@@ -23,8 +23,8 @@ yarn.lock
 # SECRITS
 _deploy*
 _local*
-
-
+*.age
+*.dec.*
 refresh.json
 
 bin/*

@@ -31,8 +31,9 @@ yarn.lock
 # SECRITS
 _deploy*
 _local*
+*.age
+*.dec.*
+refresh.json
 
 *.mp4
 *.jpg
-
-refresh.json
