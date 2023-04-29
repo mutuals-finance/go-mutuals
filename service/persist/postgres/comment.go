@@ -22,7 +22,7 @@ func NewCommentRepository(db *sql.DB, queries *db.Queries) *CommentRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	createStmt, err := db.PrepareContext(ctx, `INSERT INTO comments (ID, FEED_EVENT_ID, ACTOR_ID, REPLY_TO, COMMENT) VALUES ($1, $2, $3, $4, $5) RETURNING ID;`)
+	createStmt, err := db.PrepareContext(ctx, `INSERT INTO comments (ID, ACTOR_ID, REPLY_TO, COMMENT) VALUES ($1, $2, $3, $4) RETURNING ID;`)
 	checkNoErr(err)
 
 	deleteStmt, err := db.PrepareContext(ctx, `UPDATE comments SET DELETED = TRUE WHERE ID = $1;`)
@@ -36,9 +36,9 @@ func NewCommentRepository(db *sql.DB, queries *db.Queries) *CommentRepository {
 	}
 }
 
-func (a *CommentRepository) CreateComment(ctx context.Context, feedEventID, actorID persist.DBID, replyToID *persist.DBID, comment string) (persist.DBID, error) {
+func (a *CommentRepository) CreateComment(ctx context.Context, actorID persist.DBID, replyToID *persist.DBID, comment string) (persist.DBID, error) {
 	var resultID persist.DBID
-	err := a.createStmt.QueryRowContext(ctx, persist.GenerateID(), feedEventID, actorID, replyToID, comment).Scan(&resultID)
+	err := a.createStmt.QueryRowContext(ctx, persist.GenerateID(), actorID, replyToID, comment).Scan(&resultID)
 	if err != nil {
 		return "", err
 	}

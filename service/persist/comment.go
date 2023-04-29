@@ -9,7 +9,6 @@ type Comment struct {
 	ID          DBID            `json:"id"`
 	CreatedAt   CreationTime    `json:"created_at"`
 	LastUpdated LastUpdatedTime `json:"last_updated"`
-	FeedEventID DBID            `json:"feed_event_id"`
 	ActorID     DBID            `json:"actor_id"`
 	ReplyTo     DBID            `json:"reply_to"`
 	Comment     string          `json:"comment"`
@@ -18,7 +17,7 @@ type Comment struct {
 
 type CommentRepository interface {
 	// replyToID is optional
-	CreateComment(ctx context.Context, feedEventID DBID, actorID DBID, replyToID *DBID, comment string) (DBID, error)
+	CreateComment(ctx context.Context, actorID DBID, replyToID *DBID, comment string) (DBID, error)
 	RemoveComment(ctx context.Context, commentID DBID) error
 }
 

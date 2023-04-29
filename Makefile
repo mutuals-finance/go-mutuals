@@ -69,18 +69,14 @@ $(DEPLOY)-$(DEV)-backend          : SERVICE_FILE := backend-env.yaml
 $(DEPLOY)-$(DEV)-indexer          : SERVICE_FILE := app-dev-indexer.yaml
 $(DEPLOY)-$(DEV)-indexer-server   : SERVICE_FILE := indexer-server-env.yaml
 $(DEPLOY)-$(DEV)-admin            : SERVICE_FILE := app-dev-admin.yaml
-$(DEPLOY)-$(DEV)-feed             : SERVICE_FILE := feed-env.yaml
 $(DEPLOY)-$(DEV)-tokenprocessing  : SERVICE_FILE := tokenprocessing-env.yaml
 $(DEPLOY)-$(DEV)-emails           : SERVICE_FILE := emails-server-env.yaml
-$(DEPLOY)-$(DEV)-feedbot          : SERVICE_FILE := feedbot-env.yaml
 $(DEPLOY)-$(DEV)-routing-rules    : SERVICE_FILE := dispatch.yaml
 $(DEPLOY)-$(SANDBOX)-backend      : SERVICE_FILE := backend-sandbox-env.yaml
 $(DEPLOY)-$(PROD)-backend         : SERVICE_FILE := backend-env.yaml
 $(DEPLOY)-$(PROD)-indexer         : SERVICE_FILE := app-prod-indexer.yaml
 $(DEPLOY)-$(PROD)-indexer-server  : SERVICE_FILE := indexer-server-env.yaml
 $(DEPLOY)-$(PROD)-admin           : SERVICE_FILE := app-prod-admin.yaml
-$(DEPLOY)-$(PROD)-feed            : SERVICE_FILE := feed-env.yaml
-$(DEPLOY)-$(PROD)-feedbot         : SERVICE_FILE := feedbot-env.yaml
 $(DEPLOY)-$(PROD)-tokenprocessing : SERVICE_FILE := tokenprocessing-env.yaml
 $(DEPLOY)-$(PROD)-dummymetadata   : SERVICE_FILE := dummymetadata-env.yaml
 $(DEPLOY)-$(PROD)-emails          : SERVICE_FILE := emails-server-env.yaml
@@ -94,8 +90,6 @@ $(DEPLOY)-%-indexer               : SENTRY_PROJECT := indexer
 $(DEPLOY)-%-indexer-server        : SENTRY_PROJECT := indexer-api
 $(DEPLOY)-%-tokenprocessing       : SENTRY_PROJECT := tokenprocessing
 $(DEPLOY)-%-dummymetadata         : SENTRY_PROJECT := dummymetadata
-$(DEPLOY)-%-feed                  : SENTRY_PROJECT := feed
-$(DEPLOY)-%-feedbot               : SENTRY_PROJECT := feedbot
 $(DEPLOY)-%-emails                : SENTRY_PROJECT := emails
 
 # Docker builds
@@ -146,24 +140,6 @@ $(DEPLOY)-%-backend                    : CONCURRENCY    := $(BACKEND_CONCURRENCY
 $(DEPLOY)-$(DEV)-backend               : SERVICE        := backend-dev
 $(DEPLOY)-$(SANDBOX)-backend           : SERVICE        := backend-sandbox
 $(DEPLOY)-$(PROD)-backend              : SERVICE        := backend
-$(DEPLOY)-%-feed                       : REPO           := feed
-$(DEPLOY)-%-feed                       : DOCKER_FILE    := $(DOCKER_DIR)/feed/Dockerfile
-$(DEPLOY)-%-feed                       : PORT           := 4100
-$(DEPLOY)-%-feed                       : TIMEOUT        := $(FEED_TIMEOUT)
-$(DEPLOY)-%-feed                       : CPU            := $(FEED_CPU)
-$(DEPLOY)-%-feed                       : MEMORY         := $(FEED_MEMORY)
-$(DEPLOY)-%-feed                       : CONCURRENCY    := $(FEED_CONCURRENCY)
-$(DEPLOY)-$(DEV)-feed                  : SERVICE        := feed-dev
-$(DEPLOY)-$(PROD)-feed                 : SERVICE        := feed
-$(DEPLOY)-%-feedbot                    : REPO           := feedbot
-$(DEPLOY)-%-feedbot                    : DOCKER_FILE    := $(DOCKER_DIR)/feedbot/Dockerfile
-$(DEPLOY)-%-feedbot                    : PORT           := 4123
-$(DEPLOY)-%-feedbot                    : TIMEOUT        := $(FEEDBOT_TIMEOUT)
-$(DEPLOY)-%-feedbot                    : CPU            := $(FEEDBOT_CPU)
-$(DEPLOY)-%-feedbot                    : MEMORY         := $(FEEDBOT_MEMORY)
-$(DEPLOY)-%-feedbot                    : CONCURRENCY    := $(FEEDBOT_CONCURRENCY)
-$(DEPLOY)-$(DEV)-feedbot               : SERVICE        := feedbot-dev
-$(DEPLOY)-$(PROD)-feedbot              : SERVICE        := feedbot
 $(DEPLOY)-%-graphql-gateway                    : REPO           := graphql-gateway
 $(DEPLOY)-$(DEV)-graphql-gateway               : DOCKER_FILE    := $(DOCKER_DIR)/graphql-gateway/$(DEV)/Dockerfile
 $(DEPLOY)-$(PROD)-graphql-gateway              : DOCKER_FILE    := $(DOCKER_DIR)/graphql-gateway/$(PROD)/Dockerfile
@@ -182,8 +158,6 @@ $(PROMOTE)-%-indexer-server            : SERVICE := indexer-api
 $(PROMOTE)-%-emails                    : SERVICE := emails
 $(PROMOTE)-%-tokenprocessing           : SERVICE := tokenprocessing
 $(PROMOTE)-%-dummymetadata             : SERVICE := dummymetadata
-$(PROMOTE)-%-feed                      : SERVICE := feed
-$(PROMOTE)-%-feedbot                   : SERVICE := feedbot
 $(PROMOTE)-%-admin                     : SERVICE := admin
 
 #----------------------------------------------------------------
@@ -300,8 +274,6 @@ $(DEPLOY)-$(DEV)-indexer-server   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-ind
 $(DEPLOY)-$(DEV)-tokenprocessing  : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-tokenprocessing _$(RELEASE)-tokenprocessing
 $(DEPLOY)-$(DEV)-emails           : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
 $(DEPLOY)-$(DEV)-admin            : _set-project-$(ENV) _$(DEPLOY)-admin
-$(DEPLOY)-$(DEV)-feed             : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-feed _$(RELEASE)-feed
-$(DEPLOY)-$(DEV)-feedbot          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-feedbot _$(RELEASE)-feedbot
 $(DEPLOY)-$(DEV)-routing-rules    : _set-project-$(ENV) _$(DEPLOY)-routing-rules
 $(DEPLOY)-$(DEV)-graphql-gateway   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
 
@@ -315,8 +287,6 @@ $(DEPLOY)-$(PROD)-indexer-server  : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-ind
 $(DEPLOY)-$(PROD)-tokenprocessing : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-tokenprocessing _$(RELEASE)-tokenprocessing
 $(DEPLOY)-$(PROD)-dummymetadata   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-dummymetadata _$(RELEASE)-dummymetadata
 $(DEPLOY)-$(PROD)-emails          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
-$(DEPLOY)-$(PROD)-feed            : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-feed _$(RELEASE)-feed
-$(DEPLOY)-$(PROD)-feedbot         : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-feedbot _$(RELEASE)-feedbot
 $(DEPLOY)-$(PROD)-admin           : _set-project-$(ENV) _$(DEPLOY)-admin
 $(DEPLOY)-$(PROD)-routing-rules   : _set-project-$(ENV) _$(DEPLOY)-routing-rules
 $(DEPLOY)-$(PROD)-graphql-gateway : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
@@ -332,8 +302,6 @@ $(PROMOTE)-$(PROD)-indexer-server   : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-
 $(PROMOTE)-$(PROD)-tokenprocessing  : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-tokenprocessing
 $(PROMOTE)-$(PROD)-dummymetadata    : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-dummymetadata
 $(PROMOTE)-$(PROD)-emails           : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-emails
-$(PROMOTE)-$(PROD)-feed             : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-feed
-$(PROMOTE)-$(PROD)-feedbot          : _set-project-$(ENV) _$(PROMOTE)-feedbot
 $(PROMOTE)-$(PROD)-admin            : _set-project-$(ENV) _$(PROMOTE)-admin
 
 # Contracts

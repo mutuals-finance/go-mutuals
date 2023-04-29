@@ -133,10 +133,9 @@ func CoreInit(c *Clients, provider *multichain.Provider) *gin.Engine {
 
 	lock := redis.NewLockClient(redis.NotificationLockDB)
 	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQ)
-	feedCache := redis.NewCache(redis.FeedDB)
 	socialCache := redis.NewCache(redis.SocialDB)
 
-	return handlersInit(router, c.Repos, c.Queries, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, feedCache, socialCache, c.MagicLinkClient)
+	return handlersInit(router, c.Repos, c.Queries, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, c.MagicLinkClient)
 }
 
 func newSecretsClient() *secretmanager.Client {
@@ -190,10 +189,7 @@ func SetDefaults() {
 	viper.SetDefault("SNAPSHOT_BUCKET", "gallery-dev-322005.appspot.com")
 	viper.SetDefault("TASK_QUEUE_HOST", "")
 	viper.SetDefault("SENTRY_DSN", "")
-	viper.SetDefault("GCLOUD_FEED_QUEUE", "projects/gallery-local/locations/here/queues/feed-event")
 	viper.SetDefault("GCLOUD_WALLET_VALIDATE_QUEUE", "projects/gallery-dev-322005/locations/us-west2/queues/wallet-validate")
-	viper.SetDefault("GCLOUD_FEED_BUFFER_SECS", 20)
-	viper.SetDefault("FEED_SECRET", "feed-secret")
 	viper.SetDefault("TOKEN_PROCESSING_URL", "http://localhost:6500")
 	viper.SetDefault("TEZOS_API_URL", "https://api.tzkt.io")
 	viper.SetDefault("POAP_API_KEY", "")
@@ -211,13 +207,10 @@ func SetDefaults() {
 	viper.SetDefault("BACKEND_SECRET", "BACKEND_SECRET")
 	viper.SetDefault("MERCH_CONTRACT_ADDRESS", "0x01f55be815fbd10b1770b008b8960931a30e7f65")
 	viper.SetDefault("ETH_PRIVATE_KEY", "")
-	viper.SetDefault("FEED_URL", "")
 	viper.SetDefault("MAGIC_LINK_SECRET_KEY", "")
 	viper.SetDefault("TWITTER_CLIENT_ID", "")
 	viper.SetDefault("TWITTER_CLIENT_SECRET", "")
 	viper.SetDefault("TWITTER_AUTH_REDIRECT_URI", "http://localhost:3000/auth/twitter")
-	viper.SetDefault("FEEDBOT_URL", "")
-	viper.SetDefault("GCLOUD_FEEDBOT_TASK_QUEUE", "projects/gallery-local/locations/here/queues/feedbot")
 	viper.SetDefault("ALCHEMY_API_URL", "")
 	viper.SetDefault("INFURA_API_KEY", "")
 	viper.SetDefault("INFURA_API_SECRET", "")

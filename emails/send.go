@@ -277,30 +277,6 @@ outer:
 func notifToTemplateData(ctx context.Context, queries *coredb.Queries, n coredb.Notification) (notificationEmailDynamicTemplateData, error) {
 
 	switch n.Action {
-	case persist.ActionAdmiredFeedEvent:
-		feedEvent, err := queries.GetFeedEventByID(ctx, n.FeedEventID)
-		if err != nil {
-			return notificationEmailDynamicTemplateData{}, fmt.Errorf("failed to get feed event for admire %s: %w", n.FeedEventID, err)
-		}
-		collection, _ := queries.GetCollectionById(ctx, feedEvent.Data.CollectionID)
-		data := notificationEmailDynamicTemplateData{}
-		if collection.ID != "" && collection.Name.String != "" {
-			data.CollectionID = collection.ID
-			data.CollectionName = collection.Name.String
-			data.Action = "admired your additions to"
-		} else {
-			data.Action = "admired your gallery update"
-		}
-		if len(n.Data.AdmirerIDs) > 1 {
-			data.Actor = fmt.Sprintf("%d collectors", len(n.Data.AdmirerIDs))
-		} else {
-			actorUser, err := queries.GetUserById(ctx, n.Data.AdmirerIDs[0])
-			if err != nil {
-				return notificationEmailDynamicTemplateData{}, err
-			}
-			data.Actor = actorUser.Username.String
-		}
-		return data, nil
 	case persist.ActionUserFollowedUsers:
 		if len(n.Data.FollowerIDs) > 1 {
 			return notificationEmailDynamicTemplateData{
@@ -323,34 +299,6 @@ func notifToTemplateData(ctx context.Context, queries *coredb.Queries, n coredb.
 			}, nil
 		}
 		return notificationEmailDynamicTemplateData{}, fmt.Errorf("no follower ids")
-	case persist.ActionCommentedOnFeedEvent:
-		comment, err := queries.GetCommentByCommentID(ctx, n.CommentID)
-		if err != nil {
-			return notificationEmailDynamicTemplateData{}, fmt.Errorf("failed to get comment for comment %s: %w", n.CommentID, err)
-		}
-		userActor, err := queries.GetUserById(ctx, comment.ActorID)
-		if err != nil {
-			return notificationEmailDynamicTemplateData{}, fmt.Errorf("failed to get user for comment actor %s: %w", comment.ActorID, err)
-		}
-		feedEvent, err := queries.GetFeedEventByID(ctx, n.FeedEventID)
-		if err != nil {
-			return notificationEmailDynamicTemplateData{}, fmt.Errorf("failed to get feed event for comment %s: %w", n.FeedEventID, err)
-		}
-		collection, _ := queries.GetCollectionById(ctx, feedEvent.Data.CollectionID)
-		if collection.ID != "" {
-			return notificationEmailDynamicTemplateData{
-				Actor:          userActor.Username.String,
-				Action:         "commented on your additions to",
-				CollectionName: collection.Name.String,
-				CollectionID:   collection.ID,
-				PreviewText:    util.TruncateWithEllipsis(comment.Comment, 20),
-			}, nil
-		}
-		return notificationEmailDynamicTemplateData{
-			Actor:       userActor.Username.String,
-			Action:      "commented on your gallery update",
-			PreviewText: util.TruncateWithEllipsis(comment.Comment, 20),
-		}, nil
 	case persist.ActionViewedGallery:
 		if len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs) > 1 {
 			return notificationEmailDynamicTemplateData{

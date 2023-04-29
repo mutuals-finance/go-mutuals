@@ -18,11 +18,10 @@ func NewAdmireRepository(queries *db.Queries) *AdmireRepository {
 	}
 }
 
-func (a *AdmireRepository) CreateAdmire(ctx context.Context, feedEventID persist.DBID, actorID persist.DBID) (persist.DBID, error) {
+func (a *AdmireRepository) CreateAdmire(ctx context.Context, actorID persist.DBID) (persist.DBID, error) {
 	admireID, err := a.queries.CreateAdmire(ctx, db.CreateAdmireParams{
-		ID:          persist.GenerateID(),
-		FeedEventID: feedEventID,
-		ActorID:     actorID,
+		ID:      persist.GenerateID(),
+		ActorID: actorID,
 	})
 
 	if err != nil {

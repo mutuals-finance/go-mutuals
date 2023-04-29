@@ -91,8 +91,6 @@ type GalleryUser implements Node @goEmbedHelper {
   isAuthenticatedUser: Boolean
   followers: [GalleryUser] @goField(forceResolver: true)
   following: [GalleryUser] @goField(forceResolver: true)
-  feed(before: String, after: String, first: Int, last: Int): FeedConnection
-    @goField(forceResolver: true)
   sharedFollowers(before: String, after: String, first: Int, last: Int): UsersConnection
     @authRequired
     @goField(forceResolver: true)
@@ -546,8 +544,6 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   user: GalleryUser @goField(forceResolver: true)
   socialAccounts: SocialAccounts @goField(forceResolver: true)
   viewerGalleries: [ViewerGallery] @goField(forceResolver: true)
-  feed(before: String, after: String, first: Int, last: Int): FeedConnection
-    @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
   """
@@ -653,7 +649,6 @@ type Admire implements Node {
   creationTime: Time
   lastUpdated: Time
   admirer: GalleryUser @goField(forceResolver: true)
-  # should we include the feed event here?
 }
 
 type Comment implements Node {
@@ -664,7 +659,6 @@ type Comment implements Node {
   replyTo: Comment @goField(forceResolver: true)
   commenter: GalleryUser @goField(forceResolver: true)
   comment: String
-  # should we include the feed event here?
 }
 
 # Actions a user can take on a resource
@@ -682,161 +676,6 @@ type FollowInfo {
   followedBack: Boolean
 }
 
-type FeedEventAdmireEdge {
-  node: Admire
-  event: FeedEvent
-  cursor: String
-}
-
-type FeedEventAdmiresConnection {
-  edges: [FeedEventAdmireEdge]
-  pageInfo: PageInfo!
-}
-
-type FeedEventCommentEdge {
-  node: Comment
-  event: FeedEvent
-  cursor: String
-}
-
-type FeedEventCommentsConnection {
-  edges: [FeedEventCommentEdge]
-  pageInfo: PageInfo!
-}
-
-union Interaction = Admire | Comment
-
-type FeedEventInteractionsEdge {
-  node: Interaction
-  event: FeedEvent
-  cursor: String
-}
-
-type FeedEventInteractionsConnection {
-  edges: [FeedEventInteractionsEdge]
-  pageInfo: PageInfo!
-}
-
-interface FeedEventData {
-  eventTime: Time
-  owner: GalleryUser
-  action: Action
-}
-
-type FeedEvent implements Node @key(fields: "dbid") {
-  id: ID!
-  dbid: DBID!
-
-  eventData: FeedEventData @goField(forceResolver: true)
-  admires(before: String, after: String, first: Int, last: Int): FeedEventAdmiresConnection
-    @goField(forceResolver: true)
-  comments(before: String, after: String, first: Int, last: Int): FeedEventCommentsConnection
-    @goField(forceResolver: true)
-  caption: String
-
-  # If supplied, typeFilter will only query for the requested interaction types.
-  # If typeFilter is omitted, all interaction types will be queried.
-  interactions(
-    before: String
-    after: String
-    first: Int
-    last: Int
-    typeFilter: [InteractionType!]
-  ): FeedEventInteractionsConnection @goField(forceResolver: true)
-
-  viewerAdmire: Admire @goField(forceResolver: true)
-
-  # TODO: This is just here while we migrate the frontend over to viewerAdmire.
-  # Remove this in the near future.
-  hasViewerAdmiredEvent: Boolean @goField(forceResolver: true)
-}
-
-type UserCreatedFeedEventData implements FeedEventData {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  action: Action
-}
-
-type UserFollowedUsersFeedEventData implements FeedEventData {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  action: Action
-  followed: [FollowInfo]
-}
-
-type CollectorsNoteAddedToTokenFeedEventData implements FeedEventData {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  action: Action
-  token: CollectionToken @goField(forceResolver: true)
-  newCollectorsNote: String
-}
-
-type CollectionCreatedFeedEventData implements FeedEventData @goEmbedHelper {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  action: Action
-  collection: Collection @goField(forceResolver: true)
-  newTokens: [CollectionToken] @goField(forceResolver: true)
-  newCollectorsNote: String
-}
-
-type CollectorsNoteAddedToCollectionFeedEventData implements FeedEventData {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  action: Action
-  collection: Collection @goField(forceResolver: true)
-  newCollectorsNote: String
-}
-
-type TokensAddedToCollectionFeedEventData implements FeedEventData @goEmbedHelper {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  collection: Collection @goField(forceResolver: true)
-  action: Action
-  newTokens: [CollectionToken] @goField(forceResolver: true)
-  isPreFeed: Boolean
-}
-
-type CollectionUpdatedFeedEventData implements FeedEventData @goEmbedHelper {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  action: Action
-  collection: Collection @goField(forceResolver: true)
-  newCollectorsNote: String
-  newTokens: [CollectionToken] @goField(forceResolver: true)
-}
-
-type GalleryInfoUpdatedFeedEventData implements FeedEventData {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  newName: String
-  newDescription: String
-  action: Action
-}
-
-type GalleryUpdatedFeedEventData implements FeedEventData @goEmbedHelper {
-  eventTime: Time
-  owner: GalleryUser @goField(forceResolver: true)
-  action: Action
-  gallery: Gallery @goField(forceResolver: true)
-  subEventDatas: [FeedEventData!] @goField(forceResolver: true)
-  newName: String
-  newDescription: String
-}
-
-type ErrUnknownAction implements Error {
-  message: String!
-}
-
-type ErrFeedEventNotFound implements Error {
-  message: String!
-}
-
-union FeedEventOrError = FeedEvent | ErrFeedEventNotFound | ErrUnknownAction
-
-union FeedEventByIdOrError = FeedEvent | ErrFeedEventNotFound | ErrUnknownAction
-
 type PageInfo {
   total: Int
   size: Int!
@@ -844,16 +683,6 @@ type PageInfo {
   hasNextPage: Boolean!
   startCursor: String!
   endCursor: String!
-}
-
-type FeedEdge {
-  node: FeedEventOrError
-  cursor: String
-}
-
-type FeedConnection {
-  edges: [FeedEdge]
-  pageInfo: PageInfo!
 }
 
 type SocialConnection implements Node @goGqlId(fields: ["socialId", "socialType"]) @goEmbedHelper {
@@ -1001,10 +830,6 @@ type Query {
   ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
   galleryOfTheWeekWinners: [GalleryUser!]
-  globalFeed(before: String, after: String, first: Int, last: Int): FeedConnection
-  # Paging forward i.e. providing the `first` argument will return events in order of descending popularity.
-  trendingFeed(before: String, after: String, first: Int, last: Int): FeedConnection
-  feedEventById(id: DBID!): FeedEventByIdOrError
   getMerchTokens(wallet: Address!): MerchTokensPayloadOrError
   galleryById(id: DBID!): GalleryByIdPayloadOrError
   viewerGalleryById(id: DBID!): ViewerGalleryByIdPayloadOrError
@@ -1104,7 +929,6 @@ union CreateCollectionPayloadOrError = CreateCollectionPayload | ErrNotAuthorize
 
 type CreateCollectionPayload {
   collection: Collection
-  feedEvent: FeedEvent @goField(forceResolver: true)
 }
 
 union DeleteCollectionPayloadOrError =
@@ -1147,7 +971,6 @@ union UpdateCollectionTokensPayloadOrError =
 
 type UpdateCollectionTokensPayload {
   collection: Collection
-  feedEvent: FeedEvent @goField(forceResolver: true)
 }
 
 input UpdateCollectionHiddenInput {
@@ -1183,7 +1006,7 @@ input UpdateTokenInfoInput {
   collectorsNote: String!
 
   # Optional (for now). Lets the backend know what collection the token was being edited in.
-  # Currently used to generate feedbot URLs.
+  # @DEPCRECATED used to generate feedbot URLs.
   collectionId: DBID
 }
 
@@ -1468,55 +1291,27 @@ type UnfollowUserPayload {
   user: GalleryUser @goField(forceResolver: true)
 }
 
-union AdmireFeedEventPayloadOrError =
-    AdmireFeedEventPayload
-  | ErrAuthenticationFailed
-  | ErrFeedEventNotFound
-  | ErrInvalidInput
-  | ErrAdmireAlreadyExists
-
 union RemoveAdmirePayloadOrError =
     RemoveAdmirePayload
   | ErrAuthenticationFailed
-  | ErrFeedEventNotFound
   | ErrInvalidInput
   | ErrAdmireNotFound
 
-union CommentOnFeedEventPayloadOrError =
-    CommentOnFeedEventPayload
-  | ErrAuthenticationFailed
-  | ErrFeedEventNotFound
-  | ErrInvalidInput
 
 union RemoveCommentPayloadOrError =
     RemoveCommentPayload
   | ErrAuthenticationFailed
-  | ErrFeedEventNotFound
   | ErrInvalidInput
   | ErrCommentNotFound
 
-type AdmireFeedEventPayload {
-  viewer: Viewer
-  admire: Admire @goField(forceResolver: true)
-  feedEvent: FeedEvent @goField(forceResolver: true)
-}
 
 type RemoveAdmirePayload {
   viewer: Viewer
   admireID: DBID
-  feedEvent: FeedEvent @goField(forceResolver: true)
-}
-
-type CommentOnFeedEventPayload {
-  viewer: Viewer
-  comment: Comment @goField(forceResolver: true)
-  replyToComment: Comment @goField(forceResolver: true)
-  feedEvent: FeedEvent @goField(forceResolver: true)
 }
 
 type RemoveCommentPayload {
   viewer: Viewer
-  feedEvent: FeedEvent @goField(forceResolver: true)
 }
 
 interface Notification implements Node {
@@ -1569,33 +1364,6 @@ type SomeoneFollowedYouBackNotification implements Notification & Node & Grouped
 
   followers(before: String, after: String, first: Int, last: Int): GroupNotificationUsersConnection
     @goField(forceResolver: true)
-}
-
-type SomeoneAdmiredYourFeedEventNotification implements Notification & Node & GroupedNotification
-  @goEmbedHelper {
-  id: ID!
-  dbid: DBID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-  count: Int
-
-  feedEvent: FeedEvent @goField(forceResolver: true)
-  admirers(before: String, after: String, first: Int, last: Int): GroupNotificationUsersConnection
-    @goField(forceResolver: true)
-}
-
-type SomeoneCommentedOnYourFeedEventNotification implements Notification & Node @goEmbedHelper {
-  id: ID!
-  dbid: DBID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-
-  # Don't need a `who` here since the `comment` can provide that
-  # Do we want this comment to be the latest comment
-  comment: Comment @goField(forceResolver: true)
-  feedEvent: FeedEvent @goField(forceResolver: true)
 }
 
 type SomeoneViewedYourGalleryNotification implements Notification & Node & GroupedNotification
@@ -1727,18 +1495,6 @@ union SyncTokensForUsernamePayloadOrError =
     SyncTokensForUsernamePayload
   | ErrNotAuthorized
   | ErrSyncFailed
-
-type BanUserFromFeedPayload {
-  user: GalleryUser
-}
-
-union BanUserFromFeedPayloadOrError = BanUserFromFeedPayload | ErrNotAuthorized
-
-type UnbanUserFromFeedPayload {
-  user: GalleryUser
-}
-
-union UnbanUserFromFeedPayloadOrError = UnbanUserFromFeedPayload | ErrNotAuthorized
 
 input GalleryPositionInput {
   galleryId: DBID!
@@ -2051,13 +1807,7 @@ type Mutation {
   ): FollowAllSocialConnectionsPayloadOrError @authRequired
   unfollowUser(userId: DBID!): UnfollowUserPayloadOrError @authRequired
 
-  admireFeedEvent(feedEventId: DBID!): AdmireFeedEventPayloadOrError @authRequired
   removeAdmire(admireId: DBID!): RemoveAdmirePayloadOrError @authRequired
-  commentOnFeedEvent(
-    feedEventId: DBID!
-    replyToID: DBID
-    comment: String!
-  ): CommentOnFeedEventPayloadOrError @authRequired
   removeComment(commentId: DBID!): RemoveCommentPayloadOrError @authRequired
 
   viewGallery(galleryId: DBID!): ViewGalleryPayloadOrError
@@ -2090,8 +1840,6 @@ type Mutation {
     @retoolAuth
   syncTokensForUsername(username: String!, chains: [Chain!]!): SyncTokensForUsernamePayloadOrError
     @retoolAuth
-  banUserFromFeed(username: String!, action: String!): BanUserFromFeedPayloadOrError @retoolAuth
-  unbanUserFromFeed(username: String!): UnbanUserFromFeedPayloadOrError @retoolAuth
   mintPremiumCardToWallet(
     input: MintPremiumCardToWalletInput!
   ): MintPremiumCardToWalletPayloadOrError @retoolAuth

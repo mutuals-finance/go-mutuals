@@ -3,10 +3,6 @@ package emails
 import (
 	"context"
 	"database/sql"
-	"strings"
-	"testing"
-	"time"
-
 	"github.com/jackc/pgx/v4/pgxpool"
 	migrate "github.com/mikeydub/go-gallery/db"
 	"github.com/mikeydub/go-gallery/db/gen/coredb"
@@ -14,6 +10,8 @@ import (
 	"github.com/mikeydub/go-gallery/service/persist"
 	"github.com/mikeydub/go-gallery/service/persist/postgres"
 	"github.com/stretchr/testify/assert"
+	"strings"
+	"testing"
 )
 
 var testUser = coredb.PiiUserView{
@@ -37,8 +35,6 @@ var commentNotif coredb.Notification
 var viewNotif coredb.Notification
 
 var testGallery coredb.Gallery
-
-var feedEvent coredb.FeedEvent
 
 var comment coredb.Comment
 
@@ -154,21 +150,6 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 		t.Fatalf("failed to create admire event: %s", err)
 	}
 
-	feedEvent, err = q.CreateFeedEvent(ctx, coredb.CreateFeedEventParams{
-		ID:      persist.GenerateID(),
-		OwnerID: userID,
-		Action:  persist.ActionCollectionCreated,
-		Data: persist.FeedEventData{
-			CollectionID: testGallery.Collections[0],
-		},
-		EventTime: time.Now(),
-		EventIds:  []persist.DBID{event.ID},
-	})
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
-
 	seedAdmireNotif(ctx, t, q, userID, userID2)
 	seedCommentNotif(ctx, t, q, repos, userID, userID2)
 	seedViewNotif(ctx, t, q, repos, userID, userID2)
@@ -179,36 +160,7 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 func seedAdmireNotif(ctx context.Context, t *testing.T, q *coredb.Queries, userID persist.DBID, userID2 persist.DBID) {
 
 	admire, err := q.CreateAdmire(ctx, coredb.CreateAdmireParams{
-		ActorID:     userID2,
-		FeedEventID: feedEvent.ID,
-	})
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
-
-	admireEvent, err := q.CreateAdmireEvent(ctx, coredb.CreateAdmireEventParams{
-		ID:             persist.GenerateID(),
-		ActorID:        persist.DBIDToNullStr(userID2),
-		Action:         persist.ActionAdmiredFeedEvent,
-		ResourceTypeID: persist.ResourceTypeAdmire,
-		AdmireID:       admire,
-		FeedEventID:    feedEvent.ID,
-	})
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
-
-	admireNotif, err = q.CreateAdmireNotification(ctx, coredb.CreateAdmireNotificationParams{
-		ID:          persist.GenerateID(),
-		OwnerID:     userID,
-		Action:      persist.ActionAdmiredFeedEvent,
-		EventIds:    []persist.DBID{admireEvent.ID},
-		FeedEventID: feedEvent.ID,
-		Data: persist.NotificationData{
-			AdmirerIDs: []persist.DBID{userID2},
-		},
+		ActorID: userID2,
 	})
 
 	if err != nil {
@@ -219,39 +171,13 @@ func seedAdmireNotif(ctx context.Context, t *testing.T, q *coredb.Queries, userI
 
 func seedCommentNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos *postgres.Repositories, userID persist.DBID, userID2 persist.DBID) {
 
-	commentID, err := repos.CommentRepository.CreateComment(ctx, feedEvent.ID, userID2, nil, "test comment")
+	commentID, err := repos.CommentRepository.CreateComment(ctx, userID2, nil, "test comment")
 
 	if err != nil {
 		t.Fatalf("failed to create admire event: %s", err)
 	}
 
 	comment, err = q.GetCommentByCommentID(ctx, commentID)
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
-
-	commentEvent, err := q.CreateCommentEvent(ctx, coredb.CreateCommentEventParams{
-		ID:             persist.GenerateID(),
-		ActorID:        persist.DBIDToNullStr(userID2),
-		Action:         persist.ActionCommentedOnFeedEvent,
-		ResourceTypeID: persist.ResourceTypeAdmire,
-		CommentID:      commentID,
-		FeedEventID:    feedEvent.ID,
-	})
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
-
-	commentNotif, err = q.CreateCommentNotification(ctx, coredb.CreateCommentNotificationParams{
-		ID:          persist.GenerateID(),
-		OwnerID:     userID,
-		Action:      persist.ActionCommentedOnFeedEvent,
-		EventIds:    []persist.DBID{commentEvent.ID},
-		FeedEventID: feedEvent.ID,
-		CommentID:   commentID,
-	})
 
 	if err != nil {
 		t.Fatalf("failed to create admire event: %s", err)
