@@ -63,7 +63,6 @@ func testGraphQL(t *testing.T) {
 		{title: "should get user by username", run: testUserByUsername},
 		{title: "should get user by address", run: testUserByAddress},
 		{title: "should get viewer", run: testViewer},
-		{title: "should get viewer suggested users", run: testSuggestedUsersForViewer},
 		{title: "should add a wallet", run: testAddWallet},
 		{title: "should remove a wallet", run: testRemoveWallet},
 		{title: "should create a collection", run: testCreateCollection},
@@ -157,30 +156,6 @@ func testViewer(t *testing.T) {
 
 	payload, _ := (*response.Viewer).(*viewerQueryViewer)
 	assert.Equal(t, userF.Username, *payload.User.Username)
-}
-
-func testSuggestedUsersForViewer(t *testing.T) {
-	userF := newUserFixture(t)
-	userA := newUserFixture(t)
-	userB := newUserFixture(t)
-	userC := newUserFixture(t)
-	ctx := context.Background()
-	clients := server.ClientInit(ctx)
-	provider := server.NewMultichainProvider(clients)
-	recommender := newStubRecommender(t, []persist.DBID{
-		userA.ID,
-		userB.ID,
-		userC.ID,
-	})
-	handler := server.CoreInit(clients, provider, recommender)
-	c := customHandlerClient(t, handler, withJWTOpt(t, userF.ID))
-
-	response, err := viewerQuery(ctx, c)
-	require.NoError(t, err)
-
-	payload, _ := (*response.Viewer).(*viewerQueryViewer)
-	suggested := payload.GetSuggestedUsers().GetEdges()
-	assert.Len(t, suggested, 3)
 }
 
 func testAddWallet(t *testing.T) {
@@ -1327,8 +1302,7 @@ func defaultTokenSettings(tokens []persist.DBID) []CollectionTokenSettingsInput 
 func defaultHandler(t *testing.T) http.Handler {
 	c := server.ClientInit(context.Background())
 	p := server.NewMultichainProvider(c)
-	r := newStubRecommender(t, []persist.DBID{})
-	handler := server.CoreInit(c, p, r)
+	handler := server.CoreInit(c, p)
 	t.Cleanup(c.Close)
 	return handler
 }
@@ -1337,9 +1311,8 @@ func defaultHandler(t *testing.T) http.Handler {
 func handlerWithProviders(t *testing.T, sendTokens multichain.SendTokens, providers ...any) http.Handler {
 	c := server.ClientInit(context.Background())
 	provider := newMultichainProvider(c, sendTokens, providers)
-	recommender := newStubRecommender(t, []persist.DBID{})
 	t.Cleanup(c.Close)
-	return server.CoreInit(c, &provider, recommender)
+	return server.CoreInit(c, &provider)
 }
 
 // newMultichainProvider a new multichain provider configured with the given providers

@@ -2085,19 +2085,6 @@ func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer)
 	return resolveViewerExperiencesByUserID(ctx, obj.UserId)
 }
 
-// SuggestedUsers is the resolver for the suggestedUsers field.
-func (r *viewerResolver) SuggestedUsers(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
-	users, pageInfo, err := publicapi.For(ctx).User.RecommendUsers(ctx, before, after, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.UsersConnection{
-		Edges:    usersToEdges(ctx, users),
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
-}
-
 // Tokens is the resolver for the tokens field.
 func (r *walletResolver) Tokens(ctx context.Context, obj *model.Wallet) ([]*model.Token, error) {
 	return resolveTokensByWalletID(ctx, obj.Dbid)

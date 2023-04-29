@@ -5,22 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-
 	"github.com/everFinance/goar"
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/mikeydub/go-gallery/server"
 	"github.com/mikeydub/go-gallery/service/multichain"
 	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/recommend"
 	"github.com/mikeydub/go-gallery/service/rpc"
 	"github.com/mikeydub/go-gallery/service/task"
 	"github.com/mikeydub/go-gallery/tokenprocessing"
 	"github.com/mikeydub/go-gallery/util"
 	"github.com/stretchr/testify/mock"
+	"io"
+	"net/http"
+	"net/http/httptest"
 )
 
 // stubProvider returns a canned set of tokens and contracts
@@ -103,14 +100,6 @@ func withFetchMetadata(f func() (persist.TokenMetadata, error)) providerOpt {
 func defaultStubProvider(address string) stubProvider {
 	contract := multichain.ChainAgnosticContract{Address: "0x123", Name: "testContract"}
 	return newStubProvider(withContractTokens(contract, address, 10))
-}
-
-// newStubRecommender returns a recommender that returns a canned set of recommendations
-func newStubRecommender(t *testing.T, userIDs []persist.DBID) *recommend.Recommender {
-	return &recommend.Recommender{
-		LoadFunc:      func(context.Context) {},
-		BootstrapFunc: func(context.Context) ([]persist.DBID, error) { return userIDs, nil },
-	}
 }
 
 // sendTokensRecorder records tokenprocessing messages
