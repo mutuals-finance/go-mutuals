@@ -1360,13 +1360,12 @@ func (r *queryResolver) SearchGalleries(ctx context.Context, query string, limit
 }
 
 // SearchCommunities is the resolver for the searchCommunities field.
-func (r *queryResolver) SearchCommunities(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) (model.SearchCommunitiesPayloadOrError, error) {
+func (r *queryResolver) SearchCommunities(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchCommunitiesPayloadOrError, error) {
 	limitParam := util.GetOptionalValue(limit, 100)
 	nameWeightParam := util.GetOptionalValue(nameWeight, 0.4)
 	descriptionWeightParam := util.GetOptionalValue(descriptionWeight, 0.2)
-	poapAddressWeightParam := util.GetOptionalValue(poapAddressWeight, 0.1)
 
-	contracts, err := publicapi.For(ctx).Search.SearchContracts(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam), float32(poapAddressWeightParam))
+	contracts, err := publicapi.For(ctx).Search.SearchContracts(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam))
 	if err != nil {
 		return nil, err
 	}

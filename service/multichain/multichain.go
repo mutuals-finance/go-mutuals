@@ -245,13 +245,6 @@ var chainValidation map[persist.Chain]validation = map[persist.Chain]validation{
 		contractRefresher:     true,
 		tokenMetadataFetcher:  true,
 	},
-	persist.ChainTezos: {
-		tokensOwnerFetcher: true,
-	},
-	persist.ChainPOAP: {
-		nameResolver:       true,
-		tokensOwnerFetcher: true,
-	},
 	persist.ChainOptimism: {
 		tokensOwnerFetcher:    true,
 		tokensContractFetcher: true,

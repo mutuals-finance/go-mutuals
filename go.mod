@@ -3,7 +3,6 @@ module github.com/mikeydub/go-gallery
 go 1.19
 
 require (
-	blockwatch.cc/tzgo v1.13.2
 	cloud.google.com/go/cloudtasks v1.8.0
 	cloud.google.com/go/profiler v0.3.0
 	cloud.google.com/go/pubsub v1.28.0

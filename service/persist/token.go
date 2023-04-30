@@ -71,14 +71,9 @@ const (
 	ChainPolygon
 	// ChainOptimism represents the Optimism blockchain
 	ChainOptimism
-	// ChainTezos represents the Tezos blockchain
-	ChainTezos
-	// ChainPOAP represents a POAP
-	ChainPOAP
-
 	// MaxChainValue is the highest valid chain value, and should always be updated to
 	// point to the most recently added chain type.
-	MaxChainValue = ChainPOAP
+	MaxChainValue = ChainOptimism
 )
 
 const (
@@ -478,12 +473,7 @@ func (c Chain) NormalizeAddress(addr Address) string {
 
 // BaseKeywords are the keywords that are default for discovering media for a given chain
 func (c Chain) BaseKeywords() (image []string, anim []string) {
-	switch c {
-	case ChainTezos:
-		return []string{"displayUri", "image", "thumbnailUri", "artifactUri", "uri"}, []string{"artifactUri", "displayUri", "uri", "image"}
-	default:
-		return []string{"image"}, []string{"animation", "video"}
-	}
+	return []string{"image"}, []string{"animation", "video"}
 }
 
 // Value implements the driver.Valuer interface for the Chain type
@@ -513,16 +503,12 @@ func (c *Chain) UnmarshalJSON(data []byte) error {
 		switch strings.ToLower(asString) {
 		case "ethereum":
 			*c = ChainETH
-		case "tezos":
-			*c = ChainTezos
 		case "arbitrum":
 			*c = ChainArbitrum
 		case "polygon":
 			*c = ChainPolygon
 		case "optimism":
 			*c = ChainOptimism
-		case "poap":
-			*c = ChainPOAP
 		}
 		return nil
 	}
@@ -546,10 +532,6 @@ func (c *Chain) UnmarshalGQL(v interface{}) error {
 		*c = ChainPolygon
 	case "optimism":
 		*c = ChainOptimism
-	case "tezos":
-		*c = ChainTezos
-	case "poap":
-		*c = ChainPOAP
 	}
 	return nil
 }
@@ -559,10 +541,6 @@ func (c Chain) MarshalGQL(w io.Writer) {
 	switch c {
 	case ChainETH:
 		w.Write([]byte(`"Ethereum"`))
-	case ChainTezos:
-		w.Write([]byte(`"Tezos"`))
-	case ChainPOAP:
-		w.Write([]byte(`"POAP"`))
 	case ChainArbitrum:
 		w.Write([]byte(`"Arbitrum"`))
 	case ChainPolygon:
