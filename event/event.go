@@ -59,14 +59,14 @@ func DispatchDelayed(ctx context.Context, event db.Event) error {
 }
 
 // DispatchImmediate flushes the event immediately to its registered handlers.
-func DispatchImmediate(ctx context.Context, events []db.Event) {
+func DispatchImmediate(ctx context.Context, events []db.Event) error {
 	gc := util.GinContextFromContext(ctx)
 	sender := For(gc)
 
 	for _, e := range events {
 		if _, handable := sender.registry[immediateKey][e.Action]; !handable {
 			logger.For(ctx).WithField("action", e.Action).Warn("no immediate handler configured for action")
-			return nil, nil
+			return nil
 		}
 	}
 
@@ -74,7 +74,7 @@ func DispatchImmediate(ctx context.Context, events []db.Event) {
 	for _, e := range events {
 		persistedEvent, err := sender.eventRepo.Add(ctx, e)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		persistedEvents = append(persistedEvents, *persistedEvent)
@@ -89,16 +89,18 @@ func DispatchImmediate(ctx context.Context, events []db.Event) {
 		}
 
 	}()
+
+	return nil
 }
 
 // DispatchGroup flushes the event group immediately to its registered handlers.
-func DispatchGroup(ctx context.Context, groupID string, action persist.Action, caption *string) {
+func DispatchGroup(ctx context.Context, groupID string, action persist.Action, caption *string) error {
 	gc := util.GinContextFromContext(ctx)
 	sender := For(gc)
 
 	if _, handable := sender.registry[groupKey][action]; !handable {
 		logger.For(ctx).WithField("action", action).Warn("no group handler configured for action")
-		return nil, nil
+		return nil
 	}
 
 	if caption != nil {
@@ -107,7 +109,7 @@ func DispatchGroup(ctx context.Context, groupID string, action persist.Action, c
 			GroupID: persist.StrPtrToNullStr(&groupID),
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -120,6 +122,8 @@ func DispatchGroup(ctx context.Context, groupID string, action persist.Action, c
 		}
 
 	}()
+
+	return nil
 }
 
 func For(ctx context.Context) *eventSender {
@@ -244,6 +248,10 @@ type delayedHandler interface {
 
 type immediateHandler interface {
 	handleImmediate(context.Context, db.Event) (interface{}, error)
+}
+
+type groupHandler interface {
+	handleGroup(context.Context, string, persist.Action) (interface{}, error)
 }
 
 // notificationHandlers handles events for consumption as notifications.

@@ -126,14 +126,14 @@ func getAuthenticatedUserID(ctx context.Context) (persist.DBID, error) {
 	return userID, nil
 }
 
-func publishEventGroup(ctx context.Context, groupID string, action persist.Action, caption *string) (*db.FeedEvent, error) {
+func publishEventGroup(ctx context.Context, groupID string, action persist.Action, caption *string) error {
 	return event.DispatchGroup(sentryutil.NewSentryHubGinContext(ctx), groupID, action, caption)
 }
 
-func dispatchEvent(ctx context.Context, evt db.Event, v *validator.Validate, caption *string) (*db.FeedEvent, error) {
+func dispatchEvent(ctx context.Context, evt db.Event, v *validator.Validate, caption *string) error {
 	ctx = sentryutil.NewSentryHubGinContext(ctx)
 	if err := v.Struct(evt); err != nil {
-		return nil, err
+		return err
 	}
 
 	if caption != nil {
@@ -142,20 +142,20 @@ func dispatchEvent(ctx context.Context, evt db.Event, v *validator.Validate, cap
 	}
 
 	go pushEvent(ctx, evt)
-	return nil, nil
+	return nil
 }
 
-func dispatchEvents(ctx context.Context, evts []db.Event, v *validator.Validate, editID *string, caption *string) (*db.FeedEvent, error) {
+func dispatchEvents(ctx context.Context, evts []db.Event, v *validator.Validate, editID *string, caption *string) error {
 
 	if len(evts) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	ctx = sentryutil.NewSentryHubGinContext(ctx)
 	for i, evt := range evts {
 		evt.GroupID = persist.StrPtrToNullStr(editID)
 		if err := v.Struct(evt); err != nil {
-			return nil, err
+			return err
 		}
 		evts[i] = evt
 	}
@@ -171,7 +171,7 @@ func dispatchEvents(ctx context.Context, evts []db.Event, v *validator.Validate,
 	for _, evt := range evts {
 		go pushEvent(ctx, evt)
 	}
-	return nil, nil
+	return nil
 }
 
 func pushEvent(ctx context.Context, evt db.Event) {
