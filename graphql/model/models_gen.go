@@ -1810,7 +1810,6 @@ type UpdateCollectionTokensInput struct {
 
 type UpdateCollectionTokensPayload struct {
 	Collection *Collection `json:"collection"`
-	FeedEvent  *FeedEvent  `json:"feedEvent"`
 }
 
 func (UpdateCollectionTokensPayload) IsUpdateCollectionTokensPayloadOrError() {}

@@ -393,34 +393,6 @@ mutation publishGalleryMutation($input: PublishGalleryInput!) {
   }
 }
 
-mutation admireFeedEventMutation($feedEventId: DBID!) {
-  admireFeedEvent(feedEventId: $feedEventId) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on AdmireFeedEventPayload {
-      feedEvent {
-        dbid
-      }
-    }
-  }
-}
-
-mutation commentOnFeedEventMutation($feedEventId: DBID!, $comment: String!) {
-  commentOnFeedEvent(feedEventId: $feedEventId, comment: $comment) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on CommentOnFeedEventPayload {
-      feedEvent {
-        dbid
-      }
-    }
-  }
-}
-
 mutation updateUserExperience($input: UpdateUserExperienceInput!) {
   updateUserExperience(input: $input) {
     ... on Error {

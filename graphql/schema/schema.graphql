@@ -329,7 +329,6 @@ enum WalletType {
 }
 
 enum InteractionType {
-  Admire
   Comment
 }
 
@@ -560,14 +559,12 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 
 type NotificationSettings {
   someoneFollowedYou: Boolean
-  someoneAdmiredYourUpdate: Boolean
   someoneCommentedOnYourUpdate: Boolean
   someoneViewedYourGallery: Boolean
 }
 
 input NotificationSettingsInput {
   someoneFollowedYou: Boolean
-  someoneAdmiredYourUpdate: Boolean
   someoneCommentedOnYourUpdate: Boolean
   someoneViewedYourGallery: Boolean
 }
@@ -642,14 +639,6 @@ union CollectionByIdOrError = Collection | ErrCollectionNotFound | ErrInvalidInp
 union CollectionTokenByIdOrError = CollectionToken | ErrCollectionNotFound | ErrTokenNotFound
 
 union CommunityByAddressOrError = Community | ErrCommunityNotFound | ErrInvalidInput
-
-type Admire implements Node {
-  id: ID!
-  dbid: DBID!
-  creationTime: Time
-  lastUpdated: Time
-  admirer: GalleryUser @goField(forceResolver: true)
-}
 
 type Comment implements Node {
   id: ID!
@@ -1151,14 +1140,6 @@ type ErrSyncFailed implements Error {
   message: String!
 }
 
-type ErrAdmireNotFound implements Error {
-  message: String!
-}
-
-type ErrAdmireAlreadyExists implements Error {
-  message: String!
-}
-
 type ErrCommentNotFound implements Error {
   message: String!
 }
@@ -1291,24 +1272,12 @@ type UnfollowUserPayload {
   user: GalleryUser @goField(forceResolver: true)
 }
 
-union RemoveAdmirePayloadOrError =
-    RemoveAdmirePayload
-  | ErrAuthenticationFailed
-  | ErrInvalidInput
-  | ErrAdmireNotFound
-
-
 union RemoveCommentPayloadOrError =
     RemoveCommentPayload
   | ErrAuthenticationFailed
   | ErrInvalidInput
   | ErrCommentNotFound
 
-
-type RemoveAdmirePayload {
-  viewer: Viewer
-  admireID: DBID
-}
 
 type RemoveCommentPayload {
   viewer: Viewer
@@ -1807,7 +1776,6 @@ type Mutation {
   ): FollowAllSocialConnectionsPayloadOrError @authRequired
   unfollowUser(userId: DBID!): UnfollowUserPayloadOrError @authRequired
 
-  removeAdmire(admireId: DBID!): RemoveAdmirePayloadOrError @authRequired
   removeComment(commentId: DBID!): RemoveCommentPayloadOrError @authRequired
 
   viewGallery(galleryId: DBID!): ViewGalleryPayloadOrError

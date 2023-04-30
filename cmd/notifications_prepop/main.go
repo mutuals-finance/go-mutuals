@@ -59,14 +59,12 @@ func main() {
 
 	notifs := make([]coredb.Notification, 0, len(userIDs))
 	comments := make([]coredb.Comment, 0, len(userIDs))
-	admires := make([]coredb.Admire, 0, len(userIDs))
 	events := make([]coredb.Event, 0, len(userIDs))
 	for _, id := range userIDs {
 		action := actionForNum(rand.Intn(5))
 
 		var resource persist.ResourceType
 		var subject persist.DBID
-		var extraneousID persist.DBID
 		switch action {
 		case persist.ActionViewedGallery:
 			resource = persist.ResourceTypeGallery
@@ -110,13 +108,6 @@ func main() {
 
 	for _, comment := range comments {
 		_, err := pg.Exec(ctx, "INSERT INTO comments (id, actor_id, comment) VALUES ($1, $2, $3)", comment.ID, comment.ActorID, comment.Comment)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	for _, admire := range admires {
-		_, err := pg.Exec(ctx, "INSERT INTO admires (id, actor_id) VALUES ($1, $2) ON CONFLICT (ACTOR_ID) WHERE DELETED = false DO UPDATE SET ID = $1;", admire.ID, admire.ActorID)
 		if err != nil {
 			panic(err)
 		}

@@ -14,7 +14,6 @@ const (
 	ResourceTypeToken
 	ResourceTypeCollection
 	ResourceTypeGallery
-	ResourceTypeAdmire
 	ResourceTypeComment
 	ActionUserCreated                     Action = "UserCreated"
 	ActionUserFollowedUsers               Action = "UserFollowedUsers"

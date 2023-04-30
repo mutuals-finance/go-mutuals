@@ -99,7 +99,7 @@ func (api CollectionAPI) GetCollectionsByGalleryId(ctx context.Context, galleryI
 	return collections, nil
 }
 
-func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist.DBID, name string, collectorsNote string, tokens []persist.DBID, layout persist.TokenLayout, tokenSettings map[persist.DBID]persist.CollectionTokenSettings, caption *string) (*db.Collection, *db.FeedEvent, error) {
+func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist.DBID, name string, collectorsNote string, tokens []persist.DBID, layout persist.TokenLayout, tokenSettings map[persist.DBID]persist.CollectionTokenSettings, caption *string) (*db.Collection, error) {
 	fieldsToValidate := validate.ValidationMap{
 		"galleryID":      {galleryID, "required"},
 		"name":           {name, "collection_name"},
@@ -119,19 +119,19 @@ func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist
 
 	// Validate
 	if err := validate.ValidateFields(api.validator, fieldsToValidate); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if err := api.validator.Struct(validate.CollectionTokenSettingsParams{
 		Tokens:        tokens,
 		TokenSettings: tokenSettings,
 	}); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	layout, err := persist.ValidateLayout(layout, tokens)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Sanitize
@@ -140,12 +140,12 @@ func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist
 
 	userID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	err = api.repos.TokenRepository.TokensAreOwnedByUser(ctx, userID, tokens)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	collection := persist.CollectionDB{
@@ -161,34 +161,20 @@ func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist
 
 	collectionID, err := api.repos.CollectionRepository.Create(ctx, collection)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	err = api.repos.GalleryRepository.AddCollections(ctx, galleryID, userID, []persist.DBID{collectionID})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	createdCollection, err := api.loaders.CollectionByCollectionID.Load(collectionID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	// Send event
-	feedEvent, err := dispatchEvent(ctx, db.Event{
-		ActorID:        persist.DBIDToNullStr(userID),
-		Action:         persist.ActionCollectionCreated,
-		ResourceTypeID: persist.ResourceTypeCollection,
-		CollectionID:   collectionID,
-		GalleryID:      galleryID,
-		SubjectID:      collectionID,
-		Data:           persist.EventData{CollectionTokenIDs: createdCollection.Nfts, CollectionCollectorsNote: collectorsNote},
-	}, api.validator, caption)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &createdCollection, feedEvent, nil
+	return &createdCollection, nil
 }
 
 func (api CollectionAPI) DeleteCollection(ctx context.Context, collectionID persist.DBID) error {
@@ -260,7 +246,7 @@ func (api CollectionAPI) UpdateCollectionInfo(ctx context.Context, collectionID 
 	return err
 }
 
-func (api CollectionAPI) UpdateCollectionTokens(ctx context.Context, collectionID persist.DBID, tokens []persist.DBID, layout persist.TokenLayout, tokenSettings map[persist.DBID]persist.CollectionTokenSettings, caption *string) (*db.FeedEvent, error) {
+func (api CollectionAPI) UpdateCollectionTokens(ctx context.Context, collectionID persist.DBID, tokens []persist.DBID, layout persist.TokenLayout, tokenSettings map[persist.DBID]persist.CollectionTokenSettings, caption *string) error {
 	fieldsToValidate := validate.ValidationMap{
 		"collectionID": {collectionID, "required"},
 		"tokens":       {tokens, fmt.Sprintf("required,unique,min=1,max=%d", maxTokensPerCollection)},
@@ -278,29 +264,29 @@ func (api CollectionAPI) UpdateCollectionTokens(ctx context.Context, collectionI
 
 	// Validate
 	if err := validate.ValidateFields(api.validator, fieldsToValidate); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := api.validator.Struct(validate.CollectionTokenSettingsParams{
 		Tokens:        tokens,
 		TokenSettings: tokenSettings,
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
 	layout, err := persist.ValidateLayout(layout, tokens)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	userID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = api.repos.TokenRepository.TokensAreOwnedByUser(ctx, userID, tokens)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	update := persist.CollectionUpdateTokensInput{
@@ -312,25 +298,15 @@ func (api CollectionAPI) UpdateCollectionTokens(ctx context.Context, collectionI
 
 	err = api.repos.CollectionRepository.UpdateTokens(ctx, collectionID, userID, update)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	galleryID, err := api.queries.GetGalleryIDByCollectionID(ctx, collectionID)
+	_, err = api.queries.GetGalleryIDByCollectionID(ctx, collectionID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// Send event
-	return dispatchEvent(ctx, db.Event{
-		ActorID:        persist.DBIDToNullStr(userID),
-		Action:         persist.ActionTokensAddedToCollection,
-		ResourceTypeID: persist.ResourceTypeCollection,
-		CollectionID:   collectionID,
-		GalleryID:      galleryID,
-		SubjectID:      collectionID,
-		Data:           persist.EventData{CollectionTokenIDs: tokens},
-		Caption:        persist.StrPtrToNullStr(caption),
-	}, api.validator, caption)
+	return nil
 }
 
 func (api CollectionAPI) UpdateCollectionHidden(ctx context.Context, collectionID persist.DBID, hidden bool) error {
