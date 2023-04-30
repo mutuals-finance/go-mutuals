@@ -14,7 +14,6 @@ const (
 	ResourceTypeToken
 	ResourceTypeCollection
 	ResourceTypeGallery
-	ResourceTypeComment
 	ActionUserCreated                     Action = "UserCreated"
 	ActionUserFollowedUsers               Action = "UserFollowedUsers"
 	ActionCollectorsNoteAddedToToken      Action = "CollectorsNoteAddedToToken"

@@ -71,16 +71,6 @@ func (r *collectionTokenResolver) TokenSettings(ctx context.Context, obj *model.
 	return resolveTokenSettingsByIDs(ctx, obj.TokenId, obj.CollectionId)
 }
 
-// ReplyTo is the resolver for the replyTo field.
-func (r *commentResolver) ReplyTo(ctx context.Context, obj *model.Comment) (*model.Comment, error) {
-	return resolveCommentByCommentID(ctx, obj.ReplyTo.Dbid)
-}
-
-// Commenter is the resolver for the commenter field.
-func (r *commentResolver) Commenter(ctx context.Context, obj *model.Comment) (*model.GalleryUser, error) {
-	return resolveGalleryUserByUserID(ctx, obj.Commenter.Dbid)
-}
-
 // TokensInCommunity is the resolver for the tokensInCommunity field.
 func (r *communityResolver) TokensInCommunity(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlyGalleryUsers *bool) (*model.TokensConnection, error) {
 	if onlyGalleryUsers == nil || (onlyGalleryUsers != nil && !*onlyGalleryUsers) {
@@ -976,9 +966,8 @@ func (r *mutationResolver) ClearAllNotifications(ctx context.Context) (*model.Cl
 // UpdateNotificationSettings is the resolver for the updateNotificationSettings field.
 func (r *mutationResolver) UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error) {
 	err := publicapi.For(ctx).User.UpdateUserNotificationSettings(ctx, persist.UserNotificationSettings{
-		SomeoneFollowedYou:           settings.SomeoneFollowedYou,
-		SomeoneCommentedOnYourUpdate: settings.SomeoneCommentedOnYourUpdate,
-		SomeoneViewedYourGallery:     settings.SomeoneViewedYourGallery,
+		SomeoneFollowedYou:       settings.SomeoneFollowedYou,
+		SomeoneViewedYourGallery: settings.SomeoneViewedYourGallery,
 	})
 	if err != nil {
 		return nil, err
@@ -1632,9 +1621,6 @@ func (r *Resolver) CollectionToken() generated.CollectionTokenResolver {
 	return &collectionTokenResolver{r}
 }
 
-// Comment returns generated.CommentResolver implementation.
-func (r *Resolver) Comment() generated.CommentResolver { return &commentResolver{r} }
-
 // Community returns generated.CommunityResolver implementation.
 func (r *Resolver) Community() generated.CommunityResolver { return &communityResolver{r} }
 
@@ -1726,7 +1712,6 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 
 type collectionResolver struct{ *Resolver }
 type collectionTokenResolver struct{ *Resolver }
-type commentResolver struct{ *Resolver }
 type communityResolver struct{ *Resolver }
 type createCollectionPayloadResolver struct{ *Resolver }
 type followInfoResolver struct{ *Resolver }

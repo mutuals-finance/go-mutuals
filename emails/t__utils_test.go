@@ -26,17 +26,11 @@ var testUser2 = coredb.PiiUserView{
 	PiiEmailAddress:    persist.Email("bcc@gallery.so"),
 }
 
-var admireNotif coredb.Notification
-
 var followNotif coredb.Notification
-
-var commentNotif coredb.Notification
 
 var viewNotif coredb.Notification
 
 var testGallery coredb.Gallery
-
-var comment coredb.Comment
 
 func setupTest(t *testing.T) (*assert.Assertions, *sql.DB, *pgxpool.Pool) {
 	setDefaults()
@@ -78,8 +72,6 @@ func newRepos(pq *sql.DB, pgx *pgxpool.Pool) *postgres.Repositories {
 		MembershipRepository:  postgres.NewMembershipRepository(pq, queries),
 		EarlyAccessRepository: postgres.NewEarlyAccessRepository(pq, queries),
 		WalletRepository:      postgres.NewWalletRepository(pq, queries),
-		AdmireRepository:      postgres.NewAdmireRepository(queries),
-		CommentRepository:     postgres.NewCommentRepository(pq, queries),
 	}
 }
 
@@ -137,7 +129,7 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 		t.Fatalf("failed to get gallery: %s", err)
 	}
 
-	event, err := q.CreateCollectionEvent(ctx, coredb.CreateCollectionEventParams{
+	_, err = q.CreateCollectionEvent(ctx, coredb.CreateCollectionEventParams{
 		ID:             persist.GenerateID(),
 		ActorID:        persist.DBIDToNullStr(userID),
 		Action:         persist.ActionCollectionCreated,
@@ -147,41 +139,11 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 	})
 
 	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
+		t.Fatalf("failed to create collection event: %s", err)
 	}
 
-	seedAdmireNotif(ctx, t, q, userID, userID2)
-	seedCommentNotif(ctx, t, q, repos, userID, userID2)
 	seedViewNotif(ctx, t, q, repos, userID, userID2)
 	seedFollowNotif(ctx, t, q, repos, userID, userID2)
-
-}
-
-func seedAdmireNotif(ctx context.Context, t *testing.T, q *coredb.Queries, userID persist.DBID, userID2 persist.DBID) {
-
-	admire, err := q.CreateAdmire(ctx, coredb.CreateAdmireParams{
-		ActorID: userID2,
-	})
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
-
-}
-
-func seedCommentNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos *postgres.Repositories, userID persist.DBID, userID2 persist.DBID) {
-
-	commentID, err := repos.CommentRepository.CreateComment(ctx, userID2, nil, "test comment")
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
-
-	comment, err = q.GetCommentByCommentID(ctx, commentID)
-
-	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
-	}
 
 }
 
@@ -191,12 +153,12 @@ func seedViewNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos *
 		ID:             persist.GenerateID(),
 		ActorID:        persist.DBIDToNullStr(userID2),
 		Action:         persist.ActionViewedGallery,
-		ResourceTypeID: persist.ResourceTypeAdmire,
+		ResourceTypeID: persist.ResourceTypeGallery,
 		GalleryID:      testGallery.ID,
 	})
 
 	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
+		t.Fatalf("failed to create view event: %s", err)
 	}
 
 	viewNotif, err = q.CreateViewGalleryNotification(ctx, coredb.CreateViewGalleryNotificationParams{
@@ -211,7 +173,7 @@ func seedViewNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos *
 	})
 
 	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
+		t.Fatalf("failed to create view event: %s", err)
 	}
 
 }
@@ -222,12 +184,12 @@ func seedFollowNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos
 		ID:             persist.GenerateID(),
 		ActorID:        persist.DBIDToNullStr(userID2),
 		Action:         persist.ActionUserFollowedUsers,
-		ResourceTypeID: persist.ResourceTypeAdmire,
+		ResourceTypeID: persist.ResourceTypeUser,
 		UserID:         userID,
 	})
 
 	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
+		t.Fatalf("failed to create follow event: %s", err)
 	}
 
 	followNotif, err = q.CreateFollowNotification(ctx, coredb.CreateFollowNotificationParams{
@@ -241,7 +203,7 @@ func seedFollowNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos
 	})
 
 	if err != nil {
-		t.Fatalf("failed to create admire event: %s", err)
+		t.Fatalf("failed to create follow event: %s", err)
 	}
 
 }

@@ -111,10 +111,6 @@ sql:
           - column: "events.group_id"
             go_type: "database/sql.NullString"
 
-          # Comments
-          - column: "comments.reply_to"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.DBID"
-
           # Notifications
           - column: "notifications.data"
             go_type: "github.com/mikeydub/go-gallery/service/persist.NotificationData"

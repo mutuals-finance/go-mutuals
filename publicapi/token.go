@@ -193,25 +193,6 @@ func (api TokenAPI) GetTokensByIDs(ctx context.Context, tokenIDs []persist.DBID)
 	return foundTokens, nil
 }
 
-// GetNewTokensByFeedEventID returns new tokens added to a collection from an event.
-// Since its possible for tokens to be deleted, the return size may not be the same size of
-// the tokens added, so the caller should handle the matching of arguments to response if used in that context.
-func (api TokenAPI) GetNewTokensByFeedEventID(ctx context.Context, eventID persist.DBID) ([]db.Token, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"eventID": {eventID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	tokens, err := api.loaders.NewTokensByFeedEventID.Load(eventID)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokens, nil
-}
-
 func (api TokenAPI) GetTokensByWalletID(ctx context.Context, walletID persist.DBID) ([]db.Token, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -470,7 +451,7 @@ func (api TokenAPI) UpdateTokenInfo(ctx context.Context, tokenID persist.DBID, c
 	}
 
 	// Send event
-	_, err = dispatchEvent(ctx, db.Event{
+	err = dispatchEvent(ctx, db.Event{
 		ActorID:        persist.DBIDToNullStr(userID),
 		Action:         persist.ActionCollectorsNoteAddedToToken,
 		ResourceTypeID: persist.ResourceTypeToken,

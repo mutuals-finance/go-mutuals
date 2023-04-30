@@ -328,10 +328,6 @@ enum WalletType {
   GnosisSafe
 }
 
-enum InteractionType {
-  Comment
-}
-
 type Token implements Node {
   id: ID!
   dbid: DBID!
@@ -559,13 +555,11 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 
 type NotificationSettings {
   someoneFollowedYou: Boolean
-  someoneCommentedOnYourUpdate: Boolean
   someoneViewedYourGallery: Boolean
 }
 
 input NotificationSettingsInput {
   someoneFollowedYou: Boolean
-  someoneCommentedOnYourUpdate: Boolean
   someoneViewedYourGallery: Boolean
 }
 
@@ -639,16 +633,6 @@ union CollectionByIdOrError = Collection | ErrCollectionNotFound | ErrInvalidInp
 union CollectionTokenByIdOrError = CollectionToken | ErrCollectionNotFound | ErrTokenNotFound
 
 union CommunityByAddressOrError = Community | ErrCommunityNotFound | ErrInvalidInput
-
-type Comment implements Node {
-  id: ID!
-  dbid: DBID!
-  creationTime: Time
-  lastUpdated: Time
-  replyTo: Comment @goField(forceResolver: true)
-  commenter: GalleryUser @goField(forceResolver: true)
-  comment: String
-}
 
 # Actions a user can take on a resource
 enum Action {
@@ -1140,10 +1124,6 @@ type ErrSyncFailed implements Error {
   message: String!
 }
 
-type ErrCommentNotFound implements Error {
-  message: String!
-}
-
 input AuthMechanism {
   eoa: EoaAuth
   gnosisSafe: GnosisSafeAuth
@@ -1270,17 +1250,6 @@ type FollowUserPayload {
 type UnfollowUserPayload {
   viewer: Viewer
   user: GalleryUser @goField(forceResolver: true)
-}
-
-union RemoveCommentPayloadOrError =
-    RemoveCommentPayload
-  | ErrAuthenticationFailed
-  | ErrInvalidInput
-  | ErrCommentNotFound
-
-
-type RemoveCommentPayload {
-  viewer: Viewer
 }
 
 interface Notification implements Node {
@@ -1775,8 +1744,6 @@ type Mutation {
     accountType: SocialAccountType!
   ): FollowAllSocialConnectionsPayloadOrError @authRequired
   unfollowUser(userId: DBID!): UnfollowUserPayloadOrError @authRequired
-
-  removeComment(commentId: DBID!): RemoveCommentPayloadOrError @authRequired
 
   viewGallery(galleryId: DBID!): ViewGalleryPayloadOrError
 

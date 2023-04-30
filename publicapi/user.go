@@ -28,7 +28,6 @@ import (
 	"github.com/mikeydub/go-gallery/service/emails"
 	"github.com/mikeydub/go-gallery/service/membership"
 	"github.com/mikeydub/go-gallery/service/persist"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
 	"github.com/mikeydub/go-gallery/util"
 	"github.com/mikeydub/go-gallery/validate"
 	"roci.dev/fracdex"
@@ -405,7 +404,7 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 	}
 
 	// Send event
-	_, err = dispatchEvent(ctx, db.Event{
+	err = dispatchEvent(ctx, db.Event{
 		ActorID:        persist.DBIDToNullStr(userID),
 		Action:         persist.ActionUserCreated,
 		ResourceTypeID: persist.ResourceTypeUser,
@@ -800,13 +799,10 @@ func (api UserAPI) FollowUser(ctx context.Context, userID persist.DBID) error {
 		return err
 	}
 
-	refollowed, err := api.repos.UserRepository.AddFollower(ctx, curUserID, userID)
+	_, err = api.repos.UserRepository.AddFollower(ctx, curUserID, userID)
 	if err != nil {
 		return err
 	}
-
-	// Send event
-	go dispatchFollowEventToFeed(sentryutil.NewSentryHubGinContext(ctx), api, curUserID, userID, refollowed)
 
 	return nil
 }
@@ -865,24 +861,6 @@ func (api UserAPI) UnfollowUser(ctx context.Context, userID persist.DBID) error 
 	}
 
 	return api.repos.UserRepository.RemoveFollower(ctx, curUserID, userID)
-}
-
-func dispatchFollowEventToFeed(ctx context.Context, api UserAPI, curUserID persist.DBID, followedUserID persist.DBID, refollowed bool) {
-	followedBack, err := api.repos.UserRepository.UserFollowsUser(ctx, followedUserID, curUserID)
-
-	if err != nil {
-		sentryutil.ReportError(ctx, err)
-		return
-	}
-
-	pushEvent(ctx, db.Event{
-		ActorID:        persist.DBIDToNullStr(curUserID),
-		Action:         persist.ActionUserFollowedUsers,
-		ResourceTypeID: persist.ResourceTypeUser,
-		UserID:         curUserID,
-		SubjectID:      followedUserID,
-		Data:           persist.EventData{UserFollowedBack: followedBack, UserRefollowed: refollowed},
-	})
 }
 
 func (api UserAPI) GetUserExperiences(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {

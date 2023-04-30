@@ -310,8 +310,6 @@ type Repositories struct {
 	MembershipRepository  *MembershipRepository
 	EarlyAccessRepository *EarlyAccessRepository
 	WalletRepository      *WalletRepository
-	AdmireRepository      *AdmireRepository
-	CommentRepository     *CommentRepository
 }
 
 func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
@@ -329,8 +327,6 @@ func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
 		MembershipRepository:  NewMembershipRepository(pq, queries),
 		EarlyAccessRepository: NewEarlyAccessRepository(pq, queries),
 		WalletRepository:      NewWalletRepository(pq, queries),
-		AdmireRepository:      NewAdmireRepository(queries),
-		CommentRepository:     NewCommentRepository(pq, queries),
 	}
 }
 

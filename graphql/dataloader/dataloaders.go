@@ -21,8 +21,6 @@
 //go:generate go run github.com/gallery-so/dataloaden ContractLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Contract
 //go:generate go run github.com/gallery-so/dataloaden ContractsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Contract
 //go:generate go run github.com/gallery-so/dataloaden ContractLoaderByChainAddress github.com/mikeydub/go-gallery/service/persist.ChainAddress github.com/mikeydub/go-gallery/db/gen/coredb.Contract
-//go:generate go run github.com/gallery-so/dataloaden CommentLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Comment
-//go:generate go run github.com/gallery-so/dataloaden CommentsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Comment
 //go:generate go run github.com/gallery-so/dataloaden NotificationLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden NotificationsLoaderByUserID github.com/mikeydub/go-gallery/db/gen/coredb.GetUserNotificationsBatchParams []github.com/mikeydub/go-gallery/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden IntLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID int
@@ -87,7 +85,6 @@ type Loaders struct {
 	FollowingByUserID                *UsersLoaderByID
 	SharedFollowersByUserIDs         *SharedFollowersLoaderByIDs
 	SharedContractsByUserIDs         *SharedContractsLoaderByIDs
-	CommentByCommentID               *CommentLoaderByID
 	EventByEventID                   *EventLoaderByID
 	NotificationByID                 *NotificationLoaderByID
 	NotificationsByUserID            *NotificationsLoaderByUserID
@@ -238,10 +235,6 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 	loaders.ContractsDisplayedByUserID = NewContractsLoaderByID(defaults, loadContractsDisplayedByUserID(q))
 
 	loaders.NotificationsByUserID = NewNotificationsLoaderByUserID(defaults, loadUserNotifications(q))
-
-	loaders.CommentByCommentID = NewCommentLoaderByID(defaults, loadCommentById(q), CommentLoaderByIDCacheSubscriptions{
-		AutoCacheWithKey: func(comment db.Comment) persist.DBID { return comment.ID },
-	})
 
 	loaders.NotificationByID = NewNotificationLoaderByID(defaults, loadNotificationById(q), NotificationLoaderByIDCacheSubscriptions{
 		AutoCacheWithKey: func(notification db.Notification) persist.DBID { return notification.ID },
@@ -888,33 +881,5 @@ func loadUserNotifications(q *db.Queries) func(context.Context, []db.GetUserNoti
 		})
 
 		return notifs, errors
-	}
-}
-
-func loadCommentById(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Comment, []error) {
-	return func(ctx context.Context, commentIDs []persist.DBID) ([]db.Comment, []error) {
-		comments := make([]db.Comment, len(commentIDs))
-		errors := make([]error, len(commentIDs))
-
-		rows, err := q.GetCommentsByCommentIDs(ctx, commentIDs)
-		if err != nil {
-			fillErrors(errors, err)
-			return comments, errors
-		}
-
-		commentsByID := make(map[persist.DBID]db.Comment)
-		for _, row := range rows {
-			commentsByID[row.ID] = row
-		}
-
-		for i, id := range commentIDs {
-			if comment, ok := commentsByID[id]; ok {
-				comments[i] = comment
-			} else {
-				errors[i] = persist.ErrCommentNotFound{ID: id}
-			}
-		}
-
-		return comments, errors
 	}
 }

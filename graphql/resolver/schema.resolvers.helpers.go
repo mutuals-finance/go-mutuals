@@ -43,7 +43,6 @@ var nodeFetcher = model.NodeFetcher{
 	OnToken:            resolveTokenByTokenID,
 	OnWallet:           resolveWalletByAddress,
 	OnContract:         resolveContractByContractID,
-	OnComment:          resolveCommentByCommentID,
 	OnMerchToken:       resolveMerchTokenByTokenID,
 	OnViewer:           resolveViewerByID,
 	OnDeletedNode:      resolveDeletedNodeByID,
@@ -125,8 +124,6 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 		mappedErr = model.ErrCommunityNotFound{Message: message}
 	case persist.ErrAddressOwnedByUser:
 		mappedErr = model.ErrAddressOwnedByUser{Message: message}
-	case persist.ErrCommentNotFound:
-		mappedErr = model.ErrCommentNotFound{Message: message}
 	case publicapi.ErrTokenRefreshFailed:
 		mappedErr = model.ErrSyncFailed{Message: message}
 	case validate.ErrInvalidInput:
@@ -768,9 +765,8 @@ func resolveViewerNotificationSettings(ctx context.Context) (*model.Notification
 func notificationSettingsToModel(ctx context.Context, user *db.User) *model.NotificationSettings {
 	settings := user.NotificationSettings
 	return &model.NotificationSettings{
-		SomeoneFollowedYou:           settings.SomeoneFollowedYou,
-		SomeoneCommentedOnYourUpdate: settings.SomeoneCommentedOnYourUpdate,
-		SomeoneViewedYourGallery:     settings.SomeoneViewedYourGallery,
+		SomeoneFollowedYou:       settings.SomeoneFollowedYou,
+		SomeoneViewedYourGallery: settings.SomeoneViewedYourGallery,
 	}
 }
 
@@ -911,16 +907,6 @@ func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notifi
 	}
 
 	return notificationToModel(notification)
-}
-
-func resolveCommentByCommentID(ctx context.Context, commentID persist.DBID) (*model.Comment, error) {
-	comment, err := publicapi.For(ctx).Interaction.GetCommentByID(ctx, commentID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return commentToModel(ctx, *comment), nil
 }
 
 func resolveMerchTokenByTokenID(ctx context.Context, tokenID string) (*model.MerchToken, error) {
@@ -1135,28 +1121,6 @@ func usersToEdges(ctx context.Context, users []db.User) []*model.UserEdge {
 		}
 	}
 	return edges
-}
-
-// commentToModel converts a db.Comment to a model.Comment
-func commentToModel(ctx context.Context, comment db.Comment) *model.Comment {
-
-	return &model.Comment{
-		Dbid:         comment.ID,
-		CreationTime: &comment.CreatedAt,
-		LastUpdated:  &comment.LastUpdated,
-		Comment:      &comment.Comment,
-		Commenter:    &model.GalleryUser{Dbid: comment.ActorID}, // remaining fields handled by dedicated resolver
-	}
-}
-
-// commentToModel converts a db.Comment to a model.Comment
-func commentsToModels(ctx context.Context, comment []db.Comment) []*model.Comment {
-
-	result := make([]*model.Comment, len(comment))
-	for i, comment := range comment {
-		result[i] = commentToModel(ctx, comment)
-	}
-	return result
 }
 
 func walletToModelPersist(ctx context.Context, wallet persist.Wallet) *model.Wallet {

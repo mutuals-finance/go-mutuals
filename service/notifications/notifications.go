@@ -42,7 +42,7 @@ type NotificationHandlers struct {
 func New(queries *db.Queries, pub *pubsub.Client, lock *redislock.Client) *NotificationHandlers {
 	notifDispatcher := notificationDispatcher{handlers: map[persist.Action]notificationHandler{}, lock: lock}
 
-	def := defaultNotificationHandler{queries: queries, pubSub: pub}
+	_ = defaultNotificationHandler{queries: queries, pubSub: pub}
 	group := groupedNotificationHandler{queries: queries, pubSub: pub}
 	view := viewedNotificationHandler{queries: queries, pubSub: pub}
 

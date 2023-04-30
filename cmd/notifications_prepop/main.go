@@ -58,7 +58,6 @@ func main() {
 	}
 
 	notifs := make([]coredb.Notification, 0, len(userIDs))
-	comments := make([]coredb.Comment, 0, len(userIDs))
 	events := make([]coredb.Event, 0, len(userIDs))
 	for _, id := range userIDs {
 		action := actionForNum(rand.Intn(5))
@@ -104,13 +103,6 @@ func main() {
 			notif.Data.FollowedBack = persist.NullBool(randBool)
 		}
 		notifs = append(notifs, notif)
-	}
-
-	for _, comment := range comments {
-		_, err := pg.Exec(ctx, "INSERT INTO comments (id, actor_id, comment) VALUES ($1, $2, $3)", comment.ID, comment.ActorID, comment.Comment)
-		if err != nil {
-			panic(err)
-		}
 	}
 
 	for _, event := range events {
