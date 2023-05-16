@@ -8,494 +8,1313 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
+	emailService "github.com/mikeydub/go-gallery/emails"
 	"github.com/mikeydub/go-gallery/graphql/generated"
 	"github.com/mikeydub/go-gallery/graphql/model"
+	"github.com/mikeydub/go-gallery/publicapi"
+	"github.com/mikeydub/go-gallery/service/emails"
+	"github.com/mikeydub/go-gallery/service/mediamapper"
 	"github.com/mikeydub/go-gallery/service/persist"
+	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
+	"github.com/mikeydub/go-gallery/util"
+	"github.com/mikeydub/go-gallery/validate"
 )
 
 // Gallery is the resolver for the gallery field.
 func (r *collectionResolver) Gallery(ctx context.Context, obj *model.Collection) (*model.Gallery, error) {
-	panic(fmt.Errorf("not implemented: Gallery - gallery"))
+	gallery, err := publicapi.For(ctx).Gallery.GetGalleryByCollectionId(ctx, obj.Dbid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return galleryToModel(ctx, *gallery), nil
 }
 
 // Tokens is the resolver for the tokens field.
 func (r *collectionResolver) Tokens(ctx context.Context, obj *model.Collection, limit *int) ([]*model.CollectionToken, error) {
-	panic(fmt.Errorf("not implemented: Tokens - tokens"))
+	tokens, err := publicapi.For(ctx).Token.GetTokensByCollectionId(ctx, obj.Dbid, limit)
+
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([]*model.CollectionToken, len(tokens))
+	for i, token := range tokens {
+		output[i] = &model.CollectionToken{
+			HelperCollectionTokenData: model.HelperCollectionTokenData{
+				TokenId:      token.ID,
+				CollectionId: obj.Dbid,
+			},
+			Token:         tokenToModel(ctx, token),
+			Collection:    obj,
+			TokenSettings: nil, // handled by dedicated resolver
+		}
+	}
+
+	return output, nil
 }
 
 // Token is the resolver for the token field.
 func (r *collectionTokenResolver) Token(ctx context.Context, obj *model.CollectionToken) (*model.Token, error) {
-	panic(fmt.Errorf("not implemented: Token - token"))
+	return resolveTokenByTokenID(ctx, obj.HelperCollectionTokenData.TokenId)
 }
 
 // Collection is the resolver for the collection field.
 func (r *collectionTokenResolver) Collection(ctx context.Context, obj *model.CollectionToken) (*model.Collection, error) {
-	panic(fmt.Errorf("not implemented: Collection - collection"))
+	return resolveCollectionByCollectionID(ctx, obj.HelperCollectionTokenData.CollectionId)
 }
 
 // TokenSettings is the resolver for the tokenSettings field.
 func (r *collectionTokenResolver) TokenSettings(ctx context.Context, obj *model.CollectionToken) (*model.CollectionTokenSettings, error) {
-	panic(fmt.Errorf("not implemented: TokenSettings - tokenSettings"))
+	return resolveTokenSettingsByIDs(ctx, obj.TokenId, obj.CollectionId)
 }
 
 // TokensInCommunity is the resolver for the tokensInCommunity field.
 func (r *communityResolver) TokensInCommunity(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlyGalleryUsers *bool) (*model.TokensConnection, error) {
-	panic(fmt.Errorf("not implemented: TokensInCommunity - tokensInCommunity"))
+	if onlyGalleryUsers == nil || (onlyGalleryUsers != nil && !*onlyGalleryUsers) {
+		refresh := false
+		if obj.ForceRefresh != nil {
+			refresh = *obj.ForceRefresh
+		}
+		err := refreshTokensInContractAsync(ctx, obj.Dbid, refresh)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return resolveTokensByContractIDWithPagination(ctx, obj.Dbid, before, after, first, last, onlyGalleryUsers)
 }
 
 // Owners is the resolver for the owners field.
 func (r *communityResolver) Owners(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlyGalleryUsers *bool) (*model.TokenHoldersConnection, error) {
-	panic(fmt.Errorf("not implemented: Owners - owners"))
+	if onlyGalleryUsers == nil || (onlyGalleryUsers != nil && !*onlyGalleryUsers) {
+		refresh := false
+		if obj.ForceRefresh != nil {
+			refresh = *obj.ForceRefresh
+		}
+		err := refreshTokensInContractAsync(ctx, obj.Dbid, refresh)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return resolveCommunityOwnersByContractID(ctx, obj.Dbid, before, after, first, last, onlyGalleryUsers)
 }
 
 // User is the resolver for the user field.
 func (r *followInfoResolver) User(ctx context.Context, obj *model.FollowInfo) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	return resolveGalleryUserByUserID(ctx, obj.User.Dbid)
 }
 
 // User is the resolver for the user field.
 func (r *followUserPayloadResolver) User(ctx context.Context, obj *model.FollowUserPayload) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	return resolveGalleryUserByUserID(ctx, obj.User.Dbid)
 }
 
 // TokenPreviews is the resolver for the tokenPreviews field.
 func (r *galleryResolver) TokenPreviews(ctx context.Context, obj *model.Gallery) ([]*model.PreviewURLSet, error) {
-	panic(fmt.Errorf("not implemented: TokenPreviews - tokenPreviews"))
+	return resolveTokenPreviewsByGalleryID(ctx, obj.Dbid)
 }
 
 // Owner is the resolver for the owner field.
 func (r *galleryResolver) Owner(ctx context.Context, obj *model.Gallery) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
+	gallery, err := publicapi.For(ctx).Gallery.GetGalleryById(ctx, obj.Dbid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resolveGalleryUserByUserID(ctx, gallery.OwnerUserID)
 }
 
 // Collections is the resolver for the collections field.
 func (r *galleryResolver) Collections(ctx context.Context, obj *model.Gallery) ([]*model.Collection, error) {
-	panic(fmt.Errorf("not implemented: Collections - collections"))
+	return resolveCollectionsByGalleryID(ctx, obj.Dbid)
 }
 
 // Roles is the resolver for the roles field.
 func (r *galleryUserResolver) Roles(ctx context.Context, obj *model.GalleryUser) ([]*persist.Role, error) {
-	panic(fmt.Errorf("not implemented: Roles - roles"))
+	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserID(ctx, obj.Dbid)
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make([]*persist.Role, len(dbRoles))
+	for i, role := range dbRoles {
+		r := role
+		roles[i] = &r
+	}
+
+	return roles, nil
 }
 
 // SocialAccounts is the resolver for the socialAccounts field.
 func (r *galleryUserResolver) SocialAccounts(ctx context.Context, obj *model.GalleryUser) (*model.SocialAccounts, error) {
-	panic(fmt.Errorf("not implemented: SocialAccounts - socialAccounts"))
+	return resolveUserSocialsByUserID(ctx, obj.Dbid)
 }
 
 // Tokens is the resolver for the tokens field.
 func (r *galleryUserResolver) Tokens(ctx context.Context, obj *model.GalleryUser) ([]*model.Token, error) {
-	panic(fmt.Errorf("not implemented: Tokens - tokens"))
+	return resolveTokensByUserID(ctx, obj.Dbid)
 }
 
 // TokensByChain is the resolver for the tokensByChain field.
 func (r *galleryUserResolver) TokensByChain(ctx context.Context, obj *model.GalleryUser, chain persist.Chain) (*model.ChainTokens, error) {
-	panic(fmt.Errorf("not implemented: TokensByChain - tokensByChain"))
+	tokens, err := publicapi.For(ctx).Token.GetTokensByUserIDAndChain(ctx, obj.Dbid, chain)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ChainTokens{
+		Chain:  &chain,
+		Tokens: tokensToModel(ctx, tokens),
+	}, nil
 }
 
 // Wallets is the resolver for the wallets field.
 func (r *galleryUserResolver) Wallets(ctx context.Context, obj *model.GalleryUser) ([]*model.Wallet, error) {
-	panic(fmt.Errorf("not implemented: Wallets - wallets"))
+	return resolveWalletsByUserID(ctx, obj.Dbid)
 }
 
 // PrimaryWallet is the resolver for the primaryWallet field.
 func (r *galleryUserResolver) PrimaryWallet(ctx context.Context, obj *model.GalleryUser) (*model.Wallet, error) {
-	panic(fmt.Errorf("not implemented: PrimaryWallet - primaryWallet"))
+	return resolvePrimaryWalletByUserID(ctx, obj.HelperGalleryUserData.UserID)
 }
 
 // FeaturedGallery is the resolver for the featuredGallery field.
 func (r *galleryUserResolver) FeaturedGallery(ctx context.Context, obj *model.GalleryUser) (*model.Gallery, error) {
-	panic(fmt.Errorf("not implemented: FeaturedGallery - featuredGallery"))
+	if obj.HelperGalleryUserData.FeaturedGalleryID == nil {
+		return nil, nil
+	}
+
+	return resolveGalleryByGalleryID(ctx, *obj.HelperGalleryUserData.FeaturedGalleryID)
 }
 
 // Galleries is the resolver for the galleries field.
 func (r *galleryUserResolver) Galleries(ctx context.Context, obj *model.GalleryUser) ([]*model.Gallery, error) {
-	panic(fmt.Errorf("not implemented: Galleries - galleries"))
+	return resolveGalleriesByUserID(ctx, obj.Dbid)
 }
 
 // Badges is the resolver for the badges field.
 func (r *galleryUserResolver) Badges(ctx context.Context, obj *model.GalleryUser) ([]*model.Badge, error) {
-	panic(fmt.Errorf("not implemented: Badges - badges"))
+	return resolveBadgesByUserID(ctx, obj.Dbid)
 }
 
 // Followers is the resolver for the followers field.
 func (r *galleryUserResolver) Followers(ctx context.Context, obj *model.GalleryUser) ([]*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: Followers - followers"))
+	return resolveFollowersByUserID(ctx, obj.Dbid)
 }
 
 // Following is the resolver for the following field.
 func (r *galleryUserResolver) Following(ctx context.Context, obj *model.GalleryUser) ([]*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: Following - following"))
+	return resolveFollowingByUserID(ctx, obj.Dbid)
 }
 
 // SharedFollowers is the resolver for the sharedFollowers field.
 func (r *galleryUserResolver) SharedFollowers(ctx context.Context, obj *model.GalleryUser, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
-	panic(fmt.Errorf("not implemented: SharedFollowers - sharedFollowers"))
+	users, pageInfo, err := publicapi.For(ctx).User.SharedFollowers(ctx, obj.UserID, before, after, first, last)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.UsersConnection{
+		Edges:    usersToEdges(ctx, users),
+		PageInfo: pageInfoToModel(ctx, pageInfo),
+	}, nil
 }
 
 // SharedCommunities is the resolver for the sharedCommunities field.
 func (r *galleryUserResolver) SharedCommunities(ctx context.Context, obj *model.GalleryUser, before *string, after *string, first *int, last *int) (*model.CommunitiesConnection, error) {
-	panic(fmt.Errorf("not implemented: SharedCommunities - sharedCommunities"))
+	communities, pageInfo, err := publicapi.For(ctx).User.SharedCommunities(ctx, obj.UserID, before, after, first, last)
+	if err != nil {
+		return nil, err
+	}
+
+	edges := make([]*model.CommunityEdge, len(communities))
+	for i, community := range communities {
+		edges[i] = &model.CommunityEdge{
+			Node:   communityToModel(ctx, community, util.ToPointer(false)),
+			Cursor: nil, // not used by relay, but relay will complain without this field existing
+		}
+	}
+
+	return &model.CommunitiesConnection{
+		Edges:    edges,
+		PageInfo: pageInfoToModel(ctx, pageInfo),
+	}, nil
 }
 
 // AddUserWallet is the resolver for the addUserWallet field.
 func (r *mutationResolver) AddUserWallet(ctx context.Context, chainAddress persist.ChainAddress, authMechanism model.AuthMechanism) (model.AddUserWalletPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: AddUserWallet - addUserWallet"))
+	api := publicapi.For(ctx)
+
+	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
+	if err != nil {
+		return nil, err
+	}
+
+	err = api.User.AddWalletToUser(ctx, chainAddress, authenticator)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.AddUserWalletPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // RemoveUserWallets is the resolver for the removeUserWallets field.
 func (r *mutationResolver) RemoveUserWallets(ctx context.Context, walletIds []persist.DBID) (model.RemoveUserWalletsPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RemoveUserWallets - removeUserWallets"))
+	api := publicapi.For(ctx)
+
+	err := api.User.RemoveWalletsFromUser(ctx, walletIds)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.RemoveUserWalletsPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // UpdateUserInfo is the resolver for the updateUserInfo field.
 func (r *mutationResolver) UpdateUserInfo(ctx context.Context, input model.UpdateUserInfoInput) (model.UpdateUserInfoPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateUserInfo - updateUserInfo"))
+	api := publicapi.For(ctx)
+
+	err := api.User.UpdateUserInfo(ctx, input.Username, input.Bio)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateUserInfoPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // UpdateGalleryCollections is the resolver for the updateGalleryCollections field.
 func (r *mutationResolver) UpdateGalleryCollections(ctx context.Context, input model.UpdateGalleryCollectionsInput) (model.UpdateGalleryCollectionsPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateGalleryCollections - updateGalleryCollections"))
+	api := publicapi.For(ctx)
+
+	err := api.Gallery.UpdateGalleryCollections(ctx, input.GalleryID, input.Collections)
+	if err != nil {
+		return nil, err
+	}
+
+	gallery, err := api.Gallery.GetGalleryById(ctx, input.GalleryID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateGalleryCollectionsPayload{
+		Gallery: galleryToModel(ctx, *gallery),
+	}
+
+	return output, nil
 }
 
 // CreateCollection is the resolver for the createCollection field.
 func (r *mutationResolver) CreateCollection(ctx context.Context, input model.CreateCollectionInput) (model.CreateCollectionPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: CreateCollection - createCollection"))
+	api := publicapi.For(ctx)
+
+	sectionLayout := make([]persist.CollectionSectionLayout, len(input.Layout.SectionLayout))
+	for i, layout := range input.Layout.SectionLayout {
+		sectionLayout[i] = persist.CollectionSectionLayout{
+			Columns:    persist.NullInt32(layout.Columns),
+			Whitespace: layout.Whitespace,
+		}
+	}
+
+	layout := persist.TokenLayout{
+		Sections:      persist.StandardizeCollectionSections(input.Layout.Sections),
+		SectionLayout: sectionLayout,
+	}
+
+	settings := make(map[persist.DBID]persist.CollectionTokenSettings)
+	for _, tokenSetting := range input.TokenSettings {
+		settings[tokenSetting.TokenID] = persist.CollectionTokenSettings{RenderLive: tokenSetting.RenderLive}
+	}
+
+	collection, err := api.Collection.CreateCollection(ctx, input.GalleryID, input.Name, input.CollectorsNote, input.Tokens, layout, settings, input.Caption)
+	if err != nil {
+		return nil, err
+	}
+
+	output := model.CreateCollectionPayload{
+		Collection: collectionToModel(ctx, *collection),
+	}
+
+	return output, nil
 }
 
 // DeleteCollection is the resolver for the deleteCollection field.
 func (r *mutationResolver) DeleteCollection(ctx context.Context, collectionID persist.DBID) (model.DeleteCollectionPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: DeleteCollection - deleteCollection"))
+	api := publicapi.For(ctx)
+
+	// Make sure the collection exists before trying to delete it
+	_, err := api.Collection.GetCollectionById(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the collection's parent gallery before deleting the collection
+	gallery, err := api.Gallery.GetGalleryByCollectionId(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = api.Collection.DeleteCollection(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Deleting a collection marks the collection as "deleted" but doesn't alter the gallery,
+	// so we don't need to refetch the gallery before returning it here
+	output := &model.DeleteCollectionPayload{
+		Gallery: galleryToModel(ctx, *gallery),
+	}
+
+	return output, nil
 }
 
 // UpdateCollectionInfo is the resolver for the updateCollectionInfo field.
 func (r *mutationResolver) UpdateCollectionInfo(ctx context.Context, input model.UpdateCollectionInfoInput) (model.UpdateCollectionInfoPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateCollectionInfo - updateCollectionInfo"))
+	api := publicapi.For(ctx)
+
+	err := api.Collection.UpdateCollectionInfo(ctx, input.CollectionID, input.Name, input.CollectorsNote)
+
+	if err != nil {
+		return nil, err
+	}
+
+	collection, err := api.Collection.GetCollectionById(ctx, input.CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateCollectionInfoPayload{
+		Collection: collectionToModel(ctx, *collection),
+	}
+
+	return output, nil
 }
 
 // UpdateCollectionTokens is the resolver for the updateCollectionTokens field.
 func (r *mutationResolver) UpdateCollectionTokens(ctx context.Context, input model.UpdateCollectionTokensInput) (model.UpdateCollectionTokensPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateCollectionTokens - updateCollectionTokens"))
+	api := publicapi.For(ctx)
+
+	sectionLayout := make([]persist.CollectionSectionLayout, len(input.Layout.SectionLayout))
+	for i, layout := range input.Layout.SectionLayout {
+		sectionLayout[i] = persist.CollectionSectionLayout{
+			Columns:    persist.NullInt32(layout.Columns),
+			Whitespace: layout.Whitespace,
+		}
+	}
+
+	layout := persist.TokenLayout{
+		Sections:      persist.StandardizeCollectionSections(input.Layout.Sections),
+		SectionLayout: sectionLayout,
+	}
+
+	settings := make(map[persist.DBID]persist.CollectionTokenSettings)
+	for _, tokenSetting := range input.TokenSettings {
+		settings[tokenSetting.TokenID] = persist.CollectionTokenSettings{RenderLive: tokenSetting.RenderLive}
+	}
+
+	err := api.Collection.UpdateCollectionTokens(ctx, input.CollectionID, input.Tokens, layout, settings, input.Caption)
+	if err != nil {
+		return nil, err
+	}
+
+	collection, err := api.Collection.GetCollectionById(ctx, input.CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateCollectionTokensPayload{
+		Collection: collectionToModel(ctx, *collection),
+	}
+
+	return output, nil
 }
 
 // UpdateCollectionHidden is the resolver for the updateCollectionHidden field.
 func (r *mutationResolver) UpdateCollectionHidden(ctx context.Context, input model.UpdateCollectionHiddenInput) (model.UpdateCollectionHiddenPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateCollectionHidden - updateCollectionHidden"))
+	api := publicapi.For(ctx)
+
+	err := api.Collection.UpdateCollectionHidden(ctx, input.CollectionID, input.Hidden)
+	if err != nil {
+		return nil, err
+	}
+
+	collection, err := api.Collection.GetCollectionById(ctx, input.CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateCollectionHiddenPayload{
+		Collection: collectionToModel(ctx, *collection),
+	}
+
+	return output, nil
 }
 
 // UpdateTokenInfo is the resolver for the updateTokenInfo field.
 func (r *mutationResolver) UpdateTokenInfo(ctx context.Context, input model.UpdateTokenInfoInput) (model.UpdateTokenInfoPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateTokenInfo - updateTokenInfo"))
+	api := publicapi.For(ctx)
+
+	collectionID := persist.DBID("")
+	if input.CollectionID != nil {
+		collectionID = *input.CollectionID
+	}
+
+	err := api.Token.UpdateTokenInfo(ctx, input.TokenID, collectionID, input.CollectorsNote)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := api.Token.GetTokenById(ctx, input.TokenID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateTokenInfoPayload{
+		Token: tokenToModel(ctx, *token),
+	}
+
+	return output, nil
 }
 
 // SetSpamPreference is the resolver for the setSpamPreference field.
 func (r *mutationResolver) SetSpamPreference(ctx context.Context, input model.SetSpamPreferenceInput) (model.SetSpamPreferencePayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: SetSpamPreference - setSpamPreference"))
+	err := publicapi.For(ctx).Token.SetSpamPreference(ctx, input.Tokens, input.IsSpam)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make([]*model.Token, len(input.Tokens))
+	for i, tokenID := range input.Tokens {
+		tokens[i] = &model.Token{Dbid: tokenID} // Remaining fields handled by dedicated resolver
+	}
+
+	return model.SetSpamPreferencePayload{Tokens: tokens}, nil
 }
 
 // SyncTokens is the resolver for the syncTokens field.
 func (r *mutationResolver) SyncTokens(ctx context.Context, chains []persist.Chain) (model.SyncTokensPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: SyncTokens - syncTokens"))
+	api := publicapi.For(ctx)
+
+	if chains == nil || len(chains) == 0 {
+		chains = []persist.Chain{persist.ChainETH}
+	}
+
+	err := api.Token.SyncTokens(ctx, chains)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.SyncTokensPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // RefreshToken is the resolver for the refreshToken field.
 func (r *mutationResolver) RefreshToken(ctx context.Context, tokenID persist.DBID) (model.RefreshTokenPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
+	api := publicapi.For(ctx)
+
+	err := api.Token.RefreshToken(ctx, tokenID)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := resolveTokenByTokenID(ctx, tokenID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.RefreshTokenPayload{
+		Token: token,
+	}
+
+	return output, nil
 }
 
 // RefreshCollection is the resolver for the refreshCollection field.
 func (r *mutationResolver) RefreshCollection(ctx context.Context, collectionID persist.DBID) (model.RefreshCollectionPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RefreshCollection - refreshCollection"))
+	api := publicapi.For(ctx)
+
+	err := api.Token.RefreshCollection(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	collection, err := resolveCollectionByCollectionID(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.RefreshCollectionPayload{
+		Collection: collection,
+	}
+
+	return output, nil
 }
 
 // RefreshContract is the resolver for the refreshContract field.
 func (r *mutationResolver) RefreshContract(ctx context.Context, contractID persist.DBID) (model.RefreshContractPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RefreshContract - refreshContract"))
+	api := publicapi.For(ctx)
+
+	err := api.Contract.RefreshContract(ctx, contractID)
+	if err != nil {
+		return nil, err
+	}
+
+	contract, err := resolveContractByContractID(ctx, contractID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.RefreshContractPayload{
+		Contract: contract,
+	}
+
+	return output, nil
 }
 
 // DeepRefresh is the resolver for the deepRefresh field.
 func (r *mutationResolver) DeepRefresh(ctx context.Context, input model.DeepRefreshInput) (model.DeepRefreshPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: DeepRefresh - deepRefresh"))
+	err := publicapi.For(ctx).Token.DeepRefreshByChain(ctx, input.Chain)
+	if err != nil {
+		return nil, err
+	}
+	return model.DeepRefreshPayload{
+		Chain:     &input.Chain,
+		Submitted: util.ToPointer(true),
+	}, nil
 }
 
 // GetAuthNonce is the resolver for the getAuthNonce field.
 func (r *mutationResolver) GetAuthNonce(ctx context.Context, chainAddress persist.ChainAddress) (model.GetAuthNoncePayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: GetAuthNonce - getAuthNonce"))
+	nonce, userExists, err := publicapi.For(ctx).Auth.GetAuthNonce(ctx, chainAddress)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.AuthNonce{
+		Nonce:      &nonce,
+		UserExists: &userExists,
+	}
+
+	return output, nil
 }
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, authMechanism model.AuthMechanism, input model.CreateUserInput) (model.CreateUserPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
+	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
+	if err != nil {
+		return nil, err
+	}
+
+	bioStr := ""
+	nameStr := ""
+	descStr := ""
+	positionStr := ""
+	if input.Bio != nil {
+		bioStr = *input.Bio
+	}
+	if input.GalleryName != nil {
+		nameStr = *input.GalleryName
+	}
+	if input.GalleryDescription != nil {
+		descStr = *input.GalleryDescription
+	}
+	if input.GalleryPosition != nil {
+		positionStr = *input.GalleryPosition
+	}
+
+	var email *persist.Email
+	if input.Email != nil {
+		it := persist.Email(*input.Email)
+		email = &it
+	}
+
+	userID, galleryID, err := publicapi.For(ctx).User.CreateUser(ctx, authenticator, input.Username, email, bioStr, nameStr, descStr, positionStr)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.CreateUserPayload{
+		UserID:    &userID,
+		GalleryID: &galleryID,
+		Viewer:    resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // UpdateEmail is the resolver for the updateEmail field.
 func (r *mutationResolver) UpdateEmail(ctx context.Context, input model.UpdateEmailInput) (model.UpdateEmailPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateEmail - updateEmail"))
+	return updateUserEmail(ctx, input.Email)
 }
 
 // ResendVerificationEmail is the resolver for the resendVerificationEmail field.
 func (r *mutationResolver) ResendVerificationEmail(ctx context.Context) (model.ResendVerificationEmailPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: ResendVerificationEmail - resendVerificationEmail"))
+	return resendEmailVerification(ctx)
 }
 
 // UpdateEmailNotificationSettings is the resolver for the updateEmailNotificationSettings field.
 func (r *mutationResolver) UpdateEmailNotificationSettings(ctx context.Context, input model.UpdateEmailNotificationSettingsInput) (model.UpdateEmailNotificationSettingsPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateEmailNotificationSettings - updateEmailNotificationSettings"))
+	return updateUserEmailNotificationSettings(ctx, input)
 }
 
 // UnsubscribeFromEmailType is the resolver for the unsubscribeFromEmailType field.
 func (r *mutationResolver) UnsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailTypePayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UnsubscribeFromEmailType - unsubscribeFromEmailType"))
+	return unsubscribeFromEmailType(ctx, input)
 }
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: Login - login"))
+	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
+	if err != nil {
+		return nil, err
+	}
+
+	userId, err := publicapi.For(ctx).Auth.Login(ctx, authenticator)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.LoginPayload{
+		UserID: &userId,
+		Viewer: resolveViewer(ctx),
+	}
+	return output, nil
 }
 
 // Logout is the resolver for the logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (*model.LogoutPayload, error) {
-	panic(fmt.Errorf("not implemented: Logout - logout"))
+	publicapi.For(ctx).Auth.Logout(ctx)
+
+	output := &model.LogoutPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // ConnectSocialAccount is the resolver for the connectSocialAccount field.
 func (r *mutationResolver) ConnectSocialAccount(ctx context.Context, input model.SocialAuthMechanism, display bool) (model.ConnectSocialAccountPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: ConnectSocialAccount - connectSocialAccount"))
+	authenticator, err := r.socialAuthMechanismToAuthenticator(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	err = publicapi.For(ctx).User.AddSocialAccountToUser(ctx, authenticator, display)
+	if err != nil {
+		return nil, err
+	}
+	output := &model.ConnectSocialAccountPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // DisconnectSocialAccount is the resolver for the disconnectSocialAccount field.
 func (r *mutationResolver) DisconnectSocialAccount(ctx context.Context, accountType persist.SocialProvider) (model.DisconnectSocialAccountPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: DisconnectSocialAccount - disconnectSocialAccount"))
+	err := publicapi.For(ctx).Social.DisconnectSocialAccount(ctx, accountType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.DisconnectSocialAccountPayload{
+		Viewer: resolveViewer(ctx),
+	}, nil
 }
 
 // UpdateSocialAccountDisplayed is the resolver for the updateSocialAccountDisplayed field.
 func (r *mutationResolver) UpdateSocialAccountDisplayed(ctx context.Context, input model.UpdateSocialAccountDisplayedInput) (model.UpdateSocialAccountDisplayedPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateSocialAccountDisplayed - updateSocialAccountDisplayed"))
+	err := publicapi.For(ctx).User.UpdateUserSocialDisplayed(ctx, input.Type, input.Displayed)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateSocialAccountDisplayedPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // FollowUser is the resolver for the followUser field.
 func (r *mutationResolver) FollowUser(ctx context.Context, userID persist.DBID) (model.FollowUserPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: FollowUser - followUser"))
+	err := publicapi.For(ctx).User.FollowUser(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.FollowUserPayload{
+		Viewer: resolveViewer(ctx),
+		User: &model.GalleryUser{
+			Dbid: userID, // remaining fields handled by dedicated resolver
+		},
+	}
+
+	return output, err
 }
 
 // FollowAllSocialConnections is the resolver for the followAllSocialConnections field.
 func (r *mutationResolver) FollowAllSocialConnections(ctx context.Context, accountType persist.SocialProvider) (model.FollowAllSocialConnectionsPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: FollowAllSocialConnections - followAllSocialConnections"))
+	err := publicapi.For(ctx).User.FollowAllSocialConnections(ctx, accountType)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.FollowAllSocialConnectionsPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // UnfollowUser is the resolver for the unfollowUser field.
 func (r *mutationResolver) UnfollowUser(ctx context.Context, userID persist.DBID) (model.UnfollowUserPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UnfollowUser - unfollowUser"))
+	err := publicapi.For(ctx).User.UnfollowUser(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UnfollowUserPayload{
+		Viewer: resolveViewer(ctx),
+		User: &model.GalleryUser{
+			Dbid: userID, // remaining fields handled by dedicated resolver
+		},
+	}
+
+	return output, err
 }
 
 // ViewGallery is the resolver for the viewGallery field.
 func (r *mutationResolver) ViewGallery(ctx context.Context, galleryID persist.DBID) (model.ViewGalleryPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: ViewGallery - viewGallery"))
+	gallery, err := publicapi.For(ctx).Gallery.ViewGallery(ctx, galleryID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.ViewGalleryPayload{
+		Gallery: galleryToModel(ctx, gallery),
+	}
+
+	return output, nil
 }
 
 // UpdateGallery is the resolver for the updateGallery field.
 func (r *mutationResolver) UpdateGallery(ctx context.Context, input model.UpdateGalleryInput) (model.UpdateGalleryPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateGallery - updateGallery"))
+	res, err := publicapi.For(ctx).Gallery.UpdateGallery(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateGalleryPayload{
+		Gallery: galleryToModel(ctx, res),
+	}
+	return output, nil
 }
 
 // PublishGallery is the resolver for the publishGallery field.
 func (r *mutationResolver) PublishGallery(ctx context.Context, input model.PublishGalleryInput) (model.PublishGalleryPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: PublishGallery - publishGallery"))
+	err := publicapi.For(ctx).Gallery.PublishGallery(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	gal, err := resolveGalleryByGalleryID(ctx, input.GalleryID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.PublishGalleryPayload{
+		Gallery: gal,
+	}, nil
 }
 
 // CreateGallery is the resolver for the createGallery field.
 func (r *mutationResolver) CreateGallery(ctx context.Context, input model.CreateGalleryInput) (model.CreateGalleryPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: CreateGallery - createGallery"))
+	gallery, err := publicapi.For(ctx).Gallery.CreateGallery(ctx, input.Name, input.Description, input.Position)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.CreateGalleryPayload{
+		Gallery: galleryToModel(ctx, gallery),
+	}
+
+	return output, nil
 }
 
 // UpdateGalleryHidden is the resolver for the updateGalleryHidden field.
 func (r *mutationResolver) UpdateGalleryHidden(ctx context.Context, input model.UpdateGalleryHiddenInput) (model.UpdateGalleryHiddenPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateGalleryHidden - updateGalleryHidden"))
+	gallery, err := publicapi.For(ctx).Gallery.UpdateGalleryHidden(ctx, input.ID, input.Hidden)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateGalleryHiddenPayload{
+		Gallery: galleryToModel(ctx, gallery),
+	}
+
+	return output, nil
 }
 
 // DeleteGallery is the resolver for the deleteGallery field.
 func (r *mutationResolver) DeleteGallery(ctx context.Context, galleryID persist.DBID) (model.DeleteGalleryPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: DeleteGallery - deleteGallery"))
+	err := publicapi.For(ctx).Gallery.DeleteGallery(ctx, galleryID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.DeleteGalleryPayload{
+		DeletedID: &model.DeletedNode{
+			Dbid: galleryID,
+		},
+	}
+
+	return output, nil
 }
 
 // UpdateGalleryOrder is the resolver for the updateGalleryOrder field.
 func (r *mutationResolver) UpdateGalleryOrder(ctx context.Context, input model.UpdateGalleryOrderInput) (model.UpdateGalleryOrderPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateGalleryOrder - updateGalleryOrder"))
+	err := publicapi.For(ctx).Gallery.UpdateGalleryPositions(ctx, input.Positions)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateGalleryOrderPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // UpdateGalleryInfo is the resolver for the updateGalleryInfo field.
 func (r *mutationResolver) UpdateGalleryInfo(ctx context.Context, input model.UpdateGalleryInfoInput) (model.UpdateGalleryInfoPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateGalleryInfo - updateGalleryInfo"))
+	err := publicapi.For(ctx).Gallery.UpdateGalleryInfo(ctx, input.ID, input.Name, input.Description)
+	if err != nil {
+		return nil, err
+	}
+
+	gallery, err := resolveGalleryByGalleryID(ctx, input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateGalleryInfoPayload{
+		Gallery: gallery,
+	}
+
+	return output, nil
 }
 
 // UpdateFeaturedGallery is the resolver for the updateFeaturedGallery field.
 func (r *mutationResolver) UpdateFeaturedGallery(ctx context.Context, galleryID persist.DBID) (model.UpdateFeaturedGalleryPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateFeaturedGallery - updateFeaturedGallery"))
+	err := publicapi.For(ctx).User.UpdateFeaturedGallery(ctx, galleryID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UpdateFeaturedGalleryPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // ClearAllNotifications is the resolver for the clearAllNotifications field.
 func (r *mutationResolver) ClearAllNotifications(ctx context.Context) (*model.ClearAllNotificationsPayload, error) {
-	panic(fmt.Errorf("not implemented: ClearAllNotifications - clearAllNotifications"))
+	notifications, err := publicapi.For(ctx).Notifications.ClearUserNotifications(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	models := make([]model.Notification, len(notifications))
+	for i, n := range notifications {
+		model, err := notificationToModel(n)
+		if err != nil {
+			return nil, err
+		}
+		models[i] = model
+	}
+
+	output := &model.ClearAllNotificationsPayload{
+		Notifications: models,
+	}
+	return output, nil
 }
 
 // UpdateNotificationSettings is the resolver for the updateNotificationSettings field.
 func (r *mutationResolver) UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error) {
-	panic(fmt.Errorf("not implemented: UpdateNotificationSettings - updateNotificationSettings"))
+	err := publicapi.For(ctx).User.UpdateUserNotificationSettings(ctx, persist.UserNotificationSettings{
+		SomeoneFollowedYou:       settings.SomeoneFollowedYou,
+		SomeoneViewedYourGallery: settings.SomeoneViewedYourGallery,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resolveViewerNotificationSettings(ctx)
 }
 
 // PreverifyEmail is the resolver for the preverifyEmail field.
 func (r *mutationResolver) PreverifyEmail(ctx context.Context, input model.PreverifyEmailInput) (model.PreverifyEmailPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: PreverifyEmail - preverifyEmail"))
+	// todo we could have the frontend send the source? right now I don't see any other sources of verification other than signing up
+	result, err := emails.PreverifyEmail(ctx, input.Email, "signup")
+	if err != nil {
+		return nil, err
+	}
+
+	var modelResult model.PreverifyEmailResult
+
+	switch result.Result {
+	case emailService.PreverifyEmailResultValid:
+		modelResult = model.PreverifyEmailResultValid
+	case emailService.PreverifyEmailResultInvalid:
+		modelResult = model.PreverifyEmailResultInvalid
+	case emailService.PreverifyEmailResultRisky:
+		modelResult = model.PreverifyEmailResultRisky
+	default:
+		return nil, fmt.Errorf("unknown preverify result: %d", result.Result)
+	}
+
+	return model.PreverifyEmailPayload{
+		Email:  input.Email,
+		Result: modelResult,
+	}, nil
 }
 
 // VerifyEmail is the resolver for the verifyEmail field.
 func (r *mutationResolver) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (model.VerifyEmailPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: VerifyEmail - verifyEmail"))
+	return verifyEmail(ctx, input.Token)
 }
 
 // RedeemMerch is the resolver for the redeemMerch field.
 func (r *mutationResolver) RedeemMerch(ctx context.Context, input model.RedeemMerchInput) (model.RedeemMerchPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RedeemMerch - redeemMerch"))
+	tokenIDList := make([]persist.TokenID, len(input.TokenIds))
+	for i, id := range input.TokenIds {
+		tokenIDList[i] = persist.TokenID(id)
+	}
+	if input.Address == nil {
+		return nil, fmt.Errorf("address is required")
+	}
+	tokens, err := publicapi.For(ctx).Merch.RedeemMerchItems(ctx, tokenIDList, *input.Address, input.Signature, input.WalletType)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.RedeemMerchPayload{
+		Tokens: tokens,
+	}
+	return output, nil
 }
 
 // AddRolesToUser is the resolver for the addRolesToUser field.
 func (r *mutationResolver) AddRolesToUser(ctx context.Context, username string, roles []*persist.Role) (model.AddRolesToUserPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: AddRolesToUser - addRolesToUser"))
+	user, err := publicapi.For(ctx).Admin.AddRolesToUser(ctx, username, roles)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userToModel(ctx, *user), nil
 }
 
 // AddWalletToUserUnchecked is the resolver for the addWalletToUserUnchecked field.
 func (r *mutationResolver) AddWalletToUserUnchecked(ctx context.Context, input model.AdminAddWalletInput) (model.AdminAddWalletPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: AddWalletToUserUnchecked - addWalletToUserUnchecked"))
+	err := publicapi.For(ctx).Admin.AddWalletToUserUnchecked(ctx, input.Username, *input.ChainAddress, input.WalletType)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := publicapi.For(ctx).User.GetUserByUsername(ctx, input.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.AdminAddWalletPayload{User: userToModel(ctx, *user)}, nil
 }
 
 // RevokeRolesFromUser is the resolver for the revokeRolesFromUser field.
 func (r *mutationResolver) RevokeRolesFromUser(ctx context.Context, username string, roles []*persist.Role) (model.RevokeRolesFromUserPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RevokeRolesFromUser - revokeRolesFromUser"))
+	user, err := publicapi.For(ctx).Admin.RemoveRolesFromUser(ctx, username, roles)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userToModel(ctx, *user), nil
 }
 
 // SyncTokensForUsername is the resolver for the syncTokensForUsername field.
 func (r *mutationResolver) SyncTokensForUsername(ctx context.Context, username string, chains []persist.Chain) (model.SyncTokensForUsernamePayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: SyncTokensForUsername - syncTokensForUsername"))
+	api := publicapi.For(ctx)
+
+	user, err := api.User.GetUserByUsername(ctx, username)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if chains == nil || len(chains) == 0 {
+		chains = []persist.Chain{persist.ChainETH}
+	}
+
+	err = api.Token.SyncTokensAdmin(ctx, chains, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.SyncTokensForUsernamePayload{
+		Message: "Successfully synced tokens",
+	}
+
+	return output, nil
 }
 
 // MintPremiumCardToWallet is the resolver for the mintPremiumCardToWallet field.
 func (r *mutationResolver) MintPremiumCardToWallet(ctx context.Context, input model.MintPremiumCardToWalletInput) (model.MintPremiumCardToWalletPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: MintPremiumCardToWallet - mintPremiumCardToWallet"))
+	tx, err := publicapi.For(ctx).Card.MintPremiumCardToWallet(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.MintPremiumCardToWalletPayload{Tx: tx}, nil
 }
 
 // UploadPersistedQueries is the resolver for the uploadPersistedQueries field.
 func (r *mutationResolver) UploadPersistedQueries(ctx context.Context, input *model.UploadPersistedQueriesInput) (model.UploadPersistedQueriesPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UploadPersistedQueries - uploadPersistedQueries"))
+	err := publicapi.For(ctx).APQ.UploadPersistedQueries(ctx, *input.PersistedQueries)
+
+	if err != nil {
+		return nil, err
+	}
+
+	message := "Persisted queries uploaded successfully"
+
+	return model.UploadPersistedQueriesPayload{Message: &message}, nil
 }
 
 // UpdatePrimaryWallet is the resolver for the updatePrimaryWallet field.
 func (r *mutationResolver) UpdatePrimaryWallet(ctx context.Context, walletID persist.DBID) (model.UpdatePrimaryWalletPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdatePrimaryWallet - updatePrimaryWallet"))
+	err := publicapi.For(ctx).User.UpdateUserPrimaryWallet(ctx, walletID)
+	if err != nil {
+		return nil, err
+	}
+	return model.UpdatePrimaryWalletPayload{
+		Viewer: resolveViewer(ctx),
+	}, nil
 }
 
 // UpdateUserExperience is the resolver for the updateUserExperience field.
 func (r *mutationResolver) UpdateUserExperience(ctx context.Context, input model.UpdateUserExperienceInput) (model.UpdateUserExperiencePayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateUserExperience - updateUserExperience"))
+	err := publicapi.For(ctx).User.UpdateUserExperience(ctx, input.ExperienceType, input.Experienced)
+	if err != nil {
+		return nil, err
+	}
+	return model.UpdateUserExperiencePayload{
+		Viewer: resolveViewer(ctx),
+	}, nil
 }
 
 // MoveCollectionToGallery is the resolver for the moveCollectionToGallery field.
 func (r *mutationResolver) MoveCollectionToGallery(ctx context.Context, input *model.MoveCollectionToGalleryInput) (model.MoveCollectionToGalleryPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: MoveCollectionToGallery - moveCollectionToGallery"))
+	oldGalID, err := publicapi.For(ctx).Collection.UpdateCollectionGallery(ctx, input.SourceCollectionID, input.TargetGalleryID)
+	if err != nil {
+		return nil, err
+	}
+	old, err := resolveGalleryByGalleryID(ctx, oldGalID)
+	if err != nil {
+		return nil, err
+	}
+	new, err := resolveGalleryByGalleryID(ctx, input.TargetGalleryID)
+	if err != nil {
+		return nil, err
+	}
+	return model.MoveCollectionToGalleryPayload{
+		OldGallery: old,
+		NewGallery: new,
+	}, nil
 }
 
 // Owner is the resolver for the owner field.
 func (r *ownerAtBlockResolver) Owner(ctx context.Context, obj *model.OwnerAtBlock) (model.GalleryUserOrAddress, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Blurhash is the resolver for the blurhash field.
 func (r *previewURLSetResolver) Blurhash(ctx context.Context, obj *model.PreviewURLSet) (*string, error) {
-	panic(fmt.Errorf("not implemented: Blurhash - blurhash"))
+	mm := mediamapper.For(ctx)
+
+	return mm.GetBlurhash(*obj.Raw), nil
 }
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id model.GqlID) (model.Node, error) {
-	panic(fmt.Errorf("not implemented: Node - node"))
+	return nodeFetcher.GetNodeByGqlID(ctx, id)
 }
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (model.ViewerOrError, error) {
-	panic(fmt.Errorf("not implemented: Viewer - viewer"))
+	return resolveViewer(ctx), nil
 }
 
 // UserByUsername is the resolver for the userByUsername field.
 func (r *queryResolver) UserByUsername(ctx context.Context, username string) (model.UserByUsernameOrError, error) {
-	panic(fmt.Errorf("not implemented: UserByUsername - userByUsername"))
+	return resolveGalleryUserByUsername(ctx, username)
 }
 
 // UserByID is the resolver for the userById field.
 func (r *queryResolver) UserByID(ctx context.Context, id persist.DBID) (model.UserByIDOrError, error) {
-	panic(fmt.Errorf("not implemented: UserByID - userById"))
+	return resolveGalleryUserByUserID(ctx, id)
 }
 
 // UserByAddress is the resolver for the userByAddress field.
 func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error) {
-	panic(fmt.Errorf("not implemented: UserByAddress - userByAddress"))
+	return resolveGalleryUserByAddress(ctx, chainAddress)
 }
 
 // UsersWithTrait is the resolver for the usersWithTrait field.
 func (r *queryResolver) UsersWithTrait(ctx context.Context, trait string) ([]*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: UsersWithTrait - usersWithTrait"))
+	return resolveGalleryUsersWithTrait(ctx, trait)
 }
 
 // MembershipTiers is the resolver for the membershipTiers field.
 func (r *queryResolver) MembershipTiers(ctx context.Context, forceRefresh *bool) ([]*model.MembershipTier, error) {
-	panic(fmt.Errorf("not implemented: MembershipTiers - membershipTiers"))
+	api := publicapi.For(ctx)
+
+	refresh := false
+	if forceRefresh != nil {
+		refresh = *forceRefresh
+	}
+
+	tiers, err := api.User.GetMembershipTiers(ctx, refresh)
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([]*model.MembershipTier, len(tiers))
+	for i, tier := range tiers {
+		output[i] = persistMembershipTierToModel(ctx, tier)
+	}
+
+	return output, nil
 }
 
 // CollectionByID is the resolver for the collectionById field.
 func (r *queryResolver) CollectionByID(ctx context.Context, id persist.DBID) (model.CollectionByIDOrError, error) {
-	panic(fmt.Errorf("not implemented: CollectionByID - collectionById"))
+	return resolveCollectionByCollectionID(ctx, id)
 }
 
 // CollectionsByIds is the resolver for the collectionsByIds field.
 func (r *queryResolver) CollectionsByIds(ctx context.Context, ids []persist.DBID) ([]model.CollectionByIDOrError, error) {
-	panic(fmt.Errorf("not implemented: CollectionsByIds - collectionsByIds"))
+	collections, errs := resolveCollectionsByCollectionIDs(ctx, ids)
+
+	models := make([]model.CollectionByIDOrError, len(ids))
+
+	// TODO: Figure out how to handle errors for slice returns automatically, the same way we handle typical resolvers.
+	//       Without that kind of handling, errors must be checked manually (as is happening below).
+	for i, err := range errs {
+		if err == nil {
+			models[i] = collections[i]
+		} else if notFoundErr, ok := err.(persist.ErrCollectionNotFoundByID); ok {
+			models[i] = model.ErrCollectionNotFound{Message: notFoundErr.Error()}
+		} else if validationErr, ok := err.(validate.ErrInvalidInput); ok {
+			models[i] = model.ErrInvalidInput{Message: validationErr.Error(), Parameters: validationErr.Parameters, Reasons: validationErr.Reasons}
+		} else {
+			// Unhandled error -- add it to the unhandled error stack, but don't fail the whole operation
+			// because one collection hit an unexpected error. Consider making "unhandled error" an expected type,
+			// such that it can be returned as part of a model "OrError" union instead of returning null.
+			graphql.AddError(ctx, err)
+		}
+	}
+
+	return models, nil
 }
 
 // TokenByID is the resolver for the tokenById field.
 func (r *queryResolver) TokenByID(ctx context.Context, id persist.DBID) (model.TokenByIDOrError, error) {
-	panic(fmt.Errorf("not implemented: TokenByID - tokenById"))
+	return resolveTokenByTokenID(ctx, id)
 }
 
 // CollectionTokenByID is the resolver for the collectionTokenById field.
 func (r *queryResolver) CollectionTokenByID(ctx context.Context, tokenID persist.DBID, collectionID persist.DBID) (model.CollectionTokenByIDOrError, error) {
-	panic(fmt.Errorf("not implemented: CollectionTokenByID - collectionTokenById"))
+	return resolveCollectionTokenByID(ctx, tokenID, collectionID)
 }
 
 // CommunityByAddress is the resolver for the communityByAddress field.
 func (r *queryResolver) CommunityByAddress(ctx context.Context, communityAddress persist.ChainAddress, forceRefresh *bool) (model.CommunityByAddressOrError, error) {
-	panic(fmt.Errorf("not implemented: CommunityByAddress - communityByAddress"))
+	return resolveCommunityByContractAddress(ctx, communityAddress, forceRefresh)
 }
 
 // GeneralAllowlist is the resolver for the generalAllowlist field.
 func (r *queryResolver) GeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error) {
-	panic(fmt.Errorf("not implemented: GeneralAllowlist - generalAllowlist"))
+	return resolveGeneralAllowlist(ctx)
 }
 
 // GalleryOfTheWeekWinners is the resolver for the galleryOfTheWeekWinners field.
 func (r *queryResolver) GalleryOfTheWeekWinners(ctx context.Context) ([]*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: GalleryOfTheWeekWinners - galleryOfTheWeekWinners"))
+	winners, err := publicapi.For(ctx).Misc.GetGalleryOfTheWeekWinners(ctx)
+
+	var output = make([]*model.GalleryUser, len(winners))
+	for i, user := range winners {
+		output[i] = userToModel(ctx, user)
+	}
+
+	return output, err
 }
 
 // GetMerchTokens is the resolver for the getMerchTokens field.
 func (r *queryResolver) GetMerchTokens(ctx context.Context, wallet persist.Address) (model.MerchTokensPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: GetMerchTokens - getMerchTokens"))
+	tokens, err := publicapi.For(ctx).Merch.GetMerchTokens(ctx, wallet)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.MerchTokensPayload{
+		Tokens: tokens,
+	}
+	return output, nil
 }
 
 // GalleryByID is the resolver for the galleryById field.
 func (r *queryResolver) GalleryByID(ctx context.Context, id persist.DBID) (model.GalleryByIDPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: GalleryByID - galleryById"))
+	gallery, err := resolveGalleryByGalleryID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return gallery, nil
 }
 
 // ViewerGalleryByID is the resolver for the viewerGalleryById field.
 func (r *queryResolver) ViewerGalleryByID(ctx context.Context, id persist.DBID) (model.ViewerGalleryByIDPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: ViewerGalleryByID - viewerGalleryById"))
+	gallery, err := resolveViewerGalleryByGalleryID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return gallery, nil
 }
 
 // TrendingUsers is the resolver for the trendingUsers field.
@@ -505,167 +1324,297 @@ func (r *queryResolver) TrendingUsers(ctx context.Context, input model.TrendingU
 
 // SearchUsers is the resolver for the searchUsers field.
 func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: SearchUsers - searchUsers"))
+	limitParam := util.GetOptionalValue(limit, 100)
+	usernameWeightParam := util.GetOptionalValue(usernameWeight, 0.4)
+	bioWeightParam := util.GetOptionalValue(bioWeight, 0.2)
+
+	users, err := publicapi.For(ctx).Search.SearchUsers(ctx, query, limitParam, float32(usernameWeightParam), float32(bioWeightParam))
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*model.UserSearchResult, len(users))
+	for i, user := range users {
+		results[i] = &model.UserSearchResult{
+			User: userToModel(ctx, user),
+		}
+	}
+
+	return model.SearchUsersPayload{Results: results}, nil
 }
 
 // SearchGalleries is the resolver for the searchGalleries field.
 func (r *queryResolver) SearchGalleries(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchGalleriesPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: SearchGalleries - searchGalleries"))
+	limitParam := util.GetOptionalValue(limit, 100)
+	nameWeightParam := util.GetOptionalValue(nameWeight, 0.4)
+	descriptionWeightParam := util.GetOptionalValue(descriptionWeight, 0.2)
+
+	galleries, err := publicapi.For(ctx).Search.SearchGalleries(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam))
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*model.GallerySearchResult, len(galleries))
+	for i, gallery := range galleries {
+		results[i] = &model.GallerySearchResult{
+			Gallery: galleryToModel(ctx, gallery),
+		}
+	}
+
+	return model.SearchGalleriesPayload{Results: results}, nil
 }
 
 // SearchCommunities is the resolver for the searchCommunities field.
 func (r *queryResolver) SearchCommunities(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) (model.SearchCommunitiesPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: SearchCommunities - searchCommunities"))
+	limitParam := util.GetOptionalValue(limit, 100)
+	nameWeightParam := util.GetOptionalValue(nameWeight, 0.4)
+	descriptionWeightParam := util.GetOptionalValue(descriptionWeight, 0.2)
+
+	contracts, err := publicapi.For(ctx).Search.SearchContracts(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam))
+	if err != nil {
+		return nil, err
+	}
+
+	forceRefresh := false
+
+	results := make([]*model.CommunitySearchResult, len(contracts))
+	for i, contract := range contracts {
+		results[i] = &model.CommunitySearchResult{
+			Community: communityToModel(ctx, contract, &forceRefresh),
+		}
+	}
+
+	return model.SearchCommunitiesPayload{Results: results}, nil
 }
 
 // UsersByRole is the resolver for the usersByRole field.
 func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
-	panic(fmt.Errorf("not implemented: UsersByRole - usersByRole"))
+	users, pageInfo, err := publicapi.For(ctx).User.PaginateUsersWithRole(ctx, role, before, after, first, last)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.UsersConnection{
+		Edges:    usersToEdges(ctx, users),
+		PageInfo: pageInfoToModel(ctx, pageInfo),
+	}, nil
 }
 
 // SocialConnections is the resolver for the socialConnections field.
 func (r *queryResolver) SocialConnections(ctx context.Context, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) (*model.SocialConnectionsConnection, error) {
-	panic(fmt.Errorf("not implemented: SocialConnections - socialConnections"))
+	connections, pageInfo, err := publicapi.For(ctx).Social.GetConnectionsPaginate(ctx, socialAccountType, before, after, first, last, excludeAlreadyFollowing)
+	if err != nil {
+		return nil, err
+	}
+	edges, _ := util.Map(connections, func(c model.SocialConnection) (*model.SocialConnectionsEdge, error) {
+		return &model.SocialConnectionsEdge{
+			Node:   c,
+			Cursor: nil, // not used by relay, but relay will complain without this field existing
+		}, nil
+	})
+	return &model.SocialConnectionsConnection{
+		Edges:    edges,
+		PageInfo: pageInfoToModel(ctx, pageInfo),
+	}, nil
 }
 
 // SocialQueries is the resolver for the socialQueries field.
 func (r *queryResolver) SocialQueries(ctx context.Context) (model.SocialQueriesOrError, error) {
-	panic(fmt.Errorf("not implemented: SocialQueries - socialQueries"))
+	return &model.SocialQueries{}, nil
 }
 
 // Tokens is the resolver for the tokens field.
 func (r *setSpamPreferencePayloadResolver) Tokens(ctx context.Context, obj *model.SetSpamPreferencePayload) ([]*model.Token, error) {
-	panic(fmt.Errorf("not implemented: Tokens - tokens"))
+	tokenIDs := make([]persist.DBID, len(obj.Tokens))
+	for i, token := range obj.Tokens {
+		tokenIDs[i] = token.Dbid
+	}
+
+	tokens, err := publicapi.For(ctx).Token.GetTokensByIDs(ctx, tokenIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return tokensToModel(ctx, tokens), nil
 }
 
 // GalleryUser is the resolver for the galleryUser field.
 func (r *socialConnectionResolver) GalleryUser(ctx context.Context, obj *model.SocialConnection) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: GalleryUser - galleryUser"))
+	return resolveGalleryUserByUserID(ctx, obj.UserID)
 }
 
 // SocialConnections is the resolver for the socialConnections field.
 func (r *socialQueriesResolver) SocialConnections(ctx context.Context, obj *model.SocialQueries, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) (*model.SocialConnectionsConnection, error) {
-	panic(fmt.Errorf("not implemented: SocialConnections - socialConnections"))
+	connections, pageInfo, err := publicapi.For(ctx).Social.GetConnectionsPaginate(ctx, socialAccountType, before, after, first, last, excludeAlreadyFollowing)
+	if err != nil {
+		return nil, err
+	}
+	edges, _ := util.Map(connections, func(c model.SocialConnection) (*model.SocialConnectionsEdge, error) {
+		return &model.SocialConnectionsEdge{
+			Node:   c,
+			Cursor: nil, // not used by relay, but relay will complain without this field existing
+		}, nil
+	})
+	return &model.SocialConnectionsConnection{
+		Edges:    edges,
+		PageInfo: pageInfoToModel(ctx, pageInfo),
+	}, nil
 }
 
 // Followers is the resolver for the followers field.
 func (r *someoneFollowedYouBackNotificationResolver) Followers(ctx context.Context, obj *model.SomeoneFollowedYouBackNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	panic(fmt.Errorf("not implemented: Followers - followers"))
+	return resolveGroupNotificationUsersConnectionByUserIDs(ctx, obj.NotificationData.FollowerIDs, before, after, first, last)
 }
 
 // Followers is the resolver for the followers field.
 func (r *someoneFollowedYouNotificationResolver) Followers(ctx context.Context, obj *model.SomeoneFollowedYouNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	panic(fmt.Errorf("not implemented: Followers - followers"))
+	return resolveGroupNotificationUsersConnectionByUserIDs(ctx, obj.NotificationData.FollowerIDs, before, after, first, last)
 }
 
 // UserViewers is the resolver for the userViewers field.
 func (r *someoneViewedYourGalleryNotificationResolver) UserViewers(ctx context.Context, obj *model.SomeoneViewedYourGalleryNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	panic(fmt.Errorf("not implemented: UserViewers - userViewers"))
+	return resolveGroupNotificationUsersConnectionByUserIDs(ctx, obj.NotificationData.AuthedViewerIDs, before, after, first, last)
 }
 
 // Gallery is the resolver for the gallery field.
 func (r *someoneViewedYourGalleryNotificationResolver) Gallery(ctx context.Context, obj *model.SomeoneViewedYourGalleryNotification) (*model.Gallery, error) {
-	panic(fmt.Errorf("not implemented: Gallery - gallery"))
+	return resolveGalleryByGalleryID(ctx, obj.GalleryID)
 }
 
 // NewNotification is the resolver for the newNotification field.
 func (r *subscriptionResolver) NewNotification(ctx context.Context) (<-chan model.Notification, error) {
-	panic(fmt.Errorf("not implemented: NewNotification - newNotification"))
+	return resolveNewNotificationSubscription(ctx), nil
 }
 
 // NotificationUpdated is the resolver for the notificationUpdated field.
 func (r *subscriptionResolver) NotificationUpdated(ctx context.Context) (<-chan model.Notification, error) {
-	panic(fmt.Errorf("not implemented: NotificationUpdated - notificationUpdated"))
+	return resolveUpdatedNotificationSubscription(ctx), nil
 }
 
 // Owner is the resolver for the owner field.
 func (r *tokenResolver) Owner(ctx context.Context, obj *model.Token) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
+	return resolveTokenOwnerByTokenID(ctx, obj.Dbid)
 }
 
 // OwnedByWallets is the resolver for the ownedByWallets field.
 func (r *tokenResolver) OwnedByWallets(ctx context.Context, obj *model.Token) ([]*model.Wallet, error) {
-	panic(fmt.Errorf("not implemented: OwnedByWallets - ownedByWallets"))
+	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, obj.Dbid)
+	if err != nil {
+		return nil, err
+	}
+
+	wallets := make([]*model.Wallet, len(token.OwnedByWallets))
+	for i, walletID := range token.OwnedByWallets {
+		wallets[i], err = resolveWalletByWalletID(ctx, walletID)
+		if err != nil {
+			sentryutil.ReportError(ctx, err)
+		}
+	}
+
+	return wallets, nil
 }
 
 // Contract is the resolver for the contract field.
 func (r *tokenResolver) Contract(ctx context.Context, obj *model.Token) (*model.Contract, error) {
-	panic(fmt.Errorf("not implemented: Contract - contract"))
+	return resolveContractByTokenID(ctx, obj.Dbid)
 }
 
 // Wallets is the resolver for the wallets field.
 func (r *tokenHolderResolver) Wallets(ctx context.Context, obj *model.TokenHolder) ([]*model.Wallet, error) {
-	panic(fmt.Errorf("not implemented: Wallets - wallets"))
+	wallets := make([]*model.Wallet, 0, len(obj.WalletIds))
+	for _, id := range obj.WalletIds {
+		wallet, err := resolveWalletByWalletID(ctx, id)
+		if err == nil {
+			wallets = append(wallets, wallet)
+		}
+	}
+
+	return wallets, nil
 }
 
 // User is the resolver for the user field.
 func (r *tokenHolderResolver) User(ctx context.Context, obj *model.TokenHolder) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	return resolveGalleryUserByUserID(ctx, obj.UserId)
 }
 
 // User is the resolver for the user field.
 func (r *unfollowUserPayloadResolver) User(ctx context.Context, obj *model.UnfollowUserPayload) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	return resolveGalleryUserByUserID(ctx, obj.User.Dbid)
 }
 
 // User is the resolver for the user field.
 func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.GalleryUser, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	return resolveGalleryUserByUserID(ctx, userID)
 }
 
 // SocialAccounts is the resolver for the socialAccounts field.
 func (r *viewerResolver) SocialAccounts(ctx context.Context, obj *model.Viewer) (*model.SocialAccounts, error) {
-	panic(fmt.Errorf("not implemented: SocialAccounts - socialAccounts"))
+	return resolveViewerSocialsByUserID(ctx, obj.UserId)
 }
 
 // ViewerGalleries is the resolver for the viewerGalleries field.
 func (r *viewerResolver) ViewerGalleries(ctx context.Context, obj *model.Viewer) ([]*model.ViewerGallery, error) {
-	panic(fmt.Errorf("not implemented: ViewerGalleries - viewerGalleries"))
+	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	galleries, err := resolveGalleriesByUserID(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([]*model.ViewerGallery, len(galleries))
+	for i, gallery := range galleries {
+		output[i] = &model.ViewerGallery{
+			Gallery: gallery,
+		}
+	}
+
+	return output, nil
 }
 
 // Email is the resolver for the email field.
 func (r *viewerResolver) Email(ctx context.Context, obj *model.Viewer) (*model.UserEmail, error) {
-	panic(fmt.Errorf("not implemented: Email - email"))
+	return resolveViewerEmail(ctx), nil
 }
 
 // Notifications is the resolver for the notifications field.
 func (r *viewerResolver) Notifications(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error) {
-	panic(fmt.Errorf("not implemented: Notifications - notifications"))
+	return resolveViewerNotifications(ctx, before, after, first, last)
 }
 
 // NotificationSettings is the resolver for the notificationSettings field.
 func (r *viewerResolver) NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error) {
-	panic(fmt.Errorf("not implemented: NotificationSettings - notificationSettings"))
+	return resolveViewerNotificationSettings(ctx)
 }
 
 // UserExperiences is the resolver for the userExperiences field.
 func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer) ([]*model.UserExperience, error) {
-	panic(fmt.Errorf("not implemented: UserExperiences - userExperiences"))
+	return resolveViewerExperiencesByUserID(ctx, obj.UserId)
 }
 
 // Tokens is the resolver for the tokens field.
 func (r *walletResolver) Tokens(ctx context.Context, obj *model.Wallet) ([]*model.Token, error) {
-	panic(fmt.Errorf("not implemented: Tokens - tokens"))
+	return resolveTokensByWalletID(ctx, obj.Dbid)
 }
 
 // Address is the resolver for the address field.
 func (r *chainAddressInputResolver) Address(ctx context.Context, obj *persist.ChainAddress, data persist.Address) error {
-	panic(fmt.Errorf("not implemented: Address - address"))
+	return obj.GQLSetAddressFromResolver(data)
 }
 
 // Chain is the resolver for the chain field.
 func (r *chainAddressInputResolver) Chain(ctx context.Context, obj *persist.ChainAddress, data persist.Chain) error {
-	panic(fmt.Errorf("not implemented: Chain - chain"))
+	return obj.GQLSetChainFromResolver(data)
 }
 
 // PubKey is the resolver for the pubKey field.
 func (r *chainPubKeyInputResolver) PubKey(ctx context.Context, obj *persist.ChainPubKey, data persist.PubKey) error {
-	panic(fmt.Errorf("not implemented: PubKey - pubKey"))
+	return obj.GQLSetPubKeyFromResolver(data)
 }
 
 // Chain is the resolver for the chain field.
 func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.ChainPubKey, data persist.Chain) error {
-	panic(fmt.Errorf("not implemented: Chain - chain"))
+	return obj.GQLSetChainFromResolver(data)
 }
 
 // Collection returns generated.CollectionResolver implementation.
@@ -788,69 +1737,3 @@ type viewerResolver struct{ *Resolver }
 type walletResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *collectionResolver) ID(ctx context.Context, obj *model.Collection) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *collectionTokenResolver) ID(ctx context.Context, obj *model.CollectionToken) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *communityResolver) ID(ctx context.Context, obj *model.Community) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *contractResolver) ID(ctx context.Context, obj *model.Contract) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *deletedNodeResolver) ID(ctx context.Context, obj *model.DeletedNode) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *galleryResolver) ID(ctx context.Context, obj *model.Gallery) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *galleryUserResolver) ID(ctx context.Context, obj *model.GalleryUser) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *membershipTierResolver) ID(ctx context.Context, obj *model.MembershipTier) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *merchTokenResolver) ID(ctx context.Context, obj *model.MerchToken) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *socialConnectionResolver) ID(ctx context.Context, obj *model.SocialConnection) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *someoneFollowedYouBackNotificationResolver) ID(ctx context.Context, obj *model.SomeoneFollowedYouBackNotification) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *someoneFollowedYouNotificationResolver) ID(ctx context.Context, obj *model.SomeoneFollowedYouNotification) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *someoneViewedYourGalleryNotificationResolver) ID(ctx context.Context, obj *model.SomeoneViewedYourGalleryNotification) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *tokenResolver) ID(ctx context.Context, obj *model.Token) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *viewerResolver) ID(ctx context.Context, obj *model.Viewer) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *walletResolver) ID(ctx context.Context, obj *model.Wallet) (model.GqlID, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-func (r *Resolver) Contract() generated.ContractResolver       { return &contractResolver{r} }
-func (r *Resolver) DeletedNode() generated.DeletedNodeResolver { return &deletedNodeResolver{r} }
-func (r *Resolver) MembershipTier() generated.MembershipTierResolver {
-	return &membershipTierResolver{r}
-}
-func (r *Resolver) MerchToken() generated.MerchTokenResolver { return &merchTokenResolver{r} }
-
-type contractResolver struct{ *Resolver }
-type deletedNodeResolver struct{ *Resolver }
-type membershipTierResolver struct{ *Resolver }
-type merchTokenResolver struct{ *Resolver }
