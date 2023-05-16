@@ -62,10 +62,6 @@ func (r *MembershipTier) ID() GqlID {
 	return GqlID(fmt.Sprintf("MembershipTier:%s", r.Dbid))
 }
 
-func (r *MerchToken) ID() GqlID {
-	return GqlID(fmt.Sprintf("MerchToken:%s", r.TokenID))
-}
-
 func (r *SocialConnection) ID() GqlID {
 	return GqlID(fmt.Sprintf("SocialConnection:%s:%s", r.SocialID, r.SocialType))
 }
@@ -112,7 +108,6 @@ type NodeFetcher struct {
 	OnGallery                              func(ctx context.Context, dbid persist.DBID) (*Gallery, error)
 	OnGalleryUser                          func(ctx context.Context, dbid persist.DBID) (*GalleryUser, error)
 	OnMembershipTier                       func(ctx context.Context, dbid persist.DBID) (*MembershipTier, error)
-	OnMerchToken                           func(ctx context.Context, tokenId string) (*MerchToken, error)
 	OnSocialConnection                     func(ctx context.Context, socialId string, socialType persist.SocialProvider) (*SocialConnection, error)
 	OnSomeoneFollowedYouBackNotification   func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouBackNotification, error)
 	OnSomeoneFollowedYouNotification       func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouNotification, error)
@@ -172,11 +167,6 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MembershipTier' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnMembershipTier(ctx, persist.DBID(ids[0]))
-	case "MerchToken":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MerchToken' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnMerchToken(ctx, string(ids[0]))
 	case "SocialConnection":
 		if len(ids) != 2 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SocialConnection' type requires 2 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -235,8 +225,6 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnGalleryUser")
 	case n.OnMembershipTier == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMembershipTier")
-	case n.OnMerchToken == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMerchToken")
 	case n.OnSocialConnection == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSocialConnection")
 	case n.OnSomeoneFollowedYouBackNotification == nil:

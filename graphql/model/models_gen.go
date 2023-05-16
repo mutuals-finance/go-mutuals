@@ -117,10 +117,6 @@ type MediaSubtype interface {
 	IsMediaSubtype()
 }
 
-type MerchTokensPayloadOrError interface {
-	IsMerchTokensPayloadOrError()
-}
-
 type MintPremiumCardToWalletPayloadOrError interface {
 	IsMintPremiumCardToWalletPayloadOrError()
 }
@@ -144,10 +140,6 @@ type PreverifyEmailPayloadOrError interface {
 
 type PublishGalleryPayloadOrError interface {
 	IsPublishGalleryPayloadOrError()
-}
-
-type RedeemMerchPayloadOrError interface {
-	IsRedeemMerchPayloadOrError()
 }
 
 type RefreshCollectionPayloadOrError interface {
@@ -212,10 +204,6 @@ type SyncTokensPayloadOrError interface {
 
 type TokenByIDOrError interface {
 	IsTokenByIDOrError()
-}
-
-type TrendingUsersPayloadOrError interface {
-	IsTrendingUsersPayloadOrError()
 }
 
 type UnfollowUserPayloadOrError interface {
@@ -666,7 +654,6 @@ func (ErrInvalidInput) IsUserByAddressOrError()                          {}
 func (ErrInvalidInput) IsCollectionByIDOrError()                         {}
 func (ErrInvalidInput) IsCommunityByAddressOrError()                     {}
 func (ErrInvalidInput) IsSocialConnectionsOrError()                      {}
-func (ErrInvalidInput) IsMerchTokensPayloadOrError()                     {}
 func (ErrInvalidInput) IsSearchUsersPayloadOrError()                     {}
 func (ErrInvalidInput) IsSearchGalleriesPayloadOrError()                 {}
 func (ErrInvalidInput) IsSearchCommunitiesPayloadOrError()               {}
@@ -693,7 +680,6 @@ func (ErrInvalidInput) IsUpdateEmailPayloadOrError()                     {}
 func (ErrInvalidInput) IsResendVerificationEmailPayloadOrError()         {}
 func (ErrInvalidInput) IsUpdateEmailNotificationSettingsPayloadOrError() {}
 func (ErrInvalidInput) IsUnsubscribeFromEmailTypePayloadOrError()        {}
-func (ErrInvalidInput) IsRedeemMerchPayloadOrError()                     {}
 func (ErrInvalidInput) IsCreateGalleryPayloadOrError()                   {}
 func (ErrInvalidInput) IsUpdateGalleryInfoPayloadOrError()               {}
 func (ErrInvalidInput) IsUpdateGalleryHiddenPayloadOrError()             {}
@@ -1014,26 +1000,6 @@ type MembershipTier struct {
 
 func (MembershipTier) IsNode() {}
 
-type MerchDiscountCode struct {
-	Code    string  `json:"code"`
-	TokenID *string `json:"tokenId"`
-}
-
-type MerchToken struct {
-	TokenID      string    `json:"tokenId"`
-	ObjectType   MerchType `json:"objectType"`
-	DiscountCode *string   `json:"discountCode"`
-	Redeemed     bool      `json:"redeemed"`
-}
-
-func (MerchToken) IsNode() {}
-
-type MerchTokensPayload struct {
-	Tokens []*MerchToken `json:"tokens"`
-}
-
-func (MerchTokensPayload) IsMerchTokensPayloadOrError() {}
-
 type MintPremiumCardToWalletInput struct {
 	TokenID         string            `json:"tokenId"`
 	WalletAddresses []persist.Address `json:"walletAddresses"`
@@ -1137,19 +1103,6 @@ type PublishGalleryPayload struct {
 }
 
 func (PublishGalleryPayload) IsPublishGalleryPayloadOrError() {}
-
-type RedeemMerchInput struct {
-	TokenIds   []string              `json:"tokenIds"`
-	Address    *persist.ChainAddress `json:"address"`
-	WalletType persist.WalletType    `json:"walletType"`
-	Signature  string                `json:"signature"`
-}
-
-type RedeemMerchPayload struct {
-	Tokens []*MerchToken `json:"tokens"`
-}
-
-func (RedeemMerchPayload) IsRedeemMerchPayloadOrError() {}
 
 type RefreshCollectionPayload struct {
 	Collection *Collection `json:"collection"`
@@ -1383,16 +1336,6 @@ type TokensConnection struct {
 	Edges    []*TokenEdge `json:"edges"`
 	PageInfo *PageInfo    `json:"pageInfo"`
 }
-
-type TrendingUsersInput struct {
-	Report Window `json:"report"`
-}
-
-type TrendingUsersPayload struct {
-	Users []*GalleryUser `json:"users"`
-}
-
-func (TrendingUsersPayload) IsTrendingUsersPayloadOrError() {}
 
 type TwitterAuth struct {
 	Code string `json:"code"`
@@ -1768,49 +1711,6 @@ func (e EmailUnsubscriptionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type MerchType string
-
-const (
-	MerchTypeTShirt MerchType = "TShirt"
-	MerchTypeHat    MerchType = "Hat"
-	MerchTypeCard   MerchType = "Card"
-)
-
-var AllMerchType = []MerchType{
-	MerchTypeTShirt,
-	MerchTypeHat,
-	MerchTypeCard,
-}
-
-func (e MerchType) IsValid() bool {
-	switch e {
-	case MerchTypeTShirt, MerchTypeHat, MerchTypeCard:
-		return true
-	}
-	return false
-}
-
-func (e MerchType) String() string {
-	return string(e)
-}
-
-func (e *MerchType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = MerchType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid MerchType", str)
-	}
-	return nil
-}
-
-func (e MerchType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
 type PreverifyEmailResult string
 
 const (
@@ -1902,7 +1802,6 @@ type UserExperienceType string
 const (
 	UserExperienceTypeMultiGalleryAnnouncement          UserExperienceType = "MultiGalleryAnnouncement"
 	UserExperienceTypeEmailUpsell                       UserExperienceType = "EmailUpsell"
-	UserExperienceTypeMerchStoreUpsell                  UserExperienceType = "MerchStoreUpsell"
 	UserExperienceTypeMaintenanceFeb2023                UserExperienceType = "MaintenanceFeb2023"
 	UserExperienceTypeTwitterConnectionOnboardingUpsell UserExperienceType = "TwitterConnectionOnboardingUpsell"
 	UserExperienceTypeUpsellMintMemento4                UserExperienceType = "UpsellMintMemento4"
@@ -1911,7 +1810,6 @@ const (
 var AllUserExperienceType = []UserExperienceType{
 	UserExperienceTypeMultiGalleryAnnouncement,
 	UserExperienceTypeEmailUpsell,
-	UserExperienceTypeMerchStoreUpsell,
 	UserExperienceTypeMaintenanceFeb2023,
 	UserExperienceTypeTwitterConnectionOnboardingUpsell,
 	UserExperienceTypeUpsellMintMemento4,
@@ -1919,7 +1817,7 @@ var AllUserExperienceType = []UserExperienceType{
 
 func (e UserExperienceType) IsValid() bool {
 	switch e {
-	case UserExperienceTypeMultiGalleryAnnouncement, UserExperienceTypeEmailUpsell, UserExperienceTypeMerchStoreUpsell, UserExperienceTypeMaintenanceFeb2023, UserExperienceTypeTwitterConnectionOnboardingUpsell, UserExperienceTypeUpsellMintMemento4:
+	case UserExperienceTypeMultiGalleryAnnouncement, UserExperienceTypeEmailUpsell, UserExperienceTypeMaintenanceFeb2023, UserExperienceTypeTwitterConnectionOnboardingUpsell, UserExperienceTypeUpsellMintMemento4:
 		return true
 	}
 	return false

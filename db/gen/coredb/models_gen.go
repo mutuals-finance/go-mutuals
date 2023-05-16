@@ -187,7 +187,7 @@ type Merch struct {
 	Version      sql.NullInt32
 	CreatedAt    time.Time
 	LastUpdated  time.Time
-	TokenID      persist.TokenID
+	TokenID      persist.DBID
 	ObjectType   int32
 	DiscountCode sql.NullString
 	Redeemed     bool

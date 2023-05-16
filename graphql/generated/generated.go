@@ -448,23 +448,6 @@ type ComplexityRoot struct {
 		TokenID  func(childComplexity int) int
 	}
 
-	MerchDiscountCode struct {
-		Code    func(childComplexity int) int
-		TokenID func(childComplexity int) int
-	}
-
-	MerchToken struct {
-		DiscountCode func(childComplexity int) int
-		ID           func(childComplexity int) int
-		ObjectType   func(childComplexity int) int
-		Redeemed     func(childComplexity int) int
-		TokenID      func(childComplexity int) int
-	}
-
-	MerchTokensPayload struct {
-		Tokens func(childComplexity int) int
-	}
-
 	MintPremiumCardToWalletPayload struct {
 		Tx func(childComplexity int) int
 	}
@@ -496,7 +479,6 @@ type ComplexityRoot struct {
 		MoveCollectionToGallery         func(childComplexity int, input *model.MoveCollectionToGalleryInput) int
 		PreverifyEmail                  func(childComplexity int, input model.PreverifyEmailInput) int
 		PublishGallery                  func(childComplexity int, input model.PublishGalleryInput) int
-		RedeemMerch                     func(childComplexity int, input model.RedeemMerchInput) int
 		RefreshCollection               func(childComplexity int, collectionID persist.DBID) int
 		RefreshContract                 func(childComplexity int, contractID persist.DBID) int
 		RefreshToken                    func(childComplexity int, tokenID persist.DBID) int
@@ -596,7 +578,6 @@ type ComplexityRoot struct {
 		GalleryByID             func(childComplexity int, id persist.DBID) int
 		GalleryOfTheWeekWinners func(childComplexity int) int
 		GeneralAllowlist        func(childComplexity int) int
-		GetMerchTokens          func(childComplexity int, wallet persist.Address) int
 		MembershipTiers         func(childComplexity int, forceRefresh *bool) int
 		Node                    func(childComplexity int, id model.GqlID) int
 		SearchCommunities       func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) int
@@ -605,7 +586,6 @@ type ComplexityRoot struct {
 		SocialConnections       func(childComplexity int, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) int
 		SocialQueries           func(childComplexity int) int
 		TokenByID               func(childComplexity int, id persist.DBID) int
-		TrendingUsers           func(childComplexity int, input model.TrendingUsersInput) int
 		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
 		UserByID                func(childComplexity int, id persist.DBID) int
 		UserByUsername          func(childComplexity int, username string) int
@@ -614,10 +594,6 @@ type ComplexityRoot struct {
 		Viewer                  func(childComplexity int) int
 		ViewerGalleryByID       func(childComplexity int, id persist.DBID) int
 		__resolve__service      func(childComplexity int) int
-	}
-
-	RedeemMerchPayload struct {
-		Tokens func(childComplexity int) int
 	}
 
 	RefreshCollectionPayload struct {
@@ -798,10 +774,6 @@ type ComplexityRoot struct {
 	TokensConnection struct {
 		Edges    func(childComplexity int) int
 		PageInfo func(childComplexity int) int
-	}
-
-	TrendingUsersPayload struct {
-		Users func(childComplexity int) int
 	}
 
 	TwitterSocialAccount struct {
@@ -1060,7 +1032,6 @@ type MutationResolver interface {
 	UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error)
 	PreverifyEmail(ctx context.Context, input model.PreverifyEmailInput) (model.PreverifyEmailPayloadOrError, error)
 	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (model.VerifyEmailPayloadOrError, error)
-	RedeemMerch(ctx context.Context, input model.RedeemMerchInput) (model.RedeemMerchPayloadOrError, error)
 	AddRolesToUser(ctx context.Context, username string, roles []*persist.Role) (model.AddRolesToUserPayloadOrError, error)
 	AddWalletToUserUnchecked(ctx context.Context, input model.AdminAddWalletInput) (model.AdminAddWalletPayloadOrError, error)
 	RevokeRolesFromUser(ctx context.Context, username string, roles []*persist.Role) (model.RevokeRolesFromUserPayloadOrError, error)
@@ -1092,10 +1063,8 @@ type QueryResolver interface {
 	CommunityByAddress(ctx context.Context, communityAddress persist.ChainAddress, forceRefresh *bool) (model.CommunityByAddressOrError, error)
 	GeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error)
 	GalleryOfTheWeekWinners(ctx context.Context) ([]*model.GalleryUser, error)
-	GetMerchTokens(ctx context.Context, wallet persist.Address) (model.MerchTokensPayloadOrError, error)
 	GalleryByID(ctx context.Context, id persist.DBID) (model.GalleryByIDPayloadOrError, error)
 	ViewerGalleryByID(ctx context.Context, id persist.DBID) (model.ViewerGalleryByIDPayloadOrError, error)
-	TrendingUsers(ctx context.Context, input model.TrendingUsersInput) (model.TrendingUsersPayloadOrError, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error)
 	SearchGalleries(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchGalleriesPayloadOrError, error)
 	SearchCommunities(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) (model.SearchCommunitiesPayloadOrError, error)
@@ -2488,62 +2457,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MembershipTier.TokenID(childComplexity), true
 
-	case "MerchDiscountCode.code":
-		if e.complexity.MerchDiscountCode.Code == nil {
-			break
-		}
-
-		return e.complexity.MerchDiscountCode.Code(childComplexity), true
-
-	case "MerchDiscountCode.tokenId":
-		if e.complexity.MerchDiscountCode.TokenID == nil {
-			break
-		}
-
-		return e.complexity.MerchDiscountCode.TokenID(childComplexity), true
-
-	case "MerchToken.discountCode":
-		if e.complexity.MerchToken.DiscountCode == nil {
-			break
-		}
-
-		return e.complexity.MerchToken.DiscountCode(childComplexity), true
-
-	case "MerchToken.id":
-		if e.complexity.MerchToken.ID == nil {
-			break
-		}
-
-		return e.complexity.MerchToken.ID(childComplexity), true
-
-	case "MerchToken.objectType":
-		if e.complexity.MerchToken.ObjectType == nil {
-			break
-		}
-
-		return e.complexity.MerchToken.ObjectType(childComplexity), true
-
-	case "MerchToken.redeemed":
-		if e.complexity.MerchToken.Redeemed == nil {
-			break
-		}
-
-		return e.complexity.MerchToken.Redeemed(childComplexity), true
-
-	case "MerchToken.tokenId":
-		if e.complexity.MerchToken.TokenID == nil {
-			break
-		}
-
-		return e.complexity.MerchToken.TokenID(childComplexity), true
-
-	case "MerchTokensPayload.tokens":
-		if e.complexity.MerchTokensPayload.Tokens == nil {
-			break
-		}
-
-		return e.complexity.MerchTokensPayload.Tokens(childComplexity), true
-
 	case "MintPremiumCardToWalletPayload.tx":
 		if e.complexity.MintPremiumCardToWalletPayload.Tx == nil {
 			break
@@ -2806,18 +2719,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.PublishGallery(childComplexity, args["input"].(model.PublishGalleryInput)), true
-
-	case "Mutation.redeemMerch":
-		if e.complexity.Mutation.RedeemMerch == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_redeemMerch_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RedeemMerch(childComplexity, args["input"].(model.RedeemMerchInput)), true
 
 	case "Mutation.refreshCollection":
 		if e.complexity.Mutation.RefreshCollection == nil {
@@ -3477,18 +3378,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GeneralAllowlist(childComplexity), true
 
-	case "Query.getMerchTokens":
-		if e.complexity.Query.GetMerchTokens == nil {
-			break
-		}
-
-		args, err := ec.field_Query_getMerchTokens_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GetMerchTokens(childComplexity, args["wallet"].(persist.Address)), true
-
 	case "Query.membershipTiers":
 		if e.complexity.Query.MembershipTiers == nil {
 			break
@@ -3580,18 +3469,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.TokenByID(childComplexity, args["id"].(persist.DBID)), true
 
-	case "Query.trendingUsers":
-		if e.complexity.Query.TrendingUsers == nil {
-			break
-		}
-
-		args, err := ec.field_Query_trendingUsers_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.TrendingUsers(childComplexity, args["input"].(model.TrendingUsersInput)), true
-
 	case "Query.userByAddress":
 		if e.complexity.Query.UserByAddress == nil {
 			break
@@ -3677,13 +3554,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.__resolve__service(childComplexity), true
-
-	case "RedeemMerchPayload.tokens":
-		if e.complexity.RedeemMerchPayload.Tokens == nil {
-			break
-		}
-
-		return e.complexity.RedeemMerchPayload.Tokens(childComplexity), true
 
 	case "RefreshCollectionPayload.collection":
 		if e.complexity.RefreshCollectionPayload.Collection == nil {
@@ -4377,13 +4247,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TokensConnection.PageInfo(childComplexity), true
 
-	case "TrendingUsersPayload.users":
-		if e.complexity.TrendingUsersPayload.Users == nil {
-			break
-		}
-
-		return e.complexity.TrendingUsersPayload.Users(childComplexity), true
-
 	case "TwitterSocialAccount.display":
 		if e.complexity.TwitterSocialAccount.Display == nil {
 			break
@@ -4896,10 +4759,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNotificationSettingsInput,
 		ec.unmarshalInputPreverifyEmailInput,
 		ec.unmarshalInputPublishGalleryInput,
-		ec.unmarshalInputRedeemMerchInput,
 		ec.unmarshalInputSetSpamPreferenceInput,
 		ec.unmarshalInputSocialAuthMechanism,
-		ec.unmarshalInputTrendingUsersInput,
 		ec.unmarshalInputTwitterAuth,
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
 		ec.unmarshalInputUpdateCollectionHiddenInput,
@@ -5317,8 +5178,6 @@ enum Chain {
   Arbitrum
   Polygon
   Optimism
-  Tezos
-  POAP
 }
 
 enum WalletType {
@@ -5597,7 +5456,6 @@ input UnsubscribeFromEmailTypeInput {
 enum UserExperienceType {
   MultiGalleryAnnouncement
   EmailUpsell
-  MerchStoreUpsell
   MaintenanceFeb2023
   TwitterConnectionOnboardingUpsell
   UpsellMintMemento4
@@ -5707,26 +5565,6 @@ enum Role {
   EARLY_ACCESS
 }
 
-enum MerchType {
-  TShirt
-  Hat
-  Card
-}
-
-type MerchToken implements Node @goGqlId(fields: ["tokenId"]) {
-  id: ID!
-  tokenId: String!
-  objectType: MerchType!
-  discountCode: String
-  redeemed: Boolean!
-}
-
-type MerchTokensPayload {
-  tokens: [MerchToken!]
-}
-
-union MerchTokensPayloadOrError = MerchTokensPayload | ErrInvalidInput
-
 type ErrGalleryNotFound implements Error {
   message: String!
 }
@@ -5739,17 +5577,6 @@ enum ReportWindow {
   LAST_7_DAYS
   ALL_TIME
 }
-
-input TrendingUsersInput {
-  report: ReportWindow!
-}
-
-type TrendingUsersPayload {
-  # User are in descending order i.e. the most trending user is first.
-  users: [GalleryUser!]
-}
-
-union TrendingUsersPayloadOrError = TrendingUsersPayload
 
 type UserSearchResult {
   user: GalleryUser
@@ -5801,10 +5628,8 @@ type Query {
   ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
   galleryOfTheWeekWinners: [GalleryUser!]
-  getMerchTokens(wallet: Address!): MerchTokensPayloadOrError
   galleryById(id: DBID!): GalleryByIdPayloadOrError
   viewerGalleryById(id: DBID!): ViewerGalleryByIdPayloadOrError
-  trendingUsers(input: TrendingUsersInput!): TrendingUsersPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
@@ -6405,24 +6230,6 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-input RedeemMerchInput {
-  tokenIds: [String!]!
-  address: ChainAddressInput!
-  walletType: WalletType!
-  signature: String!
-}
-
-type MerchDiscountCode {
-  code: String!
-  tokenId: String
-}
-
-type RedeemMerchPayload {
-  tokens: [MerchToken]
-}
-
-union RedeemMerchPayloadOrError = RedeemMerchPayload | ErrInvalidInput
-
 type SyncTokensForUsernamePayload {
   message: String!
 }
@@ -6763,8 +6570,6 @@ type Mutation {
 
   preverifyEmail(input: PreverifyEmailInput!): PreverifyEmailPayloadOrError
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
-
-  redeemMerch(input: RedeemMerchInput!): RedeemMerchPayloadOrError @authRequired
 
   # Retool Specific Mutations
   addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @retoolAuth
@@ -7379,21 +7184,6 @@ func (ec *executionContext) field_Mutation_publishGallery_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_redeemMerch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.RedeemMerchInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNRedeemMerchInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRedeemMerchInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_refreshCollection_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -7970,21 +7760,6 @@ func (ec *executionContext) field_Query_galleryById_args(ctx context.Context, ra
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getMerchTokens_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.Address
-	if tmp, ok := rawArgs["wallet"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("wallet"))
-		arg0, err = ec.unmarshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["wallet"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_membershipTiers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -8222,21 +7997,6 @@ func (ec *executionContext) field_Query_tokenById_args(ctx context.Context, rawA
 		}
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_trendingUsers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.TrendingUsersInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTrendingUsersInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTrendingUsersInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -17602,361 +17362,6 @@ func (ec *executionContext) fieldContext_MembershipTier_owners(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _MerchDiscountCode_code(ctx context.Context, field graphql.CollectedField, obj *model.MerchDiscountCode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchDiscountCode_code(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Code, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchDiscountCode_code(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchDiscountCode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MerchDiscountCode_tokenId(ctx context.Context, field graphql.CollectedField, obj *model.MerchDiscountCode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchDiscountCode_tokenId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TokenID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchDiscountCode_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchDiscountCode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MerchToken_id(ctx context.Context, field graphql.CollectedField, obj *model.MerchToken) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchToken_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchToken_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchToken",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MerchToken_tokenId(ctx context.Context, field graphql.CollectedField, obj *model.MerchToken) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchToken_tokenId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TokenID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchToken_tokenId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchToken",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MerchToken_objectType(ctx context.Context, field graphql.CollectedField, obj *model.MerchToken) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchToken_objectType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ObjectType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.MerchType)
-	fc.Result = res
-	return ec.marshalNMerchType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchType(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchToken_objectType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchToken",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MerchType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MerchToken_discountCode(ctx context.Context, field graphql.CollectedField, obj *model.MerchToken) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchToken_discountCode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DiscountCode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchToken_discountCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchToken",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MerchToken_redeemed(ctx context.Context, field graphql.CollectedField, obj *model.MerchToken) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchToken_redeemed(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Redeemed, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchToken_redeemed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchToken",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MerchTokensPayload_tokens(ctx context.Context, field graphql.CollectedField, obj *model.MerchTokensPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MerchTokensPayload_tokens(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Tokens, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.MerchToken)
-	fc.Result = res
-	return ec.marshalOMerchToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchTokenᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MerchTokensPayload_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MerchTokensPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_MerchToken_id(ctx, field)
-			case "tokenId":
-				return ec.fieldContext_MerchToken_tokenId(ctx, field)
-			case "objectType":
-				return ec.fieldContext_MerchToken_objectType(ctx, field)
-			case "discountCode":
-				return ec.fieldContext_MerchToken_discountCode(ctx, field)
-			case "redeemed":
-				return ec.fieldContext_MerchToken_redeemed(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MerchToken", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _MintPremiumCardToWalletPayload_tx(ctx context.Context, field graphql.CollectedField, obj *model.MintPremiumCardToWalletPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_MintPremiumCardToWalletPayload_tx(ctx, field)
 	if err != nil {
@@ -20960,78 +20365,6 @@ func (ec *executionContext) fieldContext_Mutation_verifyEmail(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_redeemMerch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_redeemMerch(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().RedeemMerch(rctx, fc.Args["input"].(model.RedeemMerchInput))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.RedeemMerchPayloadOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.RedeemMerchPayloadOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.RedeemMerchPayloadOrError)
-	fc.Result = res
-	return ec.marshalORedeemMerchPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRedeemMerchPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_redeemMerch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type RedeemMerchPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_redeemMerch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_addRolesToUser(ctx, field)
 	if err != nil {
@@ -23877,58 +23210,6 @@ func (ec *executionContext) fieldContext_Query_galleryOfTheWeekWinners(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getMerchTokens(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getMerchTokens(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetMerchTokens(rctx, fc.Args["wallet"].(persist.Address))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.MerchTokensPayloadOrError)
-	fc.Result = res
-	return ec.marshalOMerchTokensPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchTokensPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_getMerchTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MerchTokensPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getMerchTokens_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_galleryById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_galleryById(ctx, field)
 	if err != nil {
@@ -24027,58 +23308,6 @@ func (ec *executionContext) fieldContext_Query_viewerGalleryById(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_viewerGalleryById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_trendingUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_trendingUsers(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().TrendingUsers(rctx, fc.Args["input"].(model.TrendingUsersInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.TrendingUsersPayloadOrError)
-	fc.Result = res
-	return ec.marshalOTrendingUsersPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTrendingUsersPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_trendingUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type TrendingUsersPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_trendingUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -24630,59 +23859,6 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _RedeemMerchPayload_tokens(ctx context.Context, field graphql.CollectedField, obj *model.RedeemMerchPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_RedeemMerchPayload_tokens(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Tokens, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.MerchToken)
-	fc.Result = res
-	return ec.marshalOMerchToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchToken(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_RedeemMerchPayload_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "RedeemMerchPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_MerchToken_id(ctx, field)
-			case "tokenId":
-				return ec.fieldContext_MerchToken_tokenId(ctx, field)
-			case "objectType":
-				return ec.fieldContext_MerchToken_objectType(ctx, field)
-			case "discountCode":
-				return ec.fieldContext_MerchToken_discountCode(ctx, field)
-			case "redeemed":
-				return ec.fieldContext_MerchToken_redeemed(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MerchToken", field.Name)
 		},
 	}
 	return fc, nil
@@ -29394,89 +28570,6 @@ func (ec *executionContext) fieldContext_TokensConnection_pageInfo(ctx context.C
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrendingUsersPayload_users(ctx context.Context, field graphql.CollectedField, obj *model.TrendingUsersPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TrendingUsersPayload_users(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Users, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.GalleryUser)
-	fc.Result = res
-	return ec.marshalOGalleryUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryUserᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TrendingUsersPayload_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrendingUsersPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_GalleryUser_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_GalleryUser_dbid(ctx, field)
-			case "username":
-				return ec.fieldContext_GalleryUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_GalleryUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_GalleryUser_traits(ctx, field)
-			case "universal":
-				return ec.fieldContext_GalleryUser_universal(ctx, field)
-			case "roles":
-				return ec.fieldContext_GalleryUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_GalleryUser_socialAccounts(ctx, field)
-			case "tokens":
-				return ec.fieldContext_GalleryUser_tokens(ctx, field)
-			case "tokensByChain":
-				return ec.fieldContext_GalleryUser_tokensByChain(ctx, field)
-			case "wallets":
-				return ec.fieldContext_GalleryUser_wallets(ctx, field)
-			case "primaryWallet":
-				return ec.fieldContext_GalleryUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_GalleryUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_GalleryUser_galleries(ctx, field)
-			case "badges":
-				return ec.fieldContext_GalleryUser_badges(ctx, field)
-			case "isAuthenticatedUser":
-				return ec.fieldContext_GalleryUser_isAuthenticatedUser(ctx, field)
-			case "followers":
-				return ec.fieldContext_GalleryUser_followers(ctx, field)
-			case "following":
-				return ec.fieldContext_GalleryUser_following(ctx, field)
-			case "sharedFollowers":
-				return ec.fieldContext_GalleryUser_sharedFollowers(ctx, field)
-			case "sharedCommunities":
-				return ec.fieldContext_GalleryUser_sharedCommunities(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type GalleryUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -35986,62 +35079,6 @@ func (ec *executionContext) unmarshalInputPublishGalleryInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRedeemMerchInput(ctx context.Context, obj interface{}) (model.RedeemMerchInput, error) {
-	var it model.RedeemMerchInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"tokenIds", "address", "walletType", "signature"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "tokenIds":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenIds"))
-			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TokenIds = data
-		case "address":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Address = data
-		case "walletType":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletType"))
-			data, err := ec.unmarshalNWalletType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐWalletType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.WalletType = data
-		case "signature":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signature"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Signature = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputSetSpamPreferenceInput(ctx context.Context, obj interface{}) (model.SetSpamPreferenceInput, error) {
 	var it model.SetSpamPreferenceInput
 	asMap := map[string]interface{}{}
@@ -36112,35 +35149,6 @@ func (ec *executionContext) unmarshalInputSocialAuthMechanism(ctx context.Contex
 				return it, err
 			}
 			it.Debug = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputTrendingUsersInput(ctx context.Context, obj interface{}) (model.TrendingUsersInput, error) {
-	var it model.TrendingUsersInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"report"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "report":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("report"))
-			data, err := ec.unmarshalNReportWindow2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWindow(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Report = data
 		}
 	}
 
@@ -38020,29 +37028,6 @@ func (ec *executionContext) _MediaSubtype(ctx context.Context, sel ast.Selection
 	}
 }
 
-func (ec *executionContext) _MerchTokensPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.MerchTokensPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.MerchTokensPayload:
-		return ec._MerchTokensPayload(ctx, sel, &obj)
-	case *model.MerchTokensPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._MerchTokensPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _MintPremiumCardToWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.MintPremiumCardToWalletPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -38198,13 +37183,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._SocialConnection(ctx, sel, obj)
-	case model.MerchToken:
-		return ec._MerchToken(ctx, sel, &obj)
-	case *model.MerchToken:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._MerchToken(ctx, sel, obj)
 	case model.Notification:
 		if obj == nil {
 			return graphql.Null
@@ -38324,29 +37302,6 @@ func (ec *executionContext) _PublishGalleryPayloadOrError(ctx context.Context, s
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _RedeemMerchPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.RedeemMerchPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.RedeemMerchPayload:
-		return ec._RedeemMerchPayload(ctx, sel, &obj)
-	case *model.RedeemMerchPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._RedeemMerchPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -38757,22 +37712,6 @@ func (ec *executionContext) _TokenByIdOrError(ctx context.Context, sel ast.Selec
 			return graphql.Null
 		}
 		return ec._ErrTokenNotFound(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _TrendingUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.TrendingUsersPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.TrendingUsersPayload:
-		return ec._TrendingUsersPayload(ctx, sel, &obj)
-	case *model.TrendingUsersPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._TrendingUsersPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -40758,7 +39697,7 @@ func (ec *executionContext) _ErrGalleryNotFound(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "CollectionByIdOrError", "CommunityByAddressOrError", "SocialConnectionsOrError", "MerchTokensPayloadOrError", "SearchUsersPayloadOrError", "SearchGalleriesPayloadOrError", "SearchCommunitiesPayloadOrError", "CreateCollectionPayloadOrError", "DeleteCollectionPayloadOrError", "UpdateCollectionInfoPayloadOrError", "UpdateCollectionTokensPayloadOrError", "UpdateCollectionHiddenPayloadOrError", "UpdateGalleryCollectionsPayloadOrError", "UpdateTokenInfoPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RefreshTokenPayloadOrError", "RefreshCollectionPayloadOrError", "RefreshContractPayloadOrError", "Error", "CreateUserPayloadOrError", "FollowUserPayloadOrError", "UnfollowUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "RedeemMerchPayloadOrError", "CreateGalleryPayloadOrError", "UpdateGalleryInfoPayloadOrError", "UpdateGalleryHiddenPayloadOrError", "DeleteGalleryPayloadOrError", "UpdateGalleryOrderPayloadOrError", "UpdateFeaturedGalleryPayloadOrError", "UpdateGalleryPayloadOrError", "PublishGalleryPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "MoveCollectionToGalleryPayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "MintPremiumCardToWalletPayloadOrError", "DisconnectSocialAccountPayloadOrError", "FollowAllSocialConnectionsPayloadOrError"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "CollectionByIdOrError", "CommunityByAddressOrError", "SocialConnectionsOrError", "SearchUsersPayloadOrError", "SearchGalleriesPayloadOrError", "SearchCommunitiesPayloadOrError", "CreateCollectionPayloadOrError", "DeleteCollectionPayloadOrError", "UpdateCollectionInfoPayloadOrError", "UpdateCollectionTokensPayloadOrError", "UpdateCollectionHiddenPayloadOrError", "UpdateGalleryCollectionsPayloadOrError", "UpdateTokenInfoPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RefreshTokenPayloadOrError", "RefreshCollectionPayloadOrError", "RefreshContractPayloadOrError", "Error", "CreateUserPayloadOrError", "FollowUserPayloadOrError", "UnfollowUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "CreateGalleryPayloadOrError", "UpdateGalleryInfoPayloadOrError", "UpdateGalleryHiddenPayloadOrError", "DeleteGalleryPayloadOrError", "UpdateGalleryOrderPayloadOrError", "UpdateFeaturedGalleryPayloadOrError", "UpdateGalleryPayloadOrError", "PublishGalleryPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "MoveCollectionToGalleryPayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "MintPremiumCardToWalletPayloadOrError", "DisconnectSocialAccountPayloadOrError", "FollowAllSocialConnectionsPayloadOrError"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -42024,116 +40963,6 @@ func (ec *executionContext) _MembershipTier(ctx context.Context, sel ast.Selecti
 	return out
 }
 
-var merchDiscountCodeImplementors = []string{"MerchDiscountCode"}
-
-func (ec *executionContext) _MerchDiscountCode(ctx context.Context, sel ast.SelectionSet, obj *model.MerchDiscountCode) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, merchDiscountCodeImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MerchDiscountCode")
-		case "code":
-
-			out.Values[i] = ec._MerchDiscountCode_code(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "tokenId":
-
-			out.Values[i] = ec._MerchDiscountCode_tokenId(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var merchTokenImplementors = []string{"MerchToken", "Node"}
-
-func (ec *executionContext) _MerchToken(ctx context.Context, sel ast.SelectionSet, obj *model.MerchToken) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, merchTokenImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MerchToken")
-		case "id":
-
-			out.Values[i] = ec._MerchToken_id(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "tokenId":
-
-			out.Values[i] = ec._MerchToken_tokenId(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "objectType":
-
-			out.Values[i] = ec._MerchToken_objectType(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "discountCode":
-
-			out.Values[i] = ec._MerchToken_discountCode(ctx, field, obj)
-
-		case "redeemed":
-
-			out.Values[i] = ec._MerchToken_redeemed(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var merchTokensPayloadImplementors = []string{"MerchTokensPayload", "MerchTokensPayloadOrError"}
-
-func (ec *executionContext) _MerchTokensPayload(ctx context.Context, sel ast.SelectionSet, obj *model.MerchTokensPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, merchTokensPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MerchTokensPayload")
-		case "tokens":
-
-			out.Values[i] = ec._MerchTokensPayload_tokens(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var mintPremiumCardToWalletPayloadImplementors = []string{"MintPremiumCardToWalletPayload", "MintPremiumCardToWalletPayloadOrError"}
 
 func (ec *executionContext) _MintPremiumCardToWalletPayload(ctx context.Context, sel ast.SelectionSet, obj *model.MintPremiumCardToWalletPayload) graphql.Marshaler {
@@ -42466,12 +41295,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_verifyEmail(ctx, field)
-			})
-
-		case "redeemMerch":
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_redeemMerch(ctx, field)
 			})
 
 		case "addRolesToUser":
@@ -43198,26 +42021,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "getMerchTokens":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getMerchTokens(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
 		case "galleryById":
 			field := field
 
@@ -43248,26 +42051,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_viewerGalleryById(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "trendingUsers":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_trendingUsers(ctx, field)
 				return res
 			}
 
@@ -43432,31 +42215,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var redeemMerchPayloadImplementors = []string{"RedeemMerchPayload", "RedeemMerchPayloadOrError"}
-
-func (ec *executionContext) _RedeemMerchPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RedeemMerchPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, redeemMerchPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("RedeemMerchPayload")
-		case "tokens":
-
-			out.Values[i] = ec._RedeemMerchPayload_tokens(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -44636,31 +43394,6 @@ func (ec *executionContext) _TokensConnection(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var trendingUsersPayloadImplementors = []string{"TrendingUsersPayload", "TrendingUsersPayloadOrError"}
-
-func (ec *executionContext) _TrendingUsersPayload(ctx context.Context, sel ast.SelectionSet, obj *model.TrendingUsersPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, trendingUsersPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("TrendingUsersPayload")
-		case "users":
-
-			out.Values[i] = ec._TrendingUsersPayload_users(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46537,26 +45270,6 @@ func (ec *executionContext) marshalNInt2ᚕintᚄ(ctx context.Context, sel ast.S
 	return ret
 }
 
-func (ec *executionContext) marshalNMerchToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchToken(ctx context.Context, sel ast.SelectionSet, v *model.MerchToken) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._MerchToken(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNMerchType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchType(ctx context.Context, v interface{}) (model.MerchType, error) {
-	var res model.MerchType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMerchType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchType(ctx context.Context, sel ast.SelectionSet, v model.MerchType) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) unmarshalNMintPremiumCardToWalletInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMintPremiumCardToWalletInput(ctx context.Context, v interface{}) (model.MintPremiumCardToWalletInput, error) {
 	res, err := ec.unmarshalInputMintPremiumCardToWalletInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -46606,21 +45319,6 @@ func (ec *executionContext) marshalNPubKey2githubᚗcomᚋmikeydubᚋgoᚑgaller
 func (ec *executionContext) unmarshalNPublishGalleryInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishGalleryInput(ctx context.Context, v interface{}) (model.PublishGalleryInput, error) {
 	res, err := ec.unmarshalInputPublishGalleryInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNRedeemMerchInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRedeemMerchInput(ctx context.Context, v interface{}) (model.RedeemMerchInput, error) {
-	res, err := ec.unmarshalInputRedeemMerchInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNReportWindow2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWindow(ctx context.Context, v interface{}) (model.Window, error) {
-	var res model.Window
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNReportWindow2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWindow(ctx context.Context, sel ast.SelectionSet, v model.Window) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) unmarshalNRole2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
@@ -46704,11 +45402,6 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	}
 
 	return ret
-}
-
-func (ec *executionContext) unmarshalNTrendingUsersInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTrendingUsersInput(ctx context.Context, v interface{}) (model.TrendingUsersInput, error) {
-	res, err := ec.unmarshalInputTrendingUsersInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx context.Context, v interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
@@ -48410,108 +47103,6 @@ func (ec *executionContext) marshalOMembershipTier2ᚖgithubᚗcomᚋmikeydubᚋ
 	return ec._MembershipTier(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOMerchToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchToken(ctx context.Context, sel ast.SelectionSet, v []*model.MerchToken) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOMerchToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchToken(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOMerchToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchTokenᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MerchToken) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNMerchToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchToken(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalOMerchToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchToken(ctx context.Context, sel ast.SelectionSet, v *model.MerchToken) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._MerchToken(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOMerchTokensPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMerchTokensPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MerchTokensPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._MerchTokensPayloadOrError(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOMintPremiumCardToWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMintPremiumCardToWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MintPremiumCardToWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -48785,13 +47376,6 @@ func (ec *executionContext) marshalOPublishGalleryPayloadOrError2githubᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._PublishGalleryPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalORedeemMerchPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRedeemMerchPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RedeemMerchPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._RedeemMerchPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORefreshCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshCollectionPayloadOrError) graphql.Marshaler {
@@ -49370,13 +47954,6 @@ func (ec *executionContext) marshalOTokensConnection2ᚖgithubᚗcomᚋmikeydub�
 		return graphql.Null
 	}
 	return ec._TokensConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOTrendingUsersPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTrendingUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.TrendingUsersPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._TrendingUsersPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOTwitterAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTwitterAuth(ctx context.Context, v interface{}) (*model.TwitterAuth, error) {

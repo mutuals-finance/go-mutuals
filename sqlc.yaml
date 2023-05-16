@@ -115,10 +115,6 @@ sql:
           - column: "notifications.data"
             go_type: "github.com/mikeydub/go-gallery/service/persist.NotificationData"
 
-          # Merch
-          - column: "merch.token_id"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.TokenID"
-
           # pii.AccountCreationInfo
           - column: pii.account_creation_info.ip_address
             go_type: "string"

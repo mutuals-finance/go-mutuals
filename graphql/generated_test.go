@@ -37,8 +37,6 @@ const (
 	ChainArbitrum Chain = "Arbitrum"
 	ChainPolygon  Chain = "Polygon"
 	ChainOptimism Chain = "Optimism"
-	ChainTezos    Chain = "Tezos"
-	ChainPoap     Chain = "POAP"
 )
 
 type ChainAddressInput struct {
@@ -297,14 +295,6 @@ func (v *PublishGalleryInput) GetEditId() string { return v.EditId }
 // GetCaption returns PublishGalleryInput.Caption, and is useful for accessing the field via an interface.
 func (v *PublishGalleryInput) GetCaption() *string { return v.Caption }
 
-type ReportWindow string
-
-const (
-	ReportWindowLast5Days ReportWindow = "LAST_5_DAYS"
-	ReportWindowLast7Days ReportWindow = "LAST_7_DAYS"
-	ReportWindowAllTime   ReportWindow = "ALL_TIME"
-)
-
 type SocialAccountType string
 
 const (
@@ -321,13 +311,6 @@ func (v *SocialAuthMechanism) GetTwitter() *TwitterAuth { return v.Twitter }
 
 // GetDebug returns SocialAuthMechanism.Debug, and is useful for accessing the field via an interface.
 func (v *SocialAuthMechanism) GetDebug() *DebugSocialAuth { return v.Debug }
-
-type TrendingUsersInput struct {
-	Report ReportWindow `json:"report"`
-}
-
-// GetReport returns TrendingUsersInput.Report, and is useful for accessing the field via an interface.
-func (v *TrendingUsersInput) GetReport() ReportWindow { return v.Report }
 
 type TwitterAuth struct {
 	Code string `json:"code"`
@@ -439,7 +422,6 @@ type UserExperienceType string
 const (
 	UserExperienceTypeMultigalleryannouncement          UserExperienceType = "MultiGalleryAnnouncement"
 	UserExperienceTypeEmailupsell                       UserExperienceType = "EmailUpsell"
-	UserExperienceTypeMerchstoreupsell                  UserExperienceType = "MerchStoreUpsell"
 	UserExperienceTypeMaintenancefeb2023                UserExperienceType = "MaintenanceFeb2023"
 	UserExperienceTypeTwitterconnectiononboardingupsell UserExperienceType = "TwitterConnectionOnboardingUpsell"
 	UserExperienceTypeUpsellmintmemento4                UserExperienceType = "UpsellMintMemento4"
@@ -552,14 +534,6 @@ type __syncTokensMutationInput struct {
 
 // GetChains returns __syncTokensMutationInput.Chains, and is useful for accessing the field via an interface.
 func (v *__syncTokensMutationInput) GetChains() []Chain { return v.Chains }
-
-// __trendingUsersQueryInput is used internally by genqlient
-type __trendingUsersQueryInput struct {
-	Input TrendingUsersInput `json:"input"`
-}
-
-// GetInput returns __trendingUsersQueryInput.Input, and is useful for accessing the field via an interface.
-func (v *__trendingUsersQueryInput) GetInput() TrendingUsersInput { return v.Input }
 
 // __updateGalleryMutationInput is used internally by genqlient
 type __updateGalleryMutationInput struct {
@@ -4295,167 +4269,6 @@ func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserToken
 	return v.MediaType
 }
 
-// trendingUsersQueryResponse is returned by trendingUsersQuery on success.
-type trendingUsersQueryResponse struct {
-	TrendingUsers *trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError `json:"-"`
-}
-
-// GetTrendingUsers returns trendingUsersQueryResponse.TrendingUsers, and is useful for accessing the field via an interface.
-func (v *trendingUsersQueryResponse) GetTrendingUsers() *trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError {
-	return v.TrendingUsers
-}
-
-func (v *trendingUsersQueryResponse) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*trendingUsersQueryResponse
-		TrendingUsers json.RawMessage `json:"trendingUsers"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.trendingUsersQueryResponse = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.TrendingUsers
-		src := firstPass.TrendingUsers
-		if len(src) != 0 && string(src) != "null" {
-			*dst = new(trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError)
-			err = __unmarshaltrendingUsersQueryTrendingUsersTrendingUsersPayloadOrError(
-				src, *dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal trendingUsersQueryResponse.TrendingUsers: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshaltrendingUsersQueryResponse struct {
-	TrendingUsers json.RawMessage `json:"trendingUsers"`
-}
-
-func (v *trendingUsersQueryResponse) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *trendingUsersQueryResponse) __premarshalJSON() (*__premarshaltrendingUsersQueryResponse, error) {
-	var retval __premarshaltrendingUsersQueryResponse
-
-	{
-
-		dst := &retval.TrendingUsers
-		src := v.TrendingUsers
-		if src != nil {
-			var err error
-			*dst, err = __marshaltrendingUsersQueryTrendingUsersTrendingUsersPayloadOrError(
-				src)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"unable to marshal trendingUsersQueryResponse.TrendingUsers: %w", err)
-			}
-		}
-	}
-	return &retval, nil
-}
-
-// trendingUsersQueryTrendingUsersTrendingUsersPayload includes the requested fields of the GraphQL type TrendingUsersPayload.
-type trendingUsersQueryTrendingUsersTrendingUsersPayload struct {
-	Typename *string                                                               `json:"__typename"`
-	Users    []trendingUsersQueryTrendingUsersTrendingUsersPayloadUsersGalleryUser `json:"users"`
-}
-
-// GetTypename returns trendingUsersQueryTrendingUsersTrendingUsersPayload.Typename, and is useful for accessing the field via an interface.
-func (v *trendingUsersQueryTrendingUsersTrendingUsersPayload) GetTypename() *string {
-	return v.Typename
-}
-
-// GetUsers returns trendingUsersQueryTrendingUsersTrendingUsersPayload.Users, and is useful for accessing the field via an interface.
-func (v *trendingUsersQueryTrendingUsersTrendingUsersPayload) GetUsers() []trendingUsersQueryTrendingUsersTrendingUsersPayloadUsersGalleryUser {
-	return v.Users
-}
-
-// trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError includes the requested fields of the GraphQL interface TrendingUsersPayloadOrError.
-//
-// trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError is implemented by the following types:
-// trendingUsersQueryTrendingUsersTrendingUsersPayload
-type trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError interface {
-	implementsGraphQLInterfacetrendingUsersQueryTrendingUsersTrendingUsersPayloadOrError()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() *string
-}
-
-func (v *trendingUsersQueryTrendingUsersTrendingUsersPayload) implementsGraphQLInterfacetrendingUsersQueryTrendingUsersTrendingUsersPayloadOrError() {
-}
-
-func __unmarshaltrendingUsersQueryTrendingUsersTrendingUsersPayloadOrError(b []byte, v *trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "TrendingUsersPayload":
-		*v = new(trendingUsersQueryTrendingUsersTrendingUsersPayload)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing TrendingUsersPayloadOrError.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError: "%v"`, tn.TypeName)
-	}
-}
-
-func __marshaltrendingUsersQueryTrendingUsersTrendingUsersPayloadOrError(v *trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *trendingUsersQueryTrendingUsersTrendingUsersPayload:
-		typename = "TrendingUsersPayload"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*trendingUsersQueryTrendingUsersTrendingUsersPayload
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for trendingUsersQueryTrendingUsersTrendingUsersPayloadOrError: "%T"`, v)
-	}
-}
-
-// trendingUsersQueryTrendingUsersTrendingUsersPayloadUsersGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type trendingUsersQueryTrendingUsersTrendingUsersPayloadUsersGalleryUser struct {
-	Dbid persist.DBID `json:"dbid"`
-}
-
-// GetDbid returns trendingUsersQueryTrendingUsersTrendingUsersPayloadUsersGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *trendingUsersQueryTrendingUsersTrendingUsersPayloadUsersGalleryUser) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
 // updateGalleryMutationResponse is returned by updateGalleryMutation on success.
 type updateGalleryMutationResponse struct {
 	UpdateGallery *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError `json:"-"`
@@ -6951,46 +6764,6 @@ func syncTokensMutation(
 	var err error
 
 	var data syncTokensMutationResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
-// The query or mutation executed by trendingUsersQuery.
-const trendingUsersQuery_Operation = `
-query trendingUsersQuery ($input: TrendingUsersInput!) {
-	trendingUsers(input: $input) {
-		__typename
-		... on TrendingUsersPayload {
-			users {
-				dbid
-			}
-		}
-	}
-}
-`
-
-func trendingUsersQuery(
-	ctx context.Context,
-	client graphql.Client,
-	input TrendingUsersInput,
-) (*trendingUsersQueryResponse, error) {
-	req := &graphql.Request{
-		OpName: "trendingUsersQuery",
-		Query:  trendingUsersQuery_Operation,
-		Variables: &__trendingUsersQueryInput{
-			Input: input,
-		},
-	}
-	var err error
-
-	var data trendingUsersQueryResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

@@ -1007,26 +1007,6 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input model.VerifyEm
 	return verifyEmail(ctx, input.Token)
 }
 
-// RedeemMerch is the resolver for the redeemMerch field.
-func (r *mutationResolver) RedeemMerch(ctx context.Context, input model.RedeemMerchInput) (model.RedeemMerchPayloadOrError, error) {
-	tokenIDList := make([]persist.TokenID, len(input.TokenIds))
-	for i, id := range input.TokenIds {
-		tokenIDList[i] = persist.TokenID(id)
-	}
-	if input.Address == nil {
-		return nil, fmt.Errorf("address is required")
-	}
-	tokens, err := publicapi.For(ctx).Merch.RedeemMerchItems(ctx, tokenIDList, *input.Address, input.Signature, input.WalletType)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.RedeemMerchPayload{
-		Tokens: tokens,
-	}
-	return output, nil
-}
-
 // AddRolesToUser is the resolver for the addRolesToUser field.
 func (r *mutationResolver) AddRolesToUser(ctx context.Context, username string, roles []*persist.Role) (model.AddRolesToUserPayloadOrError, error) {
 	user, err := publicapi.For(ctx).Admin.AddRolesToUser(ctx, username, roles)
@@ -1282,19 +1262,6 @@ func (r *queryResolver) GalleryOfTheWeekWinners(ctx context.Context) ([]*model.G
 	return output, err
 }
 
-// GetMerchTokens is the resolver for the getMerchTokens field.
-func (r *queryResolver) GetMerchTokens(ctx context.Context, wallet persist.Address) (model.MerchTokensPayloadOrError, error) {
-	tokens, err := publicapi.For(ctx).Merch.GetMerchTokens(ctx, wallet)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.MerchTokensPayload{
-		Tokens: tokens,
-	}
-	return output, nil
-}
-
 // GalleryByID is the resolver for the galleryById field.
 func (r *queryResolver) GalleryByID(ctx context.Context, id persist.DBID) (model.GalleryByIDPayloadOrError, error) {
 	gallery, err := resolveGalleryByGalleryID(ctx, id)
@@ -1315,11 +1282,6 @@ func (r *queryResolver) ViewerGalleryByID(ctx context.Context, id persist.DBID) 
 	}
 
 	return gallery, nil
-}
-
-// TrendingUsers is the resolver for the trendingUsers field.
-func (r *queryResolver) TrendingUsers(ctx context.Context, input model.TrendingUsersInput) (model.TrendingUsersPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: TrendingUsers - trendingUsers"))
 }
 
 // SearchUsers is the resolver for the searchUsers field.

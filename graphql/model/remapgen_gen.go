@@ -133,11 +133,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"MerchTokensPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(MerchTokensPayloadOrError)
-		return obj, ok
-	},
-
 	"MintPremiumCardToWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(MintPremiumCardToWalletPayloadOrError)
 		return obj, ok
@@ -165,11 +160,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"PublishGalleryPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(PublishGalleryPayloadOrError)
-		return obj, ok
-	},
-
-	"RedeemMerchPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RedeemMerchPayloadOrError)
 		return obj, ok
 	},
 
@@ -250,11 +240,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"TokenByIdOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(TokenByIDOrError)
-		return obj, ok
-	},
-
-	"TrendingUsersPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(TrendingUsersPayloadOrError)
 		return obj, ok
 	},
 

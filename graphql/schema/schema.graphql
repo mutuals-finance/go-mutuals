@@ -319,8 +319,6 @@ enum Chain {
   Arbitrum
   Polygon
   Optimism
-  Tezos
-  POAP
 }
 
 enum WalletType {
@@ -599,7 +597,6 @@ input UnsubscribeFromEmailTypeInput {
 enum UserExperienceType {
   MultiGalleryAnnouncement
   EmailUpsell
-  MerchStoreUpsell
   MaintenanceFeb2023
   TwitterConnectionOnboardingUpsell
   UpsellMintMemento4
@@ -709,26 +706,6 @@ enum Role {
   EARLY_ACCESS
 }
 
-enum MerchType {
-  TShirt
-  Hat
-  Card
-}
-
-type MerchToken implements Node @goGqlId(fields: ["tokenId"]) {
-  id: ID!
-  tokenId: String!
-  objectType: MerchType!
-  discountCode: String
-  redeemed: Boolean!
-}
-
-type MerchTokensPayload {
-  tokens: [MerchToken!]
-}
-
-union MerchTokensPayloadOrError = MerchTokensPayload | ErrInvalidInput
-
 type ErrGalleryNotFound implements Error {
   message: String!
 }
@@ -741,17 +718,6 @@ enum ReportWindow {
   LAST_7_DAYS
   ALL_TIME
 }
-
-input TrendingUsersInput {
-  report: ReportWindow!
-}
-
-type TrendingUsersPayload {
-  # User are in descending order i.e. the most trending user is first.
-  users: [GalleryUser!]
-}
-
-union TrendingUsersPayloadOrError = TrendingUsersPayload
 
 type UserSearchResult {
   user: GalleryUser
@@ -803,10 +769,8 @@ type Query {
   ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
   galleryOfTheWeekWinners: [GalleryUser!]
-  getMerchTokens(wallet: Address!): MerchTokensPayloadOrError
   galleryById(id: DBID!): GalleryByIdPayloadOrError
   viewerGalleryById(id: DBID!): ViewerGalleryByIdPayloadOrError
-  trendingUsers(input: TrendingUsersInput!): TrendingUsersPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
@@ -1407,24 +1371,6 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-input RedeemMerchInput {
-  tokenIds: [String!]!
-  address: ChainAddressInput!
-  walletType: WalletType!
-  signature: String!
-}
-
-type MerchDiscountCode {
-  code: String!
-  tokenId: String
-}
-
-type RedeemMerchPayload {
-  tokens: [MerchToken]
-}
-
-union RedeemMerchPayloadOrError = RedeemMerchPayload | ErrInvalidInput
-
 type SyncTokensForUsernamePayload {
   message: String!
 }
@@ -1765,8 +1711,6 @@ type Mutation {
 
   preverifyEmail(input: PreverifyEmailInput!): PreverifyEmailPayloadOrError
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
-
-  redeemMerch(input: RedeemMerchInput!): RedeemMerchPayloadOrError @authRequired
 
   # Retool Specific Mutations
   addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @retoolAuth

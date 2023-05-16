@@ -54,7 +54,6 @@ type PublicAPI struct {
 	Misc          *MiscAPI
 	Notifications *NotificationsAPI
 	Admin         *admin.AdminAPI
-	Merch         *MerchAPI
 	Social        *SocialAPI
 	Card          *CardAPI
 	Search        *SearchAPI
@@ -82,7 +81,6 @@ func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Rep
 		Misc:          &MiscAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, storageClient: storageClient},
 		Notifications: &NotificationsAPI{queries: queries, loaders: loaders, validator: validator},
 		Admin:         admin.NewAPI(repos, queries, validator, multichainProvider),
-		Merch:         &MerchAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, secrets: secrets},
 		Social:        &SocialAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, redis: socialCache},
 		Card:          &CardAPI{validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, secrets: secrets},
 		Search:        &SearchAPI{queries: queries, loaders: loaders, validator: validator},

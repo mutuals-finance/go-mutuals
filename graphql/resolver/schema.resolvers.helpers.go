@@ -43,7 +43,6 @@ var nodeFetcher = model.NodeFetcher{
 	OnToken:            resolveTokenByTokenID,
 	OnWallet:           resolveWalletByAddress,
 	OnContract:         resolveContractByContractID,
-	OnMerchToken:       resolveMerchTokenByTokenID,
 	OnViewer:           resolveViewerByID,
 	OnDeletedNode:      resolveDeletedNodeByID,
 	OnSocialConnection: resolveSocialConnectionByIdentifiers,
@@ -907,16 +906,6 @@ func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notifi
 	}
 
 	return notificationToModel(notification)
-}
-
-func resolveMerchTokenByTokenID(ctx context.Context, tokenID string) (*model.MerchToken, error) {
-	token, err := publicapi.For(ctx).Merch.GetMerchTokenByTokenID(ctx, persist.TokenID(tokenID))
-
-	if err != nil {
-		return nil, err
-	}
-
-	return token, nil
 }
 
 func resolveViewerByID(ctx context.Context, id string) (*model.Viewer, error) {
