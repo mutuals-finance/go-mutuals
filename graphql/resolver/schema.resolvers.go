@@ -1250,18 +1250,6 @@ func (r *queryResolver) GeneralAllowlist(ctx context.Context) ([]*persist.ChainA
 	return resolveGeneralAllowlist(ctx)
 }
 
-// GalleryOfTheWeekWinners is the resolver for the galleryOfTheWeekWinners field.
-func (r *queryResolver) GalleryOfTheWeekWinners(ctx context.Context) ([]*model.GalleryUser, error) {
-	winners, err := publicapi.For(ctx).Misc.GetGalleryOfTheWeekWinners(ctx)
-
-	var output = make([]*model.GalleryUser, len(winners))
-	for i, user := range winners {
-		output[i] = userToModel(ctx, user)
-	}
-
-	return output, err
-}
-
 // GalleryByID is the resolver for the galleryById field.
 func (r *queryResolver) GalleryByID(ctx context.Context, id persist.DBID) (model.GalleryByIDPayloadOrError, error) {
 	gallery, err := resolveGalleryByGalleryID(ctx, id)

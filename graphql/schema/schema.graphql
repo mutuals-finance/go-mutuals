@@ -768,7 +768,6 @@ type Query {
     forceRefresh: Boolean
   ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
-  galleryOfTheWeekWinners: [GalleryUser!]
   galleryById(id: DBID!): GalleryByIdPayloadOrError
   viewerGalleryById(id: DBID!): ViewerGalleryByIdPayloadOrError
   """

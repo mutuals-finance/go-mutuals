@@ -51,36 +51,3 @@ func (api MiscAPI) GetGeneralAllowlist(ctx context.Context) ([]persist.EthereumA
 
 	return addresses, nil
 }
-
-func (api MiscAPI) GetGalleryOfTheWeekWinners(ctx context.Context) ([]db.User, error) {
-	// hard-coded for now
-	winnerUserIds := []persist.DBID{
-		// hamsun
-		"22e1Kq9LQS2W75wBeZET1MVXsOQ",
-		// aboutblank
-		"24125QyTxCe72VqhKweRGFnBJl5",
-		// the_ayybee_gallery
-		"22RiP4IC3D0bLgwZxZebwMG5Y3m",
-		// duane king
-		"27zUnqpUL5YBc8cB2a6fPhGg5Mu",
-		// casesimmons
-		"22tlEnbSpJ38BqD9xoggxnkhNip",
-		// laury
-		"25XXRXw1B0y65xBo5ghGqRTW9Pt",
-		// walt
-		"29cvJYtKfauXyNZMeKYb34csdws",
-		// salt
-		"29oheBA67Mv3Rs6m7z8jEdK0ALs",
-	}
-
-	possibleWinners, errors := api.loaders.UserByUserID.LoadAll(winnerUserIds)
-
-	winners := []db.User{}
-	for i, err := range errors {
-		if err == nil {
-			winners = append(winners, possibleWinners[i])
-		}
-	}
-
-	return winners, nil
-}

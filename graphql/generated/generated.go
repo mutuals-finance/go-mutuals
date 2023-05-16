@@ -571,29 +571,28 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CollectionByID          func(childComplexity int, id persist.DBID) int
-		CollectionTokenByID     func(childComplexity int, tokenID persist.DBID, collectionID persist.DBID) int
-		CollectionsByIds        func(childComplexity int, ids []persist.DBID) int
-		CommunityByAddress      func(childComplexity int, communityAddress persist.ChainAddress, forceRefresh *bool) int
-		GalleryByID             func(childComplexity int, id persist.DBID) int
-		GalleryOfTheWeekWinners func(childComplexity int) int
-		GeneralAllowlist        func(childComplexity int) int
-		MembershipTiers         func(childComplexity int, forceRefresh *bool) int
-		Node                    func(childComplexity int, id model.GqlID) int
-		SearchCommunities       func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) int
-		SearchGalleries         func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
-		SearchUsers             func(childComplexity int, query string, limit *int, usernameWeight *float64, bioWeight *float64) int
-		SocialConnections       func(childComplexity int, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) int
-		SocialQueries           func(childComplexity int) int
-		TokenByID               func(childComplexity int, id persist.DBID) int
-		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
-		UserByID                func(childComplexity int, id persist.DBID) int
-		UserByUsername          func(childComplexity int, username string) int
-		UsersByRole             func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
-		UsersWithTrait          func(childComplexity int, trait string) int
-		Viewer                  func(childComplexity int) int
-		ViewerGalleryByID       func(childComplexity int, id persist.DBID) int
-		__resolve__service      func(childComplexity int) int
+		CollectionByID      func(childComplexity int, id persist.DBID) int
+		CollectionTokenByID func(childComplexity int, tokenID persist.DBID, collectionID persist.DBID) int
+		CollectionsByIds    func(childComplexity int, ids []persist.DBID) int
+		CommunityByAddress  func(childComplexity int, communityAddress persist.ChainAddress, forceRefresh *bool) int
+		GalleryByID         func(childComplexity int, id persist.DBID) int
+		GeneralAllowlist    func(childComplexity int) int
+		MembershipTiers     func(childComplexity int, forceRefresh *bool) int
+		Node                func(childComplexity int, id model.GqlID) int
+		SearchCommunities   func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) int
+		SearchGalleries     func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
+		SearchUsers         func(childComplexity int, query string, limit *int, usernameWeight *float64, bioWeight *float64) int
+		SocialConnections   func(childComplexity int, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) int
+		SocialQueries       func(childComplexity int) int
+		TokenByID           func(childComplexity int, id persist.DBID) int
+		UserByAddress       func(childComplexity int, chainAddress persist.ChainAddress) int
+		UserByID            func(childComplexity int, id persist.DBID) int
+		UserByUsername      func(childComplexity int, username string) int
+		UsersByRole         func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
+		UsersWithTrait      func(childComplexity int, trait string) int
+		Viewer              func(childComplexity int) int
+		ViewerGalleryByID   func(childComplexity int, id persist.DBID) int
+		__resolve__service  func(childComplexity int) int
 	}
 
 	RefreshCollectionPayload struct {
@@ -1062,7 +1061,6 @@ type QueryResolver interface {
 	CollectionTokenByID(ctx context.Context, tokenID persist.DBID, collectionID persist.DBID) (model.CollectionTokenByIDOrError, error)
 	CommunityByAddress(ctx context.Context, communityAddress persist.ChainAddress, forceRefresh *bool) (model.CommunityByAddressOrError, error)
 	GeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error)
-	GalleryOfTheWeekWinners(ctx context.Context) ([]*model.GalleryUser, error)
 	GalleryByID(ctx context.Context, id persist.DBID) (model.GalleryByIDPayloadOrError, error)
 	ViewerGalleryByID(ctx context.Context, id persist.DBID) (model.ViewerGalleryByIDPayloadOrError, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error)
@@ -3364,13 +3362,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GalleryByID(childComplexity, args["id"].(persist.DBID)), true
 
-	case "Query.galleryOfTheWeekWinners":
-		if e.complexity.Query.GalleryOfTheWeekWinners == nil {
-			break
-		}
-
-		return e.complexity.Query.GalleryOfTheWeekWinners(childComplexity), true
-
 	case "Query.generalAllowlist":
 		if e.complexity.Query.GeneralAllowlist == nil {
 			break
@@ -5627,7 +5618,6 @@ type Query {
     forceRefresh: Boolean
   ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
-  galleryOfTheWeekWinners: [GalleryUser!]
   galleryById(id: DBID!): GalleryByIdPayloadOrError
   viewerGalleryById(id: DBID!): ViewerGalleryByIdPayloadOrError
   """
@@ -23122,89 +23112,6 @@ func (ec *executionContext) fieldContext_Query_generalAllowlist(ctx context.Cont
 				return ec.fieldContext_ChainAddress_chain(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ChainAddress", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_galleryOfTheWeekWinners(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_galleryOfTheWeekWinners(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GalleryOfTheWeekWinners(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.GalleryUser)
-	fc.Result = res
-	return ec.marshalOGalleryUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryUserᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_galleryOfTheWeekWinners(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_GalleryUser_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_GalleryUser_dbid(ctx, field)
-			case "username":
-				return ec.fieldContext_GalleryUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_GalleryUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_GalleryUser_traits(ctx, field)
-			case "universal":
-				return ec.fieldContext_GalleryUser_universal(ctx, field)
-			case "roles":
-				return ec.fieldContext_GalleryUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_GalleryUser_socialAccounts(ctx, field)
-			case "tokens":
-				return ec.fieldContext_GalleryUser_tokens(ctx, field)
-			case "tokensByChain":
-				return ec.fieldContext_GalleryUser_tokensByChain(ctx, field)
-			case "wallets":
-				return ec.fieldContext_GalleryUser_wallets(ctx, field)
-			case "primaryWallet":
-				return ec.fieldContext_GalleryUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_GalleryUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_GalleryUser_galleries(ctx, field)
-			case "badges":
-				return ec.fieldContext_GalleryUser_badges(ctx, field)
-			case "isAuthenticatedUser":
-				return ec.fieldContext_GalleryUser_isAuthenticatedUser(ctx, field)
-			case "followers":
-				return ec.fieldContext_GalleryUser_followers(ctx, field)
-			case "following":
-				return ec.fieldContext_GalleryUser_following(ctx, field)
-			case "sharedFollowers":
-				return ec.fieldContext_GalleryUser_sharedFollowers(ctx, field)
-			case "sharedCommunities":
-				return ec.fieldContext_GalleryUser_sharedCommunities(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type GalleryUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -42001,26 +41908,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "galleryOfTheWeekWinners":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_galleryOfTheWeekWinners(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
 		case "galleryById":
 			field := field
 
@@ -45197,16 +45084,6 @@ func (ec *executionContext) marshalNGallerySearchResult2ᚖgithubᚗcomᚋmikeyd
 	return ec._GallerySearchResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGalleryUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryUser(ctx context.Context, sel ast.SelectionSet, v *model.GalleryUser) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._GalleryUser(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := model.GqlID(tmp)
@@ -46836,53 +46713,6 @@ func (ec *executionContext) marshalOGalleryUser2ᚕᚖgithubᚗcomᚋmikeydubᚋ
 
 	}
 	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOGalleryUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GalleryUser) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNGalleryUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
 
 	return ret
 }
