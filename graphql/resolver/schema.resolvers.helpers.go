@@ -129,8 +129,8 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 	case validate.ErrInvalidInput:
 		validationErr, _ := err.(validate.ErrInvalidInput)
 		mappedErr = model.ErrInvalidInput{Message: message, Parameters: validationErr.Parameters, Reasons: validationErr.Reasons}
-	case persist.ErrUnknownAction:
-		mappedErr = model.ErrUnknownAction{Message: message}
+	//case persist.ErrUnknownAction:
+	//	mappedErr = model.ErrUnknownAction{Message: message}
 	case persist.ErrGalleryNotFound:
 		mappedErr = model.ErrGalleryNotFound{Message: message}
 	case twitter.ErrInvalidRefreshToken:

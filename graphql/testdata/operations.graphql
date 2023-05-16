@@ -61,47 +61,6 @@ query viewerQuery {
             username
           }
         }
-        feed(first: 10) {
-          edges {
-            node {
-              ... on Error {
-                message
-              }
-              ... on FeedEvent {
-                dbid
-                caption
-                eventData {
-                  action
-                  ... on GalleryUpdatedFeedEventData {
-                    subEventDatas {
-                      action
-                      ... on TokensAddedToCollectionFeedEventData {
-                        newTokens {
-                          token {
-                            dbid
-                            name
-                          }
-                        }
-                      }
-                      ... on CollectionCreatedFeedEventData {
-                        newTokens {
-                          token {
-                            dbid
-                            name
-                          }
-                        }
-                      }
-                      ... on GalleryInfoUpdatedFeedEventData {
-                        newName
-                        newDescription
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     }
   }
@@ -112,38 +71,6 @@ query trendingUsersQuery($input: TrendingUsersInput!) {
     ... on TrendingUsersPayload {
       users {
         dbid
-      }
-    }
-  }
-}
-
-query globalFeedQuery($first: Int) {
-  globalFeed(first: $first) {
-    edges {
-      node {
-        ... on Error {
-          __typename
-          message
-        }
-        ... on FeedEvent {
-          dbid
-        }
-      }
-    }
-  }
-}
-
-query trendingFeedQuery($last: Int) {
-  trendingFeed(last: $last) {
-    edges {
-      node {
-        ... on Error {
-          __typename
-          message
-        }
-        ... on FeedEvent {
-          dbid
-        }
       }
     }
   }

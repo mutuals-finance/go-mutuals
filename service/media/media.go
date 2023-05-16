@@ -48,8 +48,6 @@ type Keywords interface {
 }
 
 type DefaultKeywords []string
-type TezImageKeywords []string
-type TezAnimationKeywords []string
 
 type errUnsupportedURL struct {
 	url string
@@ -1125,47 +1123,8 @@ func (d DefaultKeywords) ForToken(tokenID persist.TokenID, contract persist.Addr
 	return d
 }
 
-const (
-	hicEtNunc = "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton"
-	fxHash    = "KT1KEa8z6vWXDJrVqtMrAeDVzsvxat3kHaCE"
-	fxHash2   = "KT1U6EHmNxJTkvaWJ4ThczG4FSDaHC21ssvi"
-)
-
-func IsHicEtNunc(contract persist.Address) bool {
-	return contract == hicEtNunc
-}
-
-func IsFxHash(contract persist.Address) bool {
-	return contract == fxHash || contract == fxHash2
-}
-
-func (i TezImageKeywords) ForToken(tokenID persist.TokenID, contract persist.Address) []string {
-	switch {
-	case IsHicEtNunc(contract):
-		return []string{"artifactUri", "displayUri", "image"}
-	case IsFxHash(contract):
-		return []string{"displayUri", "artifactUri", "image", "uri"}
-	default:
-		return i
-	}
-}
-
-func (a TezAnimationKeywords) ForToken(tokenID persist.TokenID, contract persist.Address) []string {
-	switch {
-	case IsFxHash(contract):
-		return []string{"artifactUri", "displayUri"}
-	default:
-		return a
-	}
-}
-
 func KeywordsForChain(chain persist.Chain, imageKeywords []string, animationKeywords []string) (Keywords, Keywords) {
-	switch chain {
-	case persist.ChainTezos:
-		return TezImageKeywords(imageKeywords), TezAnimationKeywords(animationKeywords)
-	default:
-		return DefaultKeywords(imageKeywords), DefaultKeywords(animationKeywords)
-	}
+	return DefaultKeywords(imageKeywords), DefaultKeywords(animationKeywords)
 }
 
 func (e errUnsupportedURL) Error() string {

@@ -719,7 +719,7 @@ select role from (
         and exists(select 1 from users where id = $1 and email_verified = 1 and deleted = false)
         and deleted = false
       )
-      then @granted_membership_role else null end as role
+      then @granted_membership_role end as role
 ) r where role is not null;
 
 -- name: RedeemMerch :one
