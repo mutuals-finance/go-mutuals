@@ -36,7 +36,6 @@ require (
 	github.com/jackc/pgx/v4 v4.18.0
 	github.com/lib/pq v1.10.7
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/machinebox/graphql v0.2.2
 	github.com/magiclabs/magic-admin-go v0.2.0
 	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/ory/dockertest v3.3.5+incompatible
@@ -63,7 +62,6 @@ require (
 )
 
 require (
-	github.com/ertan/go-farcaster v1.0.0-beta
 	github.com/jinzhu/copier v0.3.5
 	go.mozilla.org/sops/v3 v3.7.3
 )
@@ -97,7 +95,6 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
-	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -179,10 +176,8 @@ require (
 	github.com/libp2p/go-libp2p-core v0.14.0 // indirect
 	github.com/libp2p/go-openssl v0.0.7 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/matryer/is v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
-	github.com/miguelmota/go-ethereum-hdwallet v0.1.1 // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -227,7 +222,6 @@ require (
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
-	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/urfave/cli/v2 v2.24.4 // indirect
 	github.com/wealdtech/go-multicodec v1.4.0 // indirect
