@@ -21,6 +21,7 @@
 //go:generate go run github.com/gallery-so/dataloaden ContractLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Contract
 //go:generate go run github.com/gallery-so/dataloaden ContractsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Contract
 //go:generate go run github.com/gallery-so/dataloaden ContractLoaderByChainAddress github.com/mikeydub/go-gallery/service/persist.ChainAddress github.com/mikeydub/go-gallery/db/gen/coredb.Contract
+//go:generate go run github.com/gallery-so/dataloaden EventLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.FeedEvent
 //go:generate go run github.com/gallery-so/dataloaden NotificationLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden NotificationsLoaderByUserID github.com/mikeydub/go-gallery/db/gen/coredb.GetUserNotificationsBatchParams []github.com/mikeydub/go-gallery/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden IntLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID int
