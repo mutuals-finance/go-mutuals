@@ -52,7 +52,7 @@ type HelperGroupNotificationUsersConnectionData struct {
 	UserIDs persist.DBIDList
 }
 
-type HelperGalleryUserData struct {
+type HelperSplitFiUserData struct {
 	UserID            persist.DBID
 	FeaturedGalleryID *persist.DBID
 }

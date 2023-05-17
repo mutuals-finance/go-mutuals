@@ -117,7 +117,7 @@ func testUserByUsername(t *testing.T) {
 	response, err := userByUsernameQuery(context.Background(), defaultHandlerClient(t), userF.Username)
 
 	require.NoError(t, err)
-	payload, _ := (*response.UserByUsername).(*userByUsernameQueryUserByUsernameGalleryUser)
+	payload, _ := (*response.UserByUsername).(*userByUsernameQueryUserByUsernameSplitFiUser)
 	assert.Equal(t, userF.Username, *payload.Username)
 	assert.Equal(t, userF.ID, payload.Dbid)
 }
@@ -129,7 +129,7 @@ func testUserByAddress(t *testing.T) {
 	response, err := userByAddressQuery(context.Background(), c, chainAddressInput(userF.Wallet.Address))
 
 	require.NoError(t, err)
-	payload, _ := (*response.UserByAddress).(*userByAddressQueryUserByAddressGalleryUser)
+	payload, _ := (*response.UserByAddress).(*userByAddressQueryUserByAddressSplitFiUser)
 	assert.Equal(t, userF.Username, *payload.Username)
 	assert.Equal(t, userF.ID, payload.Dbid)
 }
@@ -139,7 +139,7 @@ func testUserByID(t *testing.T) {
 	response, err := userByIdQuery(context.Background(), defaultHandlerClient(t), userF.ID)
 
 	require.NoError(t, err)
-	payload, _ := (*response.UserById).(*userByIdQueryUserByIdGalleryUser)
+	payload, _ := (*response.UserById).(*userByIdQueryUserByIdSplitFiUser)
 	assert.Equal(t, userF.Username, *payload.Username)
 	assert.Equal(t, userF.ID, payload.Dbid)
 }
@@ -452,7 +452,7 @@ func testConnectSocialAccount(t *testing.T) {
 
 	userResp, err := userByIdQuery(context.Background(), dc, userF.ID)
 	require.NoError(t, err)
-	userPayload := (*userResp.UserById).(*userByIdQueryUserByIdGalleryUser)
+	userPayload := (*userResp.UserById).(*userByIdQueryUserByIdSplitFiUser)
 	assert.Nil(t, userPayload.SocialAccounts.Twitter)
 
 	disconnectResp, err := disconnectSocialAccount(context.Background(), c, SocialAccountTypeTwitter)
@@ -704,7 +704,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -718,7 +718,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia)
 		assert.Equal(t, string(persist.MediaTypeVideo), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -732,7 +732,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia)
 		assert.Equal(t, string(persist.MediaTypeHTML), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -746,7 +746,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia)
 		assert.Equal(t, string(persist.MediaTypeGIF), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -760,7 +760,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia)
 		assert.Equal(t, "", *media.MediaType)
 		assert.Empty(t, *media.MediaURL)
 	})
@@ -774,7 +774,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia)
 		assert.Equal(t, "", *media.MediaType)
 		assert.Empty(t, *media.MediaURL)
 	})
@@ -788,7 +788,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia)
 		assert.Equal(t, string(persist.MediaTypeUnknown), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -802,7 +802,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia)
 		assert.Equal(t, string(persist.MediaTypeUnknown), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -816,7 +816,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, string(persist.MediaTypeSVG), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -830,7 +830,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, string(persist.MediaTypeSVG), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -844,7 +844,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, *media.MediaType, string(persist.MediaTypeImage))
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -858,7 +858,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, *media.MediaType, string(persist.MediaTypeImage))
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -872,7 +872,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -886,7 +886,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -900,7 +900,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia)
 		assert.Equal(t, string(persist.MediaTypeVideo), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -914,7 +914,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia)
 		assert.Equal(t, string(persist.MediaTypeAnimation), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -928,7 +928,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia)
 		assert.Equal(t, string(persist.MediaTypePDF), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -942,7 +942,7 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia)
 		assert.Equal(t, string(persist.MediaTypeText), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
@@ -956,13 +956,13 @@ func testSyncShouldProcessMedia(t *testing.T) {
 		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
 
 		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
 		assert.NotEmpty(t, *media.MediaURL)
 	})
 }
 
-func assertSyncedTokens(t *testing.T, response *syncTokensMutationResponse, err error, expectedLen int) []*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken {
+func assertSyncedTokens(t *testing.T, response *syncTokensMutationResponse, err error, expectedLen int) []*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken {
 	t.Helper()
 	require.NoError(t, err)
 	payload := (*response.SyncTokens).(*syncTokensMutationSyncTokensSyncTokensPayload)

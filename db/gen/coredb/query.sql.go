@@ -152,11 +152,11 @@ SELECT count(DISTINCT users.id) FROM users, tokens
 
 type CountOwnersByContractIdParams struct {
 	Contract         persist.DBID
-	GalleryUsersOnly bool
+	SplitfiUsersOnly bool
 }
 
 func (q *Queries) CountOwnersByContractId(ctx context.Context, arg CountOwnersByContractIdParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countOwnersByContractId, arg.Contract, arg.GalleryUsersOnly)
+	row := q.db.QueryRow(ctx, countOwnersByContractId, arg.Contract, arg.SplitfiUsersOnly)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -245,11 +245,11 @@ SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE 
 
 type CountTokensByContractIdParams struct {
 	Contract         persist.DBID
-	GalleryUsersOnly bool
+	SplitfiUsersOnly bool
 }
 
 func (q *Queries) CountTokensByContractId(ctx context.Context, arg CountTokensByContractIdParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countTokensByContractId, arg.Contract, arg.GalleryUsersOnly)
+	row := q.db.QueryRow(ctx, countTokensByContractId, arg.Contract, arg.SplitfiUsersOnly)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -2427,7 +2427,7 @@ SELECT t.id, t.deleted, t.version, t.created_at, t.last_updated, t.name, t.descr
 type GetTokensByContractIdPaginateParams struct {
 	Contract           persist.DBID
 	Limit              int32
-	GalleryUsersOnly   bool
+	SplitfiUsersOnly   bool
 	CurBeforeUniversal bool
 	CurBeforeTime      time.Time
 	CurBeforeID        persist.DBID
@@ -2441,7 +2441,7 @@ func (q *Queries) GetTokensByContractIdPaginate(ctx context.Context, arg GetToke
 	rows, err := q.db.Query(ctx, getTokensByContractIdPaginate,
 		arg.Contract,
 		arg.Limit,
-		arg.GalleryUsersOnly,
+		arg.SplitfiUsersOnly,
 		arg.CurBeforeUniversal,
 		arg.CurBeforeTime,
 		arg.CurBeforeID,

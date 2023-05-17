@@ -87,14 +87,6 @@ type GalleryByIDPayloadOrError interface {
 	IsGalleryByIDPayloadOrError()
 }
 
-type GalleryUserOrAddress interface {
-	IsGalleryUserOrAddress()
-}
-
-type GalleryUserOrWallet interface {
-	IsGalleryUserOrWallet()
-}
-
 type GetAuthNoncePayloadOrError interface {
 	IsGetAuthNoncePayloadOrError()
 }
@@ -192,6 +184,14 @@ type SocialConnectionsOrError interface {
 
 type SocialQueriesOrError interface {
 	IsSocialQueriesOrError()
+}
+
+type SplitFiUserOrAddress interface {
+	IsSplitFiUserOrAddress()
+}
+
+type SplitFiUserOrWallet interface {
+	IsSplitFiUserOrWallet()
 }
 
 type SyncTokensForUsernamePayloadOrError interface {
@@ -323,7 +323,7 @@ type AdminAddWalletInput struct {
 }
 
 type AdminAddWalletPayload struct {
-	User *GalleryUser `json:"user"`
+	User *SplitFiUser `json:"user"`
 }
 
 func (AdminAddWalletPayload) IsAdminAddWalletPayloadOrError() {}
@@ -820,13 +820,13 @@ type FollowAllSocialConnectionsPayload struct {
 func (FollowAllSocialConnectionsPayload) IsFollowAllSocialConnectionsPayloadOrError() {}
 
 type FollowInfo struct {
-	User         *GalleryUser `json:"user"`
+	User         *SplitFiUser `json:"user"`
 	FollowedBack *bool        `json:"followedBack"`
 }
 
 type FollowUserPayload struct {
 	Viewer *Viewer      `json:"viewer"`
-	User   *GalleryUser `json:"user"`
+	User   *SplitFiUser `json:"user"`
 }
 
 func (FollowUserPayload) IsFollowUserPayloadOrError() {}
@@ -850,7 +850,7 @@ type Gallery struct {
 	Position      *string          `json:"position"`
 	Hidden        *bool            `json:"hidden"`
 	TokenPreviews []*PreviewURLSet `json:"tokenPreviews"`
-	Owner         *GalleryUser     `json:"owner"`
+	Owner         *SplitFiUser     `json:"owner"`
 	Collections   []*Collection    `json:"collections"`
 }
 
@@ -865,38 +865,6 @@ type GalleryPositionInput struct {
 type GallerySearchResult struct {
 	Gallery *Gallery `json:"gallery"`
 }
-
-type GalleryUser struct {
-	HelperGalleryUserData
-	Dbid                persist.DBID           `json:"dbid"`
-	Username            *string                `json:"username"`
-	Bio                 *string                `json:"bio"`
-	Traits              *string                `json:"traits"`
-	Universal           *bool                  `json:"universal"`
-	Roles               []*persist.Role        `json:"roles"`
-	SocialAccounts      *SocialAccounts        `json:"socialAccounts"`
-	Tokens              []*Token               `json:"tokens"`
-	TokensByChain       *ChainTokens           `json:"tokensByChain"`
-	Wallets             []*Wallet              `json:"wallets"`
-	PrimaryWallet       *Wallet                `json:"primaryWallet"`
-	FeaturedGallery     *Gallery               `json:"featuredGallery"`
-	Galleries           []*Gallery             `json:"galleries"`
-	Badges              []*Badge               `json:"badges"`
-	IsAuthenticatedUser *bool                  `json:"isAuthenticatedUser"`
-	Followers           []*GalleryUser         `json:"followers"`
-	Following           []*GalleryUser         `json:"following"`
-	SharedFollowers     *UsersConnection       `json:"sharedFollowers"`
-	SharedCommunities   *CommunitiesConnection `json:"sharedCommunities"`
-}
-
-func (GalleryUser) IsNode()                              {}
-func (GalleryUser) IsGalleryUserOrWallet()               {}
-func (GalleryUser) IsGalleryUserOrAddress()              {}
-func (GalleryUser) IsUserByUsernameOrError()             {}
-func (GalleryUser) IsUserByIDOrError()                   {}
-func (GalleryUser) IsUserByAddressOrError()              {}
-func (GalleryUser) IsAddRolesToUserPayloadOrError()      {}
-func (GalleryUser) IsRevokeRolesFromUserPayloadOrError() {}
 
 type GltfMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
@@ -915,7 +883,7 @@ type GnosisSafeAuth struct {
 }
 
 type GroupNotificationUserEdge struct {
-	Node   *GalleryUser `json:"node"`
+	Node   *SplitFiUser `json:"node"`
 	Cursor *string      `json:"cursor"`
 }
 
@@ -1046,7 +1014,7 @@ type NotificationsConnection struct {
 }
 
 type OwnerAtBlock struct {
-	Owner       GalleryUserOrAddress `json:"owner"`
+	Owner       SplitFiUserOrAddress `json:"owner"`
 	BlockNumber *string              `json:"blockNumber"`
 }
 
@@ -1174,7 +1142,7 @@ type SocialAuthMechanism struct {
 
 type SocialConnection struct {
 	HelperSocialConnectionData
-	GalleryUser        *GalleryUser           `json:"galleryUser"`
+	SplitFiUser        *SplitFiUser           `json:"splitFiUser"`
 	CurrentlyFollowing bool                   `json:"currentlyFollowing"`
 	SocialID           string                 `json:"socialId"`
 	SocialType         persist.SocialProvider `json:"socialType"`
@@ -1246,6 +1214,38 @@ func (SomeoneViewedYourGalleryNotification) IsNotification()        {}
 func (SomeoneViewedYourGalleryNotification) IsNode()                {}
 func (SomeoneViewedYourGalleryNotification) IsGroupedNotification() {}
 
+type SplitFiUser struct {
+	HelperSplitFiUserData
+	Dbid                persist.DBID           `json:"dbid"`
+	Username            *string                `json:"username"`
+	Bio                 *string                `json:"bio"`
+	Traits              *string                `json:"traits"`
+	Universal           *bool                  `json:"universal"`
+	Roles               []*persist.Role        `json:"roles"`
+	SocialAccounts      *SocialAccounts        `json:"socialAccounts"`
+	Tokens              []*Token               `json:"tokens"`
+	TokensByChain       *ChainTokens           `json:"tokensByChain"`
+	Wallets             []*Wallet              `json:"wallets"`
+	PrimaryWallet       *Wallet                `json:"primaryWallet"`
+	FeaturedGallery     *Gallery               `json:"featuredGallery"`
+	Galleries           []*Gallery             `json:"galleries"`
+	Badges              []*Badge               `json:"badges"`
+	IsAuthenticatedUser *bool                  `json:"isAuthenticatedUser"`
+	Followers           []*SplitFiUser         `json:"followers"`
+	Following           []*SplitFiUser         `json:"following"`
+	SharedFollowers     *UsersConnection       `json:"sharedFollowers"`
+	SharedCommunities   *CommunitiesConnection `json:"sharedCommunities"`
+}
+
+func (SplitFiUser) IsNode()                              {}
+func (SplitFiUser) IsSplitFiUserOrWallet()               {}
+func (SplitFiUser) IsSplitFiUserOrAddress()              {}
+func (SplitFiUser) IsUserByUsernameOrError()             {}
+func (SplitFiUser) IsUserByIDOrError()                   {}
+func (SplitFiUser) IsUserByAddressOrError()              {}
+func (SplitFiUser) IsAddRolesToUserPayloadOrError()      {}
+func (SplitFiUser) IsRevokeRolesFromUserPayloadOrError() {}
+
 type SyncTokensForUsernamePayload struct {
 	Message string `json:"message"`
 }
@@ -1292,7 +1292,7 @@ type Token struct {
 	Description           *string               `json:"description"`
 	TokenID               *string               `json:"tokenId"`
 	Quantity              *string               `json:"quantity"`
-	Owner                 *GalleryUser          `json:"owner"`
+	Owner                 *SplitFiUser          `json:"owner"`
 	OwnedByWallets        []*Wallet             `json:"ownedByWallets"`
 	OwnershipHistory      []*OwnerAtBlock       `json:"ownershipHistory"`
 	TokenMetadata         *string               `json:"tokenMetadata"`
@@ -1318,7 +1318,7 @@ type TokenHolder struct {
 	HelperTokenHolderData
 	DisplayName   *string      `json:"displayName"`
 	Wallets       []*Wallet    `json:"wallets"`
-	User          *GalleryUser `json:"user"`
+	User          *SplitFiUser `json:"user"`
 	PreviewTokens []*string    `json:"previewTokens"`
 }
 
@@ -1354,7 +1354,7 @@ func (TwitterSocialAccount) IsSocialAccount() {}
 
 type UnfollowUserPayload struct {
 	Viewer *Viewer      `json:"viewer"`
-	User   *GalleryUser `json:"user"`
+	User   *SplitFiUser `json:"user"`
 }
 
 func (UnfollowUserPayload) IsUnfollowUserPayloadOrError() {}
@@ -1579,7 +1579,7 @@ type UploadPersistedQueriesPayload struct {
 func (UploadPersistedQueriesPayload) IsUploadPersistedQueriesPayloadOrError() {}
 
 type UserEdge struct {
-	Node   *GalleryUser `json:"node"`
+	Node   *SplitFiUser `json:"node"`
 	Cursor *string      `json:"cursor"`
 }
 
@@ -1595,7 +1595,7 @@ type UserExperience struct {
 }
 
 type UserSearchResult struct {
-	User *GalleryUser `json:"user"`
+	User *SplitFiUser `json:"user"`
 }
 
 type UsersConnection struct {
@@ -1639,7 +1639,7 @@ func (ViewGalleryPayload) IsViewGalleryPayloadOrError() {}
 
 type Viewer struct {
 	HelperViewerData
-	User            *GalleryUser     `json:"user"`
+	User            *SplitFiUser     `json:"user"`
 	SocialAccounts  *SocialAccounts  `json:"socialAccounts"`
 	ViewerGalleries []*ViewerGallery `json:"viewerGalleries"`
 	Email           *UserEmail       `json:"email"`
@@ -1668,7 +1668,7 @@ type Wallet struct {
 }
 
 func (Wallet) IsNode()                {}
-func (Wallet) IsGalleryUserOrWallet() {}
+func (Wallet) IsSplitFiUserOrWallet() {}
 
 type EmailUnsubscriptionType string
 

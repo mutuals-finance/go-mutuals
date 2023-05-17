@@ -92,7 +92,7 @@ func (api TokenAPI) GetTokensByContractId(ctx context.Context, contractID persis
 	return tokens, nil
 }
 
-func (api TokenAPI) GetTokensByContractIdPaginate(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlyGalleryUsers *bool) ([]db.Token, PageInfo, error) {
+func (api TokenAPI) GetTokensByContractIdPaginate(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) ([]db.Token, PageInfo, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"contractID": {contractID, "required"},
@@ -105,8 +105,8 @@ func (api TokenAPI) GetTokensByContractIdPaginate(ctx context.Context, contractI
 	}
 
 	ogu := false
-	if onlyGalleryUsers != nil {
-		ogu = *onlyGalleryUsers
+	if onlySplitFiUsers != nil {
+		ogu = *onlySplitFiUsers
 	}
 
 	queryFunc := func(params boolTimeIDPagingParams) ([]interface{}, error) {
@@ -115,7 +115,7 @@ func (api TokenAPI) GetTokensByContractIdPaginate(ctx context.Context, contractI
 		tokens, err := api.queries.GetTokensByContractIdPaginate(ctx, db.GetTokensByContractIdPaginateParams{
 			Contract:           contractID,
 			Limit:              params.Limit,
-			GalleryUsersOnly:   ogu,
+			SplitfiUsersOnly:   ogu,
 			CurBeforeUniversal: params.CursorBeforeBool,
 			CurAfterUniversal:  params.CursorAfterBool,
 			CurBeforeTime:      params.CursorBeforeTime,
@@ -139,7 +139,7 @@ func (api TokenAPI) GetTokensByContractIdPaginate(ctx context.Context, contractI
 	countFunc := func() (int, error) {
 		total, err := api.queries.CountTokensByContractId(ctx, db.CountTokensByContractIdParams{
 			Contract:         contractID,
-			GalleryUsersOnly: ogu,
+			SplitfiUsersOnly: ogu,
 		})
 		return int(total), err
 	}

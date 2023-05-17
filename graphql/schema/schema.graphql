@@ -67,7 +67,7 @@ interface Error {
   message: String!
 }
 
-type GalleryUser implements Node @goEmbedHelper {
+type SplitFiUser implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
   username: String
@@ -89,8 +89,8 @@ type GalleryUser implements Node @goEmbedHelper {
   galleries: [Gallery] @goField(forceResolver: true)
   badges: [Badge] @goField(forceResolver: true)
   isAuthenticatedUser: Boolean
-  followers: [GalleryUser] @goField(forceResolver: true)
-  following: [GalleryUser] @goField(forceResolver: true)
+  followers: [SplitFiUser] @goField(forceResolver: true)
+  following: [SplitFiUser] @goField(forceResolver: true)
   sharedFollowers(before: String, after: String, first: Int, last: Int): UsersConnection
     @authRequired
     @goField(forceResolver: true)
@@ -139,9 +139,9 @@ type Badge {
   contract: Contract
 }
 
-union GalleryUserOrWallet = GalleryUser | Wallet
+union SplitFiUserOrWallet = SplitFiUser | Wallet
 
-union GalleryUserOrAddress = GalleryUser | ChainAddress
+union SplitFiUserOrAddress = SplitFiUser | ChainAddress
 
 union MediaSubtype =
     ImageMedia
@@ -339,7 +339,7 @@ type Token implements Node {
   description: String
   tokenId: String
   quantity: String # source is a hex string
-  owner: GalleryUser @goField(forceResolver: true)
+  owner: SplitFiUser @goField(forceResolver: true)
   ownedByWallets: [Wallet] @goField(forceResolver: true)
   ownershipHistory: [OwnerAtBlock]
   tokenMetadata: String # source is map[string]interface{} on backend, not sure what best format is here
@@ -359,7 +359,7 @@ type Token implements Node {
 
 type OwnerAtBlock {
   # TODO: will need to store addresses to make this resolver work
-  owner: GalleryUserOrAddress @goField(forceResolver: true)
+  owner: SplitFiUserOrAddress @goField(forceResolver: true)
   blockNumber: String # source is uint64
 }
 
@@ -404,14 +404,14 @@ type Gallery implements Node {
   position: String
   hidden: Boolean
   tokenPreviews: [PreviewURLSet] @goField(forceResolver: true)
-  owner: GalleryUser @goField(forceResolver: true)
+  owner: SplitFiUser @goField(forceResolver: true)
   collections: [Collection] @goField(forceResolver: true)
 }
 
 type TokenHolder @goEmbedHelper {
   displayName: String
   wallets: [Wallet] @goField(forceResolver: true)
-  user: GalleryUser @goField(forceResolver: true)
+  user: SplitFiUser @goField(forceResolver: true)
   previewTokens: [String]
 }
 
@@ -465,7 +465,7 @@ type Community implements Node @goGqlId(fields: ["contractAddress", "chain"]) @g
     after: String
     first: Int
     last: Int
-    onlyGalleryUsers: Boolean
+    onlySplitFiUsers: Boolean
   ): TokensConnection @goField(forceResolver: true)
 
   owners(
@@ -473,7 +473,7 @@ type Community implements Node @goGqlId(fields: ["contractAddress", "chain"]) @g
     after: String
     first: Int
     last: Int
-    onlyGalleryUsers: Boolean
+    onlySplitFiUsers: Boolean
   ): TokenHoldersConnection @goField(forceResolver: true)
 }
 
@@ -534,7 +534,7 @@ type TwitterSocialAccount implements SocialAccount {
 
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
-  user: GalleryUser @goField(forceResolver: true)
+  user: SplitFiUser @goField(forceResolver: true)
   socialAccounts: SocialAccounts @goField(forceResolver: true)
   viewerGalleries: [ViewerGallery] @goField(forceResolver: true)
 
@@ -607,11 +607,11 @@ type UserExperience {
   experienced: Boolean!
 }
 
-union UserByUsernameOrError = GalleryUser | ErrUserNotFound | ErrInvalidInput
+union UserByUsernameOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
 
-union UserByIdOrError = GalleryUser | ErrUserNotFound | ErrInvalidInput
+union UserByIdOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
 
-union UserByAddressOrError = GalleryUser | ErrUserNotFound | ErrInvalidInput
+union UserByAddressOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
 
 union ViewerOrError = Viewer | ErrNotAuthorized
 
@@ -642,7 +642,7 @@ enum Action {
 }
 
 type FollowInfo {
-  user: GalleryUser @goField(forceResolver: true)
+  user: SplitFiUser @goField(forceResolver: true)
   followedBack: Boolean
 }
 
@@ -658,7 +658,7 @@ type PageInfo {
 type SocialConnection implements Node @goGqlId(fields: ["socialId", "socialType"]) @goEmbedHelper {
   id: ID!
 
-  galleryUser: GalleryUser @goField(forceResolver: true)
+  splitFiUser: SplitFiUser @goField(forceResolver: true)
 
   currentlyFollowing: Boolean!
   socialId: String!
@@ -681,7 +681,7 @@ type SocialConnectionsConnection {
 }
 
 type UserEdge {
-  node: GalleryUser
+  node: SplitFiUser
   cursor: String
 }
 
@@ -720,7 +720,7 @@ enum ReportWindow {
 }
 
 type UserSearchResult {
-  user: GalleryUser
+  user: SplitFiUser
 }
 
 type SearchUsersPayload {
@@ -757,7 +757,7 @@ type Query {
   userByUsername(username: String!): UserByUsernameOrError
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-  usersWithTrait(trait: String!): [GalleryUser]
+  usersWithTrait(trait: String!): [SplitFiUser]
   membershipTiers(forceRefresh: Boolean): [MembershipTier]
   collectionById(id: DBID!): CollectionByIdOrError
   collectionsByIds(ids: [DBID!]!): [CollectionByIdOrError]
@@ -1207,12 +1207,12 @@ union UnfollowUserPayloadOrError =
 
 type FollowUserPayload {
   viewer: Viewer
-  user: GalleryUser @goField(forceResolver: true)
+  user: SplitFiUser @goField(forceResolver: true)
 }
 
 type UnfollowUserPayload {
   viewer: Viewer
-  user: GalleryUser @goField(forceResolver: true)
+  user: SplitFiUser @goField(forceResolver: true)
 }
 
 interface Notification implements Node {
@@ -1232,7 +1232,7 @@ interface GroupedNotification implements Notification & Node {
 }
 
 type GroupNotificationUserEdge {
-  node: GalleryUser
+  node: SplitFiUser
   cursor: String
 }
 
@@ -1357,8 +1357,8 @@ type UnsubscribeFromEmailTypePayload {
 
 union UnsubscribeFromEmailTypePayloadOrError = UnsubscribeFromEmailTypePayload | ErrInvalidInput
 
-union AddRolesToUserPayloadOrError = GalleryUser | ErrNotAuthorized
-union RevokeRolesFromUserPayloadOrError = GalleryUser | ErrNotAuthorized
+union AddRolesToUserPayloadOrError = SplitFiUser | ErrNotAuthorized
+union RevokeRolesFromUserPayloadOrError = SplitFiUser | ErrNotAuthorized
 
 input UploadPersistedQueriesInput {
   persistedQueries: String
@@ -1528,7 +1528,7 @@ input AdminAddWalletInput {
 }
 
 type AdminAddWalletPayload {
-  user: GalleryUser
+  user: SplitFiUser
 }
 
 union AdminAddWalletPayloadOrError =

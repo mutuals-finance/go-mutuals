@@ -38,7 +38,7 @@ var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 var nodeFetcher = model.NodeFetcher{
 	OnGallery:          resolveGalleryByGalleryID,
 	OnCollection:       resolveCollectionByCollectionID,
-	OnGalleryUser:      resolveGalleryUserByUserID,
+	OnSplitFiUser:      resolveSplitFiUserByUserID,
 	OnMembershipTier:   resolveMembershipTierByMembershipId,
 	OnToken:            resolveTokenByTokenID,
 	OnWallet:           resolveWalletByAddress,
@@ -193,7 +193,7 @@ func (r *Resolver) socialAuthMechanismToAuthenticator(ctx context.Context, m mod
 	return nil, errNoAuthMechanismFound
 }
 
-func resolveGalleryUserByUserID(ctx context.Context, userID persist.DBID) (*model.GalleryUser, error) {
+func resolveSplitFiUserByUserID(ctx context.Context, userID persist.DBID) (*model.SplitFiUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserById(ctx, userID)
 
 	if err != nil {
@@ -203,7 +203,7 @@ func resolveGalleryUserByUserID(ctx context.Context, userID persist.DBID) (*mode
 	return userToModel(ctx, *user), nil
 }
 
-func resolveGalleryUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.GalleryUser, error) {
+func resolveSplitFiUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.SplitFiUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserByAddress(ctx, chainAddress)
 
 	if err != nil {
@@ -213,14 +213,14 @@ func resolveGalleryUserByAddress(ctx context.Context, chainAddress persist.Chain
 	return userToModel(ctx, *user), nil
 }
 
-func resolveGalleryUsersWithTrait(ctx context.Context, trait string) ([]*model.GalleryUser, error) {
+func resolveSplitFiUsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error) {
 	users, err := publicapi.For(ctx).User.GetUsersWithTrait(ctx, trait)
 
 	if err != nil {
 		return nil, err
 	}
 
-	models := make([]*model.GalleryUser, len(users))
+	models := make([]*model.SplitFiUser, len(users))
 	for i, user := range users {
 		models[i] = userToModel(ctx, user)
 	}
@@ -243,14 +243,14 @@ func resolveBadgesByUserID(ctx context.Context, userID persist.DBID) ([]*model.B
 	return result, nil
 }
 
-func resolveFollowersByUserID(ctx context.Context, userID persist.DBID) ([]*model.GalleryUser, error) {
+func resolveFollowersByUserID(ctx context.Context, userID persist.DBID) ([]*model.SplitFiUser, error) {
 	followers, err := publicapi.For(ctx).User.GetFollowersByUserId(ctx, userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var output = make([]*model.GalleryUser, len(followers))
+	var output = make([]*model.SplitFiUser, len(followers))
 	for i, user := range followers {
 		output[i] = userToModel(ctx, user)
 	}
@@ -258,14 +258,14 @@ func resolveFollowersByUserID(ctx context.Context, userID persist.DBID) ([]*mode
 	return output, nil
 }
 
-func resolveFollowingByUserID(ctx context.Context, userID persist.DBID) ([]*model.GalleryUser, error) {
+func resolveFollowingByUserID(ctx context.Context, userID persist.DBID) ([]*model.SplitFiUser, error) {
 	following, err := publicapi.For(ctx).User.GetFollowingByUserId(ctx, userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var output = make([]*model.GalleryUser, len(following))
+	var output = make([]*model.SplitFiUser, len(following))
 	for i, user := range following {
 		output[i] = userToModel(ctx, user)
 	}
@@ -273,7 +273,7 @@ func resolveFollowingByUserID(ctx context.Context, userID persist.DBID) ([]*mode
 	return output, nil
 }
 
-func resolveGalleryUserByUsername(ctx context.Context, username string) (*model.GalleryUser, error) {
+func resolveSplitFiUserByUsername(ctx context.Context, username string) (*model.SplitFiUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserByUsername(ctx, username)
 
 	if err != nil {
@@ -440,9 +440,9 @@ func resolveTokensByContractID(ctx context.Context, contractID persist.DBID) ([]
 	return tokensToModel(ctx, tokens), nil
 }
 
-func resolveTokensByContractIDWithPagination(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlyGalleryUsers *bool) (*model.TokensConnection, error) {
+func resolveTokensByContractIDWithPagination(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) (*model.TokensConnection, error) {
 
-	tokens, pageInfo, err := publicapi.For(ctx).Token.GetTokensByContractIdPaginate(ctx, contractID, before, after, first, last, onlyGalleryUsers)
+	tokens, pageInfo, err := publicapi.For(ctx).Token.GetTokensByContractIdPaginate(ctx, contractID, before, after, first, last, onlySplitFiUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -475,14 +475,14 @@ func resolveTokensByUserID(ctx context.Context, userID persist.DBID) ([]*model.T
 	return tokensToModel(ctx, tokens), nil
 }
 
-func resolveTokenOwnerByTokenID(ctx context.Context, tokenID persist.DBID) (*model.GalleryUser, error) {
+func resolveTokenOwnerByTokenID(ctx context.Context, tokenID persist.DBID) (*model.SplitFiUser, error) {
 	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, tokenID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return resolveGalleryUserByUserID(ctx, token.OwnerUserID)
+	return resolveSplitFiUserByUserID(ctx, token.OwnerUserID)
 }
 
 func resolveContractByTokenID(ctx context.Context, tokenID persist.DBID) (*model.Contract, error) {
@@ -584,12 +584,12 @@ func resolveCommunityByContractAddress(ctx context.Context, contractAddress pers
 	return communityToModel(ctx, *community, forceRefresh), nil
 }
 
-func resolveCommunityOwnersByContractID(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlyGalleryUsers *bool) (*model.TokenHoldersConnection, error) {
+func resolveCommunityOwnersByContractID(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) (*model.TokenHoldersConnection, error) {
 	contract, err := publicapi.For(ctx).Contract.GetContractByID(ctx, contractID)
 	if err != nil {
 		return nil, err
 	}
-	owners, pageInfo, err := publicapi.For(ctx).Contract.GetCommunityOwnersByContractAddress(ctx, persist.NewChainAddress(contract.Address, contract.Chain), before, after, first, last, onlyGalleryUsers)
+	owners, pageInfo, err := publicapi.For(ctx).Contract.GetCommunityOwnersByContractAddress(ctx, persist.NewChainAddress(contract.Address, contract.Chain), before, after, first, last, onlySplitFiUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -1060,7 +1060,7 @@ func layoutToModel(ctx context.Context, layout persist.TokenLayout, version int)
 }
 
 // userToModel converts a db.User to a model.User
-func userToModel(ctx context.Context, user db.User) *model.GalleryUser {
+func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
 	userApi := publicapi.For(ctx).User
 	isAuthenticatedUser := userApi.IsUserLoggedIn(ctx) && userApi.GetLoggedInUserId(ctx) == user.ID
 
@@ -1069,8 +1069,8 @@ func userToModel(ctx context.Context, user db.User) *model.GalleryUser {
 		wallets[i] = walletToModelPersist(ctx, wallet)
 	}
 
-	return &model.GalleryUser{
-		HelperGalleryUserData: model.HelperGalleryUserData{
+	return &model.SplitFiUser{
+		HelperSplitFiUserData: model.HelperSplitFiUserData{
 			UserID:            user.ID,
 			FeaturedGalleryID: user.FeaturedGallery,
 		},
@@ -1092,8 +1092,8 @@ func userToModel(ctx context.Context, user db.User) *model.GalleryUser {
 	}
 }
 
-func usersToModels(ctx context.Context, users []db.User) []*model.GalleryUser {
-	models := make([]*model.GalleryUser, len(users))
+func usersToModels(ctx context.Context, users []db.User) []*model.SplitFiUser {
+	models := make([]*model.SplitFiUser, len(users))
 	for i, user := range users {
 		models[i] = userToModel(ctx, user)
 	}

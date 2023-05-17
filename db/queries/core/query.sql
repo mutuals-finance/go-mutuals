@@ -202,7 +202,7 @@ SELECT * FROM tokens WHERE contract = $1 AND deleted = false
 SELECT t.* FROM tokens t
     JOIN users u ON u.id = t.owner_user_id
     WHERE t.contract = $1 AND t.deleted = false
-    AND (NOT @gallery_users_only::bool OR u.universal = false)
+    AND (NOT @splitfi_users_only::bool OR u.universal = false)
     AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
     AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
     ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
@@ -213,7 +213,7 @@ SELECT t.* FROM tokens t
 SELECT t.* FROM tokens t
     JOIN users u ON u.id = t.owner_user_id
     WHERE t.contract = sqlc.arg('contract') AND t.deleted = false
-    AND (NOT @gallery_users_only::bool OR u.universal = false)
+    AND (NOT @splitfi_users_only::bool OR u.universal = false)
     AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
     AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
     ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
@@ -221,7 +221,7 @@ SELECT t.* FROM tokens t
     LIMIT sqlc.arg('limit');
 
 -- name: CountTokensByContractId :one
-SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE contract = $1 AND (NOT @gallery_users_only::bool OR users.universal = false) AND tokens.deleted = false;
+SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE contract = $1 AND (NOT @splitfi_users_only::bool OR users.universal = false) AND tokens.deleted = false;
 
 -- name: GetOwnersByContractIdBatchPaginate :batchmany
 -- Note: sqlc has trouble recognizing that the output of the "select distinct" subquery below will
@@ -232,7 +232,7 @@ SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE 
 select users.* from (
     select distinct on (u.id) u.* from users u, tokens t
         where t.contract = sqlc.arg('contract') and t.owner_user_id = u.id
-        and (not @gallery_users_only::bool or u.universal = false)
+        and (not @splitfi_users_only::bool or u.universal = false)
         and t.deleted = false and u.deleted = false
     ) as users
     where (users.universal,users.created_at,users.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
@@ -244,7 +244,7 @@ select users.* from (
 -- name: CountOwnersByContractId :one
 SELECT count(DISTINCT users.id) FROM users, tokens
     WHERE tokens.contract = $1 AND tokens.owner_user_id = users.id
-    AND (NOT @gallery_users_only::bool OR users.universal = false)
+    AND (NOT @splitfi_users_only::bool OR users.universal = false)
     AND tokens.deleted = false AND users.deleted = false;
 
 -- name: GetTokenOwnerByID :one

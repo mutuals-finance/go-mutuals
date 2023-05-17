@@ -726,53 +726,53 @@ func __marshaladdUserWalletMutationAddUserWalletAddUserWalletPayloadOrError(v *a
 
 // addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer struct {
-	User *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUser `json:"user"`
+	User *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser `json:"user"`
 }
 
 // GetUser returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer) GetUser() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUser {
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer) GetUser() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser {
 	return v.User
 }
 
-// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUser struct {
-	Wallets []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet `json:"wallets"`
+// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser struct {
+	Wallets []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet `json:"wallets"`
 }
 
-// GetWallets returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUser.Wallets, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUser) GetWallets() []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet {
+// GetWallets returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser.Wallets, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser) GetWallets() []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet {
 	return v.Wallets
 }
 
-// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
-type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet struct {
+// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
+type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet struct {
 	Dbid         persist.DBID                                                                                          `json:"dbid"`
-	ChainAddress *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress `json:"chainAddress"`
+	ChainAddress *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress `json:"chainAddress"`
 }
 
-// GetDbid returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet) GetDbid() persist.DBID {
+// GetDbid returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetChainAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWallet) GetChainAddress() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress {
+// GetChainAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet) GetChainAddress() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress {
 	return v.ChainAddress
 }
 
-// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
-type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress struct {
+// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
+type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress struct {
 	Address *string `json:"address"`
 	Chain   *Chain  `json:"chain"`
 }
 
-// GetAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress) GetAddress() *string {
+// GetAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetAddress() *string {
 	return v.Address
 }
 
-// GetChain returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserGalleryUserWalletsWalletChainAddress) GetChain() *Chain {
+// GetChain returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetChain() *Chain {
 	return v.Chain
 }
 
@@ -1784,49 +1784,49 @@ func __marshalcreateUserMutationCreateUserCreateUserPayloadOrError(v *createUser
 
 // createUserMutationCreateUserCreateUserPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type createUserMutationCreateUserCreateUserPayloadViewer struct {
-	User *createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser `json:"user"`
+	User *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser `json:"user"`
 }
 
 // GetUser returns createUserMutationCreateUserCreateUserPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewer) GetUser() *createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser {
+func (v *createUserMutationCreateUserCreateUserPayloadViewer) GetUser() *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser {
 	return v.User
 }
 
-// createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser struct {
+// createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser struct {
 	Username  *string                                                                               `json:"username"`
 	Dbid      persist.DBID                                                                          `json:"dbid"`
 	Bio       *string                                                                               `json:"bio"`
-	Galleries []*createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUserGalleriesGallery `json:"galleries"`
+	Galleries []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery `json:"galleries"`
 }
 
-// GetUsername returns createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser.Username, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser) GetUsername() *string {
+// GetUsername returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetUsername() *string {
 	return v.Username
 }
 
-// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser) GetDbid() persist.DBID {
+// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetBio returns createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser.Bio, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser) GetBio() *string {
+// GetBio returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Bio, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetBio() *string {
 	return v.Bio
 }
 
-// GetGalleries returns createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser.Galleries, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUser) GetGalleries() []*createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUserGalleriesGallery {
+// GetGalleries returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Galleries, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetGalleries() []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery {
 	return v.Galleries
 }
 
-// createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUserGalleriesGallery includes the requested fields of the GraphQL type Gallery.
-type createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUserGalleriesGallery struct {
+// createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery includes the requested fields of the GraphQL type Gallery.
+type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery struct {
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUserGalleriesGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserGalleryUserGalleriesGallery) GetDbid() persist.DBID {
+// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery.Dbid, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
@@ -2579,27 +2579,27 @@ func __marshalloginMutationLoginLoginPayloadOrError(v *loginMutationLoginLoginPa
 
 // loginMutationLoginLoginPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type loginMutationLoginLoginPayloadViewer struct {
-	User *loginMutationLoginLoginPayloadViewerUserGalleryUser `json:"user"`
+	User *loginMutationLoginLoginPayloadViewerUserSplitFiUser `json:"user"`
 }
 
 // GetUser returns loginMutationLoginLoginPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *loginMutationLoginLoginPayloadViewer) GetUser() *loginMutationLoginLoginPayloadViewerUserGalleryUser {
+func (v *loginMutationLoginLoginPayloadViewer) GetUser() *loginMutationLoginLoginPayloadViewerUserSplitFiUser {
 	return v.User
 }
 
-// loginMutationLoginLoginPayloadViewerUserGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type loginMutationLoginLoginPayloadViewerUserGalleryUser struct {
+// loginMutationLoginLoginPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type loginMutationLoginLoginPayloadViewerUserSplitFiUser struct {
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetUsername returns loginMutationLoginLoginPayloadViewerUserGalleryUser.Username, and is useful for accessing the field via an interface.
-func (v *loginMutationLoginLoginPayloadViewerUserGalleryUser) GetUsername() *string {
+// GetUsername returns loginMutationLoginLoginPayloadViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
+func (v *loginMutationLoginLoginPayloadViewerUserSplitFiUser) GetUsername() *string {
 	return v.Username
 }
 
-// GetDbid returns loginMutationLoginLoginPayloadViewerUserGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *loginMutationLoginLoginPayloadViewerUserGalleryUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns loginMutationLoginLoginPayloadViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
+func (v *loginMutationLoginLoginPayloadViewerUserSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
 
 // loginMutationResponse is returned by loginMutation on success.
 type loginMutationResponse struct {
@@ -2687,27 +2687,27 @@ func (v *logoutMutationLogoutLogoutPayload) GetViewer() *logoutMutationLogoutLog
 
 // logoutMutationLogoutLogoutPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type logoutMutationLogoutLogoutPayloadViewer struct {
-	User *logoutMutationLogoutLogoutPayloadViewerUserGalleryUser `json:"user"`
+	User *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser `json:"user"`
 }
 
 // GetUser returns logoutMutationLogoutLogoutPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *logoutMutationLogoutLogoutPayloadViewer) GetUser() *logoutMutationLogoutLogoutPayloadViewerUserGalleryUser {
+func (v *logoutMutationLogoutLogoutPayloadViewer) GetUser() *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser {
 	return v.User
 }
 
-// logoutMutationLogoutLogoutPayloadViewerUserGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type logoutMutationLogoutLogoutPayloadViewerUserGalleryUser struct {
+// logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser struct {
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetUsername returns logoutMutationLogoutLogoutPayloadViewerUserGalleryUser.Username, and is useful for accessing the field via an interface.
-func (v *logoutMutationLogoutLogoutPayloadViewerUserGalleryUser) GetUsername() *string {
+// GetUsername returns logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
+func (v *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser) GetUsername() *string {
 	return v.Username
 }
 
-// GetDbid returns logoutMutationLogoutLogoutPayloadViewerUserGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *logoutMutationLogoutLogoutPayloadViewerUserGalleryUser) GetDbid() persist.DBID {
+// GetDbid returns logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
+func (v *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
@@ -3342,53 +3342,53 @@ func __marshalremoveUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayload
 
 // removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer struct {
-	User *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUser `json:"user"`
+	User *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser `json:"user"`
 }
 
 // GetUser returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer) GetUser() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUser {
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer) GetUser() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser {
 	return v.User
 }
 
-// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUser struct {
-	Wallets []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet `json:"wallets"`
+// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser struct {
+	Wallets []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet `json:"wallets"`
 }
 
-// GetWallets returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUser.Wallets, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUser) GetWallets() []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet {
+// GetWallets returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser.Wallets, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser) GetWallets() []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet {
 	return v.Wallets
 }
 
-// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
-type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet struct {
+// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
+type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet struct {
 	Dbid         persist.DBID                                                                                                      `json:"dbid"`
-	ChainAddress *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress `json:"chainAddress"`
+	ChainAddress *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress `json:"chainAddress"`
 }
 
-// GetDbid returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet) GetDbid() persist.DBID {
+// GetDbid returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetChainAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWallet) GetChainAddress() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress {
+// GetChainAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet) GetChainAddress() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress {
 	return v.ChainAddress
 }
 
-// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
-type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress struct {
+// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
+type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress struct {
 	Address *string `json:"address"`
 	Chain   *Chain  `json:"chain"`
 }
 
-// GetAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress) GetAddress() *string {
+// GetAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetAddress() *string {
 	return v.Address
 }
 
-// GetChain returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserGalleryUserWalletsWalletChainAddress) GetChain() *Chain {
+// GetChain returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetChain() *Chain {
 	return v.Chain
 }
 
@@ -3671,64 +3671,64 @@ func __marshalsyncTokensMutationSyncTokensSyncTokensPayloadOrError(v *syncTokens
 
 // syncTokensMutationSyncTokensSyncTokensPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type syncTokensMutationSyncTokensSyncTokensPayloadViewer struct {
-	User *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUser `json:"user"`
+	User *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUser `json:"user"`
 }
 
 // GetUser returns syncTokensMutationSyncTokensSyncTokensPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewer) GetUser() *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUser {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewer) GetUser() *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUser {
 	return v.User
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUser struct {
-	Tokens []*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken `json:"tokens"`
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUser struct {
+	Tokens []*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken `json:"tokens"`
 }
 
-// GetTokens returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUser.Tokens, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUser) GetTokens() []*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken {
+// GetTokens returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUser.Tokens, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUser) GetTokens() []*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken {
 	return v.Tokens
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken includes the requested fields of the GraphQL type Token.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken includes the requested fields of the GraphQL type Token.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken struct {
 	Chain   *Chain                                                                                          `json:"chain"`
 	Dbid    persist.DBID                                                                                    `json:"dbid"`
 	TokenId *string                                                                                         `json:"tokenId"`
-	Media   *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype `json:"-"`
+	Media   *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype `json:"-"`
 }
 
-// GetChain returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken.Chain, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken) GetChain() *Chain {
+// GetChain returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken.Chain, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken) GetChain() *Chain {
 	return v.Chain
 }
 
-// GetDbid returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken.Dbid, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken) GetDbid() persist.DBID {
+// GetDbid returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken.Dbid, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetTokenId returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken.TokenId, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken) GetTokenId() *string {
+// GetTokenId returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken.TokenId, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken) GetTokenId() *string {
 	return v.TokenId
 }
 
-// GetMedia returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken.Media, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken) GetMedia() *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype {
+// GetMedia returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken.Media, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken) GetMedia() *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype {
 	return v.Media
 }
 
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken) UnmarshalJSON(b []byte) error {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken
+		*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken
 		Media json.RawMessage `json:"media"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken = v
+	firstPass.syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -3739,19 +3739,19 @@ func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserToken
 		dst := &v.Media
 		src := firstPass.Media
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype)
-			err = __unmarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype(
+			*dst = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype)
+			err = __unmarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken.Media: %w", err)
+					"unable to unmarshal syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken.Media: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken struct {
+type __premarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken struct {
 	Chain *Chain `json:"chain"`
 
 	Dbid persist.DBID `json:"dbid"`
@@ -3761,7 +3761,7 @@ type __premarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryU
 	Media json.RawMessage `json:"media"`
 }
 
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken) MarshalJSON() ([]byte, error) {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -3769,8 +3769,8 @@ func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserToken
 	return json.Marshal(premarshaled)
 }
 
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken) __premarshalJSON() (*__premarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken, error) {
-	var retval __premarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken) __premarshalJSON() (*__premarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken, error) {
+	var retval __premarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken
 
 	retval.Chain = v.Chain
 	retval.Dbid = v.Dbid
@@ -3781,218 +3781,218 @@ func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserToken
 		src := v.Media
 		if src != nil {
 			var err error
-			*dst, err = __marshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype(
+			*dst, err = __marshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensToken.Media: %w", err)
+					"unable to marshal syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken.Media: %w", err)
 			}
 		}
 	}
 	return &retval, nil
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia includes the requested fields of the GraphQL type AudioMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia includes the requested fields of the GraphQL type AudioMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia includes the requested fields of the GraphQL type GIFMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia includes the requested fields of the GraphQL type GIFMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia includes the requested fields of the GraphQL type GltfMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia includes the requested fields of the GraphQL type GltfMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia includes the requested fields of the GraphQL type HtmlMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia includes the requested fields of the GraphQL type HtmlMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia includes the requested fields of the GraphQL type ImageMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia includes the requested fields of the GraphQL type ImageMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia includes the requested fields of the GraphQL type InvalidMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia includes the requested fields of the GraphQL type InvalidMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia includes the requested fields of the GraphQL type JsonMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia includes the requested fields of the GraphQL type JsonMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype includes the requested fields of the GraphQL interface MediaSubtype.
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype includes the requested fields of the GraphQL interface MediaSubtype.
 //
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype is implemented by the following types:
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype interface {
-	implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype()
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype is implemented by the following types:
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype interface {
+	implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype() {
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia) implementsGraphQLInterfacesyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype() {
 }
 
-func __unmarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype(b []byte, v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype) error {
+func __unmarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype(b []byte, v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -4007,265 +4007,265 @@ func __unmarshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUs
 
 	switch tn.TypeName {
 	case "AudioMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia)
 		return json.Unmarshal(b, *v)
 	case "GIFMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia)
 		return json.Unmarshal(b, *v)
 	case "GltfMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia)
 		return json.Unmarshal(b, *v)
 	case "HtmlMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia)
 		return json.Unmarshal(b, *v)
 	case "ImageMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
 		return json.Unmarshal(b, *v)
 	case "InvalidMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia)
 		return json.Unmarshal(b, *v)
 	case "JsonMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia)
 		return json.Unmarshal(b, *v)
 	case "PdfMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia)
 		return json.Unmarshal(b, *v)
 	case "SyncingMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia)
 		return json.Unmarshal(b, *v)
 	case "TextMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia)
 		return json.Unmarshal(b, *v)
 	case "UnknownMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia)
 		return json.Unmarshal(b, *v)
 	case "VideoMedia":
-		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia)
+		*v = new(syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
 			"response was missing MediaSubtype.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype: "%v"`, tn.TypeName)
+			`unexpected concrete type for syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype(v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype) ([]byte, error) {
+func __marshalsyncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype(v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia:
 		typename = "AudioMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaAudioMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaAudioMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia:
 		typename = "GIFMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGIFMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia:
 		typename = "GltfMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaGltfMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia:
 		typename = "HtmlMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaHtmlMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia:
 		typename = "ImageMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaImageMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia:
 		typename = "InvalidMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaInvalidMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia:
 		typename = "JsonMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaJsonMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaJsonMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia:
 		typename = "PdfMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia:
 		typename = "SyncingMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia:
 		typename = "TextMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia:
 		typename = "UnknownMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia
 		}{typename, v}
 		return json.Marshal(result)
-	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia:
+	case *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia:
 		typename = "VideoMedia"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia
+			*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaMediaSubtype: "%T"`, v)
+			`unexpected concrete type for syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaMediaSubtype: "%T"`, v)
 	}
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia includes the requested fields of the GraphQL type PdfMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia includes the requested fields of the GraphQL type PdfMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaPdfMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia includes the requested fields of the GraphQL type SyncingMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia includes the requested fields of the GraphQL type SyncingMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaSyncingMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaSyncingMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia includes the requested fields of the GraphQL type TextMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia includes the requested fields of the GraphQL type TextMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaTextMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia includes the requested fields of the GraphQL type UnknownMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia includes the requested fields of the GraphQL type UnknownMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaUnknownMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
-// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia includes the requested fields of the GraphQL type VideoMedia.
-type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia struct {
+// syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia includes the requested fields of the GraphQL type VideoMedia.
+type syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia struct {
 	Typename  *string `json:"__typename"`
 	MediaURL  *string `json:"mediaURL"`
 	MediaType *string `json:"mediaType"`
 }
 
-// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia.Typename, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia) GetTypename() *string {
+// GetTypename returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia.Typename, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia.MediaURL, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia) GetMediaURL() *string {
+// GetMediaURL returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia.MediaURL, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia) GetMediaURL() *string {
 	return v.MediaURL
 }
 
-// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia.MediaType, and is useful for accessing the field via an interface.
-func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserGalleryUserTokensTokenMediaVideoMedia) GetMediaType() *string {
+// GetMediaType returns syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia.MediaType, and is useful for accessing the field via an interface.
+func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia) GetMediaType() *string {
 	return v.MediaType
 }
 
@@ -5148,28 +5148,28 @@ func (v *userByAddressQueryUserByAddressErrUserNotFound) GetTypename() *string {
 // GetMessage returns userByAddressQueryUserByAddressErrUserNotFound.Message, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByAddressQueryUserByAddressGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type userByAddressQueryUserByAddressGalleryUser struct {
+// userByAddressQueryUserByAddressSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type userByAddressQueryUserByAddressSplitFiUser struct {
 	Typename *string      `json:"__typename"`
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetTypename returns userByAddressQueryUserByAddressGalleryUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressGalleryUser) GetTypename() *string { return v.Typename }
+// GetTypename returns userByAddressQueryUserByAddressSplitFiUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressSplitFiUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByAddressQueryUserByAddressGalleryUser.Username, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressGalleryUser) GetUsername() *string { return v.Username }
+// GetUsername returns userByAddressQueryUserByAddressSplitFiUser.Username, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressSplitFiUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns userByAddressQueryUserByAddressGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressGalleryUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns userByAddressQueryUserByAddressSplitFiUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userByAddressQueryUserByAddressUserByAddressOrError includes the requested fields of the GraphQL interface UserByAddressOrError.
 //
 // userByAddressQueryUserByAddressUserByAddressOrError is implemented by the following types:
 // userByAddressQueryUserByAddressErrInvalidInput
 // userByAddressQueryUserByAddressErrUserNotFound
-// userByAddressQueryUserByAddressGalleryUser
+// userByAddressQueryUserByAddressSplitFiUser
 type userByAddressQueryUserByAddressUserByAddressOrError interface {
 	implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -5180,7 +5180,7 @@ func (v *userByAddressQueryUserByAddressErrInvalidInput) implementsGraphQLInterf
 }
 func (v *userByAddressQueryUserByAddressErrUserNotFound) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError() {
 }
-func (v *userByAddressQueryUserByAddressGalleryUser) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError() {
+func (v *userByAddressQueryUserByAddressSplitFiUser) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError() {
 }
 
 func __unmarshaluserByAddressQueryUserByAddressUserByAddressOrError(b []byte, v *userByAddressQueryUserByAddressUserByAddressOrError) error {
@@ -5203,8 +5203,8 @@ func __unmarshaluserByAddressQueryUserByAddressUserByAddressOrError(b []byte, v 
 	case "ErrUserNotFound":
 		*v = new(userByAddressQueryUserByAddressErrUserNotFound)
 		return json.Unmarshal(b, *v)
-	case "GalleryUser":
-		*v = new(userByAddressQueryUserByAddressGalleryUser)
+	case "SplitFiUser":
+		*v = new(userByAddressQueryUserByAddressSplitFiUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -5235,12 +5235,12 @@ func __marshaluserByAddressQueryUserByAddressUserByAddressOrError(v *userByAddre
 			*userByAddressQueryUserByAddressErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByAddressQueryUserByAddressGalleryUser:
-		typename = "GalleryUser"
+	case *userByAddressQueryUserByAddressSplitFiUser:
+		typename = "SplitFiUser"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByAddressQueryUserByAddressGalleryUser
+			*userByAddressQueryUserByAddressSplitFiUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -5351,45 +5351,45 @@ func (v *userByIdQueryUserByIdErrUserNotFound) GetTypename() *string { return v.
 // GetMessage returns userByIdQueryUserByIdErrUserNotFound.Message, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByIdQueryUserByIdGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type userByIdQueryUserByIdGalleryUser struct {
+// userByIdQueryUserByIdSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type userByIdQueryUserByIdSplitFiUser struct {
 	Typename       *string                                         `json:"__typename"`
 	Username       *string                                         `json:"username"`
 	Dbid           persist.DBID                                    `json:"dbid"`
-	SocialAccounts *userByIdQueryUserByIdGalleryUserSocialAccounts `json:"socialAccounts"`
+	SocialAccounts *userByIdQueryUserByIdSplitFiUserSocialAccounts `json:"socialAccounts"`
 }
 
-// GetTypename returns userByIdQueryUserByIdGalleryUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdGalleryUser) GetTypename() *string { return v.Typename }
+// GetTypename returns userByIdQueryUserByIdSplitFiUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdSplitFiUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByIdQueryUserByIdGalleryUser.Username, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdGalleryUser) GetUsername() *string { return v.Username }
+// GetUsername returns userByIdQueryUserByIdSplitFiUser.Username, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdSplitFiUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns userByIdQueryUserByIdGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdGalleryUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns userByIdQueryUserByIdSplitFiUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
 
-// GetSocialAccounts returns userByIdQueryUserByIdGalleryUser.SocialAccounts, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdGalleryUser) GetSocialAccounts() *userByIdQueryUserByIdGalleryUserSocialAccounts {
+// GetSocialAccounts returns userByIdQueryUserByIdSplitFiUser.SocialAccounts, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdSplitFiUser) GetSocialAccounts() *userByIdQueryUserByIdSplitFiUserSocialAccounts {
 	return v.SocialAccounts
 }
 
-// userByIdQueryUserByIdGalleryUserSocialAccounts includes the requested fields of the GraphQL type SocialAccounts.
-type userByIdQueryUserByIdGalleryUserSocialAccounts struct {
-	Twitter *userByIdQueryUserByIdGalleryUserSocialAccountsTwitterTwitterSocialAccount `json:"twitter"`
+// userByIdQueryUserByIdSplitFiUserSocialAccounts includes the requested fields of the GraphQL type SocialAccounts.
+type userByIdQueryUserByIdSplitFiUserSocialAccounts struct {
+	Twitter *userByIdQueryUserByIdSplitFiUserSocialAccountsTwitterTwitterSocialAccount `json:"twitter"`
 }
 
-// GetTwitter returns userByIdQueryUserByIdGalleryUserSocialAccounts.Twitter, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdGalleryUserSocialAccounts) GetTwitter() *userByIdQueryUserByIdGalleryUserSocialAccountsTwitterTwitterSocialAccount {
+// GetTwitter returns userByIdQueryUserByIdSplitFiUserSocialAccounts.Twitter, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdSplitFiUserSocialAccounts) GetTwitter() *userByIdQueryUserByIdSplitFiUserSocialAccountsTwitterTwitterSocialAccount {
 	return v.Twitter
 }
 
-// userByIdQueryUserByIdGalleryUserSocialAccountsTwitterTwitterSocialAccount includes the requested fields of the GraphQL type TwitterSocialAccount.
-type userByIdQueryUserByIdGalleryUserSocialAccountsTwitterTwitterSocialAccount struct {
+// userByIdQueryUserByIdSplitFiUserSocialAccountsTwitterTwitterSocialAccount includes the requested fields of the GraphQL type TwitterSocialAccount.
+type userByIdQueryUserByIdSplitFiUserSocialAccountsTwitterTwitterSocialAccount struct {
 	Username string `json:"username"`
 }
 
-// GetUsername returns userByIdQueryUserByIdGalleryUserSocialAccountsTwitterTwitterSocialAccount.Username, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdGalleryUserSocialAccountsTwitterTwitterSocialAccount) GetUsername() string {
+// GetUsername returns userByIdQueryUserByIdSplitFiUserSocialAccountsTwitterTwitterSocialAccount.Username, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdSplitFiUserSocialAccountsTwitterTwitterSocialAccount) GetUsername() string {
 	return v.Username
 }
 
@@ -5398,7 +5398,7 @@ func (v *userByIdQueryUserByIdGalleryUserSocialAccountsTwitterTwitterSocialAccou
 // userByIdQueryUserByIdUserByIdOrError is implemented by the following types:
 // userByIdQueryUserByIdErrInvalidInput
 // userByIdQueryUserByIdErrUserNotFound
-// userByIdQueryUserByIdGalleryUser
+// userByIdQueryUserByIdSplitFiUser
 type userByIdQueryUserByIdUserByIdOrError interface {
 	implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -5409,7 +5409,7 @@ func (v *userByIdQueryUserByIdErrInvalidInput) implementsGraphQLInterfaceuserByI
 }
 func (v *userByIdQueryUserByIdErrUserNotFound) implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError() {
 }
-func (v *userByIdQueryUserByIdGalleryUser) implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError() {
+func (v *userByIdQueryUserByIdSplitFiUser) implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError() {
 }
 
 func __unmarshaluserByIdQueryUserByIdUserByIdOrError(b []byte, v *userByIdQueryUserByIdUserByIdOrError) error {
@@ -5432,8 +5432,8 @@ func __unmarshaluserByIdQueryUserByIdUserByIdOrError(b []byte, v *userByIdQueryU
 	case "ErrUserNotFound":
 		*v = new(userByIdQueryUserByIdErrUserNotFound)
 		return json.Unmarshal(b, *v)
-	case "GalleryUser":
-		*v = new(userByIdQueryUserByIdGalleryUser)
+	case "SplitFiUser":
+		*v = new(userByIdQueryUserByIdSplitFiUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -5464,12 +5464,12 @@ func __marshaluserByIdQueryUserByIdUserByIdOrError(v *userByIdQueryUserByIdUserB
 			*userByIdQueryUserByIdErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByIdQueryUserByIdGalleryUser:
-		typename = "GalleryUser"
+	case *userByIdQueryUserByIdSplitFiUser:
+		typename = "SplitFiUser"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByIdQueryUserByIdGalleryUser
+			*userByIdQueryUserByIdSplitFiUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -5580,28 +5580,28 @@ func (v *userByUsernameQueryUserByUsernameErrUserNotFound) GetTypename() *string
 // GetMessage returns userByUsernameQueryUserByUsernameErrUserNotFound.Message, and is useful for accessing the field via an interface.
 func (v *userByUsernameQueryUserByUsernameErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByUsernameQueryUserByUsernameGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type userByUsernameQueryUserByUsernameGalleryUser struct {
+// userByUsernameQueryUserByUsernameSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type userByUsernameQueryUserByUsernameSplitFiUser struct {
 	Typename *string      `json:"__typename"`
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetTypename returns userByUsernameQueryUserByUsernameGalleryUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameGalleryUser) GetTypename() *string { return v.Typename }
+// GetTypename returns userByUsernameQueryUserByUsernameSplitFiUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByUsernameQueryUserByUsernameSplitFiUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByUsernameQueryUserByUsernameGalleryUser.Username, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameGalleryUser) GetUsername() *string { return v.Username }
+// GetUsername returns userByUsernameQueryUserByUsernameSplitFiUser.Username, and is useful for accessing the field via an interface.
+func (v *userByUsernameQueryUserByUsernameSplitFiUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns userByUsernameQueryUserByUsernameGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameGalleryUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns userByUsernameQueryUserByUsernameSplitFiUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userByUsernameQueryUserByUsernameSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userByUsernameQueryUserByUsernameUserByUsernameOrError includes the requested fields of the GraphQL interface UserByUsernameOrError.
 //
 // userByUsernameQueryUserByUsernameUserByUsernameOrError is implemented by the following types:
 // userByUsernameQueryUserByUsernameErrInvalidInput
 // userByUsernameQueryUserByUsernameErrUserNotFound
-// userByUsernameQueryUserByUsernameGalleryUser
+// userByUsernameQueryUserByUsernameSplitFiUser
 type userByUsernameQueryUserByUsernameUserByUsernameOrError interface {
 	implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -5612,7 +5612,7 @@ func (v *userByUsernameQueryUserByUsernameErrInvalidInput) implementsGraphQLInte
 }
 func (v *userByUsernameQueryUserByUsernameErrUserNotFound) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
 }
-func (v *userByUsernameQueryUserByUsernameGalleryUser) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
+func (v *userByUsernameQueryUserByUsernameSplitFiUser) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
 }
 
 func __unmarshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(b []byte, v *userByUsernameQueryUserByUsernameUserByUsernameOrError) error {
@@ -5635,8 +5635,8 @@ func __unmarshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(b []byte,
 	case "ErrUserNotFound":
 		*v = new(userByUsernameQueryUserByUsernameErrUserNotFound)
 		return json.Unmarshal(b, *v)
-	case "GalleryUser":
-		*v = new(userByUsernameQueryUserByUsernameGalleryUser)
+	case "SplitFiUser":
+		*v = new(userByUsernameQueryUserByUsernameSplitFiUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -5667,12 +5667,12 @@ func __marshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(v *userByUs
 			*userByUsernameQueryUserByUsernameErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByUsernameQueryUserByUsernameGalleryUser:
-		typename = "GalleryUser"
+	case *userByUsernameQueryUserByUsernameSplitFiUser:
+		typename = "SplitFiUser"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByUsernameQueryUserByUsernameGalleryUser
+			*userByUsernameQueryUserByUsernameSplitFiUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -5948,7 +5948,7 @@ func (v *viewerQueryResponse) __premarshalJSON() (*__premarshalviewerQueryRespon
 type viewerQueryViewer struct {
 	Typename        *string                                          `json:"__typename"`
 	UserExperiences []viewerQueryViewerUserExperiencesUserExperience `json:"userExperiences"`
-	User            *viewerQueryViewerUserGalleryUser                `json:"user"`
+	User            *viewerQueryViewerUserSplitFiUser                `json:"user"`
 }
 
 // GetTypename returns viewerQueryViewer.Typename, and is useful for accessing the field via an interface.
@@ -5960,7 +5960,7 @@ func (v *viewerQueryViewer) GetUserExperiences() []viewerQueryViewerUserExperien
 }
 
 // GetUser returns viewerQueryViewer.User, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewer) GetUser() *viewerQueryViewerUserGalleryUser { return v.User }
+func (v *viewerQueryViewer) GetUser() *viewerQueryViewerUserSplitFiUser { return v.User }
 
 // viewerQueryViewerErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
 type viewerQueryViewerErrNotAuthorized struct {
@@ -5986,41 +5986,41 @@ func (v *viewerQueryViewerUserExperiencesUserExperience) GetType() UserExperienc
 // GetExperienced returns viewerQueryViewerUserExperiencesUserExperience.Experienced, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerUserExperiencesUserExperience) GetExperienced() bool { return v.Experienced }
 
-// viewerQueryViewerUserGalleryUser includes the requested fields of the GraphQL type GalleryUser.
-type viewerQueryViewerUserGalleryUser struct {
+// viewerQueryViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
+type viewerQueryViewerUserSplitFiUser struct {
 	Username       *string                                         `json:"username"`
 	Dbid           persist.DBID                                    `json:"dbid"`
-	SocialAccounts *viewerQueryViewerUserGalleryUserSocialAccounts `json:"socialAccounts"`
+	SocialAccounts *viewerQueryViewerUserSplitFiUserSocialAccounts `json:"socialAccounts"`
 }
 
-// GetUsername returns viewerQueryViewerUserGalleryUser.Username, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserGalleryUser) GetUsername() *string { return v.Username }
+// GetUsername returns viewerQueryViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUserSplitFiUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns viewerQueryViewerUserGalleryUser.Dbid, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserGalleryUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns viewerQueryViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUserSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
 
-// GetSocialAccounts returns viewerQueryViewerUserGalleryUser.SocialAccounts, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserGalleryUser) GetSocialAccounts() *viewerQueryViewerUserGalleryUserSocialAccounts {
+// GetSocialAccounts returns viewerQueryViewerUserSplitFiUser.SocialAccounts, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUserSplitFiUser) GetSocialAccounts() *viewerQueryViewerUserSplitFiUserSocialAccounts {
 	return v.SocialAccounts
 }
 
-// viewerQueryViewerUserGalleryUserSocialAccounts includes the requested fields of the GraphQL type SocialAccounts.
-type viewerQueryViewerUserGalleryUserSocialAccounts struct {
-	Twitter *viewerQueryViewerUserGalleryUserSocialAccountsTwitterTwitterSocialAccount `json:"twitter"`
+// viewerQueryViewerUserSplitFiUserSocialAccounts includes the requested fields of the GraphQL type SocialAccounts.
+type viewerQueryViewerUserSplitFiUserSocialAccounts struct {
+	Twitter *viewerQueryViewerUserSplitFiUserSocialAccountsTwitterTwitterSocialAccount `json:"twitter"`
 }
 
-// GetTwitter returns viewerQueryViewerUserGalleryUserSocialAccounts.Twitter, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserGalleryUserSocialAccounts) GetTwitter() *viewerQueryViewerUserGalleryUserSocialAccountsTwitterTwitterSocialAccount {
+// GetTwitter returns viewerQueryViewerUserSplitFiUserSocialAccounts.Twitter, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUserSplitFiUserSocialAccounts) GetTwitter() *viewerQueryViewerUserSplitFiUserSocialAccountsTwitterTwitterSocialAccount {
 	return v.Twitter
 }
 
-// viewerQueryViewerUserGalleryUserSocialAccountsTwitterTwitterSocialAccount includes the requested fields of the GraphQL type TwitterSocialAccount.
-type viewerQueryViewerUserGalleryUserSocialAccountsTwitterTwitterSocialAccount struct {
+// viewerQueryViewerUserSplitFiUserSocialAccountsTwitterTwitterSocialAccount includes the requested fields of the GraphQL type TwitterSocialAccount.
+type viewerQueryViewerUserSplitFiUserSocialAccountsTwitterTwitterSocialAccount struct {
 	Username string `json:"username"`
 }
 
-// GetUsername returns viewerQueryViewerUserGalleryUserSocialAccountsTwitterTwitterSocialAccount.Username, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserGalleryUserSocialAccountsTwitterTwitterSocialAccount) GetUsername() string {
+// GetUsername returns viewerQueryViewerUserSplitFiUserSocialAccountsTwitterTwitterSocialAccount.Username, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUserSplitFiUserSocialAccountsTwitterTwitterSocialAccount) GetUsername() string {
 	return v.Username
 }
 
@@ -6931,7 +6931,7 @@ query userByAddressQuery ($input: ChainAddressInput!) {
 			__typename
 			message
 		}
-		... on GalleryUser {
+		... on SplitFiUser {
 			username
 			dbid
 		}
@@ -6974,7 +6974,7 @@ query userByIdQuery ($id: DBID!) {
 			__typename
 			message
 		}
-		... on GalleryUser {
+		... on SplitFiUser {
 			username
 			dbid
 			socialAccounts {
@@ -7022,7 +7022,7 @@ query userByUsernameQuery ($user: String!) {
 			__typename
 			message
 		}
-		... on GalleryUser {
+		... on SplitFiUser {
 			username
 			dbid
 		}

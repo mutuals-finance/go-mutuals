@@ -1477,7 +1477,7 @@ type GetOwnersByContractIdBatchPaginateBatchResults struct {
 
 type GetOwnersByContractIdBatchPaginateParams struct {
 	Contract           persist.DBID
-	GalleryUsersOnly   bool
+	SplitfiUsersOnly   bool
 	CurBeforeUniversal bool
 	CurBeforeTime      time.Time
 	CurBeforeID        persist.DBID
@@ -1499,7 +1499,7 @@ func (q *Queries) GetOwnersByContractIdBatchPaginate(ctx context.Context, arg []
 	for _, a := range arg {
 		vals := []interface{}{
 			a.Contract,
-			a.GalleryUsersOnly,
+			a.SplitfiUsersOnly,
 			a.CurBeforeUniversal,
 			a.CurBeforeTime,
 			a.CurBeforeID,
@@ -2187,7 +2187,7 @@ type GetTokensByContractIdBatchPaginateBatchResults struct {
 
 type GetTokensByContractIdBatchPaginateParams struct {
 	Contract           persist.DBID
-	GalleryUsersOnly   bool
+	SplitfiUsersOnly   bool
 	CurBeforeUniversal bool
 	CurBeforeTime      time.Time
 	CurBeforeID        persist.DBID
@@ -2203,7 +2203,7 @@ func (q *Queries) GetTokensByContractIdBatchPaginate(ctx context.Context, arg []
 	for _, a := range arg {
 		vals := []interface{}{
 			a.Contract,
-			a.GalleryUsersOnly,
+			a.SplitfiUsersOnly,
 			a.CurBeforeUniversal,
 			a.CurBeforeTime,
 			a.CurBeforeID,

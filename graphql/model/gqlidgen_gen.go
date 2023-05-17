@@ -54,10 +54,6 @@ func (r *Gallery) ID() GqlID {
 	return GqlID(fmt.Sprintf("Gallery:%s", r.Dbid))
 }
 
-func (r *GalleryUser) ID() GqlID {
-	return GqlID(fmt.Sprintf("GalleryUser:%s", r.Dbid))
-}
-
 func (r *MembershipTier) ID() GqlID {
 	return GqlID(fmt.Sprintf("MembershipTier:%s", r.Dbid))
 }
@@ -76,6 +72,10 @@ func (r *SomeoneFollowedYouNotification) ID() GqlID {
 
 func (r *SomeoneViewedYourGalleryNotification) ID() GqlID {
 	return GqlID(fmt.Sprintf("SomeoneViewedYourGalleryNotification:%s", r.Dbid))
+}
+
+func (r *SplitFiUser) ID() GqlID {
+	return GqlID(fmt.Sprintf("SplitFiUser:%s", r.Dbid))
 }
 
 func (r *Token) ID() GqlID {
@@ -106,12 +106,12 @@ type NodeFetcher struct {
 	OnContract                             func(ctx context.Context, dbid persist.DBID) (*Contract, error)
 	OnDeletedNode                          func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
 	OnGallery                              func(ctx context.Context, dbid persist.DBID) (*Gallery, error)
-	OnGalleryUser                          func(ctx context.Context, dbid persist.DBID) (*GalleryUser, error)
 	OnMembershipTier                       func(ctx context.Context, dbid persist.DBID) (*MembershipTier, error)
 	OnSocialConnection                     func(ctx context.Context, socialId string, socialType persist.SocialProvider) (*SocialConnection, error)
 	OnSomeoneFollowedYouBackNotification   func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouBackNotification, error)
 	OnSomeoneFollowedYouNotification       func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouNotification, error)
 	OnSomeoneViewedYourGalleryNotification func(ctx context.Context, dbid persist.DBID) (*SomeoneViewedYourGalleryNotification, error)
+	OnSplitFiUser                          func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
 	OnToken                                func(ctx context.Context, dbid persist.DBID) (*Token, error)
 	OnViewer                               func(ctx context.Context, userId string) (*Viewer, error)
 	OnWallet                               func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
@@ -157,11 +157,6 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Gallery' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnGallery(ctx, persist.DBID(ids[0]))
-	case "GalleryUser":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'GalleryUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnGalleryUser(ctx, persist.DBID(ids[0]))
 	case "MembershipTier":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MembershipTier' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -187,6 +182,11 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SomeoneViewedYourGalleryNotification' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnSomeoneViewedYourGalleryNotification(ctx, persist.DBID(ids[0]))
+	case "SplitFiUser":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SplitFiUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnSplitFiUser(ctx, persist.DBID(ids[0]))
 	case "Token":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Token' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -221,8 +221,6 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
 	case n.OnGallery == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnGallery")
-	case n.OnGalleryUser == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnGalleryUser")
 	case n.OnMembershipTier == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMembershipTier")
 	case n.OnSocialConnection == nil:
@@ -233,6 +231,8 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSomeoneFollowedYouNotification")
 	case n.OnSomeoneViewedYourGalleryNotification == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSomeoneViewedYourGalleryNotification")
+	case n.OnSplitFiUser == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplitFiUser")
 	case n.OnToken == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnToken")
 	case n.OnViewer == nil:

@@ -120,7 +120,7 @@ func (api SocialAPI) GetConnectionsPaginate(ctx context.Context, socialProvider 
 		}
 		return util.Map(results, func(r db.GetSocialConnectionsPaginateRow) (interface{}, error) {
 			m := model.SocialConnection{
-				GalleryUser:        &model.GalleryUser{Dbid: r.UserID},
+				SplitFiUser:        &model.SplitFiUser{Dbid: r.UserID},
 				CurrentlyFollowing: r.AlreadyFollowing,
 				SocialType:         socialProvider,
 				SocialID:           r.SocialID.(string),
@@ -152,7 +152,7 @@ func (api SocialAPI) GetConnectionsPaginate(ctx context.Context, socialProvider 
 
 	cursorFunc := func(i interface{}) (bool, time.Time, persist.DBID, error) {
 		if conn, ok := i.(model.SocialConnection); ok {
-			return conn.CurrentlyFollowing, conn.UserCreatedAt.Time(), conn.GalleryUser.Dbid, nil
+			return conn.CurrentlyFollowing, conn.UserCreatedAt.Time(), conn.SplitFiUser.Dbid, nil
 		}
 		return false, time.Time{}, "", fmt.Errorf("interface{} is not a social connection")
 	}
@@ -245,7 +245,7 @@ func (api SocialAPI) GetConnections(ctx context.Context, socialProvider persist.
 		}
 		return util.Map(results, func(r db.GetSocialConnectionsRow) (model.SocialConnection, error) {
 			m := model.SocialConnection{
-				GalleryUser:        &model.GalleryUser{Dbid: r.UserID},
+				SplitFiUser:        &model.SplitFiUser{Dbid: r.UserID},
 				CurrentlyFollowing: r.AlreadyFollowing,
 				SocialType:         socialProvider,
 				SocialID:           r.SocialID.(string),

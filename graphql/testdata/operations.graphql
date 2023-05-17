@@ -4,7 +4,7 @@ query userByUsernameQuery($user: String!) {
       __typename
       message
     }
-    ... on GalleryUser {
+    ... on SplitFiUser {
       username
       dbid
     }
@@ -17,7 +17,7 @@ query userByIdQuery($id: DBID!) {
       __typename
       message
     }
-    ... on GalleryUser {
+    ... on SplitFiUser {
       username
       dbid
       socialAccounts {
@@ -35,7 +35,7 @@ query userByAddressQuery($input: ChainAddressInput!) {
       __typename
       message
     }
-    ... on GalleryUser {
+    ... on SplitFiUser {
       username
       dbid
     }

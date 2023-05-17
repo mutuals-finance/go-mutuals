@@ -143,7 +143,7 @@ func (api ContractAPI) RefreshOwnersAsync(ctx context.Context, contractID persis
 	return task.CreateTaskForContractOwnerProcessing(ctx, in, api.taskClient)
 }
 
-func (api ContractAPI) GetCommunityOwnersByContractAddress(ctx context.Context, contractAddress persist.ChainAddress, before, after *string, first, last *int, onlyGalleryUsers *bool) ([]*model.TokenHolder, PageInfo, error) {
+func (api ContractAPI) GetCommunityOwnersByContractAddress(ctx context.Context, contractAddress persist.ChainAddress, before, after *string, first, last *int, onlySplitFiUsers *bool) ([]*model.TokenHolder, PageInfo, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"contractAddress": {contractAddress, "required"},
@@ -161,8 +161,8 @@ func (api ContractAPI) GetCommunityOwnersByContractAddress(ctx context.Context, 
 	}
 
 	ogu := false
-	if onlyGalleryUsers != nil {
-		ogu = *onlyGalleryUsers
+	if onlySplitFiUsers != nil {
+		ogu = *onlySplitFiUsers
 	}
 
 	boolFunc := func(params boolTimeIDPagingParams) ([]interface{}, error) {
@@ -170,7 +170,7 @@ func (api ContractAPI) GetCommunityOwnersByContractAddress(ctx context.Context, 
 		owners, err := api.loaders.OwnersByContractID.Load(db.GetOwnersByContractIdBatchPaginateParams{
 			Contract:           contract.ID,
 			Limit:              sql.NullInt32{Int32: int32(params.Limit), Valid: true},
-			GalleryUsersOnly:   ogu,
+			SplitfiUsersOnly:   ogu,
 			CurBeforeUniversal: params.CursorBeforeBool,
 			CurAfterUniversal:  params.CursorAfterBool,
 			CurBeforeTime:      params.CursorBeforeTime,
@@ -196,7 +196,7 @@ func (api ContractAPI) GetCommunityOwnersByContractAddress(ctx context.Context, 
 
 		total, err := api.queries.CountOwnersByContractId(ctx, db.CountOwnersByContractIdParams{
 			Contract:         contract.ID,
-			GalleryUsersOnly: ogu,
+			SplitfiUsersOnly: ogu,
 		})
 
 		return int(total), err

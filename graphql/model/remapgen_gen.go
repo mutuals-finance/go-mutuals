@@ -98,16 +98,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"GalleryUserOrAddress": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(GalleryUserOrAddress)
-		return obj, ok
-	},
-
-	"GalleryUserOrWallet": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(GalleryUserOrWallet)
-		return obj, ok
-	},
-
 	"GetAuthNoncePayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(GetAuthNoncePayloadOrError)
 		return obj, ok
@@ -225,6 +215,16 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"SocialQueriesOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(SocialQueriesOrError)
+		return obj, ok
+	},
+
+	"SplitFiUserOrAddress": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(SplitFiUserOrAddress)
+		return obj, ok
+	},
+
+	"SplitFiUserOrWallet": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(SplitFiUserOrWallet)
 		return obj, ok
 	},
 

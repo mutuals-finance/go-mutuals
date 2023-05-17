@@ -72,8 +72,8 @@ func (r *collectionTokenResolver) TokenSettings(ctx context.Context, obj *model.
 }
 
 // TokensInCommunity is the resolver for the tokensInCommunity field.
-func (r *communityResolver) TokensInCommunity(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlyGalleryUsers *bool) (*model.TokensConnection, error) {
-	if onlyGalleryUsers == nil || (onlyGalleryUsers != nil && !*onlyGalleryUsers) {
+func (r *communityResolver) TokensInCommunity(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlySplitFiUsers *bool) (*model.TokensConnection, error) {
+	if onlySplitFiUsers == nil || (onlySplitFiUsers != nil && !*onlySplitFiUsers) {
 		refresh := false
 		if obj.ForceRefresh != nil {
 			refresh = *obj.ForceRefresh
@@ -83,12 +83,12 @@ func (r *communityResolver) TokensInCommunity(ctx context.Context, obj *model.Co
 			return nil, err
 		}
 	}
-	return resolveTokensByContractIDWithPagination(ctx, obj.Dbid, before, after, first, last, onlyGalleryUsers)
+	return resolveTokensByContractIDWithPagination(ctx, obj.Dbid, before, after, first, last, onlySplitFiUsers)
 }
 
 // Owners is the resolver for the owners field.
-func (r *communityResolver) Owners(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlyGalleryUsers *bool) (*model.TokenHoldersConnection, error) {
-	if onlyGalleryUsers == nil || (onlyGalleryUsers != nil && !*onlyGalleryUsers) {
+func (r *communityResolver) Owners(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlySplitFiUsers *bool) (*model.TokenHoldersConnection, error) {
+	if onlySplitFiUsers == nil || (onlySplitFiUsers != nil && !*onlySplitFiUsers) {
 		refresh := false
 		if obj.ForceRefresh != nil {
 			refresh = *obj.ForceRefresh
@@ -99,17 +99,17 @@ func (r *communityResolver) Owners(ctx context.Context, obj *model.Community, be
 		}
 	}
 
-	return resolveCommunityOwnersByContractID(ctx, obj.Dbid, before, after, first, last, onlyGalleryUsers)
+	return resolveCommunityOwnersByContractID(ctx, obj.Dbid, before, after, first, last, onlySplitFiUsers)
 }
 
 // User is the resolver for the user field.
-func (r *followInfoResolver) User(ctx context.Context, obj *model.FollowInfo) (*model.GalleryUser, error) {
-	return resolveGalleryUserByUserID(ctx, obj.User.Dbid)
+func (r *followInfoResolver) User(ctx context.Context, obj *model.FollowInfo) (*model.SplitFiUser, error) {
+	return resolveSplitFiUserByUserID(ctx, obj.User.Dbid)
 }
 
 // User is the resolver for the user field.
-func (r *followUserPayloadResolver) User(ctx context.Context, obj *model.FollowUserPayload) (*model.GalleryUser, error) {
-	return resolveGalleryUserByUserID(ctx, obj.User.Dbid)
+func (r *followUserPayloadResolver) User(ctx context.Context, obj *model.FollowUserPayload) (*model.SplitFiUser, error) {
+	return resolveSplitFiUserByUserID(ctx, obj.User.Dbid)
 }
 
 // TokenPreviews is the resolver for the tokenPreviews field.
@@ -118,131 +118,19 @@ func (r *galleryResolver) TokenPreviews(ctx context.Context, obj *model.Gallery)
 }
 
 // Owner is the resolver for the owner field.
-func (r *galleryResolver) Owner(ctx context.Context, obj *model.Gallery) (*model.GalleryUser, error) {
+func (r *galleryResolver) Owner(ctx context.Context, obj *model.Gallery) (*model.SplitFiUser, error) {
 	gallery, err := publicapi.For(ctx).Gallery.GetGalleryById(ctx, obj.Dbid)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return resolveGalleryUserByUserID(ctx, gallery.OwnerUserID)
+	return resolveSplitFiUserByUserID(ctx, gallery.OwnerUserID)
 }
 
 // Collections is the resolver for the collections field.
 func (r *galleryResolver) Collections(ctx context.Context, obj *model.Gallery) ([]*model.Collection, error) {
 	return resolveCollectionsByGalleryID(ctx, obj.Dbid)
-}
-
-// Roles is the resolver for the roles field.
-func (r *galleryUserResolver) Roles(ctx context.Context, obj *model.GalleryUser) ([]*persist.Role, error) {
-	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserID(ctx, obj.Dbid)
-	if err != nil {
-		return nil, err
-	}
-
-	roles := make([]*persist.Role, len(dbRoles))
-	for i, role := range dbRoles {
-		r := role
-		roles[i] = &r
-	}
-
-	return roles, nil
-}
-
-// SocialAccounts is the resolver for the socialAccounts field.
-func (r *galleryUserResolver) SocialAccounts(ctx context.Context, obj *model.GalleryUser) (*model.SocialAccounts, error) {
-	return resolveUserSocialsByUserID(ctx, obj.Dbid)
-}
-
-// Tokens is the resolver for the tokens field.
-func (r *galleryUserResolver) Tokens(ctx context.Context, obj *model.GalleryUser) ([]*model.Token, error) {
-	return resolveTokensByUserID(ctx, obj.Dbid)
-}
-
-// TokensByChain is the resolver for the tokensByChain field.
-func (r *galleryUserResolver) TokensByChain(ctx context.Context, obj *model.GalleryUser, chain persist.Chain) (*model.ChainTokens, error) {
-	tokens, err := publicapi.For(ctx).Token.GetTokensByUserIDAndChain(ctx, obj.Dbid, chain)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.ChainTokens{
-		Chain:  &chain,
-		Tokens: tokensToModel(ctx, tokens),
-	}, nil
-}
-
-// Wallets is the resolver for the wallets field.
-func (r *galleryUserResolver) Wallets(ctx context.Context, obj *model.GalleryUser) ([]*model.Wallet, error) {
-	return resolveWalletsByUserID(ctx, obj.Dbid)
-}
-
-// PrimaryWallet is the resolver for the primaryWallet field.
-func (r *galleryUserResolver) PrimaryWallet(ctx context.Context, obj *model.GalleryUser) (*model.Wallet, error) {
-	return resolvePrimaryWalletByUserID(ctx, obj.HelperGalleryUserData.UserID)
-}
-
-// FeaturedGallery is the resolver for the featuredGallery field.
-func (r *galleryUserResolver) FeaturedGallery(ctx context.Context, obj *model.GalleryUser) (*model.Gallery, error) {
-	if obj.HelperGalleryUserData.FeaturedGalleryID == nil {
-		return nil, nil
-	}
-
-	return resolveGalleryByGalleryID(ctx, *obj.HelperGalleryUserData.FeaturedGalleryID)
-}
-
-// Galleries is the resolver for the galleries field.
-func (r *galleryUserResolver) Galleries(ctx context.Context, obj *model.GalleryUser) ([]*model.Gallery, error) {
-	return resolveGalleriesByUserID(ctx, obj.Dbid)
-}
-
-// Badges is the resolver for the badges field.
-func (r *galleryUserResolver) Badges(ctx context.Context, obj *model.GalleryUser) ([]*model.Badge, error) {
-	return resolveBadgesByUserID(ctx, obj.Dbid)
-}
-
-// Followers is the resolver for the followers field.
-func (r *galleryUserResolver) Followers(ctx context.Context, obj *model.GalleryUser) ([]*model.GalleryUser, error) {
-	return resolveFollowersByUserID(ctx, obj.Dbid)
-}
-
-// Following is the resolver for the following field.
-func (r *galleryUserResolver) Following(ctx context.Context, obj *model.GalleryUser) ([]*model.GalleryUser, error) {
-	return resolveFollowingByUserID(ctx, obj.Dbid)
-}
-
-// SharedFollowers is the resolver for the sharedFollowers field.
-func (r *galleryUserResolver) SharedFollowers(ctx context.Context, obj *model.GalleryUser, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
-	users, pageInfo, err := publicapi.For(ctx).User.SharedFollowers(ctx, obj.UserID, before, after, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.UsersConnection{
-		Edges:    usersToEdges(ctx, users),
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
-}
-
-// SharedCommunities is the resolver for the sharedCommunities field.
-func (r *galleryUserResolver) SharedCommunities(ctx context.Context, obj *model.GalleryUser, before *string, after *string, first *int, last *int) (*model.CommunitiesConnection, error) {
-	communities, pageInfo, err := publicapi.For(ctx).User.SharedCommunities(ctx, obj.UserID, before, after, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*model.CommunityEdge, len(communities))
-	for i, community := range communities {
-		edges[i] = &model.CommunityEdge{
-			Node:   communityToModel(ctx, community, util.ToPointer(false)),
-			Cursor: nil, // not used by relay, but relay will complain without this field existing
-		}
-	}
-
-	return &model.CommunitiesConnection{
-		Edges:    edges,
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
 }
 
 // AddUserWallet is the resolver for the addUserWallet field.
@@ -766,7 +654,7 @@ func (r *mutationResolver) FollowUser(ctx context.Context, userID persist.DBID) 
 
 	output := &model.FollowUserPayload{
 		Viewer: resolveViewer(ctx),
-		User: &model.GalleryUser{
+		User: &model.SplitFiUser{
 			Dbid: userID, // remaining fields handled by dedicated resolver
 		},
 	}
@@ -798,7 +686,7 @@ func (r *mutationResolver) UnfollowUser(ctx context.Context, userID persist.DBID
 
 	output := &model.UnfollowUserPayload{
 		Viewer: resolveViewer(ctx),
-		User: &model.GalleryUser{
+		User: &model.SplitFiUser{
 			Dbid: userID, // remaining fields handled by dedicated resolver
 		},
 	}
@@ -1136,7 +1024,7 @@ func (r *mutationResolver) MoveCollectionToGallery(ctx context.Context, input *m
 }
 
 // Owner is the resolver for the owner field.
-func (r *ownerAtBlockResolver) Owner(ctx context.Context, obj *model.OwnerAtBlock) (model.GalleryUserOrAddress, error) {
+func (r *ownerAtBlockResolver) Owner(ctx context.Context, obj *model.OwnerAtBlock) (model.SplitFiUserOrAddress, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -1159,22 +1047,22 @@ func (r *queryResolver) Viewer(ctx context.Context) (model.ViewerOrError, error)
 
 // UserByUsername is the resolver for the userByUsername field.
 func (r *queryResolver) UserByUsername(ctx context.Context, username string) (model.UserByUsernameOrError, error) {
-	return resolveGalleryUserByUsername(ctx, username)
+	return resolveSplitFiUserByUsername(ctx, username)
 }
 
 // UserByID is the resolver for the userById field.
 func (r *queryResolver) UserByID(ctx context.Context, id persist.DBID) (model.UserByIDOrError, error) {
-	return resolveGalleryUserByUserID(ctx, id)
+	return resolveSplitFiUserByUserID(ctx, id)
 }
 
 // UserByAddress is the resolver for the userByAddress field.
 func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error) {
-	return resolveGalleryUserByAddress(ctx, chainAddress)
+	return resolveSplitFiUserByAddress(ctx, chainAddress)
 }
 
 // UsersWithTrait is the resolver for the usersWithTrait field.
-func (r *queryResolver) UsersWithTrait(ctx context.Context, trait string) ([]*model.GalleryUser, error) {
-	return resolveGalleryUsersWithTrait(ctx, trait)
+func (r *queryResolver) UsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error) {
+	return resolveSplitFiUsersWithTrait(ctx, trait)
 }
 
 // MembershipTiers is the resolver for the membershipTiers field.
@@ -1388,9 +1276,9 @@ func (r *setSpamPreferencePayloadResolver) Tokens(ctx context.Context, obj *mode
 	return tokensToModel(ctx, tokens), nil
 }
 
-// GalleryUser is the resolver for the galleryUser field.
-func (r *socialConnectionResolver) GalleryUser(ctx context.Context, obj *model.SocialConnection) (*model.GalleryUser, error) {
-	return resolveGalleryUserByUserID(ctx, obj.UserID)
+// SplitFiUser is the resolver for the splitFiUser field.
+func (r *socialConnectionResolver) SplitFiUser(ctx context.Context, obj *model.SocialConnection) (*model.SplitFiUser, error) {
+	return resolveSplitFiUserByUserID(ctx, obj.UserID)
 }
 
 // SocialConnections is the resolver for the socialConnections field.
@@ -1431,6 +1319,118 @@ func (r *someoneViewedYourGalleryNotificationResolver) Gallery(ctx context.Conte
 	return resolveGalleryByGalleryID(ctx, obj.GalleryID)
 }
 
+// Roles is the resolver for the roles field.
+func (r *splitFiUserResolver) Roles(ctx context.Context, obj *model.SplitFiUser) ([]*persist.Role, error) {
+	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserID(ctx, obj.Dbid)
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make([]*persist.Role, len(dbRoles))
+	for i, role := range dbRoles {
+		r := role
+		roles[i] = &r
+	}
+
+	return roles, nil
+}
+
+// SocialAccounts is the resolver for the socialAccounts field.
+func (r *splitFiUserResolver) SocialAccounts(ctx context.Context, obj *model.SplitFiUser) (*model.SocialAccounts, error) {
+	return resolveUserSocialsByUserID(ctx, obj.Dbid)
+}
+
+// Tokens is the resolver for the tokens field.
+func (r *splitFiUserResolver) Tokens(ctx context.Context, obj *model.SplitFiUser) ([]*model.Token, error) {
+	return resolveTokensByUserID(ctx, obj.Dbid)
+}
+
+// TokensByChain is the resolver for the tokensByChain field.
+func (r *splitFiUserResolver) TokensByChain(ctx context.Context, obj *model.SplitFiUser, chain persist.Chain) (*model.ChainTokens, error) {
+	tokens, err := publicapi.For(ctx).Token.GetTokensByUserIDAndChain(ctx, obj.Dbid, chain)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ChainTokens{
+		Chain:  &chain,
+		Tokens: tokensToModel(ctx, tokens),
+	}, nil
+}
+
+// Wallets is the resolver for the wallets field.
+func (r *splitFiUserResolver) Wallets(ctx context.Context, obj *model.SplitFiUser) ([]*model.Wallet, error) {
+	return resolveWalletsByUserID(ctx, obj.Dbid)
+}
+
+// PrimaryWallet is the resolver for the primaryWallet field.
+func (r *splitFiUserResolver) PrimaryWallet(ctx context.Context, obj *model.SplitFiUser) (*model.Wallet, error) {
+	return resolvePrimaryWalletByUserID(ctx, obj.HelperSplitFiUserData.UserID)
+}
+
+// FeaturedGallery is the resolver for the featuredGallery field.
+func (r *splitFiUserResolver) FeaturedGallery(ctx context.Context, obj *model.SplitFiUser) (*model.Gallery, error) {
+	if obj.HelperSplitFiUserData.FeaturedGalleryID == nil {
+		return nil, nil
+	}
+
+	return resolveGalleryByGalleryID(ctx, *obj.HelperSplitFiUserData.FeaturedGalleryID)
+}
+
+// Galleries is the resolver for the galleries field.
+func (r *splitFiUserResolver) Galleries(ctx context.Context, obj *model.SplitFiUser) ([]*model.Gallery, error) {
+	return resolveGalleriesByUserID(ctx, obj.Dbid)
+}
+
+// Badges is the resolver for the badges field.
+func (r *splitFiUserResolver) Badges(ctx context.Context, obj *model.SplitFiUser) ([]*model.Badge, error) {
+	return resolveBadgesByUserID(ctx, obj.Dbid)
+}
+
+// Followers is the resolver for the followers field.
+func (r *splitFiUserResolver) Followers(ctx context.Context, obj *model.SplitFiUser) ([]*model.SplitFiUser, error) {
+	return resolveFollowersByUserID(ctx, obj.Dbid)
+}
+
+// Following is the resolver for the following field.
+func (r *splitFiUserResolver) Following(ctx context.Context, obj *model.SplitFiUser) ([]*model.SplitFiUser, error) {
+	return resolveFollowingByUserID(ctx, obj.Dbid)
+}
+
+// SharedFollowers is the resolver for the sharedFollowers field.
+func (r *splitFiUserResolver) SharedFollowers(ctx context.Context, obj *model.SplitFiUser, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
+	users, pageInfo, err := publicapi.For(ctx).User.SharedFollowers(ctx, obj.UserID, before, after, first, last)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.UsersConnection{
+		Edges:    usersToEdges(ctx, users),
+		PageInfo: pageInfoToModel(ctx, pageInfo),
+	}, nil
+}
+
+// SharedCommunities is the resolver for the sharedCommunities field.
+func (r *splitFiUserResolver) SharedCommunities(ctx context.Context, obj *model.SplitFiUser, before *string, after *string, first *int, last *int) (*model.CommunitiesConnection, error) {
+	communities, pageInfo, err := publicapi.For(ctx).User.SharedCommunities(ctx, obj.UserID, before, after, first, last)
+	if err != nil {
+		return nil, err
+	}
+
+	edges := make([]*model.CommunityEdge, len(communities))
+	for i, community := range communities {
+		edges[i] = &model.CommunityEdge{
+			Node:   communityToModel(ctx, community, util.ToPointer(false)),
+			Cursor: nil, // not used by relay, but relay will complain without this field existing
+		}
+	}
+
+	return &model.CommunitiesConnection{
+		Edges:    edges,
+		PageInfo: pageInfoToModel(ctx, pageInfo),
+	}, nil
+}
+
 // NewNotification is the resolver for the newNotification field.
 func (r *subscriptionResolver) NewNotification(ctx context.Context) (<-chan model.Notification, error) {
 	return resolveNewNotificationSubscription(ctx), nil
@@ -1442,7 +1442,7 @@ func (r *subscriptionResolver) NotificationUpdated(ctx context.Context) (<-chan 
 }
 
 // Owner is the resolver for the owner field.
-func (r *tokenResolver) Owner(ctx context.Context, obj *model.Token) (*model.GalleryUser, error) {
+func (r *tokenResolver) Owner(ctx context.Context, obj *model.Token) (*model.SplitFiUser, error) {
 	return resolveTokenOwnerByTokenID(ctx, obj.Dbid)
 }
 
@@ -1483,19 +1483,19 @@ func (r *tokenHolderResolver) Wallets(ctx context.Context, obj *model.TokenHolde
 }
 
 // User is the resolver for the user field.
-func (r *tokenHolderResolver) User(ctx context.Context, obj *model.TokenHolder) (*model.GalleryUser, error) {
-	return resolveGalleryUserByUserID(ctx, obj.UserId)
+func (r *tokenHolderResolver) User(ctx context.Context, obj *model.TokenHolder) (*model.SplitFiUser, error) {
+	return resolveSplitFiUserByUserID(ctx, obj.UserId)
 }
 
 // User is the resolver for the user field.
-func (r *unfollowUserPayloadResolver) User(ctx context.Context, obj *model.UnfollowUserPayload) (*model.GalleryUser, error) {
-	return resolveGalleryUserByUserID(ctx, obj.User.Dbid)
+func (r *unfollowUserPayloadResolver) User(ctx context.Context, obj *model.UnfollowUserPayload) (*model.SplitFiUser, error) {
+	return resolveSplitFiUserByUserID(ctx, obj.User.Dbid)
 }
 
 // User is the resolver for the user field.
-func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.GalleryUser, error) {
+func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.SplitFiUser, error) {
 	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	return resolveGalleryUserByUserID(ctx, userID)
+	return resolveSplitFiUserByUserID(ctx, userID)
 }
 
 // SocialAccounts is the resolver for the socialAccounts field.
@@ -1589,9 +1589,6 @@ func (r *Resolver) FollowUserPayload() generated.FollowUserPayloadResolver {
 // Gallery returns generated.GalleryResolver implementation.
 func (r *Resolver) Gallery() generated.GalleryResolver { return &galleryResolver{r} }
 
-// GalleryUser returns generated.GalleryUserResolver implementation.
-func (r *Resolver) GalleryUser() generated.GalleryUserResolver { return &galleryUserResolver{r} }
-
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -1632,6 +1629,9 @@ func (r *Resolver) SomeoneViewedYourGalleryNotification() generated.SomeoneViewe
 	return &someoneViewedYourGalleryNotificationResolver{r}
 }
 
+// SplitFiUser returns generated.SplitFiUserResolver implementation.
+func (r *Resolver) SplitFiUser() generated.SplitFiUserResolver { return &splitFiUserResolver{r} }
+
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
@@ -1668,7 +1668,6 @@ type communityResolver struct{ *Resolver }
 type followInfoResolver struct{ *Resolver }
 type followUserPayloadResolver struct{ *Resolver }
 type galleryResolver struct{ *Resolver }
-type galleryUserResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type ownerAtBlockResolver struct{ *Resolver }
 type previewURLSetResolver struct{ *Resolver }
@@ -1679,6 +1678,7 @@ type socialQueriesResolver struct{ *Resolver }
 type someoneFollowedYouBackNotificationResolver struct{ *Resolver }
 type someoneFollowedYouNotificationResolver struct{ *Resolver }
 type someoneViewedYourGalleryNotificationResolver struct{ *Resolver }
+type splitFiUserResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type tokenResolver struct{ *Resolver }
 type tokenHolderResolver struct{ *Resolver }
