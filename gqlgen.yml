@@ -79,9 +79,6 @@ models:
   EthereumAddress:
     model:
       - github.com/mikeydub/go-gallery/service/persist.EthereumAddress
-  InteractionType:
-    model:
-      - github.com/mikeydub/go-gallery/service/persist.InteractionType
   SocialAccountType:
     model:
       - github.com/mikeydub/go-gallery/service/persist.SocialProvider

@@ -36,12 +36,9 @@ import (
 	"github.com/mikeydub/go-gallery/service/multichain/eth"
 	"github.com/mikeydub/go-gallery/service/multichain/infura"
 	"github.com/mikeydub/go-gallery/service/multichain/opensea"
-	"github.com/mikeydub/go-gallery/service/multichain/poap"
-	"github.com/mikeydub/go-gallery/service/multichain/tezos"
 	"github.com/mikeydub/go-gallery/service/persist"
 	"github.com/mikeydub/go-gallery/service/persist/postgres"
 	"github.com/mikeydub/go-gallery/service/pubsub/gcp"
-	"github.com/mikeydub/go-gallery/service/recommend"
 	"github.com/mikeydub/go-gallery/service/redis"
 	"github.com/mikeydub/go-gallery/service/rpc"
 	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
@@ -64,8 +61,7 @@ func Init() {
 
 	c := ClientInit(context.Background())
 	provider := NewMultichainProvider(c)
-	recommender := recommend.NewRecommender(c.Queries)
-	router := CoreInit(c, provider, recommender)
+	router := CoreInit(c, provider)
 	http.Handle("/", router)
 }
 
@@ -112,7 +108,7 @@ func ClientInit(ctx context.Context) *Clients {
 
 // CoreInit initializes core server functionality. This is abstracted
 // so the test server can also utilize it
-func CoreInit(c *Clients, provider *multichain.Provider, recommender *recommend.Recommender) *gin.Engine {
+func CoreInit(c *Clients, provider *multichain.Provider) *gin.Engine {
 	logger.For(nil).Info("initializing server...")
 
 	if env.GetString("ENV") != "production" {
@@ -135,12 +131,9 @@ func CoreInit(c *Clients, provider *multichain.Provider, recommender *recommend.
 
 	lock := redis.NewLockClient(redis.NotificationLockDB)
 	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQ)
-	feedCache := redis.NewCache(redis.FeedDB)
 	socialCache := redis.NewCache(redis.SocialDB)
 
-	recommender.Run(context.Background(), time.NewTicker(time.Hour))
-
-	return handlersInit(router, c.Repos, c.Queries, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, feedCache, socialCache, c.MagicLinkClient, recommender)
+	return handlersInit(router, c.Repos, c.Queries, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, c.MagicLinkClient)
 }
 
 func newSecretsClient() *secretmanager.Client {
@@ -194,14 +187,8 @@ func SetDefaults() {
 	viper.SetDefault("SNAPSHOT_BUCKET", "gallery-dev-322005.appspot.com")
 	viper.SetDefault("TASK_QUEUE_HOST", "")
 	viper.SetDefault("SENTRY_DSN", "")
-	viper.SetDefault("GCLOUD_FEED_QUEUE", "projects/gallery-local/locations/here/queues/feed-event")
 	viper.SetDefault("GCLOUD_WALLET_VALIDATE_QUEUE", "projects/gallery-dev-322005/locations/us-west2/queues/wallet-validate")
-	viper.SetDefault("GCLOUD_FEED_BUFFER_SECS", 20)
-	viper.SetDefault("FEED_SECRET", "feed-secret")
 	viper.SetDefault("TOKEN_PROCESSING_URL", "http://localhost:6500")
-	viper.SetDefault("TEZOS_API_URL", "https://api.tzkt.io")
-	viper.SetDefault("POAP_API_KEY", "")
-	viper.SetDefault("POAP_AUTH_TOKEN", "")
 	viper.SetDefault("GAE_VERSION", "")
 	viper.SetDefault("TOKEN_PROCESSING_QUEUE", "projects/gallery-local/locations/here/queues/token-processing")
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "gallery-dev-322005")
@@ -213,15 +200,11 @@ func SetDefaults() {
 	viper.SetDefault("EMAILS_HOST", "http://localhost:5500")
 	viper.SetDefault("RETOOL_AUTH_TOKEN", "TEST_TOKEN")
 	viper.SetDefault("BACKEND_SECRET", "BACKEND_SECRET")
-	viper.SetDefault("MERCH_CONTRACT_ADDRESS", "0x01f55be815fbd10b1770b008b8960931a30e7f65")
 	viper.SetDefault("ETH_PRIVATE_KEY", "")
-	viper.SetDefault("FEED_URL", "")
 	viper.SetDefault("MAGIC_LINK_SECRET_KEY", "")
 	viper.SetDefault("TWITTER_CLIENT_ID", "")
 	viper.SetDefault("TWITTER_CLIENT_SECRET", "")
 	viper.SetDefault("TWITTER_AUTH_REDIRECT_URI", "http://localhost:3000/auth/twitter")
-	viper.SetDefault("FEEDBOT_URL", "")
-	viper.SetDefault("GCLOUD_FEEDBOT_TASK_QUEUE", "projects/gallery-local/locations/here/queues/feedbot")
 	viper.SetDefault("ALCHEMY_API_URL", "")
 	viper.SetDefault("INFURA_API_KEY", "")
 	viper.SetDefault("INFURA_API_SECRET", "")
@@ -279,7 +262,7 @@ func initSentry() {
 
 func NewMultichainProvider(c *Clients) *multichain.Provider {
 	ethChain := persist.ChainETH
-	overrides := multichain.ChainOverrideMap{persist.ChainPOAP: &ethChain, persist.ChainOptimism: &ethChain, persist.ChainPolygon: &ethChain}
+	overrides := multichain.ChainOverrideMap{persist.ChainOptimism: &ethChain, persist.ChainPolygon: &ethChain}
 	alchemyMainnetProvider := alchemy.NewProvider(persist.ChainETH, c.HTTPClient)
 	infuraProvider := infura.NewProvider(c.HTTPClient)
 	failureEthProvider := multichain.SyncFailureFallbackProvider{Primary: infuraProvider, Fallback: alchemyMainnetProvider}
@@ -288,22 +271,12 @@ func NewMultichainProvider(c *Clients) *multichain.Provider {
 	alchemyOptimismProvider := alchemy.NewProvider(persist.ChainOptimism, c.HTTPClient)
 	alchemyPolygonProvider := alchemy.NewProvider(persist.ChainPolygon, c.HTTPClient)
 	openseaProvider := opensea.NewProvider(c.EthClient, c.HTTPClient)
-	tezosProvider := multichain.SyncWithContractEvalFallbackProvider{
-		Primary:  tezos.NewProvider(env.GetString("TEZOS_API_URL"), env.GetString("TOKEN_PROCESSING_URL"), env.GetString("IPFS_URL"), c.HTTPClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET")),
-		Fallback: tezos.NewObjktProvider(env.GetString("IPFS_URL")),
-		Eval: func(ctx context.Context, token multichain.ChainAgnosticToken) bool {
-			return tezos.IsSigned(ctx, token) && tezos.ContainsTezosKeywords(ctx, token)
-		},
-	}
-	poapProvider := poap.NewProvider(c.HTTPClient, env.GetString("POAP_API_KEY"), env.GetString("POAP_AUTH_TOKEN"))
 	cache := redis.NewCache(redis.CommunitiesDB)
 	return multichain.NewProvider(context.Background(), c.Repos, c.Queries, cache, c.TaskClient,
 		overrides,
 		failureEthProvider,
 		ethProvider,
 		openseaProvider,
-		tezosProvider,
-		poapProvider,
 		alchemyOptimismProvider,
 		alchemyPolygonProvider,
 	)

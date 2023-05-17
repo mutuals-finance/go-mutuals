@@ -52,18 +52,15 @@ type PublicAPI struct {
 	Contract      *ContractAPI
 	Wallet        *WalletAPI
 	Misc          *MiscAPI
-	Feed          *FeedAPI
 	Notifications *NotificationsAPI
-	Interaction   *InteractionAPI
 	Admin         *admin.AdminAPI
-	Merch         *MerchAPI
 	Social        *SocialAPI
 	Card          *CardAPI
 	Search        *SearchAPI
 }
 
 func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, ethClient *ethclient.Client, ipfsClient *shell.Shell,
-	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *gcptasks.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, feedCache *redis.Cache, socialCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
+	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *gcptasks.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, socialCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
 	loaders := dataloader.NewLoaders(ctx, queries, disableDataloaderCaching)
 	validator := validate.WithCustomValidators()
 
@@ -82,11 +79,8 @@ func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Rep
 		Token:         &TokenAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
 		Wallet:        &WalletAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
 		Misc:          &MiscAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, storageClient: storageClient},
-		Feed:          &FeedAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, cache: feedCache},
-		Interaction:   &InteractionAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient},
 		Notifications: &NotificationsAPI{queries: queries, loaders: loaders, validator: validator},
 		Admin:         admin.NewAPI(repos, queries, validator, multichainProvider),
-		Merch:         &MerchAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, secrets: secrets},
 		Social:        &SocialAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, redis: socialCache},
 		Card:          &CardAPI{validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, secrets: secrets},
 		Search:        &SearchAPI{queries: queries, loaders: loaders, validator: validator},
@@ -126,14 +120,14 @@ func getAuthenticatedUserID(ctx context.Context) (persist.DBID, error) {
 	return userID, nil
 }
 
-func publishEventGroup(ctx context.Context, groupID string, action persist.Action, caption *string) (*db.FeedEvent, error) {
+func publishEventGroup(ctx context.Context, groupID string, action persist.Action, caption *string) error {
 	return event.DispatchGroup(sentryutil.NewSentryHubGinContext(ctx), groupID, action, caption)
 }
 
-func dispatchEvent(ctx context.Context, evt db.Event, v *validator.Validate, caption *string) (*db.FeedEvent, error) {
+func dispatchEvent(ctx context.Context, evt db.Event, v *validator.Validate, caption *string) error {
 	ctx = sentryutil.NewSentryHubGinContext(ctx)
 	if err := v.Struct(evt); err != nil {
-		return nil, err
+		return err
 	}
 
 	if caption != nil {
@@ -142,20 +136,20 @@ func dispatchEvent(ctx context.Context, evt db.Event, v *validator.Validate, cap
 	}
 
 	go pushEvent(ctx, evt)
-	return nil, nil
+	return nil
 }
 
-func dispatchEvents(ctx context.Context, evts []db.Event, v *validator.Validate, editID *string, caption *string) (*db.FeedEvent, error) {
+func dispatchEvents(ctx context.Context, evts []db.Event, v *validator.Validate, editID *string, caption *string) error {
 
 	if len(evts) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	ctx = sentryutil.NewSentryHubGinContext(ctx)
 	for i, evt := range evts {
 		evt.GroupID = persist.StrPtrToNullStr(editID)
 		if err := v.Struct(evt); err != nil {
-			return nil, err
+			return err
 		}
 		evts[i] = evt
 	}
@@ -171,7 +165,7 @@ func dispatchEvents(ctx context.Context, evts []db.Event, v *validator.Validate,
 	for _, evt := range evts {
 		go pushEvent(ctx, evt)
 	}
-	return nil, nil
+	return nil
 }
 
 func pushEvent(ctx context.Context, evt db.Event) {

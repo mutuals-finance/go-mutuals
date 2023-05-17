@@ -63,16 +63,12 @@ func testGraphQL(t *testing.T) {
 		{title: "should get user by username", run: testUserByUsername},
 		{title: "should get user by address", run: testUserByAddress},
 		{title: "should get viewer", run: testViewer},
-		{title: "should get viewer suggested users", run: testSuggestedUsersForViewer},
 		{title: "should add a wallet", run: testAddWallet},
 		{title: "should remove a wallet", run: testRemoveWallet},
 		{title: "should create a collection", run: testCreateCollection},
 		{title: "views from multiple users are rolled up", run: testViewsAreRolledUp},
-		{title: "update gallery and create a feed event", run: testUpdateGalleryWithPublish},
 		{title: "update gallery and ensure name still gets set when not sent in update", run: testUpdateGalleryWithNoNameChange},
 		{title: "update gallery with a new collection", run: testUpdateGalleryWithNewCollection},
-		{title: "should get trending users", run: testTrendingUsers, fixtures: []fixture{usePostgres, useRedis}},
-		{title: "should get trending feed events", run: testTrendingFeedEvents},
 		{title: "should delete collection in gallery update", run: testUpdateGalleryDeleteCollection},
 		{title: "should update user experiences", run: testUpdateUserExperiences},
 		{title: "should create gallery", run: testCreateGallery},
@@ -157,30 +153,6 @@ func testViewer(t *testing.T) {
 
 	payload, _ := (*response.Viewer).(*viewerQueryViewer)
 	assert.Equal(t, userF.Username, *payload.User.Username)
-}
-
-func testSuggestedUsersForViewer(t *testing.T) {
-	userF := newUserFixture(t)
-	userA := newUserFixture(t)
-	userB := newUserFixture(t)
-	userC := newUserFixture(t)
-	ctx := context.Background()
-	clients := server.ClientInit(ctx)
-	provider := server.NewMultichainProvider(clients)
-	recommender := newStubRecommender(t, []persist.DBID{
-		userA.ID,
-		userB.ID,
-		userC.ID,
-	})
-	handler := server.CoreInit(clients, provider, recommender)
-	c := customHandlerClient(t, handler, withJWTOpt(t, userF.ID))
-
-	response, err := viewerQuery(ctx, c)
-	require.NoError(t, err)
-
-	payload, _ := (*response.Viewer).(*viewerQueryViewer)
-	suggested := payload.GetSuggestedUsers().GetEdges()
-	assert.Len(t, suggested, 3)
 }
 
 func testAddWallet(t *testing.T) {
@@ -359,45 +331,8 @@ func testUpdateGalleryWithPublish(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, publishResponse.PublishGallery)
 
-	vResp, err := viewerQuery(context.Background(), c)
+	_, err = viewerQuery(context.Background(), c)
 	require.NoError(t, err)
-
-	vPayload := (*vResp.Viewer).(*viewerQueryViewer)
-	node := vPayload.User.Feed.Edges[0].Node
-	assert.NotNil(t, node)
-	feedEvent := (*node).(*viewerQueryViewerUserGalleryUserFeedFeedConnectionEdgesFeedEdgeNodeFeedEvent)
-	assert.Equal(t, "newCaption", *feedEvent.Caption)
-	edata := *(*feedEvent.EventData).(*viewerQueryViewerUserGalleryUserFeedFeedConnectionEdgesFeedEdgeNodeFeedEventEventDataGalleryUpdatedFeedEventData)
-	assert.EqualValues(t, persist.ActionGalleryUpdated, *edata.Action)
-
-	nameIncluded := false
-	descIncluded := false
-
-	for _, c := range edata.SubEventDatas {
-		ac := c.GetAction()
-		if persist.Action(*ac) == persist.ActionCollectionCreated {
-			ca := c.(*viewerQueryViewerUserGalleryUserFeedFeedConnectionEdgesFeedEdgeNodeFeedEventEventDataGalleryUpdatedFeedEventDataSubEventDatasCollectionCreatedFeedEventData)
-			assert.Greater(t, len(ca.NewTokens), 0)
-		}
-		if persist.Action(*ac) == persist.ActionTokensAddedToCollection {
-			ca := c.(*viewerQueryViewerUserGalleryUserFeedFeedConnectionEdgesFeedEdgeNodeFeedEventEventDataGalleryUpdatedFeedEventDataSubEventDatasTokensAddedToCollectionFeedEventData)
-			assert.Greater(t, len(ca.NewTokens), 0)
-		}
-		if persist.Action(*ac) == persist.ActionGalleryInfoUpdated {
-			ca := c.(*viewerQueryViewerUserGalleryUserFeedFeedConnectionEdgesFeedEdgeNodeFeedEventEventDataGalleryUpdatedFeedEventDataSubEventDatasGalleryInfoUpdatedFeedEventData)
-			if ca.NewDescription != nil {
-				assert.Equal(t, "newDesc", *ca.NewDescription)
-				descIncluded = true
-			}
-			if ca.NewName != nil {
-				assert.Equal(t, "newName", *ca.NewName)
-				nameIncluded = true
-			}
-		}
-	}
-
-	assert.True(t, nameIncluded)
-	assert.True(t, descIncluded)
 }
 
 func testCreateGallery(t *testing.T) {
@@ -659,109 +594,6 @@ func testViewsAreRolledUp(t *testing.T) {
 	viewGallery(t, ctx, client, userF.GalleryID)
 
 	// TODO: Actually verify that the views get rolled up
-}
-
-func testTrendingUsers(t *testing.T) {
-	serverF := newServerFixture(t)
-	bob := newUserWithFeedEventsFixture(t)
-	alice := newUserWithFeedEventsFixture(t)
-	dave := newUserWithFeedEventsFixture(t)
-	ctx := context.Background()
-	var c *serverClient
-	// view bob a few times
-	for i := 0; i < 5; i++ {
-		viewer := newUserFixture(t)
-		c = authedServerClient(t, serverF.URL, viewer.ID)
-		viewGallery(t, ctx, c, bob.GalleryID)
-	}
-	// view alice a few times
-	for i := 0; i < 3; i++ {
-		viewer := newUserFixture(t)
-		c = authedServerClient(t, serverF.URL, viewer.ID)
-		viewGallery(t, ctx, c, alice.GalleryID)
-	}
-	// view dave a few times
-	for i := 0; i < 1; i++ {
-		viewer := newUserFixture(t)
-		c = authedServerClient(t, serverF.URL, viewer.ID)
-		viewGallery(t, ctx, c, dave.GalleryID)
-	}
-	expected := []persist.DBID{bob.ID, alice.ID, dave.ID}
-	getTrending := func(t *testing.T, report ReportWindow) []persist.DBID {
-		resp, err := trendingUsersQuery(ctx, c, TrendingUsersInput{Report: report})
-		require.NoError(t, err)
-		users := (*resp.GetTrendingUsers()).(*trendingUsersQueryTrendingUsersTrendingUsersPayload).GetUsers()
-		actual := make([]persist.DBID, len(users))
-		for i, u := range users {
-			actual[i] = u.Dbid
-		}
-		return actual
-	}
-
-	// Wait for event handlers to store views
-	time.Sleep(time.Second)
-
-	t.Run("should pull the last 5 days", func(t *testing.T) {
-		actual := getTrending(t, "LAST_5_DAYS")
-		assert.EqualValues(t, expected, actual)
-	})
-
-	t.Run("should pull the last 7 days", func(t *testing.T) {
-		actual := getTrending(t, "LAST_7_DAYS")
-		assert.EqualValues(t, expected, actual)
-	})
-
-	t.Run("should pull all time", func(t *testing.T) {
-		actual := getTrending(t, "ALL_TIME")
-		assert.EqualValues(t, expected, actual)
-	})
-}
-
-func testTrendingFeedEvents(t *testing.T) {
-	ctx := context.Background()
-	userF := newUserWithFeedEventsFixture(t)
-	c := authedHandlerClient(t, userF.ID)
-	admireFeedEvent(t, ctx, c, userF.FeedEventIDs[1])
-	commentOnFeedEvent(t, ctx, c, userF.FeedEventIDs[1], "a")
-	commentOnFeedEvent(t, ctx, c, userF.FeedEventIDs[1], "b")
-	commentOnFeedEvent(t, ctx, c, userF.FeedEventIDs[1], "c")
-	admireFeedEvent(t, ctx, c, userF.FeedEventIDs[0])
-	commentOnFeedEvent(t, ctx, c, userF.FeedEventIDs[0], "a")
-	commentOnFeedEvent(t, ctx, c, userF.FeedEventIDs[0], "b")
-	admireFeedEvent(t, ctx, c, userF.FeedEventIDs[2])
-	expected := []persist.DBID{
-		userF.FeedEventIDs[2],
-		userF.FeedEventIDs[0],
-		userF.FeedEventIDs[1],
-	}
-
-	actual := trendingFeedEvents(t, ctx, c, 10)
-
-	assert.Equal(t, expected, actual)
-}
-
-func testSyncNewTokens(t *testing.T) {
-	userF := newUserFixture(t)
-	provider := defaultStubProvider(userF.Wallet.Address)
-	h := handlerWithProviders(t, sendTokensNOOP, provider)
-	c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-	ctx := context.Background()
-
-	t.Run("should sync new tokens", func(t *testing.T) {
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		require.NoError(t, err)
-		payload := (*response.SyncTokens).(*syncTokensMutationSyncTokensSyncTokensPayload)
-		assert.Len(t, payload.Viewer.User.Tokens, len(provider.Tokens))
-	})
-
-	t.Run("should not duplicate tokens from repeat syncs", func(t *testing.T) {
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		require.NoError(t, err)
-		payload := (*response.SyncTokens).(*syncTokensMutationSyncTokensSyncTokensPayload)
-		assert.Len(t, payload.Viewer.User.Tokens, len(provider.Tokens))
-	})
 }
 
 func testSyncOnlySubmitsNewTokens(t *testing.T) {
@@ -1246,50 +1078,6 @@ func createCollection(t *testing.T, ctx context.Context, c graphql.Client, input
 	return payload.Collection.Dbid
 }
 
-// globalFeedEvents makes a GraphQL request to return existing feed events
-func globalFeedEvents(t *testing.T, ctx context.Context, c graphql.Client, limit int) []persist.DBID {
-	t.Helper()
-	resp, err := globalFeedQuery(ctx, c, &limit)
-	require.NoError(t, err)
-	feedEvents := make([]persist.DBID, len(resp.GlobalFeed.Edges))
-	for i, event := range resp.GlobalFeed.Edges {
-		e := (*event.Node).(*globalFeedQueryGlobalFeedFeedConnectionEdgesFeedEdgeNodeFeedEvent)
-		feedEvents[i] = e.Dbid
-
-	}
-	return feedEvents
-}
-
-// trendingFeedEvents makes a GraphQL request to return trending feedEvents
-func trendingFeedEvents(t *testing.T, ctx context.Context, c graphql.Client, limit int) []persist.DBID {
-	t.Helper()
-	resp, err := trendingFeedQuery(ctx, c, &limit)
-	require.NoError(t, err)
-	feedEvents := make([]persist.DBID, len(resp.TrendingFeed.Edges))
-	for i, event := range resp.TrendingFeed.Edges {
-		e := (*event.Node).(*trendingFeedQueryTrendingFeedFeedConnectionEdgesFeedEdgeNodeFeedEvent)
-		feedEvents[i] = e.Dbid
-
-	}
-	return feedEvents
-}
-
-// admireFeedEvent makes a GraphQL request to admire a feed event
-func admireFeedEvent(t *testing.T, ctx context.Context, c graphql.Client, feedEventID persist.DBID) {
-	t.Helper()
-	resp, err := admireFeedEventMutation(ctx, c, feedEventID)
-	require.NoError(t, err)
-	_ = (*resp.AdmireFeedEvent).(*admireFeedEventMutationAdmireFeedEventAdmireFeedEventPayload)
-}
-
-// commentOnFeedEvent makes a GraphQL request to admire a feed event
-func commentOnFeedEvent(t *testing.T, ctx context.Context, c graphql.Client, feedEventID persist.DBID, comment string) {
-	t.Helper()
-	resp, err := commentOnFeedEventMutation(ctx, c, feedEventID, comment)
-	require.NoError(t, err)
-	_ = (*resp.CommentOnFeedEvent).(*commentOnFeedEventMutationCommentOnFeedEventCommentOnFeedEventPayload)
-}
-
 // defaultLayout returns a collection layout of one section with one column
 func defaultLayout() CollectionLayoutInput {
 	return CollectionLayoutInput{
@@ -1327,8 +1115,7 @@ func defaultTokenSettings(tokens []persist.DBID) []CollectionTokenSettingsInput 
 func defaultHandler(t *testing.T) http.Handler {
 	c := server.ClientInit(context.Background())
 	p := server.NewMultichainProvider(c)
-	r := newStubRecommender(t, []persist.DBID{})
-	handler := server.CoreInit(c, p, r)
+	handler := server.CoreInit(c, p)
 	t.Cleanup(c.Close)
 	return handler
 }
@@ -1337,9 +1124,8 @@ func defaultHandler(t *testing.T) http.Handler {
 func handlerWithProviders(t *testing.T, sendTokens multichain.SendTokens, providers ...any) http.Handler {
 	c := server.ClientInit(context.Background())
 	provider := newMultichainProvider(c, sendTokens, providers)
-	recommender := newStubRecommender(t, []persist.DBID{})
 	t.Cleanup(c.Close)
-	return server.CoreInit(c, &provider, recommender)
+	return server.CoreInit(c, &provider)
 }
 
 // newMultichainProvider a new multichain provider configured with the given providers

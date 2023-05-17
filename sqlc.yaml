@@ -104,8 +104,6 @@ sql:
             go_type: "github.com/mikeydub/go-gallery/service/persist.ResourceType"
           - column: "events.data"
             go_type: "github.com/mikeydub/go-gallery/service/persist.EventData"
-          - column: "events.feed_window_size"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.NullInt"
           - column: "events.external_id"
             go_type: "database/sql.NullString"
           - column: "events.actor_id"
@@ -113,31 +111,9 @@ sql:
           - column: "events.group_id"
             go_type: "database/sql.NullString"
 
-          # Comments
-          - column: "comments.reply_to"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.DBID"
-
-          # Feed Events
-          - column: "feed_events.owner_id"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.DBID"
-          - column: "feed_events.event_ids"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.DBIDList"
-          - column: "feed_events.data"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.FeedEventData"
-          - column: "feed_events.group_id"
-            go_type: "database/sql.NullString"
-
-          # Feed Blocklist
-          - column: "feed_blocklist.user_id"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.DBID"
-
           # Notifications
           - column: "notifications.data"
             go_type: "github.com/mikeydub/go-gallery/service/persist.NotificationData"
-
-          # Merch
-          - column: "merch.token_id"
-            go_type: "github.com/mikeydub/go-gallery/service/persist.TokenID"
 
           # pii.AccountCreationInfo
           - column: pii.account_creation_info.ip_address

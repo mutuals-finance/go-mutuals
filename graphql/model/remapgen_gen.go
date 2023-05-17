@@ -18,18 +18,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"AdmireFeedEventPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(AdmireFeedEventPayloadOrError)
-		return obj, ok
-	},
-
 	"AuthorizationError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(AuthorizationError)
-		return obj, ok
-	},
-
-	"BanUserFromFeedPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(BanUserFromFeedPayloadOrError)
 		return obj, ok
 	},
 
@@ -40,11 +30,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"CollectionTokenByIdOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(CollectionTokenByIDOrError)
-		return obj, ok
-	},
-
-	"CommentOnFeedEventPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CommentOnFeedEventPayloadOrError)
 		return obj, ok
 	},
 
@@ -98,21 +83,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"FeedEventByIdOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(FeedEventByIDOrError)
-		return obj, ok
-	},
-
-	"FeedEventData": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(FeedEventData)
-		return obj, ok
-	},
-
-	"FeedEventOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(FeedEventOrError)
-		return obj, ok
-	},
-
 	"FollowAllSocialConnectionsPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(FollowAllSocialConnectionsPayloadOrError)
 		return obj, ok
@@ -148,11 +118,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"Interaction": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(Interaction)
-		return obj, ok
-	},
-
 	"LoginPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(LoginPayloadOrError)
 		return obj, ok
@@ -165,11 +130,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"MediaSubtype": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(MediaSubtype)
-		return obj, ok
-	},
-
-	"MerchTokensPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(MerchTokensPayloadOrError)
 		return obj, ok
 	},
 
@@ -203,11 +163,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"RedeemMerchPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RedeemMerchPayloadOrError)
-		return obj, ok
-	},
-
 	"RefreshCollectionPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(RefreshCollectionPayloadOrError)
 		return obj, ok
@@ -220,16 +175,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"RefreshTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(RefreshTokenPayloadOrError)
-		return obj, ok
-	},
-
-	"RemoveAdmirePayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RemoveAdmirePayloadOrError)
-		return obj, ok
-	},
-
-	"RemoveCommentPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RemoveCommentPayloadOrError)
 		return obj, ok
 	},
 
@@ -295,16 +240,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"TokenByIdOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(TokenByIDOrError)
-		return obj, ok
-	},
-
-	"TrendingUsersPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(TrendingUsersPayloadOrError)
-		return obj, ok
-	},
-
-	"UnbanUserFromFeedPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UnbanUserFromFeedPayloadOrError)
 		return obj, ok
 	},
 

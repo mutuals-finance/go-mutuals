@@ -48,16 +48,6 @@ type HelperCommunityData struct {
 	ForceRefresh *bool
 }
 
-type HelperTokensAddedToCollectionFeedEventDataData struct {
-	TokenIDs     persist.DBIDList
-	CollectionID persist.DBID
-}
-
-type HelperCollectionCreatedFeedEventDataData struct {
-	TokenIDs     persist.DBIDList
-	CollectionID persist.DBID
-}
-
 type HelperGroupNotificationUsersConnectionData struct {
 	UserIDs persist.DBIDList
 }
@@ -84,29 +74,9 @@ type HelperSomeoneFollowedYouBackNotificationData struct {
 	OwnerID          persist.DBID
 	NotificationData persist.NotificationData
 }
-type HelperSomeoneCommentedOnYourFeedEventNotificationData struct {
-	OwnerID          persist.DBID
-	FeedEventID      persist.DBID
-	CommentID        persist.DBID
-	NotificationData persist.NotificationData
-}
-type HelperSomeoneAdmiredYourFeedEventNotificationData struct {
-	OwnerID          persist.DBID
-	FeedEventID      persist.DBID
-	NotificationData persist.NotificationData
-}
 
 type HelperNotificationsConnectionData struct {
 	UserId persist.DBID
-}
-
-type HelperCollectionUpdatedFeedEventDataData struct {
-	TokenIDs     persist.DBIDList
-	CollectionID persist.DBID
-}
-
-type HelperGalleryUpdatedFeedEventDataData struct {
-	FeedEventID persist.DBID
 }
 
 type HelperGalleryCollectionUpdateData struct {

@@ -226,7 +226,7 @@ func (api GalleryAPI) UpdateGallery(ctx context.Context, update model.UpdateGall
 	if update.Caption != nil && *update.Caption == "" {
 		update.Caption = nil
 	}
-	_, err = dispatchEvents(ctx, events, api.validator, update.EditID, nil)
+	err = dispatchEvents(ctx, events, api.validator, update.EditID, nil)
 	if err != nil {
 		return db.Gallery{}, err
 	}
@@ -243,7 +243,7 @@ func (api GalleryAPI) PublishGallery(ctx context.Context, update model.PublishGa
 		return err
 	}
 
-	_, err := publishEventGroup(ctx, update.EditID, persist.ActionGalleryUpdated, update.Caption)
+	err := publishEventGroup(ctx, update.EditID, persist.ActionGalleryUpdated, update.Caption)
 	if err != nil {
 		return err
 	}
@@ -628,7 +628,7 @@ func (api GalleryAPI) ViewGallery(ctx context.Context, galleryID persist.DBID) (
 		if gallery.OwnerUserID != userID {
 			// only view gallery if the user hasn't already viewed it in this most recent notification period
 
-			_, err = dispatchEvent(ctx, db.Event{
+			err = dispatchEvent(ctx, db.Event{
 				ActorID:        persist.DBIDToNullStr(userID),
 				ResourceTypeID: persist.ResourceTypeGallery,
 				SubjectID:      galleryID,
@@ -640,7 +640,7 @@ func (api GalleryAPI) ViewGallery(ctx context.Context, galleryID persist.DBID) (
 			}
 		}
 	} else {
-		_, err := dispatchEvent(ctx, db.Event{
+		err := dispatchEvent(ctx, db.Event{
 			ResourceTypeID: persist.ResourceTypeGallery,
 			SubjectID:      galleryID,
 			Action:         persist.ActionViewedGallery,

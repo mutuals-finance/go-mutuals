@@ -8,7 +8,6 @@ import (
 	"io"
 	"strings"
 
-	"blockwatch.cc/tzgo/tezos"
 	"github.com/lib/pq"
 )
 
@@ -199,16 +198,7 @@ func (c ChainPubKey) String() string {
 
 // ToChainAddress converts a chain pub key to a chain address
 func (c ChainPubKey) ToChainAddress() ChainAddress {
-	switch c.chain {
-	case ChainTezos:
-		key, err := tezos.ParseKey(c.pubKey.String())
-		if err != nil {
-			panic(err)
-		}
-		return NewChainAddress(Address(key.Address().String()), c.chain)
-	default:
-		return NewChainAddress(Address(c.pubKey), c.chain)
-	}
+	return NewChainAddress(Address(c.pubKey), c.chain)
 }
 
 const (

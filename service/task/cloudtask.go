@@ -17,19 +17,7 @@ import (
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-// FeedMessage is the input message to the feed service
-type FeedMessage struct {
-	ID persist.DBID `json:"id" binding:"required"`
-}
-
-// FeedbotMessage is the input message to the feedbot service
-type FeedbotMessage struct {
-	FeedEventID persist.DBID   `json:"id" binding:"required"`
-	Action      persist.Action `json:"action" binding:"required"`
-}
 
 type TokenProcessingUserMessage struct {
 	UserID   persist.DBID   `json:"user_id" binding:"required"`
@@ -53,74 +41,6 @@ type DeepRefreshMessage struct {
 
 type ValidateNFTsMessage struct {
 	OwnerAddress persist.EthereumAddress `json:"wallet"`
-}
-
-func CreateTaskForFeed(ctx context.Context, scheduleOn time.Time, message FeedMessage, client *gcptasks.Client) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForFeed")
-	defer tracing.FinishSpan(span)
-
-	tracing.AddEventDataToSpan(span, map[string]interface{}{
-		"Event ID": message.ID,
-	})
-
-	url := fmt.Sprintf("%s/tasks/feed-event", env.GetString("FEED_URL"))
-	logger.For(ctx).Infof("creating task for feed event %s, scheduling on %s, sending to %s", message.ID, scheduleOn, url)
-
-	queue := env.GetString("GCLOUD_FEED_QUEUE")
-	task := &taskspb.Task{
-		ScheduleTime: timestamppb.New(scheduleOn),
-		MessageType: &taskspb.Task_HttpRequest{
-			HttpRequest: &taskspb.HttpRequest{
-				HttpMethod: taskspb.HttpMethod_POST,
-				Url:        url,
-				Headers: map[string]string{
-					"Content-type":  "application/json",
-					"sentry-trace":  span.TraceID.String(),
-					"Authorization": "Basic " + env.GetString("FEED_SECRET"),
-				},
-			},
-		},
-	}
-
-	body, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
-	return submitHttpTask(ctx, client, queue, task, body)
-}
-
-func CreateTaskForFeedbot(ctx context.Context, scheduleOn time.Time, message FeedbotMessage, client *gcptasks.Client) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForFeedbot")
-	defer tracing.FinishSpan(span)
-
-	tracing.AddEventDataToSpan(span, map[string]interface{}{
-		"Event ID": message.FeedEventID,
-	})
-
-	queue := env.GetString("GCLOUD_FEEDBOT_TASK_QUEUE")
-	task := &taskspb.Task{
-		Name:         fmt.Sprintf("%s/tasks/%s", queue, message.FeedEventID.String()),
-		ScheduleTime: timestamppb.New(scheduleOn),
-		MessageType: &taskspb.Task_HttpRequest{
-			HttpRequest: &taskspb.HttpRequest{
-				HttpMethod: taskspb.HttpMethod_POST,
-				Url:        fmt.Sprintf("%s/tasks/feed-event", env.GetString("FEEDBOT_URL")),
-				Headers: map[string]string{
-					"Content-type":  "application/json",
-					"Authorization": "Basic " + env.GetString("FEEDBOT_SECRET"),
-					"sentry-trace":  span.TraceID.String(),
-				},
-			},
-		},
-	}
-
-	body, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
-	return submitHttpTask(ctx, client, queue, task, body)
 }
 
 func CreateTaskForTokenProcessing(ctx context.Context, client *gcptasks.Client, message TokenProcessingUserMessage) error {

@@ -42,16 +42,12 @@ type NotificationHandlers struct {
 func New(queries *db.Queries, pub *pubsub.Client, lock *redislock.Client) *NotificationHandlers {
 	notifDispatcher := notificationDispatcher{handlers: map[persist.Action]notificationHandler{}, lock: lock}
 
-	def := defaultNotificationHandler{queries: queries, pubSub: pub}
+	_ = defaultNotificationHandler{queries: queries, pubSub: pub}
 	group := groupedNotificationHandler{queries: queries, pubSub: pub}
 	view := viewedNotificationHandler{queries: queries, pubSub: pub}
 
 	// grouped notification actions
 	notifDispatcher.AddHandler(persist.ActionUserFollowedUsers, group)
-	notifDispatcher.AddHandler(persist.ActionAdmiredFeedEvent, group)
-
-	// single notification actions (default)
-	notifDispatcher.AddHandler(persist.ActionCommentedOnFeedEvent, def)
 
 	// viewed notifications are handled separately
 	notifDispatcher.AddHandler(persist.ActionViewedGallery, view)
@@ -153,21 +149,11 @@ type groupedNotificationHandler struct {
 func (h groupedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
 	var curNotif db.Notification
 
-	// Bucket notifications on the feed event if it has one
-	if notif.FeedEventID == "" {
-		curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDForActionParams{
-			OwnerID:          notif.OwnerID,
-			Action:           notif.Action,
-			OnlyForFeedEvent: false,
-		})
-	} else {
-		curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDForActionParams{
-			OwnerID:          notif.OwnerID,
-			Action:           notif.Action,
-			OnlyForFeedEvent: true,
-			FeedEventID:      notif.FeedEventID,
-		})
-	}
+	// Bucket notifications
+	curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDForActionParams{
+		OwnerID: notif.OwnerID,
+		Action:  notif.Action,
+	})
 
 	if time.Since(curNotif.CreatedAt) < groupedWindow {
 		logger.For(ctx).Infof("grouping notification %s: %s-%s", curNotif.ID, notif.Action, notif.OwnerID)
@@ -391,8 +377,6 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 	amount := notif.Amount
 	resultData := mostRecentNotif.Data.Concat(notif.Data)
 	switch notif.Action {
-	case persist.ActionAdmiredFeedEvent:
-		amount = int32(len(resultData.AdmirerIDs))
 	case persist.ActionViewedGallery:
 		amount = int32(len(resultData.AuthedViewerIDs) + len(resultData.UnauthedViewerIDs))
 	case persist.ActionUserFollowedUsers:
@@ -435,26 +419,6 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 func addNotification(ctx context.Context, notif db.Notification, queries *db.Queries) (db.Notification, error) {
 	id := persist.GenerateID()
 	switch notif.Action {
-	case persist.ActionAdmiredFeedEvent:
-		return queries.CreateAdmireNotification(ctx, db.CreateAdmireNotificationParams{
-			ID:          id,
-			OwnerID:     notif.OwnerID,
-			Action:      notif.Action,
-			Data:        notif.Data,
-			EventIds:    notif.EventIds,
-			FeedEventID: notif.FeedEventID,
-		})
-	case persist.ActionCommentedOnFeedEvent:
-		return queries.CreateCommentNotification(ctx, db.CreateCommentNotificationParams{
-			ID:          id,
-			OwnerID:     notif.OwnerID,
-			Action:      notif.Action,
-			Data:        notif.Data,
-			EventIds:    notif.EventIds,
-			FeedEventID: notif.FeedEventID,
-			CommentID:   notif.CommentID,
-		})
-
 	case persist.ActionUserFollowedUsers:
 		return queries.CreateFollowNotification(ctx, db.CreateFollowNotificationParams{
 			ID:       id,

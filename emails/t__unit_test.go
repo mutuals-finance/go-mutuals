@@ -16,25 +16,10 @@ func TestNotificationTemplating_Success(t *testing.T) {
 
 	q := coredb.New(pgx)
 
-	t.Run("creates a template for admire notifications", func(t *testing.T) {
-		data, err := notifToTemplateData(ctx, q, admireNotif)
-		a.NoError(err)
-		a.Equal(testUser2.Username.String, data.Actor)
-		a.Equal(data.CollectionID, testGallery.Collections[0])
-	})
-
 	t.Run("creates a template for follow notifications", func(t *testing.T) {
 		data, err := notifToTemplateData(ctx, q, followNotif)
 		a.NoError(err)
 		a.Equal(testUser2.Username.String, data.Actor)
-	})
-
-	t.Run("creates a template for comment notifications", func(t *testing.T) {
-		data, err := notifToTemplateData(ctx, q, commentNotif)
-		a.NoError(err)
-		a.Equal(testUser2.Username.String, data.Actor)
-		a.Equal(data.CollectionID, testGallery.Collections[0])
-		a.Equal(data.PreviewText, comment.Comment)
 	})
 
 	t.Run("creates a template for view notifications", func(t *testing.T) {

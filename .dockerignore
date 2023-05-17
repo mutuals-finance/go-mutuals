@@ -8,8 +8,6 @@
 !contracts
 !db
 !event
-!feed
-!feedbot
 !graphql
 !indexer
 !mediaprocessing

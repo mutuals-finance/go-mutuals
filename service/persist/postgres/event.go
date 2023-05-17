@@ -24,10 +24,6 @@ func (r *EventRepository) Add(ctx context.Context, event db.Event) (*db.Event, e
 		return r.AddTokenEvent(ctx, event)
 	case persist.ResourceTypeCollection:
 		return r.AddCollectionEvent(ctx, event)
-	case persist.ResourceTypeAdmire:
-		return r.AddAdmireEvent(ctx, event)
-	case persist.ResourceTypeComment:
-		return r.AddCommentEvent(ctx, event)
 	case persist.ResourceTypeGallery:
 		return r.AddGalleryEvent(ctx, event)
 	default:
@@ -76,36 +72,6 @@ func (r *EventRepository) AddCollectionEvent(ctx context.Context, event db.Event
 		Caption:        event.Caption,
 		GroupID:        event.GroupID,
 		GalleryID:      event.GalleryID,
-	})
-	return &event, err
-}
-
-func (r *EventRepository) AddAdmireEvent(ctx context.Context, event db.Event) (*db.Event, error) {
-	event, err := r.Queries.CreateAdmireEvent(ctx, db.CreateAdmireEventParams{
-		ID:             persist.GenerateID(),
-		ActorID:        event.ActorID,
-		Action:         event.Action,
-		ResourceTypeID: event.ResourceTypeID,
-		AdmireID:       event.AdmireID,
-		FeedEventID:    event.FeedEventID,
-		Data:           event.Data,
-		GroupID:        event.GroupID,
-		Caption:        event.Caption,
-	})
-	return &event, err
-}
-
-func (r *EventRepository) AddCommentEvent(ctx context.Context, event db.Event) (*db.Event, error) {
-	event, err := r.Queries.CreateCommentEvent(ctx, db.CreateCommentEventParams{
-		ID:             persist.GenerateID(),
-		ActorID:        event.ActorID,
-		Action:         event.Action,
-		ResourceTypeID: event.ResourceTypeID,
-		CommentID:      event.CommentID,
-		FeedEventID:    event.FeedEventID,
-		Data:           event.Data,
-		GroupID:        event.GroupID,
-		Caption:        event.Caption,
 	})
 	return &event, err
 }

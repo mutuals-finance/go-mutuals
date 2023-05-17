@@ -1,23 +1,17 @@
 package event
 
 import (
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"context"
 	"fmt"
-	"time"
-
-	"github.com/mikeydub/go-gallery/env"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
-	"github.com/mikeydub/go-gallery/service/task"
-
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"github.com/gin-gonic/gin"
 	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/feed"
 	"github.com/mikeydub/go-gallery/graphql/dataloader"
 	"github.com/mikeydub/go-gallery/service/logger"
 	"github.com/mikeydub/go-gallery/service/notifications"
 	"github.com/mikeydub/go-gallery/service/persist"
 	"github.com/mikeydub/go-gallery/service/persist/postgres"
+	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
 	"github.com/mikeydub/go-gallery/util"
 	"golang.org/x/sync/errgroup"
 )
@@ -35,31 +29,11 @@ const (
 func AddTo(ctx *gin.Context, disableDataloaderCaching bool, notif *notifications.NotificationHandlers, queries *db.Queries, taskClient *cloudtasks.Client) {
 	sender := newEventSender(queries)
 
-	feed := newEventDispatcher()
-	feedHandler := newFeedHandler(queries, taskClient)
-	sender.addDelayedHandler(feed, persist.ActionUserCreated, feedHandler)
-	sender.addDelayedHandler(feed, persist.ActionUserFollowedUsers, feedHandler)
-	sender.addDelayedHandler(feed, persist.ActionCollectorsNoteAddedToToken, feedHandler)
-	sender.addDelayedHandler(feed, persist.ActionCollectionCreated, feedHandler)
-	sender.addDelayedHandler(feed, persist.ActionCollectorsNoteAddedToCollection, feedHandler)
-	sender.addDelayedHandler(feed, persist.ActionTokensAddedToCollection, feedHandler)
-	sender.addDelayedHandler(feed, persist.ActionGalleryUpdated, feedHandler)
-	sender.addDelayedHandler(feed, persist.ActionGalleryInfoUpdated, feedHandler)
-	sender.addImmediateHandler(feed, persist.ActionCollectionCreated, feedHandler)
-	sender.addImmediateHandler(feed, persist.ActionTokensAddedToCollection, feedHandler)
-	sender.addImmediateHandler(feed, persist.ActionCollectorsNoteAddedToCollection, feedHandler)
-	sender.addImmediateHandler(feed, persist.ActionGalleryInfoUpdated, feedHandler)
-	sender.addImmediateHandler(feed, persist.ActionCollectorsNoteAddedToToken, feedHandler)
-	sender.addGroupHandler(feed, persist.ActionGalleryUpdated, feedHandler)
-
 	notifications := newEventDispatcher()
 	notificationHandler := newNotificationHandler(notif, disableDataloaderCaching, queries)
 	sender.addDelayedHandler(notifications, persist.ActionUserFollowedUsers, notificationHandler)
-	sender.addDelayedHandler(notifications, persist.ActionAdmiredFeedEvent, notificationHandler)
 	sender.addDelayedHandler(notifications, persist.ActionViewedGallery, notificationHandler)
-	sender.addDelayedHandler(notifications, persist.ActionCommentedOnFeedEvent, notificationHandler)
 
-	sender.feed = feed
 	sender.notifications = notifications
 	ctx.Set(eventSenderContextKey, &sender)
 }
@@ -80,20 +54,19 @@ func DispatchDelayed(ctx context.Context, event db.Event) error {
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error { return sender.feed.dispatchDelayed(ctx, *persistedEvent) })
 	eg.Go(func() error { return sender.notifications.dispatchDelayed(ctx, *persistedEvent) })
 	return eg.Wait()
 }
 
 // DispatchImmediate flushes the event immediately to its registered handlers.
-func DispatchImmediate(ctx context.Context, events []db.Event) (*db.FeedEvent, error) {
+func DispatchImmediate(ctx context.Context, events []db.Event) error {
 	gc := util.GinContextFromContext(ctx)
 	sender := For(gc)
 
 	for _, e := range events {
 		if _, handable := sender.registry[immediateKey][e.Action]; !handable {
 			logger.For(ctx).WithField("action", e.Action).Warn("no immediate handler configured for action")
-			return nil, nil
+			return nil
 		}
 	}
 
@@ -101,7 +74,7 @@ func DispatchImmediate(ctx context.Context, events []db.Event) (*db.FeedEvent, e
 	for _, e := range events {
 		persistedEvent, err := sender.eventRepo.Add(ctx, e)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		persistedEvents = append(persistedEvents, *persistedEvent)
@@ -117,22 +90,17 @@ func DispatchImmediate(ctx context.Context, events []db.Event) (*db.FeedEvent, e
 
 	}()
 
-	feedEvent, err := sender.feed.dispatchImmediate(ctx, persistedEvents)
-	if err != nil {
-		return nil, err
-	}
-
-	return feedEvent.(*db.FeedEvent), nil
+	return nil
 }
 
 // DispatchGroup flushes the event group immediately to its registered handlers.
-func DispatchGroup(ctx context.Context, groupID string, action persist.Action, caption *string) (*db.FeedEvent, error) {
+func DispatchGroup(ctx context.Context, groupID string, action persist.Action, caption *string) error {
 	gc := util.GinContextFromContext(ctx)
 	sender := For(gc)
 
 	if _, handable := sender.registry[groupKey][action]; !handable {
 		logger.For(ctx).WithField("action", action).Warn("no group handler configured for action")
-		return nil, nil
+		return nil
 	}
 
 	if caption != nil {
@@ -141,7 +109,7 @@ func DispatchGroup(ctx context.Context, groupID string, action persist.Action, c
 			GroupID: persist.StrPtrToNullStr(&groupID),
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -155,12 +123,7 @@ func DispatchGroup(ctx context.Context, groupID string, action persist.Action, c
 
 	}()
 
-	feedEvent, err := sender.feed.dispatchGroup(ctx, groupID, action)
-	if err != nil {
-		return nil, err
-	}
-
-	return feedEvent.(*db.FeedEvent), nil
+	return nil
 }
 
 func For(ctx context.Context) *eventSender {
@@ -171,7 +134,6 @@ func For(ctx context.Context) *eventSender {
 type registedActions map[persist.Action]struct{}
 
 type eventSender struct {
-	feed          *eventDispatcher
 	notifications *eventDispatcher
 	registry      map[sendType]registedActions
 	queries       *db.Queries
@@ -239,8 +201,6 @@ func (d *eventDispatcher) dispatchDelayed(ctx context.Context, event db.Event) e
 }
 
 // this will run the handler for each event and return the final non-nil result returned by the handler.
-// in the case of the feed, immediate events should be grouped such that only one feed event is created
-// and one event is returned
 func (d *eventDispatcher) dispatchImmediate(ctx context.Context, event []db.Event) (interface{}, error) {
 
 	resultChan := make(chan interface{})
@@ -294,68 +254,6 @@ type groupHandler interface {
 	handleGroup(context.Context, string, persist.Action) (interface{}, error)
 }
 
-// feedHandler handles events for consumption as feed events.
-type feedHandler struct {
-	queries      *db.Queries
-	eventBuilder *feed.EventBuilder
-	tc           *cloudtasks.Client
-}
-
-func newFeedHandler(queries *db.Queries, taskClient *cloudtasks.Client) feedHandler {
-	return feedHandler{
-		queries:      queries,
-		eventBuilder: feed.NewEventBuilder(queries),
-		tc:           taskClient,
-	}
-}
-
-var actionsToBeHandledByFeedService = map[persist.Action]bool{
-	persist.ActionUserFollowedUsers: true,
-}
-
-// handleDelayed creates a delayed task for the Feed service to handle later.
-func (h feedHandler) handleDelayed(ctx context.Context, persistedEvent db.Event) error {
-	if !actionsToBeHandledByFeedService[persistedEvent.Action] {
-		return nil
-	}
-
-	scheduleOn := persistedEvent.CreatedAt.Add(time.Duration(env.GetInt("GCLOUD_FEED_BUFFER_SECS")) * time.Second)
-	return task.CreateTaskForFeed(ctx, scheduleOn, task.FeedMessage{ID: persistedEvent.ID}, h.tc)
-}
-
-// handledImmediate sidesteps the Feed service so that an event is immediately available as a feed event.
-func (h feedHandler) handleImmediate(ctx context.Context, persistedEvent db.Event) (interface{}, error) {
-	return h.eventBuilder.NewFeedEventFromEvent(ctx, persistedEvent)
-}
-
-// handleGrouped processes a group of events into a single feed event.
-func (h feedHandler) handleGroup(ctx context.Context, groupID string, action persist.Action) (interface{}, error) {
-
-	existsForGroup, err := h.queries.IsFeedEventExistsForGroup(ctx, persist.StrPtrToNullStr(&groupID))
-	if err != nil {
-		return nil, err
-	}
-	if existsForGroup {
-		return h.queries.UpdateFeedEventCaptionByGroup(ctx, persist.StrPtrToNullStr(&groupID))
-	}
-
-	feedEvent, err := h.eventBuilder.NewFeedEventFromGroup(ctx, groupID, action)
-	if err != nil {
-		return nil, err
-	}
-
-	if feedEvent != nil {
-		// Send event to feedbot
-		err = task.CreateTaskForFeedbot(ctx,
-			time.Now(), task.FeedbotMessage{FeedEventID: feedEvent.ID, Action: feedEvent.Action}, h.tc,
-		)
-		if err != nil {
-			logger.For(ctx).Errorf("failed to create task for feedbot: %s", err.Error())
-		}
-	}
-	return feedEvent, nil
-}
-
 // notificationHandlers handles events for consumption as notifications.
 type notificationHandler struct {
 	dataloaders          *dataloader.Loaders
@@ -386,13 +284,11 @@ func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent d
 	}
 
 	return h.notificationHandlers.Notifications.Dispatch(ctx, db.Notification{
-		OwnerID:     owner,
-		Action:      persistedEvent.Action,
-		Data:        h.createNotificationDataForEvent(persistedEvent),
-		EventIds:    persist.DBIDList{persistedEvent.ID},
-		GalleryID:   persistedEvent.GalleryID,
-		FeedEventID: persistedEvent.FeedEventID,
-		CommentID:   persistedEvent.CommentID,
+		OwnerID:   owner,
+		Action:    persistedEvent.Action,
+		Data:      h.createNotificationDataForEvent(persistedEvent),
+		EventIds:  persist.DBIDList{persistedEvent.ID},
+		GalleryID: persistedEvent.GalleryID,
 	})
 }
 
@@ -404,10 +300,6 @@ func (h notificationHandler) createNotificationDataForEvent(event db.Event) (dat
 		}
 		if event.ExternalID.String != "" {
 			data.UnauthedViewerIDs = []string{persist.NullStrToStr(event.ExternalID)}
-		}
-	case persist.ActionAdmiredFeedEvent:
-		if event.ActorID.String != "" {
-			data.AdmirerIDs = []persist.DBID{persist.NullStrToDBID(event.ActorID)}
 		}
 	case persist.ActionUserFollowedUsers:
 		if event.ActorID.String != "" {
@@ -427,18 +319,6 @@ func (h notificationHandler) findOwnerForNotificationFromEvent(event db.Event) (
 			return "", err
 		}
 		return gallery.OwnerUserID, nil
-	case persist.ResourceTypeComment:
-		feedEvent, err := h.dataloaders.FeedEventByFeedEventID.Load(event.FeedEventID)
-		if err != nil {
-			return "", err
-		}
-		return feedEvent.OwnerID, nil
-	case persist.ResourceTypeAdmire:
-		feedEvent, err := h.dataloaders.FeedEventByFeedEventID.Load(event.FeedEventID)
-		if err != nil {
-			return "", err
-		}
-		return feedEvent.OwnerID, nil
 	case persist.ResourceTypeUser:
 		return event.SubjectID, nil
 	}

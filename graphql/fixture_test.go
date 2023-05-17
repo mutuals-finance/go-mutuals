@@ -17,7 +17,6 @@ import (
 	"github.com/mikeydub/go-gallery/service/pubsub/gcp"
 	"github.com/mikeydub/go-gallery/service/task"
 	"github.com/mikeydub/go-gallery/tokenprocessing"
-	"github.com/mikeydub/go-gallery/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -216,45 +215,4 @@ func newUserWithTokensFixture(t *testing.T) userWithTokensFixture {
 	c := customHandlerClient(t, h, withJWTOpt(t, user.ID))
 	tokenIDs := syncTokens(t, ctx, c, user.ID)
 	return userWithTokensFixture{user, tokenIDs}
-}
-
-type userWithFeedEventsFixture struct {
-	userWithTokensFixture
-	FeedEventIDs []persist.DBID
-}
-
-// newUserWithFeedEventsFixture generates a new user with feed events pre-generated
-func newUserWithFeedEventsFixture(t *testing.T) userWithFeedEventsFixture {
-	t.Helper()
-	serverF := newServerFixture(t)
-	user := newUserWithTokensFixture(t)
-	ctx := context.Background()
-	c := authedServerClient(t, serverF.Server.URL, user.ID)
-	// At the moment, we rely on captioning to ensure that that feed events are
-	// generated near instantly so that we don't have to add arbitrary sleep
-	// times during tests.
-	createCollection(t, ctx, c, CreateCollectionInput{
-		GalleryId:     user.GalleryID,
-		Tokens:        user.TokenIDs,
-		Layout:        defaultLayout(),
-		TokenSettings: defaultTokenSettings(user.TokenIDs),
-		Caption:       util.ToPointer("this is a caption"),
-	})
-	createCollection(t, ctx, c, CreateCollectionInput{
-		GalleryId:     user.GalleryID,
-		Tokens:        user.TokenIDs,
-		Layout:        defaultLayout(),
-		TokenSettings: defaultTokenSettings(user.TokenIDs),
-		Caption:       util.ToPointer("this is a caption"),
-	})
-	createCollection(t, ctx, c, CreateCollectionInput{
-		GalleryId:     user.GalleryID,
-		Tokens:        user.TokenIDs,
-		Layout:        defaultLayout(),
-		TokenSettings: defaultTokenSettings(user.TokenIDs),
-		Caption:       util.ToPointer("this is a caption"),
-	})
-	feedEvents := globalFeedEvents(t, ctx, c, 3)
-	require.Len(t, feedEvents, 3)
-	return userWithFeedEventsFixture{user, feedEvents}
 }
