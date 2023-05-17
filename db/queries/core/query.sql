@@ -92,13 +92,6 @@ SELECT t.* FROM users u, collections c, unnest(c.nfts)
     WHERE u.id = t.owner_user_id AND t.owned_by_wallets && u.wallets
     AND c.id = sqlc.arg('collection_id') AND u.deleted = false AND c.deleted = false AND t.deleted = false ORDER BY x.nft_ord LIMIT sqlc.narg('limit');
 
--- name: GetNewTokensByFeedEventIdBatch :batchmany
-WITH new_tokens AS (
-    SELECT added.id, row_number() OVER () added_order
-    FROM (SELECT jsonb_array_elements_text(data -> 'collection_new_token_ids') id FROM feed_events f WHERE f.id = $1 AND f.deleted = false) added
-)
-SELECT t.* FROM new_tokens a JOIN tokens t ON a.id = t.id AND t.deleted = false ORDER BY a.added_order;
-
 -- name: GetMembershipByMembershipId :one
 SELECT * FROM membership WHERE id = $1 AND deleted = false;
 
@@ -310,12 +303,6 @@ INSERT INTO events (id, actor_id, action, resource_type_id, collection_id, subje
 -- name: CreateGalleryEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, gallery_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
 
--- name: CreateAdmireEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, admire_id, feed_event_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $6, $5, $7, $8, $9) RETURNING *;
-
--- name: CreateCommentEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, comment_id, feed_event_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $6, $5, $7, $8, $9) RETURNING *;
-
 -- name: GetEvent :one
 SELECT * FROM events WHERE id = $1 AND deleted = false;
 
@@ -397,140 +384,6 @@ select exists(
   and created_at > @window_start and created_at <= @window_end
 );
 
--- name: PaginateGlobalFeed :batchmany
-SELECT * FROM feed_events WHERE deleted = false
-    AND (event_time, id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id'))
-    AND (event_time, id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-    ORDER BY CASE WHEN sqlc.arg('paging_forward')::bool THEN (event_time, id) END ASC,
-            CASE WHEN NOT sqlc.arg('paging_forward')::bool THEN (event_time, id) END DESC
-    LIMIT sqlc.arg('limit');
-
--- name: PaginatePersonalFeedByUserID :batchmany
-SELECT fe.* FROM feed_events fe, follows fl WHERE fe.deleted = false AND fl.deleted = false
-    AND fe.owner_id = fl.followee AND fl.follower = sqlc.arg('follower')
-    AND (fe.event_time, fe.id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id'))
-    AND (fe.event_time, fe.id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-    ORDER BY CASE WHEN sqlc.arg('paging_forward')::bool THEN (fe.event_time, fe.id) END ASC,
-            CASE WHEN NOT sqlc.arg('paging_forward')::bool THEN (fe.event_time, fe.id) END DESC
-    LIMIT sqlc.arg('limit');
-
--- name: PaginateUserFeedByUserID :batchmany
-SELECT * FROM feed_events WHERE owner_id = sqlc.arg('owner_id') AND deleted = false
-    AND (event_time, id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id'))
-    AND (event_time, id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-    ORDER BY CASE WHEN sqlc.arg('paging_forward')::bool THEN (event_time, id) END ASC,
-            CASE WHEN NOT sqlc.arg('paging_forward')::bool THEN (event_time, id) END DESC
-    LIMIT sqlc.arg('limit');
-
--- name: PaginateTrendingFeed :many
-select f.* from feed_events f join unnest(@feed_event_ids::text[]) with ordinality t(id, pos) using(id) where f.deleted = false
-  and t.pos > @cur_before_pos::int
-  and t.pos < @cur_after_pos::int
-  order by case when @paging_forward::bool then t.pos end desc,
-          case when not @paging_forward::bool then t.pos end asc
-  limit sqlc.arg('limit');
-
--- name: GetEventByIdBatch :batchone
-SELECT * FROM feed_events WHERE id = $1 AND deleted = false;
-
--- name: CreateFeedEvent :one
-INSERT INTO feed_events (id, owner_id, action, data, event_time, event_ids, group_id, caption) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
-
--- name: IsFeedEventExistsForGroup :one
-SELECT exists(
-  SELECT 1 FROM feed_events WHERE deleted = false
-  AND group_id = $1
-);
-
--- name: UpdateFeedEventCaptionByGroup :one
-UPDATE feed_events SET caption = (select caption from events where events.group_id = $1) WHERE group_id = $1 AND deleted = false returning *;
-
--- name: GetLastFeedEventForUser :one
-select * from feed_events where deleted = false
-    and owner_id = $1
-    and action = any(@actions)
-    and event_time < $2
-    order by event_time desc
-    limit 1;
-
--- name: GetLastFeedEventForToken :one
-select * from feed_events where deleted = false
-    and owner_id = $1
-    and action = any(@actions)
-    and data ->> 'token_id' = @token_id::varchar
-    and event_time < $2
-    order by event_time desc
-    limit 1;
-
--- name: GetLastFeedEventForCollection :one
-select * from feed_events where deleted = false
-    and owner_id = $1
-    and action = any(@actions)
-    and data ->> 'collection_id' = @collection_id
-    and event_time < $2
-    order by event_time desc
-    limit 1;
-
--- name: IsFeedUserActionBlocked :one
-SELECT EXISTS(SELECT 1 FROM feed_blocklist WHERE user_id = $1 AND (action = $2 or action = '') AND deleted = false);
-
--- name: BlockUserFromFeed :exec
-INSERT INTO feed_blocklist (id, user_id, action) VALUES ($1, $2, $3);
-
--- name: UnblockUserFromFeed :exec
-UPDATE feed_blocklist SET deleted = true WHERE user_id = $1;
-
--- name: GetAdmireByAdmireID :one
-SELECT * FROM admires WHERE id = $1 AND deleted = false;
-
--- name: GetAdmiresByAdmireIDs :many
-SELECT * from admires WHERE id = ANY(@admire_ids) AND deleted = false;
-
--- name: GetAdmireByAdmireIDBatch :batchone
-SELECT * FROM admires WHERE id = $1 AND deleted = false;
-
--- name: GetAdmiresByActorID :many
-SELECT * FROM admires WHERE actor_id = $1 AND deleted = false ORDER BY created_at DESC;
-
--- name: GetAdmiresByActorIDBatch :batchmany
-SELECT * FROM admires WHERE actor_id = $1 AND deleted = false ORDER BY created_at DESC;
-
--- name: PaginateAdmiresByFeedEventIDBatch :batchmany
-SELECT * FROM admires WHERE feed_event_id = sqlc.arg('feed_event_id') AND deleted = false
-    AND (created_at, id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id')) AND (created_at, id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-    ORDER BY CASE WHEN sqlc.arg('paging_forward')::bool THEN (created_at, id) END ASC,
-             CASE WHEN NOT sqlc.arg('paging_forward')::bool THEN (created_at, id) END DESC
-    LIMIT sqlc.arg('limit');
-
--- name: CountAdmiresByFeedEventIDBatch :batchone
-SELECT count(*) FROM admires WHERE feed_event_id = $1 AND deleted = false;
-
--- name: GetCommentByCommentID :one
-SELECT * FROM comments WHERE id = $1 AND deleted = false;
-
--- name: GetCommentsByCommentIDs :many
-SELECT * from comments WHERE id = ANY(@comment_ids) AND deleted = false;
-
--- name: GetCommentByCommentIDBatch :batchone
-SELECT * FROM comments WHERE id = $1 AND deleted = false;
-
--- name: PaginateCommentsByFeedEventIDBatch :batchmany
-SELECT * FROM comments WHERE feed_event_id = sqlc.arg('feed_event_id') AND deleted = false
-    AND (created_at, id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id'))
-    AND (created_at, id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-    ORDER BY CASE WHEN sqlc.arg('paging_forward')::bool THEN (created_at, id) END ASC,
-             CASE WHEN NOT sqlc.arg('paging_forward')::bool THEN (created_at, id) END DESC
-    LIMIT sqlc.arg('limit');
-
--- name: CountCommentsByFeedEventIDBatch :batchone
-SELECT count(*) FROM comments WHERE feed_event_id = $1 AND deleted = false;
-
--- name: GetCommentsByActorID :many
-SELECT * FROM comments WHERE actor_id = $1 AND deleted = false ORDER BY created_at DESC;
-
--- name: GetCommentsByActorIDBatch :batchmany
-SELECT * FROM comments WHERE actor_id = $1 AND deleted = false ORDER BY created_at DESC;
-
 -- name: GetUserNotifications :many
 SELECT * FROM notifications WHERE owner_id = $1 AND deleted = false
     AND (created_at, id) < (@cur_before_time, @cur_before_id)
@@ -575,7 +428,6 @@ select * from notifications
     where owner_id = $1
     and action = $2
     and deleted = false
-    and (not @only_for_feed_event::bool or feed_event_id = $3)
     order by created_at desc
     limit 1;
 
@@ -583,12 +435,6 @@ select * from notifications
 SELECT * FROM notifications
     WHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at > @created_after
     ORDER BY created_at DESC;
-
--- name: CreateAdmireNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, feed_event_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
-
--- name: CreateCommentNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, feed_event_id, comment_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: CreateFollowNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING *;
@@ -604,28 +450,6 @@ UPDATE users SET notification_settings = $2 WHERE id = $1;
 
 -- name: ClearNotificationsForUser :many
 UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING *;
-
--- name: PaginateInteractionsByFeedEventIDBatch :batchmany
-SELECT interactions.created_At, interactions.id, interactions.tag FROM (
-    SELECT t.created_at, t.id, sqlc.arg('admire_tag')::int as tag FROM admires t WHERE sqlc.arg('admire_tag') != 0 AND t.feed_event_id = sqlc.arg('feed_event_id') AND t.deleted = false
-        AND (t.created_at, t.id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id')) AND (t.created_at, t.id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-                                                                    UNION
-    SELECT t.created_at, t.id, sqlc.arg('comment_tag')::int as tag FROM comments t WHERE sqlc.arg('comment_tag') != 0 AND t.feed_event_id = sqlc.arg('feed_event_id') AND t.deleted = false
-        AND (t.created_at, t.id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id')) AND (t.created_at, t.id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-) as interactions
-
-ORDER BY CASE WHEN sqlc.arg('paging_forward')::bool THEN (created_at, id) END ASC,
-         CASE WHEN NOT sqlc.arg('paging_forward')::bool THEN (created_at, id) END DESC
-LIMIT sqlc.arg('limit');
-
--- name: CountInteractionsByFeedEventIDBatch :batchmany
-SELECT count(*), sqlc.arg('admire_tag')::int as tag FROM admires t WHERE sqlc.arg('admire_tag') != 0 AND t.feed_event_id = sqlc.arg('feed_event_id') AND t.deleted = false
-                                                        UNION
-SELECT count(*), sqlc.arg('comment_tag')::int as tag FROM comments t WHERE sqlc.arg('comment_tag') != 0 AND t.feed_event_id = sqlc.arg('feed_event_id') AND t.deleted = false;
-
--- name: GetAdmireByActorIDAndFeedEventID :batchone
-SELECT * FROM admires WHERE actor_id = $1 AND feed_event_id = $2 AND deleted = false;
-
 
 -- for some reason this query will not allow me to use @tags for $1
 -- name: GetUsersWithEmailNotificationsOnForEmailType :many
@@ -693,9 +517,6 @@ update users set primary_wallet_id = @wallet_id from wallets
 
 -- name: GetUsersByChainAddresses :many
 select users.*,wallets.address from users, wallets where wallets.address = ANY(@addresses::varchar[]) AND wallets.chain = @chain::int AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false;
-
--- name: GetFeedEventByID :one
-SELECT * FROM feed_events WHERE id = $1 AND deleted = false;
 
 -- name: AddUserRoles :exec
 insert into user_roles (id, user_id, role, created_at, last_updated)
@@ -833,12 +654,6 @@ update users set user_experiences = user_experiences || @experience where id = @
 
 -- name: GetTrendingUsersByIDs :many
 select users.* from users join unnest(@user_ids::varchar[]) with ordinality t(id, pos) using (id) where deleted = false order by t.pos asc;
-
--- name: GetTrendingFeedEventIDs :many
-select feed_events.id, feed_events.created_at, count(*)
-from events as interactions, feed_events
-where interactions.action IN ('CommentedOnFeedEvent', 'AdmiredFeedEvent') and interactions.created_at >= @window_end and interactions.feed_event_id is not null and interactions.feed_event_id = feed_events.id
-group by feed_events.id, feed_events.created_at;
 
 -- name: UpdateCollectionGallery :exec
 update collections set gallery_id = @gallery_id, last_updated = now() where id = @id and deleted = false;
