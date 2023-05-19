@@ -17,7 +17,7 @@ update splits set last_updated = now(), collections = $1::text[] || collections 
 
 type SplitRepoAddCollectionsParams struct {
 	CollectionIds []string
-	SplitID       persist.DBID
+	SplitID     persist.DBID
 }
 
 func (q *Queries) SplitRepoAddCollections(ctx context.Context, arg SplitRepoAddCollectionsParams) (int64, error) {
@@ -72,7 +72,7 @@ insert into splits (id, owner_user_id, name, description, position) values ($1, 
 `
 
 type SplitRepoCreateParams struct {
-	SplitID     persist.DBID
+	SplitID   persist.DBID
 	OwnerUserID persist.DBID
 	Name        string
 	Description string
@@ -109,7 +109,7 @@ update splits set deleted = true where splits.id = $1 and (select count(*) from 
 `
 
 type SplitRepoDeleteParams struct {
-	SplitID     persist.DBID
+	SplitID   persist.DBID
 	OwnerUserID persist.DBID
 }
 
@@ -154,6 +154,32 @@ func (q *Queries) SplitRepoGetByUserIDRaw(ctx context.Context, ownerUserID persi
 	return items, nil
 }
 
+const splitRepoGetSplitCollections = `-- name: SplitRepoGetSplitCollections :many
+select c.id from splits g, unnest(g.collections) with ordinality as u(coll, coll_ord)
+    left join collections c on c.id = u.coll
+    where g.id = $1 and c.deleted = false and g.deleted = false order by u.coll_ord
+`
+
+func (q *Queries) SplitRepoGetSplitCollections(ctx context.Context, id persist.DBID) ([]persist.DBID, error) {
+	rows, err := q.db.Query(ctx, splitRepoGetSplitCollections, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []persist.DBID
+	for rows.Next() {
+		var id persist.DBID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const splitRepoGetPreviewsForUserID = `-- name: SplitRepoGetPreviewsForUserID :many
 select (t.media ->> 'thumbnail_url')::text from splits g,
     unnest(g.collections) with ordinality as collection_ids(id, ord) inner join collections c on c.id = collection_ids.id and c.deleted = false,
@@ -187,39 +213,13 @@ func (q *Queries) SplitRepoGetPreviewsForUserID(ctx context.Context, arg SplitRe
 	return items, nil
 }
 
-const splitRepoGetSplitCollections = `-- name: SplitRepoGetSplitCollections :many
-select c.id from splits g, unnest(g.collections) with ordinality as u(coll, coll_ord)
-    left join collections c on c.id = u.coll
-    where g.id = $1 and c.deleted = false and g.deleted = false order by u.coll_ord
-`
-
-func (q *Queries) SplitRepoGetSplitCollections(ctx context.Context, id persist.DBID) ([]persist.DBID, error) {
-	rows, err := q.db.Query(ctx, splitRepoGetSplitCollections, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []persist.DBID
-	for rows.Next() {
-		var id persist.DBID
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const splitRepoUpdate = `-- name: SplitRepoUpdate :execrows
 update splits set last_updated = now(), collections = $1 where splits.id = $2 and (select count(*) from collections c where c.id = any($1) and c.split_id = $2 and c.deleted = false) = coalesce(array_length($1, 1), 0)
 `
 
 type SplitRepoUpdateParams struct {
 	CollectionIds persist.DBIDList
-	SplitID       persist.DBID
+	SplitID     persist.DBID
 }
 
 func (q *Queries) SplitRepoUpdate(ctx context.Context, arg SplitRepoUpdateParams) (int64, error) {

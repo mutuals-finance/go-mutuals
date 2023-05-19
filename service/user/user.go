@@ -85,8 +85,8 @@ type MergeUsersInput struct {
 }
 
 // CreateUser creates a new user
-func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, splitName, galleryDesc, galleryPos string, userRepo *postgres.UserRepository,
-	galleryRepo *postgres.SplitRepository, mp *multichain.Provider) (userID persist.DBID, galleryID persist.DBID, err error) {
+func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, splitName, splitDesc, splitPos string, userRepo *postgres.UserRepository,
+	splitRepo *postgres.SplitRepository, mp *multichain.Provider) (userID persist.DBID, splitID persist.DBID, err error) {
 	gc := util.GinContextFromContext(pCtx)
 
 	authResult, err := authenticator.Authenticate(pCtx)
@@ -128,23 +128,23 @@ func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username
 		return "", "", err
 	}
 
-	gallery, err := galleryRepo.Create(pCtx, coredb.SplitRepoCreateParams{
+	split, err := splitRepo.Create(pCtx, coredb.SplitRepoCreateParams{
 		SplitID:     persist.GenerateID(),
 		OwnerUserID: userID,
-		Name:        galleryName,
-		Description: galleryDesc,
-		Position:    galleryPos,
+		Name:        splitName,
+		Description: splitDesc,
+		Position:    splitPos,
 	})
 	if err != nil {
 		return "", "", err
 	}
 
-	split.ID
+	splitID = split.ID
 
 	auth.SetAuthStateForCtx(gc, userID, nil)
 	auth.SetJWTCookie(gc, jwtTokenStr)
 
-	splitID, nil
+	return userID, splitID, nil
 }
 
 // RemoveWalletsFromUser removes any amount of addresses from a user in the DB

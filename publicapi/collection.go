@@ -83,15 +83,15 @@ func (api CollectionAPI) GetCollectionsByIds(ctx context.Context, collectionIDs 
 	return collections, errors
 }
 
-func (api CollectionAPI) GetCollectionsBySplitId(ctx context.Context, galleryID persist.DBID) ([]db.Collection, error) {
+func (api CollectionAPI) GetCollectionsBySplitId(ctx context.Context, splitID persist.DBID) ([]db.Collection, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"galleryID": {galleryID, "required"},
+		"splitID": {splitID, "required"},
 	}); err != nil {
 		return nil, err
 	}
 
-	collections, err := api.loaders.CollectionsBySplitID.Load(galleryID)
+	collections, err := api.loaders.CollectionsBySplitID.Load(splitID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +99,9 @@ func (api CollectionAPI) GetCollectionsBySplitId(ctx context.Context, galleryID 
 	return collections, nil
 }
 
-func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist.DBID, name string, collectorsNote string, tokens []persist.DBID, layout persist.TokenLayout, tokenSettings map[persist.DBID]persist.CollectionTokenSettings, caption *string) (*db.Collection, error) {
+func (api CollectionAPI) CreateCollection(ctx context.Context, splitID persist.DBID, name string, collectorsNote string, tokens []persist.DBID, layout persist.TokenLayout, tokenSettings map[persist.DBID]persist.CollectionTokenSettings, caption *string) (*db.Collection, error) {
 	fieldsToValidate := validate.ValidationMap{
-		"galleryID":      {galleryID, "required"},
+		"splitID":        {splitID, "required"},
 		"name":           {name, "collection_name"},
 		"collectorsNote": {collectorsNote, "collection_note"},
 		"tokens":         {tokens, fmt.Sprintf("required,unique,min=1,max=%d", maxTokensPerCollection)},
@@ -151,7 +151,7 @@ func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist
 	collection := persist.CollectionDB{
 		OwnerUserID:    userID,
 		Tokens:         tokens,
-		SplitID:        galleryID,
+		SplitID:        splitID,
 		Layout:         layout,
 		Name:           persist.NullString(name),
 		CollectorsNote: persist.NullString(collectorsNote),
@@ -164,7 +164,7 @@ func (api CollectionAPI) CreateCollection(ctx context.Context, galleryID persist
 		return nil, err
 	}
 
-	err = api.repos.SplitRepository.AddCollections(ctx, galleryID, userID, []persist.DBID{collectionID})
+	err = api.repos.SplitRepository.AddCollections(ctx, splitID, userID, []persist.DBID{collectionID})
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (api CollectionAPI) UpdateCollectionInfo(ctx context.Context, collectionID 
 		return err
 	}
 
-	galleryID, err := api.queries.GetSplitIDByCollectionID(ctx, collectionID)
+	splitID, err := api.queries.GetSplitIDByCollectionID(ctx, collectionID)
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (api CollectionAPI) UpdateCollectionInfo(ctx context.Context, collectionID 
 		Action:         persist.ActionCollectorsNoteAddedToCollection,
 		ResourceTypeID: persist.ResourceTypeCollection,
 		CollectionID:   collectionID,
-		SplitID:        galleryID,
+		SplitID:        splitID,
 		SubjectID:      collectionID,
 		Data:           persist.EventData{CollectionCollectorsNote: collectorsNote},
 	}, api.validator, nil)
@@ -332,12 +332,12 @@ func (api CollectionAPI) UpdateCollectionHidden(ctx context.Context, collectionI
 	return nil
 }
 
-// UpdateCollectionSplit updates the gallery of a collection and returns the ID of the old gallery.
-func (api CollectionAPI) UpdateCollectionSplit(ctx context.Context, collectionID, galleryID persist.DBID) (persist.DBID, error) {
+// UpdateCollectionSplit updates the split of a collection and returns the ID of the old split.
+func (api CollectionAPI) UpdateCollectionSplit(ctx context.Context, collectionID, splitID persist.DBID) (persist.DBID, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"collectionID": {collectionID, "required"},
-		"galleryID":    {galleryID, "required"},
+		"splitID":      {splitID, "required"},
 	}); err != nil {
 		return "", err
 	}
@@ -358,12 +358,12 @@ func (api CollectionAPI) UpdateCollectionSplit(ctx context.Context, collectionID
 	}
 
 	if ownsSplit, err := api.queries.UserOwnsSplit(ctx, db.UserOwnsSplitParams{
-		ID:          galleryID,
+		ID:          splitID,
 		OwnerUserID: userID,
 	}); err != nil {
 		return "", err
 	} else if !ownsSplit {
-		return "", fmt.Errorf("user does not own gallery: %s", galleryID)
+		return "", fmt.Errorf("user does not own split: %s", splitID)
 	}
 
 	tx, err := api.repos.BeginTx(ctx)
@@ -381,21 +381,21 @@ func (api CollectionAPI) UpdateCollectionSplit(ctx context.Context, collectionID
 	}
 
 	if err := q.UpdateCollectionSplit(ctx, db.UpdateCollectionSplitParams{
-		SplitID: galleryID,
+		SplitID: splitID,
 		ID:      collectionID,
 	}); err != nil {
 		return "", err
 	}
 
 	if err := q.AddCollectionToSplit(ctx, db.AddCollectionToSplitParams{
-		GalleryID:    galleryID,
+		SplitID:      splitID,
 		CollectionID: collectionID,
 	}); err != nil {
 		return "", err
 	}
 
-	if err := q.RemoveCollectionFromGallery(ctx, db.RemoveCollectionFromGalleryParams{
-		GalleryID:    curCol.GalleryID,
+	if err := q.RemoveCollectionFromSplit(ctx, db.RemoveCollectionFromSplitParams{
+		SplitID:      curCol.SplitID,
 		CollectionID: collectionID,
 	}); err != nil {
 		return "", err
@@ -405,5 +405,5 @@ func (api CollectionAPI) UpdateCollectionSplit(ctx context.Context, collectionID
 		return "", err
 	}
 
-	return curCol.GalleryID, nil
+	return curCol.SplitID, nil
 }

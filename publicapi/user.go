@@ -359,7 +359,7 @@ func (api UserAPI) AddSocialAccountToUser(ctx context.Context, authenticator soc
 	})
 }
 
-func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, galleryName, galleryDesc, galleryPos string) (userID persist.DBID, galleryID persist.DBID, err error) {
+func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, splitName, splitDesc, splitPos string) (userID persist.DBID, splitID persist.DBID, err error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"username": {username, "required,username"},
@@ -368,20 +368,20 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 		return "", "", err
 	}
 
-	if galleryPos == "" {
+	if splitPos == "" {
 		first, err := fracdex.KeyBetween("", "")
 		if err != nil {
 			return "", "", err
 		}
-		galleryPos = first
+		splitPos = first
 	}
 
-	userID, galleryID, err = user.CreateUser(ctx, authenticator, username, email, bio, galleryName, galleryDesc, galleryPos, api.repos.UserRepository, api.repos.SplitRepository, api.multichainProvider)
+	userID, splitID, err = user.CreateUser(ctx, authenticator, username, email, bio, splitName, splitDesc, splitPos, api.repos.UserRepository, api.repos.SplitRepository, api.multichainProvider)
 	if err != nil {
 		return "", "", err
 	}
 
-	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedSplitParams{SplitID: galleryID, UserID: userID})
+	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedSplitParams{SplitID: splitID, UserID: userID})
 	if err != nil {
 		return "", "", err
 	}
@@ -416,7 +416,7 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 		return "", "", err
 	}
 
-	return userID, galleryID, err
+	return userID, splitID, err
 }
 
 func (api UserAPI) UpdateUserInfo(ctx context.Context, username string, bio string) error {
@@ -465,10 +465,10 @@ func (api UserAPI) UpdateUserPrimaryWallet(ctx context.Context, primaryWalletID 
 	return nil
 }
 
-func (api UserAPI) UpdateFeaturedSplit(ctx context.Context, galleryID persist.DBID) error {
+func (api UserAPI) UpdateFeaturedSplit(ctx context.Context, splitID persist.DBID) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"galleryID": {galleryID, "required"},
+		"splitID": {splitID, "required"},
 	}); err != nil {
 		return err
 	}
@@ -478,8 +478,8 @@ func (api UserAPI) UpdateFeaturedSplit(ctx context.Context, galleryID persist.DB
 		return err
 	}
 
-	// query will validate that the gallery belongs to the user
-	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedGalleryParams{GalleryID: galleryID, UserID: userID})
+	// query will validate that the split belongs to the user
+	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedSplitParams{SplitID: splitID, UserID: userID})
 	if err != nil {
 		return err
 	}
@@ -567,7 +567,7 @@ func (api UserAPI) UpdateUserNotificationSettings(ctx context.Context, notificat
 
 func (api UserAPI) GetMembershipTiers(ctx context.Context, forceRefresh bool) ([]persist.MembershipTier, error) {
 	// Nothing to validate
-	return membership.GetMembershipTiers(ctx, forceRefresh, api.repos.MembershipRepository, api.repos.UserRepository, api.repos.GalleryRepository, api.repos.WalletRepository, api.ethClient, api.ipfsClient, api.arweaveClient, api.storageClient)
+	return membership.GetMembershipTiers(ctx, forceRefresh, api.repos.MembershipRepository, api.repos.UserRepository, api.repos.SplitRepository, api.repos.WalletRepository, api.ethClient, api.ipfsClient, api.arweaveClient, api.storageClient)
 }
 
 func (api UserAPI) GetMembershipByMembershipId(ctx context.Context, membershipID persist.DBID) (*db.Membership, error) {
