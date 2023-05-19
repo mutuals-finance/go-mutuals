@@ -2493,7 +2493,7 @@ type GetUsersByChainAddressesRow struct {
 	NotificationSettings persist.UserNotificationSettings
 	EmailVerified        persist.EmailVerificationStatus
 	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedSplit        sql.NullString
+	FeaturedSplit        *persist.DBID
 	PrimaryWalletID      persist.DBID
 	UserExperiences      pgtype.JSONB
 	Address              persist.Address

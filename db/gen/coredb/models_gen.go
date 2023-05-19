@@ -253,7 +253,7 @@ type PiiUserView struct {
 	NotificationSettings persist.UserNotificationSettings
 	EmailVerified        persist.EmailVerificationStatus
 	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedSplit        sql.NullString
+	FeaturedSplit        *persist.DBID
 	PrimaryWalletID      persist.DBID
 	UserExperiences      pgtype.JSONB
 	PiiEmailAddress      persist.Email
