@@ -26,7 +26,7 @@ create index contracts_fts_address_idx on contracts using gin (fts_address);
 create index contracts_fts_name_idx on contracts using gin (fts_name);
 create index contracts_fts_description_english_idx on contracts using gin (fts_description_english);
 
--- Contract relevance: ranks contracts based on the number of Gallery users who are currently
+-- Contract relevance: ranks contracts based on the number of Split users who are currently
 -- displaying items from each contract. min_count is set to 0, but is kept as a CTE so we can
 -- change it easily if we'd like to tweak the baseline relevance score.
 -- Score is: (# users displaying at least one piece from contract) / (# users displaying most popular contract),
@@ -41,7 +41,7 @@ create materialized view contract_relevance as (
     ),
     min_count as (
         -- The baseline score is 0, because contracts that aren't displayed by anyone on
-        -- Gallery are potentially contracts we want to filter out entirely
+        -- Split are potentially contracts we want to filter out entirely
         select 0 as count
     ),
     max_count as (
@@ -111,42 +111,42 @@ create materialized view user_relevance as (
 create unique index user_relevance_id_idx on user_relevance(id);
 
 --------------------------
--- Galleries
+-- Splits
 --------------------------
-alter table galleries add column fts_name tsvector
+alter table splits add column fts_name tsvector
     generated always as (
         to_tsvector('simple', name)
     ) stored;
 
-alter table galleries add column fts_description_english tsvector
+alter table splits add column fts_description_english tsvector
     generated always as (
         to_tsvector('english', description)
     ) stored;
 
-create index galleries_fts_name_idx on galleries using gin (fts_name);
-create index galleries_fts_description_english_idx on galleries using gin (fts_description_english);
+create index splits_fts_name_idx on splits using gin (fts_name);
+create index splits_fts_description_english_idx on splits using gin (fts_description_english);
 
--- Gallery relevance: ranks galleries based on number of views.
--- Score is: (1 + # views) / (1 + highest # views), such that all galleries have a
--- score from (0.0, 1.0], and the gallery with the most views has a 1.0 score.
-create materialized view gallery_relevance as (
-    with views_per_gallery as (
-        select gallery_id, count(gallery_id) from events
-            where action = 'ViewedGallery' and deleted = false group by gallery_id
+-- Split relevance: ranks splits based on number of views.
+-- Score is: (1 + # views) / (1 + highest # views), such that all splits have a
+-- score from (0.0, 1.0], and the split with the most views has a 1.0 score.
+create materialized view split_relevance as (
+    with views_per_split as (
+        select split_id, count(split_id) from events
+            where action = 'ViewedSplit' and deleted = false group by split_id
     ),
     max_count as (
-        select views_per_gallery.count from views_per_gallery order by views_per_gallery.count desc limit 1
+        select views_per_split.count from views_per_split order by views_per_split.count desc limit 1
     ),
     min_count as (
-        -- The baseline score is 1 view, because every gallery is relevant!
+        -- The baseline score is 1 view, because every split is relevant!
         select 1 as count
     )
-    select gallery_id as id, (min_count.count + views_per_gallery.count) / (min_count.count + max_count.count)::decimal as score
-        from views_per_gallery, min_count, max_count
+    select split_id as id, (min_count.count + views_per_split.count) / (min_count.count + max_count.count)::decimal as score
+        from views_per_split, min_count, max_count
     union
     -- Null id contains the minimum score
     select null as id, min_count.count / (min_count.count + max_count.count)::decimal as score
         from min_count, max_count
 );
 
-create unique index gallery_relevance_id_idx on gallery_relevance(id);
+create unique index split_relevance_id_idx on split_relevance(id);

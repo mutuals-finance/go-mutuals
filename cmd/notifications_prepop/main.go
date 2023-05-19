@@ -108,7 +108,7 @@ func main() {
 	for _, event := range events {
 		if event.Action == persist.ActionViewedSplit {
 			fmt.Printf("SplitID %s\n", event.SplitID)
-			_, err := pg.Exec(ctx, "INSERT INTO EVENTS (ID, ACTOR_ID, RESOURCE_TYPE_ID, SUBJECT_ID, GALLERY_ID, ACTION) VALUES ($1, $2, $3, $4, $5, $6)", event.ID, event.ActorID, event.ResourceTypeID, event.SubjectID, event.SplitID, event.Action)
+			_, err := pg.Exec(ctx, "INSERT INTO EVENTS (ID, ACTOR_ID, RESOURCE_TYPE_ID, SUBJECT_ID, SPLIT_ID, ACTION) VALUES ($1, $2, $3, $4, $5, $6)", event.ID, event.ActorID, event.ResourceTypeID, event.SubjectID, event.SplitID, event.Action)
 			if err != nil {
 				panic(err)
 			}
@@ -129,7 +129,7 @@ func main() {
 	for _, notif := range notifs {
 		if notif.Action == persist.ActionViewedSplit {
 			fmt.Printf("SplitID %s\n", notif.SplitID)
-			_, err := pg.Exec(ctx, "INSERT INTO NOTIFICATIONS (ID, OWNER_ID, ACTION, GALLERY_ID, DATA, EVENT_IDS) VALUES ($1, $2, $3, $4, $5, $6)", notif.ID, notif.OwnerID, notif.Action, notif.SplitID, notif.Data, notif.EventIds)
+			_, err := pg.Exec(ctx, "INSERT INTO NOTIFICATIONS (ID, OWNER_ID, ACTION, SPLIT_ID, DATA, EVENT_IDS) VALUES ($1, $2, $3, $4, $5, $6)", notif.ID, notif.OwnerID, notif.Action, notif.SplitID, notif.Data, notif.EventIds)
 			if err != nil {
 				panic(err)
 			}

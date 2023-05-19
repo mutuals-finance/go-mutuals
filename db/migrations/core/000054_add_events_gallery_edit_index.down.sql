@@ -1,1 +1,1 @@
-drop index if exists events_gallery_edit_idx;
+drop index if exists events_split_edit_idx;

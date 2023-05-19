@@ -21,7 +21,7 @@ var (
 )
 
 const getCollectionByIdBatch = `-- name: GetCollectionByIdBatch :batchone
-SELECT id, deleted, owner_user_id, nfts, version, last_updated, created_at, hidden, collectors_note, name, layout, token_settings, gallery_id FROM collections WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_user_id, nfts, version, last_updated, created_at, hidden, collectors_note, name, layout, token_settings, split_id FROM collections WHERE id = $1 AND deleted = false
 `
 
 type GetCollectionByIdBatchBatchResults struct {
@@ -79,32 +79,32 @@ func (b *GetCollectionByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getCollectionsByGalleryIdBatch = `-- name: GetCollectionsByGalleryIdBatch :batchmany
-SELECT c.id, c.deleted, c.owner_user_id, c.nfts, c.version, c.last_updated, c.created_at, c.hidden, c.collectors_note, c.name, c.layout, c.token_settings, c.gallery_id FROM splits g, unnest(g.collections)
+const getCollectionsBySplitIdBatch = `-- name: GetCollectionsBySplitIdBatch :batchmany
+SELECT c.id, c.deleted, c.owner_user_id, c.nfts, c.version, c.last_updated, c.created_at, c.hidden, c.collectors_note, c.name, c.layout, c.token_settings, c.split_id FROM splits g, unnest(g.collections)
     WITH ORDINALITY AS x(coll_id, coll_ord)
     INNER JOIN collections c ON c.id = x.coll_id
     WHERE g.id = $1 AND g.deleted = false AND c.deleted = false ORDER BY x.coll_ord
 `
 
-type GetCollectionsByGalleryIdBatchBatchResults struct {
+type GetCollectionsBySplitIdBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetCollectionsByGalleryIdBatch(ctx context.Context, id []persist.DBID) *GetCollectionsByGalleryIdBatchBatchResults {
+func (q *Queries) GetCollectionsBySplitIdBatch(ctx context.Context, id []persist.DBID) *GetCollectionsBySplitIdBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range id {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getCollectionsByGalleryIdBatch, vals...)
+		batch.Queue(getCollectionsBySplitIdBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetCollectionsByGalleryIdBatchBatchResults{br, len(id), false}
+	return &GetCollectionsBySplitIdBatchBatchResults{br, len(id), false}
 }
 
-func (b *GetCollectionsByGalleryIdBatchBatchResults) Query(f func(int, []Collection, error)) {
+func (b *GetCollectionsBySplitIdBatchBatchResults) Query(f func(int, []Collection, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var items []Collection
@@ -135,7 +135,7 @@ func (b *GetCollectionsByGalleryIdBatchBatchResults) Query(f func(int, []Collect
 					&i.Name,
 					&i.Layout,
 					&i.TokenSettings,
-					&i.GalleryID,
+					&i.SplitID,
 				); err != nil {
 					return err
 				}
@@ -149,7 +149,7 @@ func (b *GetCollectionsByGalleryIdBatchBatchResults) Query(f func(int, []Collect
 	}
 }
 
-func (b *GetCollectionsByGalleryIdBatchBatchResults) Close() error {
+func (b *GetCollectionsBySplitIdBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -391,7 +391,7 @@ func (b *GetContractsDisplayedByUserIDBatchBatchResults) Close() error {
 }
 
 const getFollowersByUserIdBatch = `-- name: GetFollowersByUserIdBatch :batchmany
-SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_gallery, u.primary_wallet_id, u.user_experiences FROM follows f
+SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences FROM follows f
     INNER JOIN users u ON f.follower = u.id
     WHERE f.followee = $1 AND f.deleted = false
     ORDER BY f.last_updated DESC
@@ -448,7 +448,7 @@ func (b *GetFollowersByUserIdBatchBatchResults) Query(f func(int, []User, error)
 					&i.NotificationSettings,
 					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
-					&i.FeaturedGallery,
+					&i.FeaturedSplit,
 					&i.PrimaryWalletID,
 					&i.UserExperiences,
 				); err != nil {
@@ -470,7 +470,7 @@ func (b *GetFollowersByUserIdBatchBatchResults) Close() error {
 }
 
 const getFollowingByUserIdBatch = `-- name: GetFollowingByUserIdBatch :batchmany
-SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_gallery, u.primary_wallet_id, u.user_experiences FROM follows f
+SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences FROM follows f
     INNER JOIN users u ON f.followee = u.id
     WHERE f.follower = $1 AND f.deleted = false
     ORDER BY f.last_updated DESC
@@ -527,7 +527,7 @@ func (b *GetFollowingByUserIdBatchBatchResults) Query(f func(int, []User, error)
 					&i.NotificationSettings,
 					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
-					&i.FeaturedGallery,
+					&i.FeaturedSplit,
 					&i.PrimaryWalletID,
 					&i.UserExperiences,
 				); err != nil {
@@ -544,190 +544,6 @@ func (b *GetFollowingByUserIdBatchBatchResults) Query(f func(int, []User, error)
 }
 
 func (b *GetFollowingByUserIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getGalleriesByUserIdBatch = `-- name: GetGalleriesByUserIdBatch :batchmany
-SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE owner_user_id = $1 AND deleted = false order by position
-`
-
-type GetGalleriesByUserIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetGalleriesByUserIdBatch(ctx context.Context, ownerUserID []persist.DBID) *GetGalleriesByUserIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range ownerUserID {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getGalleriesByUserIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetGalleriesByUserIdBatchBatchResults{br, len(ownerUserID), false}
-}
-
-func (b *GetGalleriesByUserIdBatchBatchResults) Query(f func(int, []Gallery, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Gallery
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Gallery
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Version,
-					&i.OwnerUserID,
-					&i.Collections,
-					&i.Name,
-					&i.Description,
-					&i.Hidden,
-					&i.Position,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetGalleriesByUserIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getGalleryByCollectionIdBatch = `-- name: GetGalleryByCollectionIdBatch :batchone
-SELECT g.id, g.deleted, g.last_updated, g.created_at, g.version, g.owner_user_id, g.collections, g.name, g.description, g.hidden, g.position FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false
-`
-
-type GetGalleryByCollectionIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetGalleryByCollectionIdBatch(ctx context.Context, id []persist.DBID) *GetGalleryByCollectionIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getGalleryByCollectionIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetGalleryByCollectionIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetGalleryByCollectionIdBatchBatchResults) QueryRow(f func(int, Gallery, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Gallery
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Version,
-			&i.OwnerUserID,
-			&i.Collections,
-			&i.Name,
-			&i.Description,
-			&i.Hidden,
-			&i.Position,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetGalleryByCollectionIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getGalleryByIdBatch = `-- name: GetGalleryByIdBatch :batchone
-SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE id = $1 AND deleted = false
-`
-
-type GetGalleryByIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetGalleryByIdBatch(ctx context.Context, id []persist.DBID) *GetGalleryByIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getGalleryByIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetGalleryByIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetGalleryByIdBatchBatchResults) QueryRow(f func(int, Gallery, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Gallery
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Version,
-			&i.OwnerUserID,
-			&i.Collections,
-			&i.Name,
-			&i.Description,
-			&i.Hidden,
-			&i.Position,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetGalleryByIdBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -788,7 +604,7 @@ func (b *GetMembershipByMembershipIdBatchBatchResults) Close() error {
 }
 
 const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, feed_event_id, comment_id, gallery_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, feed_event_id, comment_id, split_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
 `
 
 type GetNotificationByIDBatchBatchResults struct {
@@ -832,7 +648,7 @@ func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification
 			&i.EventIds,
 			&i.FeedEventID,
 			&i.CommentID,
-			&i.GalleryID,
+			&i.SplitID,
 			&i.Seen,
 			&i.Amount,
 		)
@@ -848,8 +664,8 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 }
 
 const getOwnersByContractIdBatchPaginate = `-- name: GetOwnersByContractIdBatchPaginate :batchmany
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_gallery, users.primary_wallet_id, users.user_experiences from (
-    select distinct on (u.id) u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_gallery, u.primary_wallet_id, u.user_experiences from users u, tokens t
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences from (
+    select distinct on (u.id) u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u, tokens t
         where t.contract = $1 and t.owner_user_id = u.id
         and (not $2::bool or u.universal = false)
         and t.deleted = false and u.deleted = false
@@ -939,7 +755,7 @@ func (b *GetOwnersByContractIdBatchPaginateBatchResults) Query(f func(int, []Use
 					&i.NotificationSettings,
 					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
-					&i.FeaturedGallery,
+					&i.FeaturedSplit,
 					&i.PrimaryWalletID,
 					&i.UserExperiences,
 				); err != nil {
@@ -1118,7 +934,7 @@ func (b *GetSharedContractsBatchPaginateBatchResults) Close() error {
 }
 
 const getSharedFollowersBatchPaginate = `-- name: GetSharedFollowersBatchPaginate :batchmany
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_gallery, users.primary_wallet_id, users.user_experiences, a.created_at followed_on
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences, a.created_at followed_on
 from users, follows a, follows b
 where a.follower = $1
 	and a.followee = b.follower
@@ -1166,7 +982,7 @@ type GetSharedFollowersBatchPaginateRow struct {
 	NotificationSettings persist.UserNotificationSettings
 	EmailVerified        persist.EmailVerificationStatus
 	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedGallery      *persist.DBID
+	FeaturedSplit        sql.NullString
 	PrimaryWalletID      persist.DBID
 	UserExperiences      pgtype.JSONB
 	FollowedOn           time.Time
@@ -1224,7 +1040,7 @@ func (b *GetSharedFollowersBatchPaginateBatchResults) Query(f func(int, []GetSha
 					&i.NotificationSettings,
 					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
-					&i.FeaturedGallery,
+					&i.FeaturedSplit,
 					&i.PrimaryWalletID,
 					&i.UserExperiences,
 					&i.FollowedOn,
@@ -1242,6 +1058,190 @@ func (b *GetSharedFollowersBatchPaginateBatchResults) Query(f func(int, []GetSha
 }
 
 func (b *GetSharedFollowersBatchPaginateBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getSplitByCollectionIdBatch = `-- name: GetSplitByCollectionIdBatch :batchone
+SELECT g.id, g.deleted, g.last_updated, g.created_at, g.version, g.owner_user_id, g.collections, g.name, g.description, g.hidden, g.position FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false
+`
+
+type GetSplitByCollectionIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetSplitByCollectionIdBatch(ctx context.Context, id []persist.DBID) *GetSplitByCollectionIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getSplitByCollectionIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetSplitByCollectionIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetSplitByCollectionIdBatchBatchResults) QueryRow(f func(int, Split, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Split
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Deleted,
+			&i.LastUpdated,
+			&i.CreatedAt,
+			&i.Version,
+			&i.OwnerUserID,
+			&i.Collections,
+			&i.Name,
+			&i.Description,
+			&i.Hidden,
+			&i.Position,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetSplitByCollectionIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getSplitByIdBatch = `-- name: GetSplitByIdBatch :batchone
+SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE id = $1 AND deleted = false
+`
+
+type GetSplitByIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetSplitByIdBatch(ctx context.Context, id []persist.DBID) *GetSplitByIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getSplitByIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetSplitByIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetSplitByIdBatchBatchResults) QueryRow(f func(int, Split, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Split
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Deleted,
+			&i.LastUpdated,
+			&i.CreatedAt,
+			&i.Version,
+			&i.OwnerUserID,
+			&i.Collections,
+			&i.Name,
+			&i.Description,
+			&i.Hidden,
+			&i.Position,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetSplitByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getSplitsByUserIdBatch = `-- name: GetSplitsByUserIdBatch :batchmany
+SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE owner_user_id = $1 AND deleted = false order by position
+`
+
+type GetSplitsByUserIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetSplitsByUserIdBatch(ctx context.Context, ownerUserID []persist.DBID) *GetSplitsByUserIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range ownerUserID {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getSplitsByUserIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetSplitsByUserIdBatchBatchResults{br, len(ownerUserID), false}
+}
+
+func (b *GetSplitsByUserIdBatchBatchResults) Query(f func(int, []Split, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Split
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Split
+				if err := rows.Scan(
+					&i.ID,
+					&i.Deleted,
+					&i.LastUpdated,
+					&i.CreatedAt,
+					&i.Version,
+					&i.OwnerUserID,
+					&i.Collections,
+					&i.Name,
+					&i.Description,
+					&i.Hidden,
+					&i.Position,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetSplitsByUserIdBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -1317,7 +1317,7 @@ func (b *GetTokenByIdBatchBatchResults) Close() error {
 }
 
 const getTokenOwnerByIDBatch = `-- name: GetTokenOwnerByIDBatch :batchone
-SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_gallery, u.primary_wallet_id, u.user_experiences FROM tokens t
+SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences FROM tokens t
     JOIN users u ON u.id = t.owner_user_id
     WHERE t.id = $1 AND t.deleted = false AND u.deleted = false
 `
@@ -1366,7 +1366,7 @@ func (b *GetTokenOwnerByIDBatchBatchResults) QueryRow(f func(int, User, error)) 
 			&i.NotificationSettings,
 			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedGallery,
+			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
 			&i.UserExperiences,
 		)
@@ -2031,7 +2031,7 @@ func (b *GetTokensByWalletIdsBatchBatchResults) Close() error {
 }
 
 const getUserByAddressBatch = `-- name: GetUserByAddressBatch :batchone
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_gallery, users.primary_wallet_id, users.user_experiences
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
 	and wallets.chain = $2::int
@@ -2090,7 +2090,7 @@ func (b *GetUserByAddressBatchBatchResults) QueryRow(f func(int, User, error)) {
 			&i.NotificationSettings,
 			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedGallery,
+			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
 			&i.UserExperiences,
 		)
@@ -2106,7 +2106,7 @@ func (b *GetUserByAddressBatchBatchResults) Close() error {
 }
 
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_gallery, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
 type GetUserByIdBatchBatchResults struct {
@@ -2153,7 +2153,7 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 			&i.NotificationSettings,
 			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedGallery,
+			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
 			&i.UserExperiences,
 		)
@@ -2169,7 +2169,7 @@ func (b *GetUserByIdBatchBatchResults) Close() error {
 }
 
 const getUserByUsernameBatch = `-- name: GetUserByUsernameBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_gallery, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 type GetUserByUsernameBatchBatchResults struct {
@@ -2216,7 +2216,7 @@ func (b *GetUserByUsernameBatchBatchResults) QueryRow(f func(int, User, error)) 
 			&i.NotificationSettings,
 			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedGallery,
+			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
 			&i.UserExperiences,
 		)
@@ -2232,7 +2232,7 @@ func (b *GetUserByUsernameBatchBatchResults) Close() error {
 }
 
 const getUserNotificationsBatch = `-- name: GetUserNotificationsBatch :batchmany
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, feed_event_id, comment_id, gallery_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, feed_event_id, comment_id, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
     AND (created_at, id) < ($2, $3)
     AND (created_at, id) > ($4, $5)
     ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
@@ -2304,7 +2304,7 @@ func (b *GetUserNotificationsBatchBatchResults) Query(f func(int, []Notification
 					&i.EventIds,
 					&i.FeedEventID,
 					&i.CommentID,
-					&i.GalleryID,
+					&i.SplitID,
 					&i.Seen,
 					&i.Amount,
 				); err != nil {
@@ -2326,7 +2326,7 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersWithTraitBatch = `-- name: GetUsersWithTraitBatch :batchmany
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_gallery, primary_wallet_id, user_experiences FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false
 `
 
 type GetUsersWithTraitBatchBatchResults struct {
@@ -2380,7 +2380,7 @@ func (b *GetUsersWithTraitBatchBatchResults) Query(f func(int, []User, error)) {
 					&i.NotificationSettings,
 					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
-					&i.FeaturedGallery,
+					&i.FeaturedSplit,
 					&i.PrimaryWalletID,
 					&i.UserExperiences,
 				); err != nil {

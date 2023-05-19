@@ -24,7 +24,7 @@ alter table contracts drop column if exists fts_name;
 alter table contracts drop column if exists fts_address;
 alter table contracts drop column if exists fts_description_english;
 
-alter table galleries drop column if exists fts_name;
-alter table galleries drop column if exists fts_description_english;
+alter table splits drop column if exists fts_name;
+alter table splits drop column if exists fts_description_english;
 
 

@@ -28,11 +28,11 @@ create materialized view owned_contracts as (
         owned_contracts.user_id,
         owned_contracts.contract_id,
         tokens.id as token_id
-      from owned_contracts, galleries, collections, tokens
+      from owned_contracts, splits, collections, tokens
       where
-        galleries.deleted = false
+        splits.deleted = false
         and collections.deleted = false
-        and galleries.owner_user_id = owned_contracts.user_id
+        and splits.owner_user_id = owned_contracts.user_id
         and collections.owner_user_id = owned_contracts.user_id
         and tokens.owner_user_id = owned_contracts.user_id
         and tokens.contract = owned_contracts.contract_id

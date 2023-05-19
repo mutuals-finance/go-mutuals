@@ -30,11 +30,11 @@ create view scrubbed_pii.for_users as (
             left join socials_aggregated on socials_aggregated.user_id = for_users.user_id
     ),
 
-    -- <username>@dummy-email.gallery.so for users who have email addresses, null otherwise
+    -- <username>@dummy-email.splitfi.com for users who have email addresses, null otherwise
     scrubbed_email_address as (
         select u.id as user_id,
                case
-                   when p.pii_email_address is not null then u.username_idempotent || '@dummy-email.gallery.so'
+                   when p.pii_email_address is not null then u.username_idempotent || '@dummy-email.splitfi.com'
                end as scrubbed_address from users u, pii.for_users p
         where u.id = p.user_id
     )

@@ -91,11 +91,11 @@ func (q *Queries) SearchContracts(ctx context.Context, arg SearchContractsParams
 	return items, nil
 }
 
-const searchGalleries = `-- name: SearchGalleries :many
+const searchSplits = `-- name: SearchSplits :many
 with min_content_score as (
-    select score from gallery_relevance where id is null
+    select score from split_relevance where id is null
 )
-select galleries.id, galleries.deleted, galleries.last_updated, galleries.created_at, galleries.version, galleries.owner_user_id, galleries.collections, galleries.name, galleries.description, galleries.hidden, galleries.position from galleries left join gallery_relevance on gallery_relevance.id = galleries.id,
+select splits.id, splits.deleted, splits.last_updated, splits.created_at, splits.version, splits.owner_user_id, splits.collections, splits.name, splits.description, splits.hidden, splits.position from splits left join split_relevance on split_relevance.id = splits.id,
     to_tsquery('simple', websearch_to_tsquery('simple', $1)::text || ':*') simple_partial_query,
     websearch_to_tsquery('english', $1) english_full_query,
     min_content_score,
@@ -103,7 +103,7 @@ select galleries.id, galleries.deleted, galleries.last_updated, galleries.create
         ts_rank_cd(concat('{', $2::float4, ', 1, 1, 1}')::float4[], fts_name, simple_partial_query, 1),
         ts_rank_cd(concat('{', $3::float4, ', 1, 1, 1}')::float4[], fts_description_english, english_full_query, 1)
         ) as match_score,
-    coalesce(gallery_relevance.score, min_content_score.score) as content_score
+    coalesce(split_relevance.score, min_content_score.score) as content_score
 where (
     simple_partial_query @@ fts_name or
     english_full_query @@ fts_description_english
@@ -113,15 +113,15 @@ order by content_score * match_score desc, content_score desc, match_score desc
 limit $4
 `
 
-type SearchGalleriesParams struct {
+type SearchSplitsParams struct {
 	Query             string
 	NameWeight        float32
 	DescriptionWeight float32
 	Limit             int32
 }
 
-func (q *Queries) SearchGalleries(ctx context.Context, arg SearchGalleriesParams) ([]Gallery, error) {
-	rows, err := q.db.Query(ctx, searchGalleries,
+func (q *Queries) SearchSplits(ctx context.Context, arg SearchSplitsParams) ([]Split, error) {
+	rows, err := q.db.Query(ctx, searchSplits,
 		arg.Query,
 		arg.NameWeight,
 		arg.DescriptionWeight,
@@ -131,9 +131,9 @@ func (q *Queries) SearchGalleries(ctx context.Context, arg SearchGalleriesParams
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Gallery
+	var items []Split
 	for rows.Next() {
-		var i Gallery
+		var i Split
 		if err := rows.Scan(
 			&i.ID,
 			&i.Deleted,
@@ -161,7 +161,7 @@ const searchUsers = `-- name: SearchUsers :many
 with min_content_score as (
     select score from user_relevance where id is null
 )
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_gallery, u.primary_wallet_id, u.user_experiences from users u left join user_relevance on u.id = user_relevance.id,
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u left join user_relevance on u.id = user_relevance.id,
     -- Adding the search condition to the wallet join statement is a very helpful optimization, but we can't use
     -- "simple_full_query" at this point in the statement, so we're repeating the "websearch_to_tsquery..." part here
     unnest(u.wallets) as wallet_id left join wallets w on w.id = wallet_id and w.deleted = false and websearch_to_tsquery('simple', $1) @@ w.fts_address,
@@ -222,7 +222,7 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]Use
 			&i.NotificationSettings,
 			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedGallery,
+			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
 			&i.UserExperiences,
 		); err != nil {

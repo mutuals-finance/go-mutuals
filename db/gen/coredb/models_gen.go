@@ -35,7 +35,7 @@ type Collection struct {
 	Name           sql.NullString
 	Layout         persist.TokenLayout
 	TokenSettings  map[persist.DBID]persist.CollectionTokenSettings
-	GalleryID      persist.DBID
+	SplitID        persist.DBID
 }
 
 type Comment struct {
@@ -96,7 +96,7 @@ type Event struct {
 	Deleted        bool
 	LastUpdated    time.Time
 	CreatedAt      time.Time
-	GalleryID      persist.DBID
+	SplitID        persist.DBID
 	CommentID      persist.DBID
 	AdmireID       persist.DBID
 	FeedEventID    persist.DBID
@@ -136,25 +136,6 @@ type Follow struct {
 	Deleted     bool
 	CreatedAt   time.Time
 	LastUpdated time.Time
-}
-
-type Gallery struct {
-	ID          persist.DBID
-	Deleted     bool
-	LastUpdated time.Time
-	CreatedAt   time.Time
-	Version     sql.NullInt32
-	OwnerUserID persist.DBID
-	Collections persist.DBIDList
-	Name        string
-	Description string
-	Hidden      bool
-	Position    string
-}
-
-type GalleryRelevance struct {
-	ID    persist.DBID
-	Score int32
 }
 
 type LegacyView struct {
@@ -217,7 +198,7 @@ type Notification struct {
 	EventIds    persist.DBIDList
 	FeedEventID persist.DBID
 	CommentID   persist.DBID
-	GalleryID   persist.DBID
+	SplitID     persist.DBID
 	Seen        bool
 	Amount      int32
 }
@@ -272,7 +253,7 @@ type PiiUserView struct {
 	NotificationSettings persist.UserNotificationSettings
 	EmailVerified        persist.EmailVerificationStatus
 	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedGallery      *persist.DBID
+	FeaturedSplit        sql.NullString
 	PrimaryWalletID      persist.DBID
 	UserExperiences      pgtype.JSONB
 	PiiEmailAddress      persist.Email
@@ -310,6 +291,25 @@ type SpamUserScore struct {
 	DecidedAt     sql.NullTime
 	Deleted       bool
 	CreatedAt     time.Time
+}
+
+type Split struct {
+	ID          persist.DBID
+	Deleted     bool
+	LastUpdated time.Time
+	CreatedAt   time.Time
+	Version     sql.NullInt32
+	OwnerUserID persist.DBID
+	Collections persist.DBIDList
+	Name        string
+	Description string
+	Hidden      bool
+	Position    string
+}
+
+type SplitRelevance struct {
+	ID    persist.DBID
+	Score int32
 }
 
 type Token struct {
@@ -360,7 +360,7 @@ type User struct {
 	NotificationSettings persist.UserNotificationSettings
 	EmailVerified        persist.EmailVerificationStatus
 	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedGallery      *persist.DBID
+	FeaturedSplit        sql.NullString
 	PrimaryWalletID      persist.DBID
 	UserExperiences      pgtype.JSONB
 }

@@ -46,7 +46,7 @@ func NewCollectionTokenRepository(db *sql.DB, queries *db.Queries) *CollectionTo
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	createStmt, err := db.PrepareContext(ctx, `INSERT INTO collections (ID, VERSION, NAME, COLLECTORS_NOTE, OWNER_USER_ID, GALLERY_ID, LAYOUT, NFTS, HIDDEN, TOKEN_SETTINGS) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING ID;`)
+	createStmt, err := db.PrepareContext(ctx, `INSERT INTO collections (ID, VERSION, NAME, COLLECTORS_NOTE, OWNER_USER_ID, SPLIT_ID, LAYOUT, NFTS, HIDDEN, TOKEN_SETTINGS) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING ID;`)
 	checkNoErr(err)
 
 	getByUserIDOwnerStmt, err := db.PrepareContext(ctx, `SELECT c.ID,c.OWNER_USER_ID,c.NAME,c.VERSION,c.COLLECTORS_NOTE,

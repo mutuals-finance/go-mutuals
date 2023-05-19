@@ -3,7 +3,7 @@
 -- PERMISSIONS MIGRATIONS: sets up standard access roles and login roles
 ------------------------------------------------------------------------------------
 -- NOTE: This migration must be run as the default `postgres' superuser, but all
---       migrations after this one should be run as `gallery_migrator`
+--       migrations after this one should be run as `split_migrator`
 ------------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------------------
@@ -136,53 +136,53 @@ grant all on all functions in schema pii to access_rw_pii;
 -- Create standard team login roles (note: before these can be used, a password
 -- must be set in the GCP management console)
 ------------------------------------------------------------------------------------
-drop role if exists gallery_team_ro;
-create user gallery_team_ro noinherit login;
-grant access_ro to gallery_team_ro;
-alter role gallery_team_ro set role to access_ro;
+drop role if exists split_team_ro;
+create user split_team_ro noinherit login;
+grant access_ro to split_team_ro;
+alter role split_team_ro set role to access_ro;
 
-drop role if exists gallery_team_ro_pii;
-create user gallery_team_ro_pii noinherit login;
-grant access_ro to gallery_team_ro_pii;
-grant access_ro_pii to gallery_team_ro_pii;
+drop role if exists split_team_ro_pii;
+create user split_team_ro_pii noinherit login;
+grant access_ro to split_team_ro_pii;
+grant access_ro_pii to split_team_ro_pii;
 -- pii roles log in without pii access, but can use "set role" to gain access when needed
-alter role gallery_team_ro_pii set role to access_ro;
+alter role split_team_ro_pii set role to access_ro;
 
-drop role if exists gallery_team_rw;
-create user gallery_team_rw noinherit login;
-grant access_rw to gallery_team_rw;
-alter role gallery_team_rw set role to access_rw;
+drop role if exists split_team_rw;
+create user split_team_rw noinherit login;
+grant access_rw to split_team_rw;
+alter role split_team_rw set role to access_rw;
 
-drop role if exists gallery_team_rw_pii;
-create user gallery_team_rw_pii noinherit login;
-grant access_rw to gallery_team_rw_pii;
-grant access_rw_pii to gallery_team_rw_pii;
+drop role if exists split_team_rw_pii;
+create user split_team_rw_pii noinherit login;
+grant access_rw to split_team_rw_pii;
+grant access_rw_pii to split_team_rw_pii;
 -- pii roles log in without pii access, but can use "set role" to gain access when needed
-alter role gallery_team_rw_pii set role to access_rw;
+alter role split_team_rw_pii set role to access_rw;
 
 ------------------------------------------------------------------------------------
 -- Create login roles for services and migrations (note: before these can be used,
 -- a password must be set in the GCP management console)
 ------------------------------------------------------------------------------------
--- gallery_backend is used by our backend services. Defaults to access_rw_pii.
-drop role if exists gallery_backend;
-create role gallery_backend noinherit login;
-grant access_rw to gallery_backend;
-grant access_rw_pii to gallery_backend;
-alter role gallery_backend set role to access_rw_pii;
+-- split_backend is used by our backend services. Defaults to access_rw_pii.
+drop role if exists split_backend;
+create role split_backend noinherit login;
+grant access_rw to split_backend;
+grant access_rw_pii to split_backend;
+alter role split_backend set role to access_rw_pii;
 
--- gallery_migrator is used for migrations. Defaults to access_rw, but can assume
+-- split_migrator is used for migrations. Defaults to access_rw, but can assume
 -- access_rw_pii to create or migrate pii tables.
-drop role if exists gallery_migrator;
-create user gallery_migrator noinherit login;
-grant access_rw to gallery_migrator;
-grant access_rw_pii to gallery_migrator;
-alter role gallery_migrator set role to access_rw;
+drop role if exists split_migrator;
+create user split_migrator noinherit login;
+grant access_rw to split_migrator;
+grant access_rw_pii to split_migrator;
+alter role split_migrator set role to access_rw;
 
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------
--- Anything above this section is generic and applicable to any gallery database.
+-- Anything above this section is generic and applicable to any split database.
 -- The remainder of the migration is specific to the existing tables in our main
 -- database.
 ------------------------------------------------------------------------------------
@@ -205,7 +205,7 @@ alter table features owner to access_rw;
 alter table feed_blocklist owner to access_rw;
 alter table feed_events owner to access_rw;
 alter table follows owner to access_rw;
-alter table galleries owner to access_rw;
+alter table splits owner to access_rw;
 alter table legacy_views owner to access_rw;
 alter table login_attempts owner to access_rw;
 alter table membership owner to access_rw;
