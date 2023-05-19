@@ -303,10 +303,10 @@ type Repositories struct {
 	pool                  *pgxpool.Pool
 	UserRepository        *UserRepository
 	NonceRepository       *NonceRepository
-	GalleryRepository     *GalleryRepository
-	TokenRepository       *TokenGalleryRepository
+	SplitRepository       *SplitRepository
+	TokenRepository       *TokenSplitRepository
 	CollectionRepository  *CollectionTokenRepository
-	ContractRepository    *ContractGalleryRepository
+	ContractRepository    *ContractSplitRepository
 	MembershipRepository  *MembershipRepository
 	EarlyAccessRepository *EarlyAccessRepository
 	WalletRepository      *WalletRepository
@@ -320,10 +320,10 @@ func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
 		pool:                  pgx,
 		UserRepository:        NewUserRepository(pq, queries),
 		NonceRepository:       NewNonceRepository(pq, queries),
-		TokenRepository:       NewTokenGalleryRepository(pq, queries),
+		TokenRepository:       NewTokenSplitRepository(pq, queries),
 		CollectionRepository:  NewCollectionTokenRepository(pq, queries),
-		GalleryRepository:     NewGalleryRepository(queries),
-		ContractRepository:    NewContractGalleryRepository(pq, queries),
+		SplitRepository:       NewSplitRepository(queries),
+		ContractRepository:    NewContractSplitRepository(pq, queries),
 		MembershipRepository:  NewMembershipRepository(pq, queries),
 		EarlyAccessRepository: NewEarlyAccessRepository(pq, queries),
 		WalletRepository:      NewWalletRepository(pq, queries),

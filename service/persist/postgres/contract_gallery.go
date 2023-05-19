@@ -12,8 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ContractGalleryRepository represents a contract repository in the postgres database
-type ContractGalleryRepository struct {
+// ContractSplitRepository represents a contract repository in the postgres database
+type ContractSplitRepository struct {
 	db                    *sql.DB
 	queries               *db.Queries
 	getByIDStmt           *sql.Stmt
@@ -25,8 +25,8 @@ type ContractGalleryRepository struct {
 	getPreviewNFTsStmt    *sql.Stmt
 }
 
-// NewContractGalleryRepository creates a new postgres repository for interacting with contracts
-func NewContractGalleryRepository(db *sql.DB, queries *db.Queries) *ContractGalleryRepository {
+// NewContractSplitRepository creates a new postgres repository for interacting with contracts
+func NewContractSplitRepository(db *sql.DB, queries *db.Queries) *ContractSplitRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -44,7 +44,7 @@ func NewContractGalleryRepository(db *sql.DB, queries *db.Queries) *ContractGall
 
 	getOwnersStmt, err := db.PrepareContext(ctx,
 		`SELECT n.OWNED_BY_WALLETS
-	FROM galleries g, unnest(g.COLLECTIONS) WITH ORDINALITY AS u(coll, coll_ord)
+	FROM splits g, unnest(g.COLLECTIONS) WITH ORDINALITY AS u(coll, coll_ord)
 	LEFT JOIN collections c ON c.ID = coll
 	LEFT JOIN LATERAL (SELECT n.*,nft,nft_ord FROM tokens n, unnest(c.NFTS) WITH ORDINALITY AS x(nft, nft_ord)) n ON n.ID = n.nft
 	WHERE n.CONTRACT = $1 AND g.DELETED = false AND c.DELETED = false AND n.DELETED = false ORDER BY coll_ord,n.nft_ord LIMIT $2 OFFSET $3;`,
@@ -57,33 +57,33 @@ func NewContractGalleryRepository(db *sql.DB, queries *db.Queries) *ContractGall
 	getPreviewNFTsStmt, err := db.PrepareContext(ctx, `SELECT MEDIA->>'thumbnail_url' FROM tokens WHERE CONTRACT = $1 AND DELETED = false AND OWNED_BY_WALLETS && $2 AND LENGTH(MEDIA->>'thumbnail_url') > 0 ORDER BY ID LIMIT 3`)
 	checkNoErr(err)
 
-	return &ContractGalleryRepository{db: db, queries: queries, getByIDStmt: getByIDStmt, getByAddressStmt: getByAddressStmt, upsertByAddressStmt: upsertByAddressStmt, getByAddressesStmt: getByAddressesStmt, getOwnersStmt: getOwnersStmt, getUserByWalletIDStmt: getUserByWalletIDStmt, getPreviewNFTsStmt: getPreviewNFTsStmt}
+	return &ContractSplitRepository{db: db, queries: queries, getByIDStmt: getByIDStmt, getByAddressStmt: getByAddressStmt, upsertByAddressStmt: upsertByAddressStmt, getByAddressesStmt: getByAddressesStmt, getOwnersStmt: getOwnersStmt, getUserByWalletIDStmt: getUserByWalletIDStmt, getPreviewNFTsStmt: getPreviewNFTsStmt}
 }
 
-func (c *ContractGalleryRepository) GetByID(ctx context.Context, id persist.DBID) (persist.ContractGallery, error) {
-	contract := persist.ContractGallery{}
+func (c *ContractSplitRepository) GetByID(ctx context.Context, id persist.DBID) (persist.ContractSplit, error) {
+	contract := persist.ContractSplit{}
 	err := c.getByIDStmt.QueryRowContext(ctx, id).Scan(&contract.ID, &contract.Version, &contract.CreationTime, &contract.LastUpdated, &contract.Address, &contract.Symbol, &contract.Name, &contract.CreatorAddress, &contract.Chain)
 	if err != nil {
-		return persist.ContractGallery{}, err
+		return persist.ContractSplit{}, err
 	}
 
 	return contract, nil
 }
 
 // GetByAddress returns the contract with the given address
-func (c *ContractGalleryRepository) GetByAddress(pCtx context.Context, pAddress persist.Address, pChain persist.Chain) (persist.ContractGallery, error) {
-	contract := persist.ContractGallery{}
+func (c *ContractSplitRepository) GetByAddress(pCtx context.Context, pAddress persist.Address, pChain persist.Chain) (persist.ContractSplit, error) {
+	contract := persist.ContractSplit{}
 	err := c.getByAddressStmt.QueryRowContext(pCtx, pAddress, pChain).Scan(&contract.ID, &contract.Version, &contract.CreationTime, &contract.LastUpdated, &contract.Address, &contract.Symbol, &contract.Name, &contract.CreatorAddress, &contract.Chain)
 	if err != nil {
-		return persist.ContractGallery{}, err
+		return persist.ContractSplit{}, err
 	}
 
 	return contract, nil
 }
 
 // GetByAddresses returns the contract with the given address
-func (c *ContractGalleryRepository) GetByAddresses(pCtx context.Context, pAddresses []persist.Address, pChain persist.Chain) ([]persist.ContractGallery, error) {
-	res := []persist.ContractGallery{}
+func (c *ContractSplitRepository) GetByAddresses(pCtx context.Context, pAddresses []persist.Address, pChain persist.Chain) ([]persist.ContractSplit, error) {
+	res := []persist.ContractSplit{}
 	rows, err := c.getByAddressesStmt.QueryContext(pCtx, pAddresses, pChain)
 	if err != nil {
 		return res, err
@@ -91,7 +91,7 @@ func (c *ContractGalleryRepository) GetByAddresses(pCtx context.Context, pAddres
 	defer rows.Close()
 
 	for rows.Next() {
-		var contract persist.ContractGallery
+		var contract persist.ContractSplit
 		err := rows.Scan(&contract.ID, &contract.Version, &contract.CreationTime, &contract.LastUpdated, &contract.Address, &contract.Symbol, &contract.Name, &contract.CreatorAddress, &contract.Chain)
 		if err != nil {
 			return res, err
@@ -107,7 +107,7 @@ func (c *ContractGalleryRepository) GetByAddresses(pCtx context.Context, pAddres
 }
 
 // UpsertByAddress upserts the contract with the given address
-func (c *ContractGalleryRepository) UpsertByAddress(pCtx context.Context, pAddress persist.Address, pChain persist.Chain, pContract persist.ContractGallery) error {
+func (c *ContractSplitRepository) UpsertByAddress(pCtx context.Context, pAddress persist.Address, pChain persist.Chain, pContract persist.ContractSplit) error {
 	_, err := c.upsertByAddressStmt.ExecContext(pCtx, persist.GenerateID(), pContract.Version, pContract.Address, pContract.Symbol, pContract.Name, pContract.CreatorAddress, pContract.Chain)
 	if err != nil {
 		return err
@@ -117,11 +117,11 @@ func (c *ContractGalleryRepository) UpsertByAddress(pCtx context.Context, pAddre
 }
 
 // BulkUpsert bulk upserts the contracts by address
-func (c *ContractGalleryRepository) BulkUpsert(pCtx context.Context, pContracts []persist.ContractGallery) error {
+func (c *ContractSplitRepository) BulkUpsert(pCtx context.Context, pContracts []persist.ContractSplit) error {
 	if len(pContracts) == 0 {
 		return nil
 	}
-	pContracts = removeDuplicateContractsGallery(pContracts)
+	pContracts = removeDuplicateContractsSplit(pContracts)
 	sqlStr := `INSERT INTO contracts (ID,VERSION,ADDRESS,SYMBOL,NAME,CREATOR_ADDRESS,CHAIN) VALUES `
 	vals := make([]interface{}, 0, len(pContracts)*7)
 	for i, contract := range pContracts {
@@ -139,7 +139,7 @@ func (c *ContractGalleryRepository) BulkUpsert(pCtx context.Context, pContracts 
 	return nil
 }
 
-func (c *ContractGalleryRepository) GetOwnersByAddress(ctx context.Context, contractAddr persist.Address, chain persist.Chain, limit, offset int) ([]persist.TokenHolder, error) {
+func (c *ContractSplitRepository) GetOwnersByAddress(ctx context.Context, contractAddr persist.Address, chain persist.Chain, limit, offset int) ([]persist.TokenHolder, error) {
 	contract, err := c.GetByAddress(ctx, contractAddr, chain)
 	if err != nil {
 		return nil, err
@@ -251,12 +251,12 @@ func removeDuplicates(pContracts []persist.Contract) []persist.Contract {
 	return result
 }
 
-func removeDuplicateContractsGallery(pContracts []persist.ContractGallery) []persist.ContractGallery {
+func removeDuplicateContractsSplit(pContracts []persist.ContractSplit) []persist.ContractSplit {
 	if len(pContracts) == 0 {
 		return pContracts
 	}
 	unique := map[persist.Address]bool{}
-	result := make([]persist.ContractGallery, 0, len(pContracts))
+	result := make([]persist.ContractSplit, 0, len(pContracts))
 	for _, v := range pContracts {
 		if unique[v.Address] {
 			continue

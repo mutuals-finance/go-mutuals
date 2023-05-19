@@ -47,8 +47,8 @@ type CreateCollectionPayloadOrError interface {
 	IsCreateCollectionPayloadOrError()
 }
 
-type CreateGalleryPayloadOrError interface {
-	IsCreateGalleryPayloadOrError()
+type CreateSplitPayloadOrError interface {
+	IsCreateSplitPayloadOrError()
 }
 
 type CreateUserPayloadOrError interface {
@@ -63,8 +63,8 @@ type DeleteCollectionPayloadOrError interface {
 	IsDeleteCollectionPayloadOrError()
 }
 
-type DeleteGalleryPayloadOrError interface {
-	IsDeleteGalleryPayloadOrError()
+type DeleteSplitPayloadOrError interface {
+	IsDeleteSplitPayloadOrError()
 }
 
 type DisconnectSocialAccountPayloadOrError interface {
@@ -81,10 +81,6 @@ type FollowAllSocialConnectionsPayloadOrError interface {
 
 type FollowUserPayloadOrError interface {
 	IsFollowUserPayloadOrError()
-}
-
-type GalleryByIDPayloadOrError interface {
-	IsGalleryByIDPayloadOrError()
 }
 
 type GetAuthNoncePayloadOrError interface {
@@ -113,8 +109,8 @@ type MintPremiumCardToWalletPayloadOrError interface {
 	IsMintPremiumCardToWalletPayloadOrError()
 }
 
-type MoveCollectionToGalleryPayloadOrError interface {
-	IsMoveCollectionToGalleryPayloadOrError()
+type MoveCollectionToSplitPayloadOrError interface {
+	IsMoveCollectionToSplitPayloadOrError()
 }
 
 type Node interface {
@@ -130,8 +126,8 @@ type PreverifyEmailPayloadOrError interface {
 	IsPreverifyEmailPayloadOrError()
 }
 
-type PublishGalleryPayloadOrError interface {
-	IsPublishGalleryPayloadOrError()
+type PublishSplitPayloadOrError interface {
+	IsPublishSplitPayloadOrError()
 }
 
 type RefreshCollectionPayloadOrError interface {
@@ -162,8 +158,8 @@ type SearchCommunitiesPayloadOrError interface {
 	IsSearchCommunitiesPayloadOrError()
 }
 
-type SearchGalleriesPayloadOrError interface {
-	IsSearchGalleriesPayloadOrError()
+type SearchSplitsPayloadOrError interface {
+	IsSearchSplitsPayloadOrError()
 }
 
 type SearchUsersPayloadOrError interface {
@@ -184,6 +180,10 @@ type SocialConnectionsOrError interface {
 
 type SocialQueriesOrError interface {
 	IsSocialQueriesOrError()
+}
+
+type SplitByIDPayloadOrError interface {
+	IsSplitByIDPayloadOrError()
 }
 
 type SplitFiUserOrAddress interface {
@@ -234,28 +234,8 @@ type UpdateEmailPayloadOrError interface {
 	IsUpdateEmailPayloadOrError()
 }
 
-type UpdateFeaturedGalleryPayloadOrError interface {
-	IsUpdateFeaturedGalleryPayloadOrError()
-}
-
-type UpdateGalleryCollectionsPayloadOrError interface {
-	IsUpdateGalleryCollectionsPayloadOrError()
-}
-
-type UpdateGalleryHiddenPayloadOrError interface {
-	IsUpdateGalleryHiddenPayloadOrError()
-}
-
-type UpdateGalleryInfoPayloadOrError interface {
-	IsUpdateGalleryInfoPayloadOrError()
-}
-
-type UpdateGalleryOrderPayloadOrError interface {
-	IsUpdateGalleryOrderPayloadOrError()
-}
-
-type UpdateGalleryPayloadOrError interface {
-	IsUpdateGalleryPayloadOrError()
+type UpdateFeaturedSplitPayloadOrError interface {
+	IsUpdateFeaturedSplitPayloadOrError()
 }
 
 type UpdatePrimaryWalletPayloadOrError interface {
@@ -264,6 +244,26 @@ type UpdatePrimaryWalletPayloadOrError interface {
 
 type UpdateSocialAccountDisplayedPayloadOrError interface {
 	IsUpdateSocialAccountDisplayedPayloadOrError()
+}
+
+type UpdateSplitCollectionsPayloadOrError interface {
+	IsUpdateSplitCollectionsPayloadOrError()
+}
+
+type UpdateSplitHiddenPayloadOrError interface {
+	IsUpdateSplitHiddenPayloadOrError()
+}
+
+type UpdateSplitInfoPayloadOrError interface {
+	IsUpdateSplitInfoPayloadOrError()
+}
+
+type UpdateSplitOrderPayloadOrError interface {
+	IsUpdateSplitOrderPayloadOrError()
+}
+
+type UpdateSplitPayloadOrError interface {
+	IsUpdateSplitPayloadOrError()
 }
 
 type UpdateTokenInfoPayloadOrError interface {
@@ -298,16 +298,16 @@ type VerifyEmailPayloadOrError interface {
 	IsVerifyEmailPayloadOrError()
 }
 
-type ViewGalleryPayloadOrError interface {
-	IsViewGalleryPayloadOrError()
-}
-
-type ViewerGalleryByIDPayloadOrError interface {
-	IsViewerGalleryByIDPayloadOrError()
+type ViewSplitPayloadOrError interface {
+	IsViewSplitPayloadOrError()
 }
 
 type ViewerOrError interface {
 	IsViewerOrError()
+}
+
+type ViewerSplitByIDPayloadOrError interface {
+	IsViewerSplitByIDPayloadOrError()
 }
 
 type AddUserWalletPayload struct {
@@ -373,7 +373,7 @@ type Collection struct {
 	Version        *int               `json:"version"`
 	Name           *string            `json:"name"`
 	CollectorsNote *string            `json:"collectorsNote"`
-	Gallery        *Gallery           `json:"gallery"`
+	Split          *Split             `json:"split"`
 	Layout         *CollectionLayout  `json:"layout"`
 	Hidden         *bool              `json:"hidden"`
 	Tokens         []*CollectionToken `json:"tokens"`
@@ -475,7 +475,7 @@ type Contract struct {
 
 func (Contract) IsNode() {}
 
-type CreateCollectionInGalleryInput struct {
+type CreateCollectionInSplitInput struct {
 	Name           string                          `json:"name"`
 	CollectorsNote string                          `json:"collectorsNote"`
 	Tokens         []persist.DBID                  `json:"tokens"`
@@ -486,7 +486,7 @@ type CreateCollectionInGalleryInput struct {
 }
 
 type CreateCollectionInput struct {
-	GalleryID      persist.DBID                    `json:"galleryId"`
+	SplitID        persist.DBID                    `json:"splitId"`
 	Name           string                          `json:"name"`
 	CollectorsNote string                          `json:"collectorsNote"`
 	Tokens         []persist.DBID                  `json:"tokens"`
@@ -501,31 +501,31 @@ type CreateCollectionPayload struct {
 
 func (CreateCollectionPayload) IsCreateCollectionPayloadOrError() {}
 
-type CreateGalleryInput struct {
+type CreateSplitInput struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Position    string  `json:"position"`
 }
 
-type CreateGalleryPayload struct {
-	Gallery *Gallery `json:"gallery"`
+type CreateSplitPayload struct {
+	Split *Split `json:"split"`
 }
 
-func (CreateGalleryPayload) IsCreateGalleryPayloadOrError() {}
+func (CreateSplitPayload) IsCreateSplitPayloadOrError() {}
 
 type CreateUserInput struct {
-	Username           string         `json:"username"`
-	Bio                *string        `json:"bio"`
-	Email              *persist.Email `json:"email"`
-	GalleryName        *string        `json:"galleryName"`
-	GalleryDescription *string        `json:"galleryDescription"`
-	GalleryPosition    *string        `json:"galleryPosition"`
+	Username         string         `json:"username"`
+	Bio              *string        `json:"bio"`
+	Email            *persist.Email `json:"email"`
+	SplitName        *string        `json:"splitName"`
+	SplitDescription *string        `json:"splitDescription"`
+	SplitPosition    *string        `json:"splitPosition"`
 }
 
 type CreateUserPayload struct {
-	UserID    *persist.DBID `json:"userId"`
-	GalleryID *persist.DBID `json:"galleryId"`
-	Viewer    *Viewer       `json:"viewer"`
+	UserID  *persist.DBID `json:"userId"`
+	SplitID *persist.DBID `json:"splitId"`
+	Viewer  *Viewer       `json:"viewer"`
 }
 
 func (CreateUserPayload) IsCreateUserPayloadOrError() {}
@@ -554,16 +554,16 @@ type DeepRefreshPayload struct {
 func (DeepRefreshPayload) IsDeepRefreshPayloadOrError() {}
 
 type DeleteCollectionPayload struct {
-	Gallery *Gallery `json:"gallery"`
+	Split *Split `json:"split"`
 }
 
 func (DeleteCollectionPayload) IsDeleteCollectionPayloadOrError() {}
 
-type DeleteGalleryPayload struct {
+type DeleteSplitPayload struct {
 	DeletedID *DeletedNode `json:"deletedId"`
 }
 
-func (DeleteGalleryPayload) IsDeleteGalleryPayloadOrError() {}
+func (DeleteSplitPayload) IsDeleteSplitPayloadOrError() {}
 
 type DeletedNode struct {
 	Dbid persist.DBID `json:"dbid"`
@@ -606,7 +606,7 @@ func (ErrAuthenticationFailed) IsLoginPayloadOrError()         {}
 func (ErrAuthenticationFailed) IsCreateUserPayloadOrError()    {}
 func (ErrAuthenticationFailed) IsFollowUserPayloadOrError()    {}
 func (ErrAuthenticationFailed) IsUnfollowUserPayloadOrError()  {}
-func (ErrAuthenticationFailed) IsViewGalleryPayloadOrError()   {}
+func (ErrAuthenticationFailed) IsViewSplitPayloadOrError()     {}
 
 type ErrCollectionNotFound struct {
 	Message string `json:"message"`
@@ -634,14 +634,6 @@ func (ErrDoesNotOwnRequiredToken) IsError()                      {}
 func (ErrDoesNotOwnRequiredToken) IsLoginPayloadOrError()        {}
 func (ErrDoesNotOwnRequiredToken) IsCreateUserPayloadOrError()   {}
 
-type ErrGalleryNotFound struct {
-	Message string `json:"message"`
-}
-
-func (ErrGalleryNotFound) IsError()                           {}
-func (ErrGalleryNotFound) IsGalleryByIDPayloadOrError()       {}
-func (ErrGalleryNotFound) IsViewerGalleryByIDPayloadOrError() {}
-
 type ErrInvalidInput struct {
 	Message    string   `json:"message"`
 	Parameters []string `json:"parameters"`
@@ -655,14 +647,14 @@ func (ErrInvalidInput) IsCollectionByIDOrError()                         {}
 func (ErrInvalidInput) IsCommunityByAddressOrError()                     {}
 func (ErrInvalidInput) IsSocialConnectionsOrError()                      {}
 func (ErrInvalidInput) IsSearchUsersPayloadOrError()                     {}
-func (ErrInvalidInput) IsSearchGalleriesPayloadOrError()                 {}
+func (ErrInvalidInput) IsSearchSplitsPayloadOrError()                    {}
 func (ErrInvalidInput) IsSearchCommunitiesPayloadOrError()               {}
 func (ErrInvalidInput) IsCreateCollectionPayloadOrError()                {}
 func (ErrInvalidInput) IsDeleteCollectionPayloadOrError()                {}
 func (ErrInvalidInput) IsUpdateCollectionInfoPayloadOrError()            {}
 func (ErrInvalidInput) IsUpdateCollectionTokensPayloadOrError()          {}
 func (ErrInvalidInput) IsUpdateCollectionHiddenPayloadOrError()          {}
-func (ErrInvalidInput) IsUpdateGalleryCollectionsPayloadOrError()        {}
+func (ErrInvalidInput) IsUpdateSplitCollectionsPayloadOrError()          {}
 func (ErrInvalidInput) IsUpdateTokenInfoPayloadOrError()                 {}
 func (ErrInvalidInput) IsAddUserWalletPayloadOrError()                   {}
 func (ErrInvalidInput) IsRemoveUserWalletsPayloadOrError()               {}
@@ -680,17 +672,17 @@ func (ErrInvalidInput) IsUpdateEmailPayloadOrError()                     {}
 func (ErrInvalidInput) IsResendVerificationEmailPayloadOrError()         {}
 func (ErrInvalidInput) IsUpdateEmailNotificationSettingsPayloadOrError() {}
 func (ErrInvalidInput) IsUnsubscribeFromEmailTypePayloadOrError()        {}
-func (ErrInvalidInput) IsCreateGalleryPayloadOrError()                   {}
-func (ErrInvalidInput) IsUpdateGalleryInfoPayloadOrError()               {}
-func (ErrInvalidInput) IsUpdateGalleryHiddenPayloadOrError()             {}
-func (ErrInvalidInput) IsDeleteGalleryPayloadOrError()                   {}
-func (ErrInvalidInput) IsUpdateGalleryOrderPayloadOrError()              {}
-func (ErrInvalidInput) IsUpdateFeaturedGalleryPayloadOrError()           {}
-func (ErrInvalidInput) IsUpdateGalleryPayloadOrError()                   {}
-func (ErrInvalidInput) IsPublishGalleryPayloadOrError()                  {}
+func (ErrInvalidInput) IsCreateSplitPayloadOrError()                     {}
+func (ErrInvalidInput) IsUpdateSplitInfoPayloadOrError()                 {}
+func (ErrInvalidInput) IsUpdateSplitHiddenPayloadOrError()               {}
+func (ErrInvalidInput) IsDeleteSplitPayloadOrError()                     {}
+func (ErrInvalidInput) IsUpdateSplitOrderPayloadOrError()                {}
+func (ErrInvalidInput) IsUpdateFeaturedSplitPayloadOrError()             {}
+func (ErrInvalidInput) IsUpdateSplitPayloadOrError()                     {}
+func (ErrInvalidInput) IsPublishSplitPayloadOrError()                    {}
 func (ErrInvalidInput) IsUpdatePrimaryWalletPayloadOrError()             {}
 func (ErrInvalidInput) IsUpdateUserExperiencePayloadOrError()            {}
-func (ErrInvalidInput) IsMoveCollectionToGalleryPayloadOrError()         {}
+func (ErrInvalidInput) IsMoveCollectionToSplitPayloadOrError()           {}
 func (ErrInvalidInput) IsConnectSocialAccountPayloadOrError()            {}
 func (ErrInvalidInput) IsUpdateSocialAccountDisplayedPayloadOrError()    {}
 func (ErrInvalidInput) IsMintPremiumCardToWalletPayloadOrError()         {}
@@ -735,7 +727,7 @@ func (ErrNotAuthorized) IsDeleteCollectionPayloadOrError()             {}
 func (ErrNotAuthorized) IsUpdateCollectionInfoPayloadOrError()         {}
 func (ErrNotAuthorized) IsUpdateCollectionTokensPayloadOrError()       {}
 func (ErrNotAuthorized) IsUpdateCollectionHiddenPayloadOrError()       {}
-func (ErrNotAuthorized) IsUpdateGalleryCollectionsPayloadOrError()     {}
+func (ErrNotAuthorized) IsUpdateSplitCollectionsPayloadOrError()       {}
 func (ErrNotAuthorized) IsUpdateTokenInfoPayloadOrError()              {}
 func (ErrNotAuthorized) IsSetSpamPreferencePayloadOrError()            {}
 func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()                {}
@@ -748,23 +740,31 @@ func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()               {}
 func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()          {}
 func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError()       {}
 func (ErrNotAuthorized) IsSyncTokensForUsernamePayloadOrError()        {}
-func (ErrNotAuthorized) IsCreateGalleryPayloadOrError()                {}
-func (ErrNotAuthorized) IsUpdateGalleryInfoPayloadOrError()            {}
-func (ErrNotAuthorized) IsUpdateGalleryHiddenPayloadOrError()          {}
-func (ErrNotAuthorized) IsDeleteGalleryPayloadOrError()                {}
-func (ErrNotAuthorized) IsUpdateGalleryOrderPayloadOrError()           {}
-func (ErrNotAuthorized) IsUpdateFeaturedGalleryPayloadOrError()        {}
-func (ErrNotAuthorized) IsUpdateGalleryPayloadOrError()                {}
-func (ErrNotAuthorized) IsPublishGalleryPayloadOrError()               {}
+func (ErrNotAuthorized) IsCreateSplitPayloadOrError()                  {}
+func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()              {}
+func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()            {}
+func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()                  {}
+func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()             {}
+func (ErrNotAuthorized) IsUpdateFeaturedSplitPayloadOrError()          {}
+func (ErrNotAuthorized) IsUpdateSplitPayloadOrError()                  {}
+func (ErrNotAuthorized) IsPublishSplitPayloadOrError()                 {}
 func (ErrNotAuthorized) IsUpdatePrimaryWalletPayloadOrError()          {}
 func (ErrNotAuthorized) IsAdminAddWalletPayloadOrError()               {}
 func (ErrNotAuthorized) IsUpdateUserExperiencePayloadOrError()         {}
-func (ErrNotAuthorized) IsMoveCollectionToGalleryPayloadOrError()      {}
+func (ErrNotAuthorized) IsMoveCollectionToSplitPayloadOrError()        {}
 func (ErrNotAuthorized) IsConnectSocialAccountPayloadOrError()         {}
 func (ErrNotAuthorized) IsUpdateSocialAccountDisplayedPayloadOrError() {}
 func (ErrNotAuthorized) IsMintPremiumCardToWalletPayloadOrError()      {}
 func (ErrNotAuthorized) IsDisconnectSocialAccountPayloadOrError()      {}
 func (ErrNotAuthorized) IsFollowAllSocialConnectionsPayloadOrError()   {}
+
+type ErrSplitNotFound struct {
+	Message string `json:"message"`
+}
+
+func (ErrSplitNotFound) IsError()                         {}
+func (ErrSplitNotFound) IsSplitByIDPayloadOrError()       {}
+func (ErrSplitNotFound) IsViewerSplitByIDPayloadOrError() {}
 
 type ErrSyncFailed struct {
 	Message string `json:"message"`
@@ -842,29 +842,6 @@ type GIFMedia struct {
 
 func (GIFMedia) IsMediaSubtype() {}
 func (GIFMedia) IsMedia()        {}
-
-type Gallery struct {
-	Dbid          persist.DBID     `json:"dbid"`
-	Name          *string          `json:"name"`
-	Description   *string          `json:"description"`
-	Position      *string          `json:"position"`
-	Hidden        *bool            `json:"hidden"`
-	TokenPreviews []*PreviewURLSet `json:"tokenPreviews"`
-	Owner         *SplitFiUser     `json:"owner"`
-	Collections   []*Collection    `json:"collections"`
-}
-
-func (Gallery) IsNode()                      {}
-func (Gallery) IsGalleryByIDPayloadOrError() {}
-
-type GalleryPositionInput struct {
-	GalleryID persist.DBID `json:"galleryId"`
-	Position  string       `json:"position"`
-}
-
-type GallerySearchResult struct {
-	Gallery *Gallery `json:"gallery"`
-}
 
 type GltfMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
@@ -979,17 +956,17 @@ type MintPremiumCardToWalletPayload struct {
 
 func (MintPremiumCardToWalletPayload) IsMintPremiumCardToWalletPayloadOrError() {}
 
-type MoveCollectionToGalleryInput struct {
+type MoveCollectionToSplitInput struct {
 	SourceCollectionID persist.DBID `json:"sourceCollectionId"`
-	TargetGalleryID    persist.DBID `json:"targetGalleryId"`
+	TargetSplitID      persist.DBID `json:"targetSplitId"`
 }
 
-type MoveCollectionToGalleryPayload struct {
-	OldGallery *Gallery `json:"oldGallery"`
-	NewGallery *Gallery `json:"newGallery"`
+type MoveCollectionToSplitPayload struct {
+	OldSplit *Split `json:"oldSplit"`
+	NewSplit *Split `json:"newSplit"`
 }
 
-func (MoveCollectionToGalleryPayload) IsMoveCollectionToGalleryPayloadOrError() {}
+func (MoveCollectionToSplitPayload) IsMoveCollectionToSplitPayloadOrError() {}
 
 type NotificationEdge struct {
 	Node   Notification `json:"node"`
@@ -997,13 +974,13 @@ type NotificationEdge struct {
 }
 
 type NotificationSettings struct {
-	SomeoneFollowedYou       *bool `json:"someoneFollowedYou"`
-	SomeoneViewedYourGallery *bool `json:"someoneViewedYourGallery"`
+	SomeoneFollowedYou     *bool `json:"someoneFollowedYou"`
+	SomeoneViewedYourSplit *bool `json:"someoneViewedYourSplit"`
 }
 
 type NotificationSettingsInput struct {
-	SomeoneFollowedYou       *bool `json:"someoneFollowedYou"`
-	SomeoneViewedYourGallery *bool `json:"someoneViewedYourGallery"`
+	SomeoneFollowedYou     *bool `json:"someoneFollowedYou"`
+	SomeoneViewedYourSplit *bool `json:"someoneViewedYourSplit"`
 }
 
 type NotificationsConnection struct {
@@ -1060,17 +1037,17 @@ type PreviewURLSet struct {
 	Blurhash   *string `json:"blurhash"`
 }
 
-type PublishGalleryInput struct {
-	GalleryID persist.DBID `json:"galleryId"`
-	EditID    string       `json:"editId"`
-	Caption   *string      `json:"caption"`
+type PublishSplitInput struct {
+	SplitID persist.DBID `json:"splitId"`
+	EditID  string       `json:"editId"`
+	Caption *string      `json:"caption"`
 }
 
-type PublishGalleryPayload struct {
-	Gallery *Gallery `json:"gallery"`
+type PublishSplitPayload struct {
+	Split *Split `json:"split"`
 }
 
-func (PublishGalleryPayload) IsPublishGalleryPayloadOrError() {}
+func (PublishSplitPayload) IsPublishSplitPayloadOrError() {}
 
 type RefreshCollectionPayload struct {
 	Collection *Collection `json:"collection"`
@@ -1108,11 +1085,11 @@ type SearchCommunitiesPayload struct {
 
 func (SearchCommunitiesPayload) IsSearchCommunitiesPayloadOrError() {}
 
-type SearchGalleriesPayload struct {
-	Results []*GallerySearchResult `json:"results"`
+type SearchSplitsPayload struct {
+	Results []*SplitSearchResult `json:"results"`
 }
 
-func (SearchGalleriesPayload) IsSearchGalleriesPayloadOrError() {}
+func (SearchSplitsPayload) IsSearchSplitsPayloadOrError() {}
 
 type SearchUsersPayload struct {
 	Results []*UserSearchResult `json:"results"`
@@ -1198,8 +1175,8 @@ func (SomeoneFollowedYouNotification) IsNotification()        {}
 func (SomeoneFollowedYouNotification) IsNode()                {}
 func (SomeoneFollowedYouNotification) IsGroupedNotification() {}
 
-type SomeoneViewedYourGalleryNotification struct {
-	HelperSomeoneViewedYourGalleryNotificationData
+type SomeoneViewedYourSplitNotification struct {
+	HelperSomeoneViewedYourSplitNotificationData
 	Dbid               persist.DBID                      `json:"dbid"`
 	Seen               *bool                             `json:"seen"`
 	CreationTime       *time.Time                        `json:"creationTime"`
@@ -1207,12 +1184,26 @@ type SomeoneViewedYourGalleryNotification struct {
 	Count              *int                              `json:"count"`
 	UserViewers        *GroupNotificationUsersConnection `json:"userViewers"`
 	NonUserViewerCount *int                              `json:"nonUserViewerCount"`
-	Gallery            *Gallery                          `json:"gallery"`
+	Split              *Split                            `json:"split"`
 }
 
-func (SomeoneViewedYourGalleryNotification) IsNotification()        {}
-func (SomeoneViewedYourGalleryNotification) IsNode()                {}
-func (SomeoneViewedYourGalleryNotification) IsGroupedNotification() {}
+func (SomeoneViewedYourSplitNotification) IsNotification()        {}
+func (SomeoneViewedYourSplitNotification) IsNode()                {}
+func (SomeoneViewedYourSplitNotification) IsGroupedNotification() {}
+
+type Split struct {
+	Dbid          persist.DBID     `json:"dbid"`
+	Name          *string          `json:"name"`
+	Description   *string          `json:"description"`
+	Position      *string          `json:"position"`
+	Hidden        *bool            `json:"hidden"`
+	TokenPreviews []*PreviewURLSet `json:"tokenPreviews"`
+	Owner         *SplitFiUser     `json:"owner"`
+	Collections   []*Collection    `json:"collections"`
+}
+
+func (Split) IsNode()                    {}
+func (Split) IsSplitByIDPayloadOrError() {}
 
 type SplitFiUser struct {
 	HelperSplitFiUserData
@@ -1227,8 +1218,8 @@ type SplitFiUser struct {
 	TokensByChain       *ChainTokens           `json:"tokensByChain"`
 	Wallets             []*Wallet              `json:"wallets"`
 	PrimaryWallet       *Wallet                `json:"primaryWallet"`
-	FeaturedGallery     *Gallery               `json:"featuredGallery"`
-	Galleries           []*Gallery             `json:"galleries"`
+	FeaturedSplit       *Split                 `json:"featuredSplit"`
+	Splits              []*Split               `json:"splits"`
 	Badges              []*Badge               `json:"badges"`
 	IsAuthenticatedUser *bool                  `json:"isAuthenticatedUser"`
 	Followers           []*SplitFiUser         `json:"followers"`
@@ -1245,6 +1236,15 @@ func (SplitFiUser) IsUserByIDOrError()                   {}
 func (SplitFiUser) IsUserByAddressOrError()              {}
 func (SplitFiUser) IsAddRolesToUserPayloadOrError()      {}
 func (SplitFiUser) IsRevokeRolesFromUserPayloadOrError() {}
+
+type SplitPositionInput struct {
+	SplitID  persist.DBID `json:"splitId"`
+	Position string       `json:"position"`
+}
+
+type SplitSearchResult struct {
+	Split *Split `json:"split"`
+}
 
 type SyncTokensForUsernamePayload struct {
 	Message string `json:"message"`
@@ -1449,73 +1449,11 @@ type UpdateEmailPayload struct {
 
 func (UpdateEmailPayload) IsUpdateEmailPayloadOrError() {}
 
-type UpdateFeaturedGalleryPayload struct {
+type UpdateFeaturedSplitPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (UpdateFeaturedGalleryPayload) IsUpdateFeaturedGalleryPayloadOrError() {}
-
-type UpdateGalleryCollectionsInput struct {
-	GalleryID   persist.DBID   `json:"galleryId"`
-	Collections []persist.DBID `json:"collections"`
-}
-
-type UpdateGalleryCollectionsPayload struct {
-	Gallery *Gallery `json:"gallery"`
-}
-
-func (UpdateGalleryCollectionsPayload) IsUpdateGalleryCollectionsPayloadOrError() {}
-
-type UpdateGalleryHiddenInput struct {
-	ID     persist.DBID `json:"id"`
-	Hidden bool         `json:"hidden"`
-}
-
-type UpdateGalleryHiddenPayload struct {
-	Gallery *Gallery `json:"gallery"`
-}
-
-func (UpdateGalleryHiddenPayload) IsUpdateGalleryHiddenPayloadOrError() {}
-
-type UpdateGalleryInfoInput struct {
-	ID          persist.DBID `json:"id"`
-	Name        *string      `json:"name"`
-	Description *string      `json:"description"`
-}
-
-type UpdateGalleryInfoPayload struct {
-	Gallery *Gallery `json:"gallery"`
-}
-
-func (UpdateGalleryInfoPayload) IsUpdateGalleryInfoPayloadOrError() {}
-
-type UpdateGalleryInput struct {
-	GalleryID          persist.DBID                      `json:"galleryId"`
-	Name               *string                           `json:"name"`
-	Description        *string                           `json:"description"`
-	Caption            *string                           `json:"caption"`
-	DeletedCollections []persist.DBID                    `json:"deletedCollections"`
-	UpdatedCollections []*UpdateCollectionInput          `json:"updatedCollections"`
-	CreatedCollections []*CreateCollectionInGalleryInput `json:"createdCollections"`
-	Order              []persist.DBID                    `json:"order"`
-	EditID             *string                           `json:"editId"`
-}
-
-type UpdateGalleryOrderInput struct {
-	Positions []*GalleryPositionInput `json:"positions"`
-}
-
-type UpdateGalleryOrderPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (UpdateGalleryOrderPayload) IsUpdateGalleryOrderPayloadOrError() {}
-
-type UpdateGalleryPayload struct {
-	Gallery *Gallery `json:"gallery"`
-}
-
-func (UpdateGalleryPayload) IsUpdateGalleryPayloadOrError() {}
+func (UpdateFeaturedSplitPayload) IsUpdateFeaturedSplitPayloadOrError() {}
 
 type UpdatePrimaryWalletPayload struct {
 	Viewer *Viewer `json:"viewer"`
@@ -1533,6 +1471,68 @@ type UpdateSocialAccountDisplayedPayload struct {
 }
 
 func (UpdateSocialAccountDisplayedPayload) IsUpdateSocialAccountDisplayedPayloadOrError() {}
+
+type UpdateSplitCollectionsInput struct {
+	SplitID     persist.DBID   `json:"splitId"`
+	Collections []persist.DBID `json:"collections"`
+}
+
+type UpdateSplitCollectionsPayload struct {
+	Split *Split `json:"split"`
+}
+
+func (UpdateSplitCollectionsPayload) IsUpdateSplitCollectionsPayloadOrError() {}
+
+type UpdateSplitHiddenInput struct {
+	ID     persist.DBID `json:"id"`
+	Hidden bool         `json:"hidden"`
+}
+
+type UpdateSplitHiddenPayload struct {
+	Split *Split `json:"split"`
+}
+
+func (UpdateSplitHiddenPayload) IsUpdateSplitHiddenPayloadOrError() {}
+
+type UpdateSplitInfoInput struct {
+	ID          persist.DBID `json:"id"`
+	Name        *string      `json:"name"`
+	Description *string      `json:"description"`
+}
+
+type UpdateSplitInfoPayload struct {
+	Split *Split `json:"split"`
+}
+
+func (UpdateSplitInfoPayload) IsUpdateSplitInfoPayloadOrError() {}
+
+type UpdateSplitInput struct {
+	SplitID            persist.DBID                    `json:"splitId"`
+	Name               *string                         `json:"name"`
+	Description        *string                         `json:"description"`
+	Caption            *string                         `json:"caption"`
+	DeletedCollections []persist.DBID                  `json:"deletedCollections"`
+	UpdatedCollections []*UpdateCollectionInput        `json:"updatedCollections"`
+	CreatedCollections []*CreateCollectionInSplitInput `json:"createdCollections"`
+	Order              []persist.DBID                  `json:"order"`
+	EditID             *string                         `json:"editId"`
+}
+
+type UpdateSplitOrderInput struct {
+	Positions []*SplitPositionInput `json:"positions"`
+}
+
+type UpdateSplitOrderPayload struct {
+	Viewer *Viewer `json:"viewer"`
+}
+
+func (UpdateSplitOrderPayload) IsUpdateSplitOrderPayloadOrError() {}
+
+type UpdateSplitPayload struct {
+	Split *Split `json:"split"`
+}
+
+func (UpdateSplitPayload) IsUpdateSplitPayloadOrError() {}
 
 type UpdateTokenInfoInput struct {
 	TokenID        persist.DBID  `json:"tokenId"`
@@ -1631,18 +1631,18 @@ type VideoURLSet struct {
 	Large  *string `json:"large"`
 }
 
-type ViewGalleryPayload struct {
-	Gallery *Gallery `json:"gallery"`
+type ViewSplitPayload struct {
+	Split *Split `json:"split"`
 }
 
-func (ViewGalleryPayload) IsViewGalleryPayloadOrError() {}
+func (ViewSplitPayload) IsViewSplitPayloadOrError() {}
 
 type Viewer struct {
 	HelperViewerData
-	User            *SplitFiUser     `json:"user"`
-	SocialAccounts  *SocialAccounts  `json:"socialAccounts"`
-	ViewerGalleries []*ViewerGallery `json:"viewerGalleries"`
-	Email           *UserEmail       `json:"email"`
+	User           *SplitFiUser    `json:"user"`
+	SocialAccounts *SocialAccounts `json:"socialAccounts"`
+	ViewerSplits   []*ViewerSplit  `json:"viewerSplits"`
+	Email          *UserEmail      `json:"email"`
 	// Returns a list of notifications in reverse chronological order.
 	// Seen notifications come after unseen notifications
 	Notifications        *NotificationsConnection `json:"notifications"`
@@ -1653,11 +1653,11 @@ type Viewer struct {
 func (Viewer) IsNode()          {}
 func (Viewer) IsViewerOrError() {}
 
-type ViewerGallery struct {
-	Gallery *Gallery `json:"gallery"`
+type ViewerSplit struct {
+	Split *Split `json:"split"`
 }
 
-func (ViewerGallery) IsViewerGalleryByIDPayloadOrError() {}
+func (ViewerSplit) IsViewerSplitByIDPayloadOrError() {}
 
 type Wallet struct {
 	Dbid         persist.DBID          `json:"dbid"`
@@ -1800,7 +1800,7 @@ func (e TokenType) MarshalGQL(w io.Writer) {
 type UserExperienceType string
 
 const (
-	UserExperienceTypeMultiGalleryAnnouncement          UserExperienceType = "MultiGalleryAnnouncement"
+	UserExperienceTypeMultiSplitAnnouncement            UserExperienceType = "MultiSplitAnnouncement"
 	UserExperienceTypeEmailUpsell                       UserExperienceType = "EmailUpsell"
 	UserExperienceTypeMaintenanceFeb2023                UserExperienceType = "MaintenanceFeb2023"
 	UserExperienceTypeTwitterConnectionOnboardingUpsell UserExperienceType = "TwitterConnectionOnboardingUpsell"
@@ -1808,7 +1808,7 @@ const (
 )
 
 var AllUserExperienceType = []UserExperienceType{
-	UserExperienceTypeMultiGalleryAnnouncement,
+	UserExperienceTypeMultiSplitAnnouncement,
 	UserExperienceTypeEmailUpsell,
 	UserExperienceTypeMaintenanceFeb2023,
 	UserExperienceTypeTwitterConnectionOnboardingUpsell,
@@ -1817,7 +1817,7 @@ var AllUserExperienceType = []UserExperienceType{
 
 func (e UserExperienceType) IsValid() bool {
 	switch e {
-	case UserExperienceTypeMultiGalleryAnnouncement, UserExperienceTypeEmailUpsell, UserExperienceTypeMaintenanceFeb2023, UserExperienceTypeTwitterConnectionOnboardingUpsell, UserExperienceTypeUpsellMintMemento4:
+	case UserExperienceTypeMultiSplitAnnouncement, UserExperienceTypeEmailUpsell, UserExperienceTypeMaintenanceFeb2023, UserExperienceTypeTwitterConnectionOnboardingUpsell, UserExperienceTypeUpsellMintMemento4:
 		return true
 	}
 	return false

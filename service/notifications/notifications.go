@@ -50,7 +50,7 @@ func New(queries *db.Queries, pub *pubsub.Client, lock *redislock.Client) *Notif
 	notifDispatcher.AddHandler(persist.ActionUserFollowedUsers, group)
 
 	// viewed notifications are handled separately
-	notifDispatcher.AddHandler(persist.ActionViewedGallery, view)
+	notifDispatcher.AddHandler(persist.ActionViewedSplit, view)
 
 	new := map[persist.DBID]chan db.Notification{}
 	updated := map[persist.DBID]chan db.Notification{}
@@ -377,7 +377,7 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 	amount := notif.Amount
 	resultData := mostRecentNotif.Data.Concat(notif.Data)
 	switch notif.Action {
-	case persist.ActionViewedGallery:
+	case persist.ActionViewedSplit:
 		amount = int32(len(resultData.AuthedViewerIDs) + len(resultData.UnauthedViewerIDs))
 	case persist.ActionUserFollowedUsers:
 		amount = int32(len(resultData.FollowerIDs))
@@ -427,14 +427,14 @@ func addNotification(ctx context.Context, notif db.Notification, queries *db.Que
 			Data:     notif.Data,
 			EventIds: notif.EventIds,
 		})
-	case persist.ActionViewedGallery:
-		return queries.CreateViewGalleryNotification(ctx, db.CreateViewGalleryNotificationParams{
-			ID:        id,
-			OwnerID:   notif.OwnerID,
-			Action:    notif.Action,
-			Data:      notif.Data,
-			EventIds:  notif.EventIds,
-			GalleryID: notif.GalleryID,
+	case persist.ActionViewedSplit:
+		return queries.CreateViewSplitNotification(ctx, db.CreateViewSplitNotificationParams{
+			ID:       id,
+			OwnerID:  notif.OwnerID,
+			Action:   notif.Action,
+			Data:     notif.Data,
+			EventIds: notif.EventIds,
+			SplitID:  notif.SplitID,
 		})
 
 	default:

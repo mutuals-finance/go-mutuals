@@ -50,10 +50,6 @@ func (r *DeletedNode) ID() GqlID {
 	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
 }
 
-func (r *Gallery) ID() GqlID {
-	return GqlID(fmt.Sprintf("Gallery:%s", r.Dbid))
-}
-
 func (r *MembershipTier) ID() GqlID {
 	return GqlID(fmt.Sprintf("MembershipTier:%s", r.Dbid))
 }
@@ -70,8 +66,12 @@ func (r *SomeoneFollowedYouNotification) ID() GqlID {
 	return GqlID(fmt.Sprintf("SomeoneFollowedYouNotification:%s", r.Dbid))
 }
 
-func (r *SomeoneViewedYourGalleryNotification) ID() GqlID {
-	return GqlID(fmt.Sprintf("SomeoneViewedYourGalleryNotification:%s", r.Dbid))
+func (r *SomeoneViewedYourSplitNotification) ID() GqlID {
+	return GqlID(fmt.Sprintf("SomeoneViewedYourSplitNotification:%s", r.Dbid))
+}
+
+func (r *Split) ID() GqlID {
+	return GqlID(fmt.Sprintf("Split:%s", r.Dbid))
 }
 
 func (r *SplitFiUser) ID() GqlID {
@@ -100,21 +100,21 @@ func (r *Wallet) ID() GqlID {
 }
 
 type NodeFetcher struct {
-	OnCollection                           func(ctx context.Context, dbid persist.DBID) (*Collection, error)
-	OnCollectionToken                      func(ctx context.Context, tokenId string, collectionId string) (*CollectionToken, error)
-	OnCommunity                            func(ctx context.Context, contractAddress string, chain string) (*Community, error)
-	OnContract                             func(ctx context.Context, dbid persist.DBID) (*Contract, error)
-	OnDeletedNode                          func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
-	OnGallery                              func(ctx context.Context, dbid persist.DBID) (*Gallery, error)
-	OnMembershipTier                       func(ctx context.Context, dbid persist.DBID) (*MembershipTier, error)
-	OnSocialConnection                     func(ctx context.Context, socialId string, socialType persist.SocialProvider) (*SocialConnection, error)
-	OnSomeoneFollowedYouBackNotification   func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouBackNotification, error)
-	OnSomeoneFollowedYouNotification       func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouNotification, error)
-	OnSomeoneViewedYourGalleryNotification func(ctx context.Context, dbid persist.DBID) (*SomeoneViewedYourGalleryNotification, error)
-	OnSplitFiUser                          func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
-	OnToken                                func(ctx context.Context, dbid persist.DBID) (*Token, error)
-	OnViewer                               func(ctx context.Context, userId string) (*Viewer, error)
-	OnWallet                               func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
+	OnCollection                         func(ctx context.Context, dbid persist.DBID) (*Collection, error)
+	OnCollectionToken                    func(ctx context.Context, tokenId string, collectionId string) (*CollectionToken, error)
+	OnCommunity                          func(ctx context.Context, contractAddress string, chain string) (*Community, error)
+	OnContract                           func(ctx context.Context, dbid persist.DBID) (*Contract, error)
+	OnDeletedNode                        func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
+	OnMembershipTier                     func(ctx context.Context, dbid persist.DBID) (*MembershipTier, error)
+	OnSocialConnection                   func(ctx context.Context, socialId string, socialType persist.SocialProvider) (*SocialConnection, error)
+	OnSomeoneFollowedYouBackNotification func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouBackNotification, error)
+	OnSomeoneFollowedYouNotification     func(ctx context.Context, dbid persist.DBID) (*SomeoneFollowedYouNotification, error)
+	OnSomeoneViewedYourSplitNotification func(ctx context.Context, dbid persist.DBID) (*SomeoneViewedYourSplitNotification, error)
+	OnSplit                              func(ctx context.Context, dbid persist.DBID) (*Split, error)
+	OnSplitFiUser                        func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
+	OnToken                              func(ctx context.Context, dbid persist.DBID) (*Token, error)
+	OnViewer                             func(ctx context.Context, userId string) (*Viewer, error)
+	OnWallet                             func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
@@ -152,11 +152,6 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnDeletedNode(ctx, persist.DBID(ids[0]))
-	case "Gallery":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Gallery' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnGallery(ctx, persist.DBID(ids[0]))
 	case "MembershipTier":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MembershipTier' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -177,11 +172,16 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SomeoneFollowedYouNotification' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnSomeoneFollowedYouNotification(ctx, persist.DBID(ids[0]))
-	case "SomeoneViewedYourGalleryNotification":
+	case "SomeoneViewedYourSplitNotification":
 		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SomeoneViewedYourGalleryNotification' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SomeoneViewedYourSplitNotification' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
-		return n.OnSomeoneViewedYourGalleryNotification(ctx, persist.DBID(ids[0]))
+		return n.OnSomeoneViewedYourSplitNotification(ctx, persist.DBID(ids[0]))
+	case "Split":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Split' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnSplit(ctx, persist.DBID(ids[0]))
 	case "SplitFiUser":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SplitFiUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -219,8 +219,6 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnContract")
 	case n.OnDeletedNode == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
-	case n.OnGallery == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnGallery")
 	case n.OnMembershipTier == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMembershipTier")
 	case n.OnSocialConnection == nil:
@@ -229,8 +227,10 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSomeoneFollowedYouBackNotification")
 	case n.OnSomeoneFollowedYouNotification == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSomeoneFollowedYouNotification")
-	case n.OnSomeoneViewedYourGalleryNotification == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSomeoneViewedYourGalleryNotification")
+	case n.OnSomeoneViewedYourSplitNotification == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSomeoneViewedYourSplitNotification")
+	case n.OnSplit == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplit")
 	case n.OnSplitFiUser == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplitFiUser")
 	case n.OnToken == nil:

@@ -67,12 +67,12 @@ func testGraphQL(t *testing.T) {
 		{title: "should remove a wallet", run: testRemoveWallet},
 		{title: "should create a collection", run: testCreateCollection},
 		{title: "views from multiple users are rolled up", run: testViewsAreRolledUp},
-		{title: "update gallery and ensure name still gets set when not sent in update", run: testUpdateGalleryWithNoNameChange},
-		{title: "update gallery with a new collection", run: testUpdateGalleryWithNewCollection},
-		{title: "should delete collection in gallery update", run: testUpdateGalleryDeleteCollection},
+		{title: "update split and ensure name still gets set when not sent in update", run: testUpdateSplitWithNoNameChange},
+		{title: "update split with a new collection", run: testUpdateSplitWithNewCollection},
+		{title: "should delete collection in split update", run: testUpdateSplitDeleteCollection},
 		{title: "should update user experiences", run: testUpdateUserExperiences},
-		{title: "should create gallery", run: testCreateGallery},
-		{title: "should move collection to new gallery", run: testMoveCollection},
+		{title: "should create split", run: testCreateSplit},
+		{title: "should move collection to new split", run: testMoveCollection},
 		{title: "should connect social account", run: testConnectSocialAccount},
 	}
 	for _, test := range tests {
@@ -223,7 +223,7 @@ func testCreateCollection(t *testing.T) {
 	c := authedHandlerClient(t, userF.ID)
 
 	response, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		GalleryId:      userF.GalleryID,
+		SplitId:        userF.SplitID,
 		Name:           "newCollection",
 		CollectorsNote: "this is a note",
 		Tokens:         userF.TokenIDs,
@@ -238,13 +238,13 @@ func testCreateCollection(t *testing.T) {
 	assert.Len(t, payload.Collection.Tokens, len(userF.TokenIDs))
 }
 
-func testUpdateGalleryWithPublish(t *testing.T) {
+func testUpdateSplitWithPublish(t *testing.T) {
 	serverF := newServerFixture(t)
 	userF := newUserWithTokensFixture(t)
 	c := authedServerClient(t, serverF.URL, userF.ID)
 
 	colResp, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		GalleryId:      userF.GalleryID,
+		SplitId:        userF.SplitID,
 		Name:           "newCollection",
 		CollectorsNote: "this is a note",
 		Tokens:         userF.TokenIDs[:1],
@@ -258,9 +258,9 @@ func testUpdateGalleryWithPublish(t *testing.T) {
 	assert.NotEmpty(t, colPay.Collection.Dbid)
 	assert.Len(t, colPay.Collection.Tokens, 1)
 
-	updateReponse, err := updateGalleryMutation(context.Background(), c, UpdateGalleryInput{
-		GalleryId: userF.GalleryID,
-		Name:      util.ToPointer("newName"),
+	updateReponse, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+		SplitId: userF.SplitID,
+		Name:    util.ToPointer("newName"),
 		UpdatedCollections: []*UpdateCollectionInput{
 			{
 				Dbid:           colPay.Collection.Dbid,
@@ -279,7 +279,7 @@ func testUpdateGalleryWithPublish(t *testing.T) {
 				TokenSettings: defaultTokenSettings(userF.TokenIDs[:2]),
 			},
 		},
-		CreatedCollections: []*CreateCollectionInGalleryInput{
+		CreatedCollections: []*CreateCollectionInSplitInput{
 			{
 				GivenID:        "wow",
 				Tokens:         userF.TokenIDs[:3],
@@ -302,55 +302,55 @@ func testUpdateGalleryWithPublish(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, updateReponse.UpdateGallery)
-	updatePayload, ok := (*updateReponse.UpdateGallery).(*updateGalleryMutationUpdateGalleryUpdateGalleryPayload)
+	require.NotNil(t, updateReponse.UpdateSplit)
+	updatePayload, ok := (*updateReponse.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
 	if !ok {
-		err := (*updateReponse.UpdateGallery).(*updateGalleryMutationUpdateGalleryErrInvalidInput)
+		err := (*updateReponse.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.NotEmpty(t, updatePayload.Gallery.Name)
+	assert.NotEmpty(t, updatePayload.Split.Name)
 
-	update2Reponse, err := updateGalleryMutation(context.Background(), c, UpdateGalleryInput{
-		GalleryId:   userF.GalleryID,
+	update2Reponse, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+		SplitId:     userF.SplitID,
 		Description: util.ToPointer("newDesc"),
 		EditId:      util.ToPointer("edit_id"),
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, update2Reponse.UpdateGallery)
+	require.NotNil(t, update2Reponse.UpdateSplit)
 
 	// Wait for event handlers to store update events
 	time.Sleep(time.Second)
 
 	// publish
-	publishResponse, err := publishGalleryMutation(context.Background(), c, PublishGalleryInput{
-		GalleryId: userF.GalleryID,
-		EditId:    "edit_id",
-		Caption:   util.ToPointer("newCaption"),
+	publishResponse, err := publishSplitMutation(context.Background(), c, PublishSplitInput{
+		SplitId: userF.SplitID,
+		EditId:  "edit_id",
+		Caption: util.ToPointer("newCaption"),
 	})
 	require.NoError(t, err)
-	require.NotNil(t, publishResponse.PublishGallery)
+	require.NotNil(t, publishResponse.PublishSplit)
 
 	_, err = viewerQuery(context.Background(), c)
 	require.NoError(t, err)
 }
 
-func testCreateGallery(t *testing.T) {
+func testCreateSplit(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
 
-	response, err := createGalleryMutation(context.Background(), c, CreateGalleryInput{
-		Name:        util.ToPointer("newGallery"),
+	response, err := createSplitMutation(context.Background(), c, CreateSplitInput{
+		Name:        util.ToPointer("newSplit"),
 		Description: util.ToPointer("this is a description"),
 		Position:    "a1",
 	})
 
 	require.NoError(t, err)
-	payload := (*response.CreateGallery).(*createGalleryMutationCreateGalleryCreateGalleryPayload)
-	assert.NotEmpty(t, payload.Gallery.Dbid)
-	assert.Equal(t, "newGallery", *payload.Gallery.Name)
-	assert.Equal(t, "this is a description", *payload.Gallery.Description)
-	assert.Equal(t, "a1", *payload.Gallery.Position)
+	payload := (*response.CreateSplit).(*createSplitMutationCreateSplitCreateSplitPayload)
+	assert.NotEmpty(t, payload.Split.Dbid)
+	assert.Equal(t, "newSplit", *payload.Split.Name)
+	assert.Equal(t, "this is a description", *payload.Split.Description)
+	assert.Equal(t, "a1", *payload.Split.Position)
 }
 
 func testMoveCollection(t *testing.T) {
@@ -358,7 +358,7 @@ func testMoveCollection(t *testing.T) {
 	c := authedHandlerClient(t, userF.ID)
 
 	createResp, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		GalleryId:      userF.GalleryID,
+		SplitId:        userF.SplitID,
 		Name:           "newCollection",
 		CollectorsNote: "this is a note",
 		Tokens:         userF.TokenIDs,
@@ -371,27 +371,27 @@ func testMoveCollection(t *testing.T) {
 	createPayload := (*createResp.CreateCollection).(*createCollectionMutationCreateCollectionCreateCollectionPayload)
 	assert.NotEmpty(t, createPayload.Collection.Dbid)
 
-	createGalResp, err := createGalleryMutation(context.Background(), c, CreateGalleryInput{
-		Name:        util.ToPointer("newGallery"),
+	createGalResp, err := createSplitMutation(context.Background(), c, CreateSplitInput{
+		Name:        util.ToPointer("newSplit"),
 		Description: util.ToPointer("this is a description"),
 		Position:    "a1",
 	})
 
 	require.NoError(t, err)
-	createGalPayload := (*createGalResp.CreateGallery).(*createGalleryMutationCreateGalleryCreateGalleryPayload)
-	assert.NotEmpty(t, createGalPayload.Gallery.Dbid)
+	createGalPayload := (*createGalResp.CreateSplit).(*createSplitMutationCreateSplitCreateSplitPayload)
+	assert.NotEmpty(t, createGalPayload.Split.Dbid)
 
-	response, err := moveCollectionToGallery(context.Background(), c, MoveCollectionToGalleryInput{
+	response, err := moveCollectionToSplit(context.Background(), c, MoveCollectionToSplitInput{
 		SourceCollectionId: createPayload.Collection.Dbid,
-		TargetGalleryId:    createGalPayload.Gallery.Dbid,
+		TargetSplitId:      createGalPayload.Split.Dbid,
 	})
 
 	require.NoError(t, err)
-	payload := (*response.MoveCollectionToGallery).(*moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload)
-	assert.NotEmpty(t, payload.OldGallery.Dbid)
-	assert.Len(t, payload.OldGallery.Collections, 0)
-	assert.NotEmpty(t, payload.NewGallery.Dbid)
-	assert.Len(t, payload.NewGallery.Collections, 1)
+	payload := (*response.MoveCollectionToSplit).(*moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload)
+	assert.NotEmpty(t, payload.OldSplit.Dbid)
+	assert.Len(t, payload.OldSplit.Collections, 0)
+	assert.NotEmpty(t, payload.NewSplit.Dbid)
+	assert.Len(t, payload.NewSplit.Collections, 1)
 
 }
 
@@ -400,7 +400,7 @@ func testUpdateUserExperiences(t *testing.T) {
 	c := authedHandlerClient(t, userF.ID)
 
 	response, err := updateUserExperience(context.Background(), c, UpdateUserExperienceInput{
-		ExperienceType: UserExperienceTypeMultigalleryannouncement,
+		ExperienceType: UserExperienceTypeMultisplitannouncement,
 		Experienced:    true,
 	})
 
@@ -410,7 +410,7 @@ func testUpdateUserExperiences(t *testing.T) {
 	payload := (*response.UpdateUserExperience).(*updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload)
 	assert.NotEmpty(t, payload.Viewer.UserExperiences)
 	for _, experience := range payload.Viewer.UserExperiences {
-		if experience.Type == UserExperienceTypeMultigalleryannouncement {
+		if experience.Type == UserExperienceTypeMultisplitannouncement {
 			assert.True(t, experience.Experienced)
 		}
 	}
@@ -463,12 +463,12 @@ func testConnectSocialAccount(t *testing.T) {
 
 }
 
-func testUpdateGalleryDeleteCollection(t *testing.T) {
+func testUpdateSplitDeleteCollection(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
 
 	colResp, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		GalleryId:      userF.GalleryID,
+		SplitId:        userF.SplitID,
 		Name:           "newCollection",
 		CollectorsNote: "this is a note",
 		Tokens:         userF.TokenIDs[:1],
@@ -495,60 +495,60 @@ func testUpdateGalleryDeleteCollection(t *testing.T) {
 	assert.NotEmpty(t, colPay.Collection.Dbid)
 	assert.Len(t, colPay.Collection.Tokens, 1)
 
-	response, err := updateGalleryMutation(context.Background(), c, UpdateGalleryInput{
-		GalleryId:          userF.GalleryID,
+	response, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+		SplitId:            userF.SplitID,
 		DeletedCollections: []persist.DBID{colPay.Collection.Dbid},
 		Order:              []persist.DBID{},
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, response.UpdateGallery)
-	payload, ok := (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryUpdateGalleryPayload)
+	require.NotNil(t, response.UpdateSplit)
+	payload, ok := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
 	if !ok {
-		err := (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryErrInvalidInput)
+		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.Len(t, payload.Gallery.Collections, 0)
+	assert.Len(t, payload.Split.Collections, 0)
 }
 
-func testUpdateGalleryWithNoNameChange(t *testing.T) {
+func testUpdateSplitWithNoNameChange(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
 
-	response, err := updateGalleryMutation(context.Background(), c, UpdateGalleryInput{
-		GalleryId: userF.GalleryID,
-		Name:      util.ToPointer("newName"),
+	response, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+		SplitId: userF.SplitID,
+		Name:    util.ToPointer("newName"),
 	})
 
 	require.NoError(t, err)
-	payload, ok := (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryUpdateGalleryPayload)
+	payload, ok := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
 	if !ok {
-		err := (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryErrInvalidInput)
+		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.NotEmpty(t, payload.Gallery.Name)
+	assert.NotEmpty(t, payload.Split.Name)
 
-	response, err = updateGalleryMutation(context.Background(), c, UpdateGalleryInput{
-		GalleryId: userF.GalleryID,
+	response, err = updateSplitMutation(context.Background(), c, UpdateSplitInput{
+		SplitId: userF.SplitID,
 	})
 
 	require.NoError(t, err)
-	payload, ok = (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryUpdateGalleryPayload)
+	payload, ok = (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
 	if !ok {
-		err := (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryErrInvalidInput)
+		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.NotEmpty(t, payload.Gallery.Name)
+	assert.NotEmpty(t, payload.Split.Name)
 }
 
-func testUpdateGalleryWithNewCollection(t *testing.T) {
+func testUpdateSplitWithNewCollection(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
 
-	response, err := updateGalleryMutation(context.Background(), c, UpdateGalleryInput{
-		GalleryId: userF.GalleryID,
+	response, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+		SplitId: userF.SplitID,
 
-		CreatedCollections: []*CreateCollectionInGalleryInput{
+		CreatedCollections: []*CreateCollectionInSplitInput{
 			{
 				Name:           "yay",
 				CollectorsNote: "this is a note",
@@ -571,13 +571,13 @@ func testUpdateGalleryWithNewCollection(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	payload, ok := (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryUpdateGalleryPayload)
+	payload, ok := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
 	if !ok {
-		err := (*response.UpdateGallery).(*updateGalleryMutationUpdateGalleryErrInvalidInput)
+		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.Len(t, payload.Gallery.Collections, 1)
-	assert.Len(t, payload.Gallery.Collections[0].Tokens, 1)
+	assert.Len(t, payload.Split.Collections, 1)
+	assert.Len(t, payload.Split.Collections[0].Tokens, 1)
 }
 
 func testViewsAreRolledUp(t *testing.T) {
@@ -586,12 +586,12 @@ func testViewsAreRolledUp(t *testing.T) {
 	bob := newUserFixture(t)
 	alice := newUserFixture(t)
 	ctx := context.Background()
-	// bob views gallery
+	// bob views split
 	client := authedServerClient(t, serverF.URL, bob.ID)
-	viewGallery(t, ctx, client, userF.GalleryID)
-	// // alice views gallery
+	viewSplit(t, ctx, client, userF.SplitID)
+	// // alice views split
 	client = authedServerClient(t, serverF.URL, alice.ID)
-	viewGallery(t, ctx, client, userF.GalleryID)
+	viewSplit(t, ctx, client, userF.SplitID)
 
 	// TODO: Actually verify that the views get rolled up
 }
@@ -1027,7 +1027,7 @@ func newNonce(t *testing.T, ctx context.Context, c graphql.Client, w wallet) str
 }
 
 // newUser makes a GraphQL request to generate a new user
-func newUser(t *testing.T, ctx context.Context, c graphql.Client, w wallet) (userID persist.DBID, username string, galleryID persist.DBID) {
+func newUser(t *testing.T, ctx context.Context, c graphql.Client, w wallet) (userID persist.DBID, username string, splitID persist.DBID) {
 	t.Helper()
 	nonce := newNonce(t, ctx, c, w)
 	username = "user" + persist.GenerateID().String()
@@ -1038,7 +1038,7 @@ func newUser(t *testing.T, ctx context.Context, c graphql.Client, w wallet) (use
 
 	require.NoError(t, err)
 	payload := (*response.CreateUser).(*createUserMutationCreateUserCreateUserPayload)
-	return payload.Viewer.User.Dbid, username, payload.Viewer.User.Galleries[0].Dbid
+	return payload.Viewer.User.Dbid, username, payload.Viewer.User.Splits[0].Dbid
 }
 
 // newJWT generates a JWT
@@ -1061,12 +1061,12 @@ func syncTokens(t *testing.T, ctx context.Context, c graphql.Client, userID pers
 	return tokens
 }
 
-// viewGallery makes a GraphQL request to view a gallery
-func viewGallery(t *testing.T, ctx context.Context, c graphql.Client, galleryID persist.DBID) {
+// viewSplit makes a GraphQL request to view a split
+func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID persist.DBID) {
 	t.Helper()
-	resp, err := viewGalleryMutation(ctx, c, galleryID)
+	resp, err := viewSplitMutation(ctx, c, splitID)
 	require.NoError(t, err)
-	_ = (*resp.ViewGallery).(*viewGalleryMutationViewGalleryViewGalleryPayload)
+	_ = (*resp.ViewSplit).(*viewSplitMutationViewSplitViewSplitPayload)
 }
 
 // createCollection makes a GraphQL request to create a collection

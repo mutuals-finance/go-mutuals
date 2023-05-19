@@ -6,7 +6,7 @@ db = client.gallery
 
 collection_collection = db.collections
 nft_collection = db.nfts
-gallery_collection = db.galleries
+gallery_collection = db.splits
 user_collection = db.users
 
 with open("users.csv", "w", newline="") as csvfile:

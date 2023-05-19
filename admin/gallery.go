@@ -10,9 +10,9 @@ import (
 	"github.com/mikeydub/go-gallery/util"
 )
 
-var errGetGalleriesInput = errors.New("id or user_id must be provided")
+var errGetSplitsInput = errors.New("id or user_id must be provided")
 
-type getGalleriesInput struct {
+type getSplitsInput struct {
 	ID     persist.DBID `form:"id"`
 	UserID persist.DBID `form:"user_id"`
 }
@@ -21,39 +21,39 @@ type refreshCacheInput struct {
 	UserID persist.DBID `form:"user_id" binding:"required"`
 }
 
-type backupGalleriesInput struct {
+type backupSplitsInput struct {
 	UserID persist.DBID `form:"user_id" binding:"required"`
 }
 
-func getGalleries(galleryRepo postgres.GalleryRepository) gin.HandlerFunc {
+func getSplits(galleryRepo postgres.SplitRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var input getGalleriesInput
+		var input getSplitsInput
 		if err := c.ShouldBindQuery(&input); err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
 		if input.ID == "" && input.UserID == "" {
-			util.ErrResponse(c, http.StatusBadRequest, errGetGalleriesInput)
+			util.ErrResponse(c, http.StatusBadRequest, errGetSplitsInput)
 			return
 		}
 
-		var galleries []persist.Gallery
+		var splits []persist.Split
 		//var err error
 
 		//if input.ID == "" {
 		//	gallery, e := galleryRepo.GetByID(c, input.ID)
-		//	galleries = []persist.Gallery{gallery}
+		//	splits = []persist.Split{gallery}
 		//	err = e
 		//} else {
-		//	galleries, err = galleryRepo.GetByUserID(c, input.UserID)
+		//	splits, err = galleryRepo.GetByUserID(c, input.UserID)
 		//}
 		//if err != nil {
 		//	util.ErrResponse(c, http.StatusInternalServerError, err)
 		//	return
 		//}
 
-		c.JSON(http.StatusOK, galleries)
+		c.JSON(http.StatusOK, splits)
 	}
 }

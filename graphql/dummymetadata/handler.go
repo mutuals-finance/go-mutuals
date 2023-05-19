@@ -18,7 +18,7 @@ func handlersInitServer(router *gin.Engine) *gin.Engine {
 	mediaGroup.StaticFile("/svg", util.MustFindFile("./static/test_svg.svg"))
 	mediaGroup.StaticFile("/animation", util.MustFindFile("./static/test_animation.glb"))
 	mediaGroup.StaticFile("/pdf", util.MustFindFile("./static/test_pdf.pdf"))
-	mediaGroup.GET("/text", func(c *gin.Context) { c.String(http.StatusOK, "I love Gallery") })
+	mediaGroup.GET("/text", func(c *gin.Context) { c.String(http.StatusOK, "I love SplitFi") })
 	mediaGroup.StaticFile("/badimage", util.MustFindFile("./static/test_bad_image.png"))
 
 	metadataGroup := router.Group("/metadata")

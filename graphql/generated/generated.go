@@ -45,7 +45,6 @@ type ResolverRoot interface {
 	Community() CommunityResolver
 	FollowInfo() FollowInfoResolver
 	FollowUserPayload() FollowUserPayloadResolver
-	Gallery() GalleryResolver
 	Mutation() MutationResolver
 	OwnerAtBlock() OwnerAtBlockResolver
 	PreviewURLSet() PreviewURLSetResolver
@@ -55,7 +54,8 @@ type ResolverRoot interface {
 	SocialQueries() SocialQueriesResolver
 	SomeoneFollowedYouBackNotification() SomeoneFollowedYouBackNotificationResolver
 	SomeoneFollowedYouNotification() SomeoneFollowedYouNotificationResolver
-	SomeoneViewedYourGalleryNotification() SomeoneViewedYourGalleryNotificationResolver
+	SomeoneViewedYourSplitNotification() SomeoneViewedYourSplitNotificationResolver
+	Split() SplitResolver
 	SplitFiUser() SplitFiUserResolver
 	Subscription() SubscriptionResolver
 	Token() TokenResolver
@@ -125,11 +125,11 @@ type ComplexityRoot struct {
 	Collection struct {
 		CollectorsNote func(childComplexity int) int
 		Dbid           func(childComplexity int) int
-		Gallery        func(childComplexity int) int
 		Hidden         func(childComplexity int) int
 		ID             func(childComplexity int) int
 		Layout         func(childComplexity int) int
 		Name           func(childComplexity int) int
+		Split          func(childComplexity int) int
 		Tokens         func(childComplexity int, limit *int) int
 		Version        func(childComplexity int) int
 	}
@@ -207,14 +207,14 @@ type ComplexityRoot struct {
 		Collection func(childComplexity int) int
 	}
 
-	CreateGalleryPayload struct {
-		Gallery func(childComplexity int) int
+	CreateSplitPayload struct {
+		Split func(childComplexity int) int
 	}
 
 	CreateUserPayload struct {
-		GalleryID func(childComplexity int) int
-		UserID    func(childComplexity int) int
-		Viewer    func(childComplexity int) int
+		SplitID func(childComplexity int) int
+		UserID  func(childComplexity int) int
+		Viewer  func(childComplexity int) int
 	}
 
 	DeepRefreshPayload struct {
@@ -223,10 +223,10 @@ type ComplexityRoot struct {
 	}
 
 	DeleteCollectionPayload struct {
-		Gallery func(childComplexity int) int
+		Split func(childComplexity int) int
 	}
 
-	DeleteGalleryPayload struct {
+	DeleteSplitPayload struct {
 		DeletedID func(childComplexity int) int
 	}
 
@@ -264,10 +264,6 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	ErrGalleryNotFound struct {
-		Message func(childComplexity int) int
-	}
-
 	ErrInvalidInput struct {
 		Message    func(childComplexity int) int
 		Parameters func(childComplexity int) int
@@ -289,6 +285,10 @@ type ComplexityRoot struct {
 
 	ErrNotAuthorized struct {
 		Cause   func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
+	ErrSplitNotFound struct {
 		Message func(childComplexity int) int
 	}
 
@@ -333,22 +333,6 @@ type ComplexityRoot struct {
 		MediaURL          func(childComplexity int) int
 		PreviewURLs       func(childComplexity int) int
 		StaticPreviewURLs func(childComplexity int) int
-	}
-
-	Gallery struct {
-		Collections   func(childComplexity int) int
-		Dbid          func(childComplexity int) int
-		Description   func(childComplexity int) int
-		Hidden        func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Name          func(childComplexity int) int
-		Owner         func(childComplexity int) int
-		Position      func(childComplexity int) int
-		TokenPreviews func(childComplexity int) int
-	}
-
-	GallerySearchResult struct {
-		Gallery func(childComplexity int) int
 	}
 
 	GltfMedia struct {
@@ -429,9 +413,9 @@ type ComplexityRoot struct {
 		Tx func(childComplexity int) int
 	}
 
-	MoveCollectionToGalleryPayload struct {
-		NewGallery func(childComplexity int) int
-		OldGallery func(childComplexity int) int
+	MoveCollectionToSplitPayload struct {
+		NewSplit func(childComplexity int) int
+		OldSplit func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -441,11 +425,11 @@ type ComplexityRoot struct {
 		ClearAllNotifications           func(childComplexity int) int
 		ConnectSocialAccount            func(childComplexity int, input model.SocialAuthMechanism, display bool) int
 		CreateCollection                func(childComplexity int, input model.CreateCollectionInput) int
-		CreateGallery                   func(childComplexity int, input model.CreateGalleryInput) int
+		CreateSplit                     func(childComplexity int, input model.CreateSplitInput) int
 		CreateUser                      func(childComplexity int, authMechanism model.AuthMechanism, input model.CreateUserInput) int
 		DeepRefresh                     func(childComplexity int, input model.DeepRefreshInput) int
 		DeleteCollection                func(childComplexity int, collectionID persist.DBID) int
-		DeleteGallery                   func(childComplexity int, galleryID persist.DBID) int
+		DeleteSplit                     func(childComplexity int, splitID persist.DBID) int
 		DisconnectSocialAccount         func(childComplexity int, accountType persist.SocialProvider) int
 		FollowAllSocialConnections      func(childComplexity int, accountType persist.SocialProvider) int
 		FollowUser                      func(childComplexity int, userID persist.DBID) int
@@ -453,9 +437,9 @@ type ComplexityRoot struct {
 		Login                           func(childComplexity int, authMechanism model.AuthMechanism) int
 		Logout                          func(childComplexity int) int
 		MintPremiumCardToWallet         func(childComplexity int, input model.MintPremiumCardToWalletInput) int
-		MoveCollectionToGallery         func(childComplexity int, input *model.MoveCollectionToGalleryInput) int
+		MoveCollectionToSplit           func(childComplexity int, input *model.MoveCollectionToSplitInput) int
 		PreverifyEmail                  func(childComplexity int, input model.PreverifyEmailInput) int
-		PublishGallery                  func(childComplexity int, input model.PublishGalleryInput) int
+		PublishSplit                    func(childComplexity int, input model.PublishSplitInput) int
 		RefreshCollection               func(childComplexity int, collectionID persist.DBID) int
 		RefreshContract                 func(childComplexity int, contractID persist.DBID) int
 		RefreshToken                    func(childComplexity int, tokenID persist.DBID) int
@@ -472,21 +456,21 @@ type ComplexityRoot struct {
 		UpdateCollectionTokens          func(childComplexity int, input model.UpdateCollectionTokensInput) int
 		UpdateEmail                     func(childComplexity int, input model.UpdateEmailInput) int
 		UpdateEmailNotificationSettings func(childComplexity int, input model.UpdateEmailNotificationSettingsInput) int
-		UpdateFeaturedGallery           func(childComplexity int, galleryID persist.DBID) int
-		UpdateGallery                   func(childComplexity int, input model.UpdateGalleryInput) int
-		UpdateGalleryCollections        func(childComplexity int, input model.UpdateGalleryCollectionsInput) int
-		UpdateGalleryHidden             func(childComplexity int, input model.UpdateGalleryHiddenInput) int
-		UpdateGalleryInfo               func(childComplexity int, input model.UpdateGalleryInfoInput) int
-		UpdateGalleryOrder              func(childComplexity int, input model.UpdateGalleryOrderInput) int
+		UpdateFeaturedSplit             func(childComplexity int, splitID persist.DBID) int
 		UpdateNotificationSettings      func(childComplexity int, settings *model.NotificationSettingsInput) int
 		UpdatePrimaryWallet             func(childComplexity int, walletID persist.DBID) int
 		UpdateSocialAccountDisplayed    func(childComplexity int, input model.UpdateSocialAccountDisplayedInput) int
+		UpdateSplit                     func(childComplexity int, input model.UpdateSplitInput) int
+		UpdateSplitCollections          func(childComplexity int, input model.UpdateSplitCollectionsInput) int
+		UpdateSplitHidden               func(childComplexity int, input model.UpdateSplitHiddenInput) int
+		UpdateSplitInfo                 func(childComplexity int, input model.UpdateSplitInfoInput) int
+		UpdateSplitOrder                func(childComplexity int, input model.UpdateSplitOrderInput) int
 		UpdateTokenInfo                 func(childComplexity int, input model.UpdateTokenInfoInput) int
 		UpdateUserExperience            func(childComplexity int, input model.UpdateUserExperienceInput) int
 		UpdateUserInfo                  func(childComplexity int, input model.UpdateUserInfoInput) int
 		UploadPersistedQueries          func(childComplexity int, input *model.UploadPersistedQueriesInput) int
 		VerifyEmail                     func(childComplexity int, input model.VerifyEmailInput) int
-		ViewGallery                     func(childComplexity int, galleryID persist.DBID) int
+		ViewSplit                       func(childComplexity int, splitID persist.DBID) int
 	}
 
 	NotificationEdge struct {
@@ -495,8 +479,8 @@ type ComplexityRoot struct {
 	}
 
 	NotificationSettings struct {
-		SomeoneFollowedYou       func(childComplexity int) int
-		SomeoneViewedYourGallery func(childComplexity int) int
+		SomeoneFollowedYou     func(childComplexity int) int
+		SomeoneViewedYourSplit func(childComplexity int) int
 	}
 
 	NotificationsConnection struct {
@@ -543,8 +527,8 @@ type ComplexityRoot struct {
 		Thumbnail  func(childComplexity int) int
 	}
 
-	PublishGalleryPayload struct {
-		Gallery func(childComplexity int) int
+	PublishSplitPayload struct {
+		Split func(childComplexity int) int
 	}
 
 	Query struct {
@@ -552,15 +536,15 @@ type ComplexityRoot struct {
 		CollectionTokenByID func(childComplexity int, tokenID persist.DBID, collectionID persist.DBID) int
 		CollectionsByIds    func(childComplexity int, ids []persist.DBID) int
 		CommunityByAddress  func(childComplexity int, communityAddress persist.ChainAddress, forceRefresh *bool) int
-		GalleryByID         func(childComplexity int, id persist.DBID) int
 		GeneralAllowlist    func(childComplexity int) int
 		MembershipTiers     func(childComplexity int, forceRefresh *bool) int
 		Node                func(childComplexity int, id model.GqlID) int
 		SearchCommunities   func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) int
-		SearchGalleries     func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
+		SearchSplits        func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
 		SearchUsers         func(childComplexity int, query string, limit *int, usernameWeight *float64, bioWeight *float64) int
 		SocialConnections   func(childComplexity int, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) int
 		SocialQueries       func(childComplexity int) int
+		SplitByID           func(childComplexity int, id persist.DBID) int
 		TokenByID           func(childComplexity int, id persist.DBID) int
 		UserByAddress       func(childComplexity int, chainAddress persist.ChainAddress) int
 		UserByID            func(childComplexity int, id persist.DBID) int
@@ -568,7 +552,7 @@ type ComplexityRoot struct {
 		UsersByRole         func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
 		UsersWithTrait      func(childComplexity int, trait string) int
 		Viewer              func(childComplexity int) int
-		ViewerGalleryByID   func(childComplexity int, id persist.DBID) int
+		ViewerSplitByID     func(childComplexity int, id persist.DBID) int
 		__resolve__service  func(childComplexity int) int
 	}
 
@@ -596,7 +580,7 @@ type ComplexityRoot struct {
 		Results func(childComplexity int) int
 	}
 
-	SearchGalleriesPayload struct {
+	SearchSplitsPayload struct {
 		Results func(childComplexity int) int
 	}
 
@@ -657,26 +641,37 @@ type ComplexityRoot struct {
 		UpdatedTime  func(childComplexity int) int
 	}
 
-	SomeoneViewedYourGalleryNotification struct {
+	SomeoneViewedYourSplitNotification struct {
 		Count              func(childComplexity int) int
 		CreationTime       func(childComplexity int) int
 		Dbid               func(childComplexity int) int
-		Gallery            func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		NonUserViewerCount func(childComplexity int) int
 		Seen               func(childComplexity int) int
+		Split              func(childComplexity int) int
 		UpdatedTime        func(childComplexity int) int
 		UserViewers        func(childComplexity int, before *string, after *string, first *int, last *int) int
+	}
+
+	Split struct {
+		Collections   func(childComplexity int) int
+		Dbid          func(childComplexity int) int
+		Description   func(childComplexity int) int
+		Hidden        func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Owner         func(childComplexity int) int
+		Position      func(childComplexity int) int
+		TokenPreviews func(childComplexity int) int
 	}
 
 	SplitFiUser struct {
 		Badges              func(childComplexity int) int
 		Bio                 func(childComplexity int) int
 		Dbid                func(childComplexity int) int
-		FeaturedGallery     func(childComplexity int) int
+		FeaturedSplit       func(childComplexity int) int
 		Followers           func(childComplexity int) int
 		Following           func(childComplexity int) int
-		Galleries           func(childComplexity int) int
 		ID                  func(childComplexity int) int
 		IsAuthenticatedUser func(childComplexity int) int
 		PrimaryWallet       func(childComplexity int) int
@@ -684,12 +679,17 @@ type ComplexityRoot struct {
 		SharedCommunities   func(childComplexity int, before *string, after *string, first *int, last *int) int
 		SharedFollowers     func(childComplexity int, before *string, after *string, first *int, last *int) int
 		SocialAccounts      func(childComplexity int) int
+		Splits              func(childComplexity int) int
 		Tokens              func(childComplexity int) int
 		TokensByChain       func(childComplexity int, chain persist.Chain) int
 		Traits              func(childComplexity int) int
 		Universal           func(childComplexity int) int
 		Username            func(childComplexity int) int
 		Wallets             func(childComplexity int) int
+	}
+
+	SplitSearchResult struct {
+		Split func(childComplexity int) int
 	}
 
 	Subscription struct {
@@ -821,28 +821,8 @@ type ComplexityRoot struct {
 		Viewer func(childComplexity int) int
 	}
 
-	UpdateFeaturedGalleryPayload struct {
+	UpdateFeaturedSplitPayload struct {
 		Viewer func(childComplexity int) int
-	}
-
-	UpdateGalleryCollectionsPayload struct {
-		Gallery func(childComplexity int) int
-	}
-
-	UpdateGalleryHiddenPayload struct {
-		Gallery func(childComplexity int) int
-	}
-
-	UpdateGalleryInfoPayload struct {
-		Gallery func(childComplexity int) int
-	}
-
-	UpdateGalleryOrderPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	UpdateGalleryPayload struct {
-		Gallery func(childComplexity int) int
 	}
 
 	UpdatePrimaryWalletPayload struct {
@@ -851,6 +831,26 @@ type ComplexityRoot struct {
 
 	UpdateSocialAccountDisplayedPayload struct {
 		Viewer func(childComplexity int) int
+	}
+
+	UpdateSplitCollectionsPayload struct {
+		Split func(childComplexity int) int
+	}
+
+	UpdateSplitHiddenPayload struct {
+		Split func(childComplexity int) int
+	}
+
+	UpdateSplitInfoPayload struct {
+		Split func(childComplexity int) int
+	}
+
+	UpdateSplitOrderPayload struct {
+		Viewer func(childComplexity int) int
+	}
+
+	UpdateSplitPayload struct {
+		Split func(childComplexity int) int
 	}
 
 	UpdateTokenInfoPayload struct {
@@ -913,8 +913,8 @@ type ComplexityRoot struct {
 		Small  func(childComplexity int) int
 	}
 
-	ViewGalleryPayload struct {
-		Gallery func(childComplexity int) int
+	ViewSplitPayload struct {
+		Split func(childComplexity int) int
 	}
 
 	Viewer struct {
@@ -925,11 +925,11 @@ type ComplexityRoot struct {
 		SocialAccounts       func(childComplexity int) int
 		User                 func(childComplexity int) int
 		UserExperiences      func(childComplexity int) int
-		ViewerGalleries      func(childComplexity int) int
+		ViewerSplits         func(childComplexity int) int
 	}
 
-	ViewerGallery struct {
-		Gallery func(childComplexity int) int
+	ViewerSplit struct {
+		Split func(childComplexity int) int
 	}
 
 	Wallet struct {
@@ -947,7 +947,7 @@ type ComplexityRoot struct {
 }
 
 type CollectionResolver interface {
-	Gallery(ctx context.Context, obj *model.Collection) (*model.Gallery, error)
+	Split(ctx context.Context, obj *model.Collection) (*model.Split, error)
 
 	Tokens(ctx context.Context, obj *model.Collection, limit *int) ([]*model.CollectionToken, error)
 }
@@ -966,16 +966,11 @@ type FollowInfoResolver interface {
 type FollowUserPayloadResolver interface {
 	User(ctx context.Context, obj *model.FollowUserPayload) (*model.SplitFiUser, error)
 }
-type GalleryResolver interface {
-	TokenPreviews(ctx context.Context, obj *model.Gallery) ([]*model.PreviewURLSet, error)
-	Owner(ctx context.Context, obj *model.Gallery) (*model.SplitFiUser, error)
-	Collections(ctx context.Context, obj *model.Gallery) ([]*model.Collection, error)
-}
 type MutationResolver interface {
 	AddUserWallet(ctx context.Context, chainAddress persist.ChainAddress, authMechanism model.AuthMechanism) (model.AddUserWalletPayloadOrError, error)
 	RemoveUserWallets(ctx context.Context, walletIds []persist.DBID) (model.RemoveUserWalletsPayloadOrError, error)
 	UpdateUserInfo(ctx context.Context, input model.UpdateUserInfoInput) (model.UpdateUserInfoPayloadOrError, error)
-	UpdateGalleryCollections(ctx context.Context, input model.UpdateGalleryCollectionsInput) (model.UpdateGalleryCollectionsPayloadOrError, error)
+	UpdateSplitCollections(ctx context.Context, input model.UpdateSplitCollectionsInput) (model.UpdateSplitCollectionsPayloadOrError, error)
 	CreateCollection(ctx context.Context, input model.CreateCollectionInput) (model.CreateCollectionPayloadOrError, error)
 	DeleteCollection(ctx context.Context, collectionID persist.DBID) (model.DeleteCollectionPayloadOrError, error)
 	UpdateCollectionInfo(ctx context.Context, input model.UpdateCollectionInfoInput) (model.UpdateCollectionInfoPayloadOrError, error)
@@ -1002,15 +997,15 @@ type MutationResolver interface {
 	FollowUser(ctx context.Context, userID persist.DBID) (model.FollowUserPayloadOrError, error)
 	FollowAllSocialConnections(ctx context.Context, accountType persist.SocialProvider) (model.FollowAllSocialConnectionsPayloadOrError, error)
 	UnfollowUser(ctx context.Context, userID persist.DBID) (model.UnfollowUserPayloadOrError, error)
-	ViewGallery(ctx context.Context, galleryID persist.DBID) (model.ViewGalleryPayloadOrError, error)
-	UpdateGallery(ctx context.Context, input model.UpdateGalleryInput) (model.UpdateGalleryPayloadOrError, error)
-	PublishGallery(ctx context.Context, input model.PublishGalleryInput) (model.PublishGalleryPayloadOrError, error)
-	CreateGallery(ctx context.Context, input model.CreateGalleryInput) (model.CreateGalleryPayloadOrError, error)
-	UpdateGalleryHidden(ctx context.Context, input model.UpdateGalleryHiddenInput) (model.UpdateGalleryHiddenPayloadOrError, error)
-	DeleteGallery(ctx context.Context, galleryID persist.DBID) (model.DeleteGalleryPayloadOrError, error)
-	UpdateGalleryOrder(ctx context.Context, input model.UpdateGalleryOrderInput) (model.UpdateGalleryOrderPayloadOrError, error)
-	UpdateGalleryInfo(ctx context.Context, input model.UpdateGalleryInfoInput) (model.UpdateGalleryInfoPayloadOrError, error)
-	UpdateFeaturedGallery(ctx context.Context, galleryID persist.DBID) (model.UpdateFeaturedGalleryPayloadOrError, error)
+	ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error)
+	UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error)
+	PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error)
+	CreateSplit(ctx context.Context, input model.CreateSplitInput) (model.CreateSplitPayloadOrError, error)
+	UpdateSplitHidden(ctx context.Context, input model.UpdateSplitHiddenInput) (model.UpdateSplitHiddenPayloadOrError, error)
+	DeleteSplit(ctx context.Context, splitID persist.DBID) (model.DeleteSplitPayloadOrError, error)
+	UpdateSplitOrder(ctx context.Context, input model.UpdateSplitOrderInput) (model.UpdateSplitOrderPayloadOrError, error)
+	UpdateSplitInfo(ctx context.Context, input model.UpdateSplitInfoInput) (model.UpdateSplitInfoPayloadOrError, error)
+	UpdateFeaturedSplit(ctx context.Context, splitID persist.DBID) (model.UpdateFeaturedSplitPayloadOrError, error)
 	ClearAllNotifications(ctx context.Context) (*model.ClearAllNotificationsPayload, error)
 	UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error)
 	PreverifyEmail(ctx context.Context, input model.PreverifyEmailInput) (model.PreverifyEmailPayloadOrError, error)
@@ -1023,7 +1018,7 @@ type MutationResolver interface {
 	UploadPersistedQueries(ctx context.Context, input *model.UploadPersistedQueriesInput) (model.UploadPersistedQueriesPayloadOrError, error)
 	UpdatePrimaryWallet(ctx context.Context, walletID persist.DBID) (model.UpdatePrimaryWalletPayloadOrError, error)
 	UpdateUserExperience(ctx context.Context, input model.UpdateUserExperienceInput) (model.UpdateUserExperiencePayloadOrError, error)
-	MoveCollectionToGallery(ctx context.Context, input *model.MoveCollectionToGalleryInput) (model.MoveCollectionToGalleryPayloadOrError, error)
+	MoveCollectionToSplit(ctx context.Context, input *model.MoveCollectionToSplitInput) (model.MoveCollectionToSplitPayloadOrError, error)
 }
 type OwnerAtBlockResolver interface {
 	Owner(ctx context.Context, obj *model.OwnerAtBlock) (model.SplitFiUserOrAddress, error)
@@ -1045,10 +1040,10 @@ type QueryResolver interface {
 	CollectionTokenByID(ctx context.Context, tokenID persist.DBID, collectionID persist.DBID) (model.CollectionTokenByIDOrError, error)
 	CommunityByAddress(ctx context.Context, communityAddress persist.ChainAddress, forceRefresh *bool) (model.CommunityByAddressOrError, error)
 	GeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error)
-	GalleryByID(ctx context.Context, id persist.DBID) (model.GalleryByIDPayloadOrError, error)
-	ViewerGalleryByID(ctx context.Context, id persist.DBID) (model.ViewerGalleryByIDPayloadOrError, error)
+	SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error)
+	ViewerSplitByID(ctx context.Context, id persist.DBID) (model.ViewerSplitByIDPayloadOrError, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error)
-	SearchGalleries(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchGalleriesPayloadOrError, error)
+	SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error)
 	SearchCommunities(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) (model.SearchCommunitiesPayloadOrError, error)
 	UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error)
 	SocialConnections(ctx context.Context, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) (*model.SocialConnectionsConnection, error)
@@ -1069,10 +1064,15 @@ type SomeoneFollowedYouBackNotificationResolver interface {
 type SomeoneFollowedYouNotificationResolver interface {
 	Followers(ctx context.Context, obj *model.SomeoneFollowedYouNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error)
 }
-type SomeoneViewedYourGalleryNotificationResolver interface {
-	UserViewers(ctx context.Context, obj *model.SomeoneViewedYourGalleryNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error)
+type SomeoneViewedYourSplitNotificationResolver interface {
+	UserViewers(ctx context.Context, obj *model.SomeoneViewedYourSplitNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error)
 
-	Gallery(ctx context.Context, obj *model.SomeoneViewedYourGalleryNotification) (*model.Gallery, error)
+	Split(ctx context.Context, obj *model.SomeoneViewedYourSplitNotification) (*model.Split, error)
+}
+type SplitResolver interface {
+	TokenPreviews(ctx context.Context, obj *model.Split) ([]*model.PreviewURLSet, error)
+	Owner(ctx context.Context, obj *model.Split) (*model.SplitFiUser, error)
+	Collections(ctx context.Context, obj *model.Split) ([]*model.Collection, error)
 }
 type SplitFiUserResolver interface {
 	Roles(ctx context.Context, obj *model.SplitFiUser) ([]*persist.Role, error)
@@ -1081,8 +1081,8 @@ type SplitFiUserResolver interface {
 	TokensByChain(ctx context.Context, obj *model.SplitFiUser, chain persist.Chain) (*model.ChainTokens, error)
 	Wallets(ctx context.Context, obj *model.SplitFiUser) ([]*model.Wallet, error)
 	PrimaryWallet(ctx context.Context, obj *model.SplitFiUser) (*model.Wallet, error)
-	FeaturedGallery(ctx context.Context, obj *model.SplitFiUser) (*model.Gallery, error)
-	Galleries(ctx context.Context, obj *model.SplitFiUser) ([]*model.Gallery, error)
+	FeaturedSplit(ctx context.Context, obj *model.SplitFiUser) (*model.Split, error)
+	Splits(ctx context.Context, obj *model.SplitFiUser) ([]*model.Split, error)
 	Badges(ctx context.Context, obj *model.SplitFiUser) ([]*model.Badge, error)
 
 	Followers(ctx context.Context, obj *model.SplitFiUser) ([]*model.SplitFiUser, error)
@@ -1110,7 +1110,7 @@ type UnfollowUserPayloadResolver interface {
 type ViewerResolver interface {
 	User(ctx context.Context, obj *model.Viewer) (*model.SplitFiUser, error)
 	SocialAccounts(ctx context.Context, obj *model.Viewer) (*model.SocialAccounts, error)
-	ViewerGalleries(ctx context.Context, obj *model.Viewer) ([]*model.ViewerGallery, error)
+	ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error)
 	Email(ctx context.Context, obj *model.Viewer) (*model.UserEmail, error)
 	Notifications(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error)
 	NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error)
@@ -1291,13 +1291,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Collection.Dbid(childComplexity), true
 
-	case "Collection.gallery":
-		if e.complexity.Collection.Gallery == nil {
-			break
-		}
-
-		return e.complexity.Collection.Gallery(childComplexity), true
-
 	case "Collection.hidden":
 		if e.complexity.Collection.Hidden == nil {
 			break
@@ -1325,6 +1318,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Collection.Name(childComplexity), true
+
+	case "Collection.split":
+		if e.complexity.Collection.Split == nil {
+			break
+		}
+
+		return e.complexity.Collection.Split(childComplexity), true
 
 	case "Collection.tokens":
 		if e.complexity.Collection.Tokens == nil {
@@ -1635,19 +1635,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreateCollectionPayload.Collection(childComplexity), true
 
-	case "CreateGalleryPayload.gallery":
-		if e.complexity.CreateGalleryPayload.Gallery == nil {
+	case "CreateSplitPayload.split":
+		if e.complexity.CreateSplitPayload.Split == nil {
 			break
 		}
 
-		return e.complexity.CreateGalleryPayload.Gallery(childComplexity), true
+		return e.complexity.CreateSplitPayload.Split(childComplexity), true
 
-	case "CreateUserPayload.galleryId":
-		if e.complexity.CreateUserPayload.GalleryID == nil {
+	case "CreateUserPayload.splitId":
+		if e.complexity.CreateUserPayload.SplitID == nil {
 			break
 		}
 
-		return e.complexity.CreateUserPayload.GalleryID(childComplexity), true
+		return e.complexity.CreateUserPayload.SplitID(childComplexity), true
 
 	case "CreateUserPayload.userId":
 		if e.complexity.CreateUserPayload.UserID == nil {
@@ -1677,19 +1677,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeepRefreshPayload.Submitted(childComplexity), true
 
-	case "DeleteCollectionPayload.gallery":
-		if e.complexity.DeleteCollectionPayload.Gallery == nil {
+	case "DeleteCollectionPayload.split":
+		if e.complexity.DeleteCollectionPayload.Split == nil {
 			break
 		}
 
-		return e.complexity.DeleteCollectionPayload.Gallery(childComplexity), true
+		return e.complexity.DeleteCollectionPayload.Split(childComplexity), true
 
-	case "DeleteGalleryPayload.deletedId":
-		if e.complexity.DeleteGalleryPayload.DeletedID == nil {
+	case "DeleteSplitPayload.deletedId":
+		if e.complexity.DeleteSplitPayload.DeletedID == nil {
 			break
 		}
 
-		return e.complexity.DeleteGalleryPayload.DeletedID(childComplexity), true
+		return e.complexity.DeleteSplitPayload.DeletedID(childComplexity), true
 
 	case "DeletedNode.dbid":
 		if e.complexity.DeletedNode.Dbid == nil {
@@ -1761,13 +1761,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ErrDoesNotOwnRequiredToken.Message(childComplexity), true
 
-	case "ErrGalleryNotFound.message":
-		if e.complexity.ErrGalleryNotFound.Message == nil {
-			break
-		}
-
-		return e.complexity.ErrGalleryNotFound.Message(childComplexity), true
-
 	case "ErrInvalidInput.message":
 		if e.complexity.ErrInvalidInput.Message == nil {
 			break
@@ -1830,6 +1823,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ErrNotAuthorized.Message(childComplexity), true
+
+	case "ErrSplitNotFound.message":
+		if e.complexity.ErrSplitNotFound.Message == nil {
+			break
+		}
+
+		return e.complexity.ErrSplitNotFound.Message(childComplexity), true
 
 	case "ErrSyncFailed.message":
 		if e.complexity.ErrSyncFailed.Message == nil {
@@ -1942,76 +1942,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GIFMedia.StaticPreviewURLs(childComplexity), true
-
-	case "Gallery.collections":
-		if e.complexity.Gallery.Collections == nil {
-			break
-		}
-
-		return e.complexity.Gallery.Collections(childComplexity), true
-
-	case "Gallery.dbid":
-		if e.complexity.Gallery.Dbid == nil {
-			break
-		}
-
-		return e.complexity.Gallery.Dbid(childComplexity), true
-
-	case "Gallery.description":
-		if e.complexity.Gallery.Description == nil {
-			break
-		}
-
-		return e.complexity.Gallery.Description(childComplexity), true
-
-	case "Gallery.hidden":
-		if e.complexity.Gallery.Hidden == nil {
-			break
-		}
-
-		return e.complexity.Gallery.Hidden(childComplexity), true
-
-	case "Gallery.id":
-		if e.complexity.Gallery.ID == nil {
-			break
-		}
-
-		return e.complexity.Gallery.ID(childComplexity), true
-
-	case "Gallery.name":
-		if e.complexity.Gallery.Name == nil {
-			break
-		}
-
-		return e.complexity.Gallery.Name(childComplexity), true
-
-	case "Gallery.owner":
-		if e.complexity.Gallery.Owner == nil {
-			break
-		}
-
-		return e.complexity.Gallery.Owner(childComplexity), true
-
-	case "Gallery.position":
-		if e.complexity.Gallery.Position == nil {
-			break
-		}
-
-		return e.complexity.Gallery.Position(childComplexity), true
-
-	case "Gallery.tokenPreviews":
-		if e.complexity.Gallery.TokenPreviews == nil {
-			break
-		}
-
-		return e.complexity.Gallery.TokenPreviews(childComplexity), true
-
-	case "GallerySearchResult.gallery":
-		if e.complexity.GallerySearchResult.Gallery == nil {
-			break
-		}
-
-		return e.complexity.GallerySearchResult.Gallery(childComplexity), true
 
 	case "GltfMedia.contentRenderURL":
 		if e.complexity.GltfMedia.ContentRenderURL == nil {
@@ -2307,19 +2237,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MintPremiumCardToWalletPayload.Tx(childComplexity), true
 
-	case "MoveCollectionToGalleryPayload.newGallery":
-		if e.complexity.MoveCollectionToGalleryPayload.NewGallery == nil {
+	case "MoveCollectionToSplitPayload.newSplit":
+		if e.complexity.MoveCollectionToSplitPayload.NewSplit == nil {
 			break
 		}
 
-		return e.complexity.MoveCollectionToGalleryPayload.NewGallery(childComplexity), true
+		return e.complexity.MoveCollectionToSplitPayload.NewSplit(childComplexity), true
 
-	case "MoveCollectionToGalleryPayload.oldGallery":
-		if e.complexity.MoveCollectionToGalleryPayload.OldGallery == nil {
+	case "MoveCollectionToSplitPayload.oldSplit":
+		if e.complexity.MoveCollectionToSplitPayload.OldSplit == nil {
 			break
 		}
 
-		return e.complexity.MoveCollectionToGalleryPayload.OldGallery(childComplexity), true
+		return e.complexity.MoveCollectionToSplitPayload.OldSplit(childComplexity), true
 
 	case "Mutation.addRolesToUser":
 		if e.complexity.Mutation.AddRolesToUser == nil {
@@ -2388,17 +2318,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateCollection(childComplexity, args["input"].(model.CreateCollectionInput)), true
 
-	case "Mutation.createGallery":
-		if e.complexity.Mutation.CreateGallery == nil {
+	case "Mutation.createSplit":
+		if e.complexity.Mutation.CreateSplit == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createGallery_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createSplit_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateGallery(childComplexity, args["input"].(model.CreateGalleryInput)), true
+		return e.complexity.Mutation.CreateSplit(childComplexity, args["input"].(model.CreateSplitInput)), true
 
 	case "Mutation.createUser":
 		if e.complexity.Mutation.CreateUser == nil {
@@ -2436,17 +2366,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteCollection(childComplexity, args["collectionId"].(persist.DBID)), true
 
-	case "Mutation.deleteGallery":
-		if e.complexity.Mutation.DeleteGallery == nil {
+	case "Mutation.deleteSplit":
+		if e.complexity.Mutation.DeleteSplit == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteGallery_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteSplit_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteGallery(childComplexity, args["galleryId"].(persist.DBID)), true
+		return e.complexity.Mutation.DeleteSplit(childComplexity, args["splitId"].(persist.DBID)), true
 
 	case "Mutation.disconnectSocialAccount":
 		if e.complexity.Mutation.DisconnectSocialAccount == nil {
@@ -2527,17 +2457,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.MintPremiumCardToWallet(childComplexity, args["input"].(model.MintPremiumCardToWalletInput)), true
 
-	case "Mutation.moveCollectionToGallery":
-		if e.complexity.Mutation.MoveCollectionToGallery == nil {
+	case "Mutation.moveCollectionToSplit":
+		if e.complexity.Mutation.MoveCollectionToSplit == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_moveCollectionToGallery_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_moveCollectionToSplit_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.MoveCollectionToGallery(childComplexity, args["input"].(*model.MoveCollectionToGalleryInput)), true
+		return e.complexity.Mutation.MoveCollectionToSplit(childComplexity, args["input"].(*model.MoveCollectionToSplitInput)), true
 
 	case "Mutation.preverifyEmail":
 		if e.complexity.Mutation.PreverifyEmail == nil {
@@ -2551,17 +2481,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.PreverifyEmail(childComplexity, args["input"].(model.PreverifyEmailInput)), true
 
-	case "Mutation.publishGallery":
-		if e.complexity.Mutation.PublishGallery == nil {
+	case "Mutation.publishSplit":
+		if e.complexity.Mutation.PublishSplit == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_publishGallery_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_publishSplit_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PublishGallery(childComplexity, args["input"].(model.PublishGalleryInput)), true
+		return e.complexity.Mutation.PublishSplit(childComplexity, args["input"].(model.PublishSplitInput)), true
 
 	case "Mutation.refreshCollection":
 		if e.complexity.Mutation.RefreshCollection == nil {
@@ -2750,77 +2680,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateEmailNotificationSettings(childComplexity, args["input"].(model.UpdateEmailNotificationSettingsInput)), true
 
-	case "Mutation.updateFeaturedGallery":
-		if e.complexity.Mutation.UpdateFeaturedGallery == nil {
+	case "Mutation.updateFeaturedSplit":
+		if e.complexity.Mutation.UpdateFeaturedSplit == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateFeaturedGallery_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateFeaturedSplit_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateFeaturedGallery(childComplexity, args["galleryId"].(persist.DBID)), true
-
-	case "Mutation.updateGallery":
-		if e.complexity.Mutation.UpdateGallery == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateGallery_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateGallery(childComplexity, args["input"].(model.UpdateGalleryInput)), true
-
-	case "Mutation.updateGalleryCollections":
-		if e.complexity.Mutation.UpdateGalleryCollections == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateGalleryCollections_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateGalleryCollections(childComplexity, args["input"].(model.UpdateGalleryCollectionsInput)), true
-
-	case "Mutation.updateGalleryHidden":
-		if e.complexity.Mutation.UpdateGalleryHidden == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateGalleryHidden_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateGalleryHidden(childComplexity, args["input"].(model.UpdateGalleryHiddenInput)), true
-
-	case "Mutation.updateGalleryInfo":
-		if e.complexity.Mutation.UpdateGalleryInfo == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateGalleryInfo_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateGalleryInfo(childComplexity, args["input"].(model.UpdateGalleryInfoInput)), true
-
-	case "Mutation.updateGalleryOrder":
-		if e.complexity.Mutation.UpdateGalleryOrder == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateGalleryOrder_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateGalleryOrder(childComplexity, args["input"].(model.UpdateGalleryOrderInput)), true
+		return e.complexity.Mutation.UpdateFeaturedSplit(childComplexity, args["splitId"].(persist.DBID)), true
 
 	case "Mutation.updateNotificationSettings":
 		if e.complexity.Mutation.UpdateNotificationSettings == nil {
@@ -2857,6 +2727,66 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateSocialAccountDisplayed(childComplexity, args["input"].(model.UpdateSocialAccountDisplayedInput)), true
+
+	case "Mutation.updateSplit":
+		if e.complexity.Mutation.UpdateSplit == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSplit_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSplit(childComplexity, args["input"].(model.UpdateSplitInput)), true
+
+	case "Mutation.updateSplitCollections":
+		if e.complexity.Mutation.UpdateSplitCollections == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSplitCollections_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSplitCollections(childComplexity, args["input"].(model.UpdateSplitCollectionsInput)), true
+
+	case "Mutation.updateSplitHidden":
+		if e.complexity.Mutation.UpdateSplitHidden == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSplitHidden_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSplitHidden(childComplexity, args["input"].(model.UpdateSplitHiddenInput)), true
+
+	case "Mutation.updateSplitInfo":
+		if e.complexity.Mutation.UpdateSplitInfo == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSplitInfo_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSplitInfo(childComplexity, args["input"].(model.UpdateSplitInfoInput)), true
+
+	case "Mutation.updateSplitOrder":
+		if e.complexity.Mutation.UpdateSplitOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSplitOrder_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSplitOrder(childComplexity, args["input"].(model.UpdateSplitOrderInput)), true
 
 	case "Mutation.updateTokenInfo":
 		if e.complexity.Mutation.UpdateTokenInfo == nil {
@@ -2918,17 +2848,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.VerifyEmail(childComplexity, args["input"].(model.VerifyEmailInput)), true
 
-	case "Mutation.viewGallery":
-		if e.complexity.Mutation.ViewGallery == nil {
+	case "Mutation.viewSplit":
+		if e.complexity.Mutation.ViewSplit == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_viewGallery_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_viewSplit_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ViewGallery(childComplexity, args["galleryId"].(persist.DBID)), true
+		return e.complexity.Mutation.ViewSplit(childComplexity, args["splitId"].(persist.DBID)), true
 
 	case "NotificationEdge.cursor":
 		if e.complexity.NotificationEdge.Cursor == nil {
@@ -2951,12 +2881,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NotificationSettings.SomeoneFollowedYou(childComplexity), true
 
-	case "NotificationSettings.someoneViewedYourGallery":
-		if e.complexity.NotificationSettings.SomeoneViewedYourGallery == nil {
+	case "NotificationSettings.someoneViewedYourSplit":
+		if e.complexity.NotificationSettings.SomeoneViewedYourSplit == nil {
 			break
 		}
 
-		return e.complexity.NotificationSettings.SomeoneViewedYourGallery(childComplexity), true
+		return e.complexity.NotificationSettings.SomeoneViewedYourSplit(childComplexity), true
 
 	case "NotificationsConnection.edges":
 		if e.complexity.NotificationsConnection.Edges == nil {
@@ -3140,12 +3070,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PreviewURLSet.Thumbnail(childComplexity), true
 
-	case "PublishGalleryPayload.gallery":
-		if e.complexity.PublishGalleryPayload.Gallery == nil {
+	case "PublishSplitPayload.split":
+		if e.complexity.PublishSplitPayload.Split == nil {
 			break
 		}
 
-		return e.complexity.PublishGalleryPayload.Gallery(childComplexity), true
+		return e.complexity.PublishSplitPayload.Split(childComplexity), true
 
 	case "Query.collectionById":
 		if e.complexity.Query.CollectionByID == nil {
@@ -3195,18 +3125,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CommunityByAddress(childComplexity, args["communityAddress"].(persist.ChainAddress), args["forceRefresh"].(*bool)), true
 
-	case "Query.galleryById":
-		if e.complexity.Query.GalleryByID == nil {
-			break
-		}
-
-		args, err := ec.field_Query_galleryById_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GalleryByID(childComplexity, args["id"].(persist.DBID)), true
-
 	case "Query.generalAllowlist":
 		if e.complexity.Query.GeneralAllowlist == nil {
 			break
@@ -3250,17 +3168,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchCommunities(childComplexity, args["query"].(string), args["limit"].(*int), args["nameWeight"].(*float64), args["descriptionWeight"].(*float64), args["poapAddressWeight"].(*float64)), true
 
-	case "Query.searchGalleries":
-		if e.complexity.Query.SearchGalleries == nil {
+	case "Query.searchSplits":
+		if e.complexity.Query.SearchSplits == nil {
 			break
 		}
 
-		args, err := ec.field_Query_searchGalleries_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_searchSplits_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.SearchGalleries(childComplexity, args["query"].(string), args["limit"].(*int), args["nameWeight"].(*float64), args["descriptionWeight"].(*float64)), true
+		return e.complexity.Query.SearchSplits(childComplexity, args["query"].(string), args["limit"].(*int), args["nameWeight"].(*float64), args["descriptionWeight"].(*float64)), true
 
 	case "Query.searchUsers":
 		if e.complexity.Query.SearchUsers == nil {
@@ -3292,6 +3210,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.SocialQueries(childComplexity), true
+
+	case "Query.splitById":
+		if e.complexity.Query.SplitByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_splitById_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SplitByID(childComplexity, args["id"].(persist.DBID)), true
 
 	case "Query.tokenById":
 		if e.complexity.Query.TokenByID == nil {
@@ -3372,17 +3302,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Viewer(childComplexity), true
 
-	case "Query.viewerGalleryById":
-		if e.complexity.Query.ViewerGalleryByID == nil {
+	case "Query.viewerSplitById":
+		if e.complexity.Query.ViewerSplitByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_viewerGalleryById_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_viewerSplitById_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.ViewerGalleryByID(childComplexity, args["id"].(persist.DBID)), true
+		return e.complexity.Query.ViewerSplitByID(childComplexity, args["id"].(persist.DBID)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -3433,12 +3363,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SearchCommunitiesPayload.Results(childComplexity), true
 
-	case "SearchGalleriesPayload.results":
-		if e.complexity.SearchGalleriesPayload.Results == nil {
+	case "SearchSplitsPayload.results":
+		if e.complexity.SearchSplitsPayload.Results == nil {
 			break
 		}
 
-		return e.complexity.SearchGalleriesPayload.Results(childComplexity), true
+		return e.complexity.SearchSplitsPayload.Results(childComplexity), true
 
 	case "SearchUsersPayload.results":
 		if e.complexity.SearchUsersPayload.Results == nil {
@@ -3665,73 +3595,136 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SomeoneFollowedYouNotification.UpdatedTime(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.count":
-		if e.complexity.SomeoneViewedYourGalleryNotification.Count == nil {
+	case "SomeoneViewedYourSplitNotification.count":
+		if e.complexity.SomeoneViewedYourSplitNotification.Count == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.Count(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.Count(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.creationTime":
-		if e.complexity.SomeoneViewedYourGalleryNotification.CreationTime == nil {
+	case "SomeoneViewedYourSplitNotification.creationTime":
+		if e.complexity.SomeoneViewedYourSplitNotification.CreationTime == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.CreationTime(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.CreationTime(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.dbid":
-		if e.complexity.SomeoneViewedYourGalleryNotification.Dbid == nil {
+	case "SomeoneViewedYourSplitNotification.dbid":
+		if e.complexity.SomeoneViewedYourSplitNotification.Dbid == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.Dbid(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.Dbid(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.gallery":
-		if e.complexity.SomeoneViewedYourGalleryNotification.Gallery == nil {
+	case "SomeoneViewedYourSplitNotification.id":
+		if e.complexity.SomeoneViewedYourSplitNotification.ID == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.Gallery(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.ID(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.id":
-		if e.complexity.SomeoneViewedYourGalleryNotification.ID == nil {
+	case "SomeoneViewedYourSplitNotification.nonUserViewerCount":
+		if e.complexity.SomeoneViewedYourSplitNotification.NonUserViewerCount == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.ID(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.NonUserViewerCount(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.nonUserViewerCount":
-		if e.complexity.SomeoneViewedYourGalleryNotification.NonUserViewerCount == nil {
+	case "SomeoneViewedYourSplitNotification.seen":
+		if e.complexity.SomeoneViewedYourSplitNotification.Seen == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.NonUserViewerCount(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.Seen(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.seen":
-		if e.complexity.SomeoneViewedYourGalleryNotification.Seen == nil {
+	case "SomeoneViewedYourSplitNotification.split":
+		if e.complexity.SomeoneViewedYourSplitNotification.Split == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.Seen(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.Split(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.updatedTime":
-		if e.complexity.SomeoneViewedYourGalleryNotification.UpdatedTime == nil {
+	case "SomeoneViewedYourSplitNotification.updatedTime":
+		if e.complexity.SomeoneViewedYourSplitNotification.UpdatedTime == nil {
 			break
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.UpdatedTime(childComplexity), true
+		return e.complexity.SomeoneViewedYourSplitNotification.UpdatedTime(childComplexity), true
 
-	case "SomeoneViewedYourGalleryNotification.userViewers":
-		if e.complexity.SomeoneViewedYourGalleryNotification.UserViewers == nil {
+	case "SomeoneViewedYourSplitNotification.userViewers":
+		if e.complexity.SomeoneViewedYourSplitNotification.UserViewers == nil {
 			break
 		}
 
-		args, err := ec.field_SomeoneViewedYourGalleryNotification_userViewers_args(context.TODO(), rawArgs)
+		args, err := ec.field_SomeoneViewedYourSplitNotification_userViewers_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.SomeoneViewedYourGalleryNotification.UserViewers(childComplexity, args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
+		return e.complexity.SomeoneViewedYourSplitNotification.UserViewers(childComplexity, args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "Split.collections":
+		if e.complexity.Split.Collections == nil {
+			break
+		}
+
+		return e.complexity.Split.Collections(childComplexity), true
+
+	case "Split.dbid":
+		if e.complexity.Split.Dbid == nil {
+			break
+		}
+
+		return e.complexity.Split.Dbid(childComplexity), true
+
+	case "Split.description":
+		if e.complexity.Split.Description == nil {
+			break
+		}
+
+		return e.complexity.Split.Description(childComplexity), true
+
+	case "Split.hidden":
+		if e.complexity.Split.Hidden == nil {
+			break
+		}
+
+		return e.complexity.Split.Hidden(childComplexity), true
+
+	case "Split.id":
+		if e.complexity.Split.ID == nil {
+			break
+		}
+
+		return e.complexity.Split.ID(childComplexity), true
+
+	case "Split.name":
+		if e.complexity.Split.Name == nil {
+			break
+		}
+
+		return e.complexity.Split.Name(childComplexity), true
+
+	case "Split.owner":
+		if e.complexity.Split.Owner == nil {
+			break
+		}
+
+		return e.complexity.Split.Owner(childComplexity), true
+
+	case "Split.position":
+		if e.complexity.Split.Position == nil {
+			break
+		}
+
+		return e.complexity.Split.Position(childComplexity), true
+
+	case "Split.tokenPreviews":
+		if e.complexity.Split.TokenPreviews == nil {
+			break
+		}
+
+		return e.complexity.Split.TokenPreviews(childComplexity), true
 
 	case "SplitFiUser.badges":
 		if e.complexity.SplitFiUser.Badges == nil {
@@ -3754,12 +3747,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SplitFiUser.Dbid(childComplexity), true
 
-	case "SplitFiUser.featuredGallery":
-		if e.complexity.SplitFiUser.FeaturedGallery == nil {
+	case "SplitFiUser.featuredSplit":
+		if e.complexity.SplitFiUser.FeaturedSplit == nil {
 			break
 		}
 
-		return e.complexity.SplitFiUser.FeaturedGallery(childComplexity), true
+		return e.complexity.SplitFiUser.FeaturedSplit(childComplexity), true
 
 	case "SplitFiUser.followers":
 		if e.complexity.SplitFiUser.Followers == nil {
@@ -3774,13 +3767,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SplitFiUser.Following(childComplexity), true
-
-	case "SplitFiUser.galleries":
-		if e.complexity.SplitFiUser.Galleries == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Galleries(childComplexity), true
 
 	case "SplitFiUser.id":
 		if e.complexity.SplitFiUser.ID == nil {
@@ -3841,6 +3827,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SplitFiUser.SocialAccounts(childComplexity), true
 
+	case "SplitFiUser.splits":
+		if e.complexity.SplitFiUser.Splits == nil {
+			break
+		}
+
+		return e.complexity.SplitFiUser.Splits(childComplexity), true
+
 	case "SplitFiUser.tokens":
 		if e.complexity.SplitFiUser.Tokens == nil {
 			break
@@ -3887,6 +3880,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SplitFiUser.Wallets(childComplexity), true
+
+	case "SplitSearchResult.split":
+		if e.complexity.SplitSearchResult.Split == nil {
+			break
+		}
+
+		return e.complexity.SplitSearchResult.Split(childComplexity), true
 
 	case "Subscription.newNotification":
 		if e.complexity.Subscription.NewNotification == nil {
@@ -4371,47 +4371,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UpdateEmailPayload.Viewer(childComplexity), true
 
-	case "UpdateFeaturedGalleryPayload.viewer":
-		if e.complexity.UpdateFeaturedGalleryPayload.Viewer == nil {
+	case "UpdateFeaturedSplitPayload.viewer":
+		if e.complexity.UpdateFeaturedSplitPayload.Viewer == nil {
 			break
 		}
 
-		return e.complexity.UpdateFeaturedGalleryPayload.Viewer(childComplexity), true
-
-	case "UpdateGalleryCollectionsPayload.gallery":
-		if e.complexity.UpdateGalleryCollectionsPayload.Gallery == nil {
-			break
-		}
-
-		return e.complexity.UpdateGalleryCollectionsPayload.Gallery(childComplexity), true
-
-	case "UpdateGalleryHiddenPayload.gallery":
-		if e.complexity.UpdateGalleryHiddenPayload.Gallery == nil {
-			break
-		}
-
-		return e.complexity.UpdateGalleryHiddenPayload.Gallery(childComplexity), true
-
-	case "UpdateGalleryInfoPayload.gallery":
-		if e.complexity.UpdateGalleryInfoPayload.Gallery == nil {
-			break
-		}
-
-		return e.complexity.UpdateGalleryInfoPayload.Gallery(childComplexity), true
-
-	case "UpdateGalleryOrderPayload.viewer":
-		if e.complexity.UpdateGalleryOrderPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.UpdateGalleryOrderPayload.Viewer(childComplexity), true
-
-	case "UpdateGalleryPayload.gallery":
-		if e.complexity.UpdateGalleryPayload.Gallery == nil {
-			break
-		}
-
-		return e.complexity.UpdateGalleryPayload.Gallery(childComplexity), true
+		return e.complexity.UpdateFeaturedSplitPayload.Viewer(childComplexity), true
 
 	case "UpdatePrimaryWalletPayload.viewer":
 		if e.complexity.UpdatePrimaryWalletPayload.Viewer == nil {
@@ -4426,6 +4391,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UpdateSocialAccountDisplayedPayload.Viewer(childComplexity), true
+
+	case "UpdateSplitCollectionsPayload.split":
+		if e.complexity.UpdateSplitCollectionsPayload.Split == nil {
+			break
+		}
+
+		return e.complexity.UpdateSplitCollectionsPayload.Split(childComplexity), true
+
+	case "UpdateSplitHiddenPayload.split":
+		if e.complexity.UpdateSplitHiddenPayload.Split == nil {
+			break
+		}
+
+		return e.complexity.UpdateSplitHiddenPayload.Split(childComplexity), true
+
+	case "UpdateSplitInfoPayload.split":
+		if e.complexity.UpdateSplitInfoPayload.Split == nil {
+			break
+		}
+
+		return e.complexity.UpdateSplitInfoPayload.Split(childComplexity), true
+
+	case "UpdateSplitOrderPayload.viewer":
+		if e.complexity.UpdateSplitOrderPayload.Viewer == nil {
+			break
+		}
+
+		return e.complexity.UpdateSplitOrderPayload.Viewer(childComplexity), true
+
+	case "UpdateSplitPayload.split":
+		if e.complexity.UpdateSplitPayload.Split == nil {
+			break
+		}
+
+		return e.complexity.UpdateSplitPayload.Split(childComplexity), true
 
 	case "UpdateTokenInfoPayload.token":
 		if e.complexity.UpdateTokenInfoPayload.Token == nil {
@@ -4595,12 +4595,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VideoURLSet.Small(childComplexity), true
 
-	case "ViewGalleryPayload.gallery":
-		if e.complexity.ViewGalleryPayload.Gallery == nil {
+	case "ViewSplitPayload.split":
+		if e.complexity.ViewSplitPayload.Split == nil {
 			break
 		}
 
-		return e.complexity.ViewGalleryPayload.Gallery(childComplexity), true
+		return e.complexity.ViewSplitPayload.Split(childComplexity), true
 
 	case "Viewer.email":
 		if e.complexity.Viewer.Email == nil {
@@ -4656,19 +4656,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Viewer.UserExperiences(childComplexity), true
 
-	case "Viewer.viewerGalleries":
-		if e.complexity.Viewer.ViewerGalleries == nil {
+	case "Viewer.viewerSplits":
+		if e.complexity.Viewer.ViewerSplits == nil {
 			break
 		}
 
-		return e.complexity.Viewer.ViewerGalleries(childComplexity), true
+		return e.complexity.Viewer.ViewerSplits(childComplexity), true
 
-	case "ViewerGallery.gallery":
-		if e.complexity.ViewerGallery.Gallery == nil {
+	case "ViewerSplit.split":
+		if e.complexity.ViewerSplit.Split == nil {
 			break
 		}
 
-		return e.complexity.ViewerGallery.Gallery(childComplexity), true
+		return e.complexity.ViewerSplit.Split(childComplexity), true
 
 	case "Wallet.chain":
 		if e.complexity.Wallet.Chain == nil {
@@ -4734,24 +4734,24 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCollectionLayoutInput,
 		ec.unmarshalInputCollectionSectionLayoutInput,
 		ec.unmarshalInputCollectionTokenSettingsInput,
-		ec.unmarshalInputCreateCollectionInGalleryInput,
+		ec.unmarshalInputCreateCollectionInSplitInput,
 		ec.unmarshalInputCreateCollectionInput,
-		ec.unmarshalInputCreateGalleryInput,
+		ec.unmarshalInputCreateSplitInput,
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputDebugAuth,
 		ec.unmarshalInputDebugSocialAuth,
 		ec.unmarshalInputDeepRefreshInput,
 		ec.unmarshalInputEoaAuth,
-		ec.unmarshalInputGalleryPositionInput,
 		ec.unmarshalInputGnosisSafeAuth,
 		ec.unmarshalInputMagicLinkAuth,
 		ec.unmarshalInputMintPremiumCardToWalletInput,
-		ec.unmarshalInputMoveCollectionToGalleryInput,
+		ec.unmarshalInputMoveCollectionToSplitInput,
 		ec.unmarshalInputNotificationSettingsInput,
 		ec.unmarshalInputPreverifyEmailInput,
-		ec.unmarshalInputPublishGalleryInput,
+		ec.unmarshalInputPublishSplitInput,
 		ec.unmarshalInputSetSpamPreferenceInput,
 		ec.unmarshalInputSocialAuthMechanism,
+		ec.unmarshalInputSplitPositionInput,
 		ec.unmarshalInputTwitterAuth,
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
 		ec.unmarshalInputUpdateCollectionHiddenInput,
@@ -4760,12 +4760,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateCollectionTokensInput,
 		ec.unmarshalInputUpdateEmailInput,
 		ec.unmarshalInputUpdateEmailNotificationSettingsInput,
-		ec.unmarshalInputUpdateGalleryCollectionsInput,
-		ec.unmarshalInputUpdateGalleryHiddenInput,
-		ec.unmarshalInputUpdateGalleryInfoInput,
-		ec.unmarshalInputUpdateGalleryInput,
-		ec.unmarshalInputUpdateGalleryOrderInput,
 		ec.unmarshalInputUpdateSocialAccountDisplayedInput,
+		ec.unmarshalInputUpdateSplitCollectionsInput,
+		ec.unmarshalInputUpdateSplitHiddenInput,
+		ec.unmarshalInputUpdateSplitInfoInput,
+		ec.unmarshalInputUpdateSplitInput,
+		ec.unmarshalInputUpdateSplitOrderInput,
 		ec.unmarshalInputUpdateTokenInfoInput,
 		ec.unmarshalInputUpdateUserExperienceInput,
 		ec.unmarshalInputUpdateUserInfoInput,
@@ -4935,8 +4935,8 @@ type SplitFiUser implements Node @goEmbedHelper {
 
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
-  featuredGallery: Gallery @goField(forceResolver: true)
-  galleries: [Gallery] @goField(forceResolver: true)
+  featuredSplit: Split @goField(forceResolver: true)
+  splits: [Split] @goField(forceResolver: true)
   badges: [Badge] @goField(forceResolver: true)
   isAuthenticatedUser: Boolean
   followers: [SplitFiUser] @goField(forceResolver: true)
@@ -5240,13 +5240,13 @@ type Collection implements Node {
   version: Int
   name: String
   collectorsNote: String
-  gallery: Gallery @goField(forceResolver: true)
+  split: Split @goField(forceResolver: true)
   layout: CollectionLayout
   hidden: Boolean
   tokens(limit: Int): [CollectionToken] @goField(forceResolver: true)
 }
 
-type Gallery implements Node {
+type Split implements Node {
   id: ID!
   dbid: DBID!
   name: String
@@ -5344,8 +5344,8 @@ type Contract implements Node {
 
 # We have this extra type in case we need to stick authed data
 # in here one day.
-type ViewerGallery {
-  gallery: Gallery
+type ViewerSplit {
+  split: Split
 }
 
 type NotificationEdge {
@@ -5386,7 +5386,7 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: SplitFiUser @goField(forceResolver: true)
   socialAccounts: SocialAccounts @goField(forceResolver: true)
-  viewerGalleries: [ViewerGallery] @goField(forceResolver: true)
+  viewerSplits: [ViewerSplit] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
   """
@@ -5403,12 +5403,12 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 
 type NotificationSettings {
   someoneFollowedYou: Boolean
-  someoneViewedYourGallery: Boolean
+  someoneViewedYourSplit: Boolean
 }
 
 input NotificationSettingsInput {
   someoneFollowedYou: Boolean
-  someoneViewedYourGallery: Boolean
+  someoneViewedYourSplit: Boolean
 }
 
 enum EmailVerificationStatus {
@@ -5445,7 +5445,7 @@ input UnsubscribeFromEmailTypeInput {
 }
 
 enum UserExperienceType {
-  MultiGalleryAnnouncement
+  MultiSplitAnnouncement
   EmailUpsell
   MaintenanceFeb2023
   TwitterConnectionOnboardingUpsell
@@ -5556,12 +5556,12 @@ enum Role {
   EARLY_ACCESS
 }
 
-type ErrGalleryNotFound implements Error {
+type ErrSplitNotFound implements Error {
   message: String!
 }
 
-union GalleryByIdPayloadOrError = Gallery | ErrGalleryNotFound
-union ViewerGalleryByIdPayloadOrError = ViewerGallery | ErrGalleryNotFound
+union SplitByIdPayloadOrError = Split | ErrSplitNotFound
+union ViewerSplitByIdPayloadOrError = ViewerSplit | ErrSplitNotFound
 
 enum ReportWindow {
   LAST_5_DAYS
@@ -5579,15 +5579,15 @@ type SearchUsersPayload {
 
 union SearchUsersPayloadOrError = SearchUsersPayload | ErrInvalidInput
 
-type GallerySearchResult {
-  gallery: Gallery
+type SplitSearchResult {
+  split: Split
 }
 
-type SearchGalleriesPayload {
-  results: [GallerySearchResult!]
+type SearchSplitsPayload {
+  results: [SplitSearchResult!]
 }
 
-union SearchGalleriesPayloadOrError = SearchGalleriesPayload | ErrInvalidInput
+union SearchSplitsPayloadOrError = SearchSplitsPayload | ErrInvalidInput
 
 type CommunitySearchResult {
   community: Community
@@ -5618,8 +5618,8 @@ type Query {
     forceRefresh: Boolean
   ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
-  galleryById(id: DBID!): GalleryByIdPayloadOrError
-  viewerGalleryById(id: DBID!): ViewerGalleryByIdPayloadOrError
+  splitById(id: DBID!): SplitByIdPayloadOrError
+  viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
@@ -5633,17 +5633,17 @@ type Query {
     bioWeight: Float
   ): SearchUsersPayloadOrError
   """
-  Search for galleries with optional weighting. Weights are floats in the [0.0. 1.0] range
+  Search for splits with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. nameWeight defaults to 0.4 and
-  descriptionWeight defaults to 0.2, meaning that a search result matching a gallery name is
-  considered twice as relevant as a search result matching a gallery description.
+  descriptionWeight defaults to 0.2, meaning that a search result matching a split name is
+  considered twice as relevant as a search result matching a split description.
   """
-  searchGalleries(
+  searchSplits(
     query: String!
     limit: Int
     nameWeight: Float
     descriptionWeight: Float
-  ): SearchGalleriesPayloadOrError
+  ): SearchSplitsPayloadOrError
   """
   Search for communities with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. nameWeight defaults to 0.4, descriptionWeight
@@ -5702,7 +5702,7 @@ input CollectionTokenSettingsInput {
 }
 
 input CreateCollectionInput {
-  galleryId: DBID!
+  splitId: DBID!
   name: String!
   collectorsNote: String!
   tokens: [DBID!]!
@@ -5724,7 +5724,7 @@ union DeleteCollectionPayloadOrError =
   | ErrCollectionNotFound
 
 type DeleteCollectionPayload {
-  gallery: Gallery
+  split: Split
 }
 
 input UpdateCollectionInfoInput {
@@ -5773,18 +5773,18 @@ type UpdateCollectionHiddenPayload {
   collection: Collection
 }
 
-input UpdateGalleryCollectionsInput {
-  galleryId: DBID!
+input UpdateSplitCollectionsInput {
+  splitId: DBID!
   collections: [DBID!]!
 }
 
-union UpdateGalleryCollectionsPayloadOrError =
-    UpdateGalleryCollectionsPayload
+union UpdateSplitCollectionsPayloadOrError =
+    UpdateSplitCollectionsPayload
   | ErrNotAuthorized
   | ErrInvalidInput
 
-type UpdateGalleryCollectionsPayload {
-  gallery: Gallery
+type UpdateSplitCollectionsPayload {
+  split: Split
 }
 
 input UpdateTokenInfoInput {
@@ -6023,9 +6023,9 @@ input CreateUserInput {
   username: String!
   bio: String
   email: Email
-  galleryName: String
-  galleryDescription: String
-  galleryPosition: String
+  splitName: String
+  splitDescription: String
+  splitPosition: String
 }
 
 union CreateUserPayloadOrError =
@@ -6038,8 +6038,8 @@ union CreateUserPayloadOrError =
 
 type CreateUserPayload {
   userId: DBID
-  galleryId: DBID
-  # TODO: Remove userId and galleryId in favor of viewer
+  splitId: DBID
+  # TODO: Remove userId and splitId in favor of viewer
   viewer: Viewer
 }
 
@@ -6117,7 +6117,7 @@ type SomeoneFollowedYouBackNotification implements Notification & Node & Grouped
     @goField(forceResolver: true)
 }
 
-type SomeoneViewedYourGalleryNotification implements Notification & Node & GroupedNotification
+type SomeoneViewedYourSplitNotification implements Notification & Node & GroupedNotification
   @goEmbedHelper {
   id: ID!
   dbid: DBID!
@@ -6137,18 +6137,18 @@ type SomeoneViewedYourGalleryNotification implements Notification & Node & Group
 
   # count of unique non-user viewers
   nonUserViewerCount: Int
-  gallery: Gallery @goField(forceResolver: true)
+  split: Split @goField(forceResolver: true)
 }
 
 type ClearAllNotificationsPayload {
   notifications: [Notification]
 }
 
-type ViewGalleryPayload {
-  gallery: Gallery
+type ViewSplitPayload {
+  split: Split
 }
 
-union ViewGalleryPayloadOrError = ViewGalleryPayload | ErrAuthenticationFailed
+union ViewSplitPayloadOrError = ViewSplitPayload | ErrAuthenticationFailed
 
 input VerifyEmailInput {
   token: String! @scrub
@@ -6229,77 +6229,77 @@ union SyncTokensForUsernamePayloadOrError =
   | ErrNotAuthorized
   | ErrSyncFailed
 
-input GalleryPositionInput {
-  galleryId: DBID!
+input SplitPositionInput {
+  splitId: DBID!
   position: String!
 }
 
-input UpdateGalleryOrderInput {
-  positions: [GalleryPositionInput!]!
+input UpdateSplitOrderInput {
+  positions: [SplitPositionInput!]!
 }
 
-input UpdateGalleryHiddenInput {
+input UpdateSplitHiddenInput {
   id: DBID!
   hidden: Boolean!
 }
 
-input UpdateGalleryInfoInput {
+input UpdateSplitInfoInput {
   id: DBID!
   name: String
   description: String
 }
 
-input CreateGalleryInput {
+input CreateSplitInput {
   name: String
   description: String
   position: String!
 }
 
-type CreateGalleryPayload {
-  gallery: Gallery
+type CreateSplitPayload {
+  split: Split
 }
 
-union CreateGalleryPayloadOrError = CreateGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union CreateSplitPayloadOrError = CreateSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateGalleryInfoPayload {
-  gallery: Gallery
+type UpdateSplitInfoPayload {
+  split: Split
 }
 
-union UpdateGalleryInfoPayloadOrError =
-    UpdateGalleryInfoPayload
+union UpdateSplitInfoPayloadOrError =
+    UpdateSplitInfoPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type UpdateGalleryHiddenPayload {
-  gallery: Gallery
+type UpdateSplitHiddenPayload {
+  split: Split
 }
 
-union UpdateGalleryHiddenPayloadOrError =
-    UpdateGalleryHiddenPayload
+union UpdateSplitHiddenPayloadOrError =
+    UpdateSplitHiddenPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type DeleteGalleryPayload {
+type DeleteSplitPayload {
   deletedId: DeletedNode
 }
 
-union DeleteGalleryPayloadOrError = DeleteGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union DeleteSplitPayloadOrError = DeleteSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateGalleryOrderPayload {
+type UpdateSplitOrderPayload {
   viewer: Viewer
 }
 
-union UpdateGalleryOrderPayloadOrError =
-    UpdateGalleryOrderPayload
+union UpdateSplitOrderPayloadOrError =
+    UpdateSplitOrderPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type UpdateFeaturedGalleryPayload {
+type UpdateFeaturedSplitPayload {
   viewer: Viewer
 }
 
-union UpdateFeaturedGalleryPayloadOrError =
-    UpdateFeaturedGalleryPayload
+union UpdateFeaturedSplitPayloadOrError =
+    UpdateFeaturedSplitPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
@@ -6313,7 +6313,7 @@ input UpdateCollectionInput {
   hidden: Boolean!
 }
 
-input CreateCollectionInGalleryInput {
+input CreateCollectionInSplitInput {
   name: String!
   collectorsNote: String!
   tokens: [DBID!]!
@@ -6323,8 +6323,8 @@ input CreateCollectionInGalleryInput {
   givenID: DBID!
 }
 
-input UpdateGalleryInput {
-  galleryId: DBID!
+input UpdateSplitInput {
+  splitId: DBID!
 
   name: String
   description: String
@@ -6335,7 +6335,7 @@ input UpdateGalleryInput {
   deletedCollections: [DBID!]
 
   updatedCollections: [UpdateCollectionInput]
-  createdCollections: [CreateCollectionInGalleryInput]
+  createdCollections: [CreateCollectionInSplitInput]
 
   order: [DBID!]
 
@@ -6344,23 +6344,23 @@ input UpdateGalleryInput {
   editId: String
 }
 
-type UpdateGalleryPayload {
-  gallery: Gallery
+type UpdateSplitPayload {
+  split: Split
 }
 
-union UpdateGalleryPayloadOrError = UpdateGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union UpdateSplitPayloadOrError = UpdateSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-input PublishGalleryInput {
-  galleryId: DBID!
+input PublishSplitInput {
+  splitId: DBID!
   editId: String!
   caption: String
 }
 
-type PublishGalleryPayload {
-  gallery: Gallery
+type PublishSplitPayload {
+  split: Split
 }
 
-union PublishGalleryPayloadOrError = PublishGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union PublishSplitPayloadOrError = PublishSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
 type UpdatePrimaryWalletPayload {
   viewer: Viewer
@@ -6401,18 +6401,18 @@ union UpdateUserExperiencePayloadOrError =
   | ErrInvalidInput
   | ErrNotAuthorized
 
-input MoveCollectionToGalleryInput {
+input MoveCollectionToSplitInput {
   sourceCollectionId: DBID!
-  targetGalleryId: DBID!
+  targetSplitId: DBID!
 }
 
-type MoveCollectionToGalleryPayload {
-  oldGallery: Gallery
-  newGallery: Gallery
+type MoveCollectionToSplitPayload {
+  oldSplit: Split
+  newSplit: Split
 }
 
-union MoveCollectionToGalleryPayloadOrError =
-    MoveCollectionToGalleryPayload
+union MoveCollectionToSplitPayloadOrError =
+    MoveCollectionToSplitPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
@@ -6484,10 +6484,10 @@ type Mutation {
   removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsPayloadOrError @authRequired
   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
 
-  # Gallery Mutations
-  updateGalleryCollections(
-    input: UpdateGalleryCollectionsInput!
-  ): UpdateGalleryCollectionsPayloadOrError @authRequired
+  # Split Mutations
+  updateSplitCollections(
+    input: UpdateSplitCollectionsInput!
+  ): UpdateSplitCollectionsPayloadOrError @authRequired
 
   # Collection Mutations
 
@@ -6540,19 +6540,19 @@ type Mutation {
   ): FollowAllSocialConnectionsPayloadOrError @authRequired
   unfollowUser(userId: DBID!): UnfollowUserPayloadOrError @authRequired
 
-  viewGallery(galleryId: DBID!): ViewGalleryPayloadOrError
+  viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
-  updateGallery(input: UpdateGalleryInput!): UpdateGalleryPayloadOrError @authRequired
-  publishGallery(input: PublishGalleryInput!): PublishGalleryPayloadOrError @authRequired
+  updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
+  publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired
 
-  createGallery(input: CreateGalleryInput!): CreateGalleryPayloadOrError @authRequired
-  updateGalleryHidden(input: UpdateGalleryHiddenInput!): UpdateGalleryHiddenPayloadOrError
+  createSplit(input: CreateSplitInput!): CreateSplitPayloadOrError @authRequired
+  updateSplitHidden(input: UpdateSplitHiddenInput!): UpdateSplitHiddenPayloadOrError
     @authRequired
-  deleteGallery(galleryId: DBID!): DeleteGalleryPayloadOrError @authRequired
-  updateGalleryOrder(input: UpdateGalleryOrderInput!): UpdateGalleryOrderPayloadOrError
+  deleteSplit(splitId: DBID!): DeleteSplitPayloadOrError @authRequired
+  updateSplitOrder(input: UpdateSplitOrderInput!): UpdateSplitOrderPayloadOrError
     @authRequired
-  updateGalleryInfo(input: UpdateGalleryInfoInput!): UpdateGalleryInfoPayloadOrError @authRequired
-  updateFeaturedGallery(galleryId: DBID!): UpdateFeaturedGalleryPayloadOrError @authRequired
+  updateSplitInfo(input: UpdateSplitInfoInput!): UpdateSplitInfoPayloadOrError @authRequired
+  updateFeaturedSplit(splitId: DBID!): UpdateFeaturedSplitPayloadOrError @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired
 
@@ -6572,7 +6572,7 @@ type Mutation {
     input: MintPremiumCardToWalletInput!
   ): MintPremiumCardToWalletPayloadOrError @retoolAuth
 
-  # Gallery Frontend Deploy Persisted Queries
+  # Split Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
     @frontendBuildAuth
 
@@ -6581,9 +6581,9 @@ type Mutation {
   updateUserExperience(input: UpdateUserExperienceInput!): UpdateUserExperiencePayloadOrError
     @authRequired
 
-  moveCollectionToGallery(
-    input: MoveCollectionToGalleryInput
-  ): MoveCollectionToGalleryPayloadOrError @authRequired
+  moveCollectionToSplit(
+    input: MoveCollectionToSplitInput
+  ): MoveCollectionToSplitPayloadOrError @authRequired
 }
 
 type Subscription {
@@ -6856,13 +6856,13 @@ func (ec *executionContext) field_Mutation_createCollection_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createGallery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.CreateGalleryInput
+	var arg0 model.CreateSplitInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateGalleryInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateGalleryInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6925,18 +6925,18 @@ func (ec *executionContext) field_Mutation_deleteCollection_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteGallery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deleteSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 persist.DBID
-	if tmp, ok := rawArgs["galleryId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
+	if tmp, ok := rawArgs["splitId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["galleryId"] = arg0
+	args["splitId"] = arg0
 	return args, nil
 }
 
@@ -7030,13 +7030,13 @@ func (ec *executionContext) field_Mutation_mintPremiumCardToWallet_args(ctx cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_moveCollectionToGallery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_moveCollectionToSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.MoveCollectionToGalleryInput
+	var arg0 *model.MoveCollectionToSplitInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOMoveCollectionToGalleryInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToGalleryInput(ctx, tmp)
+		arg0, err = ec.unmarshalOMoveCollectionToSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7060,13 +7060,13 @@ func (ec *executionContext) field_Mutation_preverifyEmail_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_publishGallery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_publishSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.PublishGalleryInput
+	var arg0 model.PublishSplitInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPublishGalleryInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishGalleryInput(ctx, tmp)
+		arg0, err = ec.unmarshalNPublishSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7318,93 +7318,18 @@ func (ec *executionContext) field_Mutation_updateEmail_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateFeaturedGallery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateFeaturedSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 persist.DBID
-	if tmp, ok := rawArgs["galleryId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
+	if tmp, ok := rawArgs["splitId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["galleryId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateGalleryCollections_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateGalleryCollectionsInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateGalleryCollectionsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryCollectionsInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateGalleryHidden_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateGalleryHiddenInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateGalleryHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryHiddenInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateGalleryInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateGalleryInfoInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateGalleryInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryInfoInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateGalleryOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateGalleryOrderInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateGalleryOrderInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryOrderInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateGallery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateGalleryInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateGalleryInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
+	args["splitId"] = arg0
 	return args, nil
 }
 
@@ -7445,6 +7370,81 @@ func (ec *executionContext) field_Mutation_updateSocialAccountDisplayed_args(ctx
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateSplitCollections_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateSplitCollectionsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateSplitCollectionsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateSplitHidden_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateSplitHiddenInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateSplitInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateSplitInfoInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateSplitInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateSplitOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateSplitOrderInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateSplitInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7528,18 +7528,18 @@ func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_viewGallery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_viewSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 persist.DBID
-	if tmp, ok := rawArgs["galleryId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
+	if tmp, ok := rawArgs["splitId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["galleryId"] = arg0
+	args["splitId"] = arg0
 	return args, nil
 }
 
@@ -7636,21 +7636,6 @@ func (ec *executionContext) field_Query_communityByAddress_args(ctx context.Cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_galleryById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_membershipTiers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -7732,7 +7717,7 @@ func (ec *executionContext) field_Query_searchCommunities_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_searchGalleries_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_searchSplits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -7876,6 +7861,21 @@ func (ec *executionContext) field_Query_socialConnections_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_splitById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 persist.DBID
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_tokenById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -8002,7 +8002,7 @@ func (ec *executionContext) field_Query_usersWithTrait_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_viewerGalleryById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_viewerSplitById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 persist.DBID
@@ -8161,7 +8161,7 @@ func (ec *executionContext) field_SomeoneFollowedYouNotification_followers_args(
 	return args, nil
 }
 
-func (ec *executionContext) field_SomeoneViewedYourGalleryNotification_userViewers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_SomeoneViewedYourSplitNotification_userViewers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
@@ -8424,8 +8424,8 @@ func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(ctx context
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -8501,10 +8501,10 @@ func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(ctx context.
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -9533,8 +9533,8 @@ func (ec *executionContext) fieldContext_Collection_collectorsNote(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Collection_gallery(ctx context.Context, field graphql.CollectedField, obj *model.Collection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Collection_gallery(ctx, field)
+func (ec *executionContext) _Collection_split(ctx context.Context, field graphql.CollectedField, obj *model.Collection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Collection_split(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9547,7 +9547,7 @@ func (ec *executionContext) _Collection_gallery(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Collection().Gallery(rctx, obj)
+		return ec.resolvers.Collection().Split(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9556,12 +9556,12 @@ func (ec *executionContext) _Collection_gallery(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Collection_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Collection_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Collection",
 		Field:      field,
@@ -9570,25 +9570,25 @@ func (ec *executionContext) fieldContext_Collection_gallery(ctx context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -10095,8 +10095,8 @@ func (ec *executionContext) fieldContext_CollectionToken_collection(ctx context.
 				return ec.fieldContext_Collection_name(ctx, field)
 			case "collectorsNote":
 				return ec.fieldContext_Collection_collectorsNote(ctx, field)
-			case "gallery":
-				return ec.fieldContext_Collection_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_Collection_split(ctx, field)
 			case "layout":
 				return ec.fieldContext_Collection_layout(ctx, field)
 			case "hidden":
@@ -11152,8 +11152,8 @@ func (ec *executionContext) fieldContext_ConnectSocialAccountPayload_viewer(ctx 
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -11643,8 +11643,8 @@ func (ec *executionContext) fieldContext_CreateCollectionPayload_collection(ctx 
 				return ec.fieldContext_Collection_name(ctx, field)
 			case "collectorsNote":
 				return ec.fieldContext_Collection_collectorsNote(ctx, field)
-			case "gallery":
-				return ec.fieldContext_Collection_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_Collection_split(ctx, field)
 			case "layout":
 				return ec.fieldContext_Collection_layout(ctx, field)
 			case "hidden":
@@ -11658,8 +11658,8 @@ func (ec *executionContext) fieldContext_CreateCollectionPayload_collection(ctx 
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.CreateGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateGalleryPayload_gallery(ctx, field)
+func (ec *executionContext) _CreateSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.CreateSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateSplitPayload_split(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11672,7 +11672,7 @@ func (ec *executionContext) _CreateGalleryPayload_gallery(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
+		return obj.Split, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11681,39 +11681,39 @@ func (ec *executionContext) _CreateGalleryPayload_gallery(ctx context.Context, f
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateGalleryPayload",
+		Object:     "CreateSplitPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -11760,8 +11760,8 @@ func (ec *executionContext) fieldContext_CreateUserPayload_userId(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateUserPayload_galleryId(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateUserPayload_galleryId(ctx, field)
+func (ec *executionContext) _CreateUserPayload_splitId(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayload_splitId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11774,7 +11774,7 @@ func (ec *executionContext) _CreateUserPayload_galleryId(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.GalleryID, nil
+		return obj.SplitID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11788,7 +11788,7 @@ func (ec *executionContext) _CreateUserPayload_galleryId(ctx context.Context, fi
 	return ec.marshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateUserPayload_galleryId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateUserPayload_splitId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateUserPayload",
 		Field:      field,
@@ -11843,8 +11843,8 @@ func (ec *executionContext) fieldContext_CreateUserPayload_viewer(ctx context.Co
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -11942,8 +11942,8 @@ func (ec *executionContext) fieldContext_DeepRefreshPayload_submitted(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteCollectionPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.DeleteCollectionPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteCollectionPayload_gallery(ctx, field)
+func (ec *executionContext) _DeleteCollectionPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.DeleteCollectionPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteCollectionPayload_split(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11956,7 +11956,7 @@ func (ec *executionContext) _DeleteCollectionPayload_gallery(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
+		return obj.Split, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11965,12 +11965,12 @@ func (ec *executionContext) _DeleteCollectionPayload_gallery(ctx context.Context
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteCollectionPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteCollectionPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteCollectionPayload",
 		Field:      field,
@@ -11979,32 +11979,32 @@ func (ec *executionContext) fieldContext_DeleteCollectionPayload_gallery(ctx con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteGalleryPayload_deletedId(ctx context.Context, field graphql.CollectedField, obj *model.DeleteGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteGalleryPayload_deletedId(ctx, field)
+func (ec *executionContext) _DeleteSplitPayload_deletedId(ctx context.Context, field graphql.CollectedField, obj *model.DeleteSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteSplitPayload_deletedId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12031,9 +12031,9 @@ func (ec *executionContext) _DeleteGalleryPayload_deletedId(ctx context.Context,
 	return ec.marshalODeletedNode2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeletedNode(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteGalleryPayload_deletedId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteSplitPayload_deletedId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteGalleryPayload",
+		Object:     "DeleteSplitPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12180,8 +12180,8 @@ func (ec *executionContext) fieldContext_DisconnectSocialAccountPayload_viewer(c
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -12495,50 +12495,6 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken_message(ctx context.Cont
 func (ec *executionContext) fieldContext_ErrDoesNotOwnRequiredToken_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrDoesNotOwnRequiredToken",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ErrGalleryNotFound_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrGalleryNotFound) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ErrGalleryNotFound_message(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Message, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ErrGalleryNotFound_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ErrGalleryNotFound",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12945,6 +12901,50 @@ func (ec *executionContext) fieldContext_ErrNotAuthorized_cause(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _ErrSplitNotFound_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrSplitNotFound) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ErrSplitNotFound_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ErrSplitNotFound_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ErrSplitNotFound",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ErrSyncFailed_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrSyncFailed) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ErrSyncFailed_message(ctx, field)
 	if err != nil {
@@ -13207,8 +13207,8 @@ func (ec *executionContext) fieldContext_FollowAllSocialConnectionsPayload_viewe
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -13284,10 +13284,10 @@ func (ec *executionContext) fieldContext_FollowInfo_user(ctx context.Context, fi
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -13390,8 +13390,8 @@ func (ec *executionContext) fieldContext_FollowUserPayload_viewer(ctx context.Co
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -13467,10 +13467,10 @@ func (ec *executionContext) fieldContext_FollowUserPayload_user(ctx context.Cont
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -13780,522 +13780,6 @@ func (ec *executionContext) fieldContext_GIFMedia_dimensions(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Gallery_id(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_name(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_description(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_description(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_position(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_position(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Position, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_position(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_hidden(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_hidden(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Hidden, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_hidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_tokenPreviews(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_tokenPreviews(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Gallery().TokenPreviews(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_tokenPreviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_owner(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_owner(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Gallery().Owner(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.SplitFiUser)
-	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
-			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
-			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
-			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
-			case "tokens":
-				return ec.fieldContext_SplitFiUser_tokens(ctx, field)
-			case "tokensByChain":
-				return ec.fieldContext_SplitFiUser_tokensByChain(ctx, field)
-			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
-			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
-			case "badges":
-				return ec.fieldContext_SplitFiUser_badges(ctx, field)
-			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
-			case "followers":
-				return ec.fieldContext_SplitFiUser_followers(ctx, field)
-			case "following":
-				return ec.fieldContext_SplitFiUser_following(ctx, field)
-			case "sharedFollowers":
-				return ec.fieldContext_SplitFiUser_sharedFollowers(ctx, field)
-			case "sharedCommunities":
-				return ec.fieldContext_SplitFiUser_sharedCommunities(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Gallery_collections(ctx context.Context, field graphql.CollectedField, obj *model.Gallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Gallery_collections(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Gallery().Collections(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Collection)
-	fc.Result = res
-	return ec.marshalOCollection2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Gallery_collections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Gallery",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Collection_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Collection_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Collection_version(ctx, field)
-			case "name":
-				return ec.fieldContext_Collection_name(ctx, field)
-			case "collectorsNote":
-				return ec.fieldContext_Collection_collectorsNote(ctx, field)
-			case "gallery":
-				return ec.fieldContext_Collection_gallery(ctx, field)
-			case "layout":
-				return ec.fieldContext_Collection_layout(ctx, field)
-			case "hidden":
-				return ec.fieldContext_Collection_hidden(ctx, field)
-			case "tokens":
-				return ec.fieldContext_Collection_tokens(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Collection", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GallerySearchResult_gallery(ctx context.Context, field graphql.CollectedField, obj *model.GallerySearchResult) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GallerySearchResult_gallery(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Gallery)
-	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GallerySearchResult_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GallerySearchResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
-			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
-			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
-			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
-			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
-			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
-			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _GltfMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.GltfMedia) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GltfMedia_previewURLs(ctx, field)
 	if err != nil {
@@ -14587,10 +14071,10 @@ func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(ctx cont
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -15760,8 +15244,8 @@ func (ec *executionContext) fieldContext_LoginPayload_viewer(ctx context.Context
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -15819,8 +15303,8 @@ func (ec *executionContext) fieldContext_LogoutPayload_viewer(ctx context.Contex
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -16265,8 +15749,8 @@ func (ec *executionContext) fieldContext_MintPremiumCardToWalletPayload_tx(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _MoveCollectionToGalleryPayload_oldGallery(ctx context.Context, field graphql.CollectedField, obj *model.MoveCollectionToGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MoveCollectionToGalleryPayload_oldGallery(ctx, field)
+func (ec *executionContext) _MoveCollectionToSplitPayload_oldSplit(ctx context.Context, field graphql.CollectedField, obj *model.MoveCollectionToSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MoveCollectionToSplitPayload_oldSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16279,7 +15763,7 @@ func (ec *executionContext) _MoveCollectionToGalleryPayload_oldGallery(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OldGallery, nil
+		return obj.OldSplit, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16288,46 +15772,46 @@ func (ec *executionContext) _MoveCollectionToGalleryPayload_oldGallery(ctx conte
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MoveCollectionToGalleryPayload_oldGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MoveCollectionToSplitPayload_oldSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MoveCollectionToGalleryPayload",
+		Object:     "MoveCollectionToSplitPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _MoveCollectionToGalleryPayload_newGallery(ctx context.Context, field graphql.CollectedField, obj *model.MoveCollectionToGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MoveCollectionToGalleryPayload_newGallery(ctx, field)
+func (ec *executionContext) _MoveCollectionToSplitPayload_newSplit(ctx context.Context, field graphql.CollectedField, obj *model.MoveCollectionToSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MoveCollectionToSplitPayload_newSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16340,7 +15824,7 @@ func (ec *executionContext) _MoveCollectionToGalleryPayload_newGallery(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.NewGallery, nil
+		return obj.NewSplit, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16349,39 +15833,39 @@ func (ec *executionContext) _MoveCollectionToGalleryPayload_newGallery(ctx conte
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MoveCollectionToGalleryPayload_newGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MoveCollectionToSplitPayload_newSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MoveCollectionToGalleryPayload",
+		Object:     "MoveCollectionToSplitPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -16603,8 +16087,8 @@ func (ec *executionContext) fieldContext_Mutation_updateUserInfo(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateGalleryCollections(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateGalleryCollections(ctx, field)
+func (ec *executionContext) _Mutation_updateSplitCollections(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateSplitCollections(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16618,7 +16102,7 @@ func (ec *executionContext) _Mutation_updateGalleryCollections(ctx context.Conte
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateGalleryCollections(rctx, fc.Args["input"].(model.UpdateGalleryCollectionsInput))
+			return ec.resolvers.Mutation().UpdateSplitCollections(rctx, fc.Args["input"].(model.UpdateSplitCollectionsInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -16634,10 +16118,10 @@ func (ec *executionContext) _Mutation_updateGalleryCollections(ctx context.Conte
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateGalleryCollectionsPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdateSplitCollectionsPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateGalleryCollectionsPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitCollectionsPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16646,19 +16130,19 @@ func (ec *executionContext) _Mutation_updateGalleryCollections(ctx context.Conte
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateGalleryCollectionsPayloadOrError)
+	res := resTmp.(model.UpdateSplitCollectionsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateGalleryCollectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryCollectionsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitCollectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateGalleryCollections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateSplitCollections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateGalleryCollectionsPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdateSplitCollectionsPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -16668,7 +16152,7 @@ func (ec *executionContext) fieldContext_Mutation_updateGalleryCollections(ctx c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateGalleryCollections_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateSplitCollections_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -18369,8 +17853,8 @@ func (ec *executionContext) fieldContext_Mutation_unfollowUser(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_viewGallery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_viewGallery(ctx, field)
+func (ec *executionContext) _Mutation_viewSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_viewSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18383,7 +17867,7 @@ func (ec *executionContext) _Mutation_viewGallery(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ViewGallery(rctx, fc.Args["galleryId"].(persist.DBID))
+		return ec.resolvers.Mutation().ViewSplit(rctx, fc.Args["splitId"].(persist.DBID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18392,19 +17876,19 @@ func (ec *executionContext) _Mutation_viewGallery(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.ViewGalleryPayloadOrError)
+	res := resTmp.(model.ViewSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOViewGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewGalleryPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOViewSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_viewGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_viewSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ViewGalleryPayloadOrError does not have child fields")
+			return nil, errors.New("field of type ViewSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18414,15 +17898,15 @@ func (ec *executionContext) fieldContext_Mutation_viewGallery(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_viewGallery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_viewSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateGallery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateGallery(ctx, field)
+func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18436,7 +17920,7 @@ func (ec *executionContext) _Mutation_updateGallery(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateGallery(rctx, fc.Args["input"].(model.UpdateGalleryInput))
+			return ec.resolvers.Mutation().UpdateSplit(rctx, fc.Args["input"].(model.UpdateSplitInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18452,10 +17936,10 @@ func (ec *executionContext) _Mutation_updateGallery(ctx context.Context, field g
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateGalleryPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdateSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateGalleryPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18464,19 +17948,19 @@ func (ec *executionContext) _Mutation_updateGallery(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateGalleryPayloadOrError)
+	res := resTmp.(model.UpdateSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateGalleryPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdateSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18486,15 +17970,15 @@ func (ec *executionContext) fieldContext_Mutation_updateGallery(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateGallery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_publishGallery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_publishGallery(ctx, field)
+func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_publishSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18508,7 +17992,7 @@ func (ec *executionContext) _Mutation_publishGallery(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PublishGallery(rctx, fc.Args["input"].(model.PublishGalleryInput))
+			return ec.resolvers.Mutation().PublishSplit(rctx, fc.Args["input"].(model.PublishSplitInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18524,10 +18008,10 @@ func (ec *executionContext) _Mutation_publishGallery(ctx context.Context, field 
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.PublishGalleryPayloadOrError); ok {
+		if data, ok := tmp.(model.PublishSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.PublishGalleryPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.PublishSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18536,19 +18020,19 @@ func (ec *executionContext) _Mutation_publishGallery(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.PublishGalleryPayloadOrError)
+	res := resTmp.(model.PublishSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOPublishGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishGalleryPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPublishSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_publishGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_publishSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PublishGalleryPayloadOrError does not have child fields")
+			return nil, errors.New("field of type PublishSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18558,15 +18042,15 @@ func (ec *executionContext) fieldContext_Mutation_publishGallery(ctx context.Con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_publishGallery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_publishSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createGallery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createGallery(ctx, field)
+func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18580,7 +18064,7 @@ func (ec *executionContext) _Mutation_createGallery(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateGallery(rctx, fc.Args["input"].(model.CreateGalleryInput))
+			return ec.resolvers.Mutation().CreateSplit(rctx, fc.Args["input"].(model.CreateSplitInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18596,10 +18080,10 @@ func (ec *executionContext) _Mutation_createGallery(ctx context.Context, field g
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.CreateGalleryPayloadOrError); ok {
+		if data, ok := tmp.(model.CreateSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.CreateGalleryPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.CreateSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18608,19 +18092,19 @@ func (ec *executionContext) _Mutation_createGallery(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.CreateGalleryPayloadOrError)
+	res := resTmp.(model.CreateSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOCreateGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateGalleryPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOCreateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CreateGalleryPayloadOrError does not have child fields")
+			return nil, errors.New("field of type CreateSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18630,15 +18114,15 @@ func (ec *executionContext) fieldContext_Mutation_createGallery(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createGallery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateGalleryHidden(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateGalleryHidden(ctx, field)
+func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateSplitHidden(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18652,7 +18136,7 @@ func (ec *executionContext) _Mutation_updateGalleryHidden(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateGalleryHidden(rctx, fc.Args["input"].(model.UpdateGalleryHiddenInput))
+			return ec.resolvers.Mutation().UpdateSplitHidden(rctx, fc.Args["input"].(model.UpdateSplitHiddenInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18668,10 +18152,10 @@ func (ec *executionContext) _Mutation_updateGalleryHidden(ctx context.Context, f
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateGalleryHiddenPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdateSplitHiddenPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateGalleryHiddenPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitHiddenPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18680,19 +18164,19 @@ func (ec *executionContext) _Mutation_updateGalleryHidden(ctx context.Context, f
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateGalleryHiddenPayloadOrError)
+	res := resTmp.(model.UpdateSplitHiddenPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateGalleryHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryHiddenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateGalleryHidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateSplitHidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateGalleryHiddenPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdateSplitHiddenPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18702,15 +18186,15 @@ func (ec *executionContext) fieldContext_Mutation_updateGalleryHidden(ctx contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateGalleryHidden_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateSplitHidden_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteGallery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteGallery(ctx, field)
+func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18724,7 +18208,7 @@ func (ec *executionContext) _Mutation_deleteGallery(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteGallery(rctx, fc.Args["galleryId"].(persist.DBID))
+			return ec.resolvers.Mutation().DeleteSplit(rctx, fc.Args["splitId"].(persist.DBID))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18740,10 +18224,10 @@ func (ec *executionContext) _Mutation_deleteGallery(ctx context.Context, field g
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.DeleteGalleryPayloadOrError); ok {
+		if data, ok := tmp.(model.DeleteSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.DeleteGalleryPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.DeleteSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18752,19 +18236,19 @@ func (ec *executionContext) _Mutation_deleteGallery(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.DeleteGalleryPayloadOrError)
+	res := resTmp.(model.DeleteSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalODeleteGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteGalleryPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalODeleteSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DeleteGalleryPayloadOrError does not have child fields")
+			return nil, errors.New("field of type DeleteSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18774,15 +18258,15 @@ func (ec *executionContext) fieldContext_Mutation_deleteGallery(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteGallery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateGalleryOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateGalleryOrder(ctx, field)
+func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateSplitOrder(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18796,7 +18280,7 @@ func (ec *executionContext) _Mutation_updateGalleryOrder(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateGalleryOrder(rctx, fc.Args["input"].(model.UpdateGalleryOrderInput))
+			return ec.resolvers.Mutation().UpdateSplitOrder(rctx, fc.Args["input"].(model.UpdateSplitOrderInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18812,10 +18296,10 @@ func (ec *executionContext) _Mutation_updateGalleryOrder(ctx context.Context, fi
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateGalleryOrderPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdateSplitOrderPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateGalleryOrderPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitOrderPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18824,19 +18308,19 @@ func (ec *executionContext) _Mutation_updateGalleryOrder(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateGalleryOrderPayloadOrError)
+	res := resTmp.(model.UpdateSplitOrderPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateGalleryOrderPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryOrderPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateGalleryOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateSplitOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateGalleryOrderPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdateSplitOrderPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18846,15 +18330,15 @@ func (ec *executionContext) fieldContext_Mutation_updateGalleryOrder(ctx context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateGalleryOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateSplitOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateGalleryInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateGalleryInfo(ctx, field)
+func (ec *executionContext) _Mutation_updateSplitInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateSplitInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18868,7 +18352,7 @@ func (ec *executionContext) _Mutation_updateGalleryInfo(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateGalleryInfo(rctx, fc.Args["input"].(model.UpdateGalleryInfoInput))
+			return ec.resolvers.Mutation().UpdateSplitInfo(rctx, fc.Args["input"].(model.UpdateSplitInfoInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18884,10 +18368,10 @@ func (ec *executionContext) _Mutation_updateGalleryInfo(ctx context.Context, fie
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateGalleryInfoPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdateSplitInfoPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateGalleryInfoPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitInfoPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18896,19 +18380,19 @@ func (ec *executionContext) _Mutation_updateGalleryInfo(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateGalleryInfoPayloadOrError)
+	res := resTmp.(model.UpdateSplitInfoPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateGalleryInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryInfoPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateGalleryInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateSplitInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateGalleryInfoPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdateSplitInfoPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18918,15 +18402,15 @@ func (ec *executionContext) fieldContext_Mutation_updateGalleryInfo(ctx context.
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateGalleryInfo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateSplitInfo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateFeaturedGallery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateFeaturedGallery(ctx, field)
+func (ec *executionContext) _Mutation_updateFeaturedSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateFeaturedSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18940,7 +18424,7 @@ func (ec *executionContext) _Mutation_updateFeaturedGallery(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateFeaturedGallery(rctx, fc.Args["galleryId"].(persist.DBID))
+			return ec.resolvers.Mutation().UpdateFeaturedSplit(rctx, fc.Args["splitId"].(persist.DBID))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -18956,10 +18440,10 @@ func (ec *executionContext) _Mutation_updateFeaturedGallery(ctx context.Context,
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateFeaturedGalleryPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdateFeaturedSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateFeaturedGalleryPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateFeaturedSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18968,19 +18452,19 @@ func (ec *executionContext) _Mutation_updateFeaturedGallery(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateFeaturedGalleryPayloadOrError)
+	res := resTmp.(model.UpdateFeaturedSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateFeaturedGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateFeaturedGalleryPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateFeaturedSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateFeaturedSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateFeaturedGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateFeaturedSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateFeaturedGalleryPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdateFeaturedSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -18990,7 +18474,7 @@ func (ec *executionContext) fieldContext_Mutation_updateFeaturedGallery(ctx cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateFeaturedGallery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateFeaturedSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -19100,8 +18584,8 @@ func (ec *executionContext) fieldContext_Mutation_updateNotificationSettings(ctx
 			switch field.Name {
 			case "someoneFollowedYou":
 				return ec.fieldContext_NotificationSettings_someoneFollowedYou(ctx, field)
-			case "someoneViewedYourGallery":
-				return ec.fieldContext_NotificationSettings_someoneViewedYourGallery(ctx, field)
+			case "someoneViewedYourSplit":
+				return ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
 		},
@@ -19800,8 +19284,8 @@ func (ec *executionContext) fieldContext_Mutation_updateUserExperience(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_moveCollectionToGallery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_moveCollectionToGallery(ctx, field)
+func (ec *executionContext) _Mutation_moveCollectionToSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_moveCollectionToSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -19815,7 +19299,7 @@ func (ec *executionContext) _Mutation_moveCollectionToGallery(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().MoveCollectionToGallery(rctx, fc.Args["input"].(*model.MoveCollectionToGalleryInput))
+			return ec.resolvers.Mutation().MoveCollectionToSplit(rctx, fc.Args["input"].(*model.MoveCollectionToSplitInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -19831,10 +19315,10 @@ func (ec *executionContext) _Mutation_moveCollectionToGallery(ctx context.Contex
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.MoveCollectionToGalleryPayloadOrError); ok {
+		if data, ok := tmp.(model.MoveCollectionToSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.MoveCollectionToGalleryPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.MoveCollectionToSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19843,19 +19327,19 @@ func (ec *executionContext) _Mutation_moveCollectionToGallery(ctx context.Contex
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.MoveCollectionToGalleryPayloadOrError)
+	res := resTmp.(model.MoveCollectionToSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOMoveCollectionToGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToGalleryPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOMoveCollectionToSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_moveCollectionToGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_moveCollectionToSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MoveCollectionToGalleryPayloadOrError does not have child fields")
+			return nil, errors.New("field of type MoveCollectionToSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -19865,7 +19349,7 @@ func (ec *executionContext) fieldContext_Mutation_moveCollectionToGallery(ctx co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_moveCollectionToGallery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_moveCollectionToSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -19995,8 +19479,8 @@ func (ec *executionContext) fieldContext_NotificationSettings_someoneFollowedYou
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationSettings_someoneViewedYourGallery(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationSettings_someoneViewedYourGallery(ctx, field)
+func (ec *executionContext) _NotificationSettings_someoneViewedYourSplit(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20009,7 +19493,7 @@ func (ec *executionContext) _NotificationSettings_someoneViewedYourGallery(ctx c
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SomeoneViewedYourGallery, nil
+		return obj.SomeoneViewedYourSplit, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20023,7 +19507,7 @@ func (ec *executionContext) _NotificationSettings_someoneViewedYourGallery(ctx c
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationSettings_someoneViewedYourGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationSettings_someoneViewedYourSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationSettings",
 		Field:      field,
@@ -21189,8 +20673,8 @@ func (ec *executionContext) fieldContext_PreviewURLSet_blurhash(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _PublishGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.PublishGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PublishGalleryPayload_gallery(ctx, field)
+func (ec *executionContext) _PublishSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.PublishSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PublishSplitPayload_split(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21203,7 +20687,7 @@ func (ec *executionContext) _PublishGalleryPayload_gallery(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
+		return obj.Split, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21212,39 +20696,39 @@ func (ec *executionContext) _PublishGalleryPayload_gallery(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PublishGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PublishSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PublishGalleryPayload",
+		Object:     "PublishSplitPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -21579,10 +21063,10 @@ func (ec *executionContext) fieldContext_Query_usersWithTrait(ctx context.Contex
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -21986,8 +21470,8 @@ func (ec *executionContext) fieldContext_Query_generalAllowlist(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_galleryById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_galleryById(ctx, field)
+func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_splitById(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22000,7 +21484,7 @@ func (ec *executionContext) _Query_galleryById(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GalleryByID(rctx, fc.Args["id"].(persist.DBID))
+		return ec.resolvers.Query().SplitByID(rctx, fc.Args["id"].(persist.DBID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22009,19 +21493,19 @@ func (ec *executionContext) _Query_galleryById(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.GalleryByIDPayloadOrError)
+	res := resTmp.(model.SplitByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOGalleryByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_galleryById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_splitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type GalleryByIdPayloadOrError does not have child fields")
+			return nil, errors.New("field of type SplitByIdPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -22031,15 +21515,15 @@ func (ec *executionContext) fieldContext_Query_galleryById(ctx context.Context, 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_galleryById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_splitById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_viewerGalleryById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_viewerGalleryById(ctx, field)
+func (ec *executionContext) _Query_viewerSplitById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_viewerSplitById(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22052,7 +21536,7 @@ func (ec *executionContext) _Query_viewerGalleryById(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ViewerGalleryByID(rctx, fc.Args["id"].(persist.DBID))
+		return ec.resolvers.Query().ViewerSplitByID(rctx, fc.Args["id"].(persist.DBID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22061,19 +21545,19 @@ func (ec *executionContext) _Query_viewerGalleryById(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.ViewerGalleryByIDPayloadOrError)
+	res := resTmp.(model.ViewerSplitByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOViewerGalleryByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerGalleryByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_viewerGalleryById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_viewerSplitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ViewerGalleryByIdPayloadOrError does not have child fields")
+			return nil, errors.New("field of type ViewerSplitByIdPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -22083,7 +21567,7 @@ func (ec *executionContext) fieldContext_Query_viewerGalleryById(ctx context.Con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_viewerGalleryById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_viewerSplitById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -22142,8 +21626,8 @@ func (ec *executionContext) fieldContext_Query_searchUsers(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_searchGalleries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_searchGalleries(ctx, field)
+func (ec *executionContext) _Query_searchSplits(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchSplits(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22156,7 +21640,7 @@ func (ec *executionContext) _Query_searchGalleries(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SearchGalleries(rctx, fc.Args["query"].(string), fc.Args["limit"].(*int), fc.Args["nameWeight"].(*float64), fc.Args["descriptionWeight"].(*float64))
+		return ec.resolvers.Query().SearchSplits(rctx, fc.Args["query"].(string), fc.Args["limit"].(*int), fc.Args["nameWeight"].(*float64), fc.Args["descriptionWeight"].(*float64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22165,19 +21649,19 @@ func (ec *executionContext) _Query_searchGalleries(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.SearchGalleriesPayloadOrError)
+	res := resTmp.(model.SearchSplitsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSearchGalleriesPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchGalleriesPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_searchGalleries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_searchSplits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SearchGalleriesPayloadOrError does not have child fields")
+			return nil, errors.New("field of type SearchSplitsPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -22187,7 +21671,7 @@ func (ec *executionContext) fieldContext_Query_searchGalleries(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_searchGalleries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_searchSplits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -22686,8 +22170,8 @@ func (ec *executionContext) fieldContext_RefreshCollectionPayload_collection(ctx
 				return ec.fieldContext_Collection_name(ctx, field)
 			case "collectorsNote":
 				return ec.fieldContext_Collection_collectorsNote(ctx, field)
-			case "gallery":
-				return ec.fieldContext_Collection_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_Collection_split(ctx, field)
 			case "layout":
 				return ec.fieldContext_Collection_layout(ctx, field)
 			case "hidden":
@@ -22897,8 +22381,8 @@ func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(ctx con
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -22956,8 +22440,8 @@ func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(c
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -23018,8 +22502,8 @@ func (ec *executionContext) fieldContext_SearchCommunitiesPayload_results(ctx co
 	return fc, nil
 }
 
-func (ec *executionContext) _SearchGalleriesPayload_results(ctx context.Context, field graphql.CollectedField, obj *model.SearchGalleriesPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchGalleriesPayload_results(ctx, field)
+func (ec *executionContext) _SearchSplitsPayload_results(ctx context.Context, field graphql.CollectedField, obj *model.SearchSplitsPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchSplitsPayload_results(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -23041,23 +22525,23 @@ func (ec *executionContext) _SearchGalleriesPayload_results(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.GallerySearchResult)
+	res := resTmp.([]*model.SplitSearchResult)
 	fc.Result = res
-	return ec.marshalOGallerySearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallerySearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchGalleriesPayload_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchSplitsPayload_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SearchGalleriesPayload",
+		Object:     "SearchSplitsPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "gallery":
-				return ec.fieldContext_GallerySearchResult_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_SplitSearchResult_split(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type GallerySearchResult", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SplitSearchResult", field.Name)
 		},
 	}
 	return fc, nil
@@ -23358,10 +22842,10 @@ func (ec *executionContext) fieldContext_SocialConnection_splitFiUser(ctx contex
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -24530,8 +24014,8 @@ func (ec *executionContext) fieldContext_SomeoneFollowedYouNotification_follower
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_id(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_id(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_id(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24561,9 +24045,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_id(ctx context
 	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: false,
@@ -24574,8 +24058,8 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_id
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_dbid(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_dbid(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_dbid(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_dbid(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24605,9 +24089,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_dbid(ctx conte
 	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24618,8 +24102,8 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_db
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_seen(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_seen(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_seen(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_seen(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24646,9 +24130,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_seen(ctx conte
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_seen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_seen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24659,8 +24143,8 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_se
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_creationTime(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_creationTime(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24687,9 +24171,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_creationTime(c
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24700,8 +24184,8 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_cr
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_updatedTime(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_updatedTime(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_updatedTime(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_updatedTime(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24728,9 +24212,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_updatedTime(ct
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_updatedTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_updatedTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24741,8 +24225,8 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_up
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_count(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_count(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_count(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_count(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24769,9 +24253,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_count(ctx cont
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_count(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_count(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24782,8 +24266,8 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_co
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_userViewers(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_userViewers(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_userViewers(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_userViewers(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24796,7 +24280,7 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_userViewers(ct
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SomeoneViewedYourGalleryNotification().UserViewers(rctx, obj, fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
+		return ec.resolvers.SomeoneViewedYourSplitNotification().UserViewers(rctx, obj, fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -24810,9 +24294,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_userViewers(ct
 	return ec.marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_userViewers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_userViewers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -24833,15 +24317,15 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_us
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_SomeoneViewedYourGalleryNotification_userViewers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_SomeoneViewedYourSplitNotification_userViewers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_nonUserViewerCount(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_nonUserViewerCount(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_nonUserViewerCount(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_nonUserViewerCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24868,9 +24352,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_nonUserViewerC
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_nonUserViewerCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_nonUserViewerCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24881,8 +24365,8 @@ func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_no
 	return fc, nil
 }
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification_gallery(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourGalleryNotification) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SomeoneViewedYourGalleryNotification_gallery(ctx, field)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification_split(ctx context.Context, field graphql.CollectedField, obj *model.SomeoneViewedYourSplitNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SomeoneViewedYourSplitNotification_split(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -24895,7 +24379,7 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_gallery(ctx co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SomeoneViewedYourGalleryNotification().Gallery(rctx, obj)
+		return ec.resolvers.SomeoneViewedYourSplitNotification().Split(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -24904,39 +24388,494 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification_gallery(ctx co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SomeoneViewedYourGalleryNotification_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SomeoneViewedYourGalleryNotification",
+		Object:     "SomeoneViewedYourSplitNotification",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_id(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_dbid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dbid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.DBID)
+	fc.Result = res
+	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DBID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_name(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_description(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_position(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_position(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Position, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_position(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_hidden(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_hidden(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Hidden, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_hidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_tokenPreviews(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_tokenPreviews(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Split().TokenPreviews(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.PreviewURLSet)
+	fc.Result = res
+	return ec.marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_tokenPreviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "raw":
+				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
+			case "thumbnail":
+				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
+			case "small":
+				return ec.fieldContext_PreviewURLSet_small(ctx, field)
+			case "medium":
+				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
+			case "large":
+				return ec.fieldContext_PreviewURLSet_large(ctx, field)
+			case "srcSet":
+				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
+			case "liveRender":
+				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
+			case "blurhash":
+				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_owner(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Split().Owner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.SplitFiUser)
+	fc.Result = res
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SplitFiUser_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+			case "username":
+				return ec.fieldContext_SplitFiUser_username(ctx, field)
+			case "bio":
+				return ec.fieldContext_SplitFiUser_bio(ctx, field)
+			case "traits":
+				return ec.fieldContext_SplitFiUser_traits(ctx, field)
+			case "universal":
+				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+			case "roles":
+				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+			case "socialAccounts":
+				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
+			case "tokens":
+				return ec.fieldContext_SplitFiUser_tokens(ctx, field)
+			case "tokensByChain":
+				return ec.fieldContext_SplitFiUser_tokensByChain(ctx, field)
+			case "wallets":
+				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+			case "primaryWallet":
+				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+			case "badges":
+				return ec.fieldContext_SplitFiUser_badges(ctx, field)
+			case "isAuthenticatedUser":
+				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+			case "followers":
+				return ec.fieldContext_SplitFiUser_followers(ctx, field)
+			case "following":
+				return ec.fieldContext_SplitFiUser_following(ctx, field)
+			case "sharedFollowers":
+				return ec.fieldContext_SplitFiUser_sharedFollowers(ctx, field)
+			case "sharedCommunities":
+				return ec.fieldContext_SplitFiUser_sharedCommunities(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_collections(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_collections(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Split().Collections(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Collection)
+	fc.Result = res
+	return ec.marshalOCollection2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_collections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Collection_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Collection_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Collection_version(ctx, field)
+			case "name":
+				return ec.fieldContext_Collection_name(ctx, field)
+			case "collectorsNote":
+				return ec.fieldContext_Collection_collectorsNote(ctx, field)
+			case "split":
+				return ec.fieldContext_Collection_split(ctx, field)
+			case "layout":
+				return ec.fieldContext_Collection_layout(ctx, field)
+			case "hidden":
+				return ec.fieldContext_Collection_hidden(ctx, field)
+			case "tokens":
+				return ec.fieldContext_Collection_tokens(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Collection", field.Name)
 		},
 	}
 	return fc, nil
@@ -25539,8 +25478,8 @@ func (ec *executionContext) fieldContext_SplitFiUser_primaryWallet(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SplitFiUser_featuredGallery(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
+func (ec *executionContext) _SplitFiUser_featuredSplit(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -25553,7 +25492,7 @@ func (ec *executionContext) _SplitFiUser_featuredGallery(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().FeaturedGallery(rctx, obj)
+		return ec.resolvers.SplitFiUser().FeaturedSplit(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -25562,12 +25501,12 @@ func (ec *executionContext) _SplitFiUser_featuredGallery(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SplitFiUser_featuredGallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SplitFiUser_featuredSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SplitFiUser",
 		Field:      field,
@@ -25576,32 +25515,32 @@ func (ec *executionContext) fieldContext_SplitFiUser_featuredGallery(ctx context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _SplitFiUser_galleries(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_galleries(ctx, field)
+func (ec *executionContext) _SplitFiUser_splits(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SplitFiUser_splits(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -25614,7 +25553,7 @@ func (ec *executionContext) _SplitFiUser_galleries(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().Galleries(rctx, obj)
+		return ec.resolvers.SplitFiUser().Splits(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -25623,12 +25562,12 @@ func (ec *executionContext) _SplitFiUser_galleries(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Gallery)
+	res := resTmp.([]*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SplitFiUser_galleries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SplitFiUser_splits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SplitFiUser",
 		Field:      field,
@@ -25637,25 +25576,25 @@ func (ec *executionContext) fieldContext_SplitFiUser_galleries(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -25811,10 +25750,10 @@ func (ec *executionContext) fieldContext_SplitFiUser_followers(ctx context.Conte
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -25894,10 +25833,10 @@ func (ec *executionContext) fieldContext_SplitFiUser_following(ctx context.Conte
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -26069,6 +26008,67 @@ func (ec *executionContext) fieldContext_SplitFiUser_sharedCommunities(ctx conte
 	if fc.Args, err = ec.field_SplitFiUser_sharedCommunities_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SplitSearchResult_split(ctx context.Context, field graphql.CollectedField, obj *model.SplitSearchResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SplitSearchResult_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Split, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SplitSearchResult_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SplitSearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Split_position(ctx, field)
+			case "hidden":
+				return ec.fieldContext_Split_hidden(ctx, field)
+			case "tokenPreviews":
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
+			case "owner":
+				return ec.fieldContext_Split_owner(ctx, field)
+			case "collections":
+				return ec.fieldContext_Split_collections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -26269,8 +26269,8 @@ func (ec *executionContext) fieldContext_SyncTokensPayload_viewer(ctx context.Co
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -27306,10 +27306,10 @@ func (ec *executionContext) fieldContext_Token_owner(ctx context.Context, field 
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -28116,10 +28116,10 @@ func (ec *executionContext) fieldContext_TokenHolder_user(ctx context.Context, f
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -28788,8 +28788,8 @@ func (ec *executionContext) fieldContext_UnfollowUserPayload_viewer(ctx context.
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -28865,10 +28865,10 @@ func (ec *executionContext) fieldContext_UnfollowUserPayload_user(ctx context.Co
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -29161,8 +29161,8 @@ func (ec *executionContext) fieldContext_UnsubscribeFromEmailTypePayload_viewer(
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -29224,8 +29224,8 @@ func (ec *executionContext) fieldContext_UpdateCollectionHiddenPayload_collectio
 				return ec.fieldContext_Collection_name(ctx, field)
 			case "collectorsNote":
 				return ec.fieldContext_Collection_collectorsNote(ctx, field)
-			case "gallery":
-				return ec.fieldContext_Collection_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_Collection_split(ctx, field)
 			case "layout":
 				return ec.fieldContext_Collection_layout(ctx, field)
 			case "hidden":
@@ -29285,8 +29285,8 @@ func (ec *executionContext) fieldContext_UpdateCollectionInfoPayload_collection(
 				return ec.fieldContext_Collection_name(ctx, field)
 			case "collectorsNote":
 				return ec.fieldContext_Collection_collectorsNote(ctx, field)
-			case "gallery":
-				return ec.fieldContext_Collection_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_Collection_split(ctx, field)
 			case "layout":
 				return ec.fieldContext_Collection_layout(ctx, field)
 			case "hidden":
@@ -29346,8 +29346,8 @@ func (ec *executionContext) fieldContext_UpdateCollectionTokensPayload_collectio
 				return ec.fieldContext_Collection_name(ctx, field)
 			case "collectorsNote":
 				return ec.fieldContext_Collection_collectorsNote(ctx, field)
-			case "gallery":
-				return ec.fieldContext_Collection_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_Collection_split(ctx, field)
 			case "layout":
 				return ec.fieldContext_Collection_layout(ctx, field)
 			case "hidden":
@@ -29403,8 +29403,8 @@ func (ec *executionContext) fieldContext_UpdateEmailNotificationSettingsPayload_
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -29462,8 +29462,8 @@ func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(ctx context.C
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -29479,8 +29479,8 @@ func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _UpdateFeaturedGalleryPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdateFeaturedGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateFeaturedGalleryPayload_viewer(ctx, field)
+func (ec *executionContext) _UpdateFeaturedSplitPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdateFeaturedSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateFeaturedSplitPayload_viewer(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -29507,9 +29507,9 @@ func (ec *executionContext) _UpdateFeaturedGalleryPayload_viewer(ctx context.Con
 	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateFeaturedGalleryPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateFeaturedSplitPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "UpdateFeaturedGalleryPayload",
+		Object:     "UpdateFeaturedSplitPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -29521,8 +29521,8 @@ func (ec *executionContext) fieldContext_UpdateFeaturedGalleryPayload_viewer(ctx
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -29533,309 +29533,6 @@ func (ec *executionContext) fieldContext_UpdateFeaturedGalleryPayload_viewer(ctx
 				return ec.fieldContext_Viewer_userExperiences(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateGalleryCollectionsPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.UpdateGalleryCollectionsPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateGalleryCollectionsPayload_gallery(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Gallery)
-	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateGalleryCollectionsPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateGalleryCollectionsPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
-			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
-			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
-			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
-			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
-			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
-			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateGalleryHiddenPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.UpdateGalleryHiddenPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateGalleryHiddenPayload_gallery(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Gallery)
-	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateGalleryHiddenPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateGalleryHiddenPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
-			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
-			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
-			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
-			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
-			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
-			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateGalleryInfoPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.UpdateGalleryInfoPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateGalleryInfoPayload_gallery(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Gallery)
-	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateGalleryInfoPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateGalleryInfoPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
-			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
-			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
-			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
-			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
-			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
-			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateGalleryOrderPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdateGalleryOrderPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateGalleryOrderPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Viewer)
-	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateGalleryOrderPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateGalleryOrderPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
-			case "email":
-				return ec.fieldContext_Viewer_email(ctx, field)
-			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
-			case "userExperiences":
-				return ec.fieldContext_Viewer_userExperiences(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.UpdateGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateGalleryPayload_gallery(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Gallery)
-	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateGalleryPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
-			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
-			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
-			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
-			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
-			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
-			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
 		},
 	}
 	return fc, nil
@@ -29883,8 +29580,8 @@ func (ec *executionContext) fieldContext_UpdatePrimaryWalletPayload_viewer(ctx c
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -29942,8 +29639,8 @@ func (ec *executionContext) fieldContext_UpdateSocialAccountDisplayedPayload_vie
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -29954,6 +29651,309 @@ func (ec *executionContext) fieldContext_UpdateSocialAccountDisplayedPayload_vie
 				return ec.fieldContext_Viewer_userExperiences(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateSplitCollectionsPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitCollectionsPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateSplitCollectionsPayload_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Split, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateSplitCollectionsPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateSplitCollectionsPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Split_position(ctx, field)
+			case "hidden":
+				return ec.fieldContext_Split_hidden(ctx, field)
+			case "tokenPreviews":
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
+			case "owner":
+				return ec.fieldContext_Split_owner(ctx, field)
+			case "collections":
+				return ec.fieldContext_Split_collections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateSplitHiddenPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitHiddenPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateSplitHiddenPayload_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Split, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateSplitHiddenPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateSplitHiddenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Split_position(ctx, field)
+			case "hidden":
+				return ec.fieldContext_Split_hidden(ctx, field)
+			case "tokenPreviews":
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
+			case "owner":
+				return ec.fieldContext_Split_owner(ctx, field)
+			case "collections":
+				return ec.fieldContext_Split_collections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateSplitInfoPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitInfoPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateSplitInfoPayload_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Split, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateSplitInfoPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateSplitInfoPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Split_position(ctx, field)
+			case "hidden":
+				return ec.fieldContext_Split_hidden(ctx, field)
+			case "tokenPreviews":
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
+			case "owner":
+				return ec.fieldContext_Split_owner(ctx, field)
+			case "collections":
+				return ec.fieldContext_Split_collections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateSplitOrderPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitOrderPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateSplitOrderPayload_viewer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Viewer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Viewer)
+	fc.Result = res
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateSplitOrderPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateSplitOrderPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Viewer_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Viewer_user(ctx, field)
+			case "socialAccounts":
+				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "email":
+				return ec.fieldContext_Viewer_email(ctx, field)
+			case "notifications":
+				return ec.fieldContext_Viewer_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+			case "userExperiences":
+				return ec.fieldContext_Viewer_userExperiences(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateSplitPayload_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Split, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateSplitPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Split_position(ctx, field)
+			case "hidden":
+				return ec.fieldContext_Split_hidden(ctx, field)
+			case "tokenPreviews":
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
+			case "owner":
+				return ec.fieldContext_Split_owner(ctx, field)
+			case "collections":
+				return ec.fieldContext_Split_collections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -30092,8 +30092,8 @@ func (ec *executionContext) fieldContext_UpdateUserExperiencePayload_viewer(ctx 
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -30151,8 +30151,8 @@ func (ec *executionContext) fieldContext_UpdateUserInfoPayload_viewer(ctx contex
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "socialAccounts":
 				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerGalleries":
-				return ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+			case "viewerSplits":
+				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -30269,10 +30269,10 @@ func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -30610,10 +30610,10 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(ctx context.Conte
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -31187,8 +31187,8 @@ func (ec *executionContext) fieldContext_VideoURLSet_large(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _ViewGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField, obj *model.ViewGalleryPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ViewGalleryPayload_gallery(ctx, field)
+func (ec *executionContext) _ViewSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.ViewSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ViewSplitPayload_split(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -31201,7 +31201,7 @@ func (ec *executionContext) _ViewGalleryPayload_gallery(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
+		return obj.Split, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -31210,39 +31210,39 @@ func (ec *executionContext) _ViewGalleryPayload_gallery(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ViewGalleryPayload_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ViewSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "ViewGalleryPayload",
+		Object:     "ViewSplitPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -31352,10 +31352,10 @@ func (ec *executionContext) fieldContext_Viewer_user(ctx context.Context, field 
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "featuredGallery":
-				return ec.fieldContext_SplitFiUser_featuredGallery(ctx, field)
-			case "galleries":
-				return ec.fieldContext_SplitFiUser_galleries(ctx, field)
+			case "featuredSplit":
+				return ec.fieldContext_SplitFiUser_featuredSplit(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
 			case "badges":
 				return ec.fieldContext_SplitFiUser_badges(ctx, field)
 			case "isAuthenticatedUser":
@@ -31420,8 +31420,8 @@ func (ec *executionContext) fieldContext_Viewer_socialAccounts(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Viewer_viewerGalleries(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_viewerGalleries(ctx, field)
+func (ec *executionContext) _Viewer_viewerSplits(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Viewer_viewerSplits(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -31434,7 +31434,7 @@ func (ec *executionContext) _Viewer_viewerGalleries(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().ViewerGalleries(rctx, obj)
+		return ec.resolvers.Viewer().ViewerSplits(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -31443,12 +31443,12 @@ func (ec *executionContext) _Viewer_viewerGalleries(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.ViewerGallery)
+	res := resTmp.([]*model.ViewerSplit)
 	fc.Result = res
-	return ec.marshalOViewerGallery2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerGallery(ctx, field.Selections, res)
+	return ec.marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_viewerGalleries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_viewerSplits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -31456,10 +31456,10 @@ func (ec *executionContext) fieldContext_Viewer_viewerGalleries(ctx context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "gallery":
-				return ec.fieldContext_ViewerGallery_gallery(ctx, field)
+			case "split":
+				return ec.fieldContext_ViewerSplit_split(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ViewerGallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ViewerSplit", field.Name)
 		},
 	}
 	return fc, nil
@@ -31612,8 +31612,8 @@ func (ec *executionContext) fieldContext_Viewer_notificationSettings(ctx context
 			switch field.Name {
 			case "someoneFollowedYou":
 				return ec.fieldContext_NotificationSettings_someoneFollowedYou(ctx, field)
-			case "someoneViewedYourGallery":
-				return ec.fieldContext_NotificationSettings_someoneViewedYourGallery(ctx, field)
+			case "someoneViewedYourSplit":
+				return ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
 		},
@@ -31668,8 +31668,8 @@ func (ec *executionContext) fieldContext_Viewer_userExperiences(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _ViewerGallery_gallery(ctx context.Context, field graphql.CollectedField, obj *model.ViewerGallery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ViewerGallery_gallery(ctx, field)
+func (ec *executionContext) _ViewerSplit_split(ctx context.Context, field graphql.CollectedField, obj *model.ViewerSplit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ViewerSplit_split(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -31682,7 +31682,7 @@ func (ec *executionContext) _ViewerGallery_gallery(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Gallery, nil
+		return obj.Split, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -31691,39 +31691,39 @@ func (ec *executionContext) _ViewerGallery_gallery(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Gallery)
+	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ViewerGallery_gallery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ViewerSplit_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "ViewerGallery",
+		Object:     "ViewerSplit",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Gallery_id(ctx, field)
+				return ec.fieldContext_Split_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Gallery_dbid(ctx, field)
+				return ec.fieldContext_Split_dbid(ctx, field)
 			case "name":
-				return ec.fieldContext_Gallery_name(ctx, field)
+				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Gallery_description(ctx, field)
+				return ec.fieldContext_Split_description(ctx, field)
 			case "position":
-				return ec.fieldContext_Gallery_position(ctx, field)
+				return ec.fieldContext_Split_position(ctx, field)
 			case "hidden":
-				return ec.fieldContext_Gallery_hidden(ctx, field)
+				return ec.fieldContext_Split_hidden(ctx, field)
 			case "tokenPreviews":
-				return ec.fieldContext_Gallery_tokenPreviews(ctx, field)
+				return ec.fieldContext_Split_tokenPreviews(ctx, field)
 			case "owner":
-				return ec.fieldContext_Gallery_owner(ctx, field)
+				return ec.fieldContext_Split_owner(ctx, field)
 			case "collections":
-				return ec.fieldContext_Gallery_collections(ctx, field)
+				return ec.fieldContext_Split_collections(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Gallery", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -34173,8 +34173,8 @@ func (ec *executionContext) unmarshalInputCollectionTokenSettingsInput(ctx conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateCollectionInGalleryInput(ctx context.Context, obj interface{}) (model.CreateCollectionInGalleryInput, error) {
-	var it model.CreateCollectionInGalleryInput
+func (ec *executionContext) unmarshalInputCreateCollectionInSplitInput(ctx context.Context, obj interface{}) (model.CreateCollectionInSplitInput, error) {
+	var it model.CreateCollectionInSplitInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -34263,22 +34263,22 @@ func (ec *executionContext) unmarshalInputCreateCollectionInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"galleryId", "name", "collectorsNote", "tokens", "layout", "tokenSettings", "caption"}
+	fieldsInOrder := [...]string{"splitId", "name", "collectorsNote", "tokens", "layout", "tokenSettings", "caption"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "galleryId":
+		case "splitId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.GalleryID = data
+			it.SplitID = data
 		case "name":
 			var err error
 
@@ -34339,8 +34339,8 @@ func (ec *executionContext) unmarshalInputCreateCollectionInput(ctx context.Cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateGalleryInput(ctx context.Context, obj interface{}) (model.CreateGalleryInput, error) {
-	var it model.CreateGalleryInput
+func (ec *executionContext) unmarshalInputCreateSplitInput(ctx context.Context, obj interface{}) (model.CreateSplitInput, error) {
+	var it model.CreateSplitInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -34393,7 +34393,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "bio", "email", "galleryName", "galleryDescription", "galleryPosition"}
+	fieldsInOrder := [...]string{"username", "bio", "email", "splitName", "splitDescription", "splitPosition"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -34427,33 +34427,33 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Email = data
-		case "galleryName":
+		case "splitName":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryName"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.GalleryName = data
-		case "galleryDescription":
+			it.SplitName = data
+		case "splitDescription":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryDescription"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitDescription"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.GalleryDescription = data
-		case "galleryPosition":
+			it.SplitDescription = data
+		case "splitPosition":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryPosition"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitPosition"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.GalleryPosition = data
+			it.SplitPosition = data
 		}
 	}
 
@@ -34691,44 +34691,6 @@ func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj inter
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGalleryPositionInput(ctx context.Context, obj interface{}) (model.GalleryPositionInput, error) {
-	var it model.GalleryPositionInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"galleryId", "position"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "galleryId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.GalleryID = data
-		case "position":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Position = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputGnosisSafeAuth(ctx context.Context, obj interface{}) (model.GnosisSafeAuth, error) {
 	var it model.GnosisSafeAuth
 	asMap := map[string]interface{}{}
@@ -34834,14 +34796,14 @@ func (ec *executionContext) unmarshalInputMintPremiumCardToWalletInput(ctx conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputMoveCollectionToGalleryInput(ctx context.Context, obj interface{}) (model.MoveCollectionToGalleryInput, error) {
-	var it model.MoveCollectionToGalleryInput
+func (ec *executionContext) unmarshalInputMoveCollectionToSplitInput(ctx context.Context, obj interface{}) (model.MoveCollectionToSplitInput, error) {
+	var it model.MoveCollectionToSplitInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"sourceCollectionId", "targetGalleryId"}
+	fieldsInOrder := [...]string{"sourceCollectionId", "targetSplitId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -34857,15 +34819,15 @@ func (ec *executionContext) unmarshalInputMoveCollectionToGalleryInput(ctx conte
 				return it, err
 			}
 			it.SourceCollectionID = data
-		case "targetGalleryId":
+		case "targetSplitId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetGalleryId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetSplitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TargetGalleryID = data
+			it.TargetSplitID = data
 		}
 	}
 
@@ -34879,7 +34841,7 @@ func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"someoneFollowedYou", "someoneViewedYourGallery"}
+	fieldsInOrder := [...]string{"someoneFollowedYou", "someoneViewedYourSplit"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -34895,15 +34857,15 @@ func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.
 				return it, err
 			}
 			it.SomeoneFollowedYou = data
-		case "someoneViewedYourGallery":
+		case "someoneViewedYourSplit":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneViewedYourGallery"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneViewedYourSplit"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SomeoneViewedYourGallery = data
+			it.SomeoneViewedYourSplit = data
 		}
 	}
 
@@ -34939,29 +34901,29 @@ func (ec *executionContext) unmarshalInputPreverifyEmailInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPublishGalleryInput(ctx context.Context, obj interface{}) (model.PublishGalleryInput, error) {
-	var it model.PublishGalleryInput
+func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context, obj interface{}) (model.PublishSplitInput, error) {
+	var it model.PublishSplitInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"galleryId", "editId", "caption"}
+	fieldsInOrder := [...]string{"splitId", "editId", "caption"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "galleryId":
+		case "splitId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.GalleryID = data
+			it.SplitID = data
 		case "editId":
 			var err error
 
@@ -35056,6 +35018,44 @@ func (ec *executionContext) unmarshalInputSocialAuthMechanism(ctx context.Contex
 				return it, err
 			}
 			it.Debug = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context, obj interface{}) (model.SplitPositionInput, error) {
+	var it model.SplitPositionInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"splitId", "position"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "splitId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SplitID = data
+		case "position":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Position = data
 		}
 	}
 
@@ -35429,29 +35429,67 @@ func (ec *executionContext) unmarshalInputUpdateEmailNotificationSettingsInput(c
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateGalleryCollectionsInput(ctx context.Context, obj interface{}) (model.UpdateGalleryCollectionsInput, error) {
-	var it model.UpdateGalleryCollectionsInput
+func (ec *executionContext) unmarshalInputUpdateSocialAccountDisplayedInput(ctx context.Context, obj interface{}) (model.UpdateSocialAccountDisplayedInput, error) {
+	var it model.UpdateSocialAccountDisplayedInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"galleryId", "collections"}
+	fieldsInOrder := [...]string{"type", "displayed"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "galleryId":
+		case "type":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "displayed":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayed"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Displayed = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateSplitCollectionsInput(ctx context.Context, obj interface{}) (model.UpdateSplitCollectionsInput, error) {
+	var it model.UpdateSplitCollectionsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"splitId", "collections"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "splitId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.GalleryID = data
+			it.SplitID = data
 		case "collections":
 			var err error
 
@@ -35467,8 +35505,8 @@ func (ec *executionContext) unmarshalInputUpdateGalleryCollectionsInput(ctx cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateGalleryHiddenInput(ctx context.Context, obj interface{}) (model.UpdateGalleryHiddenInput, error) {
-	var it model.UpdateGalleryHiddenInput
+func (ec *executionContext) unmarshalInputUpdateSplitHiddenInput(ctx context.Context, obj interface{}) (model.UpdateSplitHiddenInput, error) {
+	var it model.UpdateSplitHiddenInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -35505,8 +35543,8 @@ func (ec *executionContext) unmarshalInputUpdateGalleryHiddenInput(ctx context.C
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateGalleryInfoInput(ctx context.Context, obj interface{}) (model.UpdateGalleryInfoInput, error) {
-	var it model.UpdateGalleryInfoInput
+func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Context, obj interface{}) (model.UpdateSplitInfoInput, error) {
+	var it model.UpdateSplitInfoInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -35552,29 +35590,29 @@ func (ec *executionContext) unmarshalInputUpdateGalleryInfoInput(ctx context.Con
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateGalleryInput(ctx context.Context, obj interface{}) (model.UpdateGalleryInput, error) {
-	var it model.UpdateGalleryInput
+func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, obj interface{}) (model.UpdateSplitInput, error) {
+	var it model.UpdateSplitInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"galleryId", "name", "description", "caption", "deletedCollections", "updatedCollections", "createdCollections", "order", "editId"}
+	fieldsInOrder := [...]string{"splitId", "name", "description", "caption", "deletedCollections", "updatedCollections", "createdCollections", "order", "editId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "galleryId":
+		case "splitId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("galleryId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.GalleryID = data
+			it.SplitID = data
 		case "name":
 			var err error
 
@@ -35624,7 +35662,7 @@ func (ec *executionContext) unmarshalInputUpdateGalleryInput(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdCollections"))
-			data, err := ec.unmarshalOCreateCollectionInGalleryInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInGalleryInput(ctx, v)
+			data, err := ec.unmarshalOCreateCollectionInSplitInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35653,8 +35691,8 @@ func (ec *executionContext) unmarshalInputUpdateGalleryInput(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateGalleryOrderInput(ctx context.Context, obj interface{}) (model.UpdateGalleryOrderInput, error) {
-	var it model.UpdateGalleryOrderInput
+func (ec *executionContext) unmarshalInputUpdateSplitOrderInput(ctx context.Context, obj interface{}) (model.UpdateSplitOrderInput, error) {
+	var it model.UpdateSplitOrderInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -35671,49 +35709,11 @@ func (ec *executionContext) unmarshalInputUpdateGalleryOrderInput(ctx context.Co
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("positions"))
-			data, err := ec.unmarshalNGalleryPositionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryPositionInputᚄ(ctx, v)
+			data, err := ec.unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Positions = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateSocialAccountDisplayedInput(ctx context.Context, obj interface{}) (model.UpdateSocialAccountDisplayedInput, error) {
-	var it model.UpdateSocialAccountDisplayedInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"type", "displayed"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "type":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Type = data
-		case "displayed":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayed"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Displayed = data
 		}
 	}
 
@@ -36189,17 +36189,17 @@ func (ec *executionContext) _CreateCollectionPayloadOrError(ctx context.Context,
 	}
 }
 
-func (ec *executionContext) _CreateGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.CreateGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _CreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.CreateSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.CreateGalleryPayload:
-		return ec._CreateGalleryPayload(ctx, sel, &obj)
-	case *model.CreateGalleryPayload:
+	case model.CreateSplitPayload:
+		return ec._CreateSplitPayload(ctx, sel, &obj)
+	case *model.CreateSplitPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._CreateGalleryPayload(ctx, sel, obj)
+		return ec._CreateSplitPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -36330,17 +36330,17 @@ func (ec *executionContext) _DeleteCollectionPayloadOrError(ctx context.Context,
 	}
 }
 
-func (ec *executionContext) _DeleteGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.DeleteGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _DeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.DeleteSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.DeleteGalleryPayload:
-		return ec._DeleteGalleryPayload(ctx, sel, &obj)
-	case *model.DeleteGalleryPayload:
+	case model.DeleteSplitPayload:
+		return ec._DeleteSplitPayload(ctx, sel, &obj)
+	case *model.DeleteSplitPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._DeleteGalleryPayload(ctx, sel, obj)
+		return ec._DeleteSplitPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -36415,13 +36415,13 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 			return graphql.Null
 		}
 		return ec._ErrTokenNotFound(ctx, sel, obj)
-	case model.ErrGalleryNotFound:
-		return ec._ErrGalleryNotFound(ctx, sel, &obj)
-	case *model.ErrGalleryNotFound:
+	case model.ErrSplitNotFound:
+		return ec._ErrSplitNotFound(ctx, sel, &obj)
+	case *model.ErrSplitNotFound:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._ErrGalleryNotFound(ctx, sel, obj)
+		return ec._ErrSplitNotFound(ctx, sel, obj)
 	case model.ErrAuthenticationFailed:
 		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
 	case *model.ErrAuthenticationFailed:
@@ -36592,29 +36592,6 @@ func (ec *executionContext) _FollowUserPayloadOrError(ctx context.Context, sel a
 	}
 }
 
-func (ec *executionContext) _GalleryByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.GalleryByIDPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.Gallery:
-		return ec._Gallery(ctx, sel, &obj)
-	case *model.Gallery:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Gallery(ctx, sel, obj)
-	case model.ErrGalleryNotFound:
-		return ec._ErrGalleryNotFound(ctx, sel, &obj)
-	case *model.ErrGalleryNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrGalleryNotFound(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _GetAuthNoncePayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.GetAuthNoncePayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -36656,13 +36633,13 @@ func (ec *executionContext) _GroupedNotification(ctx context.Context, sel ast.Se
 			return graphql.Null
 		}
 		return ec._SomeoneFollowedYouBackNotification(ctx, sel, obj)
-	case model.SomeoneViewedYourGalleryNotification:
-		return ec._SomeoneViewedYourGalleryNotification(ctx, sel, &obj)
-	case *model.SomeoneViewedYourGalleryNotification:
+	case model.SomeoneViewedYourSplitNotification:
+		return ec._SomeoneViewedYourSplitNotification(ctx, sel, &obj)
+	case *model.SomeoneViewedYourSplitNotification:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SomeoneViewedYourGalleryNotification(ctx, sel, obj)
+		return ec._SomeoneViewedYourSplitNotification(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -36928,17 +36905,17 @@ func (ec *executionContext) _MintPremiumCardToWalletPayloadOrError(ctx context.C
 	}
 }
 
-func (ec *executionContext) _MoveCollectionToGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.MoveCollectionToGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _MoveCollectionToSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.MoveCollectionToSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.MoveCollectionToGalleryPayload:
-		return ec._MoveCollectionToGalleryPayload(ctx, sel, &obj)
-	case *model.MoveCollectionToGalleryPayload:
+	case model.MoveCollectionToSplitPayload:
+		return ec._MoveCollectionToSplitPayload(ctx, sel, &obj)
+	case *model.MoveCollectionToSplitPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._MoveCollectionToGalleryPayload(ctx, sel, obj)
+		return ec._MoveCollectionToSplitPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -37004,13 +36981,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Collection(ctx, sel, obj)
-	case model.Gallery:
-		return ec._Gallery(ctx, sel, &obj)
-	case *model.Gallery:
+	case model.Split:
+		return ec._Split(ctx, sel, &obj)
+	case *model.Split:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Gallery(ctx, sel, obj)
+		return ec._Split(ctx, sel, obj)
 	case model.MembershipTier:
 		return ec._MembershipTier(ctx, sel, &obj)
 	case *model.MembershipTier:
@@ -37070,13 +37047,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._SomeoneFollowedYouBackNotification(ctx, sel, obj)
-	case model.SomeoneViewedYourGalleryNotification:
-		return ec._SomeoneViewedYourGalleryNotification(ctx, sel, &obj)
-	case *model.SomeoneViewedYourGalleryNotification:
+	case model.SomeoneViewedYourSplitNotification:
+		return ec._SomeoneViewedYourSplitNotification(ctx, sel, &obj)
+	case *model.SomeoneViewedYourSplitNotification:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SomeoneViewedYourGalleryNotification(ctx, sel, obj)
+		return ec._SomeoneViewedYourSplitNotification(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -37105,13 +37082,13 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 			return graphql.Null
 		}
 		return ec._SomeoneFollowedYouBackNotification(ctx, sel, obj)
-	case model.SomeoneViewedYourGalleryNotification:
-		return ec._SomeoneViewedYourGalleryNotification(ctx, sel, &obj)
-	case *model.SomeoneViewedYourGalleryNotification:
+	case model.SomeoneViewedYourSplitNotification:
+		return ec._SomeoneViewedYourSplitNotification(ctx, sel, &obj)
+	case *model.SomeoneViewedYourSplitNotification:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SomeoneViewedYourGalleryNotification(ctx, sel, obj)
+		return ec._SomeoneViewedYourSplitNotification(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -37140,17 +37117,17 @@ func (ec *executionContext) _PreverifyEmailPayloadOrError(ctx context.Context, s
 	}
 }
 
-func (ec *executionContext) _PublishGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.PublishGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _PublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.PublishSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.PublishGalleryPayload:
-		return ec._PublishGalleryPayload(ctx, sel, &obj)
-	case *model.PublishGalleryPayload:
+	case model.PublishSplitPayload:
+		return ec._PublishSplitPayload(ctx, sel, &obj)
+	case *model.PublishSplitPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._PublishGalleryPayload(ctx, sel, obj)
+		return ec._PublishSplitPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -37359,17 +37336,17 @@ func (ec *executionContext) _SearchCommunitiesPayloadOrError(ctx context.Context
 	}
 }
 
-func (ec *executionContext) _SearchGalleriesPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.SearchGalleriesPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _SearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.SearchSplitsPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SearchGalleriesPayload:
-		return ec._SearchGalleriesPayload(ctx, sel, &obj)
-	case *model.SearchGalleriesPayload:
+	case model.SearchSplitsPayload:
+		return ec._SearchSplitsPayload(ctx, sel, &obj)
+	case *model.SearchSplitsPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SearchGalleriesPayload(ctx, sel, obj)
+		return ec._SearchSplitsPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -37492,6 +37469,29 @@ func (ec *executionContext) _SocialQueriesOrError(ctx context.Context, sel ast.S
 			return graphql.Null
 		}
 		return ec._ErrNeedsToReconnectSocial(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _SplitByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.SplitByIDPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.Split:
+		return ec._Split(ctx, sel, &obj)
+	case *model.Split:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Split(ctx, sel, obj)
+	case model.ErrSplitNotFound:
+		return ec._ErrSplitNotFound(ctx, sel, &obj)
+	case *model.ErrSplitNotFound:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrSplitNotFound(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -37820,167 +37820,17 @@ func (ec *executionContext) _UpdateEmailPayloadOrError(ctx context.Context, sel 
 	}
 }
 
-func (ec *executionContext) _UpdateFeaturedGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateFeaturedGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _UpdateFeaturedSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateFeaturedSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateFeaturedGalleryPayload:
-		return ec._UpdateFeaturedGalleryPayload(ctx, sel, &obj)
-	case *model.UpdateFeaturedGalleryPayload:
+	case model.UpdateFeaturedSplitPayload:
+		return ec._UpdateFeaturedSplitPayload(ctx, sel, &obj)
+	case *model.UpdateFeaturedSplitPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._UpdateFeaturedGalleryPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateGalleryCollectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateGalleryCollectionsPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.UpdateGalleryCollectionsPayload:
-		return ec._UpdateGalleryCollectionsPayload(ctx, sel, &obj)
-	case *model.UpdateGalleryCollectionsPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateGalleryCollectionsPayload(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateGalleryHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateGalleryHiddenPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.UpdateGalleryHiddenPayload:
-		return ec._UpdateGalleryHiddenPayload(ctx, sel, &obj)
-	case *model.UpdateGalleryHiddenPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateGalleryHiddenPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateGalleryInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateGalleryInfoPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.UpdateGalleryInfoPayload:
-		return ec._UpdateGalleryInfoPayload(ctx, sel, &obj)
-	case *model.UpdateGalleryInfoPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateGalleryInfoPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateGalleryOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateGalleryOrderPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.UpdateGalleryOrderPayload:
-		return ec._UpdateGalleryOrderPayload(ctx, sel, &obj)
-	case *model.UpdateGalleryOrderPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateGalleryOrderPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateGalleryPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.UpdateGalleryPayload:
-		return ec._UpdateGalleryPayload(ctx, sel, &obj)
-	case *model.UpdateGalleryPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateGalleryPayload(ctx, sel, obj)
+		return ec._UpdateFeaturedSplitPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -38062,6 +37912,156 @@ func (ec *executionContext) _UpdateSocialAccountDisplayedPayloadOrError(ctx cont
 			return graphql.Null
 		}
 		return ec._ErrNeedsToReconnectSocial(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpdateSplitCollectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitCollectionsPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.UpdateSplitCollectionsPayload:
+		return ec._UpdateSplitCollectionsPayload(ctx, sel, &obj)
+	case *model.UpdateSplitCollectionsPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitCollectionsPayload(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.UpdateSplitHiddenPayload:
+		return ec._UpdateSplitHiddenPayload(ctx, sel, &obj)
+	case *model.UpdateSplitHiddenPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitHiddenPayload(ctx, sel, obj)
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpdateSplitInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitInfoPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.UpdateSplitInfoPayload:
+		return ec._UpdateSplitInfoPayload(ctx, sel, &obj)
+	case *model.UpdateSplitInfoPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitInfoPayload(ctx, sel, obj)
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.UpdateSplitOrderPayload:
+		return ec._UpdateSplitOrderPayload(ctx, sel, &obj)
+	case *model.UpdateSplitOrderPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitOrderPayload(ctx, sel, obj)
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpdateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.UpdateSplitPayload:
+		return ec._UpdateSplitPayload(ctx, sel, &obj)
+	case *model.UpdateSplitPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitPayload(ctx, sel, obj)
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -38300,17 +38300,17 @@ func (ec *executionContext) _VerifyEmailPayloadOrError(ctx context.Context, sel 
 	}
 }
 
-func (ec *executionContext) _ViewGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _ViewSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ViewGalleryPayload:
-		return ec._ViewGalleryPayload(ctx, sel, &obj)
-	case *model.ViewGalleryPayload:
+	case model.ViewSplitPayload:
+		return ec._ViewSplitPayload(ctx, sel, &obj)
+	case *model.ViewSplitPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._ViewGalleryPayload(ctx, sel, obj)
+		return ec._ViewSplitPayload(ctx, sel, obj)
 	case model.ErrAuthenticationFailed:
 		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
 	case *model.ErrAuthenticationFailed:
@@ -38318,29 +38318,6 @@ func (ec *executionContext) _ViewGalleryPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrAuthenticationFailed(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _ViewerGalleryByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewerGalleryByIDPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ViewerGallery:
-		return ec._ViewerGallery(ctx, sel, &obj)
-	case *model.ViewerGallery:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ViewerGallery(ctx, sel, obj)
-	case model.ErrGalleryNotFound:
-		return ec._ErrGalleryNotFound(ctx, sel, &obj)
-	case *model.ErrGalleryNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrGalleryNotFound(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -38364,6 +38341,29 @@ func (ec *executionContext) _ViewerOrError(ctx context.Context, sel ast.Selectio
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _ViewerSplitByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ViewerSplit:
+		return ec._ViewerSplit(ctx, sel, &obj)
+	case *model.ViewerSplit:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ViewerSplit(ctx, sel, obj)
+	case model.ErrSplitNotFound:
+		return ec._ErrSplitNotFound(ctx, sel, &obj)
+	case *model.ErrSplitNotFound:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrSplitNotFound(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -38677,7 +38677,7 @@ func (ec *executionContext) _Collection(ctx context.Context, sel ast.SelectionSe
 
 			out.Values[i] = ec._Collection_collectorsNote(ctx, field, obj)
 
-		case "gallery":
+		case "split":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -38686,7 +38686,7 @@ func (ec *executionContext) _Collection(ctx context.Context, sel ast.SelectionSe
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Collection_gallery(ctx, field, obj)
+				res = ec._Collection_split(ctx, field, obj)
 				return res
 			}
 
@@ -39204,19 +39204,19 @@ func (ec *executionContext) _CreateCollectionPayload(ctx context.Context, sel as
 	return out
 }
 
-var createGalleryPayloadImplementors = []string{"CreateGalleryPayload", "CreateGalleryPayloadOrError"}
+var createSplitPayloadImplementors = []string{"CreateSplitPayload", "CreateSplitPayloadOrError"}
 
-func (ec *executionContext) _CreateGalleryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreateGalleryPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createGalleryPayloadImplementors)
+func (ec *executionContext) _CreateSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreateSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createSplitPayloadImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateGalleryPayload")
-		case "gallery":
+			out.Values[i] = graphql.MarshalString("CreateSplitPayload")
+		case "split":
 
-			out.Values[i] = ec._CreateGalleryPayload_gallery(ctx, field, obj)
+			out.Values[i] = ec._CreateSplitPayload_split(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -39243,9 +39243,9 @@ func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.Sele
 
 			out.Values[i] = ec._CreateUserPayload_userId(ctx, field, obj)
 
-		case "galleryId":
+		case "splitId":
 
-			out.Values[i] = ec._CreateUserPayload_galleryId(ctx, field, obj)
+			out.Values[i] = ec._CreateUserPayload_splitId(ctx, field, obj)
 
 		case "viewer":
 
@@ -39301,9 +39301,9 @@ func (ec *executionContext) _DeleteCollectionPayload(ctx context.Context, sel as
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DeleteCollectionPayload")
-		case "gallery":
+		case "split":
 
-			out.Values[i] = ec._DeleteCollectionPayload_gallery(ctx, field, obj)
+			out.Values[i] = ec._DeleteCollectionPayload_split(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -39316,19 +39316,19 @@ func (ec *executionContext) _DeleteCollectionPayload(ctx context.Context, sel as
 	return out
 }
 
-var deleteGalleryPayloadImplementors = []string{"DeleteGalleryPayload", "DeleteGalleryPayloadOrError"}
+var deleteSplitPayloadImplementors = []string{"DeleteSplitPayload", "DeleteSplitPayloadOrError"}
 
-func (ec *executionContext) _DeleteGalleryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteGalleryPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteGalleryPayloadImplementors)
+func (ec *executionContext) _DeleteSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteSplitPayloadImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteGalleryPayload")
+			out.Values[i] = graphql.MarshalString("DeleteSplitPayload")
 		case "deletedId":
 
-			out.Values[i] = ec._DeleteGalleryPayload_deletedId(ctx, field, obj)
+			out.Values[i] = ec._DeleteSplitPayload_deletedId(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -39464,7 +39464,7 @@ func (ec *executionContext) _ErrAddressOwnedByUser(ctx context.Context, sel ast.
 	return out
 }
 
-var errAuthenticationFailedImplementors = []string{"ErrAuthenticationFailed", "AddUserWalletPayloadOrError", "Error", "LoginPayloadOrError", "CreateUserPayloadOrError", "FollowUserPayloadOrError", "UnfollowUserPayloadOrError", "ViewGalleryPayloadOrError"}
+var errAuthenticationFailedImplementors = []string{"ErrAuthenticationFailed", "AddUserWalletPayloadOrError", "Error", "LoginPayloadOrError", "CreateUserPayloadOrError", "FollowUserPayloadOrError", "UnfollowUserPayloadOrError", "ViewSplitPayloadOrError"}
 
 func (ec *executionContext) _ErrAuthenticationFailed(ctx context.Context, sel ast.SelectionSet, obj *model.ErrAuthenticationFailed) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errAuthenticationFailedImplementors)
@@ -39576,35 +39576,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel
 	return out
 }
 
-var errGalleryNotFoundImplementors = []string{"ErrGalleryNotFound", "Error", "GalleryByIdPayloadOrError", "ViewerGalleryByIdPayloadOrError"}
-
-func (ec *executionContext) _ErrGalleryNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrGalleryNotFound) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, errGalleryNotFoundImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ErrGalleryNotFound")
-		case "message":
-
-			out.Values[i] = ec._ErrGalleryNotFound_message(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "CollectionByIdOrError", "CommunityByAddressOrError", "SocialConnectionsOrError", "SearchUsersPayloadOrError", "SearchGalleriesPayloadOrError", "SearchCommunitiesPayloadOrError", "CreateCollectionPayloadOrError", "DeleteCollectionPayloadOrError", "UpdateCollectionInfoPayloadOrError", "UpdateCollectionTokensPayloadOrError", "UpdateCollectionHiddenPayloadOrError", "UpdateGalleryCollectionsPayloadOrError", "UpdateTokenInfoPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RefreshTokenPayloadOrError", "RefreshCollectionPayloadOrError", "RefreshContractPayloadOrError", "Error", "CreateUserPayloadOrError", "FollowUserPayloadOrError", "UnfollowUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "CreateGalleryPayloadOrError", "UpdateGalleryInfoPayloadOrError", "UpdateGalleryHiddenPayloadOrError", "DeleteGalleryPayloadOrError", "UpdateGalleryOrderPayloadOrError", "UpdateFeaturedGalleryPayloadOrError", "UpdateGalleryPayloadOrError", "PublishGalleryPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "MoveCollectionToGalleryPayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "MintPremiumCardToWalletPayloadOrError", "DisconnectSocialAccountPayloadOrError", "FollowAllSocialConnectionsPayloadOrError"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "CollectionByIdOrError", "CommunityByAddressOrError", "SocialConnectionsOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "SearchCommunitiesPayloadOrError", "CreateCollectionPayloadOrError", "DeleteCollectionPayloadOrError", "UpdateCollectionInfoPayloadOrError", "UpdateCollectionTokensPayloadOrError", "UpdateCollectionHiddenPayloadOrError", "UpdateSplitCollectionsPayloadOrError", "UpdateTokenInfoPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RefreshTokenPayloadOrError", "RefreshCollectionPayloadOrError", "RefreshContractPayloadOrError", "Error", "CreateUserPayloadOrError", "FollowUserPayloadOrError", "UnfollowUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateFeaturedSplitPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "MoveCollectionToSplitPayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "MintPremiumCardToWalletPayloadOrError", "DisconnectSocialAccountPayloadOrError", "FollowAllSocialConnectionsPayloadOrError"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -39737,7 +39709,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "SocialQueriesOrError", "CreateCollectionPayloadOrError", "DeleteCollectionPayloadOrError", "UpdateCollectionInfoPayloadOrError", "UpdateCollectionTokensPayloadOrError", "UpdateCollectionHiddenPayloadOrError", "UpdateGalleryCollectionsPayloadOrError", "UpdateTokenInfoPayloadOrError", "SetSpamPreferencePayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "SyncTokensPayloadOrError", "Error", "DeepRefreshPayloadOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "UploadPersistedQueriesPayloadOrError", "SyncTokensForUsernamePayloadOrError", "CreateGalleryPayloadOrError", "UpdateGalleryInfoPayloadOrError", "UpdateGalleryHiddenPayloadOrError", "DeleteGalleryPayloadOrError", "UpdateGalleryOrderPayloadOrError", "UpdateFeaturedGalleryPayloadOrError", "UpdateGalleryPayloadOrError", "PublishGalleryPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "MoveCollectionToGalleryPayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "MintPremiumCardToWalletPayloadOrError", "DisconnectSocialAccountPayloadOrError", "FollowAllSocialConnectionsPayloadOrError"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "SocialQueriesOrError", "CreateCollectionPayloadOrError", "DeleteCollectionPayloadOrError", "UpdateCollectionInfoPayloadOrError", "UpdateCollectionTokensPayloadOrError", "UpdateCollectionHiddenPayloadOrError", "UpdateSplitCollectionsPayloadOrError", "UpdateTokenInfoPayloadOrError", "SetSpamPreferencePayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "SyncTokensPayloadOrError", "Error", "DeepRefreshPayloadOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "UploadPersistedQueriesPayloadOrError", "SyncTokensForUsernamePayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateFeaturedSplitPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "MoveCollectionToSplitPayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "MintPremiumCardToWalletPayloadOrError", "DisconnectSocialAccountPayloadOrError", "FollowAllSocialConnectionsPayloadOrError"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -39757,6 +39729,34 @@ func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.Selec
 		case "cause":
 
 			out.Values[i] = ec._ErrNotAuthorized_cause(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var errSplitNotFoundImplementors = []string{"ErrSplitNotFound", "Error", "SplitByIdPayloadOrError", "ViewerSplitByIdPayloadOrError"}
+
+func (ec *executionContext) _ErrSplitNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrSplitNotFound) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, errSplitNotFoundImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ErrSplitNotFound")
+		case "message":
+
+			out.Values[i] = ec._ErrSplitNotFound_message(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -40054,133 +40054,6 @@ func (ec *executionContext) _GIFMedia(ctx context.Context, sel ast.SelectionSet,
 		case "dimensions":
 
 			out.Values[i] = ec._GIFMedia_dimensions(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var galleryImplementors = []string{"Gallery", "Node", "GalleryByIdPayloadOrError"}
-
-func (ec *executionContext) _Gallery(ctx context.Context, sel ast.SelectionSet, obj *model.Gallery) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, galleryImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Gallery")
-		case "id":
-
-			out.Values[i] = ec._Gallery_id(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "dbid":
-
-			out.Values[i] = ec._Gallery_dbid(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "name":
-
-			out.Values[i] = ec._Gallery_name(ctx, field, obj)
-
-		case "description":
-
-			out.Values[i] = ec._Gallery_description(ctx, field, obj)
-
-		case "position":
-
-			out.Values[i] = ec._Gallery_position(ctx, field, obj)
-
-		case "hidden":
-
-			out.Values[i] = ec._Gallery_hidden(ctx, field, obj)
-
-		case "tokenPreviews":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Gallery_tokenPreviews(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "owner":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Gallery_owner(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "collections":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Gallery_collections(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var gallerySearchResultImplementors = []string{"GallerySearchResult"}
-
-func (ec *executionContext) _GallerySearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.GallerySearchResult) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, gallerySearchResultImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("GallerySearchResult")
-		case "gallery":
-
-			out.Values[i] = ec._GallerySearchResult_gallery(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -40622,23 +40495,23 @@ func (ec *executionContext) _MintPremiumCardToWalletPayload(ctx context.Context,
 	return out
 }
 
-var moveCollectionToGalleryPayloadImplementors = []string{"MoveCollectionToGalleryPayload", "MoveCollectionToGalleryPayloadOrError"}
+var moveCollectionToSplitPayloadImplementors = []string{"MoveCollectionToSplitPayload", "MoveCollectionToSplitPayloadOrError"}
 
-func (ec *executionContext) _MoveCollectionToGalleryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.MoveCollectionToGalleryPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, moveCollectionToGalleryPayloadImplementors)
+func (ec *executionContext) _MoveCollectionToSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.MoveCollectionToSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, moveCollectionToSplitPayloadImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("MoveCollectionToGalleryPayload")
-		case "oldGallery":
+			out.Values[i] = graphql.MarshalString("MoveCollectionToSplitPayload")
+		case "oldSplit":
 
-			out.Values[i] = ec._MoveCollectionToGalleryPayload_oldGallery(ctx, field, obj)
+			out.Values[i] = ec._MoveCollectionToSplitPayload_oldSplit(ctx, field, obj)
 
-		case "newGallery":
+		case "newSplit":
 
-			out.Values[i] = ec._MoveCollectionToGalleryPayload_newGallery(ctx, field, obj)
+			out.Values[i] = ec._MoveCollectionToSplitPayload_newSplit(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -40688,10 +40561,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 				return ec._Mutation_updateUserInfo(ctx, field)
 			})
 
-		case "updateGalleryCollections":
+		case "updateSplitCollections":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateGalleryCollections(ctx, field)
+				return ec._Mutation_updateSplitCollections(ctx, field)
 			})
 
 		case "createCollection":
@@ -40850,58 +40723,58 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 				return ec._Mutation_unfollowUser(ctx, field)
 			})
 
-		case "viewGallery":
+		case "viewSplit":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_viewGallery(ctx, field)
+				return ec._Mutation_viewSplit(ctx, field)
 			})
 
-		case "updateGallery":
+		case "updateSplit":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateGallery(ctx, field)
+				return ec._Mutation_updateSplit(ctx, field)
 			})
 
-		case "publishGallery":
+		case "publishSplit":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_publishGallery(ctx, field)
+				return ec._Mutation_publishSplit(ctx, field)
 			})
 
-		case "createGallery":
+		case "createSplit":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createGallery(ctx, field)
+				return ec._Mutation_createSplit(ctx, field)
 			})
 
-		case "updateGalleryHidden":
+		case "updateSplitHidden":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateGalleryHidden(ctx, field)
+				return ec._Mutation_updateSplitHidden(ctx, field)
 			})
 
-		case "deleteGallery":
+		case "deleteSplit":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteGallery(ctx, field)
+				return ec._Mutation_deleteSplit(ctx, field)
 			})
 
-		case "updateGalleryOrder":
+		case "updateSplitOrder":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateGalleryOrder(ctx, field)
+				return ec._Mutation_updateSplitOrder(ctx, field)
 			})
 
-		case "updateGalleryInfo":
+		case "updateSplitInfo":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateGalleryInfo(ctx, field)
+				return ec._Mutation_updateSplitInfo(ctx, field)
 			})
 
-		case "updateFeaturedGallery":
+		case "updateFeaturedSplit":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateFeaturedGallery(ctx, field)
+				return ec._Mutation_updateFeaturedSplit(ctx, field)
 			})
 
 		case "clearAllNotifications":
@@ -40976,10 +40849,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 				return ec._Mutation_updateUserExperience(ctx, field)
 			})
 
-		case "moveCollectionToGallery":
+		case "moveCollectionToSplit":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_moveCollectionToGallery(ctx, field)
+				return ec._Mutation_moveCollectionToSplit(ctx, field)
 			})
 
 		default:
@@ -41036,9 +40909,9 @@ func (ec *executionContext) _NotificationSettings(ctx context.Context, sel ast.S
 
 			out.Values[i] = ec._NotificationSettings_someoneFollowedYou(ctx, field, obj)
 
-		case "someoneViewedYourGallery":
+		case "someoneViewedYourSplit":
 
-			out.Values[i] = ec._NotificationSettings_someoneViewedYourGallery(ctx, field, obj)
+			out.Values[i] = ec._NotificationSettings_someoneViewedYourSplit(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -41328,19 +41201,19 @@ func (ec *executionContext) _PreviewURLSet(ctx context.Context, sel ast.Selectio
 	return out
 }
 
-var publishGalleryPayloadImplementors = []string{"PublishGalleryPayload", "PublishGalleryPayloadOrError"}
+var publishSplitPayloadImplementors = []string{"PublishSplitPayload", "PublishSplitPayloadOrError"}
 
-func (ec *executionContext) _PublishGalleryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PublishGalleryPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, publishGalleryPayloadImplementors)
+func (ec *executionContext) _PublishSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PublishSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, publishSplitPayloadImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PublishGalleryPayload")
-		case "gallery":
+			out.Values[i] = graphql.MarshalString("PublishSplitPayload")
+		case "split":
 
-			out.Values[i] = ec._PublishGalleryPayload_gallery(ctx, field, obj)
+			out.Values[i] = ec._PublishSplitPayload_split(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -41632,7 +41505,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "galleryById":
+		case "splitById":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -41641,7 +41514,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_galleryById(ctx, field)
+				res = ec._Query_splitById(ctx, field)
 				return res
 			}
 
@@ -41652,7 +41525,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "viewerGalleryById":
+		case "viewerSplitById":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -41661,7 +41534,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_viewerGalleryById(ctx, field)
+				res = ec._Query_viewerSplitById(ctx, field)
 				return res
 			}
 
@@ -41692,7 +41565,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "searchGalleries":
+		case "searchSplits":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -41701,7 +41574,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_searchGalleries(ctx, field)
+				res = ec._Query_searchSplits(ctx, field)
 				return res
 			}
 
@@ -41988,19 +41861,19 @@ func (ec *executionContext) _SearchCommunitiesPayload(ctx context.Context, sel a
 	return out
 }
 
-var searchGalleriesPayloadImplementors = []string{"SearchGalleriesPayload", "SearchGalleriesPayloadOrError"}
+var searchSplitsPayloadImplementors = []string{"SearchSplitsPayload", "SearchSplitsPayloadOrError"}
 
-func (ec *executionContext) _SearchGalleriesPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SearchGalleriesPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, searchGalleriesPayloadImplementors)
+func (ec *executionContext) _SearchSplitsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SearchSplitsPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchSplitsPayloadImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SearchGalleriesPayload")
+			out.Values[i] = graphql.MarshalString("SearchSplitsPayload")
 		case "results":
 
-			out.Values[i] = ec._SearchGalleriesPayload_results(ctx, field, obj)
+			out.Values[i] = ec._SearchSplitsPayload_results(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -42423,45 +42296,45 @@ func (ec *executionContext) _SomeoneFollowedYouNotification(ctx context.Context,
 	return out
 }
 
-var someoneViewedYourGalleryNotificationImplementors = []string{"SomeoneViewedYourGalleryNotification", "Notification", "Node", "GroupedNotification"}
+var someoneViewedYourSplitNotificationImplementors = []string{"SomeoneViewedYourSplitNotification", "Notification", "Node", "GroupedNotification"}
 
-func (ec *executionContext) _SomeoneViewedYourGalleryNotification(ctx context.Context, sel ast.SelectionSet, obj *model.SomeoneViewedYourGalleryNotification) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, someoneViewedYourGalleryNotificationImplementors)
+func (ec *executionContext) _SomeoneViewedYourSplitNotification(ctx context.Context, sel ast.SelectionSet, obj *model.SomeoneViewedYourSplitNotification) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, someoneViewedYourSplitNotificationImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SomeoneViewedYourGalleryNotification")
+			out.Values[i] = graphql.MarshalString("SomeoneViewedYourSplitNotification")
 		case "id":
 
-			out.Values[i] = ec._SomeoneViewedYourGalleryNotification_id(ctx, field, obj)
+			out.Values[i] = ec._SomeoneViewedYourSplitNotification_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "dbid":
 
-			out.Values[i] = ec._SomeoneViewedYourGalleryNotification_dbid(ctx, field, obj)
+			out.Values[i] = ec._SomeoneViewedYourSplitNotification_dbid(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "seen":
 
-			out.Values[i] = ec._SomeoneViewedYourGalleryNotification_seen(ctx, field, obj)
+			out.Values[i] = ec._SomeoneViewedYourSplitNotification_seen(ctx, field, obj)
 
 		case "creationTime":
 
-			out.Values[i] = ec._SomeoneViewedYourGalleryNotification_creationTime(ctx, field, obj)
+			out.Values[i] = ec._SomeoneViewedYourSplitNotification_creationTime(ctx, field, obj)
 
 		case "updatedTime":
 
-			out.Values[i] = ec._SomeoneViewedYourGalleryNotification_updatedTime(ctx, field, obj)
+			out.Values[i] = ec._SomeoneViewedYourSplitNotification_updatedTime(ctx, field, obj)
 
 		case "count":
 
-			out.Values[i] = ec._SomeoneViewedYourGalleryNotification_count(ctx, field, obj)
+			out.Values[i] = ec._SomeoneViewedYourSplitNotification_count(ctx, field, obj)
 
 		case "userViewers":
 			field := field
@@ -42472,7 +42345,7 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification(ctx context.Co
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SomeoneViewedYourGalleryNotification_userViewers(ctx, field, obj)
+				res = ec._SomeoneViewedYourSplitNotification_userViewers(ctx, field, obj)
 				return res
 			}
 
@@ -42482,9 +42355,9 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification(ctx context.Co
 			})
 		case "nonUserViewerCount":
 
-			out.Values[i] = ec._SomeoneViewedYourGalleryNotification_nonUserViewerCount(ctx, field, obj)
+			out.Values[i] = ec._SomeoneViewedYourSplitNotification_nonUserViewerCount(ctx, field, obj)
 
-		case "gallery":
+		case "split":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -42493,7 +42366,109 @@ func (ec *executionContext) _SomeoneViewedYourGalleryNotification(ctx context.Co
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SomeoneViewedYourGalleryNotification_gallery(ctx, field, obj)
+				res = ec._SomeoneViewedYourSplitNotification_split(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var splitImplementors = []string{"Split", "Node", "SplitByIdPayloadOrError"}
+
+func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, obj *model.Split) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, splitImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Split")
+		case "id":
+
+			out.Values[i] = ec._Split_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "dbid":
+
+			out.Values[i] = ec._Split_dbid(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "name":
+
+			out.Values[i] = ec._Split_name(ctx, field, obj)
+
+		case "description":
+
+			out.Values[i] = ec._Split_description(ctx, field, obj)
+
+		case "position":
+
+			out.Values[i] = ec._Split_position(ctx, field, obj)
+
+		case "hidden":
+
+			out.Values[i] = ec._Split_hidden(ctx, field, obj)
+
+		case "tokenPreviews":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Split_tokenPreviews(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "owner":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Split_owner(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "collections":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Split_collections(ctx, field, obj)
 				return res
 			}
 
@@ -42654,7 +42629,7 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return innerFunc(ctx)
 
 			})
-		case "featuredGallery":
+		case "featuredSplit":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -42663,7 +42638,7 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SplitFiUser_featuredGallery(ctx, field, obj)
+				res = ec._SplitFiUser_featuredSplit(ctx, field, obj)
 				return res
 			}
 
@@ -42671,7 +42646,7 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return innerFunc(ctx)
 
 			})
-		case "galleries":
+		case "splits":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -42680,7 +42655,7 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SplitFiUser_galleries(ctx, field, obj)
+				res = ec._SplitFiUser_splits(ctx, field, obj)
 				return res
 			}
 
@@ -42777,6 +42752,31 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return innerFunc(ctx)
 
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var splitSearchResultImplementors = []string{"SplitSearchResult"}
+
+func (ec *executionContext) _SplitSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.SplitSearchResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, splitSearchResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SplitSearchResult")
+		case "split":
+
+			out.Values[i] = ec._SplitSearchResult_split(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43588,144 +43588,19 @@ func (ec *executionContext) _UpdateEmailPayload(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var updateFeaturedGalleryPayloadImplementors = []string{"UpdateFeaturedGalleryPayload", "UpdateFeaturedGalleryPayloadOrError"}
+var updateFeaturedSplitPayloadImplementors = []string{"UpdateFeaturedSplitPayload", "UpdateFeaturedSplitPayloadOrError"}
 
-func (ec *executionContext) _UpdateFeaturedGalleryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateFeaturedGalleryPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateFeaturedGalleryPayloadImplementors)
+func (ec *executionContext) _UpdateFeaturedSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateFeaturedSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateFeaturedSplitPayloadImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateFeaturedGalleryPayload")
+			out.Values[i] = graphql.MarshalString("UpdateFeaturedSplitPayload")
 		case "viewer":
 
-			out.Values[i] = ec._UpdateFeaturedGalleryPayload_viewer(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var updateGalleryCollectionsPayloadImplementors = []string{"UpdateGalleryCollectionsPayload", "UpdateGalleryCollectionsPayloadOrError"}
-
-func (ec *executionContext) _UpdateGalleryCollectionsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateGalleryCollectionsPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateGalleryCollectionsPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateGalleryCollectionsPayload")
-		case "gallery":
-
-			out.Values[i] = ec._UpdateGalleryCollectionsPayload_gallery(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var updateGalleryHiddenPayloadImplementors = []string{"UpdateGalleryHiddenPayload", "UpdateGalleryHiddenPayloadOrError"}
-
-func (ec *executionContext) _UpdateGalleryHiddenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateGalleryHiddenPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateGalleryHiddenPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateGalleryHiddenPayload")
-		case "gallery":
-
-			out.Values[i] = ec._UpdateGalleryHiddenPayload_gallery(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var updateGalleryInfoPayloadImplementors = []string{"UpdateGalleryInfoPayload", "UpdateGalleryInfoPayloadOrError"}
-
-func (ec *executionContext) _UpdateGalleryInfoPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateGalleryInfoPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateGalleryInfoPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateGalleryInfoPayload")
-		case "gallery":
-
-			out.Values[i] = ec._UpdateGalleryInfoPayload_gallery(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var updateGalleryOrderPayloadImplementors = []string{"UpdateGalleryOrderPayload", "UpdateGalleryOrderPayloadOrError"}
-
-func (ec *executionContext) _UpdateGalleryOrderPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateGalleryOrderPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateGalleryOrderPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateGalleryOrderPayload")
-		case "viewer":
-
-			out.Values[i] = ec._UpdateGalleryOrderPayload_viewer(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var updateGalleryPayloadImplementors = []string{"UpdateGalleryPayload", "UpdateGalleryPayloadOrError"}
-
-func (ec *executionContext) _UpdateGalleryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateGalleryPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateGalleryPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateGalleryPayload")
-		case "gallery":
-
-			out.Values[i] = ec._UpdateGalleryPayload_gallery(ctx, field, obj)
+			out.Values[i] = ec._UpdateFeaturedSplitPayload_viewer(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -43776,6 +43651,131 @@ func (ec *executionContext) _UpdateSocialAccountDisplayedPayload(ctx context.Con
 		case "viewer":
 
 			out.Values[i] = ec._UpdateSocialAccountDisplayedPayload_viewer(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var updateSplitCollectionsPayloadImplementors = []string{"UpdateSplitCollectionsPayload", "UpdateSplitCollectionsPayloadOrError"}
+
+func (ec *executionContext) _UpdateSplitCollectionsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitCollectionsPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitCollectionsPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateSplitCollectionsPayload")
+		case "split":
+
+			out.Values[i] = ec._UpdateSplitCollectionsPayload_split(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var updateSplitHiddenPayloadImplementors = []string{"UpdateSplitHiddenPayload", "UpdateSplitHiddenPayloadOrError"}
+
+func (ec *executionContext) _UpdateSplitHiddenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitHiddenPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitHiddenPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateSplitHiddenPayload")
+		case "split":
+
+			out.Values[i] = ec._UpdateSplitHiddenPayload_split(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var updateSplitInfoPayloadImplementors = []string{"UpdateSplitInfoPayload", "UpdateSplitInfoPayloadOrError"}
+
+func (ec *executionContext) _UpdateSplitInfoPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitInfoPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitInfoPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateSplitInfoPayload")
+		case "split":
+
+			out.Values[i] = ec._UpdateSplitInfoPayload_split(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var updateSplitOrderPayloadImplementors = []string{"UpdateSplitOrderPayload", "UpdateSplitOrderPayloadOrError"}
+
+func (ec *executionContext) _UpdateSplitOrderPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitOrderPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitOrderPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateSplitOrderPayload")
+		case "viewer":
+
+			out.Values[i] = ec._UpdateSplitOrderPayload_viewer(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var updateSplitPayloadImplementors = []string{"UpdateSplitPayload", "UpdateSplitPayloadOrError"}
+
+func (ec *executionContext) _UpdateSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateSplitPayload")
+		case "split":
+
+			out.Values[i] = ec._UpdateSplitPayload_split(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -44148,19 +44148,19 @@ func (ec *executionContext) _VideoURLSet(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var viewGalleryPayloadImplementors = []string{"ViewGalleryPayload", "ViewGalleryPayloadOrError"}
+var viewSplitPayloadImplementors = []string{"ViewSplitPayload", "ViewSplitPayloadOrError"}
 
-func (ec *executionContext) _ViewGalleryPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ViewGalleryPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, viewGalleryPayloadImplementors)
+func (ec *executionContext) _ViewSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ViewSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, viewSplitPayloadImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("ViewGalleryPayload")
-		case "gallery":
+			out.Values[i] = graphql.MarshalString("ViewSplitPayload")
+		case "split":
 
-			out.Values[i] = ec._ViewGalleryPayload_gallery(ctx, field, obj)
+			out.Values[i] = ec._ViewSplitPayload_split(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -44224,7 +44224,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 				return innerFunc(ctx)
 
 			})
-		case "viewerGalleries":
+		case "viewerSplits":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -44233,7 +44233,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Viewer_viewerGalleries(ctx, field, obj)
+				res = ec._Viewer_viewerSplits(ctx, field, obj)
 				return res
 			}
 
@@ -44320,19 +44320,19 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var viewerGalleryImplementors = []string{"ViewerGallery", "ViewerGalleryByIdPayloadOrError"}
+var viewerSplitImplementors = []string{"ViewerSplit", "ViewerSplitByIdPayloadOrError"}
 
-func (ec *executionContext) _ViewerGallery(ctx context.Context, sel ast.SelectionSet, obj *model.ViewerGallery) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, viewerGalleryImplementors)
+func (ec *executionContext) _ViewerSplit(ctx context.Context, sel ast.SelectionSet, obj *model.ViewerSplit) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, viewerSplitImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("ViewerGallery")
-		case "gallery":
+			out.Values[i] = graphql.MarshalString("ViewerSplit")
+		case "split":
 
-			out.Values[i] = ec._ViewerGallery_gallery(ctx, field, obj)
+			out.Values[i] = ec._ViewerSplit_split(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -44963,8 +44963,8 @@ func (ec *executionContext) unmarshalNCreateCollectionInput2githubᚗcomᚋmikey
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateGalleryInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateGalleryInput(ctx context.Context, v interface{}) (model.CreateGalleryInput, error) {
-	res, err := ec.unmarshalInputCreateGalleryInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitInput(ctx context.Context, v interface{}) (model.CreateSplitInput, error) {
+	res, err := ec.unmarshalInputCreateSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -45050,38 +45050,6 @@ func (ec *executionContext) unmarshalNEmailUnsubscriptionType2githubᚗcomᚋmik
 
 func (ec *executionContext) marshalNEmailUnsubscriptionType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, sel ast.SelectionSet, v model.EmailUnsubscriptionType) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) unmarshalNGalleryPositionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.GalleryPositionInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*model.GalleryPositionInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNGalleryPositionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryPositionInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) unmarshalNGalleryPositionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryPositionInput(ctx context.Context, v interface{}) (*model.GalleryPositionInput, error) {
-	res, err := ec.unmarshalInputGalleryPositionInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGallerySearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallerySearchResult(ctx context.Context, sel ast.SelectionSet, v *model.GallerySearchResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._GallerySearchResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
@@ -45193,8 +45161,8 @@ func (ec *executionContext) marshalNPubKey2githubᚗcomᚋmikeydubᚋgoᚑgaller
 	return res
 }
 
-func (ec *executionContext) unmarshalNPublishGalleryInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishGalleryInput(ctx context.Context, v interface{}) (model.PublishGalleryInput, error) {
-	res, err := ec.unmarshalInputPublishGalleryInput(ctx, v)
+func (ec *executionContext) unmarshalNPublishSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitInput(ctx context.Context, v interface{}) (model.PublishSplitInput, error) {
+	res, err := ec.unmarshalInputPublishSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -45232,6 +45200,38 @@ func (ec *executionContext) marshalNSocialAccountType2githubᚗcomᚋmikeydubᚋ
 func (ec *executionContext) unmarshalNSocialAuthMechanism2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialAuthMechanism(ctx context.Context, v interface{}) (model.SocialAuthMechanism, error) {
 	res, err := ec.unmarshalInputSocialAuthMechanism(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.SplitPositionInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInput(ctx context.Context, v interface{}) (*model.SplitPositionInput, error) {
+	res, err := ec.unmarshalInputSplitPositionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SplitSearchResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SplitSearchResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -45311,33 +45311,33 @@ func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githu
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateGalleryCollectionsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryCollectionsInput(ctx context.Context, v interface{}) (model.UpdateGalleryCollectionsInput, error) {
-	res, err := ec.unmarshalInputUpdateGalleryCollectionsInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateGalleryHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryHiddenInput(ctx context.Context, v interface{}) (model.UpdateGalleryHiddenInput, error) {
-	res, err := ec.unmarshalInputUpdateGalleryHiddenInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateGalleryInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryInfoInput(ctx context.Context, v interface{}) (model.UpdateGalleryInfoInput, error) {
-	res, err := ec.unmarshalInputUpdateGalleryInfoInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateGalleryInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryInput(ctx context.Context, v interface{}) (model.UpdateGalleryInput, error) {
-	res, err := ec.unmarshalInputUpdateGalleryInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateGalleryOrderInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryOrderInput(ctx context.Context, v interface{}) (model.UpdateGalleryOrderInput, error) {
-	res, err := ec.unmarshalInputUpdateGalleryOrderInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx context.Context, v interface{}) (model.UpdateSocialAccountDisplayedInput, error) {
 	res, err := ec.unmarshalInputUpdateSocialAccountDisplayedInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateSplitCollectionsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsInput(ctx context.Context, v interface{}) (model.UpdateSplitCollectionsInput, error) {
+	res, err := ec.unmarshalInputUpdateSplitCollectionsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx context.Context, v interface{}) (model.UpdateSplitHiddenInput, error) {
+	res, err := ec.unmarshalInputUpdateSplitHiddenInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateSplitInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx context.Context, v interface{}) (model.UpdateSplitInfoInput, error) {
+	res, err := ec.unmarshalInputUpdateSplitInfoInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx context.Context, v interface{}) (model.UpdateSplitInput, error) {
+	res, err := ec.unmarshalInputUpdateSplitInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx context.Context, v interface{}) (model.UpdateSplitOrderInput, error) {
+	res, err := ec.unmarshalInputUpdateSplitOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -46341,7 +46341,7 @@ func (ec *executionContext) marshalOContract2ᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 	return ec._Contract(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOCreateCollectionInGalleryInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInGalleryInput(ctx context.Context, v interface{}) ([]*model.CreateCollectionInGalleryInput, error) {
+func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx context.Context, v interface{}) ([]*model.CreateCollectionInSplitInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46350,10 +46350,10 @@ func (ec *executionContext) unmarshalOCreateCollectionInGalleryInput2ᚕᚖgithu
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.CreateCollectionInGalleryInput, len(vSlice))
+	res := make([]*model.CreateCollectionInSplitInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOCreateCollectionInGalleryInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInGalleryInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOCreateCollectionInSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -46361,11 +46361,11 @@ func (ec *executionContext) unmarshalOCreateCollectionInGalleryInput2ᚕᚖgithu
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOCreateCollectionInGalleryInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInGalleryInput(ctx context.Context, v interface{}) (*model.CreateCollectionInGalleryInput, error) {
+func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx context.Context, v interface{}) (*model.CreateCollectionInSplitInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputCreateCollectionInGalleryInput(ctx, v)
+	res, err := ec.unmarshalInputCreateCollectionInSplitInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -46376,11 +46376,11 @@ func (ec *executionContext) marshalOCreateCollectionPayloadOrError2githubᚗcom�
 	return ec._CreateCollectionPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreateGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCreateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._CreateGalleryPayloadOrError(ctx, sel, v)
+	return ec._CreateSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOCreateUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateUserPayloadOrError) graphql.Marshaler {
@@ -46475,11 +46475,11 @@ func (ec *executionContext) marshalODeleteCollectionPayloadOrError2githubᚗcom�
 	return ec._DeleteCollectionPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODeleteGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalODeleteSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._DeleteGalleryPayloadOrError(ctx, sel, v)
+	return ec._DeleteSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalODeletedNode2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeletedNode(ctx context.Context, sel ast.SelectionSet, v *model.DeletedNode) graphql.Marshaler {
@@ -46572,108 +46572,6 @@ func (ec *executionContext) marshalOFollowUserPayloadOrError2githubᚗcomᚋmike
 		return graphql.Null
 	}
 	return ec._FollowUserPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOGallery2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx context.Context, sel ast.SelectionSet, v []*model.Gallery) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallery(ctx context.Context, sel ast.SelectionSet, v *model.Gallery) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Gallery(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOGalleryByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGalleryByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.GalleryByIDPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._GalleryByIdPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOGallerySearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallerySearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GallerySearchResult) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNGallerySearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGallerySearchResult(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.GetAuthNoncePayloadOrError) graphql.Marshaler {
@@ -46885,19 +46783,19 @@ func (ec *executionContext) marshalOMintPremiumCardToWalletPayloadOrError2github
 	return ec._MintPremiumCardToWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOMoveCollectionToGalleryInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToGalleryInput(ctx context.Context, v interface{}) (*model.MoveCollectionToGalleryInput, error) {
+func (ec *executionContext) unmarshalOMoveCollectionToSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitInput(ctx context.Context, v interface{}) (*model.MoveCollectionToSplitInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputMoveCollectionToGalleryInput(ctx, v)
+	res, err := ec.unmarshalInputMoveCollectionToSplitInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMoveCollectionToGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MoveCollectionToGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOMoveCollectionToSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MoveCollectionToSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._MoveCollectionToGalleryPayloadOrError(ctx, sel, v)
+	return ec._MoveCollectionToSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalONode2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
@@ -47146,11 +47044,11 @@ func (ec *executionContext) marshalOPubKey2githubᚗcomᚋmikeydubᚋgoᚑgaller
 	return res
 }
 
-func (ec *executionContext) marshalOPublishGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOPublishSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._PublishGalleryPayloadOrError(ctx, sel, v)
+	return ec._PublishSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORefreshCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshCollectionPayloadOrError) graphql.Marshaler {
@@ -47279,11 +47177,11 @@ func (ec *executionContext) marshalOSearchCommunitiesPayloadOrError2githubᚗcom
 	return ec._SearchCommunitiesPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSearchGalleriesPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchGalleriesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchGalleriesPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchSplitsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._SearchGalleriesPayloadOrError(ctx, sel, v)
+	return ec._SearchSplitsPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchUsersPayloadOrError) graphql.Marshaler {
@@ -47376,6 +47274,61 @@ func (ec *executionContext) marshalOSocialQueriesOrError2githubᚗcomᚋmikeydub
 	return ec._SocialQueriesOrError(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v *model.Split) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Split(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SplitByIDPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SplitByIdPayloadOrError(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v []*model.SplitFiUser) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -47429,6 +47382,53 @@ func (ec *executionContext) marshalOSplitFiUserOrAddress2githubᚗcomᚋmikeydub
 		return graphql.Null
 	}
 	return ec._SplitFiUserOrAddress(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SplitSearchResult) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSplitSearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
@@ -47878,46 +47878,11 @@ func (ec *executionContext) marshalOUpdateEmailPayloadOrError2githubᚗcomᚋmik
 	return ec._UpdateEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateFeaturedGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateFeaturedGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateFeaturedGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateFeaturedSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateFeaturedSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateFeaturedSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._UpdateFeaturedGalleryPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateGalleryCollectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryCollectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateGalleryCollectionsPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateGalleryCollectionsPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateGalleryHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateGalleryHiddenPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateGalleryHiddenPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateGalleryInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateGalleryInfoPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateGalleryInfoPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateGalleryOrderPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateGalleryOrderPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateGalleryOrderPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateGalleryPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateGalleryPayloadOrError(ctx, sel, v)
+	return ec._UpdateFeaturedSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePrimaryWalletPayloadOrError) graphql.Marshaler {
@@ -47932,6 +47897,41 @@ func (ec *executionContext) marshalOUpdateSocialAccountDisplayedPayloadOrError2g
 		return graphql.Null
 	}
 	return ec._UpdateSocialAccountDisplayedPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateSplitCollectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitCollectionsPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateSplitCollectionsPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateSplitHiddenPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitInfoPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateSplitInfoPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateSplitOrderPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUpdateTokenInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateTokenInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateTokenInfoPayloadOrError) graphql.Marshaler {
@@ -48161,11 +48161,11 @@ func (ec *executionContext) marshalOVideoURLSet2ᚖgithubᚗcomᚋmikeydubᚋgo�
 	return ec._VideoURLSet(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewGalleryPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewGalleryPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewGalleryPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._ViewGalleryPayloadOrError(ctx, sel, v)
+	return ec._ViewSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {
@@ -48175,7 +48175,14 @@ func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgal
 	return ec._Viewer(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerGallery2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerGallery(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerGallery) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ViewerOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerSplit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -48202,7 +48209,7 @@ func (ec *executionContext) marshalOViewerGallery2ᚕᚖgithubᚗcomᚋmikeydub�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOViewerGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerGallery(ctx, sel, v[i])
+			ret[i] = ec.marshalOViewerSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -48216,25 +48223,18 @@ func (ec *executionContext) marshalOViewerGallery2ᚕᚖgithubᚗcomᚋmikeydub�
 	return ret
 }
 
-func (ec *executionContext) marshalOViewerGallery2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerGallery(ctx context.Context, sel ast.SelectionSet, v *model.ViewerGallery) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v *model.ViewerSplit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._ViewerGallery(ctx, sel, v)
+	return ec._ViewerSplit(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerGalleryByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerGalleryByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerGalleryByIDPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._ViewerGalleryByIdPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOViewerOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ViewerOrError(ctx, sel, v)
+	return ec._ViewerSplitByIdPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v []*model.Wallet) graphql.Marshaler {

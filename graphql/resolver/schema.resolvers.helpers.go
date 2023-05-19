@@ -36,7 +36,7 @@ import (
 var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 
 var nodeFetcher = model.NodeFetcher{
-	OnGallery:          resolveGalleryByGalleryID,
+	OnSplit:            resolveSplitBySplitID,
 	OnCollection:       resolveCollectionByCollectionID,
 	OnSplitFiUser:      resolveSplitFiUserByUserID,
 	OnMembershipTier:   resolveMembershipTierByMembershipId,
@@ -78,13 +78,13 @@ var nodeFetcher = model.NodeFetcher{
 
 		return &notifConverted, nil
 	},
-	OnSomeoneViewedYourGalleryNotification: func(ctx context.Context, dbid persist.DBID) (*model.SomeoneViewedYourGalleryNotification, error) {
+	OnSomeoneViewedYourSplitNotification: func(ctx context.Context, dbid persist.DBID) (*model.SomeoneViewedYourSplitNotification, error) {
 		notif, err := resolveNotificationByID(ctx, dbid)
 		if err != nil {
 			return nil, err
 		}
 
-		notifConverted := notif.(model.SomeoneViewedYourGalleryNotification)
+		notifConverted := notif.(model.SomeoneViewedYourSplitNotification)
 
 		return &notifConverted, nil
 	},
@@ -130,8 +130,8 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 		mappedErr = model.ErrInvalidInput{Message: message, Parameters: validationErr.Parameters, Reasons: validationErr.Reasons}
 	//case persist.ErrUnknownAction:
 	//	mappedErr = model.ErrUnknownAction{Message: message}
-	case persist.ErrGalleryNotFound:
-		mappedErr = model.ErrGalleryNotFound{Message: message}
+	case persist.ErrSplitNotFound:
+		mappedErr = model.ErrSplitNotFound{Message: message}
 	case twitter.ErrInvalidRefreshToken:
 		mappedErr = model.ErrNeedsToReconnectSocial{SocialAccountType: persist.SocialProviderTwitter, Message: message}
 	}
@@ -283,16 +283,16 @@ func resolveSplitFiUserByUsername(ctx context.Context, username string) (*model.
 	return userToModel(ctx, *user), nil
 }
 
-func resolveGalleriesByUserID(ctx context.Context, userID persist.DBID) ([]*model.Gallery, error) {
-	galleries, err := publicapi.For(ctx).Gallery.GetGalleriesByUserId(ctx, userID)
+func resolveSplitsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Split, error) {
+	splits, err := publicapi.For(ctx).Split.GetSplitsByUserId(ctx, userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var output = make([]*model.Gallery, len(galleries))
-	for i, gallery := range galleries {
-		output[i] = galleryToModel(ctx, gallery)
+	var output = make([]*model.Split, len(splits))
+	for i, split := range splits {
+		output[i] = splitToModel(ctx, split)
 	}
 
 	return output, nil
@@ -324,8 +324,8 @@ func resolveCollectionsByCollectionIDs(ctx context.Context, collectionIDs []pers
 	return models, errors
 }
 
-func resolveCollectionsByGalleryID(ctx context.Context, galleryID persist.DBID) ([]*model.Collection, error) {
-	collections, err := publicapi.For(ctx).Collection.GetCollectionsByGalleryId(ctx, galleryID)
+func resolveCollectionsBySplitID(ctx context.Context, splitID persist.DBID) ([]*model.Collection, error) {
+	collections, err := publicapi.For(ctx).Collection.GetCollectionsBySplitId(ctx, splitID)
 	if err != nil {
 		return nil, err
 	}
@@ -338,8 +338,8 @@ func resolveCollectionsByGalleryID(ctx context.Context, galleryID persist.DBID) 
 	return output, nil
 }
 
-func resolveTokenPreviewsByGalleryID(ctx context.Context, galleryID persist.DBID) ([]*model.PreviewURLSet, error) {
-	medias, err := publicapi.For(ctx).Gallery.GetTokenPreviewsByGalleryID(ctx, galleryID)
+func resolveTokenPreviewsBySplitID(ctx context.Context, splitID persist.DBID) ([]*model.PreviewURLSet, error) {
+	medias, err := publicapi.For(ctx).Split.GetTokenPreviewsBySplitID(ctx, splitID)
 	if err != nil {
 		return nil, err
 	}
@@ -357,34 +357,34 @@ func resolveCollectionTokenByID(ctx context.Context, tokenID persist.DBID, colle
 	return tokenCollectionToModel(ctx, token, collectionID), nil
 }
 
-func resolveGalleryByGalleryID(ctx context.Context, galleryID persist.DBID) (*model.Gallery, error) {
-	dbGal, err := publicapi.For(ctx).Gallery.GetGalleryById(ctx, galleryID)
+func resolveSplitBySplitID(ctx context.Context, splitID persist.DBID) (*model.Split, error) {
+	dbSplit, err := publicapi.For(ctx).Split.GetSplitById(ctx, splitID)
 	if err != nil {
 		return nil, err
 	}
-	gallery := &model.Gallery{
-		Dbid:          galleryID,
-		Name:          &dbGal.Name,
-		Description:   &dbGal.Description,
-		Position:      &dbGal.Position,
-		Hidden:        &dbGal.Hidden,
+	split := &model.Split{
+		Dbid:          splitID,
+		Name:          &dbSplit.Name,
+		Description:   &dbSplit.Description,
+		Position:      &dbSplit.Position,
+		Hidden:        &dbSplit.Hidden,
 		TokenPreviews: nil, // handled by dedicated resolver
 		Owner:         nil, // handled by dedicated resolver
 		Collections:   nil, // handled by dedicated resolver
 	}
 
-	return gallery, nil
+	return split, nil
 }
 
-func resolveViewerGalleryByGalleryID(ctx context.Context, galleryID persist.DBID) (*model.ViewerGallery, error) {
-	gallery, err := publicapi.For(ctx).Gallery.GetViewerGalleryById(ctx, galleryID)
+func resolveViewerSplitBySplitID(ctx context.Context, splitID persist.DBID) (*model.ViewerSplit, error) {
+	split, err := publicapi.For(ctx).Split.GetViewerSplitById(ctx, splitID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.ViewerGallery{
-		Gallery: galleryToModel(ctx, *gallery),
+	return &model.ViewerSplit{
+		Split: splitToModel(ctx, *split),
 	}, nil
 }
 
@@ -535,8 +535,8 @@ func resolveViewer(ctx context.Context) *model.Viewer {
 		HelperViewerData: model.HelperViewerData{
 			UserId: userID,
 		},
-		User:            nil, // handled by dedicated resolver
-		ViewerGalleries: nil, // handled by dedicated resolver
+		User:         nil, // handled by dedicated resolver
+		ViewerSplits: nil, // handled by dedicated resolver
 	}
 
 	return viewer
@@ -725,12 +725,12 @@ func notificationToModel(notif db.Notification) (model.Notification, error) {
 			Count:        &amount,
 			Followers:    nil, // handled by dedicated resolver
 		}, nil
-	case persist.ActionViewedGallery:
+	case persist.ActionViewedSplit:
 		nonCount := len(notif.Data.UnauthedViewerIDs)
-		return model.SomeoneViewedYourGalleryNotification{
-			HelperSomeoneViewedYourGalleryNotificationData: model.HelperSomeoneViewedYourGalleryNotificationData{
+		return model.SomeoneViewedYourSplitNotification{
+			HelperSomeoneViewedYourSplitNotificationData: model.HelperSomeoneViewedYourSplitNotificationData{
 				OwnerID:          notif.OwnerID,
-				GalleryID:        notif.GalleryID,
+				SplitID:          notif.SplitID,
 				NotificationData: notif.Data,
 			},
 			Dbid:               notif.ID,
@@ -739,7 +739,7 @@ func notificationToModel(notif db.Notification) (model.Notification, error) {
 			UpdatedTime:        &notif.LastUpdated,
 			Count:              &amount,
 			UserViewers:        nil, // handled by dedicated resolver
-			Gallery:            nil, // handled by dedicated resolver
+			Split:              nil, // handled by dedicated resolver
 			NonUserViewerCount: &nonCount,
 		}, nil
 	default:
@@ -764,8 +764,8 @@ func resolveViewerNotificationSettings(ctx context.Context) (*model.Notification
 func notificationSettingsToModel(ctx context.Context, user *db.User) *model.NotificationSettings {
 	settings := user.NotificationSettings
 	return &model.NotificationSettings{
-		SomeoneFollowedYou:       settings.SomeoneFollowedYou,
-		SomeoneViewedYourGallery: settings.SomeoneViewedYourGallery,
+		SomeoneFollowedYou:     settings.SomeoneFollowedYou,
+		SomeoneViewedYourSplit: settings.SomeoneViewedYourSplit,
 	}
 }
 
@@ -923,8 +923,8 @@ func resolveViewerByID(ctx context.Context, id string) (*model.Viewer, error) {
 		HelperViewerData: model.HelperViewerData{
 			UserId: userID,
 		},
-		User:            nil, // handled by dedicated resolver
-		ViewerGalleries: nil, // handled by dedicated resolver
+		User:         nil, // handled by dedicated resolver
+		ViewerSplits: nil, // handled by dedicated resolver
 	}, nil
 }
 
@@ -1004,23 +1004,23 @@ func unsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEm
 
 }
 
-func galleryToModel(ctx context.Context, gallery db.Gallery) *model.Gallery {
+func splitToModel(ctx context.Context, split db.Split) *model.Split {
 
-	return &model.Gallery{
-		Dbid:        gallery.ID,
-		Name:        &gallery.Name,
-		Description: &gallery.Description,
-		Position:    &gallery.Position,
-		Hidden:      &gallery.Hidden,
+	return &model.Split{
+		Dbid:        split.ID,
+		Name:        &split.Name,
+		Description: &split.Description,
+		Position:    &split.Position,
+		Hidden:      &split.Hidden,
 		Owner:       nil, // handled by dedicated resolver
 		Collections: nil, // handled by dedicated resolver
 	}
 }
 
-func galleriesToModels(ctx context.Context, galleries []db.Gallery) []*model.Gallery {
-	models := make([]*model.Gallery, len(galleries))
-	for i, gallery := range galleries {
-		models[i] = galleryToModel(ctx, gallery)
+func splitsToModels(ctx context.Context, splits []db.Split) []*model.Split {
+	models := make([]*model.Split, len(splits))
+	for i, split := range splits {
+		models[i] = splitToModel(ctx, split)
 	}
 
 	return models
@@ -1071,8 +1071,8 @@ func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
 
 	return &model.SplitFiUser{
 		HelperSplitFiUserData: model.HelperSplitFiUserData{
-			UserID:            user.ID,
-			FeaturedGalleryID: user.FeaturedGallery,
+			UserID:          user.ID,
+			FeaturedSplitID: user.FeaturedSplit,
 		},
 		Dbid:      user.ID,
 		Username:  &user.Username.String,
@@ -1081,7 +1081,7 @@ func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
 		Universal: &user.Universal,
 
 		// each handled by dedicated resolver
-		Galleries: nil,
+		Splits:    nil,
 		Followers: nil,
 		Following: nil,
 		Tokens:    nil,
@@ -1170,7 +1170,7 @@ func collectionToModel(ctx context.Context, collection db.Collection) *model.Col
 		Version:        &version,
 		Name:           &collection.Name.String,
 		CollectorsNote: &collection.CollectorsNote.String,
-		Gallery:        nil, // handled by dedicated resolver
+		Split:          nil, // handled by dedicated resolver
 		Layout:         layoutToModel(ctx, collection.Layout, version),
 		Hidden:         &collection.Hidden,
 		Tokens:         nil, // handled by dedicated resolver

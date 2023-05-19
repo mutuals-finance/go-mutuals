@@ -33,7 +33,7 @@ type ProcessMediaForTokenInput struct {
 	AnimationKeywords []string        `json:"animation_keywords" binding:"required"`
 }
 
-func processMediaForUsersTokensOfChain(mc *multichain.Provider, tokenRepo *postgres.TokenGalleryRepository, contractRepo *postgres.ContractGalleryRepository, walletRepo persist.WalletRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, tokenBucket string, throttler *throttle.Locker) gin.HandlerFunc {
+func processMediaForUsersTokensOfChain(mc *multichain.Provider, tokenRepo *postgres.TokenSplitRepository, contractRepo *postgres.ContractSplitRepository, walletRepo persist.WalletRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, tokenBucket string, throttler *throttle.Locker) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input task.TokenProcessingUserMessage
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -80,7 +80,7 @@ func processMediaForUsersTokensOfChain(mc *multichain.Provider, tokenRepo *postg
 	}
 }
 
-func processMediaForToken(mc *multichain.Provider, tokenRepo *postgres.TokenGalleryRepository, userRepo *postgres.UserRepository, walletRepo *postgres.WalletRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, tokenBucket string, throttler *throttle.Locker) gin.HandlerFunc {
+func processMediaForToken(mc *multichain.Provider, tokenRepo *postgres.TokenSplitRepository, userRepo *postgres.UserRepository, walletRepo *postgres.WalletRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, tokenBucket string, throttler *throttle.Locker) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input ProcessMediaForTokenInput
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -124,7 +124,7 @@ func processMediaForToken(mc *multichain.Provider, tokenRepo *postgres.TokenGall
 	}
 }
 
-func processToken(c context.Context, key string, t persist.TokenGallery, contractAddress, ownerAddress persist.Address, mc *multichain.Provider, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, tokenBucket string, tokenRepo *postgres.TokenGalleryRepository, imageKeywords, animationKeywords []string, forceRefresh bool) error {
+func processToken(c context.Context, key string, t persist.TokenSplit, contractAddress, ownerAddress persist.Address, mc *multichain.Provider, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, tokenBucket string, tokenRepo *postgres.TokenSplitRepository, imageKeywords, animationKeywords []string, forceRefresh bool) error {
 	ctx := logger.NewContextWithFields(c, logrus.Fields{
 		"tokenDBID":       t.ID,
 		"tokenID":         t.TokenID,
@@ -196,7 +196,7 @@ func processToken(c context.Context, key string, t persist.TokenGallery, contrac
 	return nil
 }
 
-func processOwnersForContractTokens(mc *multichain.Provider, contractRepo *postgres.ContractGalleryRepository, throttler *throttle.Locker) gin.HandlerFunc {
+func processOwnersForContractTokens(mc *multichain.Provider, contractRepo *postgres.ContractSplitRepository, throttler *throttle.Locker) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input task.TokenProcessingContractTokensMessage
 		if err := c.ShouldBindJSON(&input); err != nil {

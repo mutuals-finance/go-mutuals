@@ -71,7 +71,7 @@ type CreateUserOutput struct {
 	SignatureValid bool         `json:"signature_valid"`
 	JWTtoken       string       `json:"jwt_token"` // JWT token is sent back to user to use to continue onboarding
 	UserID         persist.DBID `json:"user_id"`
-	GalleryID      persist.DBID `json:"gallery_id"`
+	SplitID        persist.DBID `json:"split_id"`
 }
 
 // MergeUsersInput is the input for the user merge pipeline
@@ -85,8 +85,8 @@ type MergeUsersInput struct {
 }
 
 // CreateUser creates a new user
-func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, galleryName, galleryDesc, galleryPos string, userRepo *postgres.UserRepository,
-	galleryRepo *postgres.GalleryRepository, mp *multichain.Provider) (userID persist.DBID, galleryID persist.DBID, err error) {
+func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, splitName, galleryDesc, galleryPos string, userRepo *postgres.UserRepository,
+	galleryRepo *postgres.SplitRepository, mp *multichain.Provider) (userID persist.DBID, galleryID persist.DBID, err error) {
 	gc := util.GinContextFromContext(pCtx)
 
 	authResult, err := authenticator.Authenticate(pCtx)
@@ -128,8 +128,8 @@ func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username
 		return "", "", err
 	}
 
-	gallery, err := galleryRepo.Create(pCtx, coredb.GalleryRepoCreateParams{
-		GalleryID:   persist.GenerateID(),
+	gallery, err := galleryRepo.Create(pCtx, coredb.SplitRepoCreateParams{
+		SplitID:     persist.GenerateID(),
 		OwnerUserID: userID,
 		Name:        galleryName,
 		Description: galleryDesc,
@@ -139,12 +139,12 @@ func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username
 		return "", "", err
 	}
 
-	galleryID = gallery.ID
+	split.ID
 
 	auth.SetAuthStateForCtx(gc, userID, nil)
 	auth.SetJWTCookie(gc, jwtTokenStr)
 
-	return userID, galleryID, nil
+	splitID, nil
 }
 
 // RemoveWalletsFromUser removes any amount of addresses from a user in the DB
@@ -323,7 +323,7 @@ func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, 
 // }
 
 // TODO need interface for interacting with other chains for this
-func validateNFTsForUser(pCtx context.Context, pUserID persist.DBID, userRepo postgres.UserRepository, tokenRepo postgres.TokenGalleryRepository, contractRepo persist.ContractRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client) error {
+func validateNFTsForUser(pCtx context.Context, pUserID persist.DBID, userRepo postgres.UserRepository, tokenRepo postgres.TokenSplitRepository, contractRepo persist.ContractRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client) error {
 	// input := indexer.ValidateUsersNFTsInput{
 	// 	UserID: pUserID,
 	// }
@@ -337,7 +337,7 @@ func validateNFTsForUser(pCtx context.Context, pUserID persist.DBID, userRepo po
 }
 
 // TODO need interface for interacting with other chains for this
-func ensureMediaContent(pCtx context.Context, pChainAddress persist.ChainAddress, tokenRepo postgres.TokenGalleryRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client) error {
+func ensureMediaContent(pCtx context.Context, pChainAddress persist.ChainAddress, tokenRepo postgres.TokenSplitRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client) error {
 
 	// input := indexer.UpdateMediaInput{
 	// 	OwnerAddress: pAddress,

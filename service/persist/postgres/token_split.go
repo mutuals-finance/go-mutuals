@@ -15,8 +15,8 @@ import (
 	"github.com/mikeydub/go-gallery/service/persist"
 )
 
-// TokenGalleryRepository represents a postgres repository for tokens
-type TokenGalleryRepository struct {
+// TokenSplitRepository represents a postgres repository for tokens
+type TokenSplitRepository struct {
 	db                                                    *sql.DB
 	queries                                               *db.Queries
 	getByID                                               *sql.Stmt
@@ -45,9 +45,9 @@ type TokenGalleryRepository struct {
 
 var errTokensNotOwnedByUser = errors.New("not all tokens are owned by user")
 
-// NewTokenGalleryRepository creates a new TokenRepository
+// NewTokenSplitRepository creates a new TokenRepository
 // TODO joins on addresses
-func NewTokenGalleryRepository(db *sql.DB, queries *db.Queries) *TokenGalleryRepository {
+func NewTokenSplitRepository(db *sql.DB, queries *db.Queries) *TokenSplitRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -117,7 +117,7 @@ func NewTokenGalleryRepository(db *sql.DB, queries *db.Queries) *TokenGalleryRep
 	deleteTokensOfOwnerBeforeTimeStampStmt, err := db.PrepareContext(ctx, `UPDATE tokens SET DELETED = true WHERE OWNER_USER_ID = $1 AND CHAIN = ANY($2) AND LAST_SYNCED < $3 AND DELETED = false;`)
 	checkNoErr(err)
 
-	return &TokenGalleryRepository{
+	return &TokenSplitRepository{
 		db:                                     db,
 		queries:                                queries,
 		getByID:                                getByIDStmt,
@@ -147,17 +147,17 @@ func NewTokenGalleryRepository(db *sql.DB, queries *db.Queries) *TokenGalleryRep
 }
 
 // GetByID gets a token by its DBID
-func (t *TokenGalleryRepository) GetByID(pCtx context.Context, tokenID persist.DBID) (persist.TokenGallery, error) {
-	token := persist.TokenGallery{}
+func (t *TokenSplitRepository) GetByID(pCtx context.Context, tokenID persist.DBID) (persist.TokenSplit, error) {
+	token := persist.TokenSplit{}
 	err := t.getByID.QueryRowContext(pCtx, tokenID).Scan(&token.ID, &token.CollectorsNote, &token.Media, &token.TokenType, &token.Chain, &token.Name, &token.Description, &token.TokenID, &token.TokenURI, &token.Quantity, &token.OwnerUserID, pq.Array(&token.OwnedByWallets), pq.Array(&token.OwnershipHistory), &token.TokenMetadata, &token.Contract, &token.ExternalURL, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated, &token.IsUserMarkedSpam, &token.IsProviderMarkedSpam)
 	if err != nil {
-		return persist.TokenGallery{}, err
+		return persist.TokenSplit{}, err
 	}
 	return token, nil
 }
 
 // GetByUserID gets all tokens for a user
-func (t *TokenGalleryRepository) GetByUserID(pCtx context.Context, pUserID persist.DBID, limit int64, page int64) ([]persist.TokenGallery, error) {
+func (t *TokenSplitRepository) GetByUserID(pCtx context.Context, pUserID persist.DBID, limit int64, page int64) ([]persist.TokenSplit, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
@@ -170,9 +170,9 @@ func (t *TokenGalleryRepository) GetByUserID(pCtx context.Context, pUserID persi
 	}
 	defer rows.Close()
 
-	tokens := make([]persist.TokenGallery, 0, 10)
+	tokens := make([]persist.TokenSplit, 0, 10)
 	for rows.Next() {
-		token := persist.TokenGallery{}
+		token := persist.TokenSplit{}
 		if err := rows.Scan(&token.ID, &token.CollectorsNote, &token.Media, &token.TokenType, &token.Chain, &token.Name, &token.Description, &token.TokenID, &token.TokenURI, &token.Quantity, &token.OwnerUserID, pq.Array(&token.OwnedByWallets), pq.Array(&token.OwnershipHistory), &token.TokenMetadata, &token.Contract, &token.ExternalURL, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated, &token.IsUserMarkedSpam, &token.IsProviderMarkedSpam); err != nil {
 			return nil, err
 		}
@@ -188,7 +188,7 @@ func (t *TokenGalleryRepository) GetByUserID(pCtx context.Context, pUserID persi
 }
 
 // GetByTokenIdentifiers gets a token by its token ID and contract address and chain
-func (t *TokenGalleryRepository) GetByTokenIdentifiers(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.Address, pChain persist.Chain, limit int64, page int64) ([]persist.TokenGallery, error) {
+func (t *TokenSplitRepository) GetByTokenIdentifiers(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.Address, pChain persist.Chain, limit int64, page int64) ([]persist.TokenSplit, error) {
 
 	var contractID persist.DBID
 	err := t.getContractByAddressStmt.QueryRowContext(pCtx, pContractAddress, pChain).Scan(&contractID)
@@ -207,9 +207,9 @@ func (t *TokenGalleryRepository) GetByTokenIdentifiers(pCtx context.Context, pTo
 	}
 	defer rows.Close()
 
-	tokens := make([]persist.TokenGallery, 0, 10)
+	tokens := make([]persist.TokenSplit, 0, 10)
 	for rows.Next() {
-		token := persist.TokenGallery{}
+		token := persist.TokenSplit{}
 		if err := rows.Scan(&token.ID, &token.CollectorsNote, &token.Media, &token.TokenType, &token.Chain, &token.Name, &token.Description, &token.TokenID, &token.TokenURI, &token.Quantity, &token.OwnerUserID, pq.Array(&token.OwnedByWallets), pq.Array(&token.OwnershipHistory), &token.TokenMetadata, &token.Contract, &token.ExternalURL, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated, &token.IsUserMarkedSpam, &token.IsProviderMarkedSpam); err != nil {
 			return nil, err
 		}
@@ -221,32 +221,32 @@ func (t *TokenGalleryRepository) GetByTokenIdentifiers(pCtx context.Context, pTo
 	}
 
 	if len(tokens) == 0 {
-		return nil, persist.ErrTokenGalleryNotFoundByIdentifiers{TokenID: pTokenID, ContractAddress: pContractAddress, Chain: pChain}
+		return nil, persist.ErrTokenSplitNotFoundByIdentifiers{TokenID: pTokenID, ContractAddress: pContractAddress, Chain: pChain}
 	}
 
 	return tokens, nil
 }
 
 // GetByFullIdentifiers gets a token by its token ID and contract address and chain and owner user ID
-func (t *TokenGalleryRepository) GetByFullIdentifiers(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.Address, pChain persist.Chain, pUserID persist.DBID) (persist.TokenGallery, error) {
+func (t *TokenSplitRepository) GetByFullIdentifiers(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.Address, pChain persist.Chain, pUserID persist.DBID) (persist.TokenSplit, error) {
 
 	var contractID persist.DBID
 	err := t.getContractByAddressStmt.QueryRowContext(pCtx, pContractAddress, pChain).Scan(&contractID)
 	if err != nil {
-		return persist.TokenGallery{}, err
+		return persist.TokenSplit{}, err
 	}
 
-	token := persist.TokenGallery{}
+	token := persist.TokenSplit{}
 	err = t.getByFullIdentifiersStmt.QueryRowContext(pCtx, pTokenID, contractID, pUserID).Scan(&token.ID, &token.CollectorsNote, &token.Media, &token.TokenType, &token.Chain, &token.Name, &token.Description, &token.TokenID, &token.TokenURI, &token.Quantity, &token.OwnerUserID, pq.Array(&token.OwnedByWallets), pq.Array(&token.OwnershipHistory), &token.TokenMetadata, &token.Contract, &token.ExternalURL, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated, &token.IsUserMarkedSpam, &token.IsProviderMarkedSpam)
 	if err != nil {
-		return persist.TokenGallery{}, err
+		return persist.TokenSplit{}, err
 	}
 
 	return token, nil
 }
 
 // GetByTokenID retrieves all tokens associated with a contract
-func (t *TokenGalleryRepository) GetByTokenID(pCtx context.Context, pTokenID persist.TokenID, limit int64, page int64) ([]persist.TokenGallery, error) {
+func (t *TokenSplitRepository) GetByTokenID(pCtx context.Context, pTokenID persist.TokenID, limit int64, page int64) ([]persist.TokenSplit, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
@@ -259,9 +259,9 @@ func (t *TokenGalleryRepository) GetByTokenID(pCtx context.Context, pTokenID per
 	}
 	defer rows.Close()
 
-	tokens := make([]persist.TokenGallery, 0, 10)
+	tokens := make([]persist.TokenSplit, 0, 10)
 	for rows.Next() {
-		token := persist.TokenGallery{}
+		token := persist.TokenSplit{}
 		if err := rows.Scan(&token.ID, &token.CollectorsNote, &token.Media, &token.TokenType, &token.Chain, &token.Name, &token.Description, &token.TokenID, &token.TokenURI, &token.Quantity, &token.OwnerUserID, pq.Array(&token.OwnedByWallets), pq.Array(&token.OwnershipHistory), &token.TokenMetadata, &token.Contract, &token.ExternalURL, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated, &token.IsUserMarkedSpam, &token.IsProviderMarkedSpam); err != nil {
 			return nil, err
 		}
@@ -280,7 +280,7 @@ func (t *TokenGalleryRepository) GetByTokenID(pCtx context.Context, pTokenID per
 }
 
 // BulkUpsertByOwnerUserID upserts multiple tokens for a user and removes any tokens that are not in the list
-func (t *TokenGalleryRepository) BulkUpsertByOwnerUserID(pCtx context.Context, ownerUserID persist.DBID, chains []persist.Chain, pTokens []persist.TokenGallery, skipDelete bool) ([]persist.TokenGallery, error) {
+func (t *TokenSplitRepository) BulkUpsertByOwnerUserID(pCtx context.Context, ownerUserID persist.DBID, chains []persist.Chain, pTokens []persist.TokenSplit, skipDelete bool) ([]persist.TokenSplit, error) {
 	now, persistedTokens, err := t.bulkUpsert(pCtx, pTokens)
 	if err != nil {
 		return nil, err
@@ -306,7 +306,7 @@ func (t *TokenGalleryRepository) BulkUpsertByOwnerUserID(pCtx context.Context, o
 }
 
 // BulkUpsertTokensOfContract upserts all tokens of a contract and deletes the old tokens
-func (t *TokenGalleryRepository) BulkUpsertTokensOfContract(pCtx context.Context, contractID persist.DBID, pTokens []persist.TokenGallery, skipDelete bool) ([]persist.TokenGallery, error) {
+func (t *TokenSplitRepository) BulkUpsertTokensOfContract(pCtx context.Context, contractID persist.DBID, pTokens []persist.TokenSplit, skipDelete bool) ([]persist.TokenSplit, error) {
 	now, persistedTokens, err := t.bulkUpsert(pCtx, pTokens)
 	if err != nil {
 		return nil, err
@@ -323,14 +323,14 @@ func (t *TokenGalleryRepository) BulkUpsertTokensOfContract(pCtx context.Context
 	return persistedTokens, nil
 }
 
-func (t *TokenGalleryRepository) bulkUpsert(pCtx context.Context, pTokens []persist.TokenGallery) (time.Time, []persist.TokenGallery, error) {
+func (t *TokenSplitRepository) bulkUpsert(pCtx context.Context, pTokens []persist.TokenSplit) (time.Time, []persist.TokenSplit, error) {
 	tokens, err := t.excludeZeroQuantityTokens(pCtx, pTokens)
 	if err != nil {
 		return time.Time{}, nil, err
 	}
 
 	if len(tokens) == 0 {
-		return time.Time{}, []persist.TokenGallery{}, nil
+		return time.Time{}, []persist.TokenSplit{}, nil
 	}
 
 	appendWalletList := func(dest *[]string, src []persist.Wallet, startIndices, endIndices *[]int32) {
@@ -352,7 +352,7 @@ func (t *TokenGalleryRepository) bulkUpsert(pCtx context.Context, pTokens []pers
 	// addIDIfMissing is used because sqlc was unable to bind arrays of our own custom types
 	// i.e. an array of persist.DBIDs instead of an array of strings. A zero-valued persist.DBID
 	// generates a new ID on insert, but instead we need to generate an ID beforehand.
-	addIDIfMissing := func(t *persist.TokenGallery) {
+	addIDIfMissing := func(t *persist.TokenSplit) {
 		if t.ID == persist.DBID("") {
 			(*t).ID = persist.GenerateID()
 		}
@@ -361,7 +361,7 @@ func (t *TokenGalleryRepository) bulkUpsert(pCtx context.Context, pTokens []pers
 	// addTimesIfMissing is required because sqlc was unable to bind arrays of our own custom types
 	// i.e. an array of persist.CreationTime instead of an array of time.Time. A zero-valued persist.CreationTime
 	// uses the current time as the column value, but instead we need to manually add a time to the struct.
-	addTimesIfMissing := func(t *persist.TokenGallery, ts time.Time) {
+	addTimesIfMissing := func(t *persist.TokenSplit, ts time.Time) {
 		if t.CreationTime.Time().IsZero() {
 			(*t).CreationTime = persist.CreationTime(ts)
 		}
@@ -476,8 +476,8 @@ func appendJSONBList(dest *[]pgtype.JSONB, src []any, startIndices, endIndices *
 	appendIndices(startIndices, endIndices, len(src))
 }
 
-func (t *TokenGalleryRepository) excludeZeroQuantityTokens(pCtx context.Context, pTokens []persist.TokenGallery) ([]persist.TokenGallery, error) {
-	newTokens := make([]persist.TokenGallery, 0, len(pTokens))
+func (t *TokenSplitRepository) excludeZeroQuantityTokens(pCtx context.Context, pTokens []persist.TokenSplit) ([]persist.TokenSplit, error) {
+	newTokens := make([]persist.TokenSplit, 0, len(pTokens))
 	for _, token := range pTokens {
 		if token.Quantity == "" || token.Quantity == "0" {
 			logger.For(pCtx).Warnf("Token %s has 0 quantity", token.Name)
@@ -489,7 +489,7 @@ func (t *TokenGalleryRepository) excludeZeroQuantityTokens(pCtx context.Context,
 }
 
 // UpdateByID updates a token by its ID
-func (t *TokenGalleryRepository) UpdateByID(pCtx context.Context, pID persist.DBID, pUserID persist.DBID, pUpdate interface{}) error {
+func (t *TokenSplitRepository) UpdateByID(pCtx context.Context, pID persist.DBID, pUserID persist.DBID, pUpdate interface{}) error {
 	var res sql.Result
 	var err error
 
@@ -518,7 +518,7 @@ func (t *TokenGalleryRepository) UpdateByID(pCtx context.Context, pID persist.DB
 }
 
 // UpdateByTokenIdentifiersUnsafe updates a token by its token identifiers without checking if it is owned by any given user
-func (t *TokenGalleryRepository) UpdateByTokenIdentifiersUnsafe(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.Address, pChain persist.Chain, pUpdate interface{}) error {
+func (t *TokenSplitRepository) UpdateByTokenIdentifiersUnsafe(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.Address, pChain persist.Chain, pUpdate interface{}) error {
 
 	var contractID persist.DBID
 	if err := t.getContractByAddressStmt.QueryRowContext(pCtx, pContractAddress, pChain).Scan(&contractID); err != nil {
@@ -554,25 +554,25 @@ func (t *TokenGalleryRepository) UpdateByTokenIdentifiersUnsafe(pCtx context.Con
 		return err
 	}
 	if rowsAffected == 0 {
-		return persist.ErrTokenGalleryNotFoundByIdentifiers{TokenID: pTokenID, ContractAddress: pContractAddress, Chain: pChain}
+		return persist.ErrTokenSplitNotFoundByIdentifiers{TokenID: pTokenID, ContractAddress: pContractAddress, Chain: pChain}
 	}
 	return nil
 }
 
 // DeleteByID deletes a token by its ID
-func (t *TokenGalleryRepository) DeleteByID(ctx context.Context, id persist.DBID) error {
+func (t *TokenSplitRepository) DeleteByID(ctx context.Context, id persist.DBID) error {
 	_, err := t.deleteByIDStmt.ExecContext(ctx, id)
 	return err
 }
 
 // FlagTokensAsUserMarkedSpam marks tokens as spam by the user.
-func (t *TokenGalleryRepository) FlagTokensAsUserMarkedSpam(ctx context.Context, ownerUserID persist.DBID, tokens []persist.DBID, isSpam bool) error {
+func (t *TokenSplitRepository) FlagTokensAsUserMarkedSpam(ctx context.Context, ownerUserID persist.DBID, tokens []persist.DBID, isSpam bool) error {
 	_, err := t.setTokensAsUserMarkedSpamStmt.ExecContext(ctx, isSpam, ownerUserID, tokens)
 	return err
 }
 
 // TokensAreOwnedByUser checks if all tokens are owned by the provided user.
-func (t *TokenGalleryRepository) TokensAreOwnedByUser(ctx context.Context, userID persist.DBID, tokens []persist.DBID) error {
+func (t *TokenSplitRepository) TokensAreOwnedByUser(ctx context.Context, userID persist.DBID, tokens []persist.DBID) error {
 	var owned bool
 
 	err := t.checkOwnTokensStmt.QueryRowContext(ctx, len(tokens), userID, tokens).Scan(&owned)
@@ -587,7 +587,7 @@ func (t *TokenGalleryRepository) TokensAreOwnedByUser(ctx context.Context, userI
 	return nil
 }
 
-func (t *TokenGalleryRepository) deleteTokenUnsafe(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.DBID, pOwnerUserID persist.DBID, pChain persist.Chain) error {
+func (t *TokenSplitRepository) deleteTokenUnsafe(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.DBID, pOwnerUserID persist.DBID, pChain persist.Chain) error {
 	_, err := t.deleteByIdentifiersStmt.ExecContext(pCtx, pTokenID, pContractAddress, pOwnerUserID, pChain)
 	return err
 }
@@ -599,8 +599,8 @@ type uniqueConstraintKey struct {
 	ownerUserID persist.DBID
 }
 
-func (t *TokenGalleryRepository) dedupeTokens(pTokens []persist.TokenGallery) []persist.TokenGallery {
-	seen := map[uniqueConstraintKey]persist.TokenGallery{}
+func (t *TokenSplitRepository) dedupeTokens(pTokens []persist.TokenSplit) []persist.TokenSplit {
+	seen := map[uniqueConstraintKey]persist.TokenSplit{}
 	for _, token := range pTokens {
 		key := uniqueConstraintKey{chain: token.Chain, contract: token.Contract, tokenID: token.TokenID, ownerUserID: token.OwnerUserID}
 		if seenToken, ok := seen[key]; ok {
@@ -611,7 +611,7 @@ func (t *TokenGalleryRepository) dedupeTokens(pTokens []persist.TokenGallery) []
 		}
 		seen[key] = token
 	}
-	result := make([]persist.TokenGallery, 0, len(seen))
+	result := make([]persist.TokenSplit, 0, len(seen))
 	for _, v := range seen {
 		result = append(result, v)
 	}

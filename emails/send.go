@@ -83,7 +83,7 @@ func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Quer
 
 		//logger.For(c).Debugf("sending verification email to %s with token %s", emailAddress, j)
 
-		from := mail.NewEmail("Gallery", env.GetString("FROM_EMAIL"))
+		from := mail.NewEmail("SplitFi", env.GetString("FROM_EMAIL"))
 		to := mail.NewEmail(userWithPII.Username.String, emailAddress)
 		m := mail.NewV3Mail()
 		m.SetFrom(from)
@@ -252,7 +252,7 @@ outer:
 
 	if sendRealEmail {
 		// send email
-		from := mail.NewEmail("Gallery", env.GetString("FROM_EMAIL"))
+		from := mail.NewEmail("SplitFi", env.GetString("FROM_EMAIL"))
 		to := mail.NewEmail(u.Username.String, emailRecipient.String())
 		m := mail.NewV3Mail()
 		m.SetFrom(from)
@@ -299,7 +299,7 @@ func notifToTemplateData(ctx context.Context, queries *coredb.Queries, n coredb.
 			}, nil
 		}
 		return notificationEmailDynamicTemplateData{}, fmt.Errorf("no follower ids")
-	case persist.ActionViewedGallery:
+	case persist.ActionViewedSplit:
 		if len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs) > 1 {
 			return notificationEmailDynamicTemplateData{
 				Actor:  fmt.Sprintf("%d collectors", len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs)),

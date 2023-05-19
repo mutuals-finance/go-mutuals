@@ -236,7 +236,7 @@ db = client.gallery
 
 # Select database collections (equivalent to tables)
 user_collection = db.users
-gallery_collection = db.galleries
+gallery_collection = db.splits
 collection_collection = db.collections
 nft_collection = db.nfts
 nonce_collection = db.nonces

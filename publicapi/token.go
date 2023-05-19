@@ -445,7 +445,7 @@ func (api TokenAPI) UpdateTokenInfo(ctx context.Context, tokenID persist.DBID, c
 		return err
 	}
 
-	galleryID, err := api.queries.GetGalleryIDByCollectionID(ctx, collectionID)
+	galleryID, err := api.queries.GetSplitIDByCollectionID(ctx, collectionID)
 	if err != nil {
 		return err
 	}
@@ -457,7 +457,7 @@ func (api TokenAPI) UpdateTokenInfo(ctx context.Context, tokenID persist.DBID, c
 		ResourceTypeID: persist.ResourceTypeToken,
 		TokenID:        tokenID,
 		CollectionID:   collectionID,
-		GalleryID:      galleryID,
+		SplitID:        galleryID,
 		SubjectID:      tokenID,
 		Data: persist.EventData{
 			TokenCollectionID:   collectionID,

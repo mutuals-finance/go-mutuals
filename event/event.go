@@ -32,7 +32,7 @@ func AddTo(ctx *gin.Context, disableDataloaderCaching bool, notif *notifications
 	notifications := newEventDispatcher()
 	notificationHandler := newNotificationHandler(notif, disableDataloaderCaching, queries)
 	sender.addDelayedHandler(notifications, persist.ActionUserFollowedUsers, notificationHandler)
-	sender.addDelayedHandler(notifications, persist.ActionViewedGallery, notificationHandler)
+	sender.addDelayedHandler(notifications, persist.ActionViewedSplit, notificationHandler)
 
 	sender.notifications = notifications
 	ctx.Set(eventSenderContextKey, &sender)
@@ -279,22 +279,22 @@ func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent d
 	}
 
 	// Don't notify the user on un-authed views
-	if persistedEvent.Action == persist.ActionViewedGallery && persistedEvent.ActorID.String == "" {
+	if persistedEvent.Action == persist.ActionViewedSplit && persistedEvent.ActorID.String == "" {
 		return nil
 	}
 
 	return h.notificationHandlers.Notifications.Dispatch(ctx, db.Notification{
-		OwnerID:   owner,
-		Action:    persistedEvent.Action,
-		Data:      h.createNotificationDataForEvent(persistedEvent),
-		EventIds:  persist.DBIDList{persistedEvent.ID},
-		GalleryID: persistedEvent.GalleryID,
+		OwnerID:  owner,
+		Action:   persistedEvent.Action,
+		Data:     h.createNotificationDataForEvent(persistedEvent),
+		EventIds: persist.DBIDList{persistedEvent.ID},
+		SplitID:  persistedEvent.SplitID,
 	})
 }
 
 func (h notificationHandler) createNotificationDataForEvent(event db.Event) (data persist.NotificationData) {
 	switch event.Action {
-	case persist.ActionViewedGallery:
+	case persist.ActionViewedSplit:
 		if event.ActorID.String != "" {
 			data.AuthedViewerIDs = []persist.DBID{persist.NullStrToDBID(event.ActorID)}
 		}
@@ -313,8 +313,8 @@ func (h notificationHandler) createNotificationDataForEvent(event db.Event) (dat
 
 func (h notificationHandler) findOwnerForNotificationFromEvent(event db.Event) (persist.DBID, error) {
 	switch event.ResourceTypeID {
-	case persist.ResourceTypeGallery:
-		gallery, err := h.dataloaders.GalleryByGalleryID.Load(event.GalleryID)
+	case persist.ResourceTypeSplit:
+		gallery, err := h.dataloaders.SplitBySplitID.Load(event.SplitID)
 		if err != nil {
 			return "", err
 		}

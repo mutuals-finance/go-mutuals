@@ -111,7 +111,7 @@ func NewCollectionTokenRepository(db *sql.DB, queries *db.Queries) *CollectionTo
 // Create creates a new collection in the database
 func (c *CollectionTokenRepository) Create(pCtx context.Context, pColl persist.CollectionDB) (persist.DBID, error) {
 	var id persist.DBID
-	err := c.createStmt.QueryRowContext(pCtx, persist.GenerateID(), pColl.Version, pColl.Name, pColl.CollectorsNote, pColl.OwnerUserID, pColl.GalleryID, pColl.Layout, pq.Array(pColl.Tokens), pColl.Hidden, pColl.TokenSettings).Scan(&id)
+	err := c.createStmt.QueryRowContext(pCtx, persist.GenerateID(), pColl.Version, pColl.Name, pColl.CollectorsNote, pColl.OwnerUserID, pColl.SplitID, pColl.Layout, pq.Array(pColl.Tokens), pColl.Hidden, pColl.TokenSettings).Scan(&id)
 	if err != nil {
 		return "", err
 	}

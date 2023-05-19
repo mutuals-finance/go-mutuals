@@ -42,9 +42,9 @@ func (api SearchAPI) SearchUsers(ctx context.Context, query string, limit int, u
 	})
 }
 
-// SearchGalleries searches for galleries with the given query, limit, and optional weights. Weights may be nil to accept default values.
+// SearchSplits searches for splits with the given query, limit, and optional weights. Weights may be nil to accept default values.
 // Weighting will probably be removed after we settle on defaults that feel correct!
-func (api SearchAPI) SearchGalleries(ctx context.Context, query string, limit int, nameWeight float32, descriptionWeight float32) ([]db.Gallery, error) {
+func (api SearchAPI) SearchSplits(ctx context.Context, query string, limit int, nameWeight float32, descriptionWeight float32) ([]db.Split, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"query":             {query, fmt.Sprintf("required,min=1,max=%d", maxSearchQueryLength)},
@@ -58,7 +58,7 @@ func (api SearchAPI) SearchGalleries(ctx context.Context, query string, limit in
 	// Sanitize
 	query = validate.SanitizationPolicy.Sanitize(query)
 
-	return api.queries.SearchGalleries(ctx, db.SearchGalleriesParams{
+	return api.queries.SearchSplits(ctx, db.SearchSplitsParams{
 		Limit:             int32(limit),
 		Query:             query,
 		NameWeight:        nameWeight,

@@ -66,7 +66,7 @@ func (b *GetCollectionByIdBatchBatchResults) QueryRow(f func(int, Collection, er
 			&i.Name,
 			&i.Layout,
 			&i.TokenSettings,
-			&i.GalleryID,
+			&i.SplitID,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -80,7 +80,7 @@ func (b *GetCollectionByIdBatchBatchResults) Close() error {
 }
 
 const getCollectionsByGalleryIdBatch = `-- name: GetCollectionsByGalleryIdBatch :batchmany
-SELECT c.id, c.deleted, c.owner_user_id, c.nfts, c.version, c.last_updated, c.created_at, c.hidden, c.collectors_note, c.name, c.layout, c.token_settings, c.gallery_id FROM galleries g, unnest(g.collections)
+SELECT c.id, c.deleted, c.owner_user_id, c.nfts, c.version, c.last_updated, c.created_at, c.hidden, c.collectors_note, c.name, c.layout, c.token_settings, c.gallery_id FROM splits g, unnest(g.collections)
     WITH ORDINALITY AS x(coll_id, coll_ord)
     INNER JOIN collections c ON c.id = x.coll_id
     WHERE g.id = $1 AND g.deleted = false AND c.deleted = false ORDER BY x.coll_ord
@@ -305,16 +305,16 @@ displayed as (
   where owned_contracts.user_id = $1 and displayed = true
   union
   select contracts.id
-  from last_refreshed, galleries, contracts, tokens
+  from last_refreshed, splits, contracts, tokens
   join collections on tokens.id = any(collections.nfts) and collections.deleted = false
   where tokens.owner_user_id = $1
     and tokens.contract = contracts.id
     and collections.owner_user_id = tokens.owner_user_id
-    and galleries.owner_user_id = tokens.owner_user_id
+    and splits.owner_user_id = tokens.owner_user_id
     and tokens.deleted = false
-    and galleries.deleted = false
+    and splits.deleted = false
     and contracts.deleted = false
-    and galleries.last_updated > last_refreshed.last_updated
+    and splits.last_updated > last_refreshed.last_updated
     and collections.last_updated > last_refreshed.last_updated
 )
 select contracts.id, contracts.deleted, contracts.version, contracts.created_at, contracts.last_updated, contracts.name, contracts.symbol, contracts.address, contracts.creator_address, contracts.chain, contracts.profile_banner_url, contracts.profile_image_url, contracts.badge_url, contracts.description from contracts, displayed
@@ -549,7 +549,7 @@ func (b *GetFollowingByUserIdBatchBatchResults) Close() error {
 }
 
 const getGalleriesByUserIdBatch = `-- name: GetGalleriesByUserIdBatch :batchmany
-SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM galleries WHERE owner_user_id = $1 AND deleted = false order by position
+SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE owner_user_id = $1 AND deleted = false order by position
 `
 
 type GetGalleriesByUserIdBatchBatchResults struct {
@@ -619,7 +619,7 @@ func (b *GetGalleriesByUserIdBatchBatchResults) Close() error {
 }
 
 const getGalleryByCollectionIdBatch = `-- name: GetGalleryByCollectionIdBatch :batchone
-SELECT g.id, g.deleted, g.last_updated, g.created_at, g.version, g.owner_user_id, g.collections, g.name, g.description, g.hidden, g.position FROM galleries g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false
+SELECT g.id, g.deleted, g.last_updated, g.created_at, g.version, g.owner_user_id, g.collections, g.name, g.description, g.hidden, g.position FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false
 `
 
 type GetGalleryByCollectionIdBatchBatchResults struct {
@@ -676,7 +676,7 @@ func (b *GetGalleryByCollectionIdBatchBatchResults) Close() error {
 }
 
 const getGalleryByIdBatch = `-- name: GetGalleryByIdBatch :batchone
-SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM galleries WHERE id = $1 AND deleted = false
+SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE id = $1 AND deleted = false
 `
 
 type GetGalleryByIdBatchBatchResults struct {

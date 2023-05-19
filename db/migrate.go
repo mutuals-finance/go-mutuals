@@ -118,13 +118,13 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 	}
 
 	var superMigrate *migrate.Migrate
-	var galleryMigrate *migrate.Migrate
+	var splitMigrate *migrate.Migrate
 
 	loadMigrate := func() error {
-		if galleryMigrate != nil {
+		if splitMigrate != nil {
 			return nil
 		}
-		galleryClient, err := postgres.NewClient(postgres.WithUser("gallery_migrator"))
+		splitClient, err := postgres.NewClient(postgres.WithUser("split_migrator"))
 		var errNoRole postgres.ErrRoleDoesNotExist
 		if errors.As(err, &errNoRole) {
 			return nil
@@ -132,7 +132,7 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		if err != nil {
 			return err
 		}
-		galleryMigrate, err = newMigrateInstance(galleryClient, dir)
+		splitMigrate, err = newMigrateInstance(splitClient, dir)
 		return err
 	}
 
@@ -146,24 +146,24 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		if err := loadMigrate(); err != nil {
 			return err
 		}
-		if galleryMigrate != nil {
-			defer galleryMigrate.Close()
+		if splitMigrate != nil {
+			defer splitMigrate.Close()
 		}
 	} else {
 		// Apply an up migration since a superuser isn't needed
-		galleryClient := postgres.MustCreateClient(postgres.WithUser("gallery_migrator"))
-		galleryMigrate, err = newMigrateInstance(galleryClient, dir)
+		splitClient := postgres.MustCreateClient(postgres.WithUser("split_migrator"))
+		splitMigrate, err = newMigrateInstance(splitClient, dir)
 		if err != nil {
 			return err
 		}
-		defer galleryMigrate.Close()
-		return galleryMigrate.Up()
+		defer splitMigrate.Close()
+		return splitMigrate.Up()
 	}
 
 	var curVer uint
 
-	if galleryMigrate != nil {
-		curVer, err = currentVersion(galleryMigrate)
+	if splitMigrate != nil {
+		curVer, err = currentVersion(splitMigrate)
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 			superStreak = true
 			// Skip running the migration if its the current version already applied
 			if ver-1 != curVer {
-				if err := galleryMigrate.Migrate(ver - 1); err != nil {
+				if err := splitMigrate.Migrate(ver - 1); err != nil {
 					return err
 				}
 			}
@@ -208,11 +208,11 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		}
 	}
 
-	if galleryMigrate == nil {
-		panic("gallery_migrator client never initted!")
+	if splitMigrate == nil {
+		panic("split_migrator client never initted!")
 	}
 
-	err = galleryMigrate.Up()
+	err = splitMigrate.Up()
 	if err == migrate.ErrNoChange {
 		return nil
 	}

@@ -436,7 +436,7 @@ outer:
 	return err
 }
 
-func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, tokensFromProviders []chainTokens, addressToContract map[string]persist.DBID, user persist.User) ([]persist.TokenGallery, map[persist.TokenIdentifiers]bool, error) {
+func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, tokensFromProviders []chainTokens, addressToContract map[string]persist.DBID, user persist.User) ([]persist.TokenSplit, map[persist.TokenIdentifiers]bool, error) {
 	providerTokens, err := tokensToNewDedupedTokens(ctx, tokensFromProviders, addressToContract, user)
 	if err != nil {
 		return nil, nil, err
@@ -447,7 +447,7 @@ func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, tokensFromP
 		return nil, nil, err
 	}
 
-	tokenLookup := make(map[persist.TokenIdentifiers]persist.TokenGallery)
+	tokenLookup := make(map[persist.TokenIdentifiers]persist.TokenSplit)
 	for _, token := range currentTokens {
 		tokenLookup[token.TokenIdentifiers()] = token
 	}
@@ -477,7 +477,7 @@ func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, tokensFromP
 }
 
 func (p *Provider) processTokensForOwnersOfContract(ctx context.Context, contractID persist.DBID, users map[persist.DBID]persist.User, chainTokensForUsers map[persist.DBID][]chainTokens, addressToContract map[string]persist.DBID) error {
-	tokensToUpsert := make([]persist.TokenGallery, 0, len(chainTokensForUsers)*3)
+	tokensToUpsert := make([]persist.TokenSplit, 0, len(chainTokensForUsers)*3)
 	userTokenOffsets := make(map[persist.DBID][2]int)
 	newUserTokens := make(map[persist.DBID]map[persist.TokenIdentifiers]bool)
 
@@ -527,7 +527,7 @@ func (p *Provider) processTokensForOwnersOfContract(ctx context.Context, contrac
 	return nil
 }
 
-func (p *Provider) processTokensForUser(ctx context.Context, tokensFromProviders []chainTokens, addressToContract map[string]persist.DBID, user persist.User, chains []persist.Chain, skipDelete bool) ([]persist.TokenGallery, error) {
+func (p *Provider) processTokensForUser(ctx context.Context, tokensFromProviders []chainTokens, addressToContract map[string]persist.DBID, user persist.User, chains []persist.Chain, skipDelete bool) ([]persist.TokenSplit, error) {
 	dedupedTokens, newTokens, err := p.prepTokensForTokenProcessing(ctx, tokensFromProviders, addressToContract, user)
 	if err != nil {
 		return nil, err
@@ -621,7 +621,7 @@ func (p *Provider) GetCommunityOwners(ctx context.Context, communityIdentifiers 
 	return holders, nil
 }
 
-func (p *Provider) GetTokensOfContractForWallet(ctx context.Context, contractAddress persist.Address, wallet persist.ChainAddress, limit, offset int) ([]persist.TokenGallery, error) {
+func (p *Provider) GetTokensOfContractForWallet(ctx context.Context, contractAddress persist.Address, wallet persist.ChainAddress, limit, offset int) ([]persist.TokenSplit, error) {
 	user, err := p.Repos.UserRepository.GetByChainAddress(ctx, wallet)
 	if err != nil {
 		if _, ok := err.(persist.ErrWalletNotFound); ok {
@@ -795,7 +795,7 @@ outer:
 
 			name := util.ToNullString(contract.Name, true)
 
-			if err := p.Repos.ContractRepository.UpsertByAddress(ctx, ti.ContractAddress, ti.Chain, persist.ContractGallery{
+			if err := p.Repos.ContractRepository.UpsertByAddress(ctx, ti.ContractAddress, ti.Chain, persist.ContractSplit{
 				Chain:          ti.Chain,
 				Address:        persist.Address(ti.Chain.NormalizeAddress(ti.ContractAddress)),
 				Symbol:         persist.NullString(contract.Symbol),
@@ -1155,8 +1155,8 @@ func (d *Provider) processContracts(ctx context.Context, contractsFromProviders 
 	return addressesToContracts, nil
 }
 
-func tokensToNewDedupedTokens(ctx context.Context, tokens []chainTokens, contractAddressIDs map[string]persist.DBID, ownerUser persist.User) ([]persist.TokenGallery, error) {
-	seenTokens := make(map[persist.TokenIdentifiers]persist.TokenGallery)
+func tokensToNewDedupedTokens(ctx context.Context, tokens []chainTokens, contractAddressIDs map[string]persist.DBID, ownerUser persist.User) ([]persist.TokenSplit, error) {
+	seenTokens := make(map[persist.TokenIdentifiers]persist.TokenSplit)
 
 	seenWallets := make(map[persist.TokenIdentifiers][]persist.Wallet)
 	seenQuantities := make(map[persist.TokenIdentifiers]persist.HexString)
@@ -1182,7 +1182,7 @@ func tokensToNewDedupedTokens(ctx context.Context, tokens []chainTokens, contrac
 			ti := persist.NewTokenIdentifiers(token.ContractAddress, token.TokenID, chainToken.chain)
 			existingToken, seen := seenTokens[ti]
 
-			candidateToken := persist.TokenGallery{
+			candidateToken := persist.TokenSplit{
 				TokenType:            token.TokenType,
 				Chain:                chainToken.chain,
 				Name:                 persist.NullString(token.Name),
@@ -1236,7 +1236,7 @@ func tokensToNewDedupedTokens(ctx context.Context, tokens []chainTokens, contrac
 		}
 	}
 
-	res := make([]persist.TokenGallery, len(seenTokens))
+	res := make([]persist.TokenSplit, len(seenTokens))
 	i := 0
 	for _, t := range seenTokens {
 		if t.Name == "" {
@@ -1259,8 +1259,8 @@ func tokensToNewDedupedTokens(ctx context.Context, tokens []chainTokens, contrac
 	return res, nil
 }
 
-func contractsToNewDedupedContracts(ctx context.Context, contracts []chainContracts) ([]persist.ContractGallery, error) {
-	seen := make(map[persist.ChainAddress]persist.ContractGallery)
+func contractsToNewDedupedContracts(ctx context.Context, contracts []chainContracts) ([]persist.ContractSplit, error) {
+	seen := make(map[persist.ChainAddress]persist.ContractSplit)
 
 	sort.SliceStable(contracts, func(i, j int) bool {
 		return contracts[i].priority < contracts[j].priority
@@ -1273,7 +1273,7 @@ func contractsToNewDedupedContracts(ctx context.Context, contracts []chainContra
 					continue
 				}
 			}
-			c := persist.ContractGallery{
+			c := persist.ContractSplit{
 				Chain:          chainContract.chain,
 				Address:        contract.Address,
 				Symbol:         persist.NullString(contract.Symbol),
@@ -1284,7 +1284,7 @@ func contractsToNewDedupedContracts(ctx context.Context, contracts []chainContra
 		}
 	}
 
-	res := make([]persist.ContractGallery, 0, len(seen))
+	res := make([]persist.ContractSplit, 0, len(seen))
 	for _, c := range seen {
 		res = append(res, c)
 	}

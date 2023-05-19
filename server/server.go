@@ -124,7 +124,7 @@ func CoreInit(c *Clients, provider *multichain.Provider) *gin.Engine {
 		validate.RegisterCustomValidators(v)
 	}
 
-	err := redis.ClearCache(redis.GalleriesDB)
+	err := redis.ClearCache(redis.SplitsDB)
 	if err != nil {
 		panic(err)
 	}

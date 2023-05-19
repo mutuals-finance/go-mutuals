@@ -13,33 +13,33 @@ const (
 	ResourceTypeUser ResourceType = iota
 	ResourceTypeToken
 	ResourceTypeCollection
-	ResourceTypeGallery
+	ResourceTypeSplit
 	ActionUserCreated                     Action = "UserCreated"
 	ActionUserFollowedUsers               Action = "UserFollowedUsers"
 	ActionCollectorsNoteAddedToToken      Action = "CollectorsNoteAddedToToken"
 	ActionCollectionCreated               Action = "CollectionCreated"
 	ActionCollectorsNoteAddedToCollection Action = "CollectorsNoteAddedToCollection"
 	ActionTokensAddedToCollection         Action = "TokensAddedToCollection"
-	ActionViewedGallery                   Action = "ViewedGallery"
+	ActionViewedSplit                     Action = "ViewedSplit"
 	ActionCollectionUpdated               Action = "CollectionUpdated"
-	ActionGalleryUpdated                  Action = "GalleryUpdated"
-	ActionGalleryInfoUpdated              Action = "GalleryInfoUpdated"
+	ActionSplitUpdated                    Action = "SplitUpdated"
+	ActionSplitInfoUpdated                Action = "SplitInfoUpdated"
 )
 
 type EventData struct {
-	UserBio                             string            `json:"user_bio"`
-	UserFollowedBack                    bool              `json:"user_followed_back"`
-	UserRefollowed                      bool              `json:"user_refollowed"`
-	TokenCollectorsNote                 string            `json:"token_collectors_note"`
-	TokenCollectionID                   DBID              `json:"token_collection_id"`
-	CollectionTokenIDs                  DBIDList          `json:"collection_token_ids"`
-	CollectionCollectorsNote            string            `json:"collection_collectors_note"`
-	GalleryName                         *string           `json:"gallery_name"`
-	GalleryDescription                  *string           `json:"gallery_description"`
-	GalleryNewCollectionCollectorsNotes map[DBID]string   `json:"gallery_new_collection_collectors_notes"`
-	GalleryNewTokenIDs                  map[DBID]DBIDList `json:"gallery_new_token_ids"`
-	GalleryNewCollections               DBIDList          `json:"gallery_new_collections"`
-	GalleryNewTokenCollectorsNotes      map[DBID]string   `json:"gallery_new_token_collectors_notes"`
+	UserBio                           string            `json:"user_bio"`
+	UserFollowedBack                  bool              `json:"user_followed_back"`
+	UserRefollowed                    bool              `json:"user_refollowed"`
+	TokenCollectorsNote               string            `json:"token_collectors_note"`
+	TokenCollectionID                 DBID              `json:"token_collection_id"`
+	CollectionTokenIDs                DBIDList          `json:"collection_token_ids"`
+	CollectionCollectorsNote          string            `json:"collection_collectors_note"`
+	SplitName                         *string           `json:"split_name"`
+	SplitDescription                  *string           `json:"split_description"`
+	SplitNewCollectionCollectorsNotes map[DBID]string   `json:"split_new_collection_collectors_notes"`
+	SplitNewTokenIDs                  map[DBID]DBIDList `json:"split_new_token_ids"`
+	SplitNewCollections               DBIDList          `json:"split_new_collections"`
+	SplitNewTokenCollectorsNotes      map[DBID]string   `json:"split_new_token_collectors_notes"`
 }
 
 type ErrUnknownAction struct {

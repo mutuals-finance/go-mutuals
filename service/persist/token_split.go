@@ -13,8 +13,8 @@ import (
 
 type AddressAtBlockList []AddressAtBlock
 
-// TokenGallery represents an individual Token
-type TokenGallery struct {
+// TokenSplit represents an individual Token
+type TokenSplit struct {
 	Version      NullInt32       `json:"version"` // schema version for this model
 	ID           DBID            `json:"id" binding:"required"`
 	CreationTime CreationTime    `json:"created_at"`
@@ -59,7 +59,7 @@ func (l *AddressAtBlockList) Scan(value interface{}) error {
 }
 
 // TokenIdentifiers returns the unique identifier for a token
-func (t TokenGallery) TokenIdentifiers() TokenIdentifiers {
+func (t TokenSplit) TokenIdentifiers() TokenIdentifiers {
 	return NewTokenIdentifiers(Address(t.Contract), t.TokenID, t.Chain)
 }
 
@@ -160,14 +160,14 @@ type TokenUpdateMetadataDerivedFieldsInput struct {
 	Description NullString `json:"description"`
 }
 
-// TokenGalleryRepository represents a repository for interacting with persisted tokens
-type TokenGalleryRepository interface {
-	GetByUserID(context.Context, DBID, int64, int64) ([]TokenGallery, error)
-	GetByTokenIdentifiers(context.Context, TokenID, Address, Chain, int64, int64) ([]TokenGallery, error)
-	GetByFullIdentifiers(context.Context, TokenID, Address, Chain, DBID) (TokenGallery, error)
-	GetByTokenID(context.Context, TokenID, int64, int64) ([]TokenGallery, error)
-	BulkUpsertByOwnerUserID(context.Context, DBID, []Chain, []TokenGallery, bool) ([]TokenGallery, error)
-	BulkUpsertTokensOfContract(context.Context, DBID, []TokenGallery, bool) ([]TokenGallery, error)
+// TokenSplitRepository represents a repository for interacting with persisted tokens
+type TokenSplitRepository interface {
+	GetByUserID(context.Context, DBID, int64, int64) ([]TokenSplit, error)
+	GetByTokenIdentifiers(context.Context, TokenID, Address, Chain, int64, int64) ([]TokenSplit, error)
+	GetByFullIdentifiers(context.Context, TokenID, Address, Chain, DBID) (TokenSplit, error)
+	GetByTokenID(context.Context, TokenID, int64, int64) ([]TokenSplit, error)
+	BulkUpsertByOwnerUserID(context.Context, DBID, []Chain, []TokenSplit, bool) ([]TokenSplit, error)
+	BulkUpsertTokensOfContract(context.Context, DBID, []TokenSplit, bool) ([]TokenSplit, error)
 	UpdateByID(context.Context, DBID, DBID, interface{}) error
 	UpdateByTokenIdentifiersUnsafe(context.Context, TokenID, Address, Chain, interface{}) error
 	DeleteByID(context.Context, DBID) error
@@ -175,12 +175,12 @@ type TokenGalleryRepository interface {
 	TokensAreOwnedByUser(ctx context.Context, userID DBID, tokens []DBID) error
 }
 
-type ErrTokensGalleryNotFoundByContract struct {
+type ErrTokensSplitNotFoundByContract struct {
 	ContractAddress Address
 	Chain           Chain
 }
 
-type ErrTokenGalleryNotFoundByIdentifiers struct {
+type ErrTokenSplitNotFoundByIdentifiers struct {
 	TokenID         TokenID
 	ContractAddress Address
 	Chain           Chain
@@ -248,10 +248,10 @@ func (a AddressAtBlock) Value() (driver.Value, error) {
 	return json.Marshal(a)
 }
 
-func (e ErrTokensGalleryNotFoundByContract) Error() string {
+func (e ErrTokensSplitNotFoundByContract) Error() string {
 	return fmt.Sprintf("tokens not found by contract: %s", e.ContractAddress)
 }
 
-func (e ErrTokenGalleryNotFoundByIdentifiers) Error() string {
+func (e ErrTokenSplitNotFoundByIdentifiers) Error() string {
 	return fmt.Sprintf("token not found with contract address %v and token ID %v", e.ContractAddress, e.TokenID)
 }

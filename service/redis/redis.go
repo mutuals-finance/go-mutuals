@@ -18,8 +18,8 @@ type ErrKeyNotFound struct {
 }
 
 const (
-	GalleriesDB               = 0
-	GalleriesTokenDB          = 1
+	SplitsDB                  = 0
+	SplitsTokenDB             = 1
 	CommunitiesDB             = 2
 	RequireNftsDB             = 3
 	TestSuiteDB               = 5
@@ -37,10 +37,10 @@ const (
 // This is useful for adding debug information to Redis calls (like tracing).
 func GetNameForDatabase(databaseId int) string {
 	switch databaseId {
-	case GalleriesDB:
-		return "GalleriesDB"
-	case GalleriesTokenDB:
-		return "GalleriesTokenDB"
+	case SplitsDB:
+		return "SplitsDB"
+	case SplitsTokenDB:
+		return "SplitsTokenDB"
 	case CommunitiesDB:
 		return "CommunitiesDB"
 	case RequireNftsDB:

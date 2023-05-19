@@ -85,8 +85,8 @@ type SplitFiUser implements Node @goEmbedHelper {
 
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
-  featuredGallery: Gallery @goField(forceResolver: true)
-  galleries: [Gallery] @goField(forceResolver: true)
+  featuredSplit: Split @goField(forceResolver: true)
+  splits: [Split] @goField(forceResolver: true)
   badges: [Badge] @goField(forceResolver: true)
   isAuthenticatedUser: Boolean
   followers: [SplitFiUser] @goField(forceResolver: true)
@@ -390,13 +390,13 @@ type Collection implements Node {
   version: Int
   name: String
   collectorsNote: String
-  gallery: Gallery @goField(forceResolver: true)
+  split: Split @goField(forceResolver: true)
   layout: CollectionLayout
   hidden: Boolean
   tokens(limit: Int): [CollectionToken] @goField(forceResolver: true)
 }
 
-type Gallery implements Node {
+type Split implements Node {
   id: ID!
   dbid: DBID!
   name: String
@@ -494,8 +494,8 @@ type Contract implements Node {
 
 # We have this extra type in case we need to stick authed data
 # in here one day.
-type ViewerGallery {
-  gallery: Gallery
+type ViewerSplit {
+  split: Split
 }
 
 type NotificationEdge {
@@ -536,7 +536,7 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: SplitFiUser @goField(forceResolver: true)
   socialAccounts: SocialAccounts @goField(forceResolver: true)
-  viewerGalleries: [ViewerGallery] @goField(forceResolver: true)
+  viewerSplits: [ViewerSplit] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
   """
@@ -553,12 +553,12 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 
 type NotificationSettings {
   someoneFollowedYou: Boolean
-  someoneViewedYourGallery: Boolean
+  someoneViewedYourSplit: Boolean
 }
 
 input NotificationSettingsInput {
   someoneFollowedYou: Boolean
-  someoneViewedYourGallery: Boolean
+  someoneViewedYourSplit: Boolean
 }
 
 enum EmailVerificationStatus {
@@ -595,7 +595,7 @@ input UnsubscribeFromEmailTypeInput {
 }
 
 enum UserExperienceType {
-  MultiGalleryAnnouncement
+  MultiSplitAnnouncement
   EmailUpsell
   MaintenanceFeb2023
   TwitterConnectionOnboardingUpsell
@@ -706,12 +706,12 @@ enum Role {
   EARLY_ACCESS
 }
 
-type ErrGalleryNotFound implements Error {
+type ErrSplitNotFound implements Error {
   message: String!
 }
 
-union GalleryByIdPayloadOrError = Gallery | ErrGalleryNotFound
-union ViewerGalleryByIdPayloadOrError = ViewerGallery | ErrGalleryNotFound
+union SplitByIdPayloadOrError = Split | ErrSplitNotFound
+union ViewerSplitByIdPayloadOrError = ViewerSplit | ErrSplitNotFound
 
 enum ReportWindow {
   LAST_5_DAYS
@@ -729,15 +729,15 @@ type SearchUsersPayload {
 
 union SearchUsersPayloadOrError = SearchUsersPayload | ErrInvalidInput
 
-type GallerySearchResult {
-  gallery: Gallery
+type SplitSearchResult {
+  split: Split
 }
 
-type SearchGalleriesPayload {
-  results: [GallerySearchResult!]
+type SearchSplitsPayload {
+  results: [SplitSearchResult!]
 }
 
-union SearchGalleriesPayloadOrError = SearchGalleriesPayload | ErrInvalidInput
+union SearchSplitsPayloadOrError = SearchSplitsPayload | ErrInvalidInput
 
 type CommunitySearchResult {
   community: Community
@@ -768,8 +768,8 @@ type Query {
     forceRefresh: Boolean
   ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
-  galleryById(id: DBID!): GalleryByIdPayloadOrError
-  viewerGalleryById(id: DBID!): ViewerGalleryByIdPayloadOrError
+  splitById(id: DBID!): SplitByIdPayloadOrError
+  viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
@@ -783,17 +783,17 @@ type Query {
     bioWeight: Float
   ): SearchUsersPayloadOrError
   """
-  Search for galleries with optional weighting. Weights are floats in the [0.0. 1.0] range
+  Search for splits with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. nameWeight defaults to 0.4 and
-  descriptionWeight defaults to 0.2, meaning that a search result matching a gallery name is
-  considered twice as relevant as a search result matching a gallery description.
+  descriptionWeight defaults to 0.2, meaning that a search result matching a split name is
+  considered twice as relevant as a search result matching a split description.
   """
-  searchGalleries(
+  searchSplits(
     query: String!
     limit: Int
     nameWeight: Float
     descriptionWeight: Float
-  ): SearchGalleriesPayloadOrError
+  ): SearchSplitsPayloadOrError
   """
   Search for communities with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. nameWeight defaults to 0.4, descriptionWeight
@@ -852,7 +852,7 @@ input CollectionTokenSettingsInput {
 }
 
 input CreateCollectionInput {
-  galleryId: DBID!
+  splitId: DBID!
   name: String!
   collectorsNote: String!
   tokens: [DBID!]!
@@ -874,7 +874,7 @@ union DeleteCollectionPayloadOrError =
   | ErrCollectionNotFound
 
 type DeleteCollectionPayload {
-  gallery: Gallery
+  split: Split
 }
 
 input UpdateCollectionInfoInput {
@@ -923,18 +923,18 @@ type UpdateCollectionHiddenPayload {
   collection: Collection
 }
 
-input UpdateGalleryCollectionsInput {
-  galleryId: DBID!
+input UpdateSplitCollectionsInput {
+  splitId: DBID!
   collections: [DBID!]!
 }
 
-union UpdateGalleryCollectionsPayloadOrError =
-    UpdateGalleryCollectionsPayload
+union UpdateSplitCollectionsPayloadOrError =
+    UpdateSplitCollectionsPayload
   | ErrNotAuthorized
   | ErrInvalidInput
 
-type UpdateGalleryCollectionsPayload {
-  gallery: Gallery
+type UpdateSplitCollectionsPayload {
+  split: Split
 }
 
 input UpdateTokenInfoInput {
@@ -1173,9 +1173,9 @@ input CreateUserInput {
   username: String!
   bio: String
   email: Email
-  galleryName: String
-  galleryDescription: String
-  galleryPosition: String
+  splitName: String
+  splitDescription: String
+  splitPosition: String
 }
 
 union CreateUserPayloadOrError =
@@ -1188,8 +1188,8 @@ union CreateUserPayloadOrError =
 
 type CreateUserPayload {
   userId: DBID
-  galleryId: DBID
-  # TODO: Remove userId and galleryId in favor of viewer
+  splitId: DBID
+  # TODO: Remove userId and splitId in favor of viewer
   viewer: Viewer
 }
 
@@ -1267,7 +1267,7 @@ type SomeoneFollowedYouBackNotification implements Notification & Node & Grouped
     @goField(forceResolver: true)
 }
 
-type SomeoneViewedYourGalleryNotification implements Notification & Node & GroupedNotification
+type SomeoneViewedYourSplitNotification implements Notification & Node & GroupedNotification
   @goEmbedHelper {
   id: ID!
   dbid: DBID!
@@ -1287,18 +1287,18 @@ type SomeoneViewedYourGalleryNotification implements Notification & Node & Group
 
   # count of unique non-user viewers
   nonUserViewerCount: Int
-  gallery: Gallery @goField(forceResolver: true)
+  split: Split @goField(forceResolver: true)
 }
 
 type ClearAllNotificationsPayload {
   notifications: [Notification]
 }
 
-type ViewGalleryPayload {
-  gallery: Gallery
+type ViewSplitPayload {
+  split: Split
 }
 
-union ViewGalleryPayloadOrError = ViewGalleryPayload | ErrAuthenticationFailed
+union ViewSplitPayloadOrError = ViewSplitPayload | ErrAuthenticationFailed
 
 input VerifyEmailInput {
   token: String! @scrub
@@ -1379,77 +1379,77 @@ union SyncTokensForUsernamePayloadOrError =
   | ErrNotAuthorized
   | ErrSyncFailed
 
-input GalleryPositionInput {
-  galleryId: DBID!
+input SplitPositionInput {
+  splitId: DBID!
   position: String!
 }
 
-input UpdateGalleryOrderInput {
-  positions: [GalleryPositionInput!]!
+input UpdateSplitOrderInput {
+  positions: [SplitPositionInput!]!
 }
 
-input UpdateGalleryHiddenInput {
+input UpdateSplitHiddenInput {
   id: DBID!
   hidden: Boolean!
 }
 
-input UpdateGalleryInfoInput {
+input UpdateSplitInfoInput {
   id: DBID!
   name: String
   description: String
 }
 
-input CreateGalleryInput {
+input CreateSplitInput {
   name: String
   description: String
   position: String!
 }
 
-type CreateGalleryPayload {
-  gallery: Gallery
+type CreateSplitPayload {
+  split: Split
 }
 
-union CreateGalleryPayloadOrError = CreateGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union CreateSplitPayloadOrError = CreateSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateGalleryInfoPayload {
-  gallery: Gallery
+type UpdateSplitInfoPayload {
+  split: Split
 }
 
-union UpdateGalleryInfoPayloadOrError =
-    UpdateGalleryInfoPayload
+union UpdateSplitInfoPayloadOrError =
+    UpdateSplitInfoPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type UpdateGalleryHiddenPayload {
-  gallery: Gallery
+type UpdateSplitHiddenPayload {
+  split: Split
 }
 
-union UpdateGalleryHiddenPayloadOrError =
-    UpdateGalleryHiddenPayload
+union UpdateSplitHiddenPayloadOrError =
+    UpdateSplitHiddenPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type DeleteGalleryPayload {
+type DeleteSplitPayload {
   deletedId: DeletedNode
 }
 
-union DeleteGalleryPayloadOrError = DeleteGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union DeleteSplitPayloadOrError = DeleteSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateGalleryOrderPayload {
+type UpdateSplitOrderPayload {
   viewer: Viewer
 }
 
-union UpdateGalleryOrderPayloadOrError =
-    UpdateGalleryOrderPayload
+union UpdateSplitOrderPayloadOrError =
+    UpdateSplitOrderPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type UpdateFeaturedGalleryPayload {
+type UpdateFeaturedSplitPayload {
   viewer: Viewer
 }
 
-union UpdateFeaturedGalleryPayloadOrError =
-    UpdateFeaturedGalleryPayload
+union UpdateFeaturedSplitPayloadOrError =
+    UpdateFeaturedSplitPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
@@ -1463,7 +1463,7 @@ input UpdateCollectionInput {
   hidden: Boolean!
 }
 
-input CreateCollectionInGalleryInput {
+input CreateCollectionInSplitInput {
   name: String!
   collectorsNote: String!
   tokens: [DBID!]!
@@ -1473,8 +1473,8 @@ input CreateCollectionInGalleryInput {
   givenID: DBID!
 }
 
-input UpdateGalleryInput {
-  galleryId: DBID!
+input UpdateSplitInput {
+  splitId: DBID!
 
   name: String
   description: String
@@ -1485,7 +1485,7 @@ input UpdateGalleryInput {
   deletedCollections: [DBID!]
 
   updatedCollections: [UpdateCollectionInput]
-  createdCollections: [CreateCollectionInGalleryInput]
+  createdCollections: [CreateCollectionInSplitInput]
 
   order: [DBID!]
 
@@ -1494,23 +1494,23 @@ input UpdateGalleryInput {
   editId: String
 }
 
-type UpdateGalleryPayload {
-  gallery: Gallery
+type UpdateSplitPayload {
+  split: Split
 }
 
-union UpdateGalleryPayloadOrError = UpdateGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union UpdateSplitPayloadOrError = UpdateSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-input PublishGalleryInput {
-  galleryId: DBID!
+input PublishSplitInput {
+  splitId: DBID!
   editId: String!
   caption: String
 }
 
-type PublishGalleryPayload {
-  gallery: Gallery
+type PublishSplitPayload {
+  split: Split
 }
 
-union PublishGalleryPayloadOrError = PublishGalleryPayload | ErrInvalidInput | ErrNotAuthorized
+union PublishSplitPayloadOrError = PublishSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
 type UpdatePrimaryWalletPayload {
   viewer: Viewer
@@ -1551,18 +1551,18 @@ union UpdateUserExperiencePayloadOrError =
   | ErrInvalidInput
   | ErrNotAuthorized
 
-input MoveCollectionToGalleryInput {
+input MoveCollectionToSplitInput {
   sourceCollectionId: DBID!
-  targetGalleryId: DBID!
+  targetSplitId: DBID!
 }
 
-type MoveCollectionToGalleryPayload {
-  oldGallery: Gallery
-  newGallery: Gallery
+type MoveCollectionToSplitPayload {
+  oldSplit: Split
+  newSplit: Split
 }
 
-union MoveCollectionToGalleryPayloadOrError =
-    MoveCollectionToGalleryPayload
+union MoveCollectionToSplitPayloadOrError =
+    MoveCollectionToSplitPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
@@ -1634,10 +1634,10 @@ type Mutation {
   removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsPayloadOrError @authRequired
   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
 
-  # Gallery Mutations
-  updateGalleryCollections(
-    input: UpdateGalleryCollectionsInput!
-  ): UpdateGalleryCollectionsPayloadOrError @authRequired
+  # Split Mutations
+  updateSplitCollections(
+    input: UpdateSplitCollectionsInput!
+  ): UpdateSplitCollectionsPayloadOrError @authRequired
 
   # Collection Mutations
 
@@ -1690,19 +1690,19 @@ type Mutation {
   ): FollowAllSocialConnectionsPayloadOrError @authRequired
   unfollowUser(userId: DBID!): UnfollowUserPayloadOrError @authRequired
 
-  viewGallery(galleryId: DBID!): ViewGalleryPayloadOrError
+  viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
-  updateGallery(input: UpdateGalleryInput!): UpdateGalleryPayloadOrError @authRequired
-  publishGallery(input: PublishGalleryInput!): PublishGalleryPayloadOrError @authRequired
+  updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
+  publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired
 
-  createGallery(input: CreateGalleryInput!): CreateGalleryPayloadOrError @authRequired
-  updateGalleryHidden(input: UpdateGalleryHiddenInput!): UpdateGalleryHiddenPayloadOrError
+  createSplit(input: CreateSplitInput!): CreateSplitPayloadOrError @authRequired
+  updateSplitHidden(input: UpdateSplitHiddenInput!): UpdateSplitHiddenPayloadOrError
     @authRequired
-  deleteGallery(galleryId: DBID!): DeleteGalleryPayloadOrError @authRequired
-  updateGalleryOrder(input: UpdateGalleryOrderInput!): UpdateGalleryOrderPayloadOrError
+  deleteSplit(splitId: DBID!): DeleteSplitPayloadOrError @authRequired
+  updateSplitOrder(input: UpdateSplitOrderInput!): UpdateSplitOrderPayloadOrError
     @authRequired
-  updateGalleryInfo(input: UpdateGalleryInfoInput!): UpdateGalleryInfoPayloadOrError @authRequired
-  updateFeaturedGallery(galleryId: DBID!): UpdateFeaturedGalleryPayloadOrError @authRequired
+  updateSplitInfo(input: UpdateSplitInfoInput!): UpdateSplitInfoPayloadOrError @authRequired
+  updateFeaturedSplit(splitId: DBID!): UpdateFeaturedSplitPayloadOrError @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired
 
@@ -1722,7 +1722,7 @@ type Mutation {
     input: MintPremiumCardToWalletInput!
   ): MintPremiumCardToWalletPayloadOrError @retoolAuth
 
-  # Gallery Frontend Deploy Persisted Queries
+  # Split Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
     @frontendBuildAuth
 
@@ -1731,9 +1731,9 @@ type Mutation {
   updateUserExperience(input: UpdateUserExperienceInput!): UpdateUserExperiencePayloadOrError
     @authRequired
 
-  moveCollectionToGallery(
-    input: MoveCollectionToGalleryInput
-  ): MoveCollectionToGalleryPayloadOrError @authRequired
+  moveCollectionToSplit(
+    input: MoveCollectionToSplitInput
+  ): MoveCollectionToSplitPayloadOrError @authRequired
 }
 
 type Subscription {

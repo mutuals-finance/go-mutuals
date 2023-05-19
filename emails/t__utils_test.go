@@ -30,7 +30,7 @@ var followNotif coredb.Notification
 
 var viewNotif coredb.Notification
 
-var testGallery coredb.Gallery
+var testSplit coredb.Split
 
 func setupTest(t *testing.T) (*assert.Assertions, *sql.DB, *pgxpool.Pool) {
 	setDefaults()
@@ -65,10 +65,10 @@ func newRepos(pq *sql.DB, pgx *pgxpool.Pool) *postgres.Repositories {
 	return &postgres.Repositories{
 		UserRepository:        postgres.NewUserRepository(pq, queries),
 		NonceRepository:       postgres.NewNonceRepository(pq, queries),
-		TokenRepository:       postgres.NewTokenGalleryRepository(pq, queries),
+		TokenRepository:       postgres.NewTokenSplitRepository(pq, queries),
 		CollectionRepository:  postgres.NewCollectionTokenRepository(pq, queries),
-		GalleryRepository:     postgres.NewGalleryRepository(queries),
-		ContractRepository:    postgres.NewContractGalleryRepository(pq, queries),
+		SplitRepository:       postgres.NewSplitRepository(queries),
+		ContractRepository:    postgres.NewContractSplitRepository(pq, queries),
 		MembershipRepository:  postgres.NewMembershipRepository(pq, queries),
 		EarlyAccessRepository: postgres.NewEarlyAccessRepository(pq, queries),
 		WalletRepository:      postgres.NewWalletRepository(pq, queries),
@@ -93,16 +93,16 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 
 	testUser2.ID = userID2
 
-	galleryInsert := coredb.GalleryRepoCreateParams{OwnerUserID: userID, GalleryID: persist.GenerateID(), Position: "0.1"}
+	galleryInsert := coredb.SplitRepoCreateParams{OwnerUserID: userID, SplitID: persist.GenerateID(), Position: "0.1"}
 
-	gallery, err := repos.GalleryRepository.Create(ctx, galleryInsert)
+	gallery, err := repos.SplitRepository.Create(ctx, galleryInsert)
 	if err != nil {
 		t.Fatalf("failed to create gallery: %s", err)
 	}
 
-	galleryInsert2 := coredb.GalleryRepoCreateParams{OwnerUserID: userID2, GalleryID: persist.GenerateID(), Position: "0.2"}
+	galleryInsert2 := coredb.SplitRepoCreateParams{OwnerUserID: userID2, SplitID: persist.GenerateID(), Position: "0.2"}
 
-	_, err = repos.GalleryRepository.Create(ctx, galleryInsert2)
+	_, err = repos.SplitRepository.Create(ctx, galleryInsert2)
 	if err != nil {
 		t.Fatalf("failed to create gallery: %s", err)
 	}
@@ -110,21 +110,21 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 	collID, err := repos.CollectionRepository.Create(ctx, persist.CollectionDB{
 		Name:        "test coll",
 		OwnerUserID: userID,
-		GalleryID:   gallery.ID,
+		SplitID:     gallery.ID,
 	})
 
 	if err != nil {
 		t.Fatalf("failed to create collection: %s", err)
 	}
 
-	err = repos.GalleryRepository.Update(ctx, gallery.ID, userID, persist.GalleryTokenUpdateInput{
+	err = repos.SplitRepository.Update(ctx, gallery.ID, userID, persist.SplitTokenUpdateInput{
 		Collections: []persist.DBID{collID},
 	})
 	if err != nil {
 		t.Fatalf("failed to update gallery: %s", err)
 	}
 
-	testGallery, err = q.GetGalleryById(ctx, gallery.ID)
+	testSplit, err = q.GetSplitById(ctx, gallery.ID)
 	if err != nil {
 		t.Fatalf("failed to get gallery: %s", err)
 	}
@@ -134,8 +134,8 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 		ActorID:        persist.DBIDToNullStr(userID),
 		Action:         persist.ActionCollectionCreated,
 		ResourceTypeID: persist.ResourceTypeCollection,
-		CollectionID:   testGallery.Collections[0],
-		GalleryID:      gallery.ID,
+		CollectionID:   testSplit.Collections[0],
+		SplitID:        gallery.ID,
 	})
 
 	if err != nil {
@@ -149,27 +149,27 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 
 func seedViewNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos *postgres.Repositories, userID persist.DBID, userID2 persist.DBID) {
 
-	viewEvent, err := q.CreateGalleryEvent(ctx, coredb.CreateGalleryEventParams{
+	viewEvent, err := q.CreateSplitEvent(ctx, coredb.CreateSplitEventParams{
 		ID:             persist.GenerateID(),
 		ActorID:        persist.DBIDToNullStr(userID2),
-		Action:         persist.ActionViewedGallery,
-		ResourceTypeID: persist.ResourceTypeGallery,
-		GalleryID:      testGallery.ID,
+		Action:         persist.ActionViewedSplit,
+		ResourceTypeID: persist.ResourceTypeSplit,
+		SplitID:        testSplit.ID,
 	})
 
 	if err != nil {
 		t.Fatalf("failed to create view event: %s", err)
 	}
 
-	viewNotif, err = q.CreateViewGalleryNotification(ctx, coredb.CreateViewGalleryNotificationParams{
+	viewNotif, err = q.CreateViewSplitNotification(ctx, coredb.CreateViewSplitNotificationParams{
 		ID:       persist.GenerateID(),
 		OwnerID:  userID,
-		Action:   persist.ActionViewedGallery,
+		Action:   persist.ActionViewedSplit,
 		EventIds: []persist.DBID{viewEvent.ID},
 		Data: persist.NotificationData{
 			AuthedViewerIDs: []persist.DBID{userID2},
 		},
-		GalleryID: testGallery.ID,
+		SplitID: testSplit.ID,
 	})
 
 	if err != nil {

@@ -13,10 +13,10 @@ func handlersInit(router *gin.Engine, db *sql.DB, stmts *statements, ethcl *ethc
 
 	users := api.Group("/users")
 	users.GET("/get", getUser(stmts.getUserByIDStmt, stmts.getUserByUsernameStmt, stmts.getUserByAddressStmt))
-	users.POST("/merge", mergeUser(db, stmts.getUserByIDStmt, stmts.updateUserStmt, stmts.deleteUserStmt, stmts.getGalleriesRawStmt, stmts.deleteGalleryStmt, stmts.updateGalleryStmt))
+	users.POST("/merge", mergeUser(db, stmts.getUserByIDStmt, stmts.updateUserStmt, stmts.deleteUserStmt, stmts.getSplitsRawStmt, stmts.deleteSplitStmt, stmts.updateSplitStmt))
 	users.POST("/update", updateUser(stmts.updateUserStmt))
-	users.POST("/delete", deleteUser(db, stmts.deleteUserStmt, stmts.getGalleriesRawStmt, stmts.deleteGalleryStmt, stmts.deleteCollectionStmt))
-	users.POST("/create", createUser(db, stmts.createUserStmt, stmts.createGalleryStmt, stmts.createNonceStmt))
+	users.POST("/delete", deleteUser(db, stmts.deleteUserStmt, stmts.getSplitsRawStmt, stmts.deleteSplitStmt, stmts.deleteCollectionStmt))
+	users.POST("/create", createUser(db, stmts.createUserStmt, stmts.createSplitStmt, stmts.createNonceStmt))
 
 	raw := api.Group("/raw")
 	raw.POST("/query", queryRaw(db))
@@ -26,10 +26,10 @@ func handlersInit(router *gin.Engine, db *sql.DB, stmts *statements, ethcl *ethc
 	// nfts.POST("/opensea", refreshOpensea(stmts.nftRepo, stmts.userRepo, stmts.collRepo, stmts.galleryRepo, stmts.backupRepo))
 	// nfts.GET("/owns", ownsGeneral(ethcl))
 
-	galleries := api.Group("/galleries")
-	galleries.GET("/get", getGalleries(stmts.galleryRepo))
-	//galleries.GET("/refresh", refreshCache(stmts.galleryRepo))
-	//galleries.GET("/backup", backupGalleries(stmts.galleryRepo, stmts.backupRepo))
+	splits := api.Group("/splits")
+	splits.GET("/get", getSplits(stmts.galleryRepo))
+	//splits.GET("/refresh", refreshCache(stmts.galleryRepo))
+	//splits.GET("/backup", backupSplits(stmts.galleryRepo, stmts.backupRepo))
 
 	snapshot := api.Group("/snapshot")
 	snapshot.GET("/get", getSnapshot(stg))

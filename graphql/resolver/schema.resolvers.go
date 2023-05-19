@@ -21,15 +21,15 @@ import (
 	"github.com/mikeydub/go-gallery/validate"
 )
 
-// Gallery is the resolver for the gallery field.
-func (r *collectionResolver) Gallery(ctx context.Context, obj *model.Collection) (*model.Gallery, error) {
-	gallery, err := publicapi.For(ctx).Gallery.GetGalleryByCollectionId(ctx, obj.Dbid)
+// Split is the resolver for the split field.
+func (r *collectionResolver) Split(ctx context.Context, obj *model.Collection) (*model.Split, error) {
+	split, err := publicapi.For(ctx).Split.GetSplitByCollectionId(ctx, obj.Dbid)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return galleryToModel(ctx, *gallery), nil
+	return splitToModel(ctx, *split), nil
 }
 
 // Tokens is the resolver for the tokens field.
@@ -112,27 +112,6 @@ func (r *followUserPayloadResolver) User(ctx context.Context, obj *model.FollowU
 	return resolveSplitFiUserByUserID(ctx, obj.User.Dbid)
 }
 
-// TokenPreviews is the resolver for the tokenPreviews field.
-func (r *galleryResolver) TokenPreviews(ctx context.Context, obj *model.Gallery) ([]*model.PreviewURLSet, error) {
-	return resolveTokenPreviewsByGalleryID(ctx, obj.Dbid)
-}
-
-// Owner is the resolver for the owner field.
-func (r *galleryResolver) Owner(ctx context.Context, obj *model.Gallery) (*model.SplitFiUser, error) {
-	gallery, err := publicapi.For(ctx).Gallery.GetGalleryById(ctx, obj.Dbid)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resolveSplitFiUserByUserID(ctx, gallery.OwnerUserID)
-}
-
-// Collections is the resolver for the collections field.
-func (r *galleryResolver) Collections(ctx context.Context, obj *model.Gallery) ([]*model.Collection, error) {
-	return resolveCollectionsByGalleryID(ctx, obj.Dbid)
-}
-
 // AddUserWallet is the resolver for the addUserWallet field.
 func (r *mutationResolver) AddUserWallet(ctx context.Context, chainAddress persist.ChainAddress, authMechanism model.AuthMechanism) (model.AddUserWalletPayloadOrError, error) {
 	api := publicapi.For(ctx)
@@ -186,22 +165,22 @@ func (r *mutationResolver) UpdateUserInfo(ctx context.Context, input model.Updat
 	return output, nil
 }
 
-// UpdateGalleryCollections is the resolver for the updateGalleryCollections field.
-func (r *mutationResolver) UpdateGalleryCollections(ctx context.Context, input model.UpdateGalleryCollectionsInput) (model.UpdateGalleryCollectionsPayloadOrError, error) {
+// UpdateSplitCollections is the resolver for the updateSplitCollections field.
+func (r *mutationResolver) UpdateSplitCollections(ctx context.Context, input model.UpdateSplitCollectionsInput) (model.UpdateSplitCollectionsPayloadOrError, error) {
 	api := publicapi.For(ctx)
 
-	err := api.Gallery.UpdateGalleryCollections(ctx, input.GalleryID, input.Collections)
+	err := api.Split.UpdateSplitCollections(ctx, input.SplitID, input.Collections)
 	if err != nil {
 		return nil, err
 	}
 
-	gallery, err := api.Gallery.GetGalleryById(ctx, input.GalleryID)
+	split, err := api.Split.GetSplitById(ctx, input.SplitID)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.UpdateGalleryCollectionsPayload{
-		Gallery: galleryToModel(ctx, *gallery),
+	output := &model.UpdateSplitCollectionsPayload{
+		Split: splitToModel(ctx, *split),
 	}
 
 	return output, nil
@@ -229,7 +208,7 @@ func (r *mutationResolver) CreateCollection(ctx context.Context, input model.Cre
 		settings[tokenSetting.TokenID] = persist.CollectionTokenSettings{RenderLive: tokenSetting.RenderLive}
 	}
 
-	collection, err := api.Collection.CreateCollection(ctx, input.GalleryID, input.Name, input.CollectorsNote, input.Tokens, layout, settings, input.Caption)
+	collection, err := api.Collection.CreateCollection(ctx, input.SplitID, input.Name, input.CollectorsNote, input.Tokens, layout, settings, input.Caption)
 	if err != nil {
 		return nil, err
 	}
@@ -251,8 +230,8 @@ func (r *mutationResolver) DeleteCollection(ctx context.Context, collectionID pe
 		return nil, err
 	}
 
-	// Get the collection's parent gallery before deleting the collection
-	gallery, err := api.Gallery.GetGalleryByCollectionId(ctx, collectionID)
+	// Get the collection's parent split before deleting the collection
+	split, err := api.Split.GetSplitByCollectionId(ctx, collectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -262,10 +241,10 @@ func (r *mutationResolver) DeleteCollection(ctx context.Context, collectionID pe
 		return nil, err
 	}
 
-	// Deleting a collection marks the collection as "deleted" but doesn't alter the gallery,
-	// so we don't need to refetch the gallery before returning it here
+	// Deleting a collection marks the collection as "deleted" but doesn't alter the split,
+	// so we don't need to refetch the split before returning it here
 	output := &model.DeleteCollectionPayload{
-		Gallery: galleryToModel(ctx, *gallery),
+		Split: splitToModel(ctx, *split),
 	}
 
 	return output, nil
@@ -521,14 +500,14 @@ func (r *mutationResolver) CreateUser(ctx context.Context, authMechanism model.A
 	if input.Bio != nil {
 		bioStr = *input.Bio
 	}
-	if input.GalleryName != nil {
-		nameStr = *input.GalleryName
+	if input.SplitName != nil {
+		nameStr = *input.SplitName
 	}
-	if input.GalleryDescription != nil {
-		descStr = *input.GalleryDescription
+	if input.SplitDescription != nil {
+		descStr = *input.SplitDescription
 	}
-	if input.GalleryPosition != nil {
-		positionStr = *input.GalleryPosition
+	if input.SplitPosition != nil {
+		positionStr = *input.SplitPosition
 	}
 
 	var email *persist.Email
@@ -537,15 +516,15 @@ func (r *mutationResolver) CreateUser(ctx context.Context, authMechanism model.A
 		email = &it
 	}
 
-	userID, galleryID, err := publicapi.For(ctx).User.CreateUser(ctx, authenticator, input.Username, email, bioStr, nameStr, descStr, positionStr)
+	userID, splitID, err := publicapi.For(ctx).User.CreateUser(ctx, authenticator, input.Username, email, bioStr, nameStr, descStr, positionStr)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &model.CreateUserPayload{
-		UserID:    &userID,
-		GalleryID: &galleryID,
-		Viewer:    resolveViewer(ctx),
+		UserID:  &userID,
+		SplitID: &splitID,
+		Viewer:  resolveViewer(ctx),
 	}
 
 	return output, nil
@@ -694,135 +673,135 @@ func (r *mutationResolver) UnfollowUser(ctx context.Context, userID persist.DBID
 	return output, err
 }
 
-// ViewGallery is the resolver for the viewGallery field.
-func (r *mutationResolver) ViewGallery(ctx context.Context, galleryID persist.DBID) (model.ViewGalleryPayloadOrError, error) {
-	gallery, err := publicapi.For(ctx).Gallery.ViewGallery(ctx, galleryID)
+// ViewSplit is the resolver for the viewSplit field.
+func (r *mutationResolver) ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error) {
+	split, err := publicapi.For(ctx).Split.ViewSplit(ctx, splitID)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.ViewGalleryPayload{
-		Gallery: galleryToModel(ctx, gallery),
+	output := &model.ViewSplitPayload{
+		Split: splitToModel(ctx, split),
 	}
 
 	return output, nil
 }
 
-// UpdateGallery is the resolver for the updateGallery field.
-func (r *mutationResolver) UpdateGallery(ctx context.Context, input model.UpdateGalleryInput) (model.UpdateGalleryPayloadOrError, error) {
-	res, err := publicapi.For(ctx).Gallery.UpdateGallery(ctx, input)
+// UpdateSplit is the resolver for the updateSplit field.
+func (r *mutationResolver) UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error) {
+	res, err := publicapi.For(ctx).Split.UpdateSplit(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.UpdateGalleryPayload{
-		Gallery: galleryToModel(ctx, res),
+	output := &model.UpdateSplitPayload{
+		Split: splitToModel(ctx, res),
 	}
 	return output, nil
 }
 
-// PublishGallery is the resolver for the publishGallery field.
-func (r *mutationResolver) PublishGallery(ctx context.Context, input model.PublishGalleryInput) (model.PublishGalleryPayloadOrError, error) {
-	err := publicapi.For(ctx).Gallery.PublishGallery(ctx, input)
+// PublishSplit is the resolver for the publishSplit field.
+func (r *mutationResolver) PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error) {
+	err := publicapi.For(ctx).Split.PublishSplit(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	gal, err := resolveGalleryByGalleryID(ctx, input.GalleryID)
+	gal, err := resolveSplitBySplitID(ctx, input.SplitID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.PublishGalleryPayload{
-		Gallery: gal,
+	return &model.PublishSplitPayload{
+		Split: gal,
 	}, nil
 }
 
-// CreateGallery is the resolver for the createGallery field.
-func (r *mutationResolver) CreateGallery(ctx context.Context, input model.CreateGalleryInput) (model.CreateGalleryPayloadOrError, error) {
-	gallery, err := publicapi.For(ctx).Gallery.CreateGallery(ctx, input.Name, input.Description, input.Position)
+// CreateSplit is the resolver for the createSplit field.
+func (r *mutationResolver) CreateSplit(ctx context.Context, input model.CreateSplitInput) (model.CreateSplitPayloadOrError, error) {
+	split, err := publicapi.For(ctx).Split.CreateSplit(ctx, input.Name, input.Description, input.Position)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.CreateGalleryPayload{
-		Gallery: galleryToModel(ctx, gallery),
+	output := &model.CreateSplitPayload{
+		Split: splitToModel(ctx, split),
 	}
 
 	return output, nil
 }
 
-// UpdateGalleryHidden is the resolver for the updateGalleryHidden field.
-func (r *mutationResolver) UpdateGalleryHidden(ctx context.Context, input model.UpdateGalleryHiddenInput) (model.UpdateGalleryHiddenPayloadOrError, error) {
-	gallery, err := publicapi.For(ctx).Gallery.UpdateGalleryHidden(ctx, input.ID, input.Hidden)
+// UpdateSplitHidden is the resolver for the updateSplitHidden field.
+func (r *mutationResolver) UpdateSplitHidden(ctx context.Context, input model.UpdateSplitHiddenInput) (model.UpdateSplitHiddenPayloadOrError, error) {
+	split, err := publicapi.For(ctx).Split.UpdateSplitHidden(ctx, input.ID, input.Hidden)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.UpdateGalleryHiddenPayload{
-		Gallery: galleryToModel(ctx, gallery),
+	output := &model.UpdateSplitHiddenPayload{
+		Split: splitToModel(ctx, split),
 	}
 
 	return output, nil
 }
 
-// DeleteGallery is the resolver for the deleteGallery field.
-func (r *mutationResolver) DeleteGallery(ctx context.Context, galleryID persist.DBID) (model.DeleteGalleryPayloadOrError, error) {
-	err := publicapi.For(ctx).Gallery.DeleteGallery(ctx, galleryID)
+// DeleteSplit is the resolver for the deleteSplit field.
+func (r *mutationResolver) DeleteSplit(ctx context.Context, splitID persist.DBID) (model.DeleteSplitPayloadOrError, error) {
+	err := publicapi.For(ctx).Split.DeleteSplit(ctx, splitID)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.DeleteGalleryPayload{
+	output := &model.DeleteSplitPayload{
 		DeletedID: &model.DeletedNode{
-			Dbid: galleryID,
+			Dbid: splitID,
 		},
 	}
 
 	return output, nil
 }
 
-// UpdateGalleryOrder is the resolver for the updateGalleryOrder field.
-func (r *mutationResolver) UpdateGalleryOrder(ctx context.Context, input model.UpdateGalleryOrderInput) (model.UpdateGalleryOrderPayloadOrError, error) {
-	err := publicapi.For(ctx).Gallery.UpdateGalleryPositions(ctx, input.Positions)
+// UpdateSplitOrder is the resolver for the updateSplitOrder field.
+func (r *mutationResolver) UpdateSplitOrder(ctx context.Context, input model.UpdateSplitOrderInput) (model.UpdateSplitOrderPayloadOrError, error) {
+	err := publicapi.For(ctx).Split.UpdateSplitPositions(ctx, input.Positions)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.UpdateGalleryOrderPayload{
+	output := &model.UpdateSplitOrderPayload{
 		Viewer: resolveViewer(ctx),
 	}
 
 	return output, nil
 }
 
-// UpdateGalleryInfo is the resolver for the updateGalleryInfo field.
-func (r *mutationResolver) UpdateGalleryInfo(ctx context.Context, input model.UpdateGalleryInfoInput) (model.UpdateGalleryInfoPayloadOrError, error) {
-	err := publicapi.For(ctx).Gallery.UpdateGalleryInfo(ctx, input.ID, input.Name, input.Description)
+// UpdateSplitInfo is the resolver for the updateSplitInfo field.
+func (r *mutationResolver) UpdateSplitInfo(ctx context.Context, input model.UpdateSplitInfoInput) (model.UpdateSplitInfoPayloadOrError, error) {
+	err := publicapi.For(ctx).Split.UpdateSplitInfo(ctx, input.ID, input.Name, input.Description)
 	if err != nil {
 		return nil, err
 	}
 
-	gallery, err := resolveGalleryByGalleryID(ctx, input.ID)
+	split, err := resolveSplitBySplitID(ctx, input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.UpdateGalleryInfoPayload{
-		Gallery: gallery,
+	output := &model.UpdateSplitInfoPayload{
+		Split: split,
 	}
 
 	return output, nil
 }
 
-// UpdateFeaturedGallery is the resolver for the updateFeaturedGallery field.
-func (r *mutationResolver) UpdateFeaturedGallery(ctx context.Context, galleryID persist.DBID) (model.UpdateFeaturedGalleryPayloadOrError, error) {
-	err := publicapi.For(ctx).User.UpdateFeaturedGallery(ctx, galleryID)
+// UpdateFeaturedSplit is the resolver for the updateFeaturedSplit field.
+func (r *mutationResolver) UpdateFeaturedSplit(ctx context.Context, splitID persist.DBID) (model.UpdateFeaturedSplitPayloadOrError, error) {
+	err := publicapi.For(ctx).User.UpdateFeaturedSplit(ctx, splitID)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.UpdateFeaturedGalleryPayload{
+	output := &model.UpdateFeaturedSplitPayload{
 		Viewer: resolveViewer(ctx),
 	}
 
@@ -854,8 +833,8 @@ func (r *mutationResolver) ClearAllNotifications(ctx context.Context) (*model.Cl
 // UpdateNotificationSettings is the resolver for the updateNotificationSettings field.
 func (r *mutationResolver) UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error) {
 	err := publicapi.For(ctx).User.UpdateUserNotificationSettings(ctx, persist.UserNotificationSettings{
-		SomeoneFollowedYou:       settings.SomeoneFollowedYou,
-		SomeoneViewedYourGallery: settings.SomeoneViewedYourGallery,
+		SomeoneFollowedYou:     settings.SomeoneFollowedYou,
+		SomeoneViewedYourSplit: settings.SomeoneViewedYourSplit,
 	})
 	if err != nil {
 		return nil, err
@@ -1003,23 +982,23 @@ func (r *mutationResolver) UpdateUserExperience(ctx context.Context, input model
 	}, nil
 }
 
-// MoveCollectionToGallery is the resolver for the moveCollectionToGallery field.
-func (r *mutationResolver) MoveCollectionToGallery(ctx context.Context, input *model.MoveCollectionToGalleryInput) (model.MoveCollectionToGalleryPayloadOrError, error) {
-	oldGalID, err := publicapi.For(ctx).Collection.UpdateCollectionGallery(ctx, input.SourceCollectionID, input.TargetGalleryID)
+// MoveCollectionToSplit is the resolver for the moveCollectionToSplit field.
+func (r *mutationResolver) MoveCollectionToSplit(ctx context.Context, input *model.MoveCollectionToSplitInput) (model.MoveCollectionToSplitPayloadOrError, error) {
+	oldGalID, err := publicapi.For(ctx).Collection.UpdateCollectionSplit(ctx, input.SourceCollectionID, input.TargetSplitID)
 	if err != nil {
 		return nil, err
 	}
-	old, err := resolveGalleryByGalleryID(ctx, oldGalID)
+	old, err := resolveSplitBySplitID(ctx, oldGalID)
 	if err != nil {
 		return nil, err
 	}
-	new, err := resolveGalleryByGalleryID(ctx, input.TargetGalleryID)
+	new, err := resolveSplitBySplitID(ctx, input.TargetSplitID)
 	if err != nil {
 		return nil, err
 	}
-	return model.MoveCollectionToGalleryPayload{
-		OldGallery: old,
-		NewGallery: new,
+	return model.MoveCollectionToSplitPayload{
+		OldSplit: old,
+		NewSplit: new,
 	}, nil
 }
 
@@ -1138,26 +1117,26 @@ func (r *queryResolver) GeneralAllowlist(ctx context.Context) ([]*persist.ChainA
 	return resolveGeneralAllowlist(ctx)
 }
 
-// GalleryByID is the resolver for the galleryById field.
-func (r *queryResolver) GalleryByID(ctx context.Context, id persist.DBID) (model.GalleryByIDPayloadOrError, error) {
-	gallery, err := resolveGalleryByGalleryID(ctx, id)
+// SplitByID is the resolver for the splitById field.
+func (r *queryResolver) SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error) {
+	split, err := resolveSplitBySplitID(ctx, id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return gallery, nil
+	return split, nil
 }
 
-// ViewerGalleryByID is the resolver for the viewerGalleryById field.
-func (r *queryResolver) ViewerGalleryByID(ctx context.Context, id persist.DBID) (model.ViewerGalleryByIDPayloadOrError, error) {
-	gallery, err := resolveViewerGalleryByGalleryID(ctx, id)
+// ViewerSplitByID is the resolver for the viewerSplitById field.
+func (r *queryResolver) ViewerSplitByID(ctx context.Context, id persist.DBID) (model.ViewerSplitByIDPayloadOrError, error) {
+	split, err := resolveViewerSplitBySplitID(ctx, id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return gallery, nil
+	return split, nil
 }
 
 // SearchUsers is the resolver for the searchUsers field.
@@ -1181,25 +1160,25 @@ func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *in
 	return model.SearchUsersPayload{Results: results}, nil
 }
 
-// SearchGalleries is the resolver for the searchGalleries field.
-func (r *queryResolver) SearchGalleries(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchGalleriesPayloadOrError, error) {
+// SearchSplits is the resolver for the searchSplits field.
+func (r *queryResolver) SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error) {
 	limitParam := util.GetOptionalValue(limit, 100)
 	nameWeightParam := util.GetOptionalValue(nameWeight, 0.4)
 	descriptionWeightParam := util.GetOptionalValue(descriptionWeight, 0.2)
 
-	galleries, err := publicapi.For(ctx).Search.SearchGalleries(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam))
+	splits, err := publicapi.For(ctx).Search.SearchSplits(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam))
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]*model.GallerySearchResult, len(galleries))
-	for i, gallery := range galleries {
-		results[i] = &model.GallerySearchResult{
-			Gallery: galleryToModel(ctx, gallery),
+	results := make([]*model.SplitSearchResult, len(splits))
+	for i, split := range splits {
+		results[i] = &model.SplitSearchResult{
+			Split: splitToModel(ctx, split),
 		}
 	}
 
-	return model.SearchGalleriesPayload{Results: results}, nil
+	return model.SearchSplitsPayload{Results: results}, nil
 }
 
 // SearchCommunities is the resolver for the searchCommunities field.
@@ -1310,13 +1289,34 @@ func (r *someoneFollowedYouNotificationResolver) Followers(ctx context.Context, 
 }
 
 // UserViewers is the resolver for the userViewers field.
-func (r *someoneViewedYourGalleryNotificationResolver) UserViewers(ctx context.Context, obj *model.SomeoneViewedYourGalleryNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
+func (r *someoneViewedYourSplitNotificationResolver) UserViewers(ctx context.Context, obj *model.SomeoneViewedYourSplitNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
 	return resolveGroupNotificationUsersConnectionByUserIDs(ctx, obj.NotificationData.AuthedViewerIDs, before, after, first, last)
 }
 
-// Gallery is the resolver for the gallery field.
-func (r *someoneViewedYourGalleryNotificationResolver) Gallery(ctx context.Context, obj *model.SomeoneViewedYourGalleryNotification) (*model.Gallery, error) {
-	return resolveGalleryByGalleryID(ctx, obj.GalleryID)
+// Split is the resolver for the split field.
+func (r *someoneViewedYourSplitNotificationResolver) Split(ctx context.Context, obj *model.SomeoneViewedYourSplitNotification) (*model.Split, error) {
+	return resolveSplitBySplitID(ctx, obj.SplitID)
+}
+
+// TokenPreviews is the resolver for the tokenPreviews field.
+func (r *splitResolver) TokenPreviews(ctx context.Context, obj *model.Split) ([]*model.PreviewURLSet, error) {
+	return resolveTokenPreviewsBySplitID(ctx, obj.Dbid)
+}
+
+// Owner is the resolver for the owner field.
+func (r *splitResolver) Owner(ctx context.Context, obj *model.Split) (*model.SplitFiUser, error) {
+	split, err := publicapi.For(ctx).Split.GetSplitById(ctx, obj.Dbid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resolveSplitFiUserByUserID(ctx, split.OwnerUserID)
+}
+
+// Collections is the resolver for the collections field.
+func (r *splitResolver) Collections(ctx context.Context, obj *model.Split) ([]*model.Collection, error) {
+	return resolveCollectionsBySplitID(ctx, obj.Dbid)
 }
 
 // Roles is the resolver for the roles field.
@@ -1368,18 +1368,18 @@ func (r *splitFiUserResolver) PrimaryWallet(ctx context.Context, obj *model.Spli
 	return resolvePrimaryWalletByUserID(ctx, obj.HelperSplitFiUserData.UserID)
 }
 
-// FeaturedGallery is the resolver for the featuredGallery field.
-func (r *splitFiUserResolver) FeaturedGallery(ctx context.Context, obj *model.SplitFiUser) (*model.Gallery, error) {
-	if obj.HelperSplitFiUserData.FeaturedGalleryID == nil {
+// FeaturedSplit is the resolver for the featuredSplit field.
+func (r *splitFiUserResolver) FeaturedSplit(ctx context.Context, obj *model.SplitFiUser) (*model.Split, error) {
+	if obj.HelperSplitFiUserData.FeaturedSplitID == nil {
 		return nil, nil
 	}
 
-	return resolveGalleryByGalleryID(ctx, *obj.HelperSplitFiUserData.FeaturedGalleryID)
+	return resolveSplitBySplitID(ctx, *obj.HelperSplitFiUserData.FeaturedSplitID)
 }
 
-// Galleries is the resolver for the galleries field.
-func (r *splitFiUserResolver) Galleries(ctx context.Context, obj *model.SplitFiUser) ([]*model.Gallery, error) {
-	return resolveGalleriesByUserID(ctx, obj.Dbid)
+// Splits is the resolver for the splits field.
+func (r *splitFiUserResolver) Splits(ctx context.Context, obj *model.SplitFiUser) ([]*model.Split, error) {
+	return resolveSplitsByUserID(ctx, obj.Dbid)
 }
 
 // Badges is the resolver for the badges field.
@@ -1503,19 +1503,19 @@ func (r *viewerResolver) SocialAccounts(ctx context.Context, obj *model.Viewer) 
 	return resolveViewerSocialsByUserID(ctx, obj.UserId)
 }
 
-// ViewerGalleries is the resolver for the viewerGalleries field.
-func (r *viewerResolver) ViewerGalleries(ctx context.Context, obj *model.Viewer) ([]*model.ViewerGallery, error) {
+// ViewerSplits is the resolver for the viewerSplits field.
+func (r *viewerResolver) ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error) {
 	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	galleries, err := resolveGalleriesByUserID(ctx, userID)
+	splits, err := resolveSplitsByUserID(ctx, userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	output := make([]*model.ViewerGallery, len(galleries))
-	for i, gallery := range galleries {
-		output[i] = &model.ViewerGallery{
-			Gallery: gallery,
+	output := make([]*model.ViewerSplit, len(splits))
+	for i, split := range splits {
+		output[i] = &model.ViewerSplit{
+			Split: split,
 		}
 	}
 
@@ -1586,9 +1586,6 @@ func (r *Resolver) FollowUserPayload() generated.FollowUserPayloadResolver {
 	return &followUserPayloadResolver{r}
 }
 
-// Gallery returns generated.GalleryResolver implementation.
-func (r *Resolver) Gallery() generated.GalleryResolver { return &galleryResolver{r} }
-
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -1624,10 +1621,13 @@ func (r *Resolver) SomeoneFollowedYouNotification() generated.SomeoneFollowedYou
 	return &someoneFollowedYouNotificationResolver{r}
 }
 
-// SomeoneViewedYourGalleryNotification returns generated.SomeoneViewedYourGalleryNotificationResolver implementation.
-func (r *Resolver) SomeoneViewedYourGalleryNotification() generated.SomeoneViewedYourGalleryNotificationResolver {
-	return &someoneViewedYourGalleryNotificationResolver{r}
+// SomeoneViewedYourSplitNotification returns generated.SomeoneViewedYourSplitNotificationResolver implementation.
+func (r *Resolver) SomeoneViewedYourSplitNotification() generated.SomeoneViewedYourSplitNotificationResolver {
+	return &someoneViewedYourSplitNotificationResolver{r}
 }
+
+// Split returns generated.SplitResolver implementation.
+func (r *Resolver) Split() generated.SplitResolver { return &splitResolver{r} }
 
 // SplitFiUser returns generated.SplitFiUserResolver implementation.
 func (r *Resolver) SplitFiUser() generated.SplitFiUserResolver { return &splitFiUserResolver{r} }
@@ -1667,7 +1667,6 @@ type collectionTokenResolver struct{ *Resolver }
 type communityResolver struct{ *Resolver }
 type followInfoResolver struct{ *Resolver }
 type followUserPayloadResolver struct{ *Resolver }
-type galleryResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type ownerAtBlockResolver struct{ *Resolver }
 type previewURLSetResolver struct{ *Resolver }
@@ -1677,7 +1676,8 @@ type socialConnectionResolver struct{ *Resolver }
 type socialQueriesResolver struct{ *Resolver }
 type someoneFollowedYouBackNotificationResolver struct{ *Resolver }
 type someoneFollowedYouNotificationResolver struct{ *Resolver }
-type someoneViewedYourGalleryNotificationResolver struct{ *Resolver }
+type someoneViewedYourSplitNotificationResolver struct{ *Resolver }
+type splitResolver struct{ *Resolver }
 type splitFiUserResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type tokenResolver struct{ *Resolver }

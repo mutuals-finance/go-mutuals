@@ -6,8 +6,8 @@ import (
 	"fmt"
 )
 
-// ContractGallery represents a smart contract in the database
-type ContractGallery struct {
+// ContractSplit represents a smart contract in the database
+type ContractSplit struct {
 	Version      NullInt32       `json:"version"` // schema version for this model
 	ID           DBID            `json:"id" binding:"required"`
 	CreationTime CreationTime    `json:"created_at"`
@@ -26,25 +26,25 @@ type ContractGallery struct {
 }
 
 // ErrContractNotFoundByAddress is an error type for when a contract is not found by address
-type ErrGalleryContractNotFound struct {
+type ErrSplitContractNotFound struct {
 	Address Address
 	Chain   Chain
 }
 
-// ContractGalleryRepository represents a repository for interacting with persisted contracts
-type ContractGalleryRepository interface {
-	GetByID(ctx context.Context, id DBID) (ContractGallery, error)
-	GetByAddress(context.Context, Address, Chain) (ContractGallery, error)
-	GetByAddresses(context.Context, []Address, Chain) ([]ContractGallery, error)
-	UpsertByAddress(context.Context, Address, Chain, ContractGallery) error
-	BulkUpsert(context.Context, []ContractGallery) error
+// ContractSplitRepository represents a repository for interacting with persisted contracts
+type ContractSplitRepository interface {
+	GetByID(ctx context.Context, id DBID) (ContractSplit, error)
+	GetByAddress(context.Context, Address, Chain) (ContractSplit, error)
+	GetByAddresses(context.Context, []Address, Chain) ([]ContractSplit, error)
+	UpsertByAddress(context.Context, Address, Chain, ContractSplit) error
+	BulkUpsert(context.Context, []ContractSplit) error
 	GetOwnersByAddress(context.Context, Address, Chain, int, int) ([]TokenHolder, error)
 }
 
-func (c ContractGallery) ContractIdentifiers() ContractIdentifiers {
+func (c ContractSplit) ContractIdentifiers() ContractIdentifiers {
 	return NewContractIdentifiers(c.Address, c.Chain)
 }
 
-func (e ErrGalleryContractNotFound) Error() string {
+func (e ErrSplitContractNotFound) Error() string {
 	return fmt.Sprintf("contract not found by address: %s-%d", e.Address, e.Chain)
 }

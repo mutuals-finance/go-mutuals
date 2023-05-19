@@ -11,7 +11,7 @@ import (
 	"github.com/mikeydub/go-gallery/service/persist"
 )
 
-type GalleriesLoaderByIDSettings interface {
+type SplitsLoaderByIDSettings interface {
 	getContext() context.Context
 	getWait() time.Duration
 	getMaxBatchOne() int
@@ -24,37 +24,37 @@ type GalleriesLoaderByIDSettings interface {
 	getMutexRegistry() *[]*sync.Mutex
 }
 
-func (l *GalleriesLoaderByID) setContext(ctx context.Context) {
+func (l *SplitsLoaderByID) setContext(ctx context.Context) {
 	l.ctx = ctx
 }
 
-func (l *GalleriesLoaderByID) setWait(wait time.Duration) {
+func (l *SplitsLoaderByID) setWait(wait time.Duration) {
 	l.wait = wait
 }
 
-func (l *GalleriesLoaderByID) setMaxBatch(maxBatch int) {
+func (l *SplitsLoaderByID) setMaxBatch(maxBatch int) {
 	l.maxBatch = maxBatch
 }
 
-func (l *GalleriesLoaderByID) setDisableCaching(disableCaching bool) {
+func (l *SplitsLoaderByID) setDisableCaching(disableCaching bool) {
 	l.disableCaching = disableCaching
 }
 
-func (l *GalleriesLoaderByID) setPublishResults(publishResults bool) {
+func (l *SplitsLoaderByID) setPublishResults(publishResults bool) {
 	l.publishResults = publishResults
 }
 
-func (l *GalleriesLoaderByID) setPreFetchHook(preFetchHook func(context.Context, string) context.Context) {
+func (l *SplitsLoaderByID) setPreFetchHook(preFetchHook func(context.Context, string) context.Context) {
 	l.preFetchHook = preFetchHook
 }
 
-func (l *GalleriesLoaderByID) setPostFetchHook(postFetchHook func(context.Context, string)) {
+func (l *SplitsLoaderByID) setPostFetchHook(postFetchHook func(context.Context, string)) {
 	l.postFetchHook = postFetchHook
 }
 
-// NewGalleriesLoaderByID creates a new GalleriesLoaderByID with the given settings, functions, and options
-func NewGalleriesLoaderByID(
-	settings GalleriesLoaderByIDSettings, fetch func(ctx context.Context, keys []persist.DBID) ([][]coredb.Gallery, []error),
+// NewSplitsLoaderByID creates a new SplitsLoaderByID with the given settings, functions, and options
+func NewSplitsLoaderByID(
+	settings SplitsLoaderByIDSettings, fetch func(ctx context.Context, keys []persist.DBID) ([][]coredb.Split, []error),
 	opts ...func(interface {
 		setContext(context.Context)
 		setWait(time.Duration)
@@ -64,8 +64,8 @@ func NewGalleriesLoaderByID(
 		setPreFetchHook(func(context.Context, string) context.Context)
 		setPostFetchHook(func(context.Context, string))
 	}),
-) *GalleriesLoaderByID {
-	loader := &GalleriesLoaderByID{
+) *SplitsLoaderByID {
+	loader := &SplitsLoaderByID{
 		ctx:                  settings.getContext(),
 		wait:                 settings.getWait(),
 		disableCaching:       settings.getDisableCaching(),
@@ -82,18 +82,18 @@ func NewGalleriesLoaderByID(
 	}
 
 	// Set this after applying options, in case a different context was set via options
-	loader.fetch = func(keys []persist.DBID) ([][]coredb.Gallery, []error) {
+	loader.fetch = func(keys []persist.DBID) ([][]coredb.Split, []error) {
 		ctx := loader.ctx
 
 		// Allow the preFetchHook to modify and return a new context
 		if loader.preFetchHook != nil {
-			ctx = loader.preFetchHook(ctx, "GalleriesLoaderByID")
+			ctx = loader.preFetchHook(ctx, "SplitsLoaderByID")
 		}
 
 		results, errors := fetch(ctx, keys)
 
 		if loader.postFetchHook != nil {
-			loader.postFetchHook(ctx, "GalleriesLoaderByID")
+			loader.postFetchHook(ctx, "SplitsLoaderByID")
 		}
 
 		return results, errors
@@ -113,13 +113,13 @@ func NewGalleriesLoaderByID(
 	return loader
 }
 
-// GalleriesLoaderByID batches and caches requests
-type GalleriesLoaderByID struct {
+// SplitsLoaderByID batches and caches requests
+type SplitsLoaderByID struct {
 	// context passed to fetch functions
 	ctx context.Context
 
 	// this method provides the data for the loader
-	fetch func(keys []persist.DBID) ([][]coredb.Gallery, []error)
+	fetch func(keys []persist.DBID) ([][]coredb.Split, []error)
 
 	// how long to wait before sending a batch
 	wait time.Duration
@@ -151,10 +151,10 @@ type GalleriesLoaderByID struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[persist.DBID][]coredb.Gallery
+	cache map[persist.DBID][]coredb.Split
 
 	// typed cache functions
-	//subscribers []func([]coredb.Gallery)
+	//subscribers []func([]coredb.Split)
 	subscribers []splitsLoaderByIDSubscriber
 
 	// functions used to cache published results from other dataloaders
@@ -162,7 +162,7 @@ type GalleriesLoaderByID struct {
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
-	batch *galleriesLoaderByIDBatch
+	batch *splitsLoaderByIDBatch
 
 	// mutex to prevent races
 	mu sync.Mutex
@@ -171,43 +171,43 @@ type GalleriesLoaderByID struct {
 	once sync.Once
 }
 
-type galleriesLoaderByIDBatch struct {
+type splitsLoaderByIDBatch struct {
 	keys    []persist.DBID
-	data    [][]coredb.Gallery
+	data    [][]coredb.Split
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
-// Load a Gallery by key, batching and caching will be applied automatically
-func (l *GalleriesLoaderByID) Load(key persist.DBID) ([]coredb.Gallery, error) {
+// Load a Split by key, batching and caching will be applied automatically
+func (l *SplitsLoaderByID) Load(key persist.DBID) ([]coredb.Split, error) {
 	return l.LoadThunk(key)()
 }
 
-// LoadThunk returns a function that when called will block waiting for a Gallery.
+// LoadThunk returns a function that when called will block waiting for a Split.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *GalleriesLoaderByID) LoadThunk(key persist.DBID) func() ([]coredb.Gallery, error) {
+func (l *SplitsLoaderByID) LoadThunk(key persist.DBID) func() ([]coredb.Split, error) {
 	l.mu.Lock()
 	if !l.disableCaching {
 		if it, ok := l.cache[key]; ok {
 			l.mu.Unlock()
-			return func() ([]coredb.Gallery, error) {
+			return func() ([]coredb.Split, error) {
 				return it, nil
 			}
 		}
 	}
 	if l.batch == nil {
-		l.batch = &galleriesLoaderByIDBatch{done: make(chan struct{})}
+		l.batch = &splitsLoaderByIDBatch{done: make(chan struct{})}
 	}
 	batch := l.batch
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() ([]coredb.Gallery, error) {
+	return func() ([]coredb.Split, error) {
 		<-batch.done
 
-		var data []coredb.Gallery
+		var data []coredb.Split
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -238,43 +238,43 @@ func (l *GalleriesLoaderByID) LoadThunk(key persist.DBID) func() ([]coredb.Galle
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *GalleriesLoaderByID) LoadAll(keys []persist.DBID) ([][]coredb.Gallery, []error) {
-	results := make([]func() ([]coredb.Gallery, error), len(keys))
+func (l *SplitsLoaderByID) LoadAll(keys []persist.DBID) ([][]coredb.Split, []error) {
+	results := make([]func() ([]coredb.Split, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	gallerys := make([][]coredb.Gallery, len(keys))
+	splits := make([][]coredb.Split, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
-		gallerys[i], errors[i] = thunk()
+		splits[i], errors[i] = thunk()
 	}
-	return gallerys, errors
+	return splits, errors
 }
 
-// LoadAllThunk returns a function that when called will block waiting for a Gallerys.
+// LoadAllThunk returns a function that when called will block waiting for a Splits.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *GalleriesLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([][]coredb.Gallery, []error) {
-	results := make([]func() ([]coredb.Gallery, error), len(keys))
+func (l *SplitsLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([][]coredb.Split, []error) {
+	results := make([]func() ([]coredb.Split, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([][]coredb.Gallery, []error) {
-		gallerys := make([][]coredb.Gallery, len(keys))
+	return func() ([][]coredb.Split, []error) {
+		splits := make([][]coredb.Split, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
-			gallerys[i], errors[i] = thunk()
+			splits[i], errors[i] = thunk()
 		}
-		return gallerys, errors
+		return splits, errors
 	}
 }
 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *GalleriesLoaderByID) Prime(key persist.DBID, value []coredb.Gallery) bool {
+func (l *SplitsLoaderByID) Prime(key persist.DBID, value []coredb.Split) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -283,7 +283,7 @@ func (l *GalleriesLoaderByID) Prime(key persist.DBID, value []coredb.Gallery) bo
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := make([]coredb.Gallery, len(value))
+		cpy := make([]coredb.Split, len(value))
 		copy(cpy, value)
 		l.unsafeSet(key, cpy)
 	}
@@ -292,7 +292,7 @@ func (l *GalleriesLoaderByID) Prime(key persist.DBID, value []coredb.Gallery) bo
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *GalleriesLoaderByID) Clear(key persist.DBID) {
+func (l *SplitsLoaderByID) Clear(key persist.DBID) {
 	if l.disableCaching {
 		return
 	}
@@ -301,16 +301,16 @@ func (l *GalleriesLoaderByID) Clear(key persist.DBID) {
 	l.mu.Unlock()
 }
 
-func (l *GalleriesLoaderByID) unsafeSet(key persist.DBID, value []coredb.Gallery) {
+func (l *SplitsLoaderByID) unsafeSet(key persist.DBID, value []coredb.Split) {
 	if l.cache == nil {
-		l.cache = map[persist.DBID][]coredb.Gallery{}
+		l.cache = map[persist.DBID][]coredb.Split{}
 	}
 	l.cache[key] = value
 }
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *galleriesLoaderByIDBatch) keyIndex(l *GalleriesLoaderByID, key persist.DBID) int {
+func (b *splitsLoaderByIDBatch) keyIndex(l *SplitsLoaderByID, key persist.DBID) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -334,7 +334,7 @@ func (b *galleriesLoaderByIDBatch) keyIndex(l *GalleriesLoaderByID, key persist.
 	return pos
 }
 
-func (b *galleriesLoaderByIDBatch) startTimer(l *GalleriesLoaderByID) {
+func (b *splitsLoaderByIDBatch) startTimer(l *SplitsLoaderByID) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -350,24 +350,24 @@ func (b *galleriesLoaderByIDBatch) startTimer(l *GalleriesLoaderByID) {
 	b.end(l)
 }
 
-func (b *galleriesLoaderByIDBatch) end(l *GalleriesLoaderByID) {
+func (b *splitsLoaderByIDBatch) end(l *SplitsLoaderByID) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }
 
-type galleriesLoaderByIDSubscriber struct {
-	cacheFunc func(coredb.Gallery)
+type splitsLoaderByIDSubscriber struct {
+	cacheFunc func(coredb.Split)
 	mutex     *sync.Mutex
 }
 
-func (l *GalleriesLoaderByID) publishToSubscribers(value []coredb.Gallery) {
+func (l *SplitsLoaderByID) publishToSubscribers(value []coredb.Split) {
 	// Lazy build our list of typed cache functions once
 	l.once.Do(func() {
 		for i, subscription := range *l.subscriptionRegistry {
-			if typedFunc, ok := subscription.(*func(coredb.Gallery)); ok {
+			if typedFunc, ok := subscription.(*func(coredb.Split)); ok {
 				// Don't invoke our own cache function
 				if !l.ownsCacheFunc(typedFunc) {
-					l.subscribers = append(l.subscribers, galleriesLoaderByIDSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
+					l.subscribers = append(l.subscribers, splitsLoaderByIDSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
 				}
 			}
 		}
@@ -385,13 +385,13 @@ func (l *GalleriesLoaderByID) publishToSubscribers(value []coredb.Gallery) {
 	}
 }
 
-func (l *GalleriesLoaderByID) registerCacheFunc(cacheFunc interface{}, mutex *sync.Mutex) {
+func (l *SplitsLoaderByID) registerCacheFunc(cacheFunc interface{}, mutex *sync.Mutex) {
 	l.cacheFuncs = append(l.cacheFuncs, cacheFunc)
 	*l.subscriptionRegistry = append(*l.subscriptionRegistry, cacheFunc)
 	*l.mutexRegistry = append(*l.mutexRegistry, mutex)
 }
 
-func (l *GalleriesLoaderByID) ownsCacheFunc(f *func(coredb.Gallery)) bool {
+func (l *SplitsLoaderByID) ownsCacheFunc(f *func(coredb.Split)) bool {
 	for _, cacheFunc := range l.cacheFuncs {
 		if cacheFunc == f {
 			return true

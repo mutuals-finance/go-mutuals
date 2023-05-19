@@ -53,8 +53,8 @@ type HelperGroupNotificationUsersConnectionData struct {
 }
 
 type HelperSplitFiUserData struct {
-	UserID            persist.DBID
-	FeaturedGalleryID *persist.DBID
+	UserID          persist.DBID
+	FeaturedSplitID *persist.DBID
 }
 
 type HelperNotificationSettingsData struct {
@@ -65,9 +65,9 @@ type HelperSomeoneFollowedYouNotificationData struct {
 	OwnerID          persist.DBID
 	NotificationData persist.NotificationData
 }
-type HelperSomeoneViewedYourGalleryNotificationData struct {
+type HelperSomeoneViewedYourSplitNotificationData struct {
 	OwnerID          persist.DBID
-	GalleryID        persist.DBID
+	SplitID          persist.DBID
 	NotificationData persist.NotificationData
 }
 type HelperSomeoneFollowedYouBackNotificationData struct {
@@ -79,11 +79,11 @@ type HelperNotificationsConnectionData struct {
 	UserId persist.DBID
 }
 
-type HelperGalleryCollectionUpdateData struct {
+type HelperSplitCollectionUpdateData struct {
 	CollectionID persist.DBID
 }
 
-type HelperGalleryTokenUpdateData struct {
+type HelperSplitTokenUpdateData struct {
 	TokenID persist.DBID
 }
 type HelperUserEmailData struct {

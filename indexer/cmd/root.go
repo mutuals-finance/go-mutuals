@@ -41,7 +41,7 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use:   "indexer",
 	Short: "Retrieve all NFTs that have ever been minted",
-	Long: `An NFT indexer lovingly built by your friends at Gallery.
+	Long: `An NFT indexer lovingly built by your friends at SplitFi.
                 Source code is available at https://github.com/gallery-so/go-gallery.`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		indexer.LoadConfigFile("indexer", manualEnv)

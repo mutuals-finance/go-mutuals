@@ -36,23 +36,23 @@ SELECT * FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false;
 -- name: GetUsersWithTraitBatch :batchmany
 SELECT * FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false;
 
--- name: GetGalleryById :one
-SELECT * FROM galleries WHERE id = $1 AND deleted = false;
+-- name: GetSplitById :one
+SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
--- name: GetGalleryByIdBatch :batchone
-SELECT * FROM galleries WHERE id = $1 AND deleted = false;
+-- name: GetSplitByIdBatch :batchone
+SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
--- name: GetGalleryByCollectionId :one
-SELECT g.* FROM galleries g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false;
+-- name: GetSplitByCollectionId :one
+SELECT g.* FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false;
 
--- name: GetGalleryByCollectionIdBatch :batchone
-SELECT g.* FROM galleries g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false;
+-- name: GetSplitByCollectionIdBatch :batchone
+SELECT g.* FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false;
 
--- name: GetGalleriesByUserId :many
-SELECT * FROM galleries WHERE owner_user_id = $1 AND deleted = false order by position;
+-- name: GetSplitsByUserId :many
+SELECT * FROM splits WHERE owner_user_id = $1 AND deleted = false order by position;
 
--- name: GetGalleriesByUserIdBatch :batchmany
-SELECT * FROM galleries WHERE owner_user_id = $1 AND deleted = false order by position;
+-- name: GetSplitsByUserIdBatch :batchmany
+SELECT * FROM splits WHERE owner_user_id = $1 AND deleted = false order by position;
 
 -- name: GetCollectionById :one
 SELECT * FROM collections WHERE id = $1 AND deleted = false;
@@ -60,14 +60,14 @@ SELECT * FROM collections WHERE id = $1 AND deleted = false;
 -- name: GetCollectionByIdBatch :batchone
 SELECT * FROM collections WHERE id = $1 AND deleted = false;
 
--- name: GetCollectionsByGalleryId :many
-SELECT c.* FROM galleries g, unnest(g.collections)
+-- name: GetCollectionsBySplitId :many
+SELECT c.* FROM splits g, unnest(g.collections)
     WITH ORDINALITY AS x(coll_id, coll_ord)
     INNER JOIN collections c ON c.id = x.coll_id
     WHERE g.id = $1 AND g.deleted = false AND c.deleted = false ORDER BY x.coll_ord;
 
--- name: GetCollectionsByGalleryIdBatch :batchmany
-SELECT c.* FROM galleries g, unnest(g.collections)
+-- name: GetCollectionsBySplitIdBatch :batchmany
+SELECT c.* FROM splits g, unnest(g.collections)
     WITH ORDINALITY AS x(coll_id, coll_ord)
     INNER JOIN collections c ON c.id = x.coll_id
     WHERE g.id = $1 AND g.deleted = false AND c.deleted = false ORDER BY x.coll_ord;
@@ -148,16 +148,16 @@ displayed as (
   where owned_contracts.user_id = $1 and displayed = true
   union
   select contracts.id
-  from last_refreshed, galleries, contracts, tokens
+  from last_refreshed, splits, contracts, tokens
   join collections on tokens.id = any(collections.nfts) and collections.deleted = false
   where tokens.owner_user_id = $1
     and tokens.contract = contracts.id
     and collections.owner_user_id = tokens.owner_user_id
-    and galleries.owner_user_id = tokens.owner_user_id
+    and splits.owner_user_id = tokens.owner_user_id
     and tokens.deleted = false
-    and galleries.deleted = false
+    and splits.deleted = false
     and contracts.deleted = false
-    and galleries.last_updated > last_refreshed.last_updated
+    and splits.last_updated > last_refreshed.last_updated
     and collections.last_updated > last_refreshed.last_updated
 )
 select contracts.* from contracts, displayed
@@ -295,13 +295,13 @@ ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
 INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING *;
 
 -- name: CreateTokenEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, token_id, subject_id, data, group_id, caption, gallery_id, collection_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10) RETURNING *;
+INSERT INTO events (id, actor_id, action, resource_type_id, token_id, subject_id, data, group_id, caption, split_id, collection_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10) RETURNING *;
 
 -- name: CreateCollectionEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, collection_id, subject_id, data, caption, group_id, gallery_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
+INSERT INTO events (id, actor_id, action, resource_type_id, collection_id, subject_id, data, caption, group_id, split_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
 
--- name: CreateGalleryEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, gallery_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
+-- name: CreateSplitEvent :one
+INSERT INTO events (id, actor_id, action, resource_type_id, split_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
 
 -- name: GetEvent :one
 SELECT * FROM events WHERE id = $1 AND deleted = false;
@@ -321,14 +321,14 @@ with recursive activity as (
 )
 select * from events where id = any(select id from activity) order by (created_at, id) asc;
 
--- name: GetGalleryEventsInWindow :many
+-- name: GetSplitEventsInWindow :many
 with recursive activity as (
     select * from events where events.id = $1 and deleted = false
     union
     select e.* from events e, activity a
     where e.actor_id = a.actor_id
         and e.action = any(@actions)
-        and e.gallery_id = @gallery_id
+        and e.split_id = @split_id
         and e.created_at < a.created_at
         and e.created_at >= a.created_at - make_interval(secs => $2)
         and e.deleted = false
@@ -366,11 +366,11 @@ select exists(
   and created_at > @window_start and created_at <= @window_end
 );
 
--- name: IsActorGalleryActive :one
+-- name: IsActorSplitActive :one
 select exists(
   select 1 from events where deleted = false
   and actor_id = $1
-  and gallery_id = $2
+  and split_id = $2
   and created_at > @window_start and created_at <= @window_end
 );
 
@@ -439,8 +439,8 @@ SELECT * FROM notifications
 -- name: CreateFollowNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
--- name: CreateViewGalleryNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, gallery_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+-- name: CreateViewSplitNotification :one
+INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- name: UpdateNotification :exec
 UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4;
@@ -552,29 +552,29 @@ select discount_code from merch where token_id = @token_hex and redeemed = true 
 -- name: GetUserOwnsTokenByIdentifiers :one
 select exists(select 1 from tokens where owner_user_id = @user_id and token_id = @token_hex and contract = @contract and chain = @chain and deleted = false) as owns_token;
 
--- name: UpdateGalleryHidden :one
-update galleries set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
+-- name: UpdateSplitHidden :one
+update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
 
--- name: UpdateGalleryPositions :exec
+-- name: UpdateSplitPositions :exec
 with updates as (
-    select unnest(@gallery_ids::text[]) as id, unnest(@positions::text[]) as position
+    select unnest(@split_ids::text[]) as id, unnest(@positions::text[]) as position
 )
-update galleries g set position = updates.position, last_updated = now() from updates where g.id = updates.id and deleted = false and g.owner_user_id = @owner_user_id;
+update splits g set position = updates.position, last_updated = now() from updates where g.id = updates.id and deleted = false and g.owner_user_id = @owner_user_id;
 
--- name: UserHasDuplicateGalleryPositions :one
-select exists(select position,count(*) from galleries where owner_user_id = $1 and deleted = false group by position having count(*) > 1);
+-- name: UserHasDuplicateSplitPositions :one
+select exists(select position,count(*) from splits where owner_user_id = $1 and deleted = false group by position having count(*) > 1);
 
--- name: UpdateGalleryInfo :exec
-update galleries set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, last_updated = now() where id = @id and deleted = false;
+-- name: UpdateSplitInfo :exec
+update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, last_updated = now() where id = @id and deleted = false;
 
--- name: UpdateGalleryCollections :exec
-update galleries set collections = @collections, last_updated = now() where galleries.id = @gallery_id and galleries.deleted = false and (select count(*) from collections c where c.id = any(@collections) and c.gallery_id = @gallery_id and c.deleted = false) = cardinality(@collections);
+-- name: UpdateSplitCollections :exec
+update splits set collections = @collections, last_updated = now() where splits.id = @split_id and splits.deleted = false and (select count(*) from collections c where c.id = any(@collections) and c.split_id = @split_id and c.deleted = false) = cardinality(@collections);
 
--- name: UpdateUserFeaturedGallery :exec
-update users set featured_gallery = @gallery_id, last_updated = now() from galleries where users.id = @user_id and galleries.id = @gallery_id and galleries.owner_user_id = @user_id and galleries.deleted = false;
+-- name: UpdateUserFeaturedSplit :exec
+update users set featured_split = @split_id, last_updated = now() from splits where users.id = @user_id and splits.id = @split_id and splits.owner_user_id = @user_id and splits.deleted = false;
 
--- name: GetGalleryTokenMediasByGalleryID :many
-select t.media from tokens t, collections c, galleries g where g.id = $1 and c.id = any(g.collections) and t.id = any(c.nfts) and t.deleted = false and g.deleted = false and c.deleted = false and (length(t.media->>'thumbnail_url'::varchar) > 0 or length(t.media->>'media_url'::varchar) > 0) order by array_position(g.collections, c.id),array_position(c.nfts, t.id) limit $2;
+-- name: GetSplitTokenMediasBySplitID :many
+select t.media from tokens t, collections c, splits g where g.id = $1 and c.id = any(g.collections) and t.id = any(c.nfts) and t.deleted = false and g.deleted = false and c.deleted = false and (length(t.media->>'thumbnail_url'::varchar) > 0 or length(t.media->>'media_url'::varchar) > 0) order by array_position(g.collections, c.id),array_position(c.nfts, t.id) limit $2;
 
 -- name: GetTokenByTokenIdentifiers :one
 select * from tokens where tokens.token_id = @token_hex and contract = (select contracts.id from contracts where contracts.address = @contract_address) and tokens.chain = @chain and tokens.deleted = false;
@@ -598,19 +598,19 @@ select nfts from collections where id = $1 and deleted = false;
 update collections set nfts = @nfts, last_updated = now() where id = @id and deleted = false;
 
 -- name: CreateCollection :one
-insert into collections (id, version, name, collectors_note, owner_user_id, gallery_id, layout, nfts, hidden, token_settings, created_at, last_updated) values (@id, 1, @name, @collectors_note, @owner_user_id, @gallery_id, @layout, @nfts, @hidden, @token_settings, now(), now()) returning id;
+insert into collections (id, version, name, collectors_note, owner_user_id, split_id, layout, nfts, hidden, token_settings, created_at, last_updated) values (@id, 1, @name, @collectors_note, @owner_user_id, @split_id, @layout, @nfts, @hidden, @token_settings, now(), now()) returning id;
 
--- name: GetGalleryIDByCollectionID :one
-select gallery_id from collections where id = $1 and deleted = false;
+-- name: GetSplitIDByCollectionID :one
+select split_id from collections where id = $1 and deleted = false;
 
 -- name: GetAllTimeTrendingUserIDs :many
 select users.id
-from events, galleries, users
+from events, splits, users
 left join legacy_views on users.id = legacy_views.user_id and legacy_views.deleted = false
-where action = 'ViewedGallery'
-  and events.gallery_id = galleries.id
-  and users.id = galleries.owner_user_id
-  and galleries.deleted = false
+where action = 'ViewedSplit'
+  and events.split_id = splits.id
+  and users.id = splits.owner_user_id
+  and splits.deleted = false
   and users.deleted = false
 group by users.id
 order by row_number() over(order by count(events.id) + coalesce(max(legacy_views.view_count), 0) desc, max(users.created_at) desc) asc
@@ -618,10 +618,10 @@ limit $1;
 
 -- name: GetWindowedTrendingUserIDs :many
 with viewers as (
-  select gallery_id, count(distinct coalesce(actor_id, external_id)) viewer_count
+  select split_id, count(distinct coalesce(actor_id, external_id)) viewer_count
   from events
-  where action = 'ViewedGallery' and events.created_at >= @window_end
-  group by gallery_id
+  where action = 'ViewedSplit' and events.created_at >= @window_end
+  group by split_id
 ),
 edit_events as (
   select actor_id
@@ -631,16 +631,16 @@ edit_events as (
     'CollectorsNoteAddedToCollection',
     'CollectorsNoteAddedToToken',
     'TokensAddedToCollection',
-    'GalleryInfoUpdated'
+    'SplitInfoUpdated'
   ) and created_at >= @window_end
   group by actor_id
 )
 select users.id
-from viewers, galleries, users, edit_events
-where viewers.gallery_id = galleries.id
-	and galleries.owner_user_id = users.id
+from viewers, splits, users, edit_events
+where viewers.split_id = splits.id
+	and splits.owner_user_id = users.id
 	and users.deleted = false
-	and galleries.deleted = false
+	and splits.deleted = false
   and users.id = edit_events.actor_id
 group by users.id
 order by row_number() over(order by sum(viewers.viewer_count) desc, max(users.created_at) desc) asc
@@ -655,17 +655,17 @@ update users set user_experiences = user_experiences || @experience where id = @
 -- name: GetTrendingUsersByIDs :many
 select users.* from users join unnest(@user_ids::varchar[]) with ordinality t(id, pos) using (id) where deleted = false order by t.pos asc;
 
--- name: UpdateCollectionGallery :exec
-update collections set gallery_id = @gallery_id, last_updated = now() where id = @id and deleted = false;
+-- name: UpdateCollectionSplit :exec
+update collections set split_id = @split_id, last_updated = now() where id = @id and deleted = false;
 
--- name: AddCollectionToGallery :exec
-update galleries set collections = array_append(collections, @collection_id), last_updated = now() where id = @gallery_id and deleted = false;
+-- name: AddCollectionToSplit :exec
+update splits set collections = array_append(collections, @collection_id), last_updated = now() where id = @split_id and deleted = false;
 
--- name: RemoveCollectionFromGallery :exec
-update galleries set collections = array_remove(collections, @collection_id), last_updated = now() where id = @gallery_id and deleted = false;
+-- name: RemoveCollectionFromSplit :exec
+update splits set collections = array_remove(collections, @collection_id), last_updated = now() where id = @split_id and deleted = false;
 
--- name: UserOwnsGallery :one
-select exists(select 1 from galleries where id = $1 and owner_user_id = $2 and deleted = false);
+-- name: UserOwnsSplit :one
+select exists(select 1 from splits where id = $1 and owner_user_id = $2 and deleted = false);
 
 -- name: UserOwnsCollection :one
 select exists(select 1 from collections where id = $1 and owner_user_id = $2 and deleted = false);
@@ -691,7 +691,7 @@ update pii.for_users set pii_socials = @socials where user_id = @user_id;
 -- name: UpdateEventCaptionByGroup :exec
 update events set caption = @caption where group_id = @group_id and deleted = false;
 
--- this query will take in enoug info to create a sort of fake table of social accounts matching them up to users in gallery with twitter connected.
+-- this query will take in enoug info to create a sort of fake table of social accounts matching them up to users in split with twitter connected.
 -- it will also go and search for whether the specified user follows any of the users returned
 -- name: GetSocialConnectionsPaginate :many
 select s.*, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following

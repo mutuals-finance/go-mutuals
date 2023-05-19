@@ -55,10 +55,10 @@ const (
 const cookieMaxAge int = 60 * 60 * 24 * 365 * 10
 
 // NoncePrepend is what is prepended to every nonce
-const NoncePrepend = "Gallery uses this cryptographic signature in place of a password, verifying that you are the owner of this Ethereum address: "
+const NoncePrepend = "SplitFi uses this cryptographic signature in place of a password, verifying that you are the owner of this Ethereum address: "
 
 // NewNoncePrepend is what will now be prepended to every nonce
-const NewNoncePrepend = "Gallery uses this cryptographic signature in place of a password: "
+const NewNoncePrepend = "SplitFi uses this cryptographic signature in place of a password: "
 
 // JWTCookieKey is the key used to store the JWT token in the cookie
 const JWTCookieKey = "GLRY_JWT"

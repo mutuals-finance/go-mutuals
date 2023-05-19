@@ -50,8 +50,8 @@ sql:
             go_type: "*github.com/mikeydub/go-gallery/service/persist.DBID"
           - column: "*.user*.pii_socials"
             go_type: "github.com/mikeydub/go-gallery/service/persist.Socials"
-          # Galleries
-          - column: "galleries.collections"
+          # Splits
+          - column: "splits.collections"
             go_type: "github.com/mikeydub/go-gallery/service/persist.DBIDList"
 
           # Socials

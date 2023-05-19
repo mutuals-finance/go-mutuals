@@ -185,10 +185,10 @@ func newNonceFixture(t *testing.T) nonceFixture {
 }
 
 type userFixture struct {
-	Wallet    wallet
-	Username  string
-	ID        persist.DBID
-	GalleryID persist.DBID
+	Wallet   wallet
+	Username string
+	ID       persist.DBID
+	SplitID  persist.DBID
 }
 
 // newUserFixture generates a new user

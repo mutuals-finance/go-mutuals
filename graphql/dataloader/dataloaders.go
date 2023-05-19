@@ -4,8 +4,8 @@
 //go:generate go run github.com/gallery-so/dataloaden UserLoaderByString string github.com/mikeydub/go-gallery/db/gen/coredb.User
 //go:generate go run github.com/gallery-so/dataloaden UsersLoaderByString string []github.com/mikeydub/go-gallery/db/gen/coredb.User
 //go:generate go run github.com/gallery-so/dataloaden UsersLoaderByContractID github.com/mikeydub/go-gallery/db/gen/coredb.GetOwnersByContractIdBatchPaginateParams []github.com/mikeydub/go-gallery/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden GalleryLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Gallery
-//go:generate go run github.com/gallery-so/dataloaden GalleriesLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Gallery
+//go:generate go run github.com/gallery-so/dataloaden SplitLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Split
+//go:generate go run github.com/gallery-so/dataloaden SplitsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Split
 //go:generate go run github.com/gallery-so/dataloaden CollectionLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Collection
 //go:generate go run github.com/gallery-so/dataloaden CollectionsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Collection
 //go:generate go run github.com/gallery-so/dataloaden MembershipLoaderById github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Membership
@@ -61,11 +61,11 @@ type Loaders struct {
 	UserByUsername                   *UserLoaderByString
 	UserByAddress                    *UserLoaderByAddress
 	UsersWithTrait                   *UsersLoaderByString
-	GalleryByGalleryID               *GalleryLoaderByID
-	GalleryByCollectionID            *GalleryLoaderByID
-	GalleriesByUserID                *GalleriesLoaderByID
+	SplitBySplitID                   *SplitLoaderByID
+	SplitByCollectionID              *SplitLoaderByID
+	SplitsByUserID                   *SplitsLoaderByID
 	CollectionByCollectionID         *CollectionLoaderByID
-	CollectionsByGalleryID           *CollectionsLoaderByID
+	CollectionsBySplitID             *CollectionsLoaderByID
 	MembershipByMembershipID         *MembershipLoaderById
 	WalletByWalletID                 *WalletLoaderById
 	WalletsByUserID                  *WalletsLoaderByID
@@ -117,14 +117,14 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 	//    to generate it. The convention is to name your loader <ValueType>LoaderBy<KeyType>, where
 	//    <ValueType> should be plural if your loader returns a slice. Note that a loader type can be
 	//    used by multiple dataloaders: UserLoaderByID is the correct generated type for both a
-	//    "UserByUserID" dataloader and a "UserByGalleryID" dataloader.
+	//    "UserByUserID" dataloader and a "UserBySplitID" dataloader.
 	//
 	// 2) Add your dataloader to the Loaders struct above
 	//
 	// 3) Initialize your loader below. Dataloaders that don't return slices can subscribe to automatic
 	//    cache priming by specifying an AutoCacheWithKey function (which should return the key to use
 	//    when caching). If your dataloader needs to cache a single value with multiple keys (e.g. a
-	//    GalleryByCollectionID wants to cache a single Gallery by many collection IDs), you can use
+	//    SplitByCollectionID wants to cache a single Split by many collection IDs), you can use
 	//    AutoCacheWithKeys instead. When other dataloaders return the type you've subscribed to, your
 	//    dataloader will automatically cache those results.
 	//
@@ -157,21 +157,21 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 
 	loaders.OwnersByContractID = NewUsersLoaderByContractID(defaults, loadOwnersByContractIDs(q))
 
-	loaders.GalleryByGalleryID = NewGalleryLoaderByID(defaults, loadGalleryByGalleryId(q), GalleryLoaderByIDCacheSubscriptions{
-		AutoCacheWithKey: func(gallery db.Gallery) persist.DBID { return gallery.ID },
+	loaders.SplitBySplitID = NewSplitLoaderByID(defaults, loadSplitBySplitId(q), SplitLoaderByIDCacheSubscriptions{
+		AutoCacheWithKey: func(split db.Split) persist.DBID { return split.ID },
 	})
 
-	loaders.GalleryByCollectionID = NewGalleryLoaderByID(defaults, loadGalleryByCollectionId(q), GalleryLoaderByIDCacheSubscriptions{
-		AutoCacheWithKeys: func(gallery db.Gallery) []persist.DBID { return gallery.Collections },
+	loaders.SplitByCollectionID = NewSplitLoaderByID(defaults, loadSplitByCollectionId(q), SplitLoaderByIDCacheSubscriptions{
+		AutoCacheWithKeys: func(split db.Split) []persist.DBID { return split.Collections },
 	})
 
-	loaders.GalleriesByUserID = NewGalleriesLoaderByID(defaults, loadGalleriesByUserId(q))
+	loaders.SplitsByUserID = NewSplitsLoaderByID(defaults, loadSplitsByUserId(q))
 
 	loaders.CollectionByCollectionID = NewCollectionLoaderByID(defaults, loadCollectionByCollectionId(q), CollectionLoaderByIDCacheSubscriptions{
 		AutoCacheWithKey: func(collection db.Collection) persist.DBID { return collection.ID },
 	})
 
-	loaders.CollectionsByGalleryID = NewCollectionsLoaderByID(defaults, loadCollectionsByGalleryId(q))
+	loaders.CollectionsBySplitID = NewCollectionsLoaderByID(defaults, loadCollectionsBySplitId(q))
 
 	loaders.MembershipByMembershipID = NewMembershipLoaderById(defaults, loadMembershipByMembershipId(q), MembershipLoaderByIdCacheSubscriptions{
 		AutoCacheWithKey: func(membership db.Membership) persist.DBID { return membership.ID },
@@ -336,62 +336,62 @@ func loadUsersWithTrait(q *db.Queries) func(context.Context, []string) ([][]db.U
 	}
 }
 
-func loadGalleryByGalleryId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Gallery, []error) {
-	return func(ctx context.Context, galleryIds []persist.DBID) ([]db.Gallery, []error) {
-		galleries := make([]db.Gallery, len(galleryIds))
-		errors := make([]error, len(galleryIds))
+func loadSplitBySplitId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Split, []error) {
+	return func(ctx context.Context, splitIds []persist.DBID) ([]db.Split, []error) {
+		splits := make([]db.Split, len(splitIds))
+		errors := make([]error, len(splitIds))
 
-		b := q.GetGalleryByIdBatch(ctx, galleryIds)
+		b := q.GetSplitByIdBatch(ctx, splitIds)
 		defer b.Close()
 
-		b.QueryRow(func(i int, g db.Gallery, err error) {
-			galleries[i] = g
+		b.QueryRow(func(i int, g db.Split, err error) {
+			splits[i] = g
 			errors[i] = err
 
 			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrGalleryNotFound{ID: galleryIds[i]}
+				errors[i] = persist.ErrSplitNotFound{ID: splitIds[i]}
 			}
 		})
 
-		return galleries, errors
+		return splits, errors
 	}
 }
 
-func loadGalleryByCollectionId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Gallery, []error) {
-	return func(ctx context.Context, collectionIds []persist.DBID) ([]db.Gallery, []error) {
-		galleries := make([]db.Gallery, len(collectionIds))
+func loadSplitByCollectionId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Split, []error) {
+	return func(ctx context.Context, collectionIds []persist.DBID) ([]db.Split, []error) {
+		splits := make([]db.Split, len(collectionIds))
 		errors := make([]error, len(collectionIds))
 
-		b := q.GetGalleryByCollectionIdBatch(ctx, collectionIds)
+		b := q.GetSplitByCollectionIdBatch(ctx, collectionIds)
 		defer b.Close()
 
-		b.QueryRow(func(i int, g db.Gallery, err error) {
-			galleries[i] = g
+		b.QueryRow(func(i int, g db.Split, err error) {
+			splits[i] = g
 			errors[i] = err
 
 			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrGalleryNotFound{CollectionID: collectionIds[i]}
+				errors[i] = persist.ErrSplitNotFound{CollectionID: collectionIds[i]}
 			}
 		})
 
-		return galleries, errors
+		return splits, errors
 	}
 }
 
-func loadGalleriesByUserId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Gallery, []error) {
-	return func(ctx context.Context, userIds []persist.DBID) ([][]db.Gallery, []error) {
-		galleries := make([][]db.Gallery, len(userIds))
+func loadSplitsByUserId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Split, []error) {
+	return func(ctx context.Context, userIds []persist.DBID) ([][]db.Split, []error) {
+		splits := make([][]db.Split, len(userIds))
 		errors := make([]error, len(userIds))
 
-		b := q.GetGalleriesByUserIdBatch(ctx, userIds)
+		b := q.GetSplitsByUserIdBatch(ctx, userIds)
 		defer b.Close()
 
-		b.Query(func(i int, g []db.Gallery, err error) {
-			galleries[i] = g
+		b.Query(func(i int, g []db.Split, err error) {
+			splits[i] = g
 			errors[i] = err
 		})
 
-		return galleries, errors
+		return splits, errors
 	}
 }
 
@@ -433,12 +433,12 @@ func loadCollectionByCollectionId(q *db.Queries) func(context.Context, []persist
 	}
 }
 
-func loadCollectionsByGalleryId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Collection, []error) {
-	return func(ctx context.Context, galleryIds []persist.DBID) ([][]db.Collection, []error) {
-		collections := make([][]db.Collection, len(galleryIds))
-		errors := make([]error, len(galleryIds))
+func loadCollectionsBySplitId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Collection, []error) {
+	return func(ctx context.Context, splitIds []persist.DBID) ([][]db.Collection, []error) {
+		collections := make([][]db.Collection, len(splitIds))
+		errors := make([]error, len(splitIds))
 
-		b := q.GetCollectionsByGalleryIdBatch(ctx, galleryIds)
+		b := q.GetCollectionsBySplitIdBatch(ctx, splitIds)
 		defer b.Close()
 
 		b.Query(func(i int, c []db.Collection, err error) {
@@ -828,7 +828,7 @@ func loadContractByChainAddress(q *db.Queries) func(context.Context, []persist.C
 			contracts[i], errors[i] = t, err
 
 			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrGalleryContractNotFound{Address: chainAddresses[i].Address(), Chain: chainAddresses[i].Chain()}
+				errors[i] = persist.ErrSplitContractNotFound{Address: chainAddresses[i].Address(), Chain: chainAddresses[i].Chain()}
 			}
 		})
 

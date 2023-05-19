@@ -28,9 +28,9 @@ type UserRepository struct {
 	getByUsernameStmt        *sql.Stmt
 	getByEmailStmt           *sql.Stmt
 	deleteStmt               *sql.Stmt
-	getGalleriesStmt         *sql.Stmt
+	getSplitsStmt            *sql.Stmt
 	updateCollectionsStmt    *sql.Stmt
-	deleteGalleryStmt        *sql.Stmt
+	deleteSplitStmt          *sql.Stmt
 	createWalletStmt         *sql.Stmt
 	getWalletIDStmt          *sql.Stmt
 	getWalletStmt            *sql.Stmt
@@ -73,13 +73,13 @@ func NewUserRepository(db *sql.DB, queries *db.Queries) *UserRepository {
 	deleteStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
 
-	getGalleriesStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM galleries WHERE OWNER_USER_ID = $1 and DELETED = false;`)
+	getSplitsStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM splits WHERE OWNER_USER_ID = $1 and DELETED = false;`)
 	checkNoErr(err)
 
-	updateCollectionsStmt, err := db.PrepareContext(ctx, `UPDATE galleries SET COLLECTIONS = $2 WHERE ID = $1;`)
+	updateCollectionsStmt, err := db.PrepareContext(ctx, `UPDATE splits SET COLLECTIONS = $2 WHERE ID = $1;`)
 	checkNoErr(err)
 
-	deleteGalleryStmt, err := db.PrepareContext(ctx, `UPDATE galleries SET DELETED = true WHERE ID = $1;`)
+	deleteSplitStmt, err := db.PrepareContext(ctx, `UPDATE splits SET DELETED = true WHERE ID = $1;`)
 	checkNoErr(err)
 
 	createWalletStmt, err := db.PrepareContext(ctx, `INSERT INTO wallets (ID, ADDRESS, CHAIN, WALLET_TYPE) VALUES ($1, $2, $3, $4);`)
@@ -121,9 +121,9 @@ func NewUserRepository(db *sql.DB, queries *db.Queries) *UserRepository {
 		getByEmailStmt:    getByEmailStmt,
 		deleteStmt:        deleteStmt,
 
-		getGalleriesStmt:         getGalleriesStmt,
+		getSplitsStmt:            getSplitsStmt,
 		updateCollectionsStmt:    updateCollectionsStmt,
-		deleteGalleryStmt:        deleteGalleryStmt,
+		deleteSplitStmt:          deleteSplitStmt,
 		createWalletStmt:         createWalletStmt,
 		getWalletIDStmt:          getWalletIDStmt,
 		getWalletStmt:            getWalletStmt,
@@ -488,24 +488,24 @@ func (u *UserRepository) MergeUsers(pCtx context.Context, pInitialUser persist.D
 	}
 	defer tx.Rollback()
 
-	deleteGalleryStmt := tx.StmtContext(pCtx, u.deleteGalleryStmt)
+	deleteSplitStmt := tx.StmtContext(pCtx, u.deleteSplitStmt)
 	mergedCollections := make([]persist.DBID, 0, 3)
 
-	res, err := u.getGalleriesStmt.QueryContext(pCtx, secondUser.ID)
+	res, err := u.getSplitsStmt.QueryContext(pCtx, secondUser.ID)
 	if err != nil {
 		return err
 	}
 	defer res.Close()
 
 	for res.Next() {
-		var gallery persist.GalleryDB
+		var gallery persist.SplitDB
 		if err := res.Scan(&gallery.ID, pq.Array(&gallery.Collections)); err != nil {
 			return err
 		}
 
 		mergedCollections = append(mergedCollections, gallery.Collections...)
 
-		if _, err := deleteGalleryStmt.ExecContext(pCtx, gallery.ID); err != nil {
+		if _, err := deleteSplitStmt.ExecContext(pCtx, gallery.ID); err != nil {
 			return err
 		}
 	}
@@ -514,14 +514,14 @@ func (u *UserRepository) MergeUsers(pCtx context.Context, pInitialUser persist.D
 		return err
 	}
 
-	nextRes, err := u.getGalleriesStmt.QueryContext(pCtx, pInitialUser)
+	nextRes, err := u.getSplitsStmt.QueryContext(pCtx, pInitialUser)
 	if err != nil {
 		return err
 	}
 	defer nextRes.Close()
 
 	if nextRes.Next() {
-		var gallery persist.GalleryDB
+		var gallery persist.SplitDB
 		if err := nextRes.Scan(&gallery.ID, pq.Array(&gallery.Collections)); err != nil {
 			return err
 		}

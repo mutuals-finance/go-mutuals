@@ -96,7 +96,7 @@ func (v *CollectionTokenSettingsInput) GetTokenId() persist.DBID { return v.Toke
 // GetRenderLive returns CollectionTokenSettingsInput.RenderLive, and is useful for accessing the field via an interface.
 func (v *CollectionTokenSettingsInput) GetRenderLive() bool { return v.RenderLive }
 
-type CreateCollectionInGalleryInput struct {
+type CreateCollectionInSplitInput struct {
 	Name           string                         `json:"name"`
 	CollectorsNote string                         `json:"collectorsNote"`
 	Tokens         []persist.DBID                 `json:"tokens"`
@@ -106,31 +106,31 @@ type CreateCollectionInGalleryInput struct {
 	GivenID        persist.DBID                   `json:"givenID"`
 }
 
-// GetName returns CreateCollectionInGalleryInput.Name, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInGalleryInput) GetName() string { return v.Name }
+// GetName returns CreateCollectionInSplitInput.Name, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInSplitInput) GetName() string { return v.Name }
 
-// GetCollectorsNote returns CreateCollectionInGalleryInput.CollectorsNote, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInGalleryInput) GetCollectorsNote() string { return v.CollectorsNote }
+// GetCollectorsNote returns CreateCollectionInSplitInput.CollectorsNote, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInSplitInput) GetCollectorsNote() string { return v.CollectorsNote }
 
-// GetTokens returns CreateCollectionInGalleryInput.Tokens, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInGalleryInput) GetTokens() []persist.DBID { return v.Tokens }
+// GetTokens returns CreateCollectionInSplitInput.Tokens, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInSplitInput) GetTokens() []persist.DBID { return v.Tokens }
 
-// GetLayout returns CreateCollectionInGalleryInput.Layout, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInGalleryInput) GetLayout() CollectionLayoutInput { return v.Layout }
+// GetLayout returns CreateCollectionInSplitInput.Layout, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInSplitInput) GetLayout() CollectionLayoutInput { return v.Layout }
 
-// GetTokenSettings returns CreateCollectionInGalleryInput.TokenSettings, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInGalleryInput) GetTokenSettings() []CollectionTokenSettingsInput {
+// GetTokenSettings returns CreateCollectionInSplitInput.TokenSettings, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInSplitInput) GetTokenSettings() []CollectionTokenSettingsInput {
 	return v.TokenSettings
 }
 
-// GetHidden returns CreateCollectionInGalleryInput.Hidden, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInGalleryInput) GetHidden() bool { return v.Hidden }
+// GetHidden returns CreateCollectionInSplitInput.Hidden, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInSplitInput) GetHidden() bool { return v.Hidden }
 
-// GetGivenID returns CreateCollectionInGalleryInput.GivenID, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInGalleryInput) GetGivenID() persist.DBID { return v.GivenID }
+// GetGivenID returns CreateCollectionInSplitInput.GivenID, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInSplitInput) GetGivenID() persist.DBID { return v.GivenID }
 
 type CreateCollectionInput struct {
-	GalleryId      persist.DBID                   `json:"galleryId"`
+	SplitId        persist.DBID                   `json:"splitId"`
 	Name           string                         `json:"name"`
 	CollectorsNote string                         `json:"collectorsNote"`
 	Tokens         []persist.DBID                 `json:"tokens"`
@@ -139,8 +139,8 @@ type CreateCollectionInput struct {
 	Caption        *string                        `json:"caption"`
 }
 
-// GetGalleryId returns CreateCollectionInput.GalleryId, and is useful for accessing the field via an interface.
-func (v *CreateCollectionInput) GetGalleryId() persist.DBID { return v.GalleryId }
+// GetSplitId returns CreateCollectionInput.SplitId, and is useful for accessing the field via an interface.
+func (v *CreateCollectionInput) GetSplitId() persist.DBID { return v.SplitId }
 
 // GetName returns CreateCollectionInput.Name, and is useful for accessing the field via an interface.
 func (v *CreateCollectionInput) GetName() string { return v.Name }
@@ -162,28 +162,28 @@ func (v *CreateCollectionInput) GetTokenSettings() []CollectionTokenSettingsInpu
 // GetCaption returns CreateCollectionInput.Caption, and is useful for accessing the field via an interface.
 func (v *CreateCollectionInput) GetCaption() *string { return v.Caption }
 
-type CreateGalleryInput struct {
+type CreateSplitInput struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Position    string  `json:"position"`
 }
 
-// GetName returns CreateGalleryInput.Name, and is useful for accessing the field via an interface.
-func (v *CreateGalleryInput) GetName() *string { return v.Name }
+// GetName returns CreateSplitInput.Name, and is useful for accessing the field via an interface.
+func (v *CreateSplitInput) GetName() *string { return v.Name }
 
-// GetDescription returns CreateGalleryInput.Description, and is useful for accessing the field via an interface.
-func (v *CreateGalleryInput) GetDescription() *string { return v.Description }
+// GetDescription returns CreateSplitInput.Description, and is useful for accessing the field via an interface.
+func (v *CreateSplitInput) GetDescription() *string { return v.Description }
 
-// GetPosition returns CreateGalleryInput.Position, and is useful for accessing the field via an interface.
-func (v *CreateGalleryInput) GetPosition() string { return v.Position }
+// GetPosition returns CreateSplitInput.Position, and is useful for accessing the field via an interface.
+func (v *CreateSplitInput) GetPosition() string { return v.Position }
 
 type CreateUserInput struct {
-	Username           string  `json:"username"`
-	Bio                *string `json:"bio"`
-	Email              *string `json:"email"`
-	GalleryName        *string `json:"galleryName"`
-	GalleryDescription *string `json:"galleryDescription"`
-	GalleryPosition    *string `json:"galleryPosition"`
+	Username         string  `json:"username"`
+	Bio              *string `json:"bio"`
+	Email            *string `json:"email"`
+	SplitName        *string `json:"splitName"`
+	SplitDescription *string `json:"splitDescription"`
+	SplitPosition    *string `json:"splitPosition"`
 }
 
 // GetUsername returns CreateUserInput.Username, and is useful for accessing the field via an interface.
@@ -195,14 +195,14 @@ func (v *CreateUserInput) GetBio() *string { return v.Bio }
 // GetEmail returns CreateUserInput.Email, and is useful for accessing the field via an interface.
 func (v *CreateUserInput) GetEmail() *string { return v.Email }
 
-// GetGalleryName returns CreateUserInput.GalleryName, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetGalleryName() *string { return v.GalleryName }
+// GetSplitName returns CreateUserInput.SplitName, and is useful for accessing the field via an interface.
+func (v *CreateUserInput) GetSplitName() *string { return v.SplitName }
 
-// GetGalleryDescription returns CreateUserInput.GalleryDescription, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetGalleryDescription() *string { return v.GalleryDescription }
+// GetSplitDescription returns CreateUserInput.SplitDescription, and is useful for accessing the field via an interface.
+func (v *CreateUserInput) GetSplitDescription() *string { return v.SplitDescription }
 
-// GetGalleryPosition returns CreateUserInput.GalleryPosition, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetGalleryPosition() *string { return v.GalleryPosition }
+// GetSplitPosition returns CreateUserInput.SplitPosition, and is useful for accessing the field via an interface.
+func (v *CreateUserInput) GetSplitPosition() *string { return v.SplitPosition }
 
 type DebugAuth struct {
 	AsUsername     *string             `json:"asUsername"`
@@ -267,33 +267,33 @@ type MagicLinkAuth struct {
 // GetToken returns MagicLinkAuth.Token, and is useful for accessing the field via an interface.
 func (v *MagicLinkAuth) GetToken() string { return v.Token }
 
-type MoveCollectionToGalleryInput struct {
+type MoveCollectionToSplitInput struct {
 	SourceCollectionId persist.DBID `json:"sourceCollectionId"`
-	TargetGalleryId    persist.DBID `json:"targetGalleryId"`
+	TargetSplitId      persist.DBID `json:"targetSplitId"`
 }
 
-// GetSourceCollectionId returns MoveCollectionToGalleryInput.SourceCollectionId, and is useful for accessing the field via an interface.
-func (v *MoveCollectionToGalleryInput) GetSourceCollectionId() persist.DBID {
+// GetSourceCollectionId returns MoveCollectionToSplitInput.SourceCollectionId, and is useful for accessing the field via an interface.
+func (v *MoveCollectionToSplitInput) GetSourceCollectionId() persist.DBID {
 	return v.SourceCollectionId
 }
 
-// GetTargetGalleryId returns MoveCollectionToGalleryInput.TargetGalleryId, and is useful for accessing the field via an interface.
-func (v *MoveCollectionToGalleryInput) GetTargetGalleryId() persist.DBID { return v.TargetGalleryId }
+// GetTargetSplitId returns MoveCollectionToSplitInput.TargetSplitId, and is useful for accessing the field via an interface.
+func (v *MoveCollectionToSplitInput) GetTargetSplitId() persist.DBID { return v.TargetSplitId }
 
-type PublishGalleryInput struct {
-	GalleryId persist.DBID `json:"galleryId"`
-	EditId    string       `json:"editId"`
-	Caption   *string      `json:"caption"`
+type PublishSplitInput struct {
+	SplitId persist.DBID `json:"splitId"`
+	EditId  string       `json:"editId"`
+	Caption *string      `json:"caption"`
 }
 
-// GetGalleryId returns PublishGalleryInput.GalleryId, and is useful for accessing the field via an interface.
-func (v *PublishGalleryInput) GetGalleryId() persist.DBID { return v.GalleryId }
+// GetSplitId returns PublishSplitInput.SplitId, and is useful for accessing the field via an interface.
+func (v *PublishSplitInput) GetSplitId() persist.DBID { return v.SplitId }
 
-// GetEditId returns PublishGalleryInput.EditId, and is useful for accessing the field via an interface.
-func (v *PublishGalleryInput) GetEditId() string { return v.EditId }
+// GetEditId returns PublishSplitInput.EditId, and is useful for accessing the field via an interface.
+func (v *PublishSplitInput) GetEditId() string { return v.EditId }
 
-// GetCaption returns PublishGalleryInput.Caption, and is useful for accessing the field via an interface.
-func (v *PublishGalleryInput) GetCaption() *string { return v.Caption }
+// GetCaption returns PublishSplitInput.Caption, and is useful for accessing the field via an interface.
+func (v *PublishSplitInput) GetCaption() *string { return v.Caption }
 
 type SocialAccountType string
 
@@ -352,49 +352,6 @@ func (v *UpdateCollectionInput) GetTokenSettings() []CollectionTokenSettingsInpu
 // GetHidden returns UpdateCollectionInput.Hidden, and is useful for accessing the field via an interface.
 func (v *UpdateCollectionInput) GetHidden() bool { return v.Hidden }
 
-type UpdateGalleryInput struct {
-	GalleryId          persist.DBID                      `json:"galleryId"`
-	Name               *string                           `json:"name"`
-	Description        *string                           `json:"description"`
-	Caption            *string                           `json:"caption"`
-	DeletedCollections []persist.DBID                    `json:"deletedCollections"`
-	UpdatedCollections []*UpdateCollectionInput          `json:"updatedCollections"`
-	CreatedCollections []*CreateCollectionInGalleryInput `json:"createdCollections"`
-	Order              []persist.DBID                    `json:"order"`
-	EditId             *string                           `json:"editId"`
-}
-
-// GetGalleryId returns UpdateGalleryInput.GalleryId, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetGalleryId() persist.DBID { return v.GalleryId }
-
-// GetName returns UpdateGalleryInput.Name, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetName() *string { return v.Name }
-
-// GetDescription returns UpdateGalleryInput.Description, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetDescription() *string { return v.Description }
-
-// GetCaption returns UpdateGalleryInput.Caption, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetCaption() *string { return v.Caption }
-
-// GetDeletedCollections returns UpdateGalleryInput.DeletedCollections, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetDeletedCollections() []persist.DBID { return v.DeletedCollections }
-
-// GetUpdatedCollections returns UpdateGalleryInput.UpdatedCollections, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetUpdatedCollections() []*UpdateCollectionInput {
-	return v.UpdatedCollections
-}
-
-// GetCreatedCollections returns UpdateGalleryInput.CreatedCollections, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetCreatedCollections() []*CreateCollectionInGalleryInput {
-	return v.CreatedCollections
-}
-
-// GetOrder returns UpdateGalleryInput.Order, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetOrder() []persist.DBID { return v.Order }
-
-// GetEditId returns UpdateGalleryInput.EditId, and is useful for accessing the field via an interface.
-func (v *UpdateGalleryInput) GetEditId() *string { return v.EditId }
-
 type UpdateSocialAccountDisplayedInput struct {
 	Type      SocialAccountType `json:"type"`
 	Displayed bool              `json:"displayed"`
@@ -405,6 +362,49 @@ func (v *UpdateSocialAccountDisplayedInput) GetType() SocialAccountType { return
 
 // GetDisplayed returns UpdateSocialAccountDisplayedInput.Displayed, and is useful for accessing the field via an interface.
 func (v *UpdateSocialAccountDisplayedInput) GetDisplayed() bool { return v.Displayed }
+
+type UpdateSplitInput struct {
+	SplitId            persist.DBID                    `json:"splitId"`
+	Name               *string                         `json:"name"`
+	Description        *string                         `json:"description"`
+	Caption            *string                         `json:"caption"`
+	DeletedCollections []persist.DBID                  `json:"deletedCollections"`
+	UpdatedCollections []*UpdateCollectionInput        `json:"updatedCollections"`
+	CreatedCollections []*CreateCollectionInSplitInput `json:"createdCollections"`
+	Order              []persist.DBID                  `json:"order"`
+	EditId             *string                         `json:"editId"`
+}
+
+// GetSplitId returns UpdateSplitInput.SplitId, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetSplitId() persist.DBID { return v.SplitId }
+
+// GetName returns UpdateSplitInput.Name, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetName() *string { return v.Name }
+
+// GetDescription returns UpdateSplitInput.Description, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetDescription() *string { return v.Description }
+
+// GetCaption returns UpdateSplitInput.Caption, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetCaption() *string { return v.Caption }
+
+// GetDeletedCollections returns UpdateSplitInput.DeletedCollections, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetDeletedCollections() []persist.DBID { return v.DeletedCollections }
+
+// GetUpdatedCollections returns UpdateSplitInput.UpdatedCollections, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetUpdatedCollections() []*UpdateCollectionInput {
+	return v.UpdatedCollections
+}
+
+// GetCreatedCollections returns UpdateSplitInput.CreatedCollections, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetCreatedCollections() []*CreateCollectionInSplitInput {
+	return v.CreatedCollections
+}
+
+// GetOrder returns UpdateSplitInput.Order, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetOrder() []persist.DBID { return v.Order }
+
+// GetEditId returns UpdateSplitInput.EditId, and is useful for accessing the field via an interface.
+func (v *UpdateSplitInput) GetEditId() *string { return v.EditId }
 
 type UpdateUserExperienceInput struct {
 	ExperienceType UserExperienceType `json:"experienceType"`
@@ -420,7 +420,7 @@ func (v *UpdateUserExperienceInput) GetExperienced() bool { return v.Experienced
 type UserExperienceType string
 
 const (
-	UserExperienceTypeMultigalleryannouncement          UserExperienceType = "MultiGalleryAnnouncement"
+	UserExperienceTypeMultisplitannouncement            UserExperienceType = "MultiSplitAnnouncement"
 	UserExperienceTypeEmailupsell                       UserExperienceType = "EmailUpsell"
 	UserExperienceTypeMaintenancefeb2023                UserExperienceType = "MaintenanceFeb2023"
 	UserExperienceTypeTwitterconnectiononboardingupsell UserExperienceType = "TwitterConnectionOnboardingUpsell"
@@ -459,13 +459,13 @@ type __createCollectionMutationInput struct {
 // GetInput returns __createCollectionMutationInput.Input, and is useful for accessing the field via an interface.
 func (v *__createCollectionMutationInput) GetInput() CreateCollectionInput { return v.Input }
 
-// __createGalleryMutationInput is used internally by genqlient
-type __createGalleryMutationInput struct {
-	Input CreateGalleryInput `json:"input"`
+// __createSplitMutationInput is used internally by genqlient
+type __createSplitMutationInput struct {
+	Input CreateSplitInput `json:"input"`
 }
 
-// GetInput returns __createGalleryMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__createGalleryMutationInput) GetInput() CreateGalleryInput { return v.Input }
+// GetInput returns __createSplitMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__createSplitMutationInput) GetInput() CreateSplitInput { return v.Input }
 
 // __createUserMutationInput is used internally by genqlient
 type __createUserMutationInput struct {
@@ -503,21 +503,21 @@ type __loginMutationInput struct {
 // GetAuthMechanism returns __loginMutationInput.AuthMechanism, and is useful for accessing the field via an interface.
 func (v *__loginMutationInput) GetAuthMechanism() AuthMechanism { return v.AuthMechanism }
 
-// __moveCollectionToGalleryInput is used internally by genqlient
-type __moveCollectionToGalleryInput struct {
-	Input MoveCollectionToGalleryInput `json:"input"`
+// __moveCollectionToSplitInput is used internally by genqlient
+type __moveCollectionToSplitInput struct {
+	Input MoveCollectionToSplitInput `json:"input"`
 }
 
-// GetInput returns __moveCollectionToGalleryInput.Input, and is useful for accessing the field via an interface.
-func (v *__moveCollectionToGalleryInput) GetInput() MoveCollectionToGalleryInput { return v.Input }
+// GetInput returns __moveCollectionToSplitInput.Input, and is useful for accessing the field via an interface.
+func (v *__moveCollectionToSplitInput) GetInput() MoveCollectionToSplitInput { return v.Input }
 
-// __publishGalleryMutationInput is used internally by genqlient
-type __publishGalleryMutationInput struct {
-	Input PublishGalleryInput `json:"input"`
+// __publishSplitMutationInput is used internally by genqlient
+type __publishSplitMutationInput struct {
+	Input PublishSplitInput `json:"input"`
 }
 
-// GetInput returns __publishGalleryMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__publishGalleryMutationInput) GetInput() PublishGalleryInput { return v.Input }
+// GetInput returns __publishSplitMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__publishSplitMutationInput) GetInput() PublishSplitInput { return v.Input }
 
 // __removeUserWalletsMutationInput is used internally by genqlient
 type __removeUserWalletsMutationInput struct {
@@ -535,14 +535,6 @@ type __syncTokensMutationInput struct {
 // GetChains returns __syncTokensMutationInput.Chains, and is useful for accessing the field via an interface.
 func (v *__syncTokensMutationInput) GetChains() []Chain { return v.Chains }
 
-// __updateGalleryMutationInput is used internally by genqlient
-type __updateGalleryMutationInput struct {
-	Input UpdateGalleryInput `json:"input"`
-}
-
-// GetInput returns __updateGalleryMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__updateGalleryMutationInput) GetInput() UpdateGalleryInput { return v.Input }
-
 // __updateSocialAccountDisplayedInput is used internally by genqlient
 type __updateSocialAccountDisplayedInput struct {
 	Input UpdateSocialAccountDisplayedInput `json:"input"`
@@ -552,6 +544,14 @@ type __updateSocialAccountDisplayedInput struct {
 func (v *__updateSocialAccountDisplayedInput) GetInput() UpdateSocialAccountDisplayedInput {
 	return v.Input
 }
+
+// __updateSplitMutationInput is used internally by genqlient
+type __updateSplitMutationInput struct {
+	Input UpdateSplitInput `json:"input"`
+}
+
+// GetInput returns __updateSplitMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__updateSplitMutationInput) GetInput() UpdateSplitInput { return v.Input }
 
 // __updateUserExperienceInput is used internally by genqlient
 type __updateUserExperienceInput struct {
@@ -585,13 +585,13 @@ type __userByUsernameQueryInput struct {
 // GetUser returns __userByUsernameQueryInput.User, and is useful for accessing the field via an interface.
 func (v *__userByUsernameQueryInput) GetUser() string { return v.User }
 
-// __viewGalleryMutationInput is used internally by genqlient
-type __viewGalleryMutationInput struct {
-	GalleryId persist.DBID `json:"galleryId"`
+// __viewSplitMutationInput is used internally by genqlient
+type __viewSplitMutationInput struct {
+	SplitId persist.DBID `json:"splitId"`
 }
 
-// GetGalleryId returns __viewGalleryMutationInput.GalleryId, and is useful for accessing the field via an interface.
-func (v *__viewGalleryMutationInput) GetGalleryId() persist.DBID { return v.GalleryId }
+// GetSplitId returns __viewSplitMutationInput.SplitId, and is useful for accessing the field via an interface.
+func (v *__viewSplitMutationInput) GetSplitId() persist.DBID { return v.SplitId }
 
 // addUserWalletMutationAddUserWalletAddUserWalletPayload includes the requested fields of the GraphQL type AddUserWalletPayload.
 type addUserWalletMutationAddUserWalletAddUserWalletPayload struct {
@@ -1408,70 +1408,40 @@ func (v *createCollectionMutationResponse) __premarshalJSON() (*__premarshalcrea
 	return &retval, nil
 }
 
-// createGalleryMutationCreateGalleryCreateGalleryPayload includes the requested fields of the GraphQL type CreateGalleryPayload.
-type createGalleryMutationCreateGalleryCreateGalleryPayload struct {
-	Typename *string                                                        `json:"__typename"`
-	Gallery  *createGalleryMutationCreateGalleryCreateGalleryPayloadGallery `json:"gallery"`
+// createSplitMutationCreateSplitCreateSplitPayload includes the requested fields of the GraphQL type CreateSplitPayload.
+type createSplitMutationCreateSplitCreateSplitPayload struct {
+	Typename *string                                                `json:"__typename"`
+	Split    *createSplitMutationCreateSplitCreateSplitPayloadSplit `json:"split"`
 }
 
-// GetTypename returns createGalleryMutationCreateGalleryCreateGalleryPayload.Typename, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryCreateGalleryPayload) GetTypename() *string {
-	return v.Typename
+// GetTypename returns createSplitMutationCreateSplitCreateSplitPayload.Typename, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitCreateSplitPayload) GetTypename() *string { return v.Typename }
+
+// GetSplit returns createSplitMutationCreateSplitCreateSplitPayload.Split, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitCreateSplitPayload) GetSplit() *createSplitMutationCreateSplitCreateSplitPayloadSplit {
+	return v.Split
 }
 
-// GetGallery returns createGalleryMutationCreateGalleryCreateGalleryPayload.Gallery, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryCreateGalleryPayload) GetGallery() *createGalleryMutationCreateGalleryCreateGalleryPayloadGallery {
-	return v.Gallery
-}
-
-// createGalleryMutationCreateGalleryCreateGalleryPayloadGallery includes the requested fields of the GraphQL type Gallery.
-type createGalleryMutationCreateGalleryCreateGalleryPayloadGallery struct {
-	Dbid        persist.DBID `json:"dbid"`
-	Name        *string      `json:"name"`
-	Description *string      `json:"description"`
-	Position    *string      `json:"position"`
-}
-
-// GetDbid returns createGalleryMutationCreateGalleryCreateGalleryPayloadGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryCreateGalleryPayloadGallery) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// GetName returns createGalleryMutationCreateGalleryCreateGalleryPayloadGallery.Name, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryCreateGalleryPayloadGallery) GetName() *string {
-	return v.Name
-}
-
-// GetDescription returns createGalleryMutationCreateGalleryCreateGalleryPayloadGallery.Description, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryCreateGalleryPayloadGallery) GetDescription() *string {
-	return v.Description
-}
-
-// GetPosition returns createGalleryMutationCreateGalleryCreateGalleryPayloadGallery.Position, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryCreateGalleryPayloadGallery) GetPosition() *string {
-	return v.Position
-}
-
-// createGalleryMutationCreateGalleryCreateGalleryPayloadOrError includes the requested fields of the GraphQL interface CreateGalleryPayloadOrError.
+// createSplitMutationCreateSplitCreateSplitPayloadOrError includes the requested fields of the GraphQL interface CreateSplitPayloadOrError.
 //
-// createGalleryMutationCreateGalleryCreateGalleryPayloadOrError is implemented by the following types:
-// createGalleryMutationCreateGalleryCreateGalleryPayload
-// createGalleryMutationCreateGalleryErrInvalidInput
-// createGalleryMutationCreateGalleryErrNotAuthorized
-type createGalleryMutationCreateGalleryCreateGalleryPayloadOrError interface {
-	implementsGraphQLInterfacecreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError()
+// createSplitMutationCreateSplitCreateSplitPayloadOrError is implemented by the following types:
+// createSplitMutationCreateSplitCreateSplitPayload
+// createSplitMutationCreateSplitErrInvalidInput
+// createSplitMutationCreateSplitErrNotAuthorized
+type createSplitMutationCreateSplitCreateSplitPayloadOrError interface {
+	implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *createGalleryMutationCreateGalleryCreateGalleryPayload) implementsGraphQLInterfacecreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError() {
+func (v *createSplitMutationCreateSplitCreateSplitPayload) implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError() {
 }
-func (v *createGalleryMutationCreateGalleryErrInvalidInput) implementsGraphQLInterfacecreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError() {
+func (v *createSplitMutationCreateSplitErrInvalidInput) implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError() {
 }
-func (v *createGalleryMutationCreateGalleryErrNotAuthorized) implementsGraphQLInterfacecreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError() {
+func (v *createSplitMutationCreateSplitErrNotAuthorized) implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError() {
 }
 
-func __unmarshalcreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError(b []byte, v *createGalleryMutationCreateGalleryCreateGalleryPayloadOrError) error {
+func __unmarshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(b []byte, v *createSplitMutationCreateSplitCreateSplitPayloadOrError) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -1485,106 +1455,130 @@ func __unmarshalcreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError(b 
 	}
 
 	switch tn.TypeName {
-	case "CreateGalleryPayload":
-		*v = new(createGalleryMutationCreateGalleryCreateGalleryPayload)
+	case "CreateSplitPayload":
+		*v = new(createSplitMutationCreateSplitCreateSplitPayload)
 		return json.Unmarshal(b, *v)
 	case "ErrInvalidInput":
-		*v = new(createGalleryMutationCreateGalleryErrInvalidInput)
+		*v = new(createSplitMutationCreateSplitErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(createGalleryMutationCreateGalleryErrNotAuthorized)
+		*v = new(createSplitMutationCreateSplitErrNotAuthorized)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing CreateGalleryPayloadOrError.__typename")
+			"response was missing CreateSplitPayloadOrError.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for createGalleryMutationCreateGalleryCreateGalleryPayloadOrError: "%v"`, tn.TypeName)
+			`unexpected concrete type for createSplitMutationCreateSplitCreateSplitPayloadOrError: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalcreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError(v *createGalleryMutationCreateGalleryCreateGalleryPayloadOrError) ([]byte, error) {
+func __marshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(v *createSplitMutationCreateSplitCreateSplitPayloadOrError) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *createGalleryMutationCreateGalleryCreateGalleryPayload:
-		typename = "CreateGalleryPayload"
+	case *createSplitMutationCreateSplitCreateSplitPayload:
+		typename = "CreateSplitPayload"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*createGalleryMutationCreateGalleryCreateGalleryPayload
+			*createSplitMutationCreateSplitCreateSplitPayload
 		}{typename, v}
 		return json.Marshal(result)
-	case *createGalleryMutationCreateGalleryErrInvalidInput:
+	case *createSplitMutationCreateSplitErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*createGalleryMutationCreateGalleryErrInvalidInput
+			*createSplitMutationCreateSplitErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *createGalleryMutationCreateGalleryErrNotAuthorized:
+	case *createSplitMutationCreateSplitErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*createGalleryMutationCreateGalleryErrNotAuthorized
+			*createSplitMutationCreateSplitErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for createGalleryMutationCreateGalleryCreateGalleryPayloadOrError: "%T"`, v)
+			`unexpected concrete type for createSplitMutationCreateSplitCreateSplitPayloadOrError: "%T"`, v)
 	}
 }
 
-// createGalleryMutationCreateGalleryErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type createGalleryMutationCreateGalleryErrInvalidInput struct {
+// createSplitMutationCreateSplitCreateSplitPayloadSplit includes the requested fields of the GraphQL type Split.
+type createSplitMutationCreateSplitCreateSplitPayloadSplit struct {
+	Dbid        persist.DBID `json:"dbid"`
+	Name        *string      `json:"name"`
+	Description *string      `json:"description"`
+	Position    *string      `json:"position"`
+}
+
+// GetDbid returns createSplitMutationCreateSplitCreateSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitCreateSplitPayloadSplit) GetDbid() persist.DBID { return v.Dbid }
+
+// GetName returns createSplitMutationCreateSplitCreateSplitPayloadSplit.Name, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitCreateSplitPayloadSplit) GetName() *string { return v.Name }
+
+// GetDescription returns createSplitMutationCreateSplitCreateSplitPayloadSplit.Description, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitCreateSplitPayloadSplit) GetDescription() *string {
+	return v.Description
+}
+
+// GetPosition returns createSplitMutationCreateSplitCreateSplitPayloadSplit.Position, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitCreateSplitPayloadSplit) GetPosition() *string {
+	return v.Position
+}
+
+// createSplitMutationCreateSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type createSplitMutationCreateSplitErrInvalidInput struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns createGalleryMutationCreateGalleryErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryErrInvalidInput) GetTypename() *string { return v.Typename }
+// GetTypename returns createSplitMutationCreateSplitErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// GetMessage returns createGalleryMutationCreateGalleryErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryErrInvalidInput) GetMessage() string { return v.Message }
+// GetMessage returns createSplitMutationCreateSplitErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitErrInvalidInput) GetMessage() string { return v.Message }
 
-// createGalleryMutationCreateGalleryErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type createGalleryMutationCreateGalleryErrNotAuthorized struct {
+// createSplitMutationCreateSplitErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type createSplitMutationCreateSplitErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns createGalleryMutationCreateGalleryErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryErrNotAuthorized) GetTypename() *string { return v.Typename }
+// GetTypename returns createSplitMutationCreateSplitErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitErrNotAuthorized) GetTypename() *string { return v.Typename }
 
-// GetMessage returns createGalleryMutationCreateGalleryErrNotAuthorized.Message, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationCreateGalleryErrNotAuthorized) GetMessage() string { return v.Message }
+// GetMessage returns createSplitMutationCreateSplitErrNotAuthorized.Message, and is useful for accessing the field via an interface.
+func (v *createSplitMutationCreateSplitErrNotAuthorized) GetMessage() string { return v.Message }
 
-// createGalleryMutationResponse is returned by createGalleryMutation on success.
-type createGalleryMutationResponse struct {
-	CreateGallery *createGalleryMutationCreateGalleryCreateGalleryPayloadOrError `json:"-"`
+// createSplitMutationResponse is returned by createSplitMutation on success.
+type createSplitMutationResponse struct {
+	CreateSplit *createSplitMutationCreateSplitCreateSplitPayloadOrError `json:"-"`
 }
 
-// GetCreateGallery returns createGalleryMutationResponse.CreateGallery, and is useful for accessing the field via an interface.
-func (v *createGalleryMutationResponse) GetCreateGallery() *createGalleryMutationCreateGalleryCreateGalleryPayloadOrError {
-	return v.CreateGallery
+// GetCreateSplit returns createSplitMutationResponse.CreateSplit, and is useful for accessing the field via an interface.
+func (v *createSplitMutationResponse) GetCreateSplit() *createSplitMutationCreateSplitCreateSplitPayloadOrError {
+	return v.CreateSplit
 }
 
-func (v *createGalleryMutationResponse) UnmarshalJSON(b []byte) error {
+func (v *createSplitMutationResponse) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*createGalleryMutationResponse
-		CreateGallery json.RawMessage `json:"createGallery"`
+		*createSplitMutationResponse
+		CreateSplit json.RawMessage `json:"createSplit"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.createGalleryMutationResponse = v
+	firstPass.createSplitMutationResponse = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -1592,26 +1586,26 @@ func (v *createGalleryMutationResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.CreateGallery
-		src := firstPass.CreateGallery
+		dst := &v.CreateSplit
+		src := firstPass.CreateSplit
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(createGalleryMutationCreateGalleryCreateGalleryPayloadOrError)
-			err = __unmarshalcreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError(
+			*dst = new(createSplitMutationCreateSplitCreateSplitPayloadOrError)
+			err = __unmarshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal createGalleryMutationResponse.CreateGallery: %w", err)
+					"unable to unmarshal createSplitMutationResponse.CreateSplit: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalcreateGalleryMutationResponse struct {
-	CreateGallery json.RawMessage `json:"createGallery"`
+type __premarshalcreateSplitMutationResponse struct {
+	CreateSplit json.RawMessage `json:"createSplit"`
 }
 
-func (v *createGalleryMutationResponse) MarshalJSON() ([]byte, error) {
+func (v *createSplitMutationResponse) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -1619,20 +1613,20 @@ func (v *createGalleryMutationResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(premarshaled)
 }
 
-func (v *createGalleryMutationResponse) __premarshalJSON() (*__premarshalcreateGalleryMutationResponse, error) {
-	var retval __premarshalcreateGalleryMutationResponse
+func (v *createSplitMutationResponse) __premarshalJSON() (*__premarshalcreateSplitMutationResponse, error) {
+	var retval __premarshalcreateSplitMutationResponse
 
 	{
 
-		dst := &retval.CreateGallery
-		src := v.CreateGallery
+		dst := &retval.CreateSplit
+		src := v.CreateSplit
 		if src != nil {
 			var err error
-			*dst, err = __marshalcreateGalleryMutationCreateGalleryCreateGalleryPayloadOrError(
+			*dst, err = __marshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal createGalleryMutationResponse.CreateGallery: %w", err)
+					"unable to marshal createSplitMutationResponse.CreateSplit: %w", err)
 			}
 		}
 	}
@@ -1794,10 +1788,10 @@ func (v *createUserMutationCreateUserCreateUserPayloadViewer) GetUser() *createU
 
 // createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
 type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser struct {
-	Username  *string                                                                               `json:"username"`
-	Dbid      persist.DBID                                                                          `json:"dbid"`
-	Bio       *string                                                                               `json:"bio"`
-	Galleries []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery `json:"galleries"`
+	Username *string                                                                          `json:"username"`
+	Dbid     persist.DBID                                                                     `json:"dbid"`
+	Bio      *string                                                                          `json:"bio"`
+	Splits   []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit `json:"splits"`
 }
 
 // GetUsername returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
@@ -1815,18 +1809,18 @@ func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) Get
 	return v.Bio
 }
 
-// GetGalleries returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Galleries, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetGalleries() []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery {
-	return v.Galleries
+// GetSplits returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Splits, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetSplits() []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit {
+	return v.Splits
 }
 
-// createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery includes the requested fields of the GraphQL type Gallery.
-type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery struct {
+// createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit includes the requested fields of the GraphQL type Split.
+type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit struct {
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserGalleriesGallery) GetDbid() persist.DBID {
+// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
@@ -2719,132 +2713,132 @@ type logoutMutationResponse struct {
 // GetLogout returns logoutMutationResponse.Logout, and is useful for accessing the field via an interface.
 func (v *logoutMutationResponse) GetLogout() *logoutMutationLogoutLogoutPayload { return v.Logout }
 
-// moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput struct {
+// moveCollectionToSplitMoveCollectionToSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type moveCollectionToSplitMoveCollectionToSplitErrInvalidInput struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput) GetTypename() *string {
+// GetTypename returns moveCollectionToSplitMoveCollectionToSplitErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitErrInvalidInput) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMessage returns moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput) GetMessage() string {
+// GetMessage returns moveCollectionToSplitMoveCollectionToSplitErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitErrInvalidInput) GetMessage() string {
 	return v.Message
 }
 
-// moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized struct {
+// moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized) GetTypename() *string {
+// GetTypename returns moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMessage returns moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized.Message, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized) GetMessage() string {
+// GetMessage returns moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized.Message, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized) GetMessage() string {
 	return v.Message
 }
 
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload includes the requested fields of the GraphQL type MoveCollectionToGalleryPayload.
-type moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload struct {
-	Typename   *string                                                                                 `json:"__typename"`
-	OldGallery *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery `json:"oldGallery"`
-	NewGallery *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery `json:"newGallery"`
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload includes the requested fields of the GraphQL type MoveCollectionToSplitPayload.
+type moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload struct {
+	Typename *string                                                                         `json:"__typename"`
+	OldSplit *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit `json:"oldSplit"`
+	NewSplit *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit `json:"newSplit"`
 }
 
-// GetTypename returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload.Typename, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload) GetTypename() *string {
+// GetTypename returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload.Typename, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload) GetTypename() *string {
 	return v.Typename
 }
 
-// GetOldGallery returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload.OldGallery, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload) GetOldGallery() *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery {
-	return v.OldGallery
+// GetOldSplit returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload.OldSplit, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload) GetOldSplit() *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit {
+	return v.OldSplit
 }
 
-// GetNewGallery returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload.NewGallery, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload) GetNewGallery() *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery {
-	return v.NewGallery
+// GetNewSplit returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload.NewSplit, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload) GetNewSplit() *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit {
+	return v.NewSplit
 }
 
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery includes the requested fields of the GraphQL type Gallery.
-type moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery struct {
-	Dbid        persist.DBID                                                                                                   `json:"dbid"`
-	Collections []*moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGalleryCollectionsCollection `json:"collections"`
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit includes the requested fields of the GraphQL type Split.
+type moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit struct {
+	Dbid        persist.DBID                                                                                           `json:"dbid"`
+	Collections []*moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplitCollectionsCollection `json:"collections"`
 }
 
-// GetDbid returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery) GetDbid() persist.DBID {
+// GetDbid returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetCollections returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery.Collections, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGallery) GetCollections() []*moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGalleryCollectionsCollection {
+// GetCollections returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit.Collections, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplit) GetCollections() []*moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplitCollectionsCollection {
 	return v.Collections
 }
 
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGalleryCollectionsCollection includes the requested fields of the GraphQL type Collection.
-type moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGalleryCollectionsCollection struct {
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplitCollectionsCollection includes the requested fields of the GraphQL type Collection.
+type moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplitCollectionsCollection struct {
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetDbid returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGalleryCollectionsCollection.Dbid, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadNewGalleryCollectionsCollection) GetDbid() persist.DBID {
+// GetDbid returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplitCollectionsCollection.Dbid, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadNewSplitCollectionsCollection) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery includes the requested fields of the GraphQL type Gallery.
-type moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery struct {
-	Dbid        persist.DBID                                                                                                   `json:"dbid"`
-	Collections []*moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGalleryCollectionsCollection `json:"collections"`
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit includes the requested fields of the GraphQL type Split.
+type moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit struct {
+	Dbid        persist.DBID                                                                                           `json:"dbid"`
+	Collections []*moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplitCollectionsCollection `json:"collections"`
 }
 
-// GetDbid returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery) GetDbid() persist.DBID {
+// GetDbid returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetCollections returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery.Collections, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGallery) GetCollections() []*moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGalleryCollectionsCollection {
+// GetCollections returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit.Collections, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplit) GetCollections() []*moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplitCollectionsCollection {
 	return v.Collections
 }
 
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGalleryCollectionsCollection includes the requested fields of the GraphQL type Collection.
-type moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGalleryCollectionsCollection struct {
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplitCollectionsCollection includes the requested fields of the GraphQL type Collection.
+type moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplitCollectionsCollection struct {
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetDbid returns moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGalleryCollectionsCollection.Dbid, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOldGalleryCollectionsCollection) GetDbid() persist.DBID {
+// GetDbid returns moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplitCollectionsCollection.Dbid, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOldSplitCollectionsCollection) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError includes the requested fields of the GraphQL interface MoveCollectionToGalleryPayloadOrError.
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError includes the requested fields of the GraphQL interface MoveCollectionToSplitPayloadOrError.
 //
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError is implemented by the following types:
-// moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput
-// moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized
-// moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload
-type moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError interface {
-	implementsGraphQLInterfacemoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError()
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError is implemented by the following types:
+// moveCollectionToSplitMoveCollectionToSplitErrInvalidInput
+// moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized
+// moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload
+type moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError interface {
+	implementsGraphQLInterfacemoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput) implementsGraphQLInterfacemoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError() {
+func (v *moveCollectionToSplitMoveCollectionToSplitErrInvalidInput) implementsGraphQLInterfacemoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError() {
 }
-func (v *moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized) implementsGraphQLInterfacemoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError() {
+func (v *moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized) implementsGraphQLInterfacemoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError() {
 }
-func (v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload) implementsGraphQLInterfacemoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError() {
+func (v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload) implementsGraphQLInterfacemoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError() {
 }
 
-func __unmarshalmoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError(b []byte, v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError) error {
+func __unmarshalmoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError(b []byte, v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -2859,81 +2853,81 @@ func __unmarshalmoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGa
 
 	switch tn.TypeName {
 	case "ErrInvalidInput":
-		*v = new(moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput)
+		*v = new(moveCollectionToSplitMoveCollectionToSplitErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized)
+		*v = new(moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized)
 		return json.Unmarshal(b, *v)
-	case "MoveCollectionToGalleryPayload":
-		*v = new(moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload)
+	case "MoveCollectionToSplitPayload":
+		*v = new(moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing MoveCollectionToGalleryPayloadOrError.__typename")
+			"response was missing MoveCollectionToSplitPayloadOrError.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError: "%v"`, tn.TypeName)
+			`unexpected concrete type for moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalmoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError(v *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError) ([]byte, error) {
+func __marshalmoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError(v *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput:
+	case *moveCollectionToSplitMoveCollectionToSplitErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*moveCollectionToGalleryMoveCollectionToGalleryErrInvalidInput
+			*moveCollectionToSplitMoveCollectionToSplitErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized:
+	case *moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*moveCollectionToGalleryMoveCollectionToGalleryErrNotAuthorized
+			*moveCollectionToSplitMoveCollectionToSplitErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
-	case *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload:
-		typename = "MoveCollectionToGalleryPayload"
+	case *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload:
+		typename = "MoveCollectionToSplitPayload"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayload
+			*moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError: "%T"`, v)
+			`unexpected concrete type for moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError: "%T"`, v)
 	}
 }
 
-// moveCollectionToGalleryResponse is returned by moveCollectionToGallery on success.
-type moveCollectionToGalleryResponse struct {
-	MoveCollectionToGallery *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError `json:"-"`
+// moveCollectionToSplitResponse is returned by moveCollectionToSplit on success.
+type moveCollectionToSplitResponse struct {
+	MoveCollectionToSplit *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError `json:"-"`
 }
 
-// GetMoveCollectionToGallery returns moveCollectionToGalleryResponse.MoveCollectionToGallery, and is useful for accessing the field via an interface.
-func (v *moveCollectionToGalleryResponse) GetMoveCollectionToGallery() *moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError {
-	return v.MoveCollectionToGallery
+// GetMoveCollectionToSplit returns moveCollectionToSplitResponse.MoveCollectionToSplit, and is useful for accessing the field via an interface.
+func (v *moveCollectionToSplitResponse) GetMoveCollectionToSplit() *moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError {
+	return v.MoveCollectionToSplit
 }
 
-func (v *moveCollectionToGalleryResponse) UnmarshalJSON(b []byte) error {
+func (v *moveCollectionToSplitResponse) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*moveCollectionToGalleryResponse
-		MoveCollectionToGallery json.RawMessage `json:"moveCollectionToGallery"`
+		*moveCollectionToSplitResponse
+		MoveCollectionToSplit json.RawMessage `json:"moveCollectionToSplit"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.moveCollectionToGalleryResponse = v
+	firstPass.moveCollectionToSplitResponse = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -2941,26 +2935,26 @@ func (v *moveCollectionToGalleryResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.MoveCollectionToGallery
-		src := firstPass.MoveCollectionToGallery
+		dst := &v.MoveCollectionToSplit
+		src := firstPass.MoveCollectionToSplit
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(moveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError)
-			err = __unmarshalmoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError(
+			*dst = new(moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError)
+			err = __unmarshalmoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal moveCollectionToGalleryResponse.MoveCollectionToGallery: %w", err)
+					"unable to unmarshal moveCollectionToSplitResponse.MoveCollectionToSplit: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalmoveCollectionToGalleryResponse struct {
-	MoveCollectionToGallery json.RawMessage `json:"moveCollectionToGallery"`
+type __premarshalmoveCollectionToSplitResponse struct {
+	MoveCollectionToSplit json.RawMessage `json:"moveCollectionToSplit"`
 }
 
-func (v *moveCollectionToGalleryResponse) MarshalJSON() ([]byte, error) {
+func (v *moveCollectionToSplitResponse) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -2968,100 +2962,86 @@ func (v *moveCollectionToGalleryResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(premarshaled)
 }
 
-func (v *moveCollectionToGalleryResponse) __premarshalJSON() (*__premarshalmoveCollectionToGalleryResponse, error) {
-	var retval __premarshalmoveCollectionToGalleryResponse
+func (v *moveCollectionToSplitResponse) __premarshalJSON() (*__premarshalmoveCollectionToSplitResponse, error) {
+	var retval __premarshalmoveCollectionToSplitResponse
 
 	{
 
-		dst := &retval.MoveCollectionToGallery
-		src := v.MoveCollectionToGallery
+		dst := &retval.MoveCollectionToSplit
+		src := v.MoveCollectionToSplit
 		if src != nil {
 			var err error
-			*dst, err = __marshalmoveCollectionToGalleryMoveCollectionToGalleryMoveCollectionToGalleryPayloadOrError(
+			*dst, err = __marshalmoveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayloadOrError(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal moveCollectionToGalleryResponse.MoveCollectionToGallery: %w", err)
+					"unable to marshal moveCollectionToSplitResponse.MoveCollectionToSplit: %w", err)
 			}
 		}
 	}
 	return &retval, nil
 }
 
-// publishGalleryMutationPublishGalleryErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type publishGalleryMutationPublishGalleryErrInvalidInput struct {
+// publishSplitMutationPublishSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type publishSplitMutationPublishSplitErrInvalidInput struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns publishGalleryMutationPublishGalleryErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationPublishGalleryErrInvalidInput) GetTypename() *string {
-	return v.Typename
-}
+// GetTypename returns publishSplitMutationPublishSplitErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationPublishSplitErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// GetMessage returns publishGalleryMutationPublishGalleryErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationPublishGalleryErrInvalidInput) GetMessage() string { return v.Message }
+// GetMessage returns publishSplitMutationPublishSplitErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationPublishSplitErrInvalidInput) GetMessage() string { return v.Message }
 
-// publishGalleryMutationPublishGalleryErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type publishGalleryMutationPublishGalleryErrNotAuthorized struct {
+// publishSplitMutationPublishSplitErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type publishSplitMutationPublishSplitErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns publishGalleryMutationPublishGalleryErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationPublishGalleryErrNotAuthorized) GetTypename() *string {
+// GetTypename returns publishSplitMutationPublishSplitErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationPublishSplitErrNotAuthorized) GetTypename() *string { return v.Typename }
+
+// GetMessage returns publishSplitMutationPublishSplitErrNotAuthorized.Message, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationPublishSplitErrNotAuthorized) GetMessage() string { return v.Message }
+
+// publishSplitMutationPublishSplitPublishSplitPayload includes the requested fields of the GraphQL type PublishSplitPayload.
+type publishSplitMutationPublishSplitPublishSplitPayload struct {
+	Typename *string                                                   `json:"__typename"`
+	Split    *publishSplitMutationPublishSplitPublishSplitPayloadSplit `json:"split"`
+}
+
+// GetTypename returns publishSplitMutationPublishSplitPublishSplitPayload.Typename, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationPublishSplitPublishSplitPayload) GetTypename() *string {
 	return v.Typename
 }
 
-// GetMessage returns publishGalleryMutationPublishGalleryErrNotAuthorized.Message, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationPublishGalleryErrNotAuthorized) GetMessage() string { return v.Message }
-
-// publishGalleryMutationPublishGalleryPublishGalleryPayload includes the requested fields of the GraphQL type PublishGalleryPayload.
-type publishGalleryMutationPublishGalleryPublishGalleryPayload struct {
-	Typename *string                                                           `json:"__typename"`
-	Gallery  *publishGalleryMutationPublishGalleryPublishGalleryPayloadGallery `json:"gallery"`
+// GetSplit returns publishSplitMutationPublishSplitPublishSplitPayload.Split, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationPublishSplitPublishSplitPayload) GetSplit() *publishSplitMutationPublishSplitPublishSplitPayloadSplit {
+	return v.Split
 }
 
-// GetTypename returns publishGalleryMutationPublishGalleryPublishGalleryPayload.Typename, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationPublishGalleryPublishGalleryPayload) GetTypename() *string {
-	return v.Typename
-}
-
-// GetGallery returns publishGalleryMutationPublishGalleryPublishGalleryPayload.Gallery, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationPublishGalleryPublishGalleryPayload) GetGallery() *publishGalleryMutationPublishGalleryPublishGalleryPayloadGallery {
-	return v.Gallery
-}
-
-// publishGalleryMutationPublishGalleryPublishGalleryPayloadGallery includes the requested fields of the GraphQL type Gallery.
-type publishGalleryMutationPublishGalleryPublishGalleryPayloadGallery struct {
-	Dbid persist.DBID `json:"dbid"`
-}
-
-// GetDbid returns publishGalleryMutationPublishGalleryPublishGalleryPayloadGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationPublishGalleryPublishGalleryPayloadGallery) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError includes the requested fields of the GraphQL interface PublishGalleryPayloadOrError.
+// publishSplitMutationPublishSplitPublishSplitPayloadOrError includes the requested fields of the GraphQL interface PublishSplitPayloadOrError.
 //
-// publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError is implemented by the following types:
-// publishGalleryMutationPublishGalleryErrInvalidInput
-// publishGalleryMutationPublishGalleryErrNotAuthorized
-// publishGalleryMutationPublishGalleryPublishGalleryPayload
-type publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError interface {
-	implementsGraphQLInterfacepublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError()
+// publishSplitMutationPublishSplitPublishSplitPayloadOrError is implemented by the following types:
+// publishSplitMutationPublishSplitErrInvalidInput
+// publishSplitMutationPublishSplitErrNotAuthorized
+// publishSplitMutationPublishSplitPublishSplitPayload
+type publishSplitMutationPublishSplitPublishSplitPayloadOrError interface {
+	implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *publishGalleryMutationPublishGalleryErrInvalidInput) implementsGraphQLInterfacepublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError() {
+func (v *publishSplitMutationPublishSplitErrInvalidInput) implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError() {
 }
-func (v *publishGalleryMutationPublishGalleryErrNotAuthorized) implementsGraphQLInterfacepublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError() {
+func (v *publishSplitMutationPublishSplitErrNotAuthorized) implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError() {
 }
-func (v *publishGalleryMutationPublishGalleryPublishGalleryPayload) implementsGraphQLInterfacepublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError() {
+func (v *publishSplitMutationPublishSplitPublishSplitPayload) implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError() {
 }
 
-func __unmarshalpublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError(b []byte, v *publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError) error {
+func __unmarshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(b []byte, v *publishSplitMutationPublishSplitPublishSplitPayloadOrError) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -3076,81 +3056,91 @@ func __unmarshalpublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError
 
 	switch tn.TypeName {
 	case "ErrInvalidInput":
-		*v = new(publishGalleryMutationPublishGalleryErrInvalidInput)
+		*v = new(publishSplitMutationPublishSplitErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(publishGalleryMutationPublishGalleryErrNotAuthorized)
+		*v = new(publishSplitMutationPublishSplitErrNotAuthorized)
 		return json.Unmarshal(b, *v)
-	case "PublishGalleryPayload":
-		*v = new(publishGalleryMutationPublishGalleryPublishGalleryPayload)
+	case "PublishSplitPayload":
+		*v = new(publishSplitMutationPublishSplitPublishSplitPayload)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing PublishGalleryPayloadOrError.__typename")
+			"response was missing PublishSplitPayloadOrError.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError: "%v"`, tn.TypeName)
+			`unexpected concrete type for publishSplitMutationPublishSplitPublishSplitPayloadOrError: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalpublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError(v *publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError) ([]byte, error) {
+func __marshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(v *publishSplitMutationPublishSplitPublishSplitPayloadOrError) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *publishGalleryMutationPublishGalleryErrInvalidInput:
+	case *publishSplitMutationPublishSplitErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*publishGalleryMutationPublishGalleryErrInvalidInput
+			*publishSplitMutationPublishSplitErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *publishGalleryMutationPublishGalleryErrNotAuthorized:
+	case *publishSplitMutationPublishSplitErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*publishGalleryMutationPublishGalleryErrNotAuthorized
+			*publishSplitMutationPublishSplitErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
-	case *publishGalleryMutationPublishGalleryPublishGalleryPayload:
-		typename = "PublishGalleryPayload"
+	case *publishSplitMutationPublishSplitPublishSplitPayload:
+		typename = "PublishSplitPayload"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*publishGalleryMutationPublishGalleryPublishGalleryPayload
+			*publishSplitMutationPublishSplitPublishSplitPayload
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError: "%T"`, v)
+			`unexpected concrete type for publishSplitMutationPublishSplitPublishSplitPayloadOrError: "%T"`, v)
 	}
 }
 
-// publishGalleryMutationResponse is returned by publishGalleryMutation on success.
-type publishGalleryMutationResponse struct {
-	PublishGallery *publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError `json:"-"`
+// publishSplitMutationPublishSplitPublishSplitPayloadSplit includes the requested fields of the GraphQL type Split.
+type publishSplitMutationPublishSplitPublishSplitPayloadSplit struct {
+	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetPublishGallery returns publishGalleryMutationResponse.PublishGallery, and is useful for accessing the field via an interface.
-func (v *publishGalleryMutationResponse) GetPublishGallery() *publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError {
-	return v.PublishGallery
+// GetDbid returns publishSplitMutationPublishSplitPublishSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationPublishSplitPublishSplitPayloadSplit) GetDbid() persist.DBID {
+	return v.Dbid
 }
 
-func (v *publishGalleryMutationResponse) UnmarshalJSON(b []byte) error {
+// publishSplitMutationResponse is returned by publishSplitMutation on success.
+type publishSplitMutationResponse struct {
+	PublishSplit *publishSplitMutationPublishSplitPublishSplitPayloadOrError `json:"-"`
+}
+
+// GetPublishSplit returns publishSplitMutationResponse.PublishSplit, and is useful for accessing the field via an interface.
+func (v *publishSplitMutationResponse) GetPublishSplit() *publishSplitMutationPublishSplitPublishSplitPayloadOrError {
+	return v.PublishSplit
+}
+
+func (v *publishSplitMutationResponse) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*publishGalleryMutationResponse
-		PublishGallery json.RawMessage `json:"publishGallery"`
+		*publishSplitMutationResponse
+		PublishSplit json.RawMessage `json:"publishSplit"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.publishGalleryMutationResponse = v
+	firstPass.publishSplitMutationResponse = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -3158,26 +3148,26 @@ func (v *publishGalleryMutationResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.PublishGallery
-		src := firstPass.PublishGallery
+		dst := &v.PublishSplit
+		src := firstPass.PublishSplit
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(publishGalleryMutationPublishGalleryPublishGalleryPayloadOrError)
-			err = __unmarshalpublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError(
+			*dst = new(publishSplitMutationPublishSplitPublishSplitPayloadOrError)
+			err = __unmarshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal publishGalleryMutationResponse.PublishGallery: %w", err)
+					"unable to unmarshal publishSplitMutationResponse.PublishSplit: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalpublishGalleryMutationResponse struct {
-	PublishGallery json.RawMessage `json:"publishGallery"`
+type __premarshalpublishSplitMutationResponse struct {
+	PublishSplit json.RawMessage `json:"publishSplit"`
 }
 
-func (v *publishGalleryMutationResponse) MarshalJSON() ([]byte, error) {
+func (v *publishSplitMutationResponse) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -3185,20 +3175,20 @@ func (v *publishGalleryMutationResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(premarshaled)
 }
 
-func (v *publishGalleryMutationResponse) __premarshalJSON() (*__premarshalpublishGalleryMutationResponse, error) {
-	var retval __premarshalpublishGalleryMutationResponse
+func (v *publishSplitMutationResponse) __premarshalJSON() (*__premarshalpublishSplitMutationResponse, error) {
+	var retval __premarshalpublishSplitMutationResponse
 
 	{
 
-		dst := &retval.PublishGallery
-		src := v.PublishGallery
+		dst := &retval.PublishSplit
+		src := v.PublishSplit
 		if src != nil {
 			var err error
-			*dst, err = __marshalpublishGalleryMutationPublishGalleryPublishGalleryPayloadOrError(
+			*dst, err = __marshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal publishGalleryMutationResponse.PublishGallery: %w", err)
+					"unable to marshal publishSplitMutationResponse.PublishSplit: %w", err)
 			}
 		}
 	}
@@ -4269,271 +4259,6 @@ func (v *syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserToken
 	return v.MediaType
 }
 
-// updateGalleryMutationResponse is returned by updateGalleryMutation on success.
-type updateGalleryMutationResponse struct {
-	UpdateGallery *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError `json:"-"`
-}
-
-// GetUpdateGallery returns updateGalleryMutationResponse.UpdateGallery, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationResponse) GetUpdateGallery() *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError {
-	return v.UpdateGallery
-}
-
-func (v *updateGalleryMutationResponse) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*updateGalleryMutationResponse
-		UpdateGallery json.RawMessage `json:"updateGallery"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.updateGalleryMutationResponse = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.UpdateGallery
-		src := firstPass.UpdateGallery
-		if len(src) != 0 && string(src) != "null" {
-			*dst = new(updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError)
-			err = __unmarshalupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError(
-				src, *dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal updateGalleryMutationResponse.UpdateGallery: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshalupdateGalleryMutationResponse struct {
-	UpdateGallery json.RawMessage `json:"updateGallery"`
-}
-
-func (v *updateGalleryMutationResponse) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *updateGalleryMutationResponse) __premarshalJSON() (*__premarshalupdateGalleryMutationResponse, error) {
-	var retval __premarshalupdateGalleryMutationResponse
-
-	{
-
-		dst := &retval.UpdateGallery
-		src := v.UpdateGallery
-		if src != nil {
-			var err error
-			*dst, err = __marshalupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError(
-				src)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"unable to marshal updateGalleryMutationResponse.UpdateGallery: %w", err)
-			}
-		}
-	}
-	return &retval, nil
-}
-
-// updateGalleryMutationUpdateGalleryErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type updateGalleryMutationUpdateGalleryErrInvalidInput struct {
-	Typename *string `json:"__typename"`
-}
-
-// GetTypename returns updateGalleryMutationUpdateGalleryErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryErrInvalidInput) GetTypename() *string { return v.Typename }
-
-// updateGalleryMutationUpdateGalleryErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type updateGalleryMutationUpdateGalleryErrNotAuthorized struct {
-	Typename *string `json:"__typename"`
-}
-
-// GetTypename returns updateGalleryMutationUpdateGalleryErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryErrNotAuthorized) GetTypename() *string { return v.Typename }
-
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayload includes the requested fields of the GraphQL type UpdateGalleryPayload.
-type updateGalleryMutationUpdateGalleryUpdateGalleryPayload struct {
-	Typename *string                                                        `json:"__typename"`
-	Gallery  *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery `json:"gallery"`
-}
-
-// GetTypename returns updateGalleryMutationUpdateGalleryUpdateGalleryPayload.Typename, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayload) GetTypename() *string {
-	return v.Typename
-}
-
-// GetGallery returns updateGalleryMutationUpdateGalleryUpdateGalleryPayload.Gallery, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayload) GetGallery() *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery {
-	return v.Gallery
-}
-
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery includes the requested fields of the GraphQL type Gallery.
-type updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery struct {
-	Dbid        persist.DBID                                                                          `json:"dbid"`
-	Name        *string                                                                               `json:"name"`
-	Description *string                                                                               `json:"description"`
-	Collections []*updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection `json:"collections"`
-}
-
-// GetDbid returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// GetName returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery.Name, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery) GetName() *string {
-	return v.Name
-}
-
-// GetDescription returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery.Description, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery) GetDescription() *string {
-	return v.Description
-}
-
-// GetCollections returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery.Collections, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGallery) GetCollections() []*updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection {
-	return v.Collections
-}
-
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection includes the requested fields of the GraphQL type Collection.
-type updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection struct {
-	Dbid   persist.DBID                                                                                               `json:"dbid"`
-	Name   *string                                                                                                    `json:"name"`
-	Tokens []*updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionToken `json:"tokens"`
-}
-
-// GetDbid returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection.Dbid, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// GetName returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection.Name, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection) GetName() *string {
-	return v.Name
-}
-
-// GetTokens returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection.Tokens, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollection) GetTokens() []*updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionToken {
-	return v.Tokens
-}
-
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionToken includes the requested fields of the GraphQL type CollectionToken.
-type updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionToken struct {
-	Token *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionTokenToken `json:"token"`
-}
-
-// GetToken returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionToken.Token, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionToken) GetToken() *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionTokenToken {
-	return v.Token
-}
-
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionTokenToken includes the requested fields of the GraphQL type Token.
-type updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionTokenToken struct {
-	Dbid persist.DBID `json:"dbid"`
-}
-
-// GetDbid returns updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionTokenToken.Dbid, and is useful for accessing the field via an interface.
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadGalleryCollectionsCollectionTokensCollectionTokenToken) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError includes the requested fields of the GraphQL interface UpdateGalleryPayloadOrError.
-//
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError is implemented by the following types:
-// updateGalleryMutationUpdateGalleryErrInvalidInput
-// updateGalleryMutationUpdateGalleryErrNotAuthorized
-// updateGalleryMutationUpdateGalleryUpdateGalleryPayload
-type updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError interface {
-	implementsGraphQLInterfaceupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() *string
-}
-
-func (v *updateGalleryMutationUpdateGalleryErrInvalidInput) implementsGraphQLInterfaceupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError() {
-}
-func (v *updateGalleryMutationUpdateGalleryErrNotAuthorized) implementsGraphQLInterfaceupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError() {
-}
-func (v *updateGalleryMutationUpdateGalleryUpdateGalleryPayload) implementsGraphQLInterfaceupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError() {
-}
-
-func __unmarshalupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError(b []byte, v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "ErrInvalidInput":
-		*v = new(updateGalleryMutationUpdateGalleryErrInvalidInput)
-		return json.Unmarshal(b, *v)
-	case "ErrNotAuthorized":
-		*v = new(updateGalleryMutationUpdateGalleryErrNotAuthorized)
-		return json.Unmarshal(b, *v)
-	case "UpdateGalleryPayload":
-		*v = new(updateGalleryMutationUpdateGalleryUpdateGalleryPayload)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing UpdateGalleryPayloadOrError.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError: "%v"`, tn.TypeName)
-	}
-}
-
-func __marshalupdateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError(v *updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *updateGalleryMutationUpdateGalleryErrInvalidInput:
-		typename = "ErrInvalidInput"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*updateGalleryMutationUpdateGalleryErrInvalidInput
-		}{typename, v}
-		return json.Marshal(result)
-	case *updateGalleryMutationUpdateGalleryErrNotAuthorized:
-		typename = "ErrNotAuthorized"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*updateGalleryMutationUpdateGalleryErrNotAuthorized
-		}{typename, v}
-		return json.Marshal(result)
-	case *updateGalleryMutationUpdateGalleryUpdateGalleryPayload:
-		typename = "UpdateGalleryPayload"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*updateGalleryMutationUpdateGalleryUpdateGalleryPayload
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for updateGalleryMutationUpdateGalleryUpdateGalleryPayloadOrError: "%T"`, v)
-	}
-}
-
 // updateSocialAccountDisplayedResponse is returned by updateSocialAccountDisplayed on success.
 type updateSocialAccountDisplayedResponse struct {
 	UpdateSocialAccountDisplayed *updateSocialAccountDisplayedUpdateSocialAccountDisplayedUpdateSocialAccountDisplayedPayloadOrError `json:"-"`
@@ -4809,6 +4534,265 @@ func (v *updateSocialAccountDisplayedUpdateSocialAccountDisplayedUpdateSocialAcc
 // GetDisplay returns updateSocialAccountDisplayedUpdateSocialAccountDisplayedUpdateSocialAccountDisplayedPayloadViewerSocialAccountsTwitterTwitterSocialAccount.Display, and is useful for accessing the field via an interface.
 func (v *updateSocialAccountDisplayedUpdateSocialAccountDisplayedUpdateSocialAccountDisplayedPayloadViewerSocialAccountsTwitterTwitterSocialAccount) GetDisplay() bool {
 	return v.Display
+}
+
+// updateSplitMutationResponse is returned by updateSplitMutation on success.
+type updateSplitMutationResponse struct {
+	UpdateSplit *updateSplitMutationUpdateSplitUpdateSplitPayloadOrError `json:"-"`
+}
+
+// GetUpdateSplit returns updateSplitMutationResponse.UpdateSplit, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationResponse) GetUpdateSplit() *updateSplitMutationUpdateSplitUpdateSplitPayloadOrError {
+	return v.UpdateSplit
+}
+
+func (v *updateSplitMutationResponse) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*updateSplitMutationResponse
+		UpdateSplit json.RawMessage `json:"updateSplit"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.updateSplitMutationResponse = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.UpdateSplit
+		src := firstPass.UpdateSplit
+		if len(src) != 0 && string(src) != "null" {
+			*dst = new(updateSplitMutationUpdateSplitUpdateSplitPayloadOrError)
+			err = __unmarshalupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError(
+				src, *dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal updateSplitMutationResponse.UpdateSplit: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalupdateSplitMutationResponse struct {
+	UpdateSplit json.RawMessage `json:"updateSplit"`
+}
+
+func (v *updateSplitMutationResponse) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *updateSplitMutationResponse) __premarshalJSON() (*__premarshalupdateSplitMutationResponse, error) {
+	var retval __premarshalupdateSplitMutationResponse
+
+	{
+
+		dst := &retval.UpdateSplit
+		src := v.UpdateSplit
+		if src != nil {
+			var err error
+			*dst, err = __marshalupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError(
+				src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal updateSplitMutationResponse.UpdateSplit: %w", err)
+			}
+		}
+	}
+	return &retval, nil
+}
+
+// updateSplitMutationUpdateSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type updateSplitMutationUpdateSplitErrInvalidInput struct {
+	Typename *string `json:"__typename"`
+}
+
+// GetTypename returns updateSplitMutationUpdateSplitErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitErrInvalidInput) GetTypename() *string { return v.Typename }
+
+// updateSplitMutationUpdateSplitErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type updateSplitMutationUpdateSplitErrNotAuthorized struct {
+	Typename *string `json:"__typename"`
+}
+
+// GetTypename returns updateSplitMutationUpdateSplitErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitErrNotAuthorized) GetTypename() *string { return v.Typename }
+
+// updateSplitMutationUpdateSplitUpdateSplitPayload includes the requested fields of the GraphQL type UpdateSplitPayload.
+type updateSplitMutationUpdateSplitUpdateSplitPayload struct {
+	Typename *string                                                `json:"__typename"`
+	Split    *updateSplitMutationUpdateSplitUpdateSplitPayloadSplit `json:"split"`
+}
+
+// GetTypename returns updateSplitMutationUpdateSplitUpdateSplitPayload.Typename, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayload) GetTypename() *string { return v.Typename }
+
+// GetSplit returns updateSplitMutationUpdateSplitUpdateSplitPayload.Split, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayload) GetSplit() *updateSplitMutationUpdateSplitUpdateSplitPayloadSplit {
+	return v.Split
+}
+
+// updateSplitMutationUpdateSplitUpdateSplitPayloadOrError includes the requested fields of the GraphQL interface UpdateSplitPayloadOrError.
+//
+// updateSplitMutationUpdateSplitUpdateSplitPayloadOrError is implemented by the following types:
+// updateSplitMutationUpdateSplitErrInvalidInput
+// updateSplitMutationUpdateSplitErrNotAuthorized
+// updateSplitMutationUpdateSplitUpdateSplitPayload
+type updateSplitMutationUpdateSplitUpdateSplitPayloadOrError interface {
+	implementsGraphQLInterfaceupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() *string
+}
+
+func (v *updateSplitMutationUpdateSplitErrInvalidInput) implementsGraphQLInterfaceupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError() {
+}
+func (v *updateSplitMutationUpdateSplitErrNotAuthorized) implementsGraphQLInterfaceupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError() {
+}
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayload) implementsGraphQLInterfaceupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError() {
+}
+
+func __unmarshalupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError(b []byte, v *updateSplitMutationUpdateSplitUpdateSplitPayloadOrError) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "ErrInvalidInput":
+		*v = new(updateSplitMutationUpdateSplitErrInvalidInput)
+		return json.Unmarshal(b, *v)
+	case "ErrNotAuthorized":
+		*v = new(updateSplitMutationUpdateSplitErrNotAuthorized)
+		return json.Unmarshal(b, *v)
+	case "UpdateSplitPayload":
+		*v = new(updateSplitMutationUpdateSplitUpdateSplitPayload)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing UpdateSplitPayloadOrError.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for updateSplitMutationUpdateSplitUpdateSplitPayloadOrError: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalupdateSplitMutationUpdateSplitUpdateSplitPayloadOrError(v *updateSplitMutationUpdateSplitUpdateSplitPayloadOrError) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *updateSplitMutationUpdateSplitErrInvalidInput:
+		typename = "ErrInvalidInput"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*updateSplitMutationUpdateSplitErrInvalidInput
+		}{typename, v}
+		return json.Marshal(result)
+	case *updateSplitMutationUpdateSplitErrNotAuthorized:
+		typename = "ErrNotAuthorized"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*updateSplitMutationUpdateSplitErrNotAuthorized
+		}{typename, v}
+		return json.Marshal(result)
+	case *updateSplitMutationUpdateSplitUpdateSplitPayload:
+		typename = "UpdateSplitPayload"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*updateSplitMutationUpdateSplitUpdateSplitPayload
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for updateSplitMutationUpdateSplitUpdateSplitPayloadOrError: "%T"`, v)
+	}
+}
+
+// updateSplitMutationUpdateSplitUpdateSplitPayloadSplit includes the requested fields of the GraphQL type Split.
+type updateSplitMutationUpdateSplitUpdateSplitPayloadSplit struct {
+	Dbid        persist.DBID                                                                  `json:"dbid"`
+	Name        *string                                                                       `json:"name"`
+	Description *string                                                                       `json:"description"`
+	Collections []*updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection `json:"collections"`
+}
+
+// GetDbid returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplit) GetDbid() persist.DBID { return v.Dbid }
+
+// GetName returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplit.Name, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplit) GetName() *string { return v.Name }
+
+// GetDescription returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplit.Description, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplit) GetDescription() *string {
+	return v.Description
+}
+
+// GetCollections returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplit.Collections, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplit) GetCollections() []*updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection {
+	return v.Collections
+}
+
+// updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection includes the requested fields of the GraphQL type Collection.
+type updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection struct {
+	Dbid   persist.DBID                                                                                       `json:"dbid"`
+	Name   *string                                                                                            `json:"name"`
+	Tokens []*updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionToken `json:"tokens"`
+}
+
+// GetDbid returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection.Dbid, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection) GetDbid() persist.DBID {
+	return v.Dbid
+}
+
+// GetName returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection.Name, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection) GetName() *string {
+	return v.Name
+}
+
+// GetTokens returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection.Tokens, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollection) GetTokens() []*updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionToken {
+	return v.Tokens
+}
+
+// updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionToken includes the requested fields of the GraphQL type CollectionToken.
+type updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionToken struct {
+	Token *updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionTokenToken `json:"token"`
+}
+
+// GetToken returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionToken.Token, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionToken) GetToken() *updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionTokenToken {
+	return v.Token
+}
+
+// updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionTokenToken includes the requested fields of the GraphQL type Token.
+type updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionTokenToken struct {
+	Dbid persist.DBID `json:"dbid"`
+}
+
+// GetDbid returns updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionTokenToken.Dbid, and is useful for accessing the field via an interface.
+func (v *updateSplitMutationUpdateSplitUpdateSplitPayloadSplitCollectionsCollectionTokensCollectionTokenToken) GetDbid() persist.DBID {
+	return v.Dbid
 }
 
 // updateUserExperienceResponse is returned by updateUserExperience on success.
@@ -5683,28 +5667,28 @@ func __marshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(v *userByUs
 	}
 }
 
-// viewGalleryMutationResponse is returned by viewGalleryMutation on success.
-type viewGalleryMutationResponse struct {
-	ViewGallery *viewGalleryMutationViewGalleryViewGalleryPayloadOrError `json:"-"`
+// viewSplitMutationResponse is returned by viewSplitMutation on success.
+type viewSplitMutationResponse struct {
+	ViewSplit *viewSplitMutationViewSplitViewSplitPayloadOrError `json:"-"`
 }
 
-// GetViewGallery returns viewGalleryMutationResponse.ViewGallery, and is useful for accessing the field via an interface.
-func (v *viewGalleryMutationResponse) GetViewGallery() *viewGalleryMutationViewGalleryViewGalleryPayloadOrError {
-	return v.ViewGallery
+// GetViewSplit returns viewSplitMutationResponse.ViewSplit, and is useful for accessing the field via an interface.
+func (v *viewSplitMutationResponse) GetViewSplit() *viewSplitMutationViewSplitViewSplitPayloadOrError {
+	return v.ViewSplit
 }
 
-func (v *viewGalleryMutationResponse) UnmarshalJSON(b []byte) error {
+func (v *viewSplitMutationResponse) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*viewGalleryMutationResponse
-		ViewGallery json.RawMessage `json:"viewGallery"`
+		*viewSplitMutationResponse
+		ViewSplit json.RawMessage `json:"viewSplit"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.viewGalleryMutationResponse = v
+	firstPass.viewSplitMutationResponse = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -5712,26 +5696,26 @@ func (v *viewGalleryMutationResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.ViewGallery
-		src := firstPass.ViewGallery
+		dst := &v.ViewSplit
+		src := firstPass.ViewSplit
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(viewGalleryMutationViewGalleryViewGalleryPayloadOrError)
-			err = __unmarshalviewGalleryMutationViewGalleryViewGalleryPayloadOrError(
+			*dst = new(viewSplitMutationViewSplitViewSplitPayloadOrError)
+			err = __unmarshalviewSplitMutationViewSplitViewSplitPayloadOrError(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal viewGalleryMutationResponse.ViewGallery: %w", err)
+					"unable to unmarshal viewSplitMutationResponse.ViewSplit: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalviewGalleryMutationResponse struct {
-	ViewGallery json.RawMessage `json:"viewGallery"`
+type __premarshalviewSplitMutationResponse struct {
+	ViewSplit json.RawMessage `json:"viewSplit"`
 }
 
-func (v *viewGalleryMutationResponse) MarshalJSON() ([]byte, error) {
+func (v *viewSplitMutationResponse) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -5739,81 +5723,69 @@ func (v *viewGalleryMutationResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(premarshaled)
 }
 
-func (v *viewGalleryMutationResponse) __premarshalJSON() (*__premarshalviewGalleryMutationResponse, error) {
-	var retval __premarshalviewGalleryMutationResponse
+func (v *viewSplitMutationResponse) __premarshalJSON() (*__premarshalviewSplitMutationResponse, error) {
+	var retval __premarshalviewSplitMutationResponse
 
 	{
 
-		dst := &retval.ViewGallery
-		src := v.ViewGallery
+		dst := &retval.ViewSplit
+		src := v.ViewSplit
 		if src != nil {
 			var err error
-			*dst, err = __marshalviewGalleryMutationViewGalleryViewGalleryPayloadOrError(
+			*dst, err = __marshalviewSplitMutationViewSplitViewSplitPayloadOrError(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal viewGalleryMutationResponse.ViewGallery: %w", err)
+					"unable to marshal viewSplitMutationResponse.ViewSplit: %w", err)
 			}
 		}
 	}
 	return &retval, nil
 }
 
-// viewGalleryMutationViewGalleryErrAuthenticationFailed includes the requested fields of the GraphQL type ErrAuthenticationFailed.
-type viewGalleryMutationViewGalleryErrAuthenticationFailed struct {
+// viewSplitMutationViewSplitErrAuthenticationFailed includes the requested fields of the GraphQL type ErrAuthenticationFailed.
+type viewSplitMutationViewSplitErrAuthenticationFailed struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns viewGalleryMutationViewGalleryErrAuthenticationFailed.Typename, and is useful for accessing the field via an interface.
-func (v *viewGalleryMutationViewGalleryErrAuthenticationFailed) GetTypename() *string {
-	return v.Typename
+// GetTypename returns viewSplitMutationViewSplitErrAuthenticationFailed.Typename, and is useful for accessing the field via an interface.
+func (v *viewSplitMutationViewSplitErrAuthenticationFailed) GetTypename() *string { return v.Typename }
+
+// GetMessage returns viewSplitMutationViewSplitErrAuthenticationFailed.Message, and is useful for accessing the field via an interface.
+func (v *viewSplitMutationViewSplitErrAuthenticationFailed) GetMessage() string { return v.Message }
+
+// viewSplitMutationViewSplitViewSplitPayload includes the requested fields of the GraphQL type ViewSplitPayload.
+type viewSplitMutationViewSplitViewSplitPayload struct {
+	Typename *string                                          `json:"__typename"`
+	Split    *viewSplitMutationViewSplitViewSplitPayloadSplit `json:"split"`
 }
 
-// GetMessage returns viewGalleryMutationViewGalleryErrAuthenticationFailed.Message, and is useful for accessing the field via an interface.
-func (v *viewGalleryMutationViewGalleryErrAuthenticationFailed) GetMessage() string { return v.Message }
+// GetTypename returns viewSplitMutationViewSplitViewSplitPayload.Typename, and is useful for accessing the field via an interface.
+func (v *viewSplitMutationViewSplitViewSplitPayload) GetTypename() *string { return v.Typename }
 
-// viewGalleryMutationViewGalleryViewGalleryPayload includes the requested fields of the GraphQL type ViewGalleryPayload.
-type viewGalleryMutationViewGalleryViewGalleryPayload struct {
-	Typename *string                                                  `json:"__typename"`
-	Gallery  *viewGalleryMutationViewGalleryViewGalleryPayloadGallery `json:"gallery"`
+// GetSplit returns viewSplitMutationViewSplitViewSplitPayload.Split, and is useful for accessing the field via an interface.
+func (v *viewSplitMutationViewSplitViewSplitPayload) GetSplit() *viewSplitMutationViewSplitViewSplitPayloadSplit {
+	return v.Split
 }
 
-// GetTypename returns viewGalleryMutationViewGalleryViewGalleryPayload.Typename, and is useful for accessing the field via an interface.
-func (v *viewGalleryMutationViewGalleryViewGalleryPayload) GetTypename() *string { return v.Typename }
-
-// GetGallery returns viewGalleryMutationViewGalleryViewGalleryPayload.Gallery, and is useful for accessing the field via an interface.
-func (v *viewGalleryMutationViewGalleryViewGalleryPayload) GetGallery() *viewGalleryMutationViewGalleryViewGalleryPayloadGallery {
-	return v.Gallery
-}
-
-// viewGalleryMutationViewGalleryViewGalleryPayloadGallery includes the requested fields of the GraphQL type Gallery.
-type viewGalleryMutationViewGalleryViewGalleryPayloadGallery struct {
-	Dbid persist.DBID `json:"dbid"`
-}
-
-// GetDbid returns viewGalleryMutationViewGalleryViewGalleryPayloadGallery.Dbid, and is useful for accessing the field via an interface.
-func (v *viewGalleryMutationViewGalleryViewGalleryPayloadGallery) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// viewGalleryMutationViewGalleryViewGalleryPayloadOrError includes the requested fields of the GraphQL interface ViewGalleryPayloadOrError.
+// viewSplitMutationViewSplitViewSplitPayloadOrError includes the requested fields of the GraphQL interface ViewSplitPayloadOrError.
 //
-// viewGalleryMutationViewGalleryViewGalleryPayloadOrError is implemented by the following types:
-// viewGalleryMutationViewGalleryErrAuthenticationFailed
-// viewGalleryMutationViewGalleryViewGalleryPayload
-type viewGalleryMutationViewGalleryViewGalleryPayloadOrError interface {
-	implementsGraphQLInterfaceviewGalleryMutationViewGalleryViewGalleryPayloadOrError()
+// viewSplitMutationViewSplitViewSplitPayloadOrError is implemented by the following types:
+// viewSplitMutationViewSplitErrAuthenticationFailed
+// viewSplitMutationViewSplitViewSplitPayload
+type viewSplitMutationViewSplitViewSplitPayloadOrError interface {
+	implementsGraphQLInterfaceviewSplitMutationViewSplitViewSplitPayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *viewGalleryMutationViewGalleryErrAuthenticationFailed) implementsGraphQLInterfaceviewGalleryMutationViewGalleryViewGalleryPayloadOrError() {
+func (v *viewSplitMutationViewSplitErrAuthenticationFailed) implementsGraphQLInterfaceviewSplitMutationViewSplitViewSplitPayloadOrError() {
 }
-func (v *viewGalleryMutationViewGalleryViewGalleryPayload) implementsGraphQLInterfaceviewGalleryMutationViewGalleryViewGalleryPayloadOrError() {
+func (v *viewSplitMutationViewSplitViewSplitPayload) implementsGraphQLInterfaceviewSplitMutationViewSplitViewSplitPayloadOrError() {
 }
 
-func __unmarshalviewGalleryMutationViewGalleryViewGalleryPayloadOrError(b []byte, v *viewGalleryMutationViewGalleryViewGalleryPayloadOrError) error {
+func __unmarshalviewSplitMutationViewSplitViewSplitPayloadOrError(b []byte, v *viewSplitMutationViewSplitViewSplitPayloadOrError) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -5828,47 +5800,55 @@ func __unmarshalviewGalleryMutationViewGalleryViewGalleryPayloadOrError(b []byte
 
 	switch tn.TypeName {
 	case "ErrAuthenticationFailed":
-		*v = new(viewGalleryMutationViewGalleryErrAuthenticationFailed)
+		*v = new(viewSplitMutationViewSplitErrAuthenticationFailed)
 		return json.Unmarshal(b, *v)
-	case "ViewGalleryPayload":
-		*v = new(viewGalleryMutationViewGalleryViewGalleryPayload)
+	case "ViewSplitPayload":
+		*v = new(viewSplitMutationViewSplitViewSplitPayload)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing ViewGalleryPayloadOrError.__typename")
+			"response was missing ViewSplitPayloadOrError.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for viewGalleryMutationViewGalleryViewGalleryPayloadOrError: "%v"`, tn.TypeName)
+			`unexpected concrete type for viewSplitMutationViewSplitViewSplitPayloadOrError: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalviewGalleryMutationViewGalleryViewGalleryPayloadOrError(v *viewGalleryMutationViewGalleryViewGalleryPayloadOrError) ([]byte, error) {
+func __marshalviewSplitMutationViewSplitViewSplitPayloadOrError(v *viewSplitMutationViewSplitViewSplitPayloadOrError) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *viewGalleryMutationViewGalleryErrAuthenticationFailed:
+	case *viewSplitMutationViewSplitErrAuthenticationFailed:
 		typename = "ErrAuthenticationFailed"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*viewGalleryMutationViewGalleryErrAuthenticationFailed
+			*viewSplitMutationViewSplitErrAuthenticationFailed
 		}{typename, v}
 		return json.Marshal(result)
-	case *viewGalleryMutationViewGalleryViewGalleryPayload:
-		typename = "ViewGalleryPayload"
+	case *viewSplitMutationViewSplitViewSplitPayload:
+		typename = "ViewSplitPayload"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*viewGalleryMutationViewGalleryViewGalleryPayload
+			*viewSplitMutationViewSplitViewSplitPayload
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for viewGalleryMutationViewGalleryViewGalleryPayloadOrError: "%T"`, v)
+			`unexpected concrete type for viewSplitMutationViewSplitViewSplitPayloadOrError: "%T"`, v)
 	}
 }
+
+// viewSplitMutationViewSplitViewSplitPayloadSplit includes the requested fields of the GraphQL type Split.
+type viewSplitMutationViewSplitViewSplitPayloadSplit struct {
+	Dbid persist.DBID `json:"dbid"`
+}
+
+// GetDbid returns viewSplitMutationViewSplitViewSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *viewSplitMutationViewSplitViewSplitPayloadSplit) GetDbid() persist.DBID { return v.Dbid }
 
 // viewerQueryResponse is returned by viewerQuery on success.
 type viewerQueryResponse struct {
@@ -6251,17 +6231,17 @@ func createCollectionMutation(
 	return &data, err
 }
 
-// The query or mutation executed by createGalleryMutation.
-const createGalleryMutation_Operation = `
-mutation createGalleryMutation ($input: CreateGalleryInput!) {
-	createGallery(input: $input) {
+// The query or mutation executed by createSplitMutation.
+const createSplitMutation_Operation = `
+mutation createSplitMutation ($input: CreateSplitInput!) {
+	createSplit(input: $input) {
 		__typename
 		... on Error {
 			__typename
 			message
 		}
-		... on CreateGalleryPayload {
-			gallery {
+		... on CreateSplitPayload {
+			split {
 				dbid
 				name
 				description
@@ -6272,21 +6252,21 @@ mutation createGalleryMutation ($input: CreateGalleryInput!) {
 }
 `
 
-func createGalleryMutation(
+func createSplitMutation(
 	ctx context.Context,
 	client graphql.Client,
-	input CreateGalleryInput,
-) (*createGalleryMutationResponse, error) {
+	input CreateSplitInput,
+) (*createSplitMutationResponse, error) {
 	req := &graphql.Request{
-		OpName: "createGalleryMutation",
-		Query:  createGalleryMutation_Operation,
-		Variables: &__createGalleryMutationInput{
+		OpName: "createSplitMutation",
+		Query:  createSplitMutation_Operation,
+		Variables: &__createSplitMutationInput{
 			Input: input,
 		},
 	}
 	var err error
 
-	var data createGalleryMutationResponse
+	var data createSplitMutationResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
@@ -6313,7 +6293,7 @@ mutation createUserMutation ($authMechanism: AuthMechanism!, $input: CreateUserI
 					username
 					dbid
 					bio
-					galleries {
+					splits {
 						dbid
 					}
 				}
@@ -6525,23 +6505,23 @@ func logoutMutation(
 	return &data, err
 }
 
-// The query or mutation executed by moveCollectionToGallery.
-const moveCollectionToGallery_Operation = `
-mutation moveCollectionToGallery ($input: MoveCollectionToGalleryInput!) {
-	moveCollectionToGallery(input: $input) {
+// The query or mutation executed by moveCollectionToSplit.
+const moveCollectionToSplit_Operation = `
+mutation moveCollectionToSplit ($input: MoveCollectionToSplitInput!) {
+	moveCollectionToSplit(input: $input) {
 		__typename
 		... on Error {
 			__typename
 			message
 		}
-		... on MoveCollectionToGalleryPayload {
-			oldGallery {
+		... on MoveCollectionToSplitPayload {
+			oldSplit {
 				dbid
 				collections {
 					dbid
 				}
 			}
-			newGallery {
+			newSplit {
 				dbid
 				collections {
 					dbid
@@ -6552,21 +6532,21 @@ mutation moveCollectionToGallery ($input: MoveCollectionToGalleryInput!) {
 }
 `
 
-func moveCollectionToGallery(
+func moveCollectionToSplit(
 	ctx context.Context,
 	client graphql.Client,
-	input MoveCollectionToGalleryInput,
-) (*moveCollectionToGalleryResponse, error) {
+	input MoveCollectionToSplitInput,
+) (*moveCollectionToSplitResponse, error) {
 	req := &graphql.Request{
-		OpName: "moveCollectionToGallery",
-		Query:  moveCollectionToGallery_Operation,
-		Variables: &__moveCollectionToGalleryInput{
+		OpName: "moveCollectionToSplit",
+		Query:  moveCollectionToSplit_Operation,
+		Variables: &__moveCollectionToSplitInput{
 			Input: input,
 		},
 	}
 	var err error
 
-	var data moveCollectionToGalleryResponse
+	var data moveCollectionToSplitResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
@@ -6578,17 +6558,17 @@ func moveCollectionToGallery(
 	return &data, err
 }
 
-// The query or mutation executed by publishGalleryMutation.
-const publishGalleryMutation_Operation = `
-mutation publishGalleryMutation ($input: PublishGalleryInput!) {
-	publishGallery(input: $input) {
+// The query or mutation executed by publishSplitMutation.
+const publishSplitMutation_Operation = `
+mutation publishSplitMutation ($input: PublishSplitInput!) {
+	publishSplit(input: $input) {
 		__typename
 		... on Error {
 			__typename
 			message
 		}
-		... on PublishGalleryPayload {
-			gallery {
+		... on PublishSplitPayload {
+			split {
 				dbid
 			}
 		}
@@ -6596,21 +6576,21 @@ mutation publishGalleryMutation ($input: PublishGalleryInput!) {
 }
 `
 
-func publishGalleryMutation(
+func publishSplitMutation(
 	ctx context.Context,
 	client graphql.Client,
-	input PublishGalleryInput,
-) (*publishGalleryMutationResponse, error) {
+	input PublishSplitInput,
+) (*publishSplitMutationResponse, error) {
 	req := &graphql.Request{
-		OpName: "publishGalleryMutation",
-		Query:  publishGalleryMutation_Operation,
-		Variables: &__publishGalleryMutationInput{
+		OpName: "publishSplitMutation",
+		Query:  publishSplitMutation_Operation,
+		Variables: &__publishSplitMutationInput{
 			Input: input,
 		},
 	}
 	var err error
 
-	var data publishGalleryMutationResponse
+	var data publishSplitMutationResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
@@ -6775,57 +6755,6 @@ func syncTokensMutation(
 	return &data, err
 }
 
-// The query or mutation executed by updateGalleryMutation.
-const updateGalleryMutation_Operation = `
-mutation updateGalleryMutation ($input: UpdateGalleryInput!) {
-	updateGallery(input: $input) {
-		__typename
-		... on UpdateGalleryPayload {
-			gallery {
-				dbid
-				name
-				description
-				collections {
-					dbid
-					name
-					tokens {
-						token {
-							dbid
-						}
-					}
-				}
-			}
-		}
-	}
-}
-`
-
-func updateGalleryMutation(
-	ctx context.Context,
-	client graphql.Client,
-	input UpdateGalleryInput,
-) (*updateGalleryMutationResponse, error) {
-	req := &graphql.Request{
-		OpName: "updateGalleryMutation",
-		Query:  updateGalleryMutation_Operation,
-		Variables: &__updateGalleryMutationInput{
-			Input: input,
-		},
-	}
-	var err error
-
-	var data updateGalleryMutationResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
 // The query or mutation executed by updateSocialAccountDisplayed.
 const updateSocialAccountDisplayed_Operation = `
 mutation updateSocialAccountDisplayed ($input: UpdateSocialAccountDisplayedInput!) {
@@ -6864,6 +6793,57 @@ func updateSocialAccountDisplayed(
 	var err error
 
 	var data updateSocialAccountDisplayedResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by updateSplitMutation.
+const updateSplitMutation_Operation = `
+mutation updateSplitMutation ($input: UpdateSplitInput!) {
+	updateSplit(input: $input) {
+		__typename
+		... on UpdateSplitPayload {
+			split {
+				dbid
+				name
+				description
+				collections {
+					dbid
+					name
+					tokens {
+						token {
+							dbid
+						}
+					}
+				}
+			}
+		}
+	}
+}
+`
+
+func updateSplitMutation(
+	ctx context.Context,
+	client graphql.Client,
+	input UpdateSplitInput,
+) (*updateSplitMutationResponse, error) {
+	req := &graphql.Request{
+		OpName: "updateSplitMutation",
+		Query:  updateSplitMutation_Operation,
+		Variables: &__updateSplitMutationInput{
+			Input: input,
+		},
+	}
+	var err error
+
+	var data updateSplitMutationResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
@@ -7056,17 +7036,17 @@ func userByUsernameQuery(
 	return &data, err
 }
 
-// The query or mutation executed by viewGalleryMutation.
-const viewGalleryMutation_Operation = `
-mutation viewGalleryMutation ($galleryId: DBID!) {
-	viewGallery(galleryId: $galleryId) {
+// The query or mutation executed by viewSplitMutation.
+const viewSplitMutation_Operation = `
+mutation viewSplitMutation ($splitId: DBID!) {
+	viewSplit(splitId: $splitId) {
 		__typename
 		... on Error {
 			__typename
 			message
 		}
-		... on ViewGalleryPayload {
-			gallery {
+		... on ViewSplitPayload {
+			split {
 				dbid
 			}
 		}
@@ -7074,21 +7054,21 @@ mutation viewGalleryMutation ($galleryId: DBID!) {
 }
 `
 
-func viewGalleryMutation(
+func viewSplitMutation(
 	ctx context.Context,
 	client graphql.Client,
-	galleryId persist.DBID,
-) (*viewGalleryMutationResponse, error) {
+	splitId persist.DBID,
+) (*viewSplitMutationResponse, error) {
 	req := &graphql.Request{
-		OpName: "viewGalleryMutation",
-		Query:  viewGalleryMutation_Operation,
-		Variables: &__viewGalleryMutationInput{
-			GalleryId: galleryId,
+		OpName: "viewSplitMutation",
+		Query:  viewSplitMutation_Operation,
+		Variables: &__viewSplitMutationInput{
+			SplitId: splitId,
 		},
 	}
 	var err error
 
-	var data viewGalleryMutationResponse
+	var data viewSplitMutationResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

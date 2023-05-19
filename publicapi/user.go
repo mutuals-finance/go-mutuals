@@ -376,12 +376,12 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 		galleryPos = first
 	}
 
-	userID, galleryID, err = user.CreateUser(ctx, authenticator, username, email, bio, galleryName, galleryDesc, galleryPos, api.repos.UserRepository, api.repos.GalleryRepository, api.multichainProvider)
+	userID, galleryID, err = user.CreateUser(ctx, authenticator, username, email, bio, galleryName, galleryDesc, galleryPos, api.repos.UserRepository, api.repos.SplitRepository, api.multichainProvider)
 	if err != nil {
 		return "", "", err
 	}
 
-	err = api.queries.UpdateUserFeaturedGallery(ctx, db.UpdateUserFeaturedGalleryParams{GalleryID: galleryID, UserID: userID})
+	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedSplitParams{SplitID: galleryID, UserID: userID})
 	if err != nil {
 		return "", "", err
 	}
@@ -465,7 +465,7 @@ func (api UserAPI) UpdateUserPrimaryWallet(ctx context.Context, primaryWalletID 
 	return nil
 }
 
-func (api UserAPI) UpdateFeaturedGallery(ctx context.Context, galleryID persist.DBID) error {
+func (api UserAPI) UpdateFeaturedSplit(ctx context.Context, galleryID persist.DBID) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"galleryID": {galleryID, "required"},
@@ -479,7 +479,7 @@ func (api UserAPI) UpdateFeaturedGallery(ctx context.Context, galleryID persist.
 	}
 
 	// query will validate that the gallery belongs to the user
-	err = api.queries.UpdateUserFeaturedGallery(ctx, db.UpdateUserFeaturedGalleryParams{GalleryID: galleryID, UserID: userID})
+	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedGalleryParams{GalleryID: galleryID, UserID: userID})
 	if err != nil {
 		return err
 	}

@@ -297,8 +297,8 @@ var SortedAscValidator validator.Func = func(fl validator.FieldLevel) bool {
 
 // CreatedCollectionsValidator validates that the create collection input has valid given IDs
 var CreatedCollectionsValidator validator.Func = func(fl validator.FieldLevel) bool {
-	if s, ok := fl.Field().Interface().([]*model.CreateCollectionInGalleryInput); ok {
-		return !slices.ContainsFunc(s, func(l *model.CreateCollectionInGalleryInput) bool {
+	if s, ok := fl.Field().Interface().([]*model.CreateCollectionInSplitInput); ok {
+		return !slices.ContainsFunc(s, func(l *model.CreateCollectionInSplitInput) bool {
 			return l.GivenID == ""
 		})
 	}

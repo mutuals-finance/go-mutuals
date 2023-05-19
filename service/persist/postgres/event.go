@@ -24,8 +24,8 @@ func (r *EventRepository) Add(ctx context.Context, event db.Event) (*db.Event, e
 		return r.AddTokenEvent(ctx, event)
 	case persist.ResourceTypeCollection:
 		return r.AddCollectionEvent(ctx, event)
-	case persist.ResourceTypeGallery:
-		return r.AddGalleryEvent(ctx, event)
+	case persist.ResourceTypeSplit:
+		return r.AddSplitEvent(ctx, event)
 	default:
 		return nil, persist.ErrUnknownResourceType{ResourceType: event.ResourceTypeID}
 	}
@@ -55,7 +55,7 @@ func (r *EventRepository) AddTokenEvent(ctx context.Context, event db.Event) (*d
 		Data:           event.Data,
 		GroupID:        event.GroupID,
 		Caption:        event.Caption,
-		GalleryID:      event.GalleryID,
+		SplitID:        event.SplitID,
 		CollectionID:   event.CollectionID,
 	})
 	return &event, err
@@ -71,18 +71,18 @@ func (r *EventRepository) AddCollectionEvent(ctx context.Context, event db.Event
 		Data:           event.Data,
 		Caption:        event.Caption,
 		GroupID:        event.GroupID,
-		GalleryID:      event.GalleryID,
+		SplitID:        event.SplitID,
 	})
 	return &event, err
 }
 
-func (r *EventRepository) AddGalleryEvent(ctx context.Context, event db.Event) (*db.Event, error) {
-	event, err := r.Queries.CreateGalleryEvent(ctx, db.CreateGalleryEventParams{
+func (r *EventRepository) AddSplitEvent(ctx context.Context, event db.Event) (*db.Event, error) {
+	event, err := r.Queries.CreateSplitEvent(ctx, db.CreateSplitEventParams{
 		ID:             persist.GenerateID(),
 		ActorID:        event.ActorID,
 		Action:         event.Action,
 		ResourceTypeID: event.ResourceTypeID,
-		GalleryID:      event.GalleryID,
+		SplitID:        event.SplitID,
 		Data:           event.Data,
 		ExternalID:     event.ExternalID,
 		GroupID:        event.GroupID,
@@ -109,10 +109,10 @@ func (r *EventRepository) IsActorSubjectActive(ctx context.Context, event db.Eve
 	})
 }
 
-func (r *EventRepository) IsActorGalleryActive(ctx context.Context, event db.Event, windowSize time.Duration) (bool, error) {
-	return r.Queries.IsActorGalleryActive(ctx, db.IsActorGalleryActiveParams{
+func (r *EventRepository) IsActorSplitActive(ctx context.Context, event db.Event, windowSize time.Duration) (bool, error) {
+	return r.Queries.IsActorSplitActive(ctx, db.IsActorSplitActiveParams{
 		ActorID:     event.ActorID,
-		GalleryID:   event.GalleryID,
+		SplitID:     event.SplitID,
 		WindowStart: event.CreatedAt,
 		WindowEnd:   event.CreatedAt.Add(windowSize),
 	})
@@ -139,12 +139,12 @@ func (r *EventRepository) EventsInWindow(ctx context.Context, eventID persist.DB
 }
 
 // EventsInWindow returns events belonging to the same window of activity as the given eventID.
-func (r *EventRepository) EventsInWindowForGallery(ctx context.Context, eventID, galleryID persist.DBID, windowSeconds int, actions persist.ActionList, includeSubject bool) ([]db.Event, error) {
-	return r.Queries.GetGalleryEventsInWindow(ctx, db.GetGalleryEventsInWindowParams{
+func (r *EventRepository) EventsInWindowForSplit(ctx context.Context, eventID, splitID persist.DBID, windowSeconds int, actions persist.ActionList, includeSubject bool) ([]db.Event, error) {
+	return r.Queries.GetSplitEventsInWindow(ctx, db.GetSplitEventsInWindowParams{
 		ID:             eventID,
 		Secs:           float64(windowSeconds),
 		Actions:        actions,
 		IncludeSubject: includeSubject,
-		GalleryID:      galleryID,
+		SplitID:        splitID,
 	})
 }

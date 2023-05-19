@@ -64,11 +64,11 @@ type UserUpdateNotificationSettings struct {
 
 /*
 someoneFollowedYou: Boolean
-someoneViewedYourGallery: Boolean
+someoneViewedYourSplit: Boolean
 */
 type UserNotificationSettings struct {
-	SomeoneFollowedYou       *bool `json:"someone_followed_you,omitempty"`
-	SomeoneViewedYourGallery *bool `json:"someone_viewed_your_gallery,omitempty"`
+	SomeoneFollowedYou     *bool `json:"someone_followed_you,omitempty"`
+	SomeoneViewedYourSplit *bool `json:"someone_viewed_your_split,omitempty"`
 }
 
 type CreateUserInput struct {

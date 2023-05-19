@@ -15,18 +15,18 @@ type statements struct {
 	getUserByUsernameStmt *sql.Stmt
 	getUserByAddressStmt  *sql.Stmt
 	deleteUserStmt        *sql.Stmt
-	getGalleriesRawStmt   *sql.Stmt
-	deleteGalleryStmt     *sql.Stmt
+	getSplitsRawStmt      *sql.Stmt
+	deleteSplitStmt       *sql.Stmt
 	deleteCollectionStmt  *sql.Stmt
 	updateUserStmt        *sql.Stmt
-	updateGalleryStmt     *sql.Stmt
+	updateSplitStmt       *sql.Stmt
 	createUserStmt        *sql.Stmt
-	createGalleryStmt     *sql.Stmt
+	createSplitStmt       *sql.Stmt
 	createNonceStmt       *sql.Stmt
 	getCollectionsStmt    *sql.Stmt
 	updateCollectionStmt  *sql.Stmt
 
-	galleryRepo postgres.GalleryRepository
+	galleryRepo postgres.SplitRepository
 	// nftRepo     persist.NFTRepository
 	userRepo postgres.UserRepository
 	collRepo postgres.CollectionTokenRepository
@@ -48,10 +48,10 @@ func newStatements(db *sql.DB) *statements {
 	deleteUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = true WHERE ID = $1;`)
 	checkNoErr(err)
 
-	getGalleriesRawStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM galleries WHERE OWNER_USER_ID = $1;`)
+	getSplitsRawStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM splits WHERE OWNER_USER_ID = $1;`)
 	checkNoErr(err)
 
-	deleteGalleryStmt, err := db.PrepareContext(ctx, `UPDATE galleries SET DELETED = true WHERE ID = $1;`)
+	deleteSplitStmt, err := db.PrepareContext(ctx, `UPDATE splits SET DELETED = true WHERE ID = $1;`)
 	checkNoErr(err)
 
 	deleteCollectionStmt, err := db.PrepareContext(ctx, `UPDATE collections SET DELETED = true WHERE ID = $1;`)
@@ -60,13 +60,13 @@ func newStatements(db *sql.DB) *statements {
 	updateUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET ADDRESSES = $1, BIO = $2, USERNAME = $3, USERNAME_IDEMPOTENT = $4, LAST_UPDATED = $5 WHERE ID = $6;`)
 	checkNoErr(err)
 
-	updateGalleryStmt, err := db.PrepareContext(ctx, `UPDATE galleries SET COLLECTIONS = $1, LAST_UPDATED = $2 WHERE ID = $3;`)
+	updateSplitStmt, err := db.PrepareContext(ctx, `UPDATE splits SET COLLECTIONS = $1, LAST_UPDATED = $2 WHERE ID = $3;`)
 	checkNoErr(err)
 
 	createUserStmt, err := db.PrepareContext(ctx, `INSERT INTO users (ID, ADDRESSES, USERNAME, USERNAME_IDEMPOTENT, BIO) VALUES ($1, $2, $3, $4, $5) RETURNING ID;`)
 	checkNoErr(err)
 
-	createGalleryStmt, err := db.PrepareContext(ctx, `INSERT INTO galleries (ID,OWNER_USER_ID, COLLECTIONS) VALUES ($1, $2, $3) RETURNING ID;`)
+	createSplitStmt, err := db.PrepareContext(ctx, `INSERT INTO splits (ID,OWNER_USER_ID, COLLECTIONS) VALUES ($1, $2, $3) RETURNING ID;`)
 	checkNoErr(err)
 
 	createNonceStmt, err := db.PrepareContext(ctx, `INSERT INTO nonces (ID,USER_ID, ADDRESS, VALUE) VALUES ($1, $2, $3, $4);`)
@@ -78,19 +78,19 @@ func newStatements(db *sql.DB) *statements {
 	updateCollectionStmt, err := db.PrepareContext(ctx, `UPDATE collections SET NFTS = $1, NAME = $2, COLLECTORS_NOTE = $3, LAYOUT = $4, HIDDEN = $5, LAST_UPDATED = $6 WHERE ID = $7;`)
 	checkNoErr(err)
 
-	//galleryRepo := postgres.NewGalleryRepository(db, nil)
+	//galleryRepo := postgres.NewSplitRepository(db, nil)
 	return &statements{
 		getUserByIDStmt:       getUserByIDStmt,
 		getUserByUsernameStmt: getUserByUsernameStmt,
 		getUserByAddressStmt:  getUserByAddressStmt,
 		deleteUserStmt:        deleteUserStmt,
-		getGalleriesRawStmt:   getGalleriesRawStmt,
-		deleteGalleryStmt:     deleteGalleryStmt,
+		getSplitsRawStmt:      getSplitsRawStmt,
+		deleteSplitStmt:       deleteSplitStmt,
 		deleteCollectionStmt:  deleteCollectionStmt,
 		updateUserStmt:        updateUserStmt,
-		updateGalleryStmt:     updateGalleryStmt,
+		updateSplitStmt:       updateSplitStmt,
 		createUserStmt:        createUserStmt,
-		createGalleryStmt:     createGalleryStmt,
+		createSplitStmt:       createSplitStmt,
 		createNonceStmt:       createNonceStmt,
 		getCollectionsStmt:    getCollectionsStmt,
 		updateCollectionStmt:  updateCollectionStmt,
