@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/indexer"
-	"github.com/mikeydub/go-gallery/service/logger"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/indexer"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/appengine"
 
@@ -42,7 +42,7 @@ var rootCmd = &cobra.Command{
 	Use:   "indexer",
 	Short: "Retrieve all NFTs that have ever been minted",
 	Long: `An NFT indexer lovingly built by your friends at SplitFi.
-                Source code is available at https://github.com/gallery-so/go-gallery.`,
+                Source code is available at https://github.com/SplitFi/go-splitfi.`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		indexer.LoadConfigFile("indexer", manualEnv)
 		indexer.ValidateEnv()

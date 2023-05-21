@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 type DBHook[T any] func(ctx context.Context, it []T) error

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/redis"
+	"github.com/SplitFi/go-splitfi/service/redis"
 )
 
 // ErrThrottleLocked is returned when the throttle is already locked for a given key. We do not block

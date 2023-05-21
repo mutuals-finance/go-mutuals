@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/media"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/rpc"
 	"github.com/getsentry/sentry-go"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/media"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/rpc"
 	"github.com/stretchr/testify/assert"
 )
 

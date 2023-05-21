@@ -5,12 +5,12 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/SplitFi/go-splitfi/contracts"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/mikeydub/go-gallery/contracts"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 const ensContractAddress = "0xFaC7BEA255a6990f749363002136aF6556b31e04"

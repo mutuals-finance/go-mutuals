@@ -50,9 +50,9 @@ services:
     command: [
       "-host", "0.0.0.0",
       "-port", "8123",
-      "-queue", "projects/gallery-local/locations/here/queues/token-processing",
-      "-queue", "projects/gallery-local/locations/here/queues/indexer-refreshes",
-      "-queue", "projects/gallery-local/locations/here/queues/wallet-validate",
+      "-queue", "projects/splitfi-local/locations/here/queues/token-processing",
+      "-queue", "projects/splitfi-local/locations/here/queues/indexer-refreshes",
+      "-queue", "projects/splitfi-local/locations/here/queues/wallet-validate",
     ]
   pubsub-emulator:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
@@ -63,7 +63,7 @@ services:
     command: [
       "/bin/bash",
       "-c",
-      "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=gallery-local"
+      "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=splitfi-local"
     ]
 
   # Uncomment if you want to run tokenprocessing locally as a container

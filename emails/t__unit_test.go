@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 )
 
 func TestNotificationTemplating_Success(t *testing.T) {

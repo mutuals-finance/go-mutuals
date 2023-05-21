@@ -14,9 +14,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
-	"github.com/mikeydub/go-gallery/service/logger"
 	"github.com/spf13/viper"
 	"go.mozilla.org/sops/v3/decrypt"
 )

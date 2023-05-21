@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
-	"github.com/mikeydub/go-gallery/service/auth"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 var errMustProvideUserIdentifier = fmt.Errorf("must provide either ID or username")
@@ -46,7 +46,7 @@ type createUserInput struct {
 
 type createUserOutput struct {
 	UserID  persist.DBID `json:"user_id"`
-	SplitID persist.DBID `json:"gallery_id"`
+	SplitID persist.DBID `json:"split_id"`
 }
 
 func getUser(getUserByIDStmt, getUserByUsername, getUserByAddress *sql.Stmt) gin.HandlerFunc {
@@ -94,13 +94,13 @@ func createUser(db *sql.DB, createUserStmt, createSplitStmt, createNonceStmt *sq
 			return
 		}
 
-		var userID, galleryID persist.DBID
+		var userID, splitID persist.DBID
 		if err := tx.StmtContext(c, createUserStmt).QueryRowContext(c, persist.GenerateID(), pq.Array(input.Addresses), input.Username, strings.ToLower(input.Username), input.Bio).Scan(&userID); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
 
-		if err := tx.StmtContext(c, createSplitStmt).QueryRowContext(c, persist.GenerateID(), userID, pq.Array([]persist.DBID{})).Scan(&galleryID); err != nil {
+		if err := tx.StmtContext(c, createSplitStmt).QueryRowContext(c, persist.GenerateID(), userID, pq.Array([]persist.DBID{})).Scan(&splitID); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
@@ -119,7 +119,7 @@ func createUser(db *sql.DB, createUserStmt, createSplitStmt, createNonceStmt *sq
 
 		c.JSON(http.StatusOK, createUserOutput{
 			UserID:  userID,
-			SplitID: galleryID,
+			SplitID: splitID,
 		})
 	}
 }
@@ -277,11 +277,11 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 			rollbackWithErr(c, tx, http.StatusInternalServerError, errNoSplits)
 			return
 		}
-		gallery := splits[0]
+		split := splits[0]
 		if len(secondSplits) > 0 {
 			delStmt := tx.StmtContext(c, deleteSplitsStmt)
 			for _, g := range secondSplits {
-				gallery.Collections = append(gallery.Collections, g.Collections...)
+				split.Collections = append(split.Collections, g.Collections...)
 				if _, err := delStmt.ExecContext(c, g.ID); err != nil {
 					rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 					return
@@ -289,7 +289,7 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 			}
 		}
 
-		if _, err := tx.StmtContext(c, updateSplitStmt).ExecContext(c, pq.Array(gallery.Collections), persist.LastUpdatedTime{}, gallery.ID); err != nil {
+		if _, err := tx.StmtContext(c, updateSplitStmt).ExecContext(c, pq.Array(split.Collections), persist.LastUpdatedTime{}, split.ID); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}

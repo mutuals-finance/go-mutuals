@@ -7,13 +7,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/util"
+	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/everFinance/goar"
 	sentry "github.com/getsentry/sentry-go"
 	shell "github.com/ipfs/go-ipfs-api"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/util"
-	"github.com/mikeydub/go-gallery/validate"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 
@@ -21,29 +21,29 @@ import (
 	"cloud.google.com/go/pubsub"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/storage"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/media"
+	"github.com/SplitFi/go-splitfi/service/multichain"
+	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
+	"github.com/SplitFi/go-splitfi/service/multichain/eth"
+	"github.com/SplitFi/go-splitfi/service/multichain/infura"
+	"github.com/SplitFi/go-splitfi/service/multichain/opensea"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/SplitFi/go-splitfi/service/rpc"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/SplitFi/go-splitfi/service/throttle"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/middleware"
-	"github.com/mikeydub/go-gallery/service/auth"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/media"
-	"github.com/mikeydub/go-gallery/service/multichain"
-	"github.com/mikeydub/go-gallery/service/multichain/alchemy"
-	"github.com/mikeydub/go-gallery/service/multichain/eth"
-	"github.com/mikeydub/go-gallery/service/multichain/infura"
-	"github.com/mikeydub/go-gallery/service/multichain/opensea"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
-	"github.com/mikeydub/go-gallery/service/pubsub/gcp"
-	"github.com/mikeydub/go-gallery/service/redis"
-	"github.com/mikeydub/go-gallery/service/rpc"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
-	"github.com/mikeydub/go-gallery/service/task"
-	"github.com/mikeydub/go-gallery/service/throttle"
 	"github.com/spf13/viper"
 )
 
@@ -164,7 +164,7 @@ func SetDefaults() {
 	viper.SetDefault("PORT", 4000)
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "gallery_backend")
+	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("IPFS_URL", "https://gallery.infura-ipfs.io")

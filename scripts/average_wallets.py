@@ -2,7 +2,7 @@ import csv
 from pymongo import MongoClient
 
 client = MongoClient()
-db = client.gallery
+db = client.split
 
 user_collection = db.users
 

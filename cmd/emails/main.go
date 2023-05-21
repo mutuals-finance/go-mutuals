@@ -7,10 +7,10 @@ import (
 	"os"
 
 	"cloud.google.com/go/profiler"
-	"github.com/mikeydub/go-gallery/emails"
-	"github.com/mikeydub/go-gallery/service/logger"
+	"github.com/SplitFi/go-splitfi/emails"
+	"github.com/SplitFi/go-splitfi/service/logger"
 
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"google.golang.org/appengine"
 )
 

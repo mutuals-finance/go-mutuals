@@ -14,8 +14,8 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 const (

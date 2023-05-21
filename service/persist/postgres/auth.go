@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 // NonceRepository is a repository for user nonces

@@ -3,10 +3,10 @@ package publicapi
 import (
 	"context"
 	"fmt"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/graphql/dataloader"
+	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/go-playground/validator/v10"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/graphql/dataloader"
-	"github.com/mikeydub/go-gallery/validate"
 )
 
 const maxSearchQueryLength = 256

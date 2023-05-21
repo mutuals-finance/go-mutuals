@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 type jwtClaims struct {

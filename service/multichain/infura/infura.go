@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/multichain"
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/multichain"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 func init() {

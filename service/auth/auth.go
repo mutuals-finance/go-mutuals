@@ -8,19 +8,19 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/magiclabs/magic-admin-go"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"github.com/magiclabs/magic-admin-go/token"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
 
-	"github.com/mikeydub/go-gallery/service/logger"
+	"github.com/SplitFi/go-splitfi/service/logger"
 
+	"github.com/SplitFi/go-splitfi/service/multichain"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/service/multichain"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 // TODO: ExternalWallet? Something to denote "wallet, but not part of our ecosystem"

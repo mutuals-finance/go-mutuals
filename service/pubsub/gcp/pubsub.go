@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/util"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/util"
 
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/option"

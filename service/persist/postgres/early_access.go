@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/lib/pq"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 type EarlyAccessRepository struct {

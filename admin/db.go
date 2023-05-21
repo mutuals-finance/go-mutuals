@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 type statements struct {
@@ -26,7 +26,7 @@ type statements struct {
 	getCollectionsStmt    *sql.Stmt
 	updateCollectionStmt  *sql.Stmt
 
-	galleryRepo postgres.SplitRepository
+	splitRepo postgres.SplitRepository
 	// nftRepo     persist.NFTRepository
 	userRepo postgres.UserRepository
 	collRepo postgres.CollectionTokenRepository
@@ -78,7 +78,7 @@ func newStatements(db *sql.DB) *statements {
 	updateCollectionStmt, err := db.PrepareContext(ctx, `UPDATE collections SET NFTS = $1, NAME = $2, COLLECTORS_NOTE = $3, LAYOUT = $4, HIDDEN = $5, LAST_UPDATED = $6 WHERE ID = $7;`)
 	checkNoErr(err)
 
-	//galleryRepo := postgres.NewSplitRepository(db, nil)
+	//splitRepo := postgres.NewSplitRepository(db, nil)
 	return &statements{
 		getUserByIDStmt:       getUserByIDStmt,
 		getUserByUsernameStmt: getUserByUsernameStmt,
@@ -95,10 +95,10 @@ func newStatements(db *sql.DB) *statements {
 		getCollectionsStmt:    getCollectionsStmt,
 		updateCollectionStmt:  updateCollectionStmt,
 
-		//galleryRepo: galleryRepo,
-		//// nftRepo:     postgres.NewNFTRepository(db, galleryRepo),
+		//splitRepo: splitRepo,
+		//// nftRepo:     postgres.NewNFTRepository(db, splitRepo),
 		//userRepo: postgres.NewUserRepository(db),
-		//// collRepo:    postgres.NewCollectionRepository(db, galleryRepo),
+		//// collRepo:    postgres.NewCollectionRepository(db, splitRepo),
 		//backupRepo: postgres.NewBackupRepository(db),
 	}
 

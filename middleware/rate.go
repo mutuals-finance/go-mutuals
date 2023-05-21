@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
+	gredis "github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/benny-conn/limiters"
 	"github.com/go-redis/redis/v8"
-	gredis "github.com/mikeydub/go-gallery/service/redis"
 )
 
 // KeyRateLimiter .

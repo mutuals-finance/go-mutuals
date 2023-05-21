@@ -6,15 +6,15 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/sirupsen/logrus"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 
+	"github.com/SplitFi/go-splitfi/util"
 	sentrygin "github.com/getsentry/sentry-go/gin"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 const (

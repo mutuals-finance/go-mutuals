@@ -10,7 +10,7 @@ headers:
 cors:
   allow_credentials: true
   match_origins:
-    - "^https://gallery.*.vercel.app$"
+    - "^https://splitfi.*.vercel.app$"
     - "http://localhost:3000"
 
 supergraph:

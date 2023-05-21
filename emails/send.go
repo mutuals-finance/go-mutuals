@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/graphql/dataloader"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/graphql/dataloader"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 	"github.com/sendgrid/rest"
 	sendgrid "github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -303,7 +303,7 @@ func notifToTemplateData(ctx context.Context, queries *coredb.Queries, n coredb.
 		if len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs) > 1 {
 			return notificationEmailDynamicTemplateData{
 				Actor:  fmt.Sprintf("%d collectors", len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs)),
-				Action: "viewed your gallery",
+				Action: "viewed your split",
 			}, nil
 		}
 		if len(n.Data.AuthedViewerIDs) == 1 {
@@ -313,13 +313,13 @@ func notifToTemplateData(ctx context.Context, queries *coredb.Queries, n coredb.
 			}
 			return notificationEmailDynamicTemplateData{
 				Actor:  userActor.Username.String,
-				Action: "viewed your gallery",
+				Action: "viewed your split",
 			}, nil
 		}
 		if len(n.Data.UnauthedViewerIDs) == 1 {
 			return notificationEmailDynamicTemplateData{
 				Actor:  "Someone",
-				Action: "viewed your gallery",
+				Action: "viewed your split",
 			}, nil
 		}
 

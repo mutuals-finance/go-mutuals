@@ -4,15 +4,15 @@ import (
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"context"
 	"fmt"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/graphql/dataloader"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/notifications"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/graphql/dataloader"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/notifications"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
-	"github.com/mikeydub/go-gallery/util"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -314,11 +314,11 @@ func (h notificationHandler) createNotificationDataForEvent(event db.Event) (dat
 func (h notificationHandler) findOwnerForNotificationFromEvent(event db.Event) (persist.DBID, error) {
 	switch event.ResourceTypeID {
 	case persist.ResourceTypeSplit:
-		gallery, err := h.dataloaders.SplitBySplitID.Load(event.SplitID)
+		split, err := h.dataloaders.SplitBySplitID.Load(event.SplitID)
 		if err != nil {
 			return "", err
 		}
-		return gallery.OwnerUserID, nil
+		return split.OwnerUserID, nil
 	case persist.ResourceTypeUser:
 		return event.SubjectID, nil
 	}

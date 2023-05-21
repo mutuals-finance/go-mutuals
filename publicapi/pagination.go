@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/go-playground/validator/v10"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/validate"
 )
 
 var (

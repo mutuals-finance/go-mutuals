@@ -1,32 +1,32 @@
-//go:generate go run github.com/gallery-so/dataloaden UserLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden UsersLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden UserLoaderByAddress github.com/mikeydub/go-gallery/db/gen/coredb.GetUserByAddressBatchParams github.com/mikeydub/go-gallery/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden UserLoaderByString string github.com/mikeydub/go-gallery/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden UsersLoaderByString string []github.com/mikeydub/go-gallery/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden UsersLoaderByContractID github.com/mikeydub/go-gallery/db/gen/coredb.GetOwnersByContractIdBatchPaginateParams []github.com/mikeydub/go-gallery/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden SplitLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Split
-//go:generate go run github.com/gallery-so/dataloaden SplitsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Split
-//go:generate go run github.com/gallery-so/dataloaden CollectionLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Collection
-//go:generate go run github.com/gallery-so/dataloaden CollectionsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Collection
-//go:generate go run github.com/gallery-so/dataloaden MembershipLoaderById github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Membership
-//go:generate go run github.com/gallery-so/dataloaden WalletLoaderById github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Wallet
-//go:generate go run github.com/gallery-so/dataloaden WalletLoaderByChainAddress github.com/mikeydub/go-gallery/service/persist.ChainAddress github.com/mikeydub/go-gallery/db/gen/coredb.Wallet
-//go:generate go run github.com/gallery-so/dataloaden WalletsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Wallet
-//go:generate go run github.com/gallery-so/dataloaden TokenLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDAndLimit github.com/mikeydub/go-gallery/graphql/dataloader.IDAndLimit []github.com/mikeydub/go-gallery/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByContractID github.com/mikeydub/go-gallery/db/gen/coredb.GetTokensByContractIdBatchPaginateParams []github.com/mikeydub/go-gallery/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDTuple github.com/mikeydub/go-gallery/service/persist.DBIDTuple []github.com/mikeydub/go-gallery/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDAndChain github.com/mikeydub/go-gallery/graphql/dataloader.IDAndChain []github.com/mikeydub/go-gallery/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden ContractLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Contract
-//go:generate go run github.com/gallery-so/dataloaden ContractsLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID []github.com/mikeydub/go-gallery/db/gen/coredb.Contract
-//go:generate go run github.com/gallery-so/dataloaden ContractLoaderByChainAddress github.com/mikeydub/go-gallery/service/persist.ChainAddress github.com/mikeydub/go-gallery/db/gen/coredb.Contract
-//go:generate go run github.com/gallery-so/dataloaden EventLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.FeedEvent
-//go:generate go run github.com/gallery-so/dataloaden NotificationLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID github.com/mikeydub/go-gallery/db/gen/coredb.Notification
-//go:generate go run github.com/gallery-so/dataloaden NotificationsLoaderByUserID github.com/mikeydub/go-gallery/db/gen/coredb.GetUserNotificationsBatchParams []github.com/mikeydub/go-gallery/db/gen/coredb.Notification
-//go:generate go run github.com/gallery-so/dataloaden IntLoaderByID github.com/mikeydub/go-gallery/service/persist.DBID int
-//go:generate go run github.com/gallery-so/dataloaden SharedFollowersLoaderByIDs github.com/mikeydub/go-gallery/db/gen/coredb.GetSharedFollowersBatchPaginateParams []github.com/mikeydub/go-gallery/db/gen/coredb.GetSharedFollowersBatchPaginateRow
-//go:generate go run github.com/gallery-so/dataloaden SharedContractsLoaderByIDs github.com/mikeydub/go-gallery/db/gen/coredb.GetSharedContractsBatchPaginateParams []github.com/mikeydub/go-gallery/db/gen/coredb.GetSharedContractsBatchPaginateRow
+//go:generate go run github.com/gallery-so/dataloaden UserLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.User
+//go:generate go run github.com/gallery-so/dataloaden UsersLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.User
+//go:generate go run github.com/gallery-so/dataloaden UserLoaderByAddress github.com/SplitFi/go-splitfi/db/gen/coredb.GetUserByAddressBatchParams github.com/SplitFi/go-splitfi/db/gen/coredb.User
+//go:generate go run github.com/gallery-so/dataloaden UserLoaderByString string github.com/SplitFi/go-splitfi/db/gen/coredb.User
+//go:generate go run github.com/gallery-so/dataloaden UsersLoaderByString string []github.com/SplitFi/go-splitfi/db/gen/coredb.User
+//go:generate go run github.com/gallery-so/dataloaden UsersLoaderByContractID github.com/SplitFi/go-splitfi/db/gen/coredb.GetOwnersByContractIdBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.User
+//go:generate go run github.com/gallery-so/dataloaden SplitLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Split
+//go:generate go run github.com/gallery-so/dataloaden SplitsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Split
+//go:generate go run github.com/gallery-so/dataloaden CollectionLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Collection
+//go:generate go run github.com/gallery-so/dataloaden CollectionsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Collection
+//go:generate go run github.com/gallery-so/dataloaden MembershipLoaderById github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Membership
+//go:generate go run github.com/gallery-so/dataloaden WalletLoaderById github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
+//go:generate go run github.com/gallery-so/dataloaden WalletLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
+//go:generate go run github.com/gallery-so/dataloaden WalletsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
+//go:generate go run github.com/gallery-so/dataloaden TokenLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Token
+//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
+//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDAndLimit github.com/SplitFi/go-splitfi/graphql/dataloader.IDAndLimit []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
+//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByContractID github.com/SplitFi/go-splitfi/db/gen/coredb.GetTokensByContractIdBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
+//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDTuple github.com/SplitFi/go-splitfi/service/persist.DBIDTuple []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
+//go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDAndChain github.com/SplitFi/go-splitfi/graphql/dataloader.IDAndChain []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
+//go:generate go run github.com/gallery-so/dataloaden ContractLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Contract
+//go:generate go run github.com/gallery-so/dataloaden ContractsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Contract
+//go:generate go run github.com/gallery-so/dataloaden ContractLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress github.com/SplitFi/go-splitfi/db/gen/coredb.Contract
+//go:generate go run github.com/gallery-so/dataloaden EventLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.FeedEvent
+//go:generate go run github.com/gallery-so/dataloaden NotificationLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
+//go:generate go run github.com/gallery-so/dataloaden NotificationsLoaderByUserID github.com/SplitFi/go-splitfi/db/gen/coredb.GetUserNotificationsBatchParams []github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
+//go:generate go run github.com/gallery-so/dataloaden IntLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID int
+//go:generate go run github.com/gallery-so/dataloaden SharedFollowersLoaderByIDs github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedFollowersBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedFollowersBatchPaginateRow
+//go:generate go run github.com/gallery-so/dataloaden SharedContractsLoaderByIDs github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedContractsBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedContractsBatchPaginateRow
 
 package dataloader
 
@@ -36,11 +36,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/tracing"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/jackc/pgx/v4"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 type IDAndChain struct {

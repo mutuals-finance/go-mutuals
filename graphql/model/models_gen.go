@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 type AddRolesToUserPayloadOrError interface {

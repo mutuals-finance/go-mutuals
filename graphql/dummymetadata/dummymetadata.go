@@ -3,10 +3,10 @@ package dummymetadata
 import (
 	"net/http"
 
+	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/middleware"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/tracing"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

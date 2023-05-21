@@ -7,8 +7,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/util"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/util"
 )
 
 var errRetoolUnauthorized = errors.New("not authorized")

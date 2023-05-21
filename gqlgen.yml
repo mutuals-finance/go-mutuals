@@ -35,7 +35,7 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "github.com/mikeydub/go-gallery/graphql/model"
+  - "github.com/SplitFi/go-splitfi/graphql/model"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -45,46 +45,46 @@ autobind:
 models:
   Address:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.Address
+      - github.com/SplitFi/go-splitfi/service/persist.Address
   PubKey:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.PubKey
+      - github.com/SplitFi/go-splitfi/service/persist.PubKey
   Chain:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.Chain
+      - github.com/SplitFi/go-splitfi/service/persist.Chain
   EmailVerificationStatus:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.EmailVerificationStatus
+      - github.com/SplitFi/go-splitfi/service/persist.EmailVerificationStatus
   Email:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.Email
+      - github.com/SplitFi/go-splitfi/service/persist.Email
   ChainAddress:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.ChainAddress
+      - github.com/SplitFi/go-splitfi/service/persist.ChainAddress
   ChainAddressInput:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.ChainAddress
+      - github.com/SplitFi/go-splitfi/service/persist.ChainAddress
   ChainPubKey:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.ChainPubKey
+      - github.com/SplitFi/go-splitfi/service/persist.ChainPubKey
   ChainPubKeyInput:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.ChainPubKey
+      - github.com/SplitFi/go-splitfi/service/persist.ChainPubKey
   DBID:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.DBID
+      - github.com/SplitFi/go-splitfi/service/persist.DBID
   WalletType:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.WalletType
+      - github.com/SplitFi/go-splitfi/service/persist.WalletType
   EthereumAddress:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.EthereumAddress
+      - github.com/SplitFi/go-splitfi/service/persist.EthereumAddress
   SocialAccountType:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.SocialProvider
+      - github.com/SplitFi/go-splitfi/service/persist.SocialProvider
   ID:
     model:
-      - github.com/mikeydub/go-gallery/graphql/model.GqlID
+      - github.com/SplitFi/go-splitfi/graphql/model.GqlID
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
@@ -96,13 +96,13 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Action:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.Action
+      - github.com/SplitFi/go-splitfi/service/persist.Action
   Role:
     model:
-      - github.com/mikeydub/go-gallery/service/persist.Role
+      - github.com/SplitFi/go-splitfi/service/persist.Role
   ReportWindow:
     model:
-      - github.com/mikeydub/go-gallery/graphql/model.Window
+      - github.com/SplitFi/go-splitfi/graphql/model.Window
 directives:
   goGqlId:
     skip_runtime: true

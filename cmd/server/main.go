@@ -3,10 +3,10 @@ package main
 import (
 	"net/http"
 
-	"github.com/mikeydub/go-gallery/service/logger"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 
-	"github.com/mikeydub/go-gallery/server"
+	"github.com/SplitFi/go-splitfi/server"
 	"google.golang.org/appengine"
 )
 

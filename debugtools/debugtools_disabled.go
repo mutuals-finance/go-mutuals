@@ -11,8 +11,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mikeydub/go-gallery/service/auth"
-	"github.com/mikeydub/go-gallery/service/socialauth"
+	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/SplitFi/go-splitfi/service/socialauth"
 )
 
 const Enabled bool = false

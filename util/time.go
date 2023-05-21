@@ -3,7 +3,7 @@ package util
 import (
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/logger"
+	"github.com/SplitFi/go-splitfi/service/logger"
 )
 
 // Track the time it takes to execute a function

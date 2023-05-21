@@ -6,21 +6,21 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/indexer/refresh"
+	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/media"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/SplitFi/go-splitfi/service/rpc"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/service/throttle"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/indexer/refresh"
-	"github.com/mikeydub/go-gallery/middleware"
-	"github.com/mikeydub/go-gallery/service/auth"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/media"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
-	"github.com/mikeydub/go-gallery/service/redis"
-	"github.com/mikeydub/go-gallery/service/rpc"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
-	"github.com/mikeydub/go-gallery/service/throttle"
-	"github.com/mikeydub/go-gallery/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -118,7 +118,7 @@ func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
 
 func SetDefaults() {
 	viper.SetDefault("RPC_URL", "")
-	viper.SetDefault("IPFS_URL", "https://gallery.infura-ipfs.io")
+	viper.SetDefault("IPFS_URL", "https://splitfi.infura-ipfs.io")
 	viper.SetDefault("IPFS_API_URL", "https://ipfs.infura.io:5001")
 	viper.SetDefault("FALLBACK_IPFS_URL", "https://ipfs.io")
 	viper.SetDefault("IPFS_PROJECT_ID", "")

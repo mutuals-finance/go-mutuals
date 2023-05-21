@@ -3,11 +3,11 @@ package socialauth
 import (
 	"context"
 
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/redis"
-	"github.com/mikeydub/go-gallery/service/twitter"
-	"github.com/mikeydub/go-gallery/util"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/SplitFi/go-splitfi/service/twitter"
+	"github.com/SplitFi/go-splitfi/util"
 )
 
 type SocialAuthResult struct {

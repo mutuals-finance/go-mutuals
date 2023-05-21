@@ -9,16 +9,16 @@ import (
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
-	emailService "github.com/mikeydub/go-gallery/emails"
-	"github.com/mikeydub/go-gallery/graphql/generated"
-	"github.com/mikeydub/go-gallery/graphql/model"
-	"github.com/mikeydub/go-gallery/publicapi"
-	"github.com/mikeydub/go-gallery/service/emails"
-	"github.com/mikeydub/go-gallery/service/mediamapper"
-	"github.com/mikeydub/go-gallery/service/persist"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
-	"github.com/mikeydub/go-gallery/util"
-	"github.com/mikeydub/go-gallery/validate"
+	emailService "github.com/SplitFi/go-splitfi/emails"
+	"github.com/SplitFi/go-splitfi/graphql/generated"
+	"github.com/SplitFi/go-splitfi/graphql/model"
+	"github.com/SplitFi/go-splitfi/publicapi"
+	"github.com/SplitFi/go-splitfi/service/emails"
+	"github.com/SplitFi/go-splitfi/service/mediamapper"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/util"
+	"github.com/SplitFi/go-splitfi/validate"
 )
 
 // Split is the resolver for the split field.

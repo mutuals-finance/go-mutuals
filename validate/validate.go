@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/graphql/model"
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/graphql/model"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"golang.org/x/exp/slices"
 
 	"github.com/go-playground/validator/v10"

@@ -24,12 +24,16 @@ import (
 
 	"golang.org/x/image/bmp"
 
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/tracing"
+	"github.com/SplitFi/go-splitfi/util/retry"
 	"github.com/getsentry/sentry-go"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/tracing"
-	"github.com/mikeydub/go-gallery/util/retry"
 
+	"github.com/SplitFi/go-splitfi/contracts"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -40,10 +44,6 @@ import (
 	"github.com/everFinance/goar"
 	goartypes "github.com/everFinance/goar/types"
 	shell "github.com/ipfs/go-ipfs-api"
-	"github.com/mikeydub/go-gallery/contracts"
-	"github.com/mikeydub/go-gallery/service/persist"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 func init() {

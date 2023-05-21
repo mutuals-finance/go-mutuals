@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/rpc"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/rpc"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 // GetContractOutput is the response for getting a single smart contract

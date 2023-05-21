@@ -9,9 +9,9 @@ import (
 
 	"github.com/99designs/gqlgen/api"
 	"github.com/99designs/gqlgen/codegen/config"
-	"github.com/mikeydub/go-gallery/graphql/plugin/gqlidgen"
-	"github.com/mikeydub/go-gallery/graphql/plugin/modelgen_custom"
-	"github.com/mikeydub/go-gallery/graphql/plugin/remapgen"
+	"github.com/SplitFi/go-splitfi/graphql/plugin/gqlidgen"
+	"github.com/SplitFi/go-splitfi/graphql/plugin/modelgen_custom"
+	"github.com/SplitFi/go-splitfi/graphql/plugin/remapgen"
 )
 
 func main() {

@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/jackc/pgtype"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
 
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/lib/pq"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 // TokenSplitRepository represents a postgres repository for tokens

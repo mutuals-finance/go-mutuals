@@ -13,10 +13,10 @@ import (
 	gcptasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/cloudtasks/apiv2/cloudtaskspb"
 	"cloud.google.com/go/pubsub"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/asottile/dockerfile"
 	"github.com/go-redis/redis/v8"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
 	"google.golang.org/api/option"
@@ -154,9 +154,9 @@ func StartCloudTasks() (*dockertest.Resource, error) {
 		}
 		defer client.Close()
 		_, err = client.CreateQueue(ctx, &cloudtaskspb.CreateQueueRequest{
-			Parent: "projects/gallery-local/locations/here",
+			Parent: "projects/splitfi-local/locations/here",
 			Queue: &cloudtaskspb.Queue{
-				Name: "projects/gallery-local/locations/here/queues/dummy-queue",
+				Name: "projects/splitfi-local/locations/here/queues/dummy-queue",
 			},
 		})
 		return err
@@ -183,7 +183,7 @@ func StartPubSub() (*dockertest.Resource, error) {
 	err = pool.Retry(func() error {
 		ctx := context.Background()
 		client, err := pubsub.NewClient(ctx,
-			"gallery-local",
+			"splitfi-local",
 			option.WithEndpoint(r.GetHostPort("8085/tcp")),
 			option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
 			option.WithoutAuthentication(),

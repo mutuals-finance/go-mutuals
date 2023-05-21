@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	storage "cloud.google.com/go/storage"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/util"
 	"github.com/sirupsen/logrus"
 )
 

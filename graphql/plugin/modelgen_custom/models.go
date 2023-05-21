@@ -43,7 +43,7 @@ type ModelBuild struct {
 	Models      []*Object
 	Enums       []*Enum
 	Scalars     []string
-	Embeds      map[string]bool // Added by es@gallery.so
+	Embeds      map[string]bool // Added by es@splitfi.com
 }
 
 type Interface struct {
@@ -211,7 +211,7 @@ func (m *Plugin) MutateConfig(cfg *config.Config) error {
 		b = m.MutateHook(b)
 	}
 
-	b.Embeds = getEmbeds(cfg) // Added by es@gallery.so
+	b.Embeds = getEmbeds(cfg) // Added by es@splitfi.com
 
 	getInterfaceByName := func(name string) *Interface {
 		// Allow looking up interfaces, so template can generate getters for each field
@@ -514,7 +514,7 @@ func findAndHandleCyclicalRelationships(b *ModelBuild) {
 	}
 }
 
-// Added by es@gallery.so
+// Added by es@splitfi.com
 func getEmbeds(cfg *config.Config) map[string]bool {
 	embeds := make(map[string]bool)
 

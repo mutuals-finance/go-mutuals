@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	migrate "github.com/mikeydub/go-gallery/db"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
+	migrate "github.com/SplitFi/go-splitfi/db"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
 func init() {
-	viper.SetDefault("POSTGRES_USER", "gallery_migrator")
+	viper.SetDefault("POSTGRES_USER", "splitfi_migrator")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("POSTGRES_HOST", "localhost")

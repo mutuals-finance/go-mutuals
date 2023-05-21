@@ -8,8 +8,8 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/jackc/pgtype"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 type Admire struct {

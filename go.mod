@@ -1,4 +1,4 @@
-module github.com/mikeydub/go-gallery
+module github.com/SplitFi/go-splitfi
 
 go 1.19
 

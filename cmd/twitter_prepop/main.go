@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -89,7 +89,7 @@ func main() {
 func setDefaults() {
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "gallery_backend")
+	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 

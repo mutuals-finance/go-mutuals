@@ -9,11 +9,11 @@ import (
 	"sync"
 
 	"cloud.google.com/go/storage"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/bits-and-blooms/bloom"
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/persist"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
 	"golang.org/x/sync/errgroup"
 )
 

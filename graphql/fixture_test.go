@@ -8,15 +8,15 @@ import (
 	"testing"
 
 	"cloud.google.com/go/cloudtasks/apiv2/cloudtaskspb"
-	migrate "github.com/mikeydub/go-gallery/db"
-	"github.com/mikeydub/go-gallery/docker"
-	"github.com/mikeydub/go-gallery/graphql/dummymetadata"
-	"github.com/mikeydub/go-gallery/server"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
-	"github.com/mikeydub/go-gallery/service/pubsub/gcp"
-	"github.com/mikeydub/go-gallery/service/task"
-	"github.com/mikeydub/go-gallery/tokenprocessing"
+	migrate "github.com/SplitFi/go-splitfi/db"
+	"github.com/SplitFi/go-splitfi/docker"
+	"github.com/SplitFi/go-splitfi/graphql/dummymetadata"
+	"github.com/SplitFi/go-splitfi/server"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
+	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/SplitFi/go-splitfi/tokenprocessing"
 	"github.com/stretchr/testify/require"
 )
 
@@ -91,7 +91,7 @@ func useTokenQueue(t *testing.T) {
 	client := task.NewClient(ctx)
 	defer client.Close()
 	queue, err := client.CreateQueue(ctx, &cloudtaskspb.CreateQueueRequest{
-		Parent: "projects/gallery-test/locations/here",
+		Parent: "projects/splitfi-test/locations/here",
 		Queue: &cloudtaskspb.Queue{
 			Name: "projects/gallery-test/locations/here/queues/token-processing-" + persist.GenerateID().String(),
 		},

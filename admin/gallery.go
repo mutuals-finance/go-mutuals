@@ -2,12 +2,12 @@ package admin
 
 import (
 	"errors"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"net/http"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 var errGetSplitsInput = errors.New("id or user_id must be provided")

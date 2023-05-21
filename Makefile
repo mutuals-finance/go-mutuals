@@ -85,7 +85,7 @@ $(DEPLOY)-$(DEV)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
 $(DEPLOY)-$(PROD)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
 
 # Service to Sentry project mapping
-$(DEPLOY)-%-backend               : SENTRY_PROJECT := gallery-backend
+$(DEPLOY)-%-backend               : SENTRY_PROJECT := splitfi-backend
 $(DEPLOY)-%-indexer               : SENTRY_PROJECT := indexer
 $(DEPLOY)-%-indexer-server        : SENTRY_PROJECT := indexer-api
 $(DEPLOY)-%-tokenprocessing       : SENTRY_PROJECT := tokenprocessing

@@ -11,9 +11,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 var (

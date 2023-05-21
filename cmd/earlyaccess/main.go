@@ -15,7 +15,7 @@ import (
 )
 
 // Early access address adder!
-// Build from go-gallery root like this: go build -o ./bin/earlyaccess ./cmd/earlyaccess/main.go
+// Build from go-splitfi root like this: go build -o ./bin/earlyaccess ./cmd/earlyaccess/main.go
 // And run like this: ./bin/earlyaccess "postgres://postgres:<dev db password here>@34.102.59.201:5432/postgres" "../snapshots/snapshot.json"
 func main() {
 	args := os.Args

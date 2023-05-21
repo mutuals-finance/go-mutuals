@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/service/persist"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 type EventRepository struct {

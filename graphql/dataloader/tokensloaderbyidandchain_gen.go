@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 )
 
 type TokensLoaderByIDAndChainSettings interface {

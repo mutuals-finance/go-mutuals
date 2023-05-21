@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"errors"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/util"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/util"
 
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 var errCollsNotOwnedByUser = errors.New("collections not owned by user")

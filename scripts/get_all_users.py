@@ -2,7 +2,7 @@ import csv
 from pymongo import MongoClient
 
 client = MongoClient()
-db = client.gallery
+db = client.split
 
 collection_collection = db.collections
 nft_collection = db.nfts

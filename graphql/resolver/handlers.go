@@ -10,21 +10,21 @@ import (
 
 	"reflect"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/publicapi"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/publicapi"
 
 	gqlgen "github.com/99designs/gqlgen/graphql"
+	"github.com/SplitFi/go-splitfi/graphql/model"
+	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/getsentry/sentry-go"
-	"github.com/mikeydub/go-gallery/graphql/model"
-	"github.com/mikeydub/go-gallery/service/auth"
-	"github.com/mikeydub/go-gallery/service/logger"
-	sentryutil "github.com/mikeydub/go-gallery/service/sentry"
-	"github.com/mikeydub/go-gallery/service/tracing"
 
 	"sort"
 	"strings"
 
-	"github.com/mikeydub/go-gallery/util"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/segmentio/ksuid"
 	"github.com/sirupsen/logrus"
 	"github.com/vektah/gqlparser/v2/ast"

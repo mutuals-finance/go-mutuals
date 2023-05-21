@@ -6,19 +6,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 
-	"github.com/mikeydub/go-gallery/service/logger"
+	"github.com/SplitFi/go-splitfi/service/logger"
 
 	"cloud.google.com/go/storage"
+	"github.com/SplitFi/go-splitfi/service/multichain/opensea"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/everFinance/goar"
 	"github.com/gammazero/workerpool"
 	shell "github.com/ipfs/go-ipfs-api"
-	"github.com/mikeydub/go-gallery/service/multichain/opensea"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 // MembershipTierIDs is a list of all membership tiers

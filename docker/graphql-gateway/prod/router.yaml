@@ -10,7 +10,7 @@ headers:
 cors:
   allow_credentials: true
   origins:
-    - "https://gallery.so"
+    - "https://splitfi.com"
     - http://localhost:3000
 
 supergraph:

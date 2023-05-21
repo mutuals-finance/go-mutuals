@@ -9,7 +9,7 @@ bindings:
   Email:
     type: string
   DBID:
-    type: github.com/mikeydub/go-gallery/service/persist.DBID
+    type: github.com/SplitFi/go-splitfi/service/persist.DBID
   Address:
     type: string
   PubKey:

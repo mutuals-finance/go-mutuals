@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/lib/pq"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/service/persist"
 	"github.com/sirupsen/logrus"
 )
 

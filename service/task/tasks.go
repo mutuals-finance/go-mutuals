@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/redis"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/redis"
 
 	"github.com/gammazero/workerpool"
 )

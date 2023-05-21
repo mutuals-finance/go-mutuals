@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mikeydub/go-gallery/service/logger"
+	"github.com/SplitFi/go-splitfi/service/logger"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/lib/pq"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 // TokenRepository represents a postgres repository for tokens

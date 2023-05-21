@@ -6,9 +6,9 @@ package debugtools
 import (
 	"fmt"
 
-	"github.com/mikeydub/go-gallery/service/auth"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/socialauth"
+	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/socialauth"
 )
 
 type DebugAuthenticator struct {

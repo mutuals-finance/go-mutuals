@@ -10,17 +10,17 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	migrate "github.com/SplitFi/go-splitfi/db"
+	"github.com/SplitFi/go-splitfi/docker"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/indexer/refresh"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/rpc"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/jackc/pgx/v4/pgxpool"
-	migrate "github.com/mikeydub/go-gallery/db"
-	"github.com/mikeydub/go-gallery/docker"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/indexer/refresh"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
-	"github.com/mikeydub/go-gallery/service/rpc"
-	"github.com/mikeydub/go-gallery/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/option"
 )
@@ -29,7 +29,7 @@ var (
 	testBlockFrom            = 0
 	testBlockTo              = 100
 	testAddress              = "0x9a3f9764b21adaf3c6fdf6f947e6d3340a3f8ac5"
-	galleryMembershipAddress = "0xe01569ca9b39e55bc7c0dfa09f05fa15cb4c7698"
+	splitfiMembershipAddress = "0xe01569ca9b39e55bc7c0dfa09f05fa15cb4c7698"
 	ensAddress               = "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
 	contribAddress           = "0xda3845b44736b57e05ee80fc011a52a9c777423a" // Jarrel's address with a contributor card in it
 )
@@ -164,7 +164,7 @@ var svgLogs = []types.Log{
 }
 var erc1155Logs = []types.Log{
 	{
-		Address: common.HexToAddress(galleryMembershipAddress),
+		Address: common.HexToAddress(splitfiMembershipAddress),
 		Topics: []common.Hash{
 			common.HexToHash(string(transferSingleEventHash)),
 			common.HexToHash(persist.ZeroAddress.String()),
@@ -242,10 +242,10 @@ var expectedResults expectedTokenResults = expectedTokenResults{
 		TokenID:         "d9",
 		Quantity:        "1",
 	},
-	persist.NewTokenIdentifiers(persist.Address(galleryMembershipAddress), "0", 0): persist.Token{
+	persist.NewTokenIdentifiers(persist.Address(splitfiMembershipAddress), "0", 0): persist.Token{
 		BlockNumber:     5,
 		OwnerAddress:    persist.EthereumAddress(contribAddress),
-		ContractAddress: persist.EthereumAddress(galleryMembershipAddress),
+		ContractAddress: persist.EthereumAddress(splitfiMembershipAddress),
 		TokenType:       persist.TokenTypeERC1155,
 		TokenID:         "0",
 		Quantity:        "1",

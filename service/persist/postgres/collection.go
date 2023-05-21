@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/lib/pq"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 var errNotOwnedByUser = errors.New("not all nfts are owned by the user")

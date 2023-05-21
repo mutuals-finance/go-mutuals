@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 // SyncWithContractEvalFallbackProvider will call its fallback if the primary Provider's token

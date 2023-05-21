@@ -2,7 +2,7 @@ from pymongo import MongoClient
 import requests
 
 client = MongoClient()
-db = client.gallery
+db = client.split
 
 
 user_collection = db.users

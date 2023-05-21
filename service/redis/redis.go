@@ -7,8 +7,8 @@ import (
 
 	"github.com/bsm/redislock"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/tracing"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 
 	"github.com/go-redis/redis/v8"
 )

@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/golang-migrate/migrate/v4"
 	pgdriver "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 const sudoFlag = "/* {% require_sudo %} */"

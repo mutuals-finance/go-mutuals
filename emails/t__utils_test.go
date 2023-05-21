@@ -3,12 +3,12 @@ package emails
 import (
 	"context"
 	"database/sql"
+	migrate "github.com/SplitFi/go-splitfi/db"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/docker"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/jackc/pgx/v4/pgxpool"
-	migrate "github.com/mikeydub/go-gallery/db"
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/docker"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/persist/postgres"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -17,13 +17,13 @@ import (
 var testUser = coredb.PiiUserView{
 	Username:           sql.NullString{String: "test1", Valid: true},
 	UsernameIdempotent: sql.NullString{String: "test1", Valid: true},
-	PiiEmailAddress:    persist.Email("bc@gallery.so"),
+	PiiEmailAddress:    persist.Email("bc@splitfi.com"),
 }
 
 var testUser2 = coredb.PiiUserView{
 	Username:           sql.NullString{String: "test2", Valid: true},
 	UsernameIdempotent: sql.NullString{String: "test2", Valid: true},
-	PiiEmailAddress:    persist.Email("bcc@gallery.so"),
+	PiiEmailAddress:    persist.Email("bcc@splitfi.com"),
 }
 
 var followNotif coredb.Notification
@@ -93,40 +93,40 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 
 	testUser2.ID = userID2
 
-	galleryInsert := coredb.SplitRepoCreateParams{OwnerUserID: userID, SplitID: persist.GenerateID(), Position: "0.1"}
+	splitInsert := coredb.SplitRepoCreateParams{OwnerUserID: userID, SplitID: persist.GenerateID(), Position: "0.1"}
 
-	gallery, err := repos.SplitRepository.Create(ctx, galleryInsert)
+	split, err := repos.SplitRepository.Create(ctx, splitInsert)
 	if err != nil {
-		t.Fatalf("failed to create gallery: %s", err)
+		t.Fatalf("failed to create split: %s", err)
 	}
 
-	galleryInsert2 := coredb.SplitRepoCreateParams{OwnerUserID: userID2, SplitID: persist.GenerateID(), Position: "0.2"}
+	splitInsert2 := coredb.SplitRepoCreateParams{OwnerUserID: userID2, SplitID: persist.GenerateID(), Position: "0.2"}
 
-	_, err = repos.SplitRepository.Create(ctx, galleryInsert2)
+	_, err = repos.SplitRepository.Create(ctx, splitInsert2)
 	if err != nil {
-		t.Fatalf("failed to create gallery: %s", err)
+		t.Fatalf("failed to create split: %s", err)
 	}
 
 	collID, err := repos.CollectionRepository.Create(ctx, persist.CollectionDB{
 		Name:        "test coll",
 		OwnerUserID: userID,
-		SplitID:     gallery.ID,
+		SplitID:     split.ID,
 	})
 
 	if err != nil {
 		t.Fatalf("failed to create collection: %s", err)
 	}
 
-	err = repos.SplitRepository.Update(ctx, gallery.ID, userID, persist.SplitTokenUpdateInput{
+	err = repos.SplitRepository.Update(ctx, split.ID, userID, persist.SplitTokenUpdateInput{
 		Collections: []persist.DBID{collID},
 	})
 	if err != nil {
-		t.Fatalf("failed to update gallery: %s", err)
+		t.Fatalf("failed to update split: %s", err)
 	}
 
-	testSplit, err = q.GetSplitById(ctx, gallery.ID)
+	testSplit, err = q.GetSplitById(ctx, split.ID)
 	if err != nil {
-		t.Fatalf("failed to get gallery: %s", err)
+		t.Fatalf("failed to get split: %s", err)
 	}
 
 	_, err = q.CreateCollectionEvent(ctx, coredb.CreateCollectionEventParams{
@@ -135,7 +135,7 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 		Action:         persist.ActionCollectionCreated,
 		ResourceTypeID: persist.ResourceTypeCollection,
 		CollectionID:   testSplit.Collections[0],
-		SplitID:        gallery.ID,
+		SplitID:        split.ID,
 	})
 
 	if err != nil {

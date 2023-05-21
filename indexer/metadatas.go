@@ -12,6 +12,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SplitFi/go-splitfi/contracts"
+	"github.com/SplitFi/go-splitfi/service/media"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/rpc"
+	"github.com/SplitFi/go-splitfi/util"
 	svg "github.com/ajstarks/svgo"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,11 +24,6 @@ import (
 	"github.com/everFinance/goar"
 	shell "github.com/ipfs/go-ipfs-api"
 	colorful "github.com/lucasb-eyer/go-colorful"
-	"github.com/mikeydub/go-gallery/contracts"
-	"github.com/mikeydub/go-gallery/service/media"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/service/rpc"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 var uniqueMetadataHandlers = uniqueMetadatas{

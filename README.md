@@ -1,4 +1,4 @@
-# go-gallery
+# go-splitfi
 
 ## Pre
 
@@ -9,8 +9,8 @@
 ## Clone and install deps
 
 ```bash
-$ git clone git@github.com:gallery-so/go-gallery.git
-$ cd go-gallery
+$ git clone git@github.com:Splitfi/go-splitfi.git
+$ cd go-splitfi
 $ go get -u=patch -d ./...
 ```
 
@@ -122,7 +122,7 @@ $ curl localhost:4000/alive
 This is available for live environments:
 
 ```bash
-$ curl api.gallery.so/alive
+$ curl api.splitfi.com/alive
 ```
 ```
 

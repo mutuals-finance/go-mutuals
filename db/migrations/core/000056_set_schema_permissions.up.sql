@@ -164,12 +164,12 @@ alter role split_team_rw_pii set role to access_rw;
 -- Create login roles for services and migrations (note: before these can be used,
 -- a password must be set in the GCP management console)
 ------------------------------------------------------------------------------------
--- split_backend is used by our backend services. Defaults to access_rw_pii.
-drop role if exists split_backend;
-create role split_backend noinherit login;
-grant access_rw to split_backend;
-grant access_rw_pii to split_backend;
-alter role split_backend set role to access_rw_pii;
+-- splitfi_backend is used by our backend services. Defaults to access_rw_pii.
+drop role if exists splitfi_backend;
+create role splitfi_backend noinherit login;
+grant access_rw to splitfi_backend;
+grant access_rw_pii to splitfi_backend;
+alter role splitfi_backend set role to access_rw_pii;
 
 -- split_migrator is used for migrations. Defaults to access_rw, but can assume
 -- access_rw_pii to create or migrate pii tables.

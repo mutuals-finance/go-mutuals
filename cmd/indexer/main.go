@@ -3,7 +3,7 @@ package main
 import (
 	_ "net/http/pprof"
 
-	"github.com/mikeydub/go-gallery/indexer/cmd"
+	"github.com/SplitFi/go-splitfi/indexer/cmd"
 )
 
 func main() {

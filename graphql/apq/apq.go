@@ -3,7 +3,7 @@ package apq
 import (
 	"context"
 	"encoding/json"
-	"github.com/mikeydub/go-gallery/service/redis"
+	"github.com/SplitFi/go-splitfi/service/redis"
 	"time"
 )
 

@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/lib/pq"
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 // UserRepository represents a user repository in the postgres database

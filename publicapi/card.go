@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/mikeydub/go-gallery/contracts"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/graphql/model"
-	"github.com/mikeydub/go-gallery/service/multichain"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
+	"github.com/SplitFi/go-splitfi/contracts"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/graphql/model"
+	"github.com/SplitFi/go-splitfi/service/multichain"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

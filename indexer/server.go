@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 func getStatus(i *indexer, tokenRepository persist.TokenRepository) gin.HandlerFunc {

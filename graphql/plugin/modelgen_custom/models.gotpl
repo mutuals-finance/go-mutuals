@@ -12,7 +12,7 @@
 {{ reserveImport "github.com/99designs/gqlgen/graphql" }}
 {{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
 
-{{ reserveImport "github.com/mikeydub/go-gallery/service/persist" }}
+{{ reserveImport "github.com/SplitFi/go-splitfi/service/persist" }}
 
 {{- range $model := .Interfaces }}
 	{{ with .Description }} {{.|prefixLines "// "}} {{ end }}

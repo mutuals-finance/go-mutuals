@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 func responseProto(c *gin.Context) string {

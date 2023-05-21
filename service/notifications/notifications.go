@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/bsm/redislock"
 	"github.com/gin-gonic/gin"
 	"github.com/googleapis/gax-go/v2/apierror"
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	db "github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/logger"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 	"google.golang.org/grpc/codes"
 )
 

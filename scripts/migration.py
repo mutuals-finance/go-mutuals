@@ -31,7 +31,7 @@ def create_id():
 # Initialize lists to hold all the documents that we create. These will be bulk inserted into Mongo at the end of the script
 user_documents = []
 collection_documents = []
-gallery_documents = []
+split_documents = []
 nft_documents = []
 nonce_documents = []
 errored_documents = []

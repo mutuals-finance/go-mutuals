@@ -3,8 +3,8 @@ package middleware
 import (
 	"strings"
 
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/util"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/util"
 )
 
 func IsOriginAllowed(requestOrigin string) bool {

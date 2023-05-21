@@ -8,7 +8,7 @@ package coredb
 import (
 	"context"
 
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 const splitRepoAddCollections = `-- name: SplitRepoAddCollections :execrows

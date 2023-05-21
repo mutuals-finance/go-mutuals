@@ -3,8 +3,8 @@ package dummymetadata
 import (
 	"net/http"
 
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/util"
 )
 
 func handlersInitServer(router *gin.Engine) *gin.Engine {

@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/mikeydub/go-gallery/db/gen/coredb"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/persist"
-	"github.com/mikeydub/go-gallery/util"
 	"github.com/sendgrid/sendgrid-go"
 )
 
@@ -214,11 +214,11 @@ type sendgridEmailValidation struct {
 /*
 {
    "result":{
-      "email":"bc@gallery.so",
+      "email":"bc@splitfi.com",
       "verdict":"Risky",
       "score":0.21029,
       "local":"bc",
-      "host":"gallery.so",
+      "host":"splitfi.com",
       "checks":{
          "domain":{
             "has_valid_address_syntax":true,

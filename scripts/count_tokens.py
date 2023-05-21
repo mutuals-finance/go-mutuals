@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 client = MongoClient()
-db = client.gallery
+db = client.split
 
 token_collection = db.tokens
 

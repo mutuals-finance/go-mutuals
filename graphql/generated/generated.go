@@ -16,8 +16,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
-	"github.com/mikeydub/go-gallery/graphql/model"
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/graphql/model"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -6769,7 +6769,7 @@ func (ec *executionContext) field_Mutation_addRolesToUser_args(ctx context.Conte
 	var arg1 []*persist.Role
 	if tmp, ok := rawArgs["roles"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
-		arg1, err = ec.unmarshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx, tmp)
+		arg1, err = ec.unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6784,7 +6784,7 @@ func (ec *executionContext) field_Mutation_addUserWallet_args(ctx context.Contex
 	var arg0 persist.ChainAddress
 	if tmp, ok := rawArgs["chainAddress"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
+		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6793,7 +6793,7 @@ func (ec *executionContext) field_Mutation_addUserWallet_args(ctx context.Contex
 	var arg1 model.AuthMechanism
 	if tmp, ok := rawArgs["authMechanism"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-		arg1, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
+		arg1, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6808,7 +6808,7 @@ func (ec *executionContext) field_Mutation_addWalletToUserUnchecked_args(ctx con
 	var arg0 model.AdminAddWalletInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAdminAddWalletInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx, tmp)
+		arg0, err = ec.unmarshalNAdminAddWalletInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6823,7 +6823,7 @@ func (ec *executionContext) field_Mutation_connectSocialAccount_args(ctx context
 	var arg0 model.SocialAuthMechanism
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSocialAuthMechanism2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialAuthMechanism(ctx, tmp)
+		arg0, err = ec.unmarshalNSocialAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAuthMechanism(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6847,7 +6847,7 @@ func (ec *executionContext) field_Mutation_createCollection_args(ctx context.Con
 	var arg0 model.CreateCollectionInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateCollectionInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateCollectionInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6862,7 +6862,7 @@ func (ec *executionContext) field_Mutation_createSplit_args(ctx context.Context,
 	var arg0 model.CreateSplitInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6877,7 +6877,7 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	var arg0 model.AuthMechanism
 	if tmp, ok := rawArgs["authMechanism"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-		arg0, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
+		arg0, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6886,7 +6886,7 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	var arg1 model.CreateUserInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNCreateUserInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateUserInput(ctx, tmp)
+		arg1, err = ec.unmarshalNCreateUserInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6901,7 +6901,7 @@ func (ec *executionContext) field_Mutation_deepRefresh_args(ctx context.Context,
 	var arg0 model.DeepRefreshInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNDeepRefreshInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeepRefreshInput(ctx, tmp)
+		arg0, err = ec.unmarshalNDeepRefreshInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6916,7 +6916,7 @@ func (ec *executionContext) field_Mutation_deleteCollection_args(ctx context.Con
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["collectionId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collectionId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6931,7 +6931,7 @@ func (ec *executionContext) field_Mutation_deleteSplit_args(ctx context.Context,
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["splitId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6946,7 +6946,7 @@ func (ec *executionContext) field_Mutation_disconnectSocialAccount_args(ctx cont
 	var arg0 persist.SocialProvider
 	if tmp, ok := rawArgs["accountType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountType"))
-		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
+		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6961,7 +6961,7 @@ func (ec *executionContext) field_Mutation_followAllSocialConnections_args(ctx c
 	var arg0 persist.SocialProvider
 	if tmp, ok := rawArgs["accountType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountType"))
-		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
+		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6976,7 +6976,7 @@ func (ec *executionContext) field_Mutation_followUser_args(ctx context.Context, 
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6991,7 +6991,7 @@ func (ec *executionContext) field_Mutation_getAuthNonce_args(ctx context.Context
 	var arg0 persist.ChainAddress
 	if tmp, ok := rawArgs["chainAddress"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
+		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7006,7 +7006,7 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	var arg0 model.AuthMechanism
 	if tmp, ok := rawArgs["authMechanism"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-		arg0, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
+		arg0, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7021,7 +7021,7 @@ func (ec *executionContext) field_Mutation_mintPremiumCardToWallet_args(ctx cont
 	var arg0 model.MintPremiumCardToWalletInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNMintPremiumCardToWalletInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMintPremiumCardToWalletInput(ctx, tmp)
+		arg0, err = ec.unmarshalNMintPremiumCardToWalletInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMintPremiumCardToWalletInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7036,7 +7036,7 @@ func (ec *executionContext) field_Mutation_moveCollectionToSplit_args(ctx contex
 	var arg0 *model.MoveCollectionToSplitInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOMoveCollectionToSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitInput(ctx, tmp)
+		arg0, err = ec.unmarshalOMoveCollectionToSplitInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMoveCollectionToSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7051,7 +7051,7 @@ func (ec *executionContext) field_Mutation_preverifyEmail_args(ctx context.Conte
 	var arg0 model.PreverifyEmailInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPreverifyEmailInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx, tmp)
+		arg0, err = ec.unmarshalNPreverifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7066,7 +7066,7 @@ func (ec *executionContext) field_Mutation_publishSplit_args(ctx context.Context
 	var arg0 model.PublishSplitInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPublishSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitInput(ctx, tmp)
+		arg0, err = ec.unmarshalNPublishSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7081,7 +7081,7 @@ func (ec *executionContext) field_Mutation_refreshCollection_args(ctx context.Co
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["collectionId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collectionId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7096,7 +7096,7 @@ func (ec *executionContext) field_Mutation_refreshContract_args(ctx context.Cont
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["contractId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7111,7 +7111,7 @@ func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["tokenId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7126,7 +7126,7 @@ func (ec *executionContext) field_Mutation_removeUserWallets_args(ctx context.Co
 	var arg0 []persist.DBID
 	if tmp, ok := rawArgs["walletIds"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletIds"))
-		arg0, err = ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7150,7 +7150,7 @@ func (ec *executionContext) field_Mutation_revokeRolesFromUser_args(ctx context.
 	var arg1 []*persist.Role
 	if tmp, ok := rawArgs["roles"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
-		arg1, err = ec.unmarshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx, tmp)
+		arg1, err = ec.unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7165,7 +7165,7 @@ func (ec *executionContext) field_Mutation_setSpamPreference_args(ctx context.Co
 	var arg0 model.SetSpamPreferenceInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSetSpamPreferenceInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSetSpamPreferenceInput(ctx, tmp)
+		arg0, err = ec.unmarshalNSetSpamPreferenceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferenceInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7189,7 +7189,7 @@ func (ec *executionContext) field_Mutation_syncTokensForUsername_args(ctx contex
 	var arg1 []persist.Chain
 	if tmp, ok := rawArgs["chains"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chains"))
-		arg1, err = ec.unmarshalNChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainᚄ(ctx, tmp)
+		arg1, err = ec.unmarshalNChain2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7204,7 +7204,7 @@ func (ec *executionContext) field_Mutation_syncTokens_args(ctx context.Context, 
 	var arg0 []persist.Chain
 	if tmp, ok := rawArgs["chains"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chains"))
-		arg0, err = ec.unmarshalOChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainᚄ(ctx, tmp)
+		arg0, err = ec.unmarshalOChain2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7219,7 +7219,7 @@ func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7234,7 +7234,7 @@ func (ec *executionContext) field_Mutation_unsubscribeFromEmailType_args(ctx con
 	var arg0 model.UnsubscribeFromEmailTypeInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7249,7 +7249,7 @@ func (ec *executionContext) field_Mutation_updateCollectionHidden_args(ctx conte
 	var arg0 model.UpdateCollectionHiddenInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateCollectionHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionHiddenInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateCollectionHiddenInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionHiddenInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7264,7 +7264,7 @@ func (ec *executionContext) field_Mutation_updateCollectionInfo_args(ctx context
 	var arg0 model.UpdateCollectionInfoInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateCollectionInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInfoInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateCollectionInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7279,7 +7279,7 @@ func (ec *executionContext) field_Mutation_updateCollectionTokens_args(ctx conte
 	var arg0 model.UpdateCollectionTokensInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateCollectionTokensInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionTokensInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateCollectionTokensInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionTokensInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7294,7 +7294,7 @@ func (ec *executionContext) field_Mutation_updateEmailNotificationSettings_args(
 	var arg0 model.UpdateEmailNotificationSettingsInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7309,7 +7309,7 @@ func (ec *executionContext) field_Mutation_updateEmail_args(ctx context.Context,
 	var arg0 model.UpdateEmailInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateEmailInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7324,7 +7324,7 @@ func (ec *executionContext) field_Mutation_updateFeaturedSplit_args(ctx context.
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["splitId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7339,7 +7339,7 @@ func (ec *executionContext) field_Mutation_updateNotificationSettings_args(ctx c
 	var arg0 *model.NotificationSettingsInput
 	if tmp, ok := rawArgs["settings"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("settings"))
-		arg0, err = ec.unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx, tmp)
+		arg0, err = ec.unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7354,7 +7354,7 @@ func (ec *executionContext) field_Mutation_updatePrimaryWallet_args(ctx context.
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["walletID"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletID"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7369,7 +7369,7 @@ func (ec *executionContext) field_Mutation_updateSocialAccountDisplayed_args(ctx
 	var arg0 model.UpdateSocialAccountDisplayedInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7384,7 +7384,7 @@ func (ec *executionContext) field_Mutation_updateSplitCollections_args(ctx conte
 	var arg0 model.UpdateSplitCollectionsInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitCollectionsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateSplitCollectionsInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitCollectionsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7399,7 +7399,7 @@ func (ec *executionContext) field_Mutation_updateSplitHidden_args(ctx context.Co
 	var arg0 model.UpdateSplitHiddenInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7414,7 +7414,7 @@ func (ec *executionContext) field_Mutation_updateSplitInfo_args(ctx context.Cont
 	var arg0 model.UpdateSplitInfoInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateSplitInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7429,7 +7429,7 @@ func (ec *executionContext) field_Mutation_updateSplitOrder_args(ctx context.Con
 	var arg0 model.UpdateSplitOrderInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateSplitOrderInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7444,7 +7444,7 @@ func (ec *executionContext) field_Mutation_updateSplit_args(ctx context.Context,
 	var arg0 model.UpdateSplitInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7459,7 +7459,7 @@ func (ec *executionContext) field_Mutation_updateTokenInfo_args(ctx context.Cont
 	var arg0 model.UpdateTokenInfoInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateTokenInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateTokenInfoInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateTokenInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateTokenInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7474,7 +7474,7 @@ func (ec *executionContext) field_Mutation_updateUserExperience_args(ctx context
 	var arg0 model.UpdateUserExperienceInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateUserExperienceInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateUserExperienceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7489,7 +7489,7 @@ func (ec *executionContext) field_Mutation_updateUserInfo_args(ctx context.Conte
 	var arg0 model.UpdateUserInfoInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateUserInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateUserInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7504,7 +7504,7 @@ func (ec *executionContext) field_Mutation_uploadPersistedQueries_args(ctx conte
 	var arg0 *model.UploadPersistedQueriesInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx, tmp)
+		arg0, err = ec.unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7519,7 +7519,7 @@ func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context,
 	var arg0 model.VerifyEmailInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNVerifyEmailInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx, tmp)
+		arg0, err = ec.unmarshalNVerifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7534,7 +7534,7 @@ func (ec *executionContext) field_Mutation_viewSplit_args(ctx context.Context, r
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["splitId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7564,7 +7564,7 @@ func (ec *executionContext) field_Query_collectionById_args(ctx context.Context,
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7579,7 +7579,7 @@ func (ec *executionContext) field_Query_collectionTokenById_args(ctx context.Con
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["tokenId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7588,7 +7588,7 @@ func (ec *executionContext) field_Query_collectionTokenById_args(ctx context.Con
 	var arg1 persist.DBID
 	if tmp, ok := rawArgs["collectionId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collectionId"))
-		arg1, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg1, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7603,7 +7603,7 @@ func (ec *executionContext) field_Query_collectionsByIds_args(ctx context.Contex
 	var arg0 []persist.DBID
 	if tmp, ok := rawArgs["ids"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
-		arg0, err = ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7618,7 +7618,7 @@ func (ec *executionContext) field_Query_communityByAddress_args(ctx context.Cont
 	var arg0 persist.ChainAddress
 	if tmp, ok := rawArgs["communityAddress"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("communityAddress"))
-		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
+		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7657,7 +7657,7 @@ func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs m
 	var arg0 model.GqlID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7807,7 +7807,7 @@ func (ec *executionContext) field_Query_socialConnections_args(ctx context.Conte
 	var arg0 persist.SocialProvider
 	if tmp, ok := rawArgs["socialAccountType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("socialAccountType"))
-		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
+		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7867,7 +7867,7 @@ func (ec *executionContext) field_Query_splitById_args(ctx context.Context, rawA
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7882,7 +7882,7 @@ func (ec *executionContext) field_Query_tokenById_args(ctx context.Context, rawA
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7897,7 +7897,7 @@ func (ec *executionContext) field_Query_userByAddress_args(ctx context.Context, 
 	var arg0 persist.ChainAddress
 	if tmp, ok := rawArgs["chainAddress"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
+		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7912,7 +7912,7 @@ func (ec *executionContext) field_Query_userById_args(ctx context.Context, rawAr
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7942,7 +7942,7 @@ func (ec *executionContext) field_Query_usersByRole_args(ctx context.Context, ra
 	var arg0 persist.Role
 	if tmp, ok := rawArgs["role"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-		arg0, err = ec.unmarshalNRole2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx, tmp)
+		arg0, err = ec.unmarshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -8008,7 +8008,7 @@ func (ec *executionContext) field_Query_viewerSplitById_args(ctx context.Context
 	var arg0 persist.DBID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -8023,7 +8023,7 @@ func (ec *executionContext) field_SocialQueries_socialConnections_args(ctx conte
 	var arg0 persist.SocialProvider
 	if tmp, ok := rawArgs["socialAccountType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("socialAccountType"))
-		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
+		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -8293,7 +8293,7 @@ func (ec *executionContext) field_SplitFiUser_tokensByChain_args(ctx context.Con
 	var arg0 persist.Chain
 	if tmp, ok := rawArgs["chain"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-		arg0, err = ec.unmarshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, tmp)
+		arg0, err = ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -8407,7 +8407,7 @@ func (ec *executionContext) _AddUserWalletPayload_viewer(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8466,7 +8466,7 @@ func (ec *executionContext) _AdminAddWalletPayload_user(ctx context.Context, fie
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8549,7 +8549,7 @@ func (ec *executionContext) _AudioMedia_previewURLs(ctx context.Context, field g
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AudioMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8731,7 +8731,7 @@ func (ec *executionContext) _AudioMedia_dimensions(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AudioMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8947,7 +8947,7 @@ func (ec *executionContext) _Badge_contract(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Contract)
 	fc.Result = res
-	return ec.marshalOContract2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐContract(ctx, field.Selections, res)
+	return ec.marshalOContract2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐContract(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Badge_contract(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9010,7 +9010,7 @@ func (ec *executionContext) _ChainAddress_address(ctx context.Context, field gra
 	}
 	res := resTmp.(persist.Address)
 	fc.Result = res
-	return ec.marshalOAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainAddress_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9051,7 +9051,7 @@ func (ec *executionContext) _ChainAddress_chain(ctx context.Context, field graph
 	}
 	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainAddress_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9092,7 +9092,7 @@ func (ec *executionContext) _ChainPubKey_pubKey(ctx context.Context, field graph
 	}
 	res := resTmp.(persist.PubKey)
 	fc.Result = res
-	return ec.marshalOPubKey2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐPubKey(ctx, field.Selections, res)
+	return ec.marshalOPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainPubKey_pubKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9133,7 +9133,7 @@ func (ec *executionContext) _ChainPubKey_chain(ctx context.Context, field graphq
 	}
 	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainPubKey_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9174,7 +9174,7 @@ func (ec *executionContext) _ChainTokens_chain(ctx context.Context, field graphq
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainTokens_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9215,7 +9215,7 @@ func (ec *executionContext) _ChainTokens_tokens(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainTokens_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9306,7 +9306,7 @@ func (ec *executionContext) _ClearAllNotificationsPayload_notifications(ctx cont
 	}
 	res := resTmp.([]model.Notification)
 	fc.Result = res
-	return ec.marshalONotification2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalONotification2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ClearAllNotificationsPayload_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9350,7 +9350,7 @@ func (ec *executionContext) _Collection_id(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Collection_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9394,7 +9394,7 @@ func (ec *executionContext) _Collection_dbid(ctx context.Context, field graphql.
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Collection_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9558,7 +9558,7 @@ func (ec *executionContext) _Collection_split(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Collection_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9619,7 +9619,7 @@ func (ec *executionContext) _Collection_layout(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.CollectionLayout)
 	fc.Result = res
-	return ec.marshalOCollectionLayout2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionLayout(ctx, field.Selections, res)
+	return ec.marshalOCollectionLayout2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionLayout(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Collection_layout(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9707,7 +9707,7 @@ func (ec *executionContext) _Collection_tokens(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.CollectionToken)
 	fc.Result = res
-	return ec.marshalOCollectionToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionToken(ctx, field.Selections, res)
+	return ec.marshalOCollectionToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Collection_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9810,7 +9810,7 @@ func (ec *executionContext) _CollectionLayout_sectionLayout(ctx context.Context,
 	}
 	res := resTmp.([]*model.CollectionSectionLayout)
 	fc.Result = res
-	return ec.marshalOCollectionSectionLayout2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx, field.Selections, res)
+	return ec.marshalOCollectionSectionLayout2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CollectionLayout_sectionLayout(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9942,7 +9942,7 @@ func (ec *executionContext) _CollectionToken_id(ctx context.Context, field graph
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CollectionToken_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9983,7 +9983,7 @@ func (ec *executionContext) _CollectionToken_token(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CollectionToken_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10074,7 +10074,7 @@ func (ec *executionContext) _CollectionToken_collection(ctx context.Context, fie
 	}
 	res := resTmp.(*model.Collection)
 	fc.Result = res
-	return ec.marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+	return ec.marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CollectionToken_collection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10135,7 +10135,7 @@ func (ec *executionContext) _CollectionToken_tokenSettings(ctx context.Context, 
 	}
 	res := resTmp.(*model.CollectionTokenSettings)
 	fc.Result = res
-	return ec.marshalOCollectionTokenSettings2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettings(ctx, field.Selections, res)
+	return ec.marshalOCollectionTokenSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CollectionToken_tokenSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10221,7 +10221,7 @@ func (ec *executionContext) _CommunitiesConnection_edges(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.CommunityEdge)
 	fc.Result = res
-	return ec.marshalOCommunityEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunityEdge(ctx, field.Selections, res)
+	return ec.marshalOCommunityEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunityEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CommunitiesConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10271,7 +10271,7 @@ func (ec *executionContext) _CommunitiesConnection_pageInfo(ctx context.Context,
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CommunitiesConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10329,7 +10329,7 @@ func (ec *executionContext) _Community_dbid(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Community_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10373,7 +10373,7 @@ func (ec *executionContext) _Community_id(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Community_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10455,7 +10455,7 @@ func (ec *executionContext) _Community_contractAddress(ctx context.Context, fiel
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Community_contractAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10502,7 +10502,7 @@ func (ec *executionContext) _Community_creatorAddress(ctx context.Context, field
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Community_creatorAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10549,7 +10549,7 @@ func (ec *executionContext) _Community_chain(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Community_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10836,7 +10836,7 @@ func (ec *executionContext) _Community_tokensInCommunity(ctx context.Context, fi
 	}
 	res := resTmp.(*model.TokensConnection)
 	fc.Result = res
-	return ec.marshalOTokensConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokensConnection(ctx, field.Selections, res)
+	return ec.marshalOTokensConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokensConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Community_tokensInCommunity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10894,7 +10894,7 @@ func (ec *executionContext) _Community_owners(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.TokenHoldersConnection)
 	fc.Result = res
-	return ec.marshalOTokenHoldersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHoldersConnection(ctx, field.Selections, res)
+	return ec.marshalOTokenHoldersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHoldersConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Community_owners(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10952,7 +10952,7 @@ func (ec *executionContext) _CommunityEdge_node(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Community)
 	fc.Result = res
-	return ec.marshalOCommunity2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunity(ctx, field.Selections, res)
+	return ec.marshalOCommunity2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunity(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CommunityEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11064,7 +11064,7 @@ func (ec *executionContext) _CommunitySearchResult_community(ctx context.Context
 	}
 	res := resTmp.(*model.Community)
 	fc.Result = res
-	return ec.marshalOCommunity2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunity(ctx, field.Selections, res)
+	return ec.marshalOCommunity2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunity(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CommunitySearchResult_community(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11135,7 +11135,7 @@ func (ec *executionContext) _ConnectSocialAccountPayload_viewer(ctx context.Cont
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ConnectSocialAccountPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11197,7 +11197,7 @@ func (ec *executionContext) _Contract_id(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Contract_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11241,7 +11241,7 @@ func (ec *executionContext) _Contract_dbid(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Contract_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11323,7 +11323,7 @@ func (ec *executionContext) _Contract_contractAddress(ctx context.Context, field
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Contract_contractAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11370,7 +11370,7 @@ func (ec *executionContext) _Contract_creatorAddress(ctx context.Context, field 
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Contract_creatorAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11417,7 +11417,7 @@ func (ec *executionContext) _Contract_chain(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Contract_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11622,7 +11622,7 @@ func (ec *executionContext) _CreateCollectionPayload_collection(ctx context.Cont
 	}
 	res := resTmp.(*model.Collection)
 	fc.Result = res
-	return ec.marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+	return ec.marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreateCollectionPayload_collection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11683,7 +11683,7 @@ func (ec *executionContext) _CreateSplitPayload_split(ctx context.Context, field
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreateSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11744,7 +11744,7 @@ func (ec *executionContext) _CreateUserPayload_userId(ctx context.Context, field
 	}
 	res := resTmp.(*persist.DBID)
 	fc.Result = res
-	return ec.marshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreateUserPayload_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11785,7 +11785,7 @@ func (ec *executionContext) _CreateUserPayload_splitId(ctx context.Context, fiel
 	}
 	res := resTmp.(*persist.DBID)
 	fc.Result = res
-	return ec.marshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreateUserPayload_splitId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11826,7 +11826,7 @@ func (ec *executionContext) _CreateUserPayload_viewer(ctx context.Context, field
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreateUserPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11885,7 +11885,7 @@ func (ec *executionContext) _DeepRefreshPayload_chain(ctx context.Context, field
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeepRefreshPayload_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11967,7 +11967,7 @@ func (ec *executionContext) _DeleteCollectionPayload_split(ctx context.Context, 
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeleteCollectionPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12028,7 +12028,7 @@ func (ec *executionContext) _DeleteSplitPayload_deletedId(ctx context.Context, f
 	}
 	res := resTmp.(*model.DeletedNode)
 	fc.Result = res
-	return ec.marshalODeletedNode2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeletedNode(ctx, field.Selections, res)
+	return ec.marshalODeletedNode2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeletedNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeleteSplitPayload_deletedId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12078,7 +12078,7 @@ func (ec *executionContext) _DeletedNode_id(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeletedNode_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12122,7 +12122,7 @@ func (ec *executionContext) _DeletedNode_dbid(ctx context.Context, field graphql
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeletedNode_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12163,7 +12163,7 @@ func (ec *executionContext) _DisconnectSocialAccountPayload_viewer(ctx context.C
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DisconnectSocialAccountPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12709,7 +12709,7 @@ func (ec *executionContext) _ErrNeedsToReconnectSocial_socialAccountType(ctx con
 	}
 	res := resTmp.(persist.SocialProvider)
 	fc.Result = res
-	return ec.marshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
+	return ec.marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrNeedsToReconnectSocial_socialAccountType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12885,7 +12885,7 @@ func (ec *executionContext) _ErrNotAuthorized_cause(ctx context.Context, field g
 	}
 	res := resTmp.(model.AuthorizationError)
 	fc.Result = res
-	return ec.marshalNAuthorizationError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAuthorizationError(ctx, field.Selections, res)
+	return ec.marshalNAuthorizationError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthorizationError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ErrNotAuthorized_cause(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13190,7 +13190,7 @@ func (ec *executionContext) _FollowAllSocialConnectionsPayload_viewer(ctx contex
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_FollowAllSocialConnectionsPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13249,7 +13249,7 @@ func (ec *executionContext) _FollowInfo_user(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_FollowInfo_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13373,7 +13373,7 @@ func (ec *executionContext) _FollowUserPayload_viewer(ctx context.Context, field
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_FollowUserPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13432,7 +13432,7 @@ func (ec *executionContext) _FollowUserPayload_user(ctx context.Context, field g
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_FollowUserPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13515,7 +13515,7 @@ func (ec *executionContext) _GIFMedia_previewURLs(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GIFMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13574,7 +13574,7 @@ func (ec *executionContext) _GIFMedia_staticPreviewURLs(ctx context.Context, fie
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GIFMedia_staticPreviewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13756,7 +13756,7 @@ func (ec *executionContext) _GIFMedia_dimensions(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GIFMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13805,7 +13805,7 @@ func (ec *executionContext) _GltfMedia_previewURLs(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GltfMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13987,7 +13987,7 @@ func (ec *executionContext) _GltfMedia_dimensions(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GltfMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14036,7 +14036,7 @@ func (ec *executionContext) _GroupNotificationUserEdge_node(ctx context.Context,
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14160,7 +14160,7 @@ func (ec *executionContext) _GroupNotificationUsersConnection_edges(ctx context.
 	}
 	res := resTmp.([]*model.GroupNotificationUserEdge)
 	fc.Result = res
-	return ec.marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, field.Selections, res)
+	return ec.marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14207,7 +14207,7 @@ func (ec *executionContext) _GroupNotificationUsersConnection_pageInfo(ctx conte
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14262,7 +14262,7 @@ func (ec *executionContext) _HtmlMedia_previewURLs(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HtmlMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14444,7 +14444,7 @@ func (ec *executionContext) _HtmlMedia_dimensions(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HtmlMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14493,7 +14493,7 @@ func (ec *executionContext) _ImageMedia_previewURLs(ctx context.Context, field g
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ImageMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14675,7 +14675,7 @@ func (ec *executionContext) _ImageMedia_dimensions(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ImageMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14724,7 +14724,7 @@ func (ec *executionContext) _InvalidMedia_previewURLs(ctx context.Context, field
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InvalidMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14906,7 +14906,7 @@ func (ec *executionContext) _InvalidMedia_dimensions(ctx context.Context, field 
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InvalidMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14955,7 +14955,7 @@ func (ec *executionContext) _JsonMedia_previewURLs(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_JsonMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15137,7 +15137,7 @@ func (ec *executionContext) _JsonMedia_dimensions(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_JsonMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15186,7 +15186,7 @@ func (ec *executionContext) _LoginPayload_userId(ctx context.Context, field grap
 	}
 	res := resTmp.(*persist.DBID)
 	fc.Result = res
-	return ec.marshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LoginPayload_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15227,7 +15227,7 @@ func (ec *executionContext) _LoginPayload_viewer(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LoginPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15286,7 +15286,7 @@ func (ec *executionContext) _LogoutPayload_viewer(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogoutPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15471,7 +15471,7 @@ func (ec *executionContext) _MembershipTier_id(ctx context.Context, field graphq
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MembershipTier_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15515,7 +15515,7 @@ func (ec *executionContext) _MembershipTier_dbid(ctx context.Context, field grap
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MembershipTier_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15679,7 +15679,7 @@ func (ec *executionContext) _MembershipTier_owners(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.TokenHolder)
 	fc.Result = res
-	return ec.marshalOTokenHolder2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolder(ctx, field.Selections, res)
+	return ec.marshalOTokenHolder2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolder(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MembershipTier_owners(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15774,7 +15774,7 @@ func (ec *executionContext) _MoveCollectionToSplitPayload_oldSplit(ctx context.C
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MoveCollectionToSplitPayload_oldSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15835,7 +15835,7 @@ func (ec *executionContext) _MoveCollectionToSplitPayload_newSplit(ctx context.C
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MoveCollectionToSplitPayload_newSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15905,7 +15905,7 @@ func (ec *executionContext) _Mutation_addUserWallet(ctx context.Context, field g
 		if data, ok := tmp.(model.AddUserWalletPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.AddUserWalletPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.AddUserWalletPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15916,7 +15916,7 @@ func (ec *executionContext) _Mutation_addUserWallet(ctx context.Context, field g
 	}
 	res := resTmp.(model.AddUserWalletPayloadOrError)
 	fc.Result = res
-	return ec.marshalOAddUserWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOAddUserWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addUserWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15977,7 +15977,7 @@ func (ec *executionContext) _Mutation_removeUserWallets(ctx context.Context, fie
 		if data, ok := tmp.(model.RemoveUserWalletsPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.RemoveUserWalletsPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.RemoveUserWalletsPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15988,7 +15988,7 @@ func (ec *executionContext) _Mutation_removeUserWallets(ctx context.Context, fie
 	}
 	res := resTmp.(model.RemoveUserWalletsPayloadOrError)
 	fc.Result = res
-	return ec.marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_removeUserWallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16049,7 +16049,7 @@ func (ec *executionContext) _Mutation_updateUserInfo(ctx context.Context, field 
 		if data, ok := tmp.(model.UpdateUserInfoPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateUserInfoPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateUserInfoPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16060,7 +16060,7 @@ func (ec *executionContext) _Mutation_updateUserInfo(ctx context.Context, field 
 	}
 	res := resTmp.(model.UpdateUserInfoPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUserInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16121,7 +16121,7 @@ func (ec *executionContext) _Mutation_updateSplitCollections(ctx context.Context
 		if data, ok := tmp.(model.UpdateSplitCollectionsPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitCollectionsPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitCollectionsPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16132,7 +16132,7 @@ func (ec *executionContext) _Mutation_updateSplitCollections(ctx context.Context
 	}
 	res := resTmp.(model.UpdateSplitCollectionsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitCollectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitCollectionsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitCollectionsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSplitCollections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16193,7 +16193,7 @@ func (ec *executionContext) _Mutation_createCollection(ctx context.Context, fiel
 		if data, ok := tmp.(model.CreateCollectionPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.CreateCollectionPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.CreateCollectionPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16204,7 +16204,7 @@ func (ec *executionContext) _Mutation_createCollection(ctx context.Context, fiel
 	}
 	res := resTmp.(model.CreateCollectionPayloadOrError)
 	fc.Result = res
-	return ec.marshalOCreateCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOCreateCollectionPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createCollection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16265,7 +16265,7 @@ func (ec *executionContext) _Mutation_deleteCollection(ctx context.Context, fiel
 		if data, ok := tmp.(model.DeleteCollectionPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.DeleteCollectionPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.DeleteCollectionPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16276,7 +16276,7 @@ func (ec *executionContext) _Mutation_deleteCollection(ctx context.Context, fiel
 	}
 	res := resTmp.(model.DeleteCollectionPayloadOrError)
 	fc.Result = res
-	return ec.marshalODeleteCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteCollectionPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalODeleteCollectionPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeleteCollectionPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteCollection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16337,7 +16337,7 @@ func (ec *executionContext) _Mutation_updateCollectionInfo(ctx context.Context, 
 		if data, ok := tmp.(model.UpdateCollectionInfoPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateCollectionInfoPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateCollectionInfoPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16348,7 +16348,7 @@ func (ec *executionContext) _Mutation_updateCollectionInfo(ctx context.Context, 
 	}
 	res := resTmp.(model.UpdateCollectionInfoPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateCollectionInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInfoPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateCollectionInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInfoPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateCollectionInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16409,7 +16409,7 @@ func (ec *executionContext) _Mutation_updateCollectionTokens(ctx context.Context
 		if data, ok := tmp.(model.UpdateCollectionTokensPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateCollectionTokensPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateCollectionTokensPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16420,7 +16420,7 @@ func (ec *executionContext) _Mutation_updateCollectionTokens(ctx context.Context
 	}
 	res := resTmp.(model.UpdateCollectionTokensPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateCollectionTokensPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionTokensPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateCollectionTokensPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionTokensPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateCollectionTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16481,7 +16481,7 @@ func (ec *executionContext) _Mutation_updateCollectionHidden(ctx context.Context
 		if data, ok := tmp.(model.UpdateCollectionHiddenPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateCollectionHiddenPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateCollectionHiddenPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16492,7 +16492,7 @@ func (ec *executionContext) _Mutation_updateCollectionHidden(ctx context.Context
 	}
 	res := resTmp.(model.UpdateCollectionHiddenPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateCollectionHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionHiddenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateCollectionHiddenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionHiddenPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateCollectionHidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16553,7 +16553,7 @@ func (ec *executionContext) _Mutation_updateTokenInfo(ctx context.Context, field
 		if data, ok := tmp.(model.UpdateTokenInfoPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateTokenInfoPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateTokenInfoPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16564,7 +16564,7 @@ func (ec *executionContext) _Mutation_updateTokenInfo(ctx context.Context, field
 	}
 	res := resTmp.(model.UpdateTokenInfoPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateTokenInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateTokenInfoPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateTokenInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateTokenInfoPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateTokenInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16625,7 +16625,7 @@ func (ec *executionContext) _Mutation_setSpamPreference(ctx context.Context, fie
 		if data, ok := tmp.(model.SetSpamPreferencePayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.SetSpamPreferencePayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.SetSpamPreferencePayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16636,7 +16636,7 @@ func (ec *executionContext) _Mutation_setSpamPreference(ctx context.Context, fie
 	}
 	res := resTmp.(model.SetSpamPreferencePayloadOrError)
 	fc.Result = res
-	return ec.marshalOSetSpamPreferencePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSetSpamPreferencePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSetSpamPreferencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferencePayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setSpamPreference(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16697,7 +16697,7 @@ func (ec *executionContext) _Mutation_syncTokens(ctx context.Context, field grap
 		if data, ok := tmp.(model.SyncTokensPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.SyncTokensPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.SyncTokensPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16708,7 +16708,7 @@ func (ec *executionContext) _Mutation_syncTokens(ctx context.Context, field grap
 	}
 	res := resTmp.(model.SyncTokensPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSyncTokensPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSyncTokensPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSyncTokensPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSyncTokensPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_syncTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16760,7 +16760,7 @@ func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field gr
 	}
 	res := resTmp.(model.RefreshTokenPayloadOrError)
 	fc.Result = res
-	return ec.marshalORefreshTokenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshTokenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORefreshTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshTokenPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_refreshToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16812,7 +16812,7 @@ func (ec *executionContext) _Mutation_refreshCollection(ctx context.Context, fie
 	}
 	res := resTmp.(model.RefreshCollectionPayloadOrError)
 	fc.Result = res
-	return ec.marshalORefreshCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshCollectionPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORefreshCollectionPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshCollectionPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_refreshCollection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16864,7 +16864,7 @@ func (ec *executionContext) _Mutation_refreshContract(ctx context.Context, field
 	}
 	res := resTmp.(model.RefreshContractPayloadOrError)
 	fc.Result = res
-	return ec.marshalORefreshContractPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshContractPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORefreshContractPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshContractPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_refreshContract(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16925,7 +16925,7 @@ func (ec *executionContext) _Mutation_deepRefresh(ctx context.Context, field gra
 		if data, ok := tmp.(model.DeepRefreshPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.DeepRefreshPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.DeepRefreshPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16936,7 +16936,7 @@ func (ec *executionContext) _Mutation_deepRefresh(ctx context.Context, field gra
 	}
 	res := resTmp.(model.DeepRefreshPayloadOrError)
 	fc.Result = res
-	return ec.marshalODeepRefreshPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeepRefreshPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalODeepRefreshPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deepRefresh(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16988,7 +16988,7 @@ func (ec *executionContext) _Mutation_getAuthNonce(ctx context.Context, field gr
 	}
 	res := resTmp.(model.GetAuthNoncePayloadOrError)
 	fc.Result = res
-	return ec.marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_getAuthNonce(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17040,7 +17040,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(model.CreateUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalOCreateUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOCreateUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17101,7 +17101,7 @@ func (ec *executionContext) _Mutation_updateEmail(ctx context.Context, field gra
 		if data, ok := tmp.(model.UpdateEmailPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateEmailPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateEmailPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17112,7 +17112,7 @@ func (ec *executionContext) _Mutation_updateEmail(ctx context.Context, field gra
 	}
 	res := resTmp.(model.UpdateEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17173,7 +17173,7 @@ func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Contex
 		if data, ok := tmp.(model.ResendVerificationEmailPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.ResendVerificationEmailPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.ResendVerificationEmailPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17184,7 +17184,7 @@ func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Contex
 	}
 	res := resTmp.(model.ResendVerificationEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_resendVerificationEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17234,7 +17234,7 @@ func (ec *executionContext) _Mutation_updateEmailNotificationSettings(ctx contex
 		if data, ok := tmp.(model.UpdateEmailNotificationSettingsPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateEmailNotificationSettingsPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateEmailNotificationSettingsPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17245,7 +17245,7 @@ func (ec *executionContext) _Mutation_updateEmailNotificationSettings(ctx contex
 	}
 	res := resTmp.(model.UpdateEmailNotificationSettingsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateEmailNotificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17297,7 +17297,7 @@ func (ec *executionContext) _Mutation_unsubscribeFromEmailType(ctx context.Conte
 	}
 	res := resTmp.(model.UnsubscribeFromEmailTypePayloadOrError)
 	fc.Result = res
-	return ec.marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_unsubscribeFromEmailType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17349,7 +17349,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.LoginPayloadOrError)
 	fc.Result = res
-	return ec.marshalOLoginPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOLoginPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17401,7 +17401,7 @@ func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.LogoutPayload)
 	fc.Result = res
-	return ec.marshalOLogoutPayload2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐLogoutPayload(ctx, field.Selections, res)
+	return ec.marshalOLogoutPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLogoutPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17455,7 +17455,7 @@ func (ec *executionContext) _Mutation_connectSocialAccount(ctx context.Context, 
 		if data, ok := tmp.(model.ConnectSocialAccountPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.ConnectSocialAccountPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.ConnectSocialAccountPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17466,7 +17466,7 @@ func (ec *executionContext) _Mutation_connectSocialAccount(ctx context.Context, 
 	}
 	res := resTmp.(model.ConnectSocialAccountPayloadOrError)
 	fc.Result = res
-	return ec.marshalOConnectSocialAccountPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐConnectSocialAccountPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOConnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐConnectSocialAccountPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_connectSocialAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17527,7 +17527,7 @@ func (ec *executionContext) _Mutation_disconnectSocialAccount(ctx context.Contex
 		if data, ok := tmp.(model.DisconnectSocialAccountPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.DisconnectSocialAccountPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.DisconnectSocialAccountPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17538,7 +17538,7 @@ func (ec *executionContext) _Mutation_disconnectSocialAccount(ctx context.Contex
 	}
 	res := resTmp.(model.DisconnectSocialAccountPayloadOrError)
 	fc.Result = res
-	return ec.marshalODisconnectSocialAccountPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDisconnectSocialAccountPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalODisconnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDisconnectSocialAccountPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_disconnectSocialAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17599,7 +17599,7 @@ func (ec *executionContext) _Mutation_updateSocialAccountDisplayed(ctx context.C
 		if data, ok := tmp.(model.UpdateSocialAccountDisplayedPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSocialAccountDisplayedPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSocialAccountDisplayedPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17610,7 +17610,7 @@ func (ec *executionContext) _Mutation_updateSocialAccountDisplayed(ctx context.C
 	}
 	res := resTmp.(model.UpdateSocialAccountDisplayedPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSocialAccountDisplayedPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSocialAccountDisplayedPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSocialAccountDisplayed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17671,7 +17671,7 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 		if data, ok := tmp.(model.FollowUserPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.FollowUserPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.FollowUserPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17682,7 +17682,7 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 	}
 	res := resTmp.(model.FollowUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalOFollowUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐFollowUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOFollowUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐFollowUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_followUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17743,7 +17743,7 @@ func (ec *executionContext) _Mutation_followAllSocialConnections(ctx context.Con
 		if data, ok := tmp.(model.FollowAllSocialConnectionsPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.FollowAllSocialConnectionsPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.FollowAllSocialConnectionsPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17754,7 +17754,7 @@ func (ec *executionContext) _Mutation_followAllSocialConnections(ctx context.Con
 	}
 	res := resTmp.(model.FollowAllSocialConnectionsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOFollowAllSocialConnectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐFollowAllSocialConnectionsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOFollowAllSocialConnectionsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐFollowAllSocialConnectionsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_followAllSocialConnections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17815,7 +17815,7 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 		if data, ok := tmp.(model.UnfollowUserPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UnfollowUserPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UnfollowUserPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17826,7 +17826,7 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 	}
 	res := resTmp.(model.UnfollowUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUnfollowUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUnfollowUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUnfollowUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnfollowUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_unfollowUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17878,7 +17878,7 @@ func (ec *executionContext) _Mutation_viewSplit(ctx context.Context, field graph
 	}
 	res := resTmp.(model.ViewSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOViewSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOViewSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_viewSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17939,7 +17939,7 @@ func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field gra
 		if data, ok := tmp.(model.UpdateSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17950,7 +17950,7 @@ func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field gra
 	}
 	res := resTmp.(model.UpdateSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18011,7 +18011,7 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 		if data, ok := tmp.(model.PublishSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.PublishSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.PublishSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18022,7 +18022,7 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 	}
 	res := resTmp.(model.PublishSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOPublishSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPublishSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_publishSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18083,7 +18083,7 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 		if data, ok := tmp.(model.CreateSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.CreateSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.CreateSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18094,7 +18094,7 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 	}
 	res := resTmp.(model.CreateSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOCreateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOCreateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18155,7 +18155,7 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 		if data, ok := tmp.(model.UpdateSplitHiddenPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitHiddenPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitHiddenPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18166,7 +18166,7 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 	}
 	res := resTmp.(model.UpdateSplitHiddenPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSplitHidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18227,7 +18227,7 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 		if data, ok := tmp.(model.DeleteSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.DeleteSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.DeleteSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18238,7 +18238,7 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 	}
 	res := resTmp.(model.DeleteSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalODeleteSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalODeleteSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18299,7 +18299,7 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 		if data, ok := tmp.(model.UpdateSplitOrderPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitOrderPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitOrderPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18310,7 +18310,7 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 	}
 	res := resTmp.(model.UpdateSplitOrderPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSplitOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18371,7 +18371,7 @@ func (ec *executionContext) _Mutation_updateSplitInfo(ctx context.Context, field
 		if data, ok := tmp.(model.UpdateSplitInfoPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateSplitInfoPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitInfoPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18382,7 +18382,7 @@ func (ec *executionContext) _Mutation_updateSplitInfo(ctx context.Context, field
 	}
 	res := resTmp.(model.UpdateSplitInfoPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSplitInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18443,7 +18443,7 @@ func (ec *executionContext) _Mutation_updateFeaturedSplit(ctx context.Context, f
 		if data, ok := tmp.(model.UpdateFeaturedSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateFeaturedSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateFeaturedSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18454,7 +18454,7 @@ func (ec *executionContext) _Mutation_updateFeaturedSplit(ctx context.Context, f
 	}
 	res := resTmp.(model.UpdateFeaturedSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateFeaturedSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateFeaturedSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateFeaturedSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateFeaturedSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateFeaturedSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18515,7 +18515,7 @@ func (ec *executionContext) _Mutation_clearAllNotifications(ctx context.Context,
 		if data, ok := tmp.(*model.ClearAllNotificationsPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/graphql/model.ClearAllNotificationsPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.ClearAllNotificationsPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18526,7 +18526,7 @@ func (ec *executionContext) _Mutation_clearAllNotifications(ctx context.Context,
 	}
 	res := resTmp.(*model.ClearAllNotificationsPayload)
 	fc.Result = res
-	return ec.marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx, field.Selections, res)
+	return ec.marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_clearAllNotifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18571,7 +18571,7 @@ func (ec *executionContext) _Mutation_updateNotificationSettings(ctx context.Con
 	}
 	res := resTmp.(*model.NotificationSettings)
 	fc.Result = res
-	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
+	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateNotificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18629,7 +18629,7 @@ func (ec *executionContext) _Mutation_preverifyEmail(ctx context.Context, field 
 	}
 	res := resTmp.(model.PreverifyEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_preverifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18681,7 +18681,7 @@ func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field gra
 	}
 	res := resTmp.(model.VerifyEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOVerifyEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOVerifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_verifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18742,7 +18742,7 @@ func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field 
 		if data, ok := tmp.(model.AddRolesToUserPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.AddRolesToUserPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.AddRolesToUserPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18753,7 +18753,7 @@ func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field 
 	}
 	res := resTmp.(model.AddRolesToUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addRolesToUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18814,7 +18814,7 @@ func (ec *executionContext) _Mutation_addWalletToUserUnchecked(ctx context.Conte
 		if data, ok := tmp.(model.AdminAddWalletPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.AdminAddWalletPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.AdminAddWalletPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18825,7 +18825,7 @@ func (ec *executionContext) _Mutation_addWalletToUserUnchecked(ctx context.Conte
 	}
 	res := resTmp.(model.AdminAddWalletPayloadOrError)
 	fc.Result = res
-	return ec.marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addWalletToUserUnchecked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18886,7 +18886,7 @@ func (ec *executionContext) _Mutation_revokeRolesFromUser(ctx context.Context, f
 		if data, ok := tmp.(model.RevokeRolesFromUserPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.RevokeRolesFromUserPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.RevokeRolesFromUserPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18897,7 +18897,7 @@ func (ec *executionContext) _Mutation_revokeRolesFromUser(ctx context.Context, f
 	}
 	res := resTmp.(model.RevokeRolesFromUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_revokeRolesFromUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18958,7 +18958,7 @@ func (ec *executionContext) _Mutation_syncTokensForUsername(ctx context.Context,
 		if data, ok := tmp.(model.SyncTokensForUsernamePayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.SyncTokensForUsernamePayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.SyncTokensForUsernamePayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18969,7 +18969,7 @@ func (ec *executionContext) _Mutation_syncTokensForUsername(ctx context.Context,
 	}
 	res := resTmp.(model.SyncTokensForUsernamePayloadOrError)
 	fc.Result = res
-	return ec.marshalOSyncTokensForUsernamePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSyncTokensForUsernamePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSyncTokensForUsernamePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSyncTokensForUsernamePayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_syncTokensForUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19030,7 +19030,7 @@ func (ec *executionContext) _Mutation_mintPremiumCardToWallet(ctx context.Contex
 		if data, ok := tmp.(model.MintPremiumCardToWalletPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.MintPremiumCardToWalletPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.MintPremiumCardToWalletPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19041,7 +19041,7 @@ func (ec *executionContext) _Mutation_mintPremiumCardToWallet(ctx context.Contex
 	}
 	res := resTmp.(model.MintPremiumCardToWalletPayloadOrError)
 	fc.Result = res
-	return ec.marshalOMintPremiumCardToWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMintPremiumCardToWalletPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOMintPremiumCardToWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMintPremiumCardToWalletPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_mintPremiumCardToWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19102,7 +19102,7 @@ func (ec *executionContext) _Mutation_uploadPersistedQueries(ctx context.Context
 		if data, ok := tmp.(model.UploadPersistedQueriesPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UploadPersistedQueriesPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UploadPersistedQueriesPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19113,7 +19113,7 @@ func (ec *executionContext) _Mutation_uploadPersistedQueries(ctx context.Context
 	}
 	res := resTmp.(model.UploadPersistedQueriesPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_uploadPersistedQueries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19174,7 +19174,7 @@ func (ec *executionContext) _Mutation_updatePrimaryWallet(ctx context.Context, f
 		if data, ok := tmp.(model.UpdatePrimaryWalletPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdatePrimaryWalletPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdatePrimaryWalletPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19185,7 +19185,7 @@ func (ec *executionContext) _Mutation_updatePrimaryWallet(ctx context.Context, f
 	}
 	res := resTmp.(model.UpdatePrimaryWalletPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updatePrimaryWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19246,7 +19246,7 @@ func (ec *executionContext) _Mutation_updateUserExperience(ctx context.Context, 
 		if data, ok := tmp.(model.UpdateUserExperiencePayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.UpdateUserExperiencePayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateUserExperiencePayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19257,7 +19257,7 @@ func (ec *executionContext) _Mutation_updateUserExperience(ctx context.Context, 
 	}
 	res := resTmp.(model.UpdateUserExperiencePayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUserExperience(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19318,7 +19318,7 @@ func (ec *executionContext) _Mutation_moveCollectionToSplit(ctx context.Context,
 		if data, ok := tmp.(model.MoveCollectionToSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.MoveCollectionToSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.MoveCollectionToSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19329,7 +19329,7 @@ func (ec *executionContext) _Mutation_moveCollectionToSplit(ctx context.Context,
 	}
 	res := resTmp.(model.MoveCollectionToSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOMoveCollectionToSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOMoveCollectionToSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMoveCollectionToSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_moveCollectionToSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19381,7 +19381,7 @@ func (ec *executionContext) _NotificationEdge_node(ctx context.Context, field gr
 	}
 	res := resTmp.(model.Notification)
 	fc.Result = res
-	return ec.marshalONotification2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19545,7 +19545,7 @@ func (ec *executionContext) _NotificationsConnection_edges(ctx context.Context, 
 	}
 	res := resTmp.([]*model.NotificationEdge)
 	fc.Result = res
-	return ec.marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationEdge(ctx, field.Selections, res)
+	return ec.marshalONotificationEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationsConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19633,7 +19633,7 @@ func (ec *executionContext) _NotificationsConnection_pageInfo(ctx context.Contex
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationsConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19688,7 +19688,7 @@ func (ec *executionContext) _OwnerAtBlock_owner(ctx context.Context, field graph
 	}
 	res := resTmp.(model.SplitFiUserOrAddress)
 	fc.Result = res
-	return ec.marshalOSplitFiUserOrAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUserOrAddress(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUserOrAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUserOrAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_OwnerAtBlock_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20031,7 +20031,7 @@ func (ec *executionContext) _PdfMedia_previewURLs(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PdfMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20213,7 +20213,7 @@ func (ec *executionContext) _PdfMedia_dimensions(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PdfMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20265,7 +20265,7 @@ func (ec *executionContext) _PreverifyEmailPayload_email(ctx context.Context, fi
 	}
 	res := resTmp.(persist.Email)
 	fc.Result = res
-	return ec.marshalNEmail2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
+	return ec.marshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PreverifyEmailPayload_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20309,7 +20309,7 @@ func (ec *executionContext) _PreverifyEmailPayload_result(ctx context.Context, f
 	}
 	res := resTmp.(model.PreverifyEmailResult)
 	fc.Result = res
-	return ec.marshalNPreverifyEmailResult2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx, field.Selections, res)
+	return ec.marshalNPreverifyEmailResult2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PreverifyEmailPayload_result(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20698,7 +20698,7 @@ func (ec *executionContext) _PublishSplitPayload_split(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PublishSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20759,7 +20759,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(model.Node)
 	fc.Result = res
-	return ec.marshalONode2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNode(ctx, field.Selections, res)
+	return ec.marshalONode2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20820,7 +20820,7 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 		if data, ok := tmp.(model.ViewerOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.ViewerOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.ViewerOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20831,7 +20831,7 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(model.ViewerOrError)
 	fc.Result = res
-	return ec.marshalOViewerOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerOrError(ctx, field.Selections, res)
+	return ec.marshalOViewerOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20872,7 +20872,7 @@ func (ec *executionContext) _Query_userByUsername(ctx context.Context, field gra
 	}
 	res := resTmp.(model.UserByUsernameOrError)
 	fc.Result = res
-	return ec.marshalOUserByUsernameOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx, field.Selections, res)
+	return ec.marshalOUserByUsernameOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20924,7 +20924,7 @@ func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.UserByIDOrError)
 	fc.Result = res
-	return ec.marshalOUserByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserByIDOrError(ctx, field.Selections, res)
+	return ec.marshalOUserByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByIDOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20976,7 +20976,7 @@ func (ec *executionContext) _Query_userByAddress(ctx context.Context, field grap
 	}
 	res := resTmp.(model.UserByAddressOrError)
 	fc.Result = res
-	return ec.marshalOUserByAddressOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx, field.Selections, res)
+	return ec.marshalOUserByAddressOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userByAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21028,7 +21028,7 @@ func (ec *executionContext) _Query_usersWithTrait(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_usersWithTrait(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21122,7 +21122,7 @@ func (ec *executionContext) _Query_membershipTiers(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.MembershipTier)
 	fc.Result = res
-	return ec.marshalOMembershipTier2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMembershipTier(ctx, field.Selections, res)
+	return ec.marshalOMembershipTier2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMembershipTier(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_membershipTiers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21188,7 +21188,7 @@ func (ec *executionContext) _Query_collectionById(ctx context.Context, field gra
 	}
 	res := resTmp.(model.CollectionByIDOrError)
 	fc.Result = res
-	return ec.marshalOCollectionByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx, field.Selections, res)
+	return ec.marshalOCollectionByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_collectionById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21240,7 +21240,7 @@ func (ec *executionContext) _Query_collectionsByIds(ctx context.Context, field g
 	}
 	res := resTmp.([]model.CollectionByIDOrError)
 	fc.Result = res
-	return ec.marshalOCollectionByIdOrError2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx, field.Selections, res)
+	return ec.marshalOCollectionByIdOrError2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_collectionsByIds(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21292,7 +21292,7 @@ func (ec *executionContext) _Query_tokenById(ctx context.Context, field graphql.
 	}
 	res := resTmp.(model.TokenByIDOrError)
 	fc.Result = res
-	return ec.marshalOTokenByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenByIDOrError(ctx, field.Selections, res)
+	return ec.marshalOTokenByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenByIDOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_tokenById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21344,7 +21344,7 @@ func (ec *executionContext) _Query_collectionTokenById(ctx context.Context, fiel
 	}
 	res := resTmp.(model.CollectionTokenByIDOrError)
 	fc.Result = res
-	return ec.marshalOCollectionTokenByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenByIDOrError(ctx, field.Selections, res)
+	return ec.marshalOCollectionTokenByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenByIDOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_collectionTokenById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21396,7 +21396,7 @@ func (ec *executionContext) _Query_communityByAddress(ctx context.Context, field
 	}
 	res := resTmp.(model.CommunityByAddressOrError)
 	fc.Result = res
-	return ec.marshalOCommunityByAddressOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunityByAddressOrError(ctx, field.Selections, res)
+	return ec.marshalOCommunityByAddressOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunityByAddressOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_communityByAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21448,7 +21448,7 @@ func (ec *executionContext) _Query_generalAllowlist(ctx context.Context, field g
 	}
 	res := resTmp.([]*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddressᚄ(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_generalAllowlist(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21495,7 +21495,7 @@ func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.
 	}
 	res := resTmp.(model.SplitByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_splitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21547,7 +21547,7 @@ func (ec *executionContext) _Query_viewerSplitById(ctx context.Context, field gr
 	}
 	res := resTmp.(model.ViewerSplitByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_viewerSplitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21599,7 +21599,7 @@ func (ec *executionContext) _Query_searchUsers(ctx context.Context, field graphq
 	}
 	res := resTmp.(model.SearchUsersPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSearchUsersPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSearchUsersPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21651,7 +21651,7 @@ func (ec *executionContext) _Query_searchSplits(ctx context.Context, field graph
 	}
 	res := resTmp.(model.SearchSplitsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSearchSplitsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchSplits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21703,7 +21703,7 @@ func (ec *executionContext) _Query_searchCommunities(ctx context.Context, field 
 	}
 	res := resTmp.(model.SearchCommunitiesPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSearchCommunitiesPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchCommunitiesPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSearchCommunitiesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchCommunitiesPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchCommunities(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21764,7 +21764,7 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 		if data, ok := tmp.(*model.UsersConnection); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/graphql/model.UsersConnection`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.UsersConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21775,7 +21775,7 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.UsersConnection)
 	fc.Result = res
-	return ec.marshalOUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUsersConnection(ctx, field.Selections, res)
+	return ec.marshalOUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUsersConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_usersByRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21842,7 +21842,7 @@ func (ec *executionContext) _Query_socialConnections(ctx context.Context, field 
 		if data, ok := tmp.(*model.SocialConnectionsConnection); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/graphql/model.SocialConnectionsConnection`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.SocialConnectionsConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21853,7 +21853,7 @@ func (ec *executionContext) _Query_socialConnections(ctx context.Context, field 
 	}
 	res := resTmp.(*model.SocialConnectionsConnection)
 	fc.Result = res
-	return ec.marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx, field.Selections, res)
+	return ec.marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_socialConnections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21920,7 +21920,7 @@ func (ec *executionContext) _Query_socialQueries(ctx context.Context, field grap
 		if data, ok := tmp.(model.SocialQueriesOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mikeydub/go-gallery/graphql/model.SocialQueriesOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.SocialQueriesOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21931,7 +21931,7 @@ func (ec *executionContext) _Query_socialQueries(ctx context.Context, field grap
 	}
 	res := resTmp.(model.SocialQueriesOrError)
 	fc.Result = res
-	return ec.marshalOSocialQueriesOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialQueriesOrError(ctx, field.Selections, res)
+	return ec.marshalOSocialQueriesOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialQueriesOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_socialQueries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22149,7 +22149,7 @@ func (ec *executionContext) _RefreshCollectionPayload_collection(ctx context.Con
 	}
 	res := resTmp.(*model.Collection)
 	fc.Result = res
-	return ec.marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+	return ec.marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RefreshCollectionPayload_collection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22210,7 +22210,7 @@ func (ec *executionContext) _RefreshContractPayload_contract(ctx context.Context
 	}
 	res := resTmp.(*model.Contract)
 	fc.Result = res
-	return ec.marshalOContract2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐContract(ctx, field.Selections, res)
+	return ec.marshalOContract2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐContract(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RefreshContractPayload_contract(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22273,7 +22273,7 @@ func (ec *executionContext) _RefreshTokenPayload_token(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RefreshTokenPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22364,7 +22364,7 @@ func (ec *executionContext) _RemoveUserWalletsPayload_viewer(ctx context.Context
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22423,7 +22423,7 @@ func (ec *executionContext) _ResendVerificationEmailPayload_viewer(ctx context.C
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22482,7 +22482,7 @@ func (ec *executionContext) _SearchCommunitiesPayload_results(ctx context.Contex
 	}
 	res := resTmp.([]*model.CommunitySearchResult)
 	fc.Result = res
-	return ec.marshalOCommunitySearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunitySearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalOCommunitySearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunitySearchResultᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchCommunitiesPayload_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22527,7 +22527,7 @@ func (ec *executionContext) _SearchSplitsPayload_results(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.SplitSearchResult)
 	fc.Result = res
-	return ec.marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchSplitsPayload_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22572,7 +22572,7 @@ func (ec *executionContext) _SearchUsersPayload_results(ctx context.Context, fie
 	}
 	res := resTmp.([]*model.UserSearchResult)
 	fc.Result = res
-	return ec.marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchUsersPayload_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22617,7 +22617,7 @@ func (ec *executionContext) _SetSpamPreferencePayload_tokens(ctx context.Context
 	}
 	res := resTmp.([]*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SetSpamPreferencePayload_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22708,7 +22708,7 @@ func (ec *executionContext) _SocialAccounts_twitter(ctx context.Context, field g
 	}
 	res := resTmp.(*model.TwitterSocialAccount)
 	fc.Result = res
-	return ec.marshalOTwitterSocialAccount2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTwitterSocialAccount(ctx, field.Selections, res)
+	return ec.marshalOTwitterSocialAccount2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterSocialAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialAccounts_twitter(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22766,7 +22766,7 @@ func (ec *executionContext) _SocialConnection_id(ctx context.Context, field grap
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialConnection_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22807,7 +22807,7 @@ func (ec *executionContext) _SocialConnection_splitFiUser(ctx context.Context, f
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialConnection_splitFiUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22981,7 +22981,7 @@ func (ec *executionContext) _SocialConnection_socialType(ctx context.Context, fi
 	}
 	res := resTmp.(persist.SocialProvider)
 	fc.Result = res
-	return ec.marshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
+	return ec.marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialConnection_socialType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23154,7 +23154,7 @@ func (ec *executionContext) _SocialConnectionsConnection_edges(ctx context.Conte
 	}
 	res := resTmp.([]*model.SocialConnectionsEdge)
 	fc.Result = res
-	return ec.marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx, field.Selections, res)
+	return ec.marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialConnectionsConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23204,7 +23204,7 @@ func (ec *executionContext) _SocialConnectionsConnection_pageInfo(ctx context.Co
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialConnectionsConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23259,7 +23259,7 @@ func (ec *executionContext) _SocialConnectionsEdge_node(ctx context.Context, fie
 	}
 	res := resTmp.(model.SocialConnectionsOrError)
 	fc.Result = res
-	return ec.marshalOSocialConnectionsOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsOrError(ctx, field.Selections, res)
+	return ec.marshalOSocialConnectionsOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialConnectionsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23350,7 +23350,7 @@ func (ec *executionContext) _SocialQueries_socialConnections(ctx context.Context
 		if data, ok := tmp.(*model.SocialConnectionsConnection); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/graphql/model.SocialConnectionsConnection`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.SocialConnectionsConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23361,7 +23361,7 @@ func (ec *executionContext) _SocialQueries_socialConnections(ctx context.Context
 	}
 	res := resTmp.(*model.SocialConnectionsConnection)
 	fc.Result = res
-	return ec.marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx, field.Selections, res)
+	return ec.marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SocialQueries_socialConnections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23422,7 +23422,7 @@ func (ec *executionContext) _SomeoneFollowedYouBackNotification_id(ctx context.C
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneFollowedYouBackNotification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23466,7 +23466,7 @@ func (ec *executionContext) _SomeoneFollowedYouBackNotification_dbid(ctx context
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneFollowedYouBackNotification_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23671,7 +23671,7 @@ func (ec *executionContext) _SomeoneFollowedYouBackNotification_followers(ctx co
 	}
 	res := resTmp.(*model.GroupNotificationUsersConnection)
 	fc.Result = res
-	return ec.marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx, field.Selections, res)
+	return ec.marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneFollowedYouBackNotification_followers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23732,7 +23732,7 @@ func (ec *executionContext) _SomeoneFollowedYouNotification_id(ctx context.Conte
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneFollowedYouNotification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23776,7 +23776,7 @@ func (ec *executionContext) _SomeoneFollowedYouNotification_dbid(ctx context.Con
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneFollowedYouNotification_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23981,7 +23981,7 @@ func (ec *executionContext) _SomeoneFollowedYouNotification_followers(ctx contex
 	}
 	res := resTmp.(*model.GroupNotificationUsersConnection)
 	fc.Result = res
-	return ec.marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx, field.Selections, res)
+	return ec.marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneFollowedYouNotification_followers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24042,7 +24042,7 @@ func (ec *executionContext) _SomeoneViewedYourSplitNotification_id(ctx context.C
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24086,7 +24086,7 @@ func (ec *executionContext) _SomeoneViewedYourSplitNotification_dbid(ctx context
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24291,7 +24291,7 @@ func (ec *executionContext) _SomeoneViewedYourSplitNotification_userViewers(ctx 
 	}
 	res := resTmp.(*model.GroupNotificationUsersConnection)
 	fc.Result = res
-	return ec.marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx, field.Selections, res)
+	return ec.marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_userViewers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24390,7 +24390,7 @@ func (ec *executionContext) _SomeoneViewedYourSplitNotification_split(ctx contex
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SomeoneViewedYourSplitNotification_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24454,7 +24454,7 @@ func (ec *executionContext) _Split_id(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Split_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24498,7 +24498,7 @@ func (ec *executionContext) _Split_dbid(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Split_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24703,7 +24703,7 @@ func (ec *executionContext) _Split_tokenPreviews(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Split_tokenPreviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24762,7 +24762,7 @@ func (ec *executionContext) _Split_owner(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Split_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24845,7 +24845,7 @@ func (ec *executionContext) _Split_collections(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Collection)
 	fc.Result = res
-	return ec.marshalOCollection2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+	return ec.marshalOCollection2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Split_collections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24909,7 +24909,7 @@ func (ec *executionContext) _SplitFiUser_id(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24953,7 +24953,7 @@ func (ec *executionContext) _SplitFiUser_dbid(ctx context.Context, field graphql
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25158,7 +25158,7 @@ func (ec *executionContext) _SplitFiUser_roles(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*persist.Role)
 	fc.Result = res
-	return ec.marshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx, field.Selections, res)
+	return ec.marshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_roles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25199,7 +25199,7 @@ func (ec *executionContext) _SplitFiUser_socialAccounts(ctx context.Context, fie
 	}
 	res := resTmp.(*model.SocialAccounts)
 	fc.Result = res
-	return ec.marshalOSocialAccounts2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialAccounts(ctx, field.Selections, res)
+	return ec.marshalOSocialAccounts2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAccounts(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_socialAccounts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25244,7 +25244,7 @@ func (ec *executionContext) _SplitFiUser_tokens(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25335,7 +25335,7 @@ func (ec *executionContext) _SplitFiUser_tokensByChain(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.ChainTokens)
 	fc.Result = res
-	return ec.marshalOChainTokens2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐChainTokens(ctx, field.Selections, res)
+	return ec.marshalOChainTokens2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐChainTokens(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_tokensByChain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25393,7 +25393,7 @@ func (ec *executionContext) _SplitFiUser_wallets(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.Wallet)
 	fc.Result = res
-	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
+	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_wallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25448,7 +25448,7 @@ func (ec *executionContext) _SplitFiUser_primaryWallet(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Wallet)
 	fc.Result = res
-	return ec.marshalOWallet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
+	return ec.marshalOWallet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_primaryWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25503,7 +25503,7 @@ func (ec *executionContext) _SplitFiUser_featuredSplit(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_featuredSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25564,7 +25564,7 @@ func (ec *executionContext) _SplitFiUser_splits(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_splits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25625,7 +25625,7 @@ func (ec *executionContext) _SplitFiUser_badges(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Badge)
 	fc.Result = res
-	return ec.marshalOBadge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐBadge(ctx, field.Selections, res)
+	return ec.marshalOBadge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐBadge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_badges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25715,7 +25715,7 @@ func (ec *executionContext) _SplitFiUser_followers(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_followers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25798,7 +25798,7 @@ func (ec *executionContext) _SplitFiUser_following(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_following(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25890,7 +25890,7 @@ func (ec *executionContext) _SplitFiUser_sharedFollowers(ctx context.Context, fi
 		if data, ok := tmp.(*model.UsersConnection); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/graphql/model.UsersConnection`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.UsersConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -25901,7 +25901,7 @@ func (ec *executionContext) _SplitFiUser_sharedFollowers(ctx context.Context, fi
 	}
 	res := resTmp.(*model.UsersConnection)
 	fc.Result = res
-	return ec.marshalOUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUsersConnection(ctx, field.Selections, res)
+	return ec.marshalOUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUsersConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_sharedFollowers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25968,7 +25968,7 @@ func (ec *executionContext) _SplitFiUser_sharedCommunities(ctx context.Context, 
 		if data, ok := tmp.(*model.CommunitiesConnection); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/graphql/model.CommunitiesConnection`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.CommunitiesConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -25979,7 +25979,7 @@ func (ec *executionContext) _SplitFiUser_sharedCommunities(ctx context.Context, 
 	}
 	res := resTmp.(*model.CommunitiesConnection)
 	fc.Result = res
-	return ec.marshalOCommunitiesConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunitiesConnection(ctx, field.Selections, res)
+	return ec.marshalOCommunitiesConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunitiesConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitFiUser_sharedCommunities(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26037,7 +26037,7 @@ func (ec *executionContext) _SplitSearchResult_split(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SplitSearchResult_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26106,7 +26106,7 @@ func (ec *executionContext) _Subscription_newNotification(ctx context.Context, f
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalONotification2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -26161,7 +26161,7 @@ func (ec *executionContext) _Subscription_notificationUpdated(ctx context.Contex
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalONotification2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -26252,7 +26252,7 @@ func (ec *executionContext) _SyncTokensPayload_viewer(ctx context.Context, field
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyncTokensPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26311,7 +26311,7 @@ func (ec *executionContext) _SyncingMedia_previewURLs(ctx context.Context, field
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyncingMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26493,7 +26493,7 @@ func (ec *executionContext) _SyncingMedia_dimensions(ctx context.Context, field 
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyncingMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26542,7 +26542,7 @@ func (ec *executionContext) _TextMedia_previewURLs(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TextMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26724,7 +26724,7 @@ func (ec *executionContext) _TextMedia_dimensions(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TextMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26776,7 +26776,7 @@ func (ec *executionContext) _Token_id(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26820,7 +26820,7 @@ func (ec *executionContext) _Token_dbid(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26984,7 +26984,7 @@ func (ec *executionContext) _Token_media(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(model.MediaSubtype)
 	fc.Result = res
-	return ec.marshalOMediaSubtype2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaSubtype(ctx, field.Selections, res)
+	return ec.marshalOMediaSubtype2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaSubtype(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_media(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27025,7 +27025,7 @@ func (ec *executionContext) _Token_tokenType(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.TokenType)
 	fc.Result = res
-	return ec.marshalOTokenType2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenType(ctx, field.Selections, res)
+	return ec.marshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_tokenType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27066,7 +27066,7 @@ func (ec *executionContext) _Token_chain(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27271,7 +27271,7 @@ func (ec *executionContext) _Token_owner(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27354,7 +27354,7 @@ func (ec *executionContext) _Token_ownedByWallets(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.Wallet)
 	fc.Result = res
-	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
+	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_ownedByWallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27409,7 +27409,7 @@ func (ec *executionContext) _Token_ownershipHistory(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.OwnerAtBlock)
 	fc.Result = res
-	return ec.marshalOOwnerAtBlock2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx, field.Selections, res)
+	return ec.marshalOOwnerAtBlock2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_ownershipHistory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27497,7 +27497,7 @@ func (ec *executionContext) _Token_contract(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Contract)
 	fc.Result = res
-	return ec.marshalOContract2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐContract(ctx, field.Selections, res)
+	return ec.marshalOContract2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐContract(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_contract(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27724,7 +27724,7 @@ func (ec *executionContext) _Token_creatorAddress(ctx context.Context, field gra
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_creatorAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27853,7 +27853,7 @@ func (ec *executionContext) _TokenEdge_node(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28026,7 +28026,7 @@ func (ec *executionContext) _TokenHolder_wallets(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.Wallet)
 	fc.Result = res
-	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
+	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenHolder_wallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28081,7 +28081,7 @@ func (ec *executionContext) _TokenHolder_user(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenHolder_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28205,7 +28205,7 @@ func (ec *executionContext) _TokenHolderEdge_node(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.TokenHolder)
 	fc.Result = res
-	return ec.marshalOTokenHolder2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolder(ctx, field.Selections, res)
+	return ec.marshalOTokenHolder2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolder(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenHolderEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28297,7 +28297,7 @@ func (ec *executionContext) _TokenHoldersConnection_edges(ctx context.Context, f
 	}
 	res := resTmp.([]*model.TokenHolderEdge)
 	fc.Result = res
-	return ec.marshalOTokenHolderEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx, field.Selections, res)
+	return ec.marshalOTokenHolderEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenHoldersConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28347,7 +28347,7 @@ func (ec *executionContext) _TokenHoldersConnection_pageInfo(ctx context.Context
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenHoldersConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28402,7 +28402,7 @@ func (ec *executionContext) _TokensConnection_edges(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.TokenEdge)
 	fc.Result = res
-	return ec.marshalOTokenEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenEdge(ctx, field.Selections, res)
+	return ec.marshalOTokenEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokensConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28452,7 +28452,7 @@ func (ec *executionContext) _TokensConnection_pageInfo(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokensConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28510,7 +28510,7 @@ func (ec *executionContext) _TwitterSocialAccount_type(ctx context.Context, fiel
 	}
 	res := resTmp.(persist.SocialProvider)
 	fc.Result = res
-	return ec.marshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
+	return ec.marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TwitterSocialAccount_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28771,7 +28771,7 @@ func (ec *executionContext) _UnfollowUserPayload_viewer(ctx context.Context, fie
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UnfollowUserPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28830,7 +28830,7 @@ func (ec *executionContext) _UnfollowUserPayload_user(ctx context.Context, field
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UnfollowUserPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28913,7 +28913,7 @@ func (ec *executionContext) _UnknownMedia_previewURLs(ctx context.Context, field
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UnknownMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29095,7 +29095,7 @@ func (ec *executionContext) _UnknownMedia_dimensions(ctx context.Context, field 
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UnknownMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29144,7 +29144,7 @@ func (ec *executionContext) _UnsubscribeFromEmailTypePayload_viewer(ctx context.
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UnsubscribeFromEmailTypePayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29203,7 +29203,7 @@ func (ec *executionContext) _UpdateCollectionHiddenPayload_collection(ctx contex
 	}
 	res := resTmp.(*model.Collection)
 	fc.Result = res
-	return ec.marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+	return ec.marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateCollectionHiddenPayload_collection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29264,7 +29264,7 @@ func (ec *executionContext) _UpdateCollectionInfoPayload_collection(ctx context.
 	}
 	res := resTmp.(*model.Collection)
 	fc.Result = res
-	return ec.marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+	return ec.marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateCollectionInfoPayload_collection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29325,7 +29325,7 @@ func (ec *executionContext) _UpdateCollectionTokensPayload_collection(ctx contex
 	}
 	res := resTmp.(*model.Collection)
 	fc.Result = res
-	return ec.marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
+	return ec.marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateCollectionTokensPayload_collection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29386,7 +29386,7 @@ func (ec *executionContext) _UpdateEmailNotificationSettingsPayload_viewer(ctx c
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateEmailNotificationSettingsPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29445,7 +29445,7 @@ func (ec *executionContext) _UpdateEmailPayload_viewer(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29504,7 +29504,7 @@ func (ec *executionContext) _UpdateFeaturedSplitPayload_viewer(ctx context.Conte
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateFeaturedSplitPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29563,7 +29563,7 @@ func (ec *executionContext) _UpdatePrimaryWalletPayload_viewer(ctx context.Conte
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdatePrimaryWalletPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29622,7 +29622,7 @@ func (ec *executionContext) _UpdateSocialAccountDisplayedPayload_viewer(ctx cont
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateSocialAccountDisplayedPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29681,7 +29681,7 @@ func (ec *executionContext) _UpdateSplitCollectionsPayload_split(ctx context.Con
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateSplitCollectionsPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29742,7 +29742,7 @@ func (ec *executionContext) _UpdateSplitHiddenPayload_split(ctx context.Context,
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateSplitHiddenPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29803,7 +29803,7 @@ func (ec *executionContext) _UpdateSplitInfoPayload_split(ctx context.Context, f
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateSplitInfoPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29864,7 +29864,7 @@ func (ec *executionContext) _UpdateSplitOrderPayload_viewer(ctx context.Context,
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateSplitOrderPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29923,7 +29923,7 @@ func (ec *executionContext) _UpdateSplitPayload_split(ctx context.Context, field
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29984,7 +29984,7 @@ func (ec *executionContext) _UpdateTokenInfoPayload_token(ctx context.Context, f
 	}
 	res := resTmp.(*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateTokenInfoPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30075,7 +30075,7 @@ func (ec *executionContext) _UpdateUserExperiencePayload_viewer(ctx context.Cont
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateUserExperiencePayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30134,7 +30134,7 @@ func (ec *executionContext) _UpdateUserInfoPayload_viewer(ctx context.Context, f
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateUserInfoPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30234,7 +30234,7 @@ func (ec *executionContext) _UserEdge_node(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30358,7 +30358,7 @@ func (ec *executionContext) _UserEmail_email(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*persist.Email)
 	fc.Result = res
-	return ec.marshalOEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
+	return ec.marshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserEmail_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30399,7 +30399,7 @@ func (ec *executionContext) _UserEmail_verificationStatus(ctx context.Context, f
 	}
 	res := resTmp.(*persist.EmailVerificationStatus)
 	fc.Result = res
-	return ec.marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmailVerificationStatus(ctx, field.Selections, res)
+	return ec.marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmailVerificationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserEmail_verificationStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30440,7 +30440,7 @@ func (ec *executionContext) _UserEmail_emailNotificationSettings(ctx context.Con
 	}
 	res := resTmp.(*model.EmailNotificationSettings)
 	fc.Result = res
-	return ec.marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx, field.Selections, res)
+	return ec.marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserEmail_emailNotificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30490,7 +30490,7 @@ func (ec *executionContext) _UserExperience_type(ctx context.Context, field grap
 	}
 	res := resTmp.(model.UserExperienceType)
 	fc.Result = res
-	return ec.marshalNUserExperienceType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperienceType(ctx, field.Selections, res)
+	return ec.marshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserExperience_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30575,7 +30575,7 @@ func (ec *executionContext) _UserSearchResult_user(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserSearchResult_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30658,7 +30658,7 @@ func (ec *executionContext) _UsersConnection_edges(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.UserEdge)
 	fc.Result = res
-	return ec.marshalOUserEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserEdge(ctx, field.Selections, res)
+	return ec.marshalOUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UsersConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30708,7 +30708,7 @@ func (ec *executionContext) _UsersConnection_pageInfo(ctx context.Context, field
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UsersConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30766,7 +30766,7 @@ func (ec *executionContext) _VerifyEmailPayload_email(ctx context.Context, field
 	}
 	res := resTmp.(persist.Email)
 	fc.Result = res
-	return ec.marshalNEmail2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
+	return ec.marshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VerifyEmailPayload_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30807,7 +30807,7 @@ func (ec *executionContext) _VideoMedia_previewURLs(ctx context.Context, field g
 	}
 	res := resTmp.(*model.PreviewURLSet)
 	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
+	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VideoMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30948,7 +30948,7 @@ func (ec *executionContext) _VideoMedia_contentRenderURLs(ctx context.Context, f
 	}
 	res := resTmp.(*model.VideoURLSet)
 	fc.Result = res
-	return ec.marshalOVideoURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐVideoURLSet(ctx, field.Selections, res)
+	return ec.marshalOVideoURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVideoURLSet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VideoMedia_contentRenderURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30999,7 +30999,7 @@ func (ec *executionContext) _VideoMedia_dimensions(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.MediaDimensions)
 	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
+	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VideoMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31212,7 +31212,7 @@ func (ec *executionContext) _ViewSplitPayload_split(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ViewSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31276,7 +31276,7 @@ func (ec *executionContext) _Viewer_id(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31317,7 +31317,7 @@ func (ec *executionContext) _Viewer_user(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.SplitFiUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31400,7 +31400,7 @@ func (ec *executionContext) _Viewer_socialAccounts(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.SocialAccounts)
 	fc.Result = res
-	return ec.marshalOSocialAccounts2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialAccounts(ctx, field.Selections, res)
+	return ec.marshalOSocialAccounts2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAccounts(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_socialAccounts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31445,7 +31445,7 @@ func (ec *executionContext) _Viewer_viewerSplits(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.ViewerSplit)
 	fc.Result = res
-	return ec.marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx, field.Selections, res)
+	return ec.marshalOViewerSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_viewerSplits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31490,7 +31490,7 @@ func (ec *executionContext) _Viewer_email(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.UserEmail)
 	fc.Result = res
-	return ec.marshalOUserEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserEmail(ctx, field.Selections, res)
+	return ec.marshalOUserEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEmail(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31539,7 +31539,7 @@ func (ec *executionContext) _Viewer_notifications(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.NotificationsConnection)
 	fc.Result = res
-	return ec.marshalONotificationsConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationsConnection(ctx, field.Selections, res)
+	return ec.marshalONotificationsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationsConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31599,7 +31599,7 @@ func (ec *executionContext) _Viewer_notificationSettings(ctx context.Context, fi
 	}
 	res := resTmp.(*model.NotificationSettings)
 	fc.Result = res
-	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
+	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_notificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31646,7 +31646,7 @@ func (ec *executionContext) _Viewer_userExperiences(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.UserExperience)
 	fc.Result = res
-	return ec.marshalOUserExperience2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx, field.Selections, res)
+	return ec.marshalOUserExperience2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_userExperiences(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31693,7 +31693,7 @@ func (ec *executionContext) _ViewerSplit_split(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ViewerSplit_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31757,7 +31757,7 @@ func (ec *executionContext) _Wallet_id(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Wallet_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31801,7 +31801,7 @@ func (ec *executionContext) _Wallet_dbid(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Wallet_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31842,7 +31842,7 @@ func (ec *executionContext) _Wallet_chainAddress(ctx context.Context, field grap
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Wallet_chainAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31889,7 +31889,7 @@ func (ec *executionContext) _Wallet_chain(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Wallet_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31930,7 +31930,7 @@ func (ec *executionContext) _Wallet_walletType(ctx context.Context, field graphq
 	}
 	res := resTmp.(*persist.WalletType)
 	fc.Result = res
-	return ec.marshalOWalletType2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐWalletType(ctx, field.Selections, res)
+	return ec.marshalOWalletType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Wallet_walletType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -31971,7 +31971,7 @@ func (ec *executionContext) _Wallet_tokens(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Wallet_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -33878,7 +33878,7 @@ func (ec *executionContext) unmarshalInputAdminAddWalletInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-			data, err := ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, v)
+			data, err := ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33887,7 +33887,7 @@ func (ec *executionContext) unmarshalInputAdminAddWalletInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletType"))
-			data, err := ec.unmarshalNWalletType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐWalletType(ctx, v)
+			data, err := ec.unmarshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33916,7 +33916,7 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eoa"))
-			data, err := ec.unmarshalOEoaAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEoaAuth(ctx, v)
+			data, err := ec.unmarshalOEoaAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEoaAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33925,7 +33925,7 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gnosisSafe"))
-			data, err := ec.unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx, v)
+			data, err := ec.unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33935,7 +33935,7 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalODebugAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDebugAuth(ctx, v)
+				return ec.unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugAuth(ctx, v)
 			}
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local"})
@@ -33957,14 +33957,14 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 			} else if tmp == nil {
 				it.Debug = nil
 			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/graphql/model.DebugAuth`, tmp)
+				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.DebugAuth`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "magicLink":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("magicLink"))
-			data, err := ec.unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx, v)
+			data, err := ec.unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33993,7 +33993,7 @@ func (ec *executionContext) unmarshalInputChainAddressInput(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx, v)
+			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34004,7 +34004,7 @@ func (ec *executionContext) unmarshalInputChainAddressInput(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-			data, err := ec.unmarshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, v)
+			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34035,7 +34035,7 @@ func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pubKey"))
-			data, err := ec.unmarshalNPubKey2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐPubKey(ctx, v)
+			data, err := ec.unmarshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34046,7 +34046,7 @@ func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-			data, err := ec.unmarshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, v)
+			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34086,7 +34086,7 @@ func (ec *executionContext) unmarshalInputCollectionLayoutInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionLayout"))
-			data, err := ec.unmarshalNCollectionSectionLayoutInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayoutInputᚄ(ctx, v)
+			data, err := ec.unmarshalNCollectionSectionLayoutInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayoutInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34153,7 +34153,7 @@ func (ec *executionContext) unmarshalInputCollectionTokenSettingsInput(ctx conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34209,7 +34209,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInSplitInput(ctx conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokens"))
-			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34218,7 +34218,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInSplitInput(ctx conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("layout"))
-			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
+			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34227,7 +34227,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInSplitInput(ctx conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenSettings"))
-			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
+			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34245,7 +34245,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInSplitInput(ctx conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("givenID"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34274,7 +34274,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34301,7 +34301,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokens"))
-			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34310,7 +34310,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("layout"))
-			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
+			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34319,7 +34319,7 @@ func (ec *executionContext) unmarshalInputCreateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenSettings"))
-			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
+			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34422,7 +34422,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx, v)
+			data, err := ec.unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34507,7 +34507,7 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+				return ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			}
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local"})
@@ -34529,7 +34529,7 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 			} else if tmp == nil {
 				it.UserID = nil
 			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/mikeydub/go-gallery/service/persist.DBID`, tmp)
+				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/service/persist.DBID`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "chainAddresses":
@@ -34537,7 +34537,7 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddresses"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddressᚄ(ctx, v)
+				return ec.unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx, v)
 			}
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local"})
@@ -34559,7 +34559,7 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 			} else if tmp == nil {
 				it.ChainAddresses = nil
 			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be []*github.com/mikeydub/go-gallery/service/persist.ChainAddress`, tmp)
+				err := fmt.Errorf(`unexpected type %T from directive, should be []*github.com/SplitFi/go-splitfi/service/persist.ChainAddress`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		}
@@ -34586,7 +34586,7 @@ func (ec *executionContext) unmarshalInputDebugSocialAuth(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, v)
+			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34633,7 +34633,7 @@ func (ec *executionContext) unmarshalInputDeepRefreshInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-			data, err := ec.unmarshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, v)
+			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34662,7 +34662,7 @@ func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj inter
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainPubKey"))
-			data, err := ec.unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainPubKey(ctx, v)
+			data, err := ec.unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainPubKey(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34709,7 +34709,7 @@ func (ec *executionContext) unmarshalInputGnosisSafeAuth(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx, v)
+			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34785,7 +34785,7 @@ func (ec *executionContext) unmarshalInputMintPremiumCardToWalletInput(ctx conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletAddresses"))
-			data, err := ec.unmarshalOAddress2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddressᚄ(ctx, v)
+			data, err := ec.unmarshalOAddress2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddressᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34814,7 +34814,7 @@ func (ec *executionContext) unmarshalInputMoveCollectionToSplitInput(ctx context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceCollectionId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34823,7 +34823,7 @@ func (ec *executionContext) unmarshalInputMoveCollectionToSplitInput(ctx context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetSplitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34890,7 +34890,7 @@ func (ec *executionContext) unmarshalInputPreverifyEmailInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmail2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx, v)
+			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34919,7 +34919,7 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34966,7 +34966,7 @@ func (ec *executionContext) unmarshalInputSetSpamPreferenceInput(ctx context.Con
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokens"))
-			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35004,7 +35004,7 @@ func (ec *executionContext) unmarshalInputSocialAuthMechanism(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("twitter"))
-			data, err := ec.unmarshalOTwitterAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTwitterAuth(ctx, v)
+			data, err := ec.unmarshalOTwitterAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35013,7 +35013,7 @@ func (ec *executionContext) unmarshalInputSocialAuthMechanism(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
-			data, err := ec.unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDebugSocialAuth(ctx, v)
+			data, err := ec.unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugSocialAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35042,7 +35042,7 @@ func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35109,7 +35109,7 @@ func (ec *executionContext) unmarshalInputUnsubscribeFromEmailTypeInput(ctx cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNEmailUnsubscriptionType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx, v)
+			data, err := ec.unmarshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35147,7 +35147,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionHiddenInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collectionId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35185,7 +35185,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInfoInput(ctx context.
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collectionId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35232,7 +35232,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dbid"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35259,7 +35259,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokens"))
-			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35268,7 +35268,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("layout"))
-			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
+			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35277,7 +35277,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenSettings"))
-			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
+			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35315,7 +35315,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionTokensInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collectionId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35324,7 +35324,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionTokensInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokens"))
-			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35333,7 +35333,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionTokensInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("layout"))
-			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
+			data, err := ec.unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35342,7 +35342,7 @@ func (ec *executionContext) unmarshalInputUpdateCollectionTokensInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenSettings"))
-			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
+			data, err := ec.unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35380,7 +35380,7 @@ func (ec *executionContext) unmarshalInputUpdateEmailInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmail2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx, v)
+			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35447,7 +35447,7 @@ func (ec *executionContext) unmarshalInputUpdateSocialAccountDisplayedInput(ctx 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx, v)
+			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35485,7 +35485,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitCollectionsInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35494,7 +35494,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitCollectionsInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collections"))
-			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35523,7 +35523,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitHiddenInput(ctx context.Con
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35561,7 +35561,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35608,7 +35608,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35644,7 +35644,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedCollections"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35653,7 +35653,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedCollections"))
-			data, err := ec.unmarshalOUpdateCollectionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx, v)
+			data, err := ec.unmarshalOUpdateCollectionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35662,7 +35662,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdCollections"))
-			data, err := ec.unmarshalOCreateCollectionInSplitInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx, v)
+			data, err := ec.unmarshalOCreateCollectionInSplitInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35671,7 +35671,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35709,7 +35709,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitOrderInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("positions"))
-			data, err := ec.unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx, v)
+			data, err := ec.unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35738,7 +35738,7 @@ func (ec *executionContext) unmarshalInputUpdateTokenInfoInput(ctx context.Conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35756,7 +35756,7 @@ func (ec *executionContext) unmarshalInputUpdateTokenInfoInput(ctx context.Conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("collectionId"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35785,7 +35785,7 @@ func (ec *executionContext) unmarshalInputUpdateUserExperienceInput(ctx context.
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("experienceType"))
-			data, err := ec.unmarshalNUserExperienceType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperienceType(ctx, v)
+			data, err := ec.unmarshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -44752,13 +44752,13 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
+func (ec *executionContext) unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Address(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
+func (ec *executionContext) marshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -44768,17 +44768,17 @@ func (ec *executionContext) marshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalle
 	return res
 }
 
-func (ec *executionContext) unmarshalNAdminAddWalletInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx context.Context, v interface{}) (model.AdminAddWalletInput, error) {
+func (ec *executionContext) unmarshalNAdminAddWalletInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx context.Context, v interface{}) (model.AdminAddWalletInput, error) {
 	res, err := ec.unmarshalInputAdminAddWalletInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNAuthMechanism2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (model.AuthMechanism, error) {
+func (ec *executionContext) unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (model.AuthMechanism, error) {
 	res, err := ec.unmarshalInputAuthMechanism(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAuthorizationError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAuthorizationError(ctx context.Context, sel ast.SelectionSet, v model.AuthorizationError) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthorizationError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthorizationError(ctx context.Context, sel ast.SelectionSet, v model.AuthorizationError) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -44803,17 +44803,17 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
+func (ec *executionContext) unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
 	var res persist.Chain
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, v interface{}) ([]persist.Chain, error) {
+func (ec *executionContext) unmarshalNChain2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, v interface{}) ([]persist.Chain, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -44822,7 +44822,7 @@ func (ec *executionContext) unmarshalNChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑga
 	res := make([]persist.Chain, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -44830,7 +44830,7 @@ func (ec *executionContext) unmarshalNChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑga
 	return res, nil
 }
 
-func (ec *executionContext) marshalNChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalNChain2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Chain) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -44854,7 +44854,7 @@ func (ec *executionContext) marshalNChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgall
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, sel, v[i])
+			ret[i] = ec.marshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -44874,7 +44874,7 @@ func (ec *executionContext) marshalNChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgall
 	return ret
 }
 
-func (ec *executionContext) marshalNChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
+func (ec *executionContext) marshalNChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -44884,27 +44884,27 @@ func (ec *executionContext) marshalNChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgo
 	return ec._ChainAddress(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNChainAddressInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (persist.ChainAddress, error) {
+func (ec *executionContext) unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (persist.ChainAddress, error) {
 	res, err := ec.unmarshalInputChainAddressInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (*persist.ChainAddress, error) {
+func (ec *executionContext) unmarshalNChainAddressInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (*persist.ChainAddress, error) {
 	res, err := ec.unmarshalInputChainAddressInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainPubKey(ctx context.Context, v interface{}) (*persist.ChainPubKey, error) {
+func (ec *executionContext) unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainPubKey(ctx context.Context, v interface{}) (*persist.ChainPubKey, error) {
 	res, err := ec.unmarshalInputChainPubKeyInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx context.Context, v interface{}) (*model.CollectionLayoutInput, error) {
+func (ec *executionContext) unmarshalNCollectionLayoutInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionLayoutInput(ctx context.Context, v interface{}) (*model.CollectionLayoutInput, error) {
 	res, err := ec.unmarshalInputCollectionLayoutInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCollectionSectionLayoutInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayoutInputᚄ(ctx context.Context, v interface{}) ([]*model.CollectionSectionLayoutInput, error) {
+func (ec *executionContext) unmarshalNCollectionSectionLayoutInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayoutInputᚄ(ctx context.Context, v interface{}) ([]*model.CollectionSectionLayoutInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -44913,7 +44913,7 @@ func (ec *executionContext) unmarshalNCollectionSectionLayoutInput2ᚕᚖgithub�
 	res := make([]*model.CollectionSectionLayoutInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNCollectionSectionLayoutInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayoutInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNCollectionSectionLayoutInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayoutInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -44921,12 +44921,12 @@ func (ec *executionContext) unmarshalNCollectionSectionLayoutInput2ᚕᚖgithub�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNCollectionSectionLayoutInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayoutInput(ctx context.Context, v interface{}) (*model.CollectionSectionLayoutInput, error) {
+func (ec *executionContext) unmarshalNCollectionSectionLayoutInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayoutInput(ctx context.Context, v interface{}) (*model.CollectionSectionLayoutInput, error) {
 	res, err := ec.unmarshalInputCollectionSectionLayoutInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx context.Context, v interface{}) ([]*model.CollectionTokenSettingsInput, error) {
+func (ec *executionContext) unmarshalNCollectionTokenSettingsInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettingsInputᚄ(ctx context.Context, v interface{}) ([]*model.CollectionTokenSettingsInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -44935,7 +44935,7 @@ func (ec *executionContext) unmarshalNCollectionTokenSettingsInput2ᚕᚖgithub�
 	res := make([]*model.CollectionTokenSettingsInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNCollectionTokenSettingsInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettingsInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNCollectionTokenSettingsInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettingsInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -44943,12 +44943,12 @@ func (ec *executionContext) unmarshalNCollectionTokenSettingsInput2ᚕᚖgithub�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNCollectionTokenSettingsInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettingsInput(ctx context.Context, v interface{}) (*model.CollectionTokenSettingsInput, error) {
+func (ec *executionContext) unmarshalNCollectionTokenSettingsInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettingsInput(ctx context.Context, v interface{}) (*model.CollectionTokenSettingsInput, error) {
 	res, err := ec.unmarshalInputCollectionTokenSettingsInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCommunitySearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunitySearchResult(ctx context.Context, sel ast.SelectionSet, v *model.CommunitySearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalNCommunitySearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunitySearchResult(ctx context.Context, sel ast.SelectionSet, v *model.CommunitySearchResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -44958,28 +44958,28 @@ func (ec *executionContext) marshalNCommunitySearchResult2ᚖgithubᚗcomᚋmike
 	return ec._CommunitySearchResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateCollectionInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInput(ctx context.Context, v interface{}) (model.CreateCollectionInput, error) {
+func (ec *executionContext) unmarshalNCreateCollectionInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionInput(ctx context.Context, v interface{}) (model.CreateCollectionInput, error) {
 	res, err := ec.unmarshalInputCreateCollectionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitInput(ctx context.Context, v interface{}) (model.CreateSplitInput, error) {
+func (ec *executionContext) unmarshalNCreateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitInput(ctx context.Context, v interface{}) (model.CreateSplitInput, error) {
 	res, err := ec.unmarshalInputCreateSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
+func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (persist.DBID, error) {
+func (ec *executionContext) unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (persist.DBID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.DBID(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v persist.DBID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -44989,7 +44989,7 @@ func (ec *executionContext) marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgallery�
 	return res
 }
 
-func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
+func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -44998,7 +44998,7 @@ func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgal
 	res := make([]persist.DBID, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -45006,10 +45006,10 @@ func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgal
 	return res, nil
 }
 
-func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
+		ret[i] = ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
 	}
 
 	for _, e := range ret {
@@ -45021,18 +45021,18 @@ func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalle
 	return ret
 }
 
-func (ec *executionContext) unmarshalNDeepRefreshInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeepRefreshInput(ctx context.Context, v interface{}) (model.DeepRefreshInput, error) {
+func (ec *executionContext) unmarshalNDeepRefreshInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshInput(ctx context.Context, v interface{}) (model.DeepRefreshInput, error) {
 	res, err := ec.unmarshalInputDeepRefreshInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNEmail2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (persist.Email, error) {
+func (ec *executionContext) unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (persist.Email, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Email(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNEmail2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v persist.Email) graphql.Marshaler {
+func (ec *executionContext) marshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v persist.Email) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -45042,23 +45042,23 @@ func (ec *executionContext) marshalNEmail2githubᚗcomᚋmikeydubᚋgoᚑgallery
 	return res
 }
 
-func (ec *executionContext) unmarshalNEmailUnsubscriptionType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, v interface{}) (model.EmailUnsubscriptionType, error) {
+func (ec *executionContext) unmarshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, v interface{}) (model.EmailUnsubscriptionType, error) {
 	var res model.EmailUnsubscriptionType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNEmailUnsubscriptionType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, sel ast.SelectionSet, v model.EmailUnsubscriptionType) graphql.Marshaler {
+func (ec *executionContext) marshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, sel ast.SelectionSet, v model.EmailUnsubscriptionType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
+func (ec *executionContext) unmarshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := model.GqlID(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, sel ast.SelectionSet, v model.GqlID) graphql.Marshaler {
+func (ec *executionContext) marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, sel ast.SelectionSet, v model.GqlID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -45115,12 +45115,12 @@ func (ec *executionContext) marshalNInt2ᚕintᚄ(ctx context.Context, sel ast.S
 	return ret
 }
 
-func (ec *executionContext) unmarshalNMintPremiumCardToWalletInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMintPremiumCardToWalletInput(ctx context.Context, v interface{}) (model.MintPremiumCardToWalletInput, error) {
+func (ec *executionContext) unmarshalNMintPremiumCardToWalletInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMintPremiumCardToWalletInput(ctx context.Context, v interface{}) (model.MintPremiumCardToWalletInput, error) {
 	res, err := ec.unmarshalInputMintPremiumCardToWalletInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -45130,28 +45130,28 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPreverifyEmailInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx context.Context, v interface{}) (model.PreverifyEmailInput, error) {
+func (ec *executionContext) unmarshalNPreverifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx context.Context, v interface{}) (model.PreverifyEmailInput, error) {
 	res, err := ec.unmarshalInputPreverifyEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNPreverifyEmailResult2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, v interface{}) (model.PreverifyEmailResult, error) {
+func (ec *executionContext) unmarshalNPreverifyEmailResult2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, v interface{}) (model.PreverifyEmailResult, error) {
 	var res model.PreverifyEmailResult
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPreverifyEmailResult2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailResult) graphql.Marshaler {
+func (ec *executionContext) marshalNPreverifyEmailResult2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailResult) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNPubKey2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
+func (ec *executionContext) unmarshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.PubKey(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPubKey2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
+func (ec *executionContext) marshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -45161,33 +45161,33 @@ func (ec *executionContext) marshalNPubKey2githubᚗcomᚋmikeydubᚋgoᚑgaller
 	return res
 }
 
-func (ec *executionContext) unmarshalNPublishSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitInput(ctx context.Context, v interface{}) (model.PublishSplitInput, error) {
+func (ec *executionContext) unmarshalNPublishSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitInput(ctx context.Context, v interface{}) (model.PublishSplitInput, error) {
 	res, err := ec.unmarshalInputPublishSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRole2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
+func (ec *executionContext) unmarshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
 	var res persist.Role
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRole2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v persist.Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v persist.Role) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNSetSpamPreferenceInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSetSpamPreferenceInput(ctx context.Context, v interface{}) (model.SetSpamPreferenceInput, error) {
+func (ec *executionContext) unmarshalNSetSpamPreferenceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferenceInput(ctx context.Context, v interface{}) (model.SetSpamPreferenceInput, error) {
 	res, err := ec.unmarshalInputSetSpamPreferenceInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx context.Context, v interface{}) (persist.SocialProvider, error) {
+func (ec *executionContext) unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx context.Context, v interface{}) (persist.SocialProvider, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.SocialProvider(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSocialAccountType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐSocialProvider(ctx context.Context, sel ast.SelectionSet, v persist.SocialProvider) graphql.Marshaler {
+func (ec *executionContext) marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx context.Context, sel ast.SelectionSet, v persist.SocialProvider) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -45197,12 +45197,12 @@ func (ec *executionContext) marshalNSocialAccountType2githubᚗcomᚋmikeydubᚋ
 	return res
 }
 
-func (ec *executionContext) unmarshalNSocialAuthMechanism2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialAuthMechanism(ctx context.Context, v interface{}) (model.SocialAuthMechanism, error) {
+func (ec *executionContext) unmarshalNSocialAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAuthMechanism(ctx context.Context, v interface{}) (model.SocialAuthMechanism, error) {
 	res, err := ec.unmarshalInputSocialAuthMechanism(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
+func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -45211,7 +45211,7 @@ func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmi
 	res := make([]*model.SplitPositionInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -45219,12 +45219,12 @@ func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmi
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitPositionInput(ctx context.Context, v interface{}) (*model.SplitPositionInput, error) {
+func (ec *executionContext) unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInput(ctx context.Context, v interface{}) (*model.SplitPositionInput, error) {
 	res, err := ec.unmarshalInputSplitPositionInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SplitSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SplitSearchResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -45281,82 +45281,82 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx context.Context, v interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
+func (ec *executionContext) unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx context.Context, v interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
 	res, err := ec.unmarshalInputUnsubscribeFromEmailTypeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateCollectionHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionHiddenInput(ctx context.Context, v interface{}) (model.UpdateCollectionHiddenInput, error) {
+func (ec *executionContext) unmarshalNUpdateCollectionHiddenInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionHiddenInput(ctx context.Context, v interface{}) (model.UpdateCollectionHiddenInput, error) {
 	res, err := ec.unmarshalInputUpdateCollectionHiddenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateCollectionInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInfoInput(ctx context.Context, v interface{}) (model.UpdateCollectionInfoInput, error) {
+func (ec *executionContext) unmarshalNUpdateCollectionInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInfoInput(ctx context.Context, v interface{}) (model.UpdateCollectionInfoInput, error) {
 	res, err := ec.unmarshalInputUpdateCollectionInfoInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateCollectionTokensInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionTokensInput(ctx context.Context, v interface{}) (model.UpdateCollectionTokensInput, error) {
+func (ec *executionContext) unmarshalNUpdateCollectionTokensInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionTokensInput(ctx context.Context, v interface{}) (model.UpdateCollectionTokensInput, error) {
 	res, err := ec.unmarshalInputUpdateCollectionTokensInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateEmailInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx context.Context, v interface{}) (model.UpdateEmailInput, error) {
+func (ec *executionContext) unmarshalNUpdateEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx context.Context, v interface{}) (model.UpdateEmailInput, error) {
 	res, err := ec.unmarshalInputUpdateEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx context.Context, v interface{}) (model.UpdateEmailNotificationSettingsInput, error) {
+func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx context.Context, v interface{}) (model.UpdateEmailNotificationSettingsInput, error) {
 	res, err := ec.unmarshalInputUpdateEmailNotificationSettingsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx context.Context, v interface{}) (model.UpdateSocialAccountDisplayedInput, error) {
+func (ec *executionContext) unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx context.Context, v interface{}) (model.UpdateSocialAccountDisplayedInput, error) {
 	res, err := ec.unmarshalInputUpdateSocialAccountDisplayedInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitCollectionsInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsInput(ctx context.Context, v interface{}) (model.UpdateSplitCollectionsInput, error) {
+func (ec *executionContext) unmarshalNUpdateSplitCollectionsInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitCollectionsInput(ctx context.Context, v interface{}) (model.UpdateSplitCollectionsInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitCollectionsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx context.Context, v interface{}) (model.UpdateSplitHiddenInput, error) {
+func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx context.Context, v interface{}) (model.UpdateSplitHiddenInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitHiddenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx context.Context, v interface{}) (model.UpdateSplitInfoInput, error) {
+func (ec *executionContext) unmarshalNUpdateSplitInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx context.Context, v interface{}) (model.UpdateSplitInfoInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitInfoInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx context.Context, v interface{}) (model.UpdateSplitInput, error) {
+func (ec *executionContext) unmarshalNUpdateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx context.Context, v interface{}) (model.UpdateSplitInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx context.Context, v interface{}) (model.UpdateSplitOrderInput, error) {
+func (ec *executionContext) unmarshalNUpdateSplitOrderInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx context.Context, v interface{}) (model.UpdateSplitOrderInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateTokenInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateTokenInfoInput(ctx context.Context, v interface{}) (model.UpdateTokenInfoInput, error) {
+func (ec *executionContext) unmarshalNUpdateTokenInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateTokenInfoInput(ctx context.Context, v interface{}) (model.UpdateTokenInfoInput, error) {
 	res, err := ec.unmarshalInputUpdateTokenInfoInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateUserExperienceInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx context.Context, v interface{}) (model.UpdateUserExperienceInput, error) {
+func (ec *executionContext) unmarshalNUpdateUserExperienceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx context.Context, v interface{}) (model.UpdateUserExperienceInput, error) {
 	res, err := ec.unmarshalInputUpdateUserExperienceInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateUserInfoInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx context.Context, v interface{}) (model.UpdateUserInfoInput, error) {
+func (ec *executionContext) unmarshalNUpdateUserInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx context.Context, v interface{}) (model.UpdateUserInfoInput, error) {
 	res, err := ec.unmarshalInputUpdateUserInfoInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUserExperience2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperience(ctx context.Context, sel ast.SelectionSet, v *model.UserExperience) graphql.Marshaler {
+func (ec *executionContext) marshalNUserExperience2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperience(ctx context.Context, sel ast.SelectionSet, v *model.UserExperience) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -45366,17 +45366,17 @@ func (ec *executionContext) marshalNUserExperience2ᚖgithubᚗcomᚋmikeydubᚋ
 	return ec._UserExperience(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUserExperienceType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, v interface{}) (model.UserExperienceType, error) {
+func (ec *executionContext) unmarshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, v interface{}) (model.UserExperienceType, error) {
 	var res model.UserExperienceType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUserExperienceType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, sel ast.SelectionSet, v model.UserExperienceType) graphql.Marshaler {
+func (ec *executionContext) marshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, sel ast.SelectionSet, v model.UserExperienceType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNUserSearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.UserSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalNUserSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.UserSearchResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -45386,18 +45386,18 @@ func (ec *executionContext) marshalNUserSearchResult2ᚖgithubᚗcomᚋmikeydub�
 	return ec._UserSearchResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVerifyEmailInput2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx context.Context, v interface{}) (model.VerifyEmailInput, error) {
+func (ec *executionContext) unmarshalNVerifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx context.Context, v interface{}) (model.VerifyEmailInput, error) {
 	res, err := ec.unmarshalInputVerifyEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNWalletType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (persist.WalletType, error) {
+func (ec *executionContext) unmarshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (persist.WalletType, error) {
 	var res persist.WalletType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNWalletType2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v persist.WalletType) graphql.Marshaler {
+func (ec *executionContext) marshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v persist.WalletType) graphql.Marshaler {
 	return v
 }
 
@@ -45673,32 +45673,32 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddRolesToUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddRolesToUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AddRolesToUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAddUserWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddUserWalletPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOAddUserWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddUserWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AddUserWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
+func (ec *executionContext) unmarshalOAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Address(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
+func (ec *executionContext) marshalOAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func (ec *executionContext) unmarshalOAddress2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddressᚄ(ctx context.Context, v interface{}) ([]persist.Address, error) {
+func (ec *executionContext) unmarshalOAddress2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddressᚄ(ctx context.Context, v interface{}) ([]persist.Address, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45710,7 +45710,7 @@ func (ec *executionContext) unmarshalOAddress2ᚕgithubᚗcomᚋmikeydubᚋgoᚑ
 	res := make([]persist.Address, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -45718,13 +45718,13 @@ func (ec *executionContext) unmarshalOAddress2ᚕgithubᚗcomᚋmikeydubᚋgoᚑ
 	return res, nil
 }
 
-func (ec *executionContext) marshalOAddress2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddressᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Address) graphql.Marshaler {
+func (ec *executionContext) marshalOAddress2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddressᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Address) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalNAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐAddress(ctx, sel, v[i])
+		ret[i] = ec.marshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, sel, v[i])
 	}
 
 	for _, e := range ret {
@@ -45736,14 +45736,14 @@ func (ec *executionContext) marshalOAddress2ᚕgithubᚗcomᚋmikeydubᚋgoᚑga
 	return ret
 }
 
-func (ec *executionContext) marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AdminAddWalletPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AdminAddWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AdminAddWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBadge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐBadge(ctx context.Context, sel ast.SelectionSet, v []*model.Badge) graphql.Marshaler {
+func (ec *executionContext) marshalOBadge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐBadge(ctx context.Context, sel ast.SelectionSet, v []*model.Badge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -45770,7 +45770,7 @@ func (ec *executionContext) marshalOBadge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOBadge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐBadge(ctx, sel, v[i])
+			ret[i] = ec.marshalOBadge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐBadge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -45784,7 +45784,7 @@ func (ec *executionContext) marshalOBadge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 	return ret
 }
 
-func (ec *executionContext) marshalOBadge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐBadge(ctx context.Context, sel ast.SelectionSet, v *model.Badge) graphql.Marshaler {
+func (ec *executionContext) marshalOBadge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐBadge(ctx context.Context, sel ast.SelectionSet, v *model.Badge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -45817,17 +45817,17 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
+func (ec *executionContext) unmarshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
 	var res persist.Chain
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, v interface{}) ([]persist.Chain, error) {
+func (ec *executionContext) unmarshalOChain2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, v interface{}) ([]persist.Chain, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45839,7 +45839,7 @@ func (ec *executionContext) unmarshalOChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑga
 	res := make([]persist.Chain, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -45847,7 +45847,7 @@ func (ec *executionContext) unmarshalOChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑga
 	return res, nil
 }
 
-func (ec *executionContext) marshalOChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalOChain2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Chain) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -45874,7 +45874,7 @@ func (ec *executionContext) marshalOChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgall
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNChain2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx, sel, v[i])
+			ret[i] = ec.marshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -45894,7 +45894,7 @@ func (ec *executionContext) marshalOChain2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgall
 	return ret
 }
 
-func (ec *executionContext) unmarshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (*persist.Chain, error) {
+func (ec *executionContext) unmarshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (*persist.Chain, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45903,14 +45903,14 @@ func (ec *executionContext) unmarshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑga
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOChain2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v *persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v *persist.Chain) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOChainAddress2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, sel ast.SelectionSet, v []*persist.ChainAddress) graphql.Marshaler {
+func (ec *executionContext) marshalOChainAddress2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, sel ast.SelectionSet, v []*persist.ChainAddress) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -45937,7 +45937,7 @@ func (ec *executionContext) marshalOChainAddress2ᚕᚖgithubᚗcomᚋmikeydub�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, sel, v[i])
+			ret[i] = ec.marshalNChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -45957,14 +45957,14 @@ func (ec *executionContext) marshalOChainAddress2ᚕᚖgithubᚗcomᚋmikeydub�
 	return ret
 }
 
-func (ec *executionContext) marshalOChainAddress2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
+func (ec *executionContext) marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ChainAddress(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, v interface{}) ([]*persist.ChainAddress, error) {
+func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, v interface{}) ([]*persist.ChainAddress, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45976,7 +45976,7 @@ func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmik
 	res := make([]*persist.ChainAddress, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐChainAddress(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -45984,21 +45984,21 @@ func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmik
 	return res, nil
 }
 
-func (ec *executionContext) marshalOChainTokens2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐChainTokens(ctx context.Context, sel ast.SelectionSet, v *model.ChainTokens) graphql.Marshaler {
+func (ec *executionContext) marshalOChainTokens2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐChainTokens(ctx context.Context, sel ast.SelectionSet, v *model.ChainTokens) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ChainTokens(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v *model.ClearAllNotificationsPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v *model.ClearAllNotificationsPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ClearAllNotificationsPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCollection2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx context.Context, sel ast.SelectionSet, v []*model.Collection) graphql.Marshaler {
+func (ec *executionContext) marshalOCollection2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx context.Context, sel ast.SelectionSet, v []*model.Collection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46025,7 +46025,7 @@ func (ec *executionContext) marshalOCollection2ᚕᚖgithubᚗcomᚋmikeydubᚋg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx, sel, v[i])
+			ret[i] = ec.marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46039,21 +46039,21 @@ func (ec *executionContext) marshalOCollection2ᚕᚖgithubᚗcomᚋmikeydubᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalOCollection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollection(ctx context.Context, sel ast.SelectionSet, v *model.Collection) graphql.Marshaler {
+func (ec *executionContext) marshalOCollection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollection(ctx context.Context, sel ast.SelectionSet, v *model.Collection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Collection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCollectionByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.CollectionByIDOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.CollectionByIDOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CollectionByIdOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCollectionByIdOrError2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx context.Context, sel ast.SelectionSet, v []model.CollectionByIDOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionByIdOrError2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx context.Context, sel ast.SelectionSet, v []model.CollectionByIDOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46080,7 +46080,7 @@ func (ec *executionContext) marshalOCollectionByIdOrError2ᚕgithubᚗcomᚋmike
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCollectionByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx, sel, v[i])
+			ret[i] = ec.marshalOCollectionByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionByIDOrError(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46094,14 +46094,14 @@ func (ec *executionContext) marshalOCollectionByIdOrError2ᚕgithubᚗcomᚋmike
 	return ret
 }
 
-func (ec *executionContext) marshalOCollectionLayout2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionLayout(ctx context.Context, sel ast.SelectionSet, v *model.CollectionLayout) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionLayout2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionLayout(ctx context.Context, sel ast.SelectionSet, v *model.CollectionLayout) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CollectionLayout(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCollectionSectionLayout2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx context.Context, sel ast.SelectionSet, v []*model.CollectionSectionLayout) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionSectionLayout2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx context.Context, sel ast.SelectionSet, v []*model.CollectionSectionLayout) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46128,7 +46128,7 @@ func (ec *executionContext) marshalOCollectionSectionLayout2ᚕᚖgithubᚗcom�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCollectionSectionLayout2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx, sel, v[i])
+			ret[i] = ec.marshalOCollectionSectionLayout2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46142,14 +46142,14 @@ func (ec *executionContext) marshalOCollectionSectionLayout2ᚕᚖgithubᚗcom�
 	return ret
 }
 
-func (ec *executionContext) marshalOCollectionSectionLayout2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx context.Context, sel ast.SelectionSet, v *model.CollectionSectionLayout) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionSectionLayout2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionSectionLayout(ctx context.Context, sel ast.SelectionSet, v *model.CollectionSectionLayout) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CollectionSectionLayout(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCollectionToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionToken(ctx context.Context, sel ast.SelectionSet, v []*model.CollectionToken) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionToken(ctx context.Context, sel ast.SelectionSet, v []*model.CollectionToken) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46176,7 +46176,7 @@ func (ec *executionContext) marshalOCollectionToken2ᚕᚖgithubᚗcomᚋmikeydu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCollectionToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionToken(ctx, sel, v[i])
+			ret[i] = ec.marshalOCollectionToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionToken(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46190,49 +46190,49 @@ func (ec *executionContext) marshalOCollectionToken2ᚕᚖgithubᚗcomᚋmikeydu
 	return ret
 }
 
-func (ec *executionContext) marshalOCollectionToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionToken(ctx context.Context, sel ast.SelectionSet, v *model.CollectionToken) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionToken(ctx context.Context, sel ast.SelectionSet, v *model.CollectionToken) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CollectionToken(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCollectionTokenByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.CollectionTokenByIDOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionTokenByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.CollectionTokenByIDOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CollectionTokenByIdOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCollectionTokenSettings2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCollectionTokenSettings(ctx context.Context, sel ast.SelectionSet, v *model.CollectionTokenSettings) graphql.Marshaler {
+func (ec *executionContext) marshalOCollectionTokenSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCollectionTokenSettings(ctx context.Context, sel ast.SelectionSet, v *model.CollectionTokenSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CollectionTokenSettings(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommunitiesConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunitiesConnection(ctx context.Context, sel ast.SelectionSet, v *model.CommunitiesConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOCommunitiesConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunitiesConnection(ctx context.Context, sel ast.SelectionSet, v *model.CommunitiesConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CommunitiesConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommunity2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunity(ctx context.Context, sel ast.SelectionSet, v *model.Community) graphql.Marshaler {
+func (ec *executionContext) marshalOCommunity2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunity(ctx context.Context, sel ast.SelectionSet, v *model.Community) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Community(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommunityByAddressOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunityByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.CommunityByAddressOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCommunityByAddressOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunityByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.CommunityByAddressOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CommunityByAddressOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommunityEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunityEdge(ctx context.Context, sel ast.SelectionSet, v []*model.CommunityEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOCommunityEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunityEdge(ctx context.Context, sel ast.SelectionSet, v []*model.CommunityEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46259,7 +46259,7 @@ func (ec *executionContext) marshalOCommunityEdge2ᚕᚖgithubᚗcomᚋmikeydub�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCommunityEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunityEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOCommunityEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunityEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46273,14 +46273,14 @@ func (ec *executionContext) marshalOCommunityEdge2ᚕᚖgithubᚗcomᚋmikeydub�
 	return ret
 }
 
-func (ec *executionContext) marshalOCommunityEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunityEdge(ctx context.Context, sel ast.SelectionSet, v *model.CommunityEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOCommunityEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunityEdge(ctx context.Context, sel ast.SelectionSet, v *model.CommunityEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CommunityEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommunitySearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunitySearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CommunitySearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalOCommunitySearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunitySearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CommunitySearchResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46307,7 +46307,7 @@ func (ec *executionContext) marshalOCommunitySearchResult2ᚕᚖgithubᚗcomᚋm
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCommunitySearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCommunitySearchResult(ctx, sel, v[i])
+			ret[i] = ec.marshalNCommunitySearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCommunitySearchResult(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46327,21 +46327,21 @@ func (ec *executionContext) marshalOCommunitySearchResult2ᚕᚖgithubᚗcomᚋm
 	return ret
 }
 
-func (ec *executionContext) marshalOConnectSocialAccountPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐConnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ConnectSocialAccountPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOConnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐConnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ConnectSocialAccountPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ConnectSocialAccountPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOContract2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐContract(ctx context.Context, sel ast.SelectionSet, v *model.Contract) graphql.Marshaler {
+func (ec *executionContext) marshalOContract2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐContract(ctx context.Context, sel ast.SelectionSet, v *model.Contract) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Contract(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx context.Context, v interface{}) ([]*model.CreateCollectionInSplitInput, error) {
+func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx context.Context, v interface{}) ([]*model.CreateCollectionInSplitInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46353,7 +46353,7 @@ func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚕᚖgithub�
 	res := make([]*model.CreateCollectionInSplitInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOCreateCollectionInSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOCreateCollectionInSplitInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -46361,7 +46361,7 @@ func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚕᚖgithub�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx context.Context, v interface{}) (*model.CreateCollectionInSplitInput, error) {
+func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionInSplitInput(ctx context.Context, v interface{}) (*model.CreateCollectionInSplitInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46369,28 +46369,28 @@ func (ec *executionContext) unmarshalOCreateCollectionInSplitInput2ᚖgithubᚗc
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOCreateCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateCollectionPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCreateCollectionPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateCollectionPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreateCollectionPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCreateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreateSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreateUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCreateUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreateUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
+func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46402,7 +46402,7 @@ func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgal
 	res := make([]persist.DBID, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -46410,13 +46410,13 @@ func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgal
 	return res, nil
 }
 
-func (ec *executionContext) marshalODBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalNDBID2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
+		ret[i] = ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
 	}
 
 	for _, e := range ret {
@@ -46428,7 +46428,7 @@ func (ec *executionContext) marshalODBID2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalle
 	return ret
 }
 
-func (ec *executionContext) unmarshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (*persist.DBID, error) {
+func (ec *executionContext) unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (*persist.DBID, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46437,7 +46437,7 @@ func (ec *executionContext) unmarshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgal
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v *persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v *persist.DBID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46445,7 +46445,7 @@ func (ec *executionContext) marshalODBID2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalle
 	return res
 }
 
-func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDebugAuth(ctx context.Context, v interface{}) (*model.DebugAuth, error) {
+func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugAuth(ctx context.Context, v interface{}) (*model.DebugAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46453,7 +46453,7 @@ func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋmikeydubᚋgo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDebugSocialAuth(ctx context.Context, v interface{}) (*model.DebugSocialAuth, error) {
+func (ec *executionContext) unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugSocialAuth(ctx context.Context, v interface{}) (*model.DebugSocialAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46461,42 +46461,42 @@ func (ec *executionContext) unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋmikeydub
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODeepRefreshPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeepRefreshPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeepRefreshPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalODeepRefreshPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeepRefreshPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DeepRefreshPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODeleteCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteCollectionPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalODeleteCollectionPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeleteCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteCollectionPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DeleteCollectionPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODeleteSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalODeleteSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DeleteSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODeletedNode2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDeletedNode(ctx context.Context, sel ast.SelectionSet, v *model.DeletedNode) graphql.Marshaler {
+func (ec *executionContext) marshalODeletedNode2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeletedNode(ctx context.Context, sel ast.SelectionSet, v *model.DeletedNode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DeletedNode(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODisconnectSocialAccountPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐDisconnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DisconnectSocialAccountPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalODisconnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDisconnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DisconnectSocialAccountPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DisconnectSocialAccountPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (*persist.Email, error) {
+func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (*persist.Email, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46505,7 +46505,7 @@ func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑga
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v *persist.Email) graphql.Marshaler {
+func (ec *executionContext) marshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v *persist.Email) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46513,14 +46513,14 @@ func (ec *executionContext) marshalOEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgall
 	return res
 }
 
-func (ec *executionContext) marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.EmailNotificationSettings) graphql.Marshaler {
+func (ec *executionContext) marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.EmailNotificationSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._EmailNotificationSettings(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, v interface{}) (*persist.EmailVerificationStatus, error) {
+func (ec *executionContext) unmarshalOEmailVerificationStatus2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, v interface{}) (*persist.EmailVerificationStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46529,14 +46529,14 @@ func (ec *executionContext) unmarshalOEmailVerificationStatus2ᚖgithubᚗcomᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, sel ast.SelectionSet, v *persist.EmailVerificationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, sel ast.SelectionSet, v *persist.EmailVerificationStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOEoaAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐEoaAuth(ctx context.Context, v interface{}) (*model.EoaAuth, error) {
+func (ec *executionContext) unmarshalOEoaAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEoaAuth(ctx context.Context, v interface{}) (*model.EoaAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46560,28 +46560,28 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalOFollowAllSocialConnectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐFollowAllSocialConnectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.FollowAllSocialConnectionsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOFollowAllSocialConnectionsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐFollowAllSocialConnectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.FollowAllSocialConnectionsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._FollowAllSocialConnectionsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOFollowUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐFollowUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.FollowUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOFollowUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐFollowUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.FollowUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._FollowUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.GetAuthNoncePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.GetAuthNoncePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._GetAuthNoncePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx context.Context, v interface{}) (*model.GnosisSafeAuth, error) {
+func (ec *executionContext) unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx context.Context, v interface{}) (*model.GnosisSafeAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46589,7 +46589,7 @@ func (ec *executionContext) unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋmikeydub�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.GroupNotificationUserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.GroupNotificationUserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46616,7 +46616,7 @@ func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcom
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46630,14 +46630,14 @@ func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcom
 	return ret
 }
 
-func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.GroupNotificationUserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.GroupNotificationUserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._GroupNotificationUserEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx context.Context, sel ast.SelectionSet, v *model.GroupNotificationUsersConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOGroupNotificationUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUsersConnection(ctx context.Context, sel ast.SelectionSet, v *model.GroupNotificationUsersConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46692,21 +46692,21 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOLoginPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.LoginPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOLoginPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.LoginPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._LoginPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOLogoutPayload2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v *model.LogoutPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOLogoutPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v *model.LogoutPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._LogoutPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx context.Context, v interface{}) (*model.MagicLinkAuth, error) {
+func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx context.Context, v interface{}) (*model.MagicLinkAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46714,21 +46714,21 @@ func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmikeydub�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMediaDimensions2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaDimensions(ctx context.Context, sel ast.SelectionSet, v *model.MediaDimensions) graphql.Marshaler {
+func (ec *executionContext) marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx context.Context, sel ast.SelectionSet, v *model.MediaDimensions) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._MediaDimensions(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOMediaSubtype2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMediaSubtype(ctx context.Context, sel ast.SelectionSet, v model.MediaSubtype) graphql.Marshaler {
+func (ec *executionContext) marshalOMediaSubtype2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaSubtype(ctx context.Context, sel ast.SelectionSet, v model.MediaSubtype) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._MediaSubtype(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOMembershipTier2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMembershipTier(ctx context.Context, sel ast.SelectionSet, v []*model.MembershipTier) graphql.Marshaler {
+func (ec *executionContext) marshalOMembershipTier2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMembershipTier(ctx context.Context, sel ast.SelectionSet, v []*model.MembershipTier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46755,7 +46755,7 @@ func (ec *executionContext) marshalOMembershipTier2ᚕᚖgithubᚗcomᚋmikeydub
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOMembershipTier2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMembershipTier(ctx, sel, v[i])
+			ret[i] = ec.marshalOMembershipTier2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMembershipTier(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46769,21 +46769,21 @@ func (ec *executionContext) marshalOMembershipTier2ᚕᚖgithubᚗcomᚋmikeydub
 	return ret
 }
 
-func (ec *executionContext) marshalOMembershipTier2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMembershipTier(ctx context.Context, sel ast.SelectionSet, v *model.MembershipTier) graphql.Marshaler {
+func (ec *executionContext) marshalOMembershipTier2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMembershipTier(ctx context.Context, sel ast.SelectionSet, v *model.MembershipTier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._MembershipTier(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOMintPremiumCardToWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMintPremiumCardToWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MintPremiumCardToWalletPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOMintPremiumCardToWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMintPremiumCardToWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MintPremiumCardToWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._MintPremiumCardToWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOMoveCollectionToSplitInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitInput(ctx context.Context, v interface{}) (*model.MoveCollectionToSplitInput, error) {
+func (ec *executionContext) unmarshalOMoveCollectionToSplitInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMoveCollectionToSplitInput(ctx context.Context, v interface{}) (*model.MoveCollectionToSplitInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46791,28 +46791,28 @@ func (ec *executionContext) unmarshalOMoveCollectionToSplitInput2ᚖgithubᚗcom
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMoveCollectionToSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐMoveCollectionToSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MoveCollectionToSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOMoveCollectionToSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMoveCollectionToSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.MoveCollectionToSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._MoveCollectionToSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONode2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
+func (ec *executionContext) marshalONode2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotification2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Notification(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []model.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46839,7 +46839,7 @@ func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋmikeydubᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONotification2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotification(ctx, sel, v[i])
+			ret[i] = ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46853,7 +46853,7 @@ func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋmikeydubᚋgo
 	return ret
 }
 
-func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationEdge) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46880,7 +46880,7 @@ func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmikeyd
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONotificationEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalONotificationEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46894,21 +46894,21 @@ func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmikeyd
 	return ret
 }
 
-func (ec *executionContext) marshalONotificationEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v *model.NotificationEdge) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v *model.NotificationEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NotificationEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotificationSettings2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.NotificationSettings) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.NotificationSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NotificationSettings(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx context.Context, v interface{}) (*model.NotificationSettingsInput, error) {
+func (ec *executionContext) unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx context.Context, v interface{}) (*model.NotificationSettingsInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46916,14 +46916,14 @@ func (ec *executionContext) unmarshalONotificationSettingsInput2ᚖgithubᚗcom�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalONotificationsConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐNotificationsConnection(ctx context.Context, sel ast.SelectionSet, v *model.NotificationsConnection) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationsConnection(ctx context.Context, sel ast.SelectionSet, v *model.NotificationsConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NotificationsConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOOwnerAtBlock2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx context.Context, sel ast.SelectionSet, v []*model.OwnerAtBlock) graphql.Marshaler {
+func (ec *executionContext) marshalOOwnerAtBlock2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx context.Context, sel ast.SelectionSet, v []*model.OwnerAtBlock) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46950,7 +46950,7 @@ func (ec *executionContext) marshalOOwnerAtBlock2ᚕᚖgithubᚗcomᚋmikeydub�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOOwnerAtBlock2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx, sel, v[i])
+			ret[i] = ec.marshalOOwnerAtBlock2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -46964,28 +46964,28 @@ func (ec *executionContext) marshalOOwnerAtBlock2ᚕᚖgithubᚗcomᚋmikeydub�
 	return ret
 }
 
-func (ec *executionContext) marshalOOwnerAtBlock2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx context.Context, sel ast.SelectionSet, v *model.OwnerAtBlock) graphql.Marshaler {
+func (ec *executionContext) marshalOOwnerAtBlock2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOwnerAtBlock(ctx context.Context, sel ast.SelectionSet, v *model.OwnerAtBlock) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._OwnerAtBlock(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPageInfo2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalOPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PreverifyEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx context.Context, sel ast.SelectionSet, v []*model.PreviewURLSet) graphql.Marshaler {
+func (ec *executionContext) marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx context.Context, sel ast.SelectionSet, v []*model.PreviewURLSet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47012,7 +47012,7 @@ func (ec *executionContext) marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋmikeydub�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, sel, v[i])
+			ret[i] = ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47026,74 +47026,74 @@ func (ec *executionContext) marshalOPreviewURLSet2ᚕᚖgithubᚗcomᚋmikeydub�
 	return ret
 }
 
-func (ec *executionContext) marshalOPreviewURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPreviewURLSet(ctx context.Context, sel ast.SelectionSet, v *model.PreviewURLSet) graphql.Marshaler {
+func (ec *executionContext) marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx context.Context, sel ast.SelectionSet, v *model.PreviewURLSet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PreviewURLSet(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPubKey2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
+func (ec *executionContext) unmarshalOPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.PubKey(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPubKey2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
+func (ec *executionContext) marshalOPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func (ec *executionContext) marshalOPublishSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOPublishSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PublishSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORefreshCollectionPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshCollectionPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORefreshCollectionPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshCollectionPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshCollectionPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RefreshCollectionPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORefreshContractPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshContractPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshContractPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORefreshContractPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshContractPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshContractPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RefreshContractPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORefreshTokenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRefreshTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshTokenPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORefreshTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshTokenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RefreshTokenPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RemoveUserWalletsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RemoveUserWalletsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RemoveUserWalletsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ResendVerificationEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ResendVerificationEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ResendVerificationEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RevokeRolesFromUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RevokeRolesFromUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RevokeRolesFromUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) ([]*persist.Role, error) {
+func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) ([]*persist.Role, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47105,7 +47105,7 @@ func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑ
 	res := make([]*persist.Role, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalORole2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
+		res[i], err = ec.unmarshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -47113,7 +47113,7 @@ func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑ
 	return res, nil
 }
 
-func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v []*persist.Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v []*persist.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47140,7 +47140,7 @@ func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑga
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalORole2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
+			ret[i] = ec.marshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47154,7 +47154,7 @@ func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑga
 	return ret
 }
 
-func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (*persist.Role, error) {
+func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (*persist.Role, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47163,56 +47163,56 @@ func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgal
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v *persist.Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v *persist.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOSearchCommunitiesPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchCommunitiesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchCommunitiesPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSearchCommunitiesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchCommunitiesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchCommunitiesPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SearchCommunitiesPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchSplitsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSearchSplitsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchSplitsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SearchSplitsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchUsersPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchUsersPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SearchUsersPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSetSpamPreferencePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSetSpamPreferencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SetSpamPreferencePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSetSpamPreferencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SetSpamPreferencePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SetSpamPreferencePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSocialAccounts2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialAccounts(ctx context.Context, sel ast.SelectionSet, v *model.SocialAccounts) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialAccounts2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAccounts(ctx context.Context, sel ast.SelectionSet, v *model.SocialAccounts) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SocialAccounts(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx context.Context, sel ast.SelectionSet, v *model.SocialConnectionsConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx context.Context, sel ast.SelectionSet, v *model.SocialConnectionsConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SocialConnectionsConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.SocialConnectionsEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.SocialConnectionsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47239,7 +47239,7 @@ func (ec *executionContext) marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋm
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSocialConnectionsEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOSocialConnectionsEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47253,28 +47253,28 @@ func (ec *executionContext) marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋm
 	return ret
 }
 
-func (ec *executionContext) marshalOSocialConnectionsEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v *model.SocialConnectionsEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialConnectionsEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v *model.SocialConnectionsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SocialConnectionsEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSocialConnectionsOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialConnectionsOrError(ctx context.Context, sel ast.SelectionSet, v model.SocialConnectionsOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialConnectionsOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsOrError(ctx context.Context, sel ast.SelectionSet, v model.SocialConnectionsOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SocialConnectionsOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSocialQueriesOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSocialQueriesOrError(ctx context.Context, sel ast.SelectionSet, v model.SocialQueriesOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSocialQueriesOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialQueriesOrError(ctx context.Context, sel ast.SelectionSet, v model.SocialQueriesOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SocialQueriesOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
+func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47301,7 +47301,7 @@ func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx, sel, v[i])
+			ret[i] = ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47315,21 +47315,21 @@ func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 	return ret
 }
 
-func (ec *executionContext) marshalOSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v *model.Split) graphql.Marshaler {
+func (ec *executionContext) marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v *model.Split) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Split(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SplitByIDPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SplitByIDPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SplitByIdPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v []*model.SplitFiUser) graphql.Marshaler {
+func (ec *executionContext) marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v []*model.SplitFiUser) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47356,7 +47356,7 @@ func (ec *executionContext) marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋmikeydubᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47370,21 +47370,21 @@ func (ec *executionContext) marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋmikeydubᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalOSplitFiUser2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v *model.SplitFiUser) graphql.Marshaler {
+func (ec *executionContext) marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v *model.SplitFiUser) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SplitFiUser(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplitFiUserOrAddress2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitFiUserOrAddress(ctx context.Context, sel ast.SelectionSet, v model.SplitFiUserOrAddress) graphql.Marshaler {
+func (ec *executionContext) marshalOSplitFiUserOrAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUserOrAddress(ctx context.Context, sel ast.SelectionSet, v model.SplitFiUserOrAddress) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SplitFiUserOrAddress(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SplitSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SplitSearchResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47411,7 +47411,7 @@ func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmikey
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSplitSearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSplitSearchResult(ctx, sel, v[i])
+			ret[i] = ec.marshalNSplitSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResult(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47527,14 +47527,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOSyncTokensForUsernamePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSyncTokensForUsernamePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SyncTokensForUsernamePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSyncTokensForUsernamePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSyncTokensForUsernamePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SyncTokensForUsernamePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SyncTokensForUsernamePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSyncTokensPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐSyncTokensPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SyncTokensPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSyncTokensPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSyncTokensPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SyncTokensPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47557,7 +47557,7 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v []*model.Token) graphql.Marshaler {
+func (ec *executionContext) marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v []*model.Token) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47584,7 +47584,7 @@ func (ec *executionContext) marshalOToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx, sel, v[i])
+			ret[i] = ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47598,21 +47598,21 @@ func (ec *executionContext) marshalOToken2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑg
 	return ret
 }
 
-func (ec *executionContext) marshalOToken2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v *model.Token) graphql.Marshaler {
+func (ec *executionContext) marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v *model.Token) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Token(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTokenByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.TokenByIDOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.TokenByIDOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TokenByIdOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTokenEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TokenEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TokenEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47639,7 +47639,7 @@ func (ec *executionContext) marshalOTokenEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTokenEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOTokenEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47653,14 +47653,14 @@ func (ec *executionContext) marshalOTokenEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgo
 	return ret
 }
 
-func (ec *executionContext) marshalOTokenEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenEdge(ctx context.Context, sel ast.SelectionSet, v *model.TokenEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenEdge(ctx context.Context, sel ast.SelectionSet, v *model.TokenEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TokenEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTokenHolder2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolder(ctx context.Context, sel ast.SelectionSet, v []*model.TokenHolder) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenHolder2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolder(ctx context.Context, sel ast.SelectionSet, v []*model.TokenHolder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47687,7 +47687,7 @@ func (ec *executionContext) marshalOTokenHolder2ᚕᚖgithubᚗcomᚋmikeydubᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTokenHolder2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolder(ctx, sel, v[i])
+			ret[i] = ec.marshalOTokenHolder2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47701,14 +47701,14 @@ func (ec *executionContext) marshalOTokenHolder2ᚕᚖgithubᚗcomᚋmikeydubᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalOTokenHolder2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolder(ctx context.Context, sel ast.SelectionSet, v *model.TokenHolder) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenHolder2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolder(ctx context.Context, sel ast.SelectionSet, v *model.TokenHolder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TokenHolder(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTokenHolderEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TokenHolderEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenHolderEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TokenHolderEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -47735,7 +47735,7 @@ func (ec *executionContext) marshalOTokenHolderEdge2ᚕᚖgithubᚗcomᚋmikeydu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTokenHolderEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOTokenHolderEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -47749,21 +47749,21 @@ func (ec *executionContext) marshalOTokenHolderEdge2ᚕᚖgithubᚗcomᚋmikeydu
 	return ret
 }
 
-func (ec *executionContext) marshalOTokenHolderEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx context.Context, sel ast.SelectionSet, v *model.TokenHolderEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenHolderEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHolderEdge(ctx context.Context, sel ast.SelectionSet, v *model.TokenHolderEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TokenHolderEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTokenHoldersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenHoldersConnection(ctx context.Context, sel ast.SelectionSet, v *model.TokenHoldersConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenHoldersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenHoldersConnection(ctx context.Context, sel ast.SelectionSet, v *model.TokenHoldersConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TokenHoldersConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOTokenType2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, v interface{}) (*model.TokenType, error) {
+func (ec *executionContext) unmarshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, v interface{}) (*model.TokenType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47772,21 +47772,21 @@ func (ec *executionContext) unmarshalOTokenType2ᚖgithubᚗcomᚋmikeydubᚋgo�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOTokenType2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, sel ast.SelectionSet, v *model.TokenType) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, sel ast.SelectionSet, v *model.TokenType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOTokensConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTokensConnection(ctx context.Context, sel ast.SelectionSet, v *model.TokensConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOTokensConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokensConnection(ctx context.Context, sel ast.SelectionSet, v *model.TokensConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TokensConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOTwitterAuth2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTwitterAuth(ctx context.Context, v interface{}) (*model.TwitterAuth, error) {
+func (ec *executionContext) unmarshalOTwitterAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterAuth(ctx context.Context, v interface{}) (*model.TwitterAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47794,42 +47794,42 @@ func (ec *executionContext) unmarshalOTwitterAuth2ᚖgithubᚗcomᚋmikeydubᚋg
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOTwitterSocialAccount2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐTwitterSocialAccount(ctx context.Context, sel ast.SelectionSet, v *model.TwitterSocialAccount) graphql.Marshaler {
+func (ec *executionContext) marshalOTwitterSocialAccount2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterSocialAccount(ctx context.Context, sel ast.SelectionSet, v *model.TwitterSocialAccount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TwitterSocialAccount(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUnfollowUserPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUnfollowUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnfollowUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUnfollowUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnfollowUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnfollowUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UnfollowUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnsubscribeFromEmailTypePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnsubscribeFromEmailTypePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UnsubscribeFromEmailTypePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateCollectionHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateCollectionHiddenPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateCollectionHiddenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateCollectionHiddenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateCollectionHiddenPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateCollectionInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateCollectionInfoPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateCollectionInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateCollectionInfoPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateCollectionInfoPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOUpdateCollectionInput2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx context.Context, v interface{}) ([]*model.UpdateCollectionInput, error) {
+func (ec *executionContext) unmarshalOUpdateCollectionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx context.Context, v interface{}) ([]*model.UpdateCollectionInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47841,7 +47841,7 @@ func (ec *executionContext) unmarshalOUpdateCollectionInput2ᚕᚖgithubᚗcom�
 	res := make([]*model.UpdateCollectionInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOUpdateCollectionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOUpdateCollectionInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -47849,7 +47849,7 @@ func (ec *executionContext) unmarshalOUpdateCollectionInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOUpdateCollectionInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx context.Context, v interface{}) (*model.UpdateCollectionInput, error) {
+func (ec *executionContext) unmarshalOUpdateCollectionInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionInput(ctx context.Context, v interface{}) (*model.UpdateCollectionInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47857,105 +47857,105 @@ func (ec *executionContext) unmarshalOUpdateCollectionInput2ᚖgithubᚗcomᚋmi
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOUpdateCollectionTokensPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateCollectionTokensPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateCollectionTokensPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateCollectionTokensPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateCollectionTokensPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateCollectionTokensPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateCollectionTokensPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailNotificationSettingsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailNotificationSettingsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateEmailNotificationSettingsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateFeaturedSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateFeaturedSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateFeaturedSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateFeaturedSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateFeaturedSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateFeaturedSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateFeaturedSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePrimaryWalletPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePrimaryWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdatePrimaryWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSocialAccountDisplayedPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSocialAccountDisplayedPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSocialAccountDisplayedPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSocialAccountDisplayedPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSocialAccountDisplayedPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitCollectionsPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitCollectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitCollectionsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSplitCollectionsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitCollectionsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitCollectionsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitCollectionsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitHiddenPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitInfoPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitInfoPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitInfoPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitOrderPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateTokenInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateTokenInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateTokenInfoPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateTokenInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateTokenInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateTokenInfoPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateTokenInfoPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserExperiencePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserExperiencePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateUserExperiencePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserInfoPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserInfoPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateUserInfoPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx context.Context, v interface{}) (*model.UploadPersistedQueriesInput, error) {
+func (ec *executionContext) unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx context.Context, v interface{}) (*model.UploadPersistedQueriesInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47963,35 +47963,35 @@ func (ec *executionContext) unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗco
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UploadPersistedQueriesPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UploadPersistedQueriesPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UploadPersistedQueriesPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserByAddressOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByAddressOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUserByAddressOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByAddressOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserByAddressOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserByIdOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByIDOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUserByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByIDOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserByIdOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserByUsernameOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByUsernameOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUserByUsernameOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByUsernameOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserByUsernameOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.UserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.UserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -48018,7 +48018,7 @@ func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgo�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUserEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -48032,21 +48032,21 @@ func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋmikeydubᚋgo�
 	return ret
 }
 
-func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.UserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.UserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserEmail2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserEmail(ctx context.Context, sel ast.SelectionSet, v *model.UserEmail) graphql.Marshaler {
+func (ec *executionContext) marshalOUserEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEmail(ctx context.Context, sel ast.SelectionSet, v *model.UserEmail) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserEmail(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserExperience) graphql.Marshaler {
+func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserExperience) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -48073,7 +48073,7 @@ func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋmikeydub
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUserExperience2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserExperience(ctx, sel, v[i])
+			ret[i] = ec.marshalNUserExperience2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperience(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -48093,7 +48093,7 @@ func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋmikeydub
 	return ret
 }
 
-func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserSearchResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -48120,7 +48120,7 @@ func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmikeyd
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUserSearchResult2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUserSearchResult(ctx, sel, v[i])
+			ret[i] = ec.marshalNUserSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResult(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -48140,49 +48140,49 @@ func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmikeyd
 	return ret
 }
 
-func (ec *executionContext) marshalOUsersConnection2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐUsersConnection(ctx context.Context, sel ast.SelectionSet, v *model.UsersConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUsersConnection(ctx context.Context, sel ast.SelectionSet, v *model.UsersConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UsersConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOVerifyEmailPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOVerifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._VerifyEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOVideoURLSet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐVideoURLSet(ctx context.Context, sel ast.SelectionSet, v *model.VideoURLSet) graphql.Marshaler {
+func (ec *executionContext) marshalOVideoURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVideoURLSet(ctx context.Context, sel ast.SelectionSet, v *model.VideoURLSet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._VideoURLSet(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewSplitPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ViewSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {
+func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Viewer(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ViewerOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerSplit) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerSplit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -48209,7 +48209,7 @@ func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOViewerSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx, sel, v[i])
+			ret[i] = ec.marshalOViewerSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -48223,21 +48223,21 @@ func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmikeydubᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalOViewerSplit2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v *model.ViewerSplit) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v *model.ViewerSplit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ViewerSplit(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ViewerSplitByIdPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v []*model.Wallet) graphql.Marshaler {
+func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v []*model.Wallet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -48264,7 +48264,7 @@ func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOWallet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx, sel, v[i])
+			ret[i] = ec.marshalOWallet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -48278,14 +48278,14 @@ func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋmikeydubᚋgoᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalOWallet2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v *model.Wallet) graphql.Marshaler {
+func (ec *executionContext) marshalOWallet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v *model.Wallet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Wallet(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOWalletType2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (*persist.WalletType, error) {
+func (ec *executionContext) unmarshalOWalletType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (*persist.WalletType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -48294,7 +48294,7 @@ func (ec *executionContext) unmarshalOWalletType2ᚖgithubᚗcomᚋmikeydubᚋgo
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOWalletType2ᚖgithubᚗcomᚋmikeydubᚋgoᚑgalleryᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v *persist.WalletType) graphql.Marshaler {
+func (ec *executionContext) marshalOWalletType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v *persist.WalletType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

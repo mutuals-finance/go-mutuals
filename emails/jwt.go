@@ -4,9 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/mikeydub/go-gallery/env"
-	"github.com/mikeydub/go-gallery/service/persist"
 )
 
 // this wouldn't be necessary if we were using go 1.18 because we could have the auth.ParseJWT function use generics to return the correct type
@@ -36,7 +36,7 @@ func jwtParse(pJWTtokenStr string) (persist.DBID, string, error) {
 }
 
 func jwtGenerate(pUserID persist.DBID, email string) (string, error) {
-	issuer := "gallery"
+	issuer := "splitfi"
 
 	signingKeyBytesLst := []byte(env.GetString("JWT_SECRET"))
 

@@ -3,7 +3,7 @@ package admin
 import (
 	"errors"
 
-	"github.com/mikeydub/go-gallery/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 var errGetNFTsInput = errors.New("address or user_id must be provided")
@@ -77,7 +77,7 @@ type RefreshNFTsInput struct {
 // 	}
 // }
 
-// func refreshOpensea(nftRepo persist.NFTRepository, userRepo postgres.UserRepository, collRepo postgres.CollectionRepository, galleryRepo postgres.SplitRepository, backupRepo postgres.BackupRepository) gin.HandlerFunc {
+// func refreshOpensea(nftRepo persist.NFTRepository, userRepo postgres.UserRepository, collRepo postgres.CollectionRepository, splitRepo postgres.SplitRepository, backupRepo postgres.BackupRepository) gin.HandlerFunc {
 // 	return func(c *gin.Context) {
 // 		var input RefreshNFTsInput
 // 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -88,7 +88,7 @@ type RefreshNFTsInput struct {
 // 			util.ErrResponse(c, http.StatusBadRequest, errGetNFTsInput)
 // 			return
 // 		}
-// 		err := RefreshOpensea(c, input, userRepo, nftRepo, collRepo, galleryRepo, backupRepo)
+// 		err := RefreshOpensea(c, input, userRepo, nftRepo, collRepo, splitRepo, backupRepo)
 // 		if err != nil {
 // 			util.ErrResponse(c, http.StatusInternalServerError, err)
 // 			return
@@ -99,7 +99,7 @@ type RefreshNFTsInput struct {
 // }
 
 // // RefreshOpensea refreshes the opensea data for the given user ids and addresses
-// func RefreshOpensea(c context.Context, input RefreshNFTsInput, userRepo postgres.UserRepository, nftRepo persist.NFTRepository, collRepo postgres.CollectionRepository, galleryRepo postgres.SplitRepository, backupRepo postgres.BackupRepository) error {
+// func RefreshOpensea(c context.Context, input RefreshNFTsInput, userRepo postgres.UserRepository, nftRepo persist.NFTRepository, collRepo postgres.CollectionRepository, splitRepo postgres.SplitRepository, backupRepo postgres.BackupRepository) error {
 // 	logrus.Debugf("refreshOpensea input: %+v", input)
 // 	if input.UserIDs != nil && len(input.UserIDs) > 0 {
 // 		for _, userID := range input.UserIDs {
@@ -107,7 +107,7 @@ type RefreshNFTsInput struct {
 // 			if err != nil {
 // 				return err
 // 			}
-// 			err = opensea.UpdateAssetsForAcc(c, user.ID, persist.WalletsToEthereumAddresses(user.Wallets), nftRepo, userRepo, collRepo, galleryRepo, backupRepo)
+// 			err = opensea.UpdateAssetsForAcc(c, user.ID, persist.WalletsToEthereumAddresses(user.Wallets), nftRepo, userRepo, collRepo, splitRepo, backupRepo)
 // 			if err != nil {
 // 				return err
 // 			}
