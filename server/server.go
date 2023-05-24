@@ -31,7 +31,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
 	"github.com/SplitFi/go-splitfi/service/multichain/eth"
 	"github.com/SplitFi/go-splitfi/service/multichain/infura"
-	"github.com/SplitFi/go-splitfi/service/multichain/opensea"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
@@ -270,13 +269,11 @@ func NewMultichainProvider(c *Clients) *multichain.Provider {
 	ethProvider := eth.NewProvider(env.GetString("INDEXER_HOST"), c.HTTPClient, c.EthClient, c.TaskClient)
 	alchemyOptimismProvider := alchemy.NewProvider(persist.ChainOptimism, c.HTTPClient)
 	alchemyPolygonProvider := alchemy.NewProvider(persist.ChainPolygon, c.HTTPClient)
-	openseaProvider := opensea.NewProvider(c.EthClient, c.HTTPClient)
 	cache := redis.NewCache(redis.CommunitiesDB)
 	return multichain.NewProvider(context.Background(), c.Repos, c.Queries, cache, c.TaskClient,
 		overrides,
 		failureEthProvider,
 		ethProvider,
-		openseaProvider,
 		alchemyOptimismProvider,
 		alchemyPolygonProvider,
 	)

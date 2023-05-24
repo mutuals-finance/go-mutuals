@@ -351,10 +351,6 @@ type Token implements Node {
   # These are subject to change; unlike the other fields, they aren't present on the current persist.Token
   # struct and may ultimately end up elsewhere
   creatorAddress: ChainAddress
-  openseaCollectionName: String
-
-  # temporary field while we're dependent on opensea
-  openseaId: Int
 }
 
 type OwnerAtBlock {

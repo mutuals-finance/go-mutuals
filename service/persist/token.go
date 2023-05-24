@@ -269,12 +269,6 @@ type NFT struct {
 	Contract            NFTContract     `json:"asset_contract"`
 	TokenCollectionName NullString      `json:"token_collection_name"`
 
-	OpenseaID NullInt64 `json:"opensea_id"`
-	// OPEN_SEA_TOKEN_ID
-	// https://api.opensea.io/api/v1/asset/0xa7d8d9ef8d8ce8992df33d8b8cf4aebabd5bd270/26000331
-	// (/asset/:contract_address/:token_id)
-	OpenseaTokenID TokenID `json:"opensea_token_id"`
-
 	// IMAGES - OPENSEA
 	ImageURL             NullString `json:"image_url"`
 	ImageThumbnailURL    NullString `json:"image_thumbnail_url"`

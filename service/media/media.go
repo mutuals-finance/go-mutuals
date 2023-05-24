@@ -21,7 +21,6 @@ import (
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/mediamapper"
-	"github.com/SplitFi/go-splitfi/service/multichain/opensea"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/sirupsen/logrus"
@@ -895,36 +894,7 @@ outer:
 	timeBeforeDataReader := time.Now()
 	reader, err := rpc.GetDataFromURIAsReader(pCtx, asURI, ipfsClient, arweaveClient)
 	if err != nil {
-
-		if !isRecursive && tids.Chain == persist.ChainETH {
-			logger.For(pCtx).Infof("failed to get data from uri '%s' for '%s', trying opensea", mediaURL, name)
-			// if token is ETH, backup to asking opensea
-			assets, err := opensea.FetchAssetsForTokenIdentifiers(pCtx, persist.EthereumAddress(tids.ContractAddress), opensea.TokenID(tids.TokenID.Base10String()))
-			if err != nil || len(assets) == 0 {
-				// no data from opensea, return error
-				return mediaType, false, errNoDataFromReader{err: err, url: mediaURL}
-			}
-
-			for _, asset := range assets {
-				// does this asset have any valid URLs?
-				firstNonEmptyURL, ok := util.FindFirst([]string{asset.AnimationURL, asset.ImageURL, asset.ImagePreviewURL, asset.ImageOriginalURL, asset.ImageThumbnailURL}, func(s string) bool {
-					return s != ""
-				})
-				if !ok {
-					continue
-				}
-
-				reader, err = rpc.GetDataFromURIAsReader(pCtx, persist.TokenURI(firstNonEmptyURL), ipfsClient, arweaveClient)
-				if err != nil {
-					continue
-				}
-
-				logger.For(pCtx).Infof("got reader for %s from opensea in %s (%s)", name, time.Since(timeBeforeDataReader), firstNonEmptyURL)
-				return downloadAndCache(pCtx, tids, firstNonEmptyURL, name, ipfsPrefix, ipfsClient, arweaveClient, storageClient, bucket, true)
-			}
-		}
 		return mediaType, false, errNoDataFromReader{err: err, url: mediaURL}
-
 	}
 	logger.For(pCtx).Infof("got reader for %s in %s", name, time.Since(timeBeforeDataReader))
 	defer reader.Close()

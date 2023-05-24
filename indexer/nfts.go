@@ -14,7 +14,6 @@ import (
 	"github.com/SplitFi/go-splitfi/contracts"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/media"
-	"github.com/SplitFi/go-splitfi/service/multichain/opensea"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/rpc"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
@@ -436,53 +435,10 @@ func validateNFTs(c context.Context, input ValidateWalletNFTsInput, tokenReposit
 		output.Message += newMsg
 	}
 
-	openseaAssets, err := opensea.FetchAssetsForWallet(c, input.Wallet)
 	if err != nil {
 		return ValidateUsersNFTsOutput{}, err
 	}
 
-	accountedFor := make(map[persist.DBID]bool)
-	unaccountedFor := make(map[string]opensea.Asset)
-
-	for _, asset := range openseaAssets {
-		af := false
-		for _, nft := range currentNFTs {
-			if accountedFor[nft.ID] {
-				continue
-			}
-			if asset.Contract.ContractAddress == nft.ContractAddress && asset.TokenID.String() == nft.TokenID.Base10String() {
-				accountedFor[nft.ID] = true
-				af = true
-				break
-			}
-		}
-		if !af {
-			unaccountedFor[asset.Contract.ContractAddress.String()+" -- "+asset.TokenID.String()] = asset
-		}
-	}
-
-	if len(unaccountedFor) > 0 {
-		unaccountedForKeys := make([]string, 0, len(unaccountedFor))
-		for k := range unaccountedFor {
-			unaccountedForKeys = append(unaccountedForKeys, k)
-		}
-		accountedForKeys := make([]string, 0, len(accountedFor))
-		for k := range accountedFor {
-			accountedForKeys = append(accountedForKeys, k.String())
-		}
-
-		allUnaccountedForAssets := make([]opensea.Asset, 0, len(unaccountedFor))
-		for _, asset := range unaccountedFor {
-			allUnaccountedForAssets = append(allUnaccountedForAssets, asset)
-		}
-
-		if err := processUnaccountedForNFTs(c, allUnaccountedForAssets, input.Wallet, tokenRepository, contractRepository, ethcl, ipfsClient, arweaveClient); err != nil {
-			logger.For(c).WithError(err).Error("failed to process unaccounted for NFTs")
-			return ValidateUsersNFTsOutput{}, err
-		}
-		output.Success = false
-		output.Message += fmt.Sprintf("user %s has unaccounted for NFTs: %v | accounted for NFTs: %v", input.Wallet, unaccountedForKeys, accountedForKeys)
-	}
 	return output, nil
 }
 
@@ -523,25 +479,6 @@ func processAccountedForNFTs(ctx context.Context, tokens []persist.Token, tokenR
 	}
 	return msgToAdd, nil
 }
-func processUnaccountedForNFTs(ctx context.Context, assets []opensea.Asset, address persist.EthereumAddress, tokenRepository persist.TokenRepository, contractRepository persist.ContractRepository, ethcl *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client) error {
-	errChan := make(chan error)
-	wp := workerpool.New(10)
-	for _, asset := range assets {
-		a := asset
-		wp.Submit(func() {
-			errChan <- refreshTokenMetadatas(ctx, UpdateTokenInput{OwnerAddress: address, TokenID: persist.TokenID(a.TokenID.ToBase16()), ContractAddress: a.Contract.ContractAddress, UpdateAll: true}, tokenRepository, ethcl, ipfsClient, arweaveClient)
-		})
-	}
-	for i := 0; i < len(assets); i++ {
-		err := <-errChan
-		if err != nil {
-			logger.For(ctx).WithError(err).Error("failed to refresh unaccounted token media")
-		}
-	}
-
-	return nil
-}
-
 func updateTokens(tokenRepository persist.TokenRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		input := UpdateTokenInput{}

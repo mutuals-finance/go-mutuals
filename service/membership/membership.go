@@ -3,18 +3,14 @@ package membership
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 
 	"github.com/SplitFi/go-splitfi/service/logger"
 
 	"cloud.google.com/go/storage"
-	"github.com/SplitFi/go-splitfi/service/multichain/opensea"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/everFinance/goar"
 	"github.com/gammazero/workerpool"
@@ -81,62 +77,6 @@ func UpdateMembershipTier(pTokenID persist.TokenID, membershipRepository *postgr
 		return persist.MembershipTier{}, fmt.Errorf("No owners found for token: %s", pTokenID)
 	}
 	return processOwners(ctx, pTokenID, md, owners, ethClient, userRepository, galleryRepository, membershipRepository, walletRepository)
-}
-
-// OpenseaFetchMembershipCards recursively fetches all membership cards for a token ID
-func OpenseaFetchMembershipCards(contractAddress persist.EthereumAddress, tokenID persist.TokenID, pOffset int, pRetry int) ([]opensea.Event, error) {
-
-	client := &http.Client{
-		Timeout: time.Minute,
-	}
-
-	result := []opensea.Event{}
-
-	urlStr := fmt.Sprintf("https://api.opensea.io/api/v1/events?asset_contract_address=%s&token_id=%s&only_opensea=false&offset=%d&limit=50", contractAddress, tokenID.Base10String(), pOffset)
-
-	req, err := http.NewRequest("GET", urlStr, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("X-API-KEY", env.GetString("OPENSEA_API_KEY"))
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != 200 {
-		if resp.StatusCode == 429 {
-			if pRetry > 3 {
-				return nil, fmt.Errorf("timed out fetching membership cards %d at url: %s", tokenID.ToInt(), urlStr)
-			}
-
-			logger.For(nil).Warnf("Opensea API rate limit exceeded, retrying in 5 seconds")
-			time.Sleep(time.Second * 2 * time.Duration(pRetry+1))
-			return OpenseaFetchMembershipCards(contractAddress, tokenID, pOffset, pRetry+1)
-		}
-		return nil, fmt.Errorf("unexpected status code: %d - url: %s", resp.StatusCode, urlStr)
-	}
-
-	response := &opensea.Events{}
-	err = util.UnmarshallBody(response, resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	result = append(result, response.Events...)
-	if len(response.Events) == 50 {
-		next, err := OpenseaFetchMembershipCards(contractAddress, tokenID, pOffset+50, pRetry)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, next...)
-	}
-
-	return result, nil
 }
 
 func filterTokenHolders(holdersChannel chan persist.TokenHolder, numHolders int, tokenID persist.TokenID) []persist.TokenHolder {
