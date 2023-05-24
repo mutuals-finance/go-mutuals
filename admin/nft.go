@@ -21,12 +21,6 @@ type ownsGeneralOutput struct {
 	Owns bool `json:"owns"`
 }
 
-// RefreshNFTsInput is the input for the refreshOpensea function
-type RefreshNFTsInput struct {
-	UserIDs   []persist.DBID            `json:"user_ids"`
-	Addresses []persist.EthereumAddress `json:"addresses"`
-}
-
 // func getNFTs(nftRepo persist.NFTRepository) gin.HandlerFunc {
 // 	return func(c *gin.Context) {
 // 		var input getNFTsInput

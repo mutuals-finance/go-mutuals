@@ -31,8 +31,8 @@ type TokenAPI struct {
 	throttler          *throttle.Locker
 }
 
-// ErrTokenRefreshFailed is a generic error that wraps all other OpenSea sync failures.
-// Should be removed once we stop using OpenSea to sync NFTs.
+// ErrTokenRefreshFailed is a generic error that wraps all sync failures.
+// Should be removed once we stop using to sync NFTs.
 type ErrTokenRefreshFailed struct {
 	Message string
 }
@@ -288,7 +288,7 @@ func (api TokenAPI) SyncTokensAdmin(ctx context.Context, chains []persist.Chain,
 	defer api.throttler.Unlock(ctx, userID.String())
 
 	if err := api.multichainProvider.SyncTokens(ctx, userID, chains); err != nil {
-		// Wrap all OpenSea sync failures in a generic type that can be returned to the frontend as an expected error type
+		// Wrap all sync failures in a generic type that can be returned to the frontend as an expected error type
 		return ErrTokenRefreshFailed{Message: err.Error()}
 	}
 
@@ -309,7 +309,7 @@ func (api TokenAPI) SyncTokens(ctx context.Context, chains []persist.Chain) erro
 
 	err = api.multichainProvider.SyncTokens(ctx, userID, chains)
 	if err != nil {
-		// Wrap all OpenSea sync failures in a generic type that can be returned to the frontend as an expected error type
+		// Wrap all sync failures in a generic type that can be returned to the frontend as an expected error type
 		return ErrTokenRefreshFailed{Message: err.Error()}
 	}
 

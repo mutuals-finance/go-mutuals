@@ -1278,9 +1278,6 @@ func tokenToModel(ctx context.Context, token db.Token) *model.Token {
 		BlockNumber:      &blockNumber, // TODO: later
 		IsSpamByUser:     isSpamByUser,
 		IsSpamByProvider: isSpamByProvider,
-
-		// These are legacy mappings that will likely end up elsewhere when we pull data from the indexer
-		OpenseaCollectionName: nil, // TODO: later
 	}
 }
 

@@ -68,7 +68,6 @@ func setDefaults() {
 	viper.SetDefault("CONTRACT_ADDRESSES", "0x93eC9b03a9C14a530F582aef24a21d7FC88aaC46=[0,1,2,3,4,5,6,7,8]")
 	viper.SetDefault("GENERAL_ADDRESS", "0xe3d0fe9b7e0b951663267a3ed1e6577f6f79757e")
 	viper.SetDefault("RPC_URL", "https://eth-rinkeby.alchemyapi.io/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
-	viper.SetDefault("OPENSEA_API_KEY", "")
 	viper.SetDefault("GCLOUD_SERVICE_KEY", "")
 	viper.SetDefault("SNAPSHOT_BUCKET", "splitfi-dev-322005.appspot.com")
 

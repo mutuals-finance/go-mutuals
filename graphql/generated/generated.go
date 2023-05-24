@@ -722,30 +722,28 @@ type ComplexityRoot struct {
 	}
 
 	Token struct {
-		BlockNumber           func(childComplexity int) int
-		Chain                 func(childComplexity int) int
-		CollectorsNote        func(childComplexity int) int
-		Contract              func(childComplexity int) int
-		CreationTime          func(childComplexity int) int
-		CreatorAddress        func(childComplexity int) int
-		Dbid                  func(childComplexity int) int
-		Description           func(childComplexity int) int
-		ExternalURL           func(childComplexity int) int
-		ID                    func(childComplexity int) int
-		IsSpamByProvider      func(childComplexity int) int
-		IsSpamByUser          func(childComplexity int) int
-		LastUpdated           func(childComplexity int) int
-		Media                 func(childComplexity int) int
-		Name                  func(childComplexity int) int
-		OpenseaCollectionName func(childComplexity int) int
-		OpenseaID             func(childComplexity int) int
-		OwnedByWallets        func(childComplexity int) int
-		Owner                 func(childComplexity int) int
-		OwnershipHistory      func(childComplexity int) int
-		Quantity              func(childComplexity int) int
-		TokenID               func(childComplexity int) int
-		TokenMetadata         func(childComplexity int) int
-		TokenType             func(childComplexity int) int
+		BlockNumber      func(childComplexity int) int
+		Chain            func(childComplexity int) int
+		CollectorsNote   func(childComplexity int) int
+		Contract         func(childComplexity int) int
+		CreationTime     func(childComplexity int) int
+		CreatorAddress   func(childComplexity int) int
+		Dbid             func(childComplexity int) int
+		Description      func(childComplexity int) int
+		ExternalURL      func(childComplexity int) int
+		ID               func(childComplexity int) int
+		IsSpamByProvider func(childComplexity int) int
+		IsSpamByUser     func(childComplexity int) int
+		LastUpdated      func(childComplexity int) int
+		Media            func(childComplexity int) int
+		Name             func(childComplexity int) int
+		OwnedByWallets   func(childComplexity int) int
+		Owner            func(childComplexity int) int
+		OwnershipHistory func(childComplexity int) int
+		Quantity         func(childComplexity int) int
+		TokenID          func(childComplexity int) int
+		TokenMetadata    func(childComplexity int) int
+		TokenType        func(childComplexity int) int
 	}
 
 	TokenEdge struct {
@@ -4091,20 +4089,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Token.Name(childComplexity), true
 
-	case "Token.openseaCollectionName":
-		if e.complexity.Token.OpenseaCollectionName == nil {
-			break
-		}
-
-		return e.complexity.Token.OpenseaCollectionName(childComplexity), true
-
-	case "Token.openseaId":
-		if e.complexity.Token.OpenseaID == nil {
-			break
-		}
-
-		return e.complexity.Token.OpenseaID(childComplexity), true
-
 	case "Token.ownedByWallets":
 		if e.complexity.Token.OwnedByWallets == nil {
 			break
@@ -5201,10 +5185,6 @@ type Token implements Node {
   # These are subject to change; unlike the other fields, they aren't present on the current persist.Token
   # struct and may ultimately end up elsewhere
   creatorAddress: ChainAddress
-  openseaCollectionName: String
-
-  # temporary field while we're dependent on opensea
-  openseaId: Int
 }
 
 type OwnerAtBlock {
@@ -9270,10 +9250,6 @@ func (ec *executionContext) fieldContext_ChainTokens_tokens(ctx context.Context,
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -10038,10 +10014,6 @@ func (ec *executionContext) fieldContext_CollectionToken_token(ctx context.Conte
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -22328,10 +22300,6 @@ func (ec *executionContext) fieldContext_RefreshTokenPayload_token(ctx context.C
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -22672,10 +22640,6 @@ func (ec *executionContext) fieldContext_SetSpamPreferencePayload_tokens(ctx con
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -25299,10 +25263,6 @@ func (ec *executionContext) fieldContext_SplitFiUser_tokens(ctx context.Context,
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -27746,88 +27706,6 @@ func (ec *executionContext) fieldContext_Token_creatorAddress(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Token_openseaCollectionName(ctx context.Context, field graphql.CollectedField, obj *model.Token) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Token_openseaCollectionName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OpenseaCollectionName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Token_openseaCollectionName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Token",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Token_openseaId(ctx context.Context, field graphql.CollectedField, obj *model.Token) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Token_openseaId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OpenseaID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Token_openseaId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Token",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TokenEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.TokenEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TokenEdge_node(ctx, field)
 	if err != nil {
@@ -27908,10 +27786,6 @@ func (ec *executionContext) fieldContext_TokenEdge_node(ctx context.Context, fie
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -30039,10 +29913,6 @@ func (ec *executionContext) fieldContext_UpdateTokenInfoPayload_token(ctx contex
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -32026,10 +31896,6 @@ func (ec *executionContext) fieldContext_Wallet_tokens(ctx context.Context, fiel
 				return ec.fieldContext_Token_isSpamByProvider(ctx, field)
 			case "creatorAddress":
 				return ec.fieldContext_Token_creatorAddress(ctx, field)
-			case "openseaCollectionName":
-				return ec.fieldContext_Token_openseaCollectionName(ctx, field)
-			case "openseaId":
-				return ec.fieldContext_Token_openseaId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
@@ -43087,14 +42953,6 @@ func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, ob
 		case "creatorAddress":
 
 			out.Values[i] = ec._Token_creatorAddress(ctx, field, obj)
-
-		case "openseaCollectionName":
-
-			out.Values[i] = ec._Token_openseaCollectionName(ctx, field, obj)
-
-		case "openseaId":
-
-			out.Values[i] = ec._Token_openseaId(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
