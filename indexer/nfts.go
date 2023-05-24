@@ -103,20 +103,6 @@ type GetTokenMetadataOutput struct {
 	Metadata persist.TokenMetadata `json:"metadata"`
 }
 
-// ValidateWalletNFTsInput is the input for the validate users NFTs endpoint that will return
-// whether what opensea has on a user is the same as what we have in our database
-type ValidateWalletNFTsInput struct {
-	Wallet persist.EthereumAddress `json:"wallet,omitempty" binding:"required"`
-	All    bool                    `json:"all"`
-}
-
-// ValidateUsersNFTsOutput is the output of the validate users NFTs endpoint that will return
-// whether what opensea has on a user is the same as what we have in our database
-type ValidateUsersNFTsOutput struct {
-	Success bool   `json:"success"`
-	Message string `json:"message,omitempty"`
-}
-
 func getTokens(queueChan chan<- processTokensInput, nftRepository persist.TokenRepository, contractRepository persist.ContractRepository, ipfsClient *shell.Shell, ethClient *ethclient.Client, arweaveClient *goar.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		input := &getTokensInput{}
@@ -397,49 +383,6 @@ func getTokensFromDB(pCtx context.Context, input *getTokensInput, ethClient *eth
 	default:
 		return nil, nil, errors.New("must specify at least one of id, address, contract_address, token_id")
 	}
-}
-
-func validateWalletsNFTs(tokenRepository persist.TokenRepository, contractRepository persist.ContractRepository, ethcl *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var input ValidateWalletNFTsInput
-		if err := c.ShouldBindJSON(&input); err != nil {
-			util.ErrResponse(c, http.StatusBadRequest, err)
-			return
-		}
-
-		output, err := validateNFTs(c, input, tokenRepository, contractRepository, ethcl, ipfsClient, arweaveClient)
-		if err != nil {
-			util.ErrResponse(c, http.StatusInternalServerError, err)
-			return
-		}
-		c.JSON(http.StatusOK, output)
-
-	}
-}
-
-// validateNFTs will validate the NFTs for the wallet passed in when being compared with opensea
-func validateNFTs(c context.Context, input ValidateWalletNFTsInput, tokenRepository persist.TokenRepository, contractRepository persist.ContractRepository, ethcl *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client) (ValidateUsersNFTsOutput, error) {
-
-	currentNFTs, _, err := tokenRepository.GetByWallet(c, input.Wallet, -1, 0)
-	if err != nil {
-		return ValidateUsersNFTsOutput{}, err
-	}
-
-	output := ValidateUsersNFTsOutput{Success: true}
-
-	if input.All {
-		newMsg, err := processAccountedForNFTs(c, currentNFTs, tokenRepository, ethcl, ipfsClient, arweaveClient)
-		if err != nil {
-			return ValidateUsersNFTsOutput{}, err
-		}
-		output.Message += newMsg
-	}
-
-	if err != nil {
-		return ValidateUsersNFTsOutput{}, err
-	}
-
-	return output, nil
 }
 
 func processAccountedForNFTs(ctx context.Context, tokens []persist.Token, tokenRepository persist.TokenRepository, ethcl *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client) (string, error) {

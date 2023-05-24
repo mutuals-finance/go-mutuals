@@ -1435,10 +1435,6 @@ func getGIFMedia(ctx context.Context, media persist.Media) model.GIFMedia {
 // Temporary method for handling the large "dead ringers" NFT image. This remapping
 // step should actually happen as part of generating resized images with imgix.
 func remapLargeImageUrls(url string) string {
-	if url == "https://storage.opensea.io/files/33ab86c2a565430af5e7fb8399876960.png" || url == "https://openseauserdata.com/files/33ab86c2a565430af5e7fb8399876960.png" {
-		return "https://lh3.googleusercontent.com/pw/AM-JKLVsudnwN97ULF-DgJC1J_AZ8i-1pMjLCVUqswF1_WShId30uP_p_jSRkmVx-XNgKNIGFSglgRojZQrsLOoCM2pVNJwgx5_E4yeYRsMvDQALFKbJk0_6wj64tjLhSIINwGpdNw0MhtWNehKCipDKNeE"
-	}
-
 	return url
 }
 
