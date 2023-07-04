@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	// TokenTypeERC721 is the type of an ERC721 token
+	// TokenTypeERC721 is the type of ERC721 token
 	TokenTypeERC721 TokenType = "ERC-721"
-	// TokenTypeERC1155 is the type of an ERC1155 token
+	// TokenTypeERC1155 is the type of ERC1155 token
 	TokenTypeERC1155 TokenType = "ERC-1155"
-	// TokenTypeERC20 is the type of an ERC20 token
+	// TokenTypeERC20 is the type of ERC20 token
 	TokenTypeERC20 TokenType = "ERC-20"
 )
 
@@ -205,17 +205,21 @@ type Token struct {
 
 	Chain Chain `json:"chain"`
 
-	Name        NullString `json:"name"`
+	Name NullString `json:"name"`
+	// TODO add token symbol
 	Description NullString `json:"description"`
 
-	TokenURI         TokenURI                 `json:"token_uri"`
+	TokenURI TokenURI `json:"token_uri"`
+	// TODO remove token id
 	TokenID          TokenID                  `json:"token_id"`
 	Quantity         HexString                `json:"quantity"`
 	OwnerAddress     EthereumAddress          `json:"owner_address"`
 	OwnershipHistory []EthereumAddressAtBlock `json:"previous_owners"`
-	TokenMetadata    TokenMetadata            `json:"metadata"`
-	ContractAddress  EthereumAddress          `json:"contract_address"`
+	// TODO remove metadata and add logo_url
+	TokenMetadata   TokenMetadata   `json:"metadata"`
+	ContractAddress EthereumAddress `json:"contract_address"`
 
+	// TODO external url needed?
 	ExternalURL NullString `json:"external_url"`
 
 	BlockNumber BlockNumber `json:"block_number"`

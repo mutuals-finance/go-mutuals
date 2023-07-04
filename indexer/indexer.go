@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/contracts"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/SplitFi/go-splitfi/contracts"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/indexer/refresh"
 	"github.com/SplitFi/go-splitfi/service/logger"
@@ -47,12 +47,6 @@ func init() {
 const (
 	// transferEventHash represents the keccak256 hash of Transfer(address,address,uint256)
 	transferEventHash eventHash = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-	// transferSingleEventHash represents the keccak256 hash of TransferSingle(address,address,address,uint256,uint256)
-	transferSingleEventHash eventHash = "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62"
-	// transferBatchEventHash represents the keccak256 hash of TransferBatch(address,address,address,uint256[],uint256[])
-	transferBatchEventHash eventHash = "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb"
-	// uriEventHash represents the keccak256 hash of URI(string,uint256)
-	uriEventHash eventHash = "0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b"
 
 	defaultWorkerPoolSize     = 3
 	defaultWorkerPoolWaitSize = 10
@@ -60,14 +54,12 @@ const (
 )
 
 var (
-	rpcEnabled            bool = false // Enables external RPC calls
-	erc1155ABI, _              = contracts.IERC1155MetaData.GetAbi()
-	animationKeywords          = []string{"animation", "video"}
-	imageKeywords              = []string{"image"}
-	defaultTransferEvents      = []eventHash{
-		transferBatchEventHash,
+	rpcEnabled            = false // Enables external RPC calls
+	erc20ABI, _           = contracts.IERC20MetaData.GetAbi()
+	animationKeywords     = []string{"animation", "video"}
+	imageKeywords         = []string{"image"}
+	defaultTransferEvents = []eventHash{
 		transferEventHash,
-		transferSingleEventHash,
 	}
 )
 
@@ -433,98 +425,35 @@ func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
 		initial := time.Now()
 		switch {
 		case strings.EqualFold(pLog.Topics[0].Hex(), string(transferEventHash)):
-
 			if len(pLog.Topics) < 4 {
 				continue
+			}
+
+			eventData := map[string]interface{}{}
+			err := erc20ABI.UnpackIntoMap(eventData, "Transfer", pLog.Data)
+			if err != nil {
+				logger.For(ctx).WithError(err).Error("Failed to unpack Transfer event")
+				panic(err)
+			}
+
+			value, ok := eventData["value"].(*big.Int)
+			if !ok {
+				panic("Failed to unpack Transfer event, value not found")
 			}
 
 			result = append(result, rpc.Transfer{
 				From:            persist.EthereumAddress(pLog.Topics[1].Hex()),
 				To:              persist.EthereumAddress(pLog.Topics[2].Hex()),
-				TokenID:         persist.TokenID(pLog.Topics[3].Hex()),
-				Amount:          1,
-				BlockNumber:     persist.BlockNumber(pLog.BlockNumber),
-				ContractAddress: persist.EthereumAddress(pLog.Address.Hex()),
-				TokenType:       persist.TokenTypeERC721,
-				TxHash:          pLog.TxHash,
-				BlockHash:       pLog.BlockHash,
-				TxIndex:         pLog.TxIndex,
-			})
-
-			logger.For(ctx).Debugf("Processed transfer event in %s", time.Since(initial))
-		case strings.EqualFold(pLog.Topics[0].Hex(), string(transferSingleEventHash)):
-			if len(pLog.Topics) < 4 {
-				continue
-			}
-
-			eventData := map[string]interface{}{}
-			err := erc1155ABI.UnpackIntoMap(eventData, "TransferSingle", pLog.Data)
-			if err != nil {
-				logger.For(ctx).WithError(err).Error("Failed to unpack TransferSingle event")
-				panic(err)
-			}
-
-			id, ok := eventData["id"].(*big.Int)
-			if !ok {
-				panic("Failed to unpack TransferSingle event, id not found")
-			}
-
-			value, ok := eventData["value"].(*big.Int)
-			if !ok {
-				panic("Failed to unpack TransferSingle event, value not found")
-			}
-
-			result = append(result, rpc.Transfer{
-				From:            persist.EthereumAddress(pLog.Topics[2].Hex()),
-				To:              persist.EthereumAddress(pLog.Topics[3].Hex()),
-				TokenID:         persist.TokenID(id.Text(16)),
 				Amount:          value.Uint64(),
 				BlockNumber:     persist.BlockNumber(pLog.BlockNumber),
 				ContractAddress: persist.EthereumAddress(pLog.Address.Hex()),
-				TokenType:       persist.TokenTypeERC1155,
+				TokenType:       persist.TokenTypeERC20,
 				TxHash:          pLog.TxHash,
 				BlockHash:       pLog.BlockHash,
 				TxIndex:         pLog.TxIndex,
 			})
-			logger.For(ctx).Debugf("Processed single transfer event in %s", time.Since(initial))
-		case strings.EqualFold(pLog.Topics[0].Hex(), string(transferBatchEventHash)):
-			if len(pLog.Topics) < 4 {
-				continue
-			}
+			logger.For(ctx).Debugf("Processed transfer event in %s", time.Since(initial))
 
-			eventData := map[string]interface{}{}
-			err := erc1155ABI.UnpackIntoMap(eventData, "TransferBatch", pLog.Data)
-			if err != nil {
-				logger.For(ctx).WithError(err).Error("Failed to unpack TransferBatch event")
-				panic(err)
-			}
-
-			ids, ok := eventData["ids"].([]*big.Int)
-			if !ok {
-				panic("Failed to unpack TransferBatch event, ids not found")
-			}
-
-			values, ok := eventData["values"].([]*big.Int)
-			if !ok {
-				panic("Failed to unpack TransferBatch event, values not found")
-			}
-
-			for j := 0; j < len(ids); j++ {
-
-				result = append(result, rpc.Transfer{
-					From:            persist.EthereumAddress(pLog.Topics[2].Hex()),
-					To:              persist.EthereumAddress(pLog.Topics[3].Hex()),
-					TokenID:         persist.TokenID(ids[j].Text(16)),
-					Amount:          values[j].Uint64(),
-					ContractAddress: persist.EthereumAddress(pLog.Address.Hex()),
-					TokenType:       persist.TokenTypeERC1155,
-					BlockNumber:     persist.BlockNumber(pLog.BlockNumber),
-					TxHash:          pLog.TxHash,
-					BlockHash:       pLog.BlockHash,
-					TxIndex:         pLog.TxIndex,
-				})
-			}
-			logger.For(ctx).Debugf("Processed batch event in %s", time.Since(initial))
 		default:
 			logger.For(ctx).WithFields(logrus.Fields{
 				"address":   pLog.Address,
@@ -534,97 +463,6 @@ func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
 		}
 	}
 	return result
-}
-
-type tokenIdentifiers struct {
-	tokenID         persist.TokenID
-	contractAddress persist.EthereumAddress
-	ownerAddress    persist.EthereumAddress
-	tokenType       persist.TokenType
-}
-
-func getTokenIdentifiersFromLog(ctx context.Context, log types.Log) ([]tokenIdentifiers, error) {
-
-	result := make([]tokenIdentifiers, 0, 10)
-	switch {
-	case strings.EqualFold(log.Topics[0].Hex(), string(transferEventHash)):
-
-		if len(log.Topics) < 4 {
-			return nil, fmt.Errorf("invalid log topics length: %d: %+v", len(log.Topics), log)
-		}
-
-		ti := tokenIdentifiers{
-			tokenID:         persist.TokenID(log.Topics[3].Hex()),
-			contractAddress: persist.EthereumAddress(log.Address.Hex()),
-			ownerAddress:    persist.EthereumAddress(log.Topics[2].Hex()),
-			tokenType:       persist.TokenTypeERC721,
-		}
-
-		result = append(result, ti)
-
-	case strings.EqualFold(log.Topics[0].Hex(), string(transferSingleEventHash)):
-		if len(log.Topics) < 4 {
-			return nil, fmt.Errorf("invalid log topics length: %d: %+v", len(log.Topics), log)
-		}
-
-		eventData := map[string]interface{}{}
-		err := erc1155ABI.UnpackIntoMap(eventData, "TransferSingle", log.Data)
-		if err != nil {
-			logger.For(ctx).WithError(err).Error("Failed to unpack TransferSingle event")
-			panic(err)
-		}
-
-		id, ok := eventData["id"].(*big.Int)
-		if !ok {
-			panic("Failed to unpack TransferSingle event, id not found")
-		}
-		ti := tokenIdentifiers{
-			tokenID:         persist.TokenID(id.Text(16)),
-			contractAddress: persist.EthereumAddress(log.Address.Hex()),
-			ownerAddress:    persist.EthereumAddress(log.Topics[3].Hex()),
-			tokenType:       persist.TokenTypeERC1155,
-		}
-
-		result = append(result, ti)
-
-	case strings.EqualFold(log.Topics[0].Hex(), string(transferBatchEventHash)):
-		if len(log.Topics) < 4 {
-			return nil, fmt.Errorf("invalid log topics length: %d: %+v", len(log.Topics), log)
-		}
-
-		eventData := map[string]interface{}{}
-		err := erc1155ABI.UnpackIntoMap(eventData, "TransferBatch", log.Data)
-		if err != nil {
-			logger.For(ctx).WithError(err).Error("Failed to unpack TransferBatch event")
-			panic(err)
-		}
-
-		ids, ok := eventData["ids"].([]*big.Int)
-		if !ok {
-			panic("Failed to unpack TransferBatch event, ids not found")
-		}
-
-		for j := 0; j < len(ids); j++ {
-
-			ti := tokenIdentifiers{
-				tokenID:         persist.TokenID(ids[j].Text(16)),
-				contractAddress: persist.EthereumAddress(log.Address.Hex()),
-				ownerAddress:    persist.EthereumAddress(log.Topics[3].Hex()),
-				tokenType:       persist.TokenTypeERC1155,
-			}
-
-			result = append(result, ti)
-		}
-	default:
-		logger.For(ctx).WithFields(logrus.Fields{
-			"address":   log.Address,
-			"block":     log.BlockNumber,
-			"eventType": log.Topics[0]},
-		).Warn("unknown event")
-	}
-
-	return result, nil
-
 }
 
 func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transfersAtBlock, topics [][]common.Hash) {
