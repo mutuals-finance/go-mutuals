@@ -281,21 +281,6 @@ func GetTransaction(ctx context.Context, ethClient *ethclient.Client, txHash com
 	return ethClient.TransactionByHash(ctx, txHash)
 }
 
-// RetryGetTransaction calls GetTransaction with backoff.
-func RetryGetTransaction(ctx context.Context, ethClient *ethclient.Client, txHash common.Hash, retry retry.Retry) (*types.Transaction, bool, error) {
-	var tx *types.Transaction
-	var pending bool
-	var err error
-	for i := 0; i < retry.Tries; i++ {
-		tx, pending, err = GetTransaction(ctx, ethClient, txHash)
-		if !isRateLimitedError(err) {
-			break
-		}
-		retry.Sleep(i)
-	}
-	return tx, pending, err
-}
-
 // GetTokenContractMetadata returns the metadata for a given contract (without URI)
 func GetTokenContractMetadata(ctx context.Context, address persist.EthereumAddress, ethClient *ethclient.Client) (*TokenContractMetadata, error) {
 	contract := address.Address()
@@ -320,21 +305,7 @@ func GetTokenContractMetadata(ctx context.Context, address persist.EthereumAddre
 	return &TokenContractMetadata{Name: name, Symbol: symbol}, nil
 }
 
-// RetryGetTokenContractMetaData calls GetTokenContractMetadata with backoff.
-func RetryGetTokenContractMetadata(ctx context.Context, contractAddress persist.EthereumAddress, ethClient *ethclient.Client) (*TokenContractMetadata, error) {
-	var metadata *TokenContractMetadata
-	var err error
-	for i := 0; i < retry.DefaultRetry.Tries; i++ {
-		metadata, err = GetTokenContractMetadata(ctx, contractAddress, ethClient)
-		if !isRateLimitedError(err) {
-			break
-		}
-		retry.DefaultRetry.Sleep(i)
-	}
-	return metadata, err
-}
-
-// GetMetadataFromURI parses and returns the NFT metadata for a given token URI
+// GetMetadataFromURI parses and returns the ERC20 metadata for a given token URI
 func GetMetadataFromURI(ctx context.Context, turi persist.TokenURI, ipfsClient *shell.Shell, arweaveClient *goar.Client) (persist.TokenMetadata, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)

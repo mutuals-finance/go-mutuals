@@ -175,8 +175,8 @@ func (l *TokenIDList) Scan(value interface{}) error {
 	return pq.Array(l).Scan(value)
 }
 
-// TokenURI represents the URI for an Ethereum token
-type TokenURI string
+// Logo represents the URL for an ERC20 token logo
+type Logo string
 
 // TokenMetadata represents the JSON metadata for a token
 type TokenMetadata map[string]interface{}
@@ -193,37 +193,23 @@ type EthereumAddressAtBlock struct {
 // EthereumTokenIdentifiers represents a unique identifier for a token on the Ethereum Blockchain
 type EthereumTokenIdentifiers string
 
-// Token represents an individual Token token
+// Token represents an ERC20 or native token
 type Token struct {
-	Version      NullInt32       `json:"version"` // schema version for this model
-	ID           DBID            `json:"id" binding:"required"`
-	CreationTime CreationTime    `json:"created_at"`
-	Deleted      NullBool        `json:"-"`
-	LastUpdated  LastUpdatedTime `json:"last_updated"`
-
-	TokenType TokenType `json:"token_type"`
-
-	Chain Chain `json:"chain"`
-
-	Name NullString `json:"name"`
-	// TODO add token symbol
-	Description NullString `json:"description"`
-
-	TokenURI TokenURI `json:"token_uri"`
-	// TODO remove token id
-	TokenID          TokenID                  `json:"token_id"`
-	Quantity         HexString                `json:"quantity"`
-	OwnerAddress     EthereumAddress          `json:"owner_address"`
-	OwnershipHistory []EthereumAddressAtBlock `json:"previous_owners"`
-	// TODO remove metadata and add logo_url
-	TokenMetadata   TokenMetadata   `json:"metadata"`
+	Version         NullInt32       `json:"version"` // schema version for this model
+	ID              DBID            `json:"id" binding:"required"`
+	CreationTime    CreationTime    `json:"created_at"`
+	Deleted         NullBool        `json:"-"`
+	LastUpdated     LastUpdatedTime `json:"last_updated"`
+	TokenType       TokenType       `json:"token_type"`
+	Chain           Chain           `json:"chain"`
+	Name            NullString      `json:"name"`
+	Symbol          NullString      `json:"symbol"`
+	Decimals        NullInt32       `json:"decimals"`
+	Logo            Logo            `json:"logo"`
+	TotalSupply     NullInt32       `json:"total_supply"`
 	ContractAddress EthereumAddress `json:"contract_address"`
-
-	// TODO external url needed?
-	ExternalURL NullString `json:"external_url"`
-
-	BlockNumber BlockNumber `json:"block_number"`
-	IsSpam      *bool       `json:"is_spam"`
+	BlockNumber     BlockNumber     `json:"block_number"`
+	IsSpam          *bool           `json:"is_spam"`
 }
 
 type Dimensions struct {
@@ -235,7 +221,7 @@ func (d Dimensions) Valid() bool {
 	return d.Width > 0 && d.Height > 0
 }
 
-// Media represents a token's media content with processed images from metadata
+// Media represents a splits media content with processed images from metadata
 type Media struct {
 	ThumbnailURL   NullString `json:"thumbnail_url,omitempty"`
 	LivePreviewURL NullString `json:"live_preview_url,omitempty"`
@@ -249,51 +235,13 @@ func (m Media) IsServable() bool {
 	return m.MediaURL != "" && m.MediaType.IsValid()
 }
 
-// NFT represents an old nft throughout the application
-type NFT struct {
-	Version         NullInt32       `json:"version"` // schema version for this model
-	ID              DBID            `json:"id" binding:"required"`
-	CreationTime    CreationTime    `json:"created_at"`
-	Deleted         NullBool        `json:"-"`
-	LastUpdatedTime LastUpdatedTime `json:"last_updated"`
-
-	CollectorsNote NullString `json:"collectors_note"`
-
-	// OwnerUsers     []*User  `bson:"owner_users" json:"owner_users"`
-	OwnerAddress EthereumAddress `json:"owner_address"`
-
-	MultipleOwners NullBool `json:"multiple_owners"`
-
-	Name                NullString      `json:"name"`
-	Description         NullString      `json:"description"`
-	ExternalURL         NullString      `json:"external_url"`
-	TokenMetadataURL    NullString      `json:"token_metadata_url"`
-	CreatorAddress      EthereumAddress `json:"creator_address"`
-	CreatorName         NullString      `json:"creator_name"`
-	Contract            NFTContract     `json:"asset_contract"`
-	TokenCollectionName NullString      `json:"token_collection_name"`
-
-	// IMAGES
-	ImageURL             NullString `json:"image_url"`
-	ImageThumbnailURL    NullString `json:"image_thumbnail_url"`
-	ImagePreviewURL      NullString `json:"image_preview_url"`
-	ImageOriginalURL     NullString `json:"image_original_url"`
-	AnimationURL         NullString `json:"animation_url"`
-	AnimationOriginalURL NullString `json:"animation_original_url"`
-
-	AcquisitionDateStr NullString `json:"acquisition_date"`
-}
-
-// NFTContract represents a smart contract's information for a given NFT
-type NFTContract struct {
-	ContractAddress      EthereumAddress `json:"address"`
-	ContractName         NullString      `json:"name"`
-	ContractImage        NullString      `json:"image_url"`
-	ContractDescription  NullString      `json:"description"`
-	ContractExternalLink NullString      `json:"external_link"`
-	ContractSchemaName   NullString      `json:"schema_name"`
-	ContractSymbol       NullString      `json:"symbol"`
-	ContractTotalSupply  NullString      `json:"total_supply"`
+// TokenContract represents a smart contract's information for an ERC20 or native token
+type TokenContract struct {
+	ContractAddress     EthereumAddress `json:"address"`
+	ContractName        NullString      `json:"name"`
+	ContractImage       NullString      `json:"logo"`
+	ContractSymbol      NullString      `json:"symbol"`
+	ContractTotalSupply NullString      `json:"total_supply"`
 }
 
 // ContractCollectionNFT represents a contract within a collection nft

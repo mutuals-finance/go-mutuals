@@ -17,14 +17,17 @@ func handlersInit(router *gin.Engine, i *indexer, tokenRepository persist.TokenR
 
 func handlersInitServer(router *gin.Engine, queueChan chan processTokensInput, tokenRepository persist.TokenRepository, contractRepository persist.ContractRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, idxer *indexer) *gin.Engine {
 
-	nftsGroup := router.Group("/nfts")
-	nftsGroup.POST("/refresh", updateTokens(tokenRepository, ethClient, ipfsClient, arweaveClient))
-	nftsGroup.GET("/get", getTokens(queueChan, tokenRepository, contractRepository, ipfsClient, ethClient, arweaveClient))
-	nftsGroup.GET("/get/metadata", getTokenMetadata(tokenRepository, ipfsClient, ethClient, arweaveClient))
+	tokenGroup := router.Group("/tokens")
+	tokenGroup.POST("/", updateTokens(tokenRepository, ethClient, ipfsClient, arweaveClient))
+	tokenGroup.GET("/", getTokens(queueChan, tokenRepository, contractRepository, ipfsClient, ethClient, arweaveClient))
 
-	contractsGroup := router.Group("/contracts")
-	contractsGroup.GET("/get", getContract(contractRepository))
-	contractsGroup.POST("/refresh", updateContractMetadata(contractRepository, ethClient))
+	factoryGroup := router.Group("/factory")
+	factoryGroup.GET("/", getContract(contractRepository))
+	factoryGroup.POST("/", updateContractMetadata(contractRepository, ethClient))
+
+	splitsGroup := router.Group("/splits")
+	splitsGroup.GET("/", getContract(contractRepository))
+	splitsGroup.POST("/", updateContractMetadata(contractRepository, ethClient))
 
 	return router
 }
