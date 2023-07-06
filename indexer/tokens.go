@@ -325,7 +325,7 @@ func processMissingMetadata(ctx context.Context, inputs <-chan processTokensInpu
 	mainPool.StopWait()
 }
 
-func getTokensFromDB(pCtx context.Context, input *getTokensInput, ethClient *ethclient.Client, tokenRepo persist.TokenRepository, contractRepo persist.ContractRepository) ([]persist.Token, []persist.Contract, error) {
+func getTokenFromDB(pCtx context.Context, input *getTokensInput, ethClient *ethclient.Client, tokenRepo persist.TokenRepository, contractRepo persist.ContractRepository) ([]persist.Token, []persist.Contract, error) {
 	switch {
 	case input.WalletAddress != "":
 		if input.TokenID != "" && input.ContractAddress != "" {

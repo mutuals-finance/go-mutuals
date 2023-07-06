@@ -188,7 +188,7 @@ func (t *TokenSplitRepository) GetByUserID(pCtx context.Context, pUserID persist
 }
 
 // GetByTokenIdentifiers gets a token by its token ID and contract address and chain
-func (t *TokenSplitRepository) GetByTokenIdentifiers(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.Address, pChain persist.Chain, limit int64, page int64) ([]persist.TokenSplit, error) {
+func (t *TokenSplitRepository) GetByTokenIdentifiers(pCtx context.Context, pContractAddress persist.Address, pChain persist.Chain, limit int64, page int64) ([]persist.TokenSplit, error) {
 
 	var contractID persist.DBID
 	err := t.getContractByAddressStmt.QueryRowContext(pCtx, pContractAddress, pChain).Scan(&contractID)
@@ -198,9 +198,9 @@ func (t *TokenSplitRepository) GetByTokenIdentifiers(pCtx context.Context, pToke
 
 	var rows *sql.Rows
 	if limit > 0 {
-		rows, err = t.getByTokenIdentifiersPaginateStmt.QueryContext(pCtx, pTokenID, contractID, limit, page*limit)
+		rows, err = t.getByTokenIdentifiersPaginateStmt.QueryContext(pCtx, contractID, limit, page*limit)
 	} else {
-		rows, err = t.getByTokenIdentifiersStmt.QueryContext(pCtx, pTokenID, contractID)
+		rows, err = t.getByTokenIdentifiersStmt.QueryContext(pCtx, contractID)
 	}
 	if err != nil {
 		return nil, err
@@ -221,7 +221,7 @@ func (t *TokenSplitRepository) GetByTokenIdentifiers(pCtx context.Context, pToke
 	}
 
 	if len(tokens) == 0 {
-		return nil, persist.ErrTokenSplitNotFoundByIdentifiers{TokenID: pTokenID, ContractAddress: pContractAddress, Chain: pChain}
+		return nil, persist.ErrTokenSplitNotFoundByIdentifiers{ContractAddress: pContractAddress, Chain: pChain}
 	}
 
 	return tokens, nil

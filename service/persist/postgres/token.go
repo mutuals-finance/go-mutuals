@@ -245,13 +245,13 @@ func (t *TokenRepository) GetOwnedByContract(pCtx context.Context, pContractAddr
 }
 
 // GetByTokenIdentifiers gets a token by its token ID and contract address
-func (t *TokenRepository) GetByTokenIdentifiers(pCtx context.Context, pTokenID persist.TokenID, pContractAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Token, error) {
+func (t *TokenRepository) GetByTokenIdentifiers(pCtx context.Context, pContractAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Token, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
-		rows, err = t.getByTokenIdentifiersPaginateStmt.QueryContext(pCtx, pTokenID, pContractAddress, limit, offset)
+		rows, err = t.getByTokenIdentifiersPaginateStmt.QueryContext(pCtx, pContractAddress, limit, offset)
 	} else {
-		rows, err = t.getByTokenIdentifiersStmt.QueryContext(pCtx, pTokenID, pContractAddress)
+		rows, err = t.getByTokenIdentifiersStmt.QueryContext(pCtx, pContractAddress)
 	}
 	if err != nil {
 		return nil, err
@@ -272,7 +272,7 @@ func (t *TokenRepository) GetByTokenIdentifiers(pCtx context.Context, pTokenID p
 	}
 
 	if len(tokens) == 0 {
-		return nil, persist.ErrTokenNotFoundByTokenIdentifiers{TokenID: pTokenID, ContractAddress: pContractAddress}
+		return nil, persist.ErrTokenNotFoundByTokenIdentifiers{ContractAddress: pContractAddress}
 	}
 
 	return tokens, nil
@@ -291,13 +291,13 @@ func (t *TokenRepository) GetURIByTokenIdentifiers(pCtx context.Context, tokenID
 	return uri, nil
 }
 
-// GetByIdentifiers gets a token by its token ID and contract address and owner address
-func (t *TokenRepository) GetByIdentifiers(pCtx context.Context, pTokenID persist.TokenID, pContractAddress, pOwnerAddress persist.EthereumAddress) (persist.Token, error) {
+// GetByIdentifiers gets a token by its contract address
+func (t *TokenRepository) GetByIdentifiers(pCtx context.Context, pContractAddress, pOwnerAddress persist.EthereumAddress) (persist.Token, error) {
 	var token persist.Token
-	err := t.getByIdentifiersStmt.QueryRowContext(pCtx, pTokenID, pContractAddress, pOwnerAddress).Scan(&token.ID, &token.TokenType, &token.Chain, &token.Name, &token.Description, &token.TokenID, &token.TokenURI, &token.Quantity, &token.OwnerAddress, pq.Array(&token.OwnershipHistory), &token.TokenMetadata, &token.ContractAddress, &token.ExternalURL, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated)
+	err := t.getByIdentifiersStmt.QueryRowContext(pCtx, pContractAddress, pOwnerAddress).Scan(&token.ID, &token.TokenType, &token.Chain, &token.Name, &token.Description, &token.TokenURI, &token.Quantity, &token.OwnerAddress, pq.Array(&token.OwnershipHistory), &token.TokenMetadata, &token.ContractAddress, &token.ExternalURL, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return token, persist.ErrTokenNotFoundByIdentifiers{TokenID: pTokenID, ContractAddress: pContractAddress, OwnerAddress: pOwnerAddress}
+			return token, persist.ErrTokenNotFoundByIdentifiers{ContractAddress: pContractAddress, OwnerAddress: pOwnerAddress}
 		}
 		return persist.Token{}, err
 	}

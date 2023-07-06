@@ -17,9 +17,9 @@ func handlersInit(router *gin.Engine, i *indexer, tokenRepository persist.TokenR
 
 func handlersInitServer(router *gin.Engine, queueChan chan processTokensInput, tokenRepository persist.TokenRepository, contractRepository persist.ContractRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, idxer *indexer) *gin.Engine {
 
-	tokenGroup := router.Group("/tokens")
-	tokenGroup.POST("/", updateTokens(tokenRepository, ethClient, ipfsClient, arweaveClient))
-	tokenGroup.GET("/", getTokens(queueChan, tokenRepository, contractRepository, ipfsClient, ethClient, arweaveClient))
+	activityGroup := router.Group("/activity")
+	activityGroup.POST("/", updateActivity(tokenRepository, ethClient, ipfsClient, arweaveClient))
+	activityGroup.GET("/", getTokens(queueChan, tokenRepository, contractRepository, ipfsClient, ethClient, arweaveClient))
 
 	factoryGroup := router.Group("/factory")
 	factoryGroup.GET("/", getContract(contractRepository))

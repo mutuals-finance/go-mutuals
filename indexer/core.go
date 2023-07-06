@@ -65,6 +65,7 @@ func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engin
 
 	router := gin.Default()
 
+	// TODO add alchemy's secret validation middleware
 	router.Use(middleware.GinContextToContext(), middleware.Sentry(true), middleware.Tracing(), middleware.HandleCORS(), middleware.ErrLogger())
 
 	if env.GetString("ENV") != "production" {

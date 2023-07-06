@@ -265,9 +265,9 @@ type TokenRepository interface {
 	GetByWallet(context.Context, EthereumAddress, int64, int64) ([]Token, []Contract, error)
 	GetByContract(context.Context, EthereumAddress, int64, int64) ([]Token, error)
 	GetOwnedByContract(context.Context, EthereumAddress, EthereumAddress, int64, int64) ([]Token, Contract, error)
-	GetByTokenIdentifiers(context.Context, TokenID, EthereumAddress, int64, int64) ([]Token, error)
+	GetByTokenIdentifiers(context.Context, EthereumAddress, int64, int64) ([]Token, error)
 	GetURIByTokenIdentifiers(context.Context, TokenID, EthereumAddress) (TokenURI, error)
-	GetByIdentifiers(context.Context, TokenID, EthereumAddress, EthereumAddress) (Token, error)
+	GetByIdentifiers(context.Context, EthereumAddress) (Token, error)
 	DeleteByID(context.Context, DBID) error
 	BulkUpsert(context.Context, []Token) error
 	Upsert(context.Context, Token) error
