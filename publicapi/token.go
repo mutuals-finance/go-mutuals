@@ -259,27 +259,6 @@ func (api TokenAPI) GetTokensByUserIDAndChain(ctx context.Context, userID persis
 	return tokens, nil
 }
 
-// Short-term workaround to create admin-only functions. Should be removed when the
-// admin UI is back up and running.
-func isAdminUser(userID persist.DBID) bool {
-	switch userID {
-	case "a3ff91986625382ff776067619200efe":
-		return true
-	case "85dd971e87c9574a962af22e23e52d95":
-		return true
-	case "872b4e915dd0e2006a368b32fb6b685a":
-		return true
-	case "23LydFAYGJY03L7ZMVKIsfDzM9A":
-		return true
-	case "213enLGfyDLSd2ZX8TLMbf5qUPQ":
-		return true
-	case "217M1MtDpVQ0sZLhnH91m1AAGdq":
-		return true
-	default:
-		return false
-	}
-}
-
 func (api TokenAPI) SyncTokensAdmin(ctx context.Context, chains []persist.Chain, userID persist.DBID) error {
 	if err := api.throttler.Lock(ctx, userID.String()); err != nil {
 		return ErrTokenRefreshFailed{Message: err.Error()}
@@ -445,7 +424,7 @@ func (api TokenAPI) UpdateTokenInfo(ctx context.Context, tokenID persist.DBID, c
 		return err
 	}
 
-	galleryID, err := api.queries.GetSplitIDByCollectionID(ctx, collectionID)
+	splitID, err := api.queries.GetSplitIDByCollectionID(ctx, collectionID)
 	if err != nil {
 		return err
 	}
@@ -457,7 +436,7 @@ func (api TokenAPI) UpdateTokenInfo(ctx context.Context, tokenID persist.DBID, c
 		ResourceTypeID: persist.ResourceTypeToken,
 		TokenID:        tokenID,
 		CollectionID:   collectionID,
-		SplitID:        galleryID,
+		SplitID:        splitID,
 		SubjectID:      tokenID,
 		Data: persist.EventData{
 			TokenCollectionID:   collectionID,

@@ -16,7 +16,6 @@ type MembershipTier struct {
 	Deleted      NullBool        `json:"-"`
 	LastUpdated  LastUpdatedTime `json:"last_updated"`
 	Name         NullString      `json:"name"`
-	TokenID      TokenID         `json:"token_id"`
 	AssetURL     NullString      `json:"asset_url"`
 	Owners       []TokenHolder   `json:"owners"`
 }

@@ -19,10 +19,6 @@ import (
 )
 
 const (
-	// TokenTypeERC721 is the type of ERC721 token
-	TokenTypeERC721 TokenType = "ERC-721"
-	// TokenTypeERC1155 is the type of ERC1155 token
-	TokenTypeERC1155 TokenType = "ERC-1155"
 	// TokenTypeERC20 is the type of ERC20 token
 	TokenTypeERC20 TokenType = "ERC-20"
 )
@@ -107,20 +103,6 @@ const (
 	URITypeNone URIType = "none"
 )
 
-const (
-	// CountTypeTotal represents the total count
-	CountTypeTotal TokenCountType = "total"
-	// CountTypeNoMetadata represents the count of tokens without metadata
-	CountTypeNoMetadata TokenCountType = "no-metadata"
-	// CountTypeERC721 represents the count of ERC721 tokens
-	CountTypeERC721 TokenCountType = "erc721"
-	// CountTypeERC1155 represents the count of ERC1155 tokens
-	CountTypeERC1155 TokenCountType = "erc1155"
-)
-
-// InvalidTokenURI represents an invalid token URI
-const InvalidTokenURI TokenURI = "INVALID"
-
 // ZeroAddress is the all-zero Ethereum address
 const ZeroAddress EthereumAddress = "0x0000000000000000000000000000000000000000"
 
@@ -161,19 +143,6 @@ type TokenCountType string
 
 // Chain represents which blockchain a token is on
 type Chain int
-
-// TokenID represents the ID of a token
-type TokenID string
-
-type TokenIDList []TokenID
-
-func (l TokenIDList) Value() (driver.Value, error) {
-	return pq.Array(l).Value()
-}
-
-func (l *TokenIDList) Scan(value interface{}) error {
-	return pq.Array(l).Scan(value)
-}
 
 // Logo represents the URL for an ERC20 token logo
 type Logo string
@@ -250,42 +219,31 @@ type ContractCollectionNFT struct {
 	ContractImage NullString `json:"image_url"`
 }
 
-type TokenUpdateOwnerInput struct {
-	OwnerAddress EthereumAddress `json:"owner_address"`
-	BlockNumber  BlockNumber     `json:"block_number"`
-}
-
-type TokenUpdateBalanceInput struct {
-	Quantity    HexString   `json:"quantity"`
+type TokenUpdateTotalSupplyInput struct {
+	TotalSupply HexString   `json:"total_supply"`
 	BlockNumber BlockNumber `json:"block_number"`
 }
 
 // TokenRepository represents a repository for interacting with persisted tokens
 type TokenRepository interface {
 	GetByWallet(context.Context, EthereumAddress, int64, int64) ([]Token, []Contract, error)
-	GetByContract(context.Context, EthereumAddress, int64, int64) ([]Token, error)
-	GetOwnedByContract(context.Context, EthereumAddress, EthereumAddress, int64, int64) ([]Token, Contract, error)
 	GetByTokenIdentifiers(context.Context, EthereumAddress, int64, int64) ([]Token, error)
-	GetURIByTokenIdentifiers(context.Context, TokenID, EthereumAddress) (TokenURI, error)
 	GetByIdentifiers(context.Context, EthereumAddress) (Token, error)
-	DeleteByID(context.Context, DBID) error
-	BulkUpsert(context.Context, []Token) error
+	TokenExistsByTokenIdentifiers(context.Context, EthereumAddress) (bool, error)
 	Upsert(context.Context, Token) error
 	UpdateByID(context.Context, DBID, interface{}) error
-	UpdateByTokenIdentifiers(context.Context, TokenID, EthereumAddress, interface{}) error
+	UpdateByTokenIdentifiers(context.Context, EthereumAddress, interface{}) error
 	MostRecentBlock(context.Context) (BlockNumber, error)
-	TokenExistsByTokenIdentifiers(context.Context, TokenID, EthereumAddress) (bool, error)
+	DeleteByID(context.Context, DBID) error
 }
 
 // ErrTokenNotFoundByTokenIdentifiers is an error that is returned when a token is not found by its identifiers (token ID and contract address)
 type ErrTokenNotFoundByTokenIdentifiers struct {
-	TokenID         TokenID
 	ContractAddress EthereumAddress
 }
 
 // ErrTokenNotFoundByIdentifiers is an error that is returned when a token is not found by its identifiers (token ID and contract address and owner address)
 type ErrTokenNotFoundByIdentifiers struct {
-	TokenID         TokenID
 	ContractAddress EthereumAddress
 	OwnerAddress    EthereumAddress
 }
@@ -293,10 +251,6 @@ type ErrTokenNotFoundByIdentifiers struct {
 // ErrTokenNotFoundByID is an error that is returned when a token is not found by its ID
 type ErrTokenNotFoundByID struct {
 	ID DBID
-}
-
-type ErrTokensNotFoundByTokenID struct {
-	TokenID TokenID
 }
 
 type ErrTokensNotFoundByContract struct {
@@ -379,20 +333,16 @@ func (e ErrTokenNotFoundByID) Error() string {
 	return fmt.Sprintf("token not found by ID: %s", e.ID)
 }
 
-func (e ErrTokensNotFoundByTokenID) Error() string {
-	return fmt.Sprintf("tokens not found by token ID: %s", e.TokenID)
-}
-
 func (e ErrTokensNotFoundByContract) Error() string {
 	return fmt.Sprintf("tokens not found by contract: %s", e.ContractAddress)
 }
 
 func (e ErrTokenNotFoundByTokenIdentifiers) Error() string {
-	return fmt.Sprintf("token not found with contract address %s and token ID %s", e.ContractAddress, e.TokenID)
+	return fmt.Sprintf("token not found with contract address %s", e.ContractAddress)
 }
 
 func (e ErrTokenNotFoundByIdentifiers) Error() string {
-	return fmt.Sprintf("token not found with contract address %s and token ID %s and owner address %s", e.ContractAddress, e.TokenID, e.OwnerAddress)
+	return fmt.Sprintf("token not found with contract address %s", e.ContractAddress)
 }
 
 // NormalizeAddress normalizes an address for the given chain
@@ -485,16 +435,16 @@ func (c Chain) MarshalGQL(w io.Writer) {
 }
 
 // URL turns a token's URI into a URL
-func (uri TokenURI) URL() (*url.URL, error) {
+func (uri URIType) URL() (*url.URL, error) {
 	return url.Parse(uri.String())
 }
 
 // IsPathPrefixed returns whether the URI is prefixed with a path to be parsed by a browser or decentralized storage service
-func (uri TokenURI) IsPathPrefixed() bool {
+func (uri URIType) IsPathPrefixed() bool {
 	return strings.HasPrefix(uri.String(), "http") || strings.HasPrefix(uri.String(), "ipfs://") || strings.HasPrefix(uri.String(), "arweave") || strings.HasPrefix(uri.String(), "ar://")
 }
 
-func (uri TokenURI) String() string {
+func (uri URIType) String() string {
 	asString := string(uri)
 	if strings.HasPrefix(asString, "http") || strings.HasPrefix(asString, "ipfs") || strings.HasPrefix(asString, "ar") {
 		url, err := url.QueryUnescape(string(uri))
@@ -506,7 +456,7 @@ func (uri TokenURI) String() string {
 }
 
 // Value implements the driver.Valuer interface for token URIs
-func (uri TokenURI) Value() (driver.Value, error) {
+func (uri URIType) Value() (driver.Value, error) {
 	result := string(uri)
 	if strings.Contains(result, "://") {
 		result = url.QueryEscape(result)
@@ -515,23 +465,18 @@ func (uri TokenURI) Value() (driver.Value, error) {
 	return strings.ToValidUTF8(strings.ReplaceAll(clean, "\\u0000", ""), ""), nil
 }
 
-// ReplaceID replaces the token's ID with the given ID
-func (uri TokenURI) ReplaceID(id TokenID) TokenURI {
-	return TokenURI(strings.TrimSpace(strings.ReplaceAll(uri.String(), "{id}", id.ToUint256String())))
-}
-
 // Scan implements the sql.Scanner interface for token URIs
-func (uri *TokenURI) Scan(src interface{}) error {
+func (uri *URIType) Scan(src interface{}) error {
 	if src == nil {
-		*uri = TokenURI("")
+		*uri = URIType("")
 		return nil
 	}
-	*uri = TokenURI(src.(string))
+	*uri = URIType(src.(string))
 	return nil
 }
 
-// Type returns the type of the token URI
-func (uri TokenURI) Type() URIType {
+// Type returns the type of the URI
+func (uri URIType) Type() URIType {
 	asString := uri.String()
 	asString = strings.TrimSpace(asString)
 	switch {
@@ -557,7 +502,7 @@ func (uri TokenURI) Type() URIType {
 		return URITypeSVG
 	case strings.HasSuffix(asString, ".ens"):
 		return URITypeENS
-	case asString == InvalidTokenURI.String():
+	case asString == URITypeInvalid.String():
 		return URITypeInvalid
 	case asString == "":
 		return URITypeNone
@@ -567,64 +512,15 @@ func (uri TokenURI) Type() URIType {
 }
 
 // IsRenderable returns whether a frontend could render the given URI directly
-func (uri TokenURI) IsRenderable() bool {
+func (uri URIType) IsRenderable() bool {
 	return uri.IsHTTP() // || uri.IsIPFS() || uri.IsArweave()
 }
 
 // IsHTTP returns whether a frontend could render the given URI directly
-func (uri TokenURI) IsHTTP() bool {
+func (uri URIType) IsHTTP() bool {
 	asString := uri.String()
 	asString = strings.TrimSpace(asString)
 	return strings.HasPrefix(asString, "http")
-}
-
-func (id TokenID) String() string {
-	return strings.ToLower(util.RemoveLeftPaddedZeros(string(id)))
-}
-
-// Value implements the driver.Valuer interface for token IDs
-func (id TokenID) Value() (driver.Value, error) {
-	return id.String(), nil
-}
-
-// Scan implements the sql.Scanner interface for token IDs
-func (id *TokenID) Scan(src interface{}) error {
-	if src == nil {
-		*id = TokenID("")
-		return nil
-	}
-	*id = TokenID(src.(string))
-	return nil
-}
-
-// BigInt returns the token ID as a big.Int
-func (id TokenID) BigInt() *big.Int {
-	normalized := util.RemoveLeftPaddedZeros(string(id))
-	if normalized == "" {
-		return big.NewInt(0)
-	}
-	i, ok := new(big.Int).SetString(normalized, 16)
-
-	if !ok {
-		panic(fmt.Sprintf("failed to parse token ID %s as base 16", normalized))
-	}
-
-	return i
-}
-
-// ToUint256String returns the uint256 hex string representation of the token id
-func (id TokenID) ToUint256String() string {
-	return fmt.Sprintf("%064s", id.String())
-}
-
-// Base10String returns the token ID as a base 10 string
-func (id TokenID) Base10String() string {
-	return id.BigInt().String()
-}
-
-// ToInt returns the token ID as a base 10 integer
-func (id TokenID) ToInt() int64 {
-	return id.BigInt().Int64()
 }
 
 func (hex HexString) String() string {
@@ -858,20 +754,9 @@ func (t *TokenType) Scan(src interface{}) error {
 	return nil
 }
 
-func (c *NFTContract) Scan(src interface{}) error {
-	if src == nil {
-		return nil
-	}
-	err := json.Unmarshal(src.([]uint8), &c)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // NewEthereumTokenIdentifiers creates a new token identifiers
-func NewEthereumTokenIdentifiers(pContractAddress EthereumAddress, pTokenID TokenID) EthereumTokenIdentifiers {
-	return EthereumTokenIdentifiers(fmt.Sprintf("%s+%s", pContractAddress, pTokenID))
+func NewEthereumTokenIdentifiers(pContractAddress EthereumAddress) EthereumTokenIdentifiers {
+	return EthereumTokenIdentifiers(fmt.Sprintf("%s", pContractAddress))
 }
 
 func (t EthereumTokenIdentifiers) String() string {
@@ -879,12 +764,12 @@ func (t EthereumTokenIdentifiers) String() string {
 }
 
 // GetParts returns the parts of the token identifiers
-func (t EthereumTokenIdentifiers) GetParts() (EthereumAddress, TokenID, error) {
+func (t EthereumTokenIdentifiers) GetParts() (EthereumAddress, error) {
 	parts := strings.Split(t.String(), "+")
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid token identifiers: %s", t)
+	if len(parts) != 1 {
+		return "", fmt.Errorf("invalid token identifiers: %s", t)
 	}
-	return EthereumAddress(EthereumAddress(parts[0]).String()), TokenID(TokenID(parts[1]).String()), nil
+	return EthereumAddress(EthereumAddress(parts[0]).String()), nil
 }
 
 // Value implements the driver.Valuer interface
@@ -899,10 +784,10 @@ func (t *EthereumTokenIdentifiers) Scan(i interface{}) error {
 		return nil
 	}
 	res := strings.Split(i.(string), "+")
-	if len(res) != 2 {
-		return fmt.Errorf("invalid token identifiers: %v - %T", i, i)
+	if len(res) != 1 {
+		return fmt.Errorf("invalid token identifiers: %v", i)
 	}
-	*t = EthereumTokenIdentifiers(fmt.Sprintf("%s+%s", res[0], res[1]))
+	*t = EthereumTokenIdentifiers(fmt.Sprintf("%s", res[0]))
 	return nil
 }
 

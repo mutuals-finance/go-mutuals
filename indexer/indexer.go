@@ -568,14 +568,12 @@ func (i *indexer) processTransfers(ctx context.Context, transfers []transfersAtB
 			contractAddress := persist.EthereumAddress(transfer.ContractAddress.String())
 			from := transfer.From
 			to := transfer.To
-			tokenID := transfer.TokenID
 
-			key := persist.NewEthereumTokenIdentifiers(contractAddress, tokenID)
+			key := persist.NewEthereumTokenIdentifiers(contractAddress)
 
 			RunTransferPlugins(ctx, transfer, key, plugins)
 
 			logger.For(ctx).WithFields(logrus.Fields{
-				"tokenID":         tokenID,
 				"contractAddress": contractAddress,
 				"fromAddress":     from,
 				"toAddress":       to,
