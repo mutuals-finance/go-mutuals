@@ -16,7 +16,6 @@ type ContractSplit struct {
 
 	Chain            Chain          `json:"chain"`
 	Address          Address        `json:"address"`
-	Symbol           NullString     `json:"symbol"`
 	Name             sql.NullString `json:"name"`
 	Description      NullString     `json:"description"`
 	CreatorAddress   Address        `json:"creator_address"`
