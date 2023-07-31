@@ -184,8 +184,7 @@ func beginningOfWeek(t time.Time) time.Time {
 	return time.Date(y, m, newD, 0, 0, 0, 0, pst)
 }
 
-// this handler will still group notifications in the usual window, but it will also ensure that each viewer does
-// does not show up mutliple times in a week
+// Handle will still group notifications in the usual window, but it will also ensure that each viewer does not show up multiple times in a week
 func (h viewedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
 	// all of this user's view notifications in the current week
 	notifs, _ := h.queries.GetNotificationsByOwnerIDForActionAfter(ctx, db.GetNotificationsByOwnerIDForActionAfterParams{

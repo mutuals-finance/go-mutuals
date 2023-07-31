@@ -11,7 +11,7 @@ import (
 // ReqHeaders is a type that holds the headers for a request
 type ReqHeaders map[string][]string
 
-// UserNonce represents a short lived nonce that holds a value to be signed
+// UserNonce represents a short-lived nonce that holds a value to be signed
 // by a user cryptographically to prove they are the owner of a given address.
 type UserNonce struct {
 	Version      NullInt32       `json:"version"`

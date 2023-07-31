@@ -128,12 +128,10 @@ func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username
 		return "", "", err
 	}
 
-	split, err := splitRepo.Create(pCtx, coredb.SplitRepoCreateParams{
+	split, err := splitRepo.Upsert(pCtx, coredb.SplitRepoCreateParams{
 		SplitID:     persist.GenerateID(),
-		OwnerUserID: userID,
 		Name:        splitName,
 		Description: splitDesc,
-		Position:    splitPos,
 	})
 	if err != nil {
 		return "", "", err

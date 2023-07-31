@@ -29,14 +29,14 @@ func NewTokenBalanceRepository(db *sql.DB, queries *db.Queries) *TokenBalanceRep
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	getByOwnerStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER 
+	getByOwnerStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER,
 		t.ID,t.TOKEN_TYPE,t.CHAIN,t.NAME,t.SYMBOL,t.LOGO,t.DECIMALS,t.TOTAL_SUPPLY,t.CONTRACT_ADDRESS,t.BLOCK_NUMBER,t.VERSION,t.CREATED_AT,t.LAST_UPDATED,t.IS_SPAM		
 		FROM balances b
-		JOIN tokens t ON t.CONTRACT_ADDRESS = TOKEN_ADDRESS
+		JOIN tokens t ON t.CONTRACT_ADDRESS = b.TOKEN_ADDRESS
 		WHERE b.OWNER_ADDRESS = $1 AND t.CHAIN = $2 AND t.DELETED = false;`)
 	checkNoErr(err)
 
-	getByOwnerPaginateStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER 
+	getByOwnerPaginateStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER,
 		t.ID,t.TOKEN_TYPE,t.CHAIN,t.NAME,t.SYMBOL,t.LOGO,t.DECIMALS,t.TOTAL_SUPPLY,t.CONTRACT_ADDRESS,t.BLOCK_NUMBER,t.VERSION,t.CREATED_AT,t.LAST_UPDATED,t.IS_SPAM		
 		FROM balances b
 		JOIN tokens t ON t.CONTRACT_ADDRESS = b.TOKEN_ADDRESS
@@ -44,14 +44,14 @@ func NewTokenBalanceRepository(db *sql.DB, queries *db.Queries) *TokenBalanceRep
 		ORDER BY BALANCE DESC LIMIT $2 OFFSET $3`)
 	checkNoErr(err)
 
-	getByTokenStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER 
+	getByTokenStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER,
 		t.ID,t.TOKEN_TYPE,t.CHAIN,t.NAME,t.SYMBOL,t.LOGO,t.DECIMALS,t.TOTAL_SUPPLY,t.CONTRACT_ADDRESS,t.BLOCK_NUMBER,t.VERSION,t.CREATED_AT,t.LAST_UPDATED,t.IS_SPAM		
 		FROM balances b
 		JOIN tokens t ON t.CONTRACT_ADDRESS = b.TOKEN_ADDRESS
 		WHERE t.CONTRACT_ADDRESS = $1 AND t.CHAIN = $2 AND t.DELETED = false;`)
 	checkNoErr(err)
 
-	getByTokenPaginateStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER 
+	getByTokenPaginateStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER,
 		t.ID,t.TOKEN_TYPE,t.CHAIN,t.NAME,t.SYMBOL,t.LOGO,t.DECIMALS,t.TOTAL_SUPPLY,t.CONTRACT_ADDRESS,t.BLOCK_NUMBER,t.VERSION,t.CREATED_AT,t.LAST_UPDATED,t.IS_SPAM		
 		FROM balances b
 		JOIN tokens t ON t.CONTRACT_ADDRESS = b.TOKEN_ADDRESS
@@ -59,7 +59,7 @@ func NewTokenBalanceRepository(db *sql.DB, queries *db.Queries) *TokenBalanceRep
 		ORDER BY BALANCE DESC LIMIT $3 OFFSET $4`)
 	checkNoErr(err)
 
-	getByIdentifiersStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER 
+	getByIdentifiersStmt, err := db.PrepareContext(ctx, `SELECT b.ID,b.VERSION,b.CREATED_AT,b.LAST_UPDATED,b.OWNER_ADDRESS,b.BALANCE,b.BLOCK_NUMBER,
 		t.ID,t.TOKEN_TYPE,t.CHAIN,t.NAME,t.SYMBOL,t.LOGO,t.DECIMALS,t.TOTAL_SUPPLY,t.CONTRACT_ADDRESS,t.BLOCK_NUMBER,t.VERSION,t.CREATED_AT,t.LAST_UPDATED,t.IS_SPAM		
 		FROM balances b
 		JOIN tokens t ON t.CONTRACT_ADDRESS = b.TOKEN_ADDRESS
@@ -75,7 +75,7 @@ func NewTokenBalanceRepository(db *sql.DB, queries *db.Queries) *TokenBalanceRep
 	updateBalanceByIdentifiersUnsafeStmt, err := db.PrepareContext(ctx, `UPDATE balances SET BALANCE = $1, BLOCK_NUMBER = $2, LAST_UPDATED = now() WHERE OWNER_ADDRESS = $3 AND TOKEN_ADDRESS = $4;`)
 	checkNoErr(err)
 
-	return &TokenBalanceRepository{db: db, queries: queries, getByOwnerStmt: getByOwnerStmt, getByTokenStmt: getByTokenStmt, getByOwnerTokenStmt: getByOwnerTokenStmt, upsertByOwnerTokenStmt: upsertByOwnerTokenStmt, updateBalanceUnsafeStmt: updateBalanceUnsafeStmt, updateBalanceByBalanceIdentifiersUnsafeStmt: updateBalanceByBalanceIdentifiersUnsafeStmt}
+	return &TokenBalanceRepository{db: db, queries: queries, getByOwnerStmt: getByOwnerStmt, getByOwnerPaginateStmt: getByOwnerPaginateStmt, getByTokenStmt: getByTokenStmt, getByTokenPaginateStmt: getByTokenPaginateStmt, getByIdentifiersStmt: getByIdentifiersStmt, upsertByIdentifiersStmt: upsertByIdentifiersStmt, updateBalanceUnsafeStmt: updateBalanceUnsafeStmt, updateBalanceByIdentifiersUnsafeStmt: updateBalanceByIdentifiersUnsafeStmt}
 }
 
 // GetByOwner retrieves all balances associated with an owner ethereum address

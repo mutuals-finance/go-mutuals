@@ -299,34 +299,30 @@ func checkNoErr(err error) {
 
 // Repositories is the set of all available persistence repositories
 type Repositories struct {
-	db                    *sql.DB
-	pool                  *pgxpool.Pool
-	UserRepository        *UserRepository
-	NonceRepository       *NonceRepository
-	SplitRepository       *SplitRepository
-	TokenRepository       *TokenSplitRepository
-	CollectionRepository  *CollectionTokenRepository
-	ContractRepository    *ContractSplitRepository
-	MembershipRepository  *MembershipRepository
-	EarlyAccessRepository *EarlyAccessRepository
-	WalletRepository      *WalletRepository
+	db                     *sql.DB
+	pool                   *pgxpool.Pool
+	UserRepository         *UserRepository
+	NonceRepository        *NonceRepository
+	SplitRepository        *SplitRepository
+	TokenRepository        *TokenRepository
+	TokenBalanceRepository *TokenBalanceRepository
+	EarlyAccessRepository  *EarlyAccessRepository
+	WalletRepository       *WalletRepository
 }
 
 func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
 	queries := coredb.New(pgx)
 
 	return &Repositories{
-		db:                    pq,
-		pool:                  pgx,
-		UserRepository:        NewUserRepository(pq, queries),
-		NonceRepository:       NewNonceRepository(pq, queries),
-		TokenRepository:       NewTokenSplitRepository(pq, queries),
-		CollectionRepository:  NewCollectionTokenRepository(pq, queries),
-		SplitRepository:       NewSplitRepository(queries),
-		ContractRepository:    NewContractSplitRepository(pq, queries),
-		MembershipRepository:  NewMembershipRepository(pq, queries),
-		EarlyAccessRepository: NewEarlyAccessRepository(pq, queries),
-		WalletRepository:      NewWalletRepository(pq, queries),
+		db:                     pq,
+		pool:                   pgx,
+		UserRepository:         NewUserRepository(pq, queries),
+		NonceRepository:        NewNonceRepository(pq, queries),
+		TokenRepository:        NewTokenRepository(pq),
+		TokenBalanceRepository: NewTokenBalanceRepository(pq, queries),
+		SplitRepository:        NewSplitRepository(pq, queries),
+		EarlyAccessRepository:  NewEarlyAccessRepository(pq, queries),
+		WalletRepository:       NewWalletRepository(pq, queries),
 	}
 }
 

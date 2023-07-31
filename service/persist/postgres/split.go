@@ -25,7 +25,7 @@ type SplitRepository struct {
 }
 
 // NewSplitRepository creates a new SplitRepository
-func NewSplitRepository(queries *db.Queries) *SplitRepository {
+func NewSplitRepository(db *sql.DB, queries *db.Queries) *SplitRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 

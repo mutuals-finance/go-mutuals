@@ -28,8 +28,6 @@ type UserRepository struct {
 	getByUsernameStmt        *sql.Stmt
 	getByEmailStmt           *sql.Stmt
 	deleteStmt               *sql.Stmt
-	getSplitsStmt            *sql.Stmt
-	updateCollectionsStmt    *sql.Stmt
 	deleteSplitStmt          *sql.Stmt
 	createWalletStmt         *sql.Stmt
 	getWalletIDStmt          *sql.Stmt
@@ -71,12 +69,6 @@ func NewUserRepository(db *sql.DB, queries *db.Queries) *UserRepository {
 	checkNoErr(err)
 
 	deleteStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = TRUE WHERE ID = $1;`)
-	checkNoErr(err)
-
-	getSplitsStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM splits WHERE OWNER_USER_ID = $1 and DELETED = false;`)
-	checkNoErr(err)
-
-	updateCollectionsStmt, err := db.PrepareContext(ctx, `UPDATE splits SET COLLECTIONS = $2 WHERE ID = $1;`)
 	checkNoErr(err)
 
 	deleteSplitStmt, err := db.PrepareContext(ctx, `UPDATE splits SET DELETED = true WHERE ID = $1;`)
@@ -121,8 +113,6 @@ func NewUserRepository(db *sql.DB, queries *db.Queries) *UserRepository {
 		getByEmailStmt:    getByEmailStmt,
 		deleteStmt:        deleteStmt,
 
-		getSplitsStmt:            getSplitsStmt,
-		updateCollectionsStmt:    updateCollectionsStmt,
 		deleteSplitStmt:          deleteSplitStmt,
 		createWalletStmt:         createWalletStmt,
 		getWalletIDStmt:          getWalletIDStmt,
@@ -467,75 +457,6 @@ func (u *UserRepository) Delete(pCtx context.Context, pID persist.DBID) error {
 	}
 
 	return nil
-}
-
-// MergeUsers merges the given users into the first user
-func (u *UserRepository) MergeUsers(pCtx context.Context, pInitialUser persist.DBID, pSecondUser persist.DBID) error {
-
-	var user persist.User
-	if err := u.getByIDStmt.QueryRowContext(pCtx, pInitialUser).Scan(&user.ID, &user.Deleted, &user.Version, &user.Username, &user.UsernameIdempotent, pq.Array(&user.Wallets), &user.Bio, &user.Universal, &user.CreationTime, &user.LastUpdated); err != nil {
-		return err
-	}
-
-	var secondUser persist.User
-	if err := u.getByIDStmt.QueryRowContext(pCtx, pSecondUser).Scan(&secondUser.ID, &secondUser.Deleted, &secondUser.Version, &secondUser.Username, &secondUser.UsernameIdempotent, pq.Array(&secondUser.Wallets), &secondUser.Bio, &user.Universal, &secondUser.CreationTime, &secondUser.LastUpdated); err != nil {
-		return err
-	}
-
-	tx, err := u.db.BeginTx(pCtx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	deleteSplitStmt := tx.StmtContext(pCtx, u.deleteSplitStmt)
-	mergedCollections := make([]persist.DBID, 0, 3)
-
-	res, err := u.getSplitsStmt.QueryContext(pCtx, secondUser.ID)
-	if err != nil {
-		return err
-	}
-	defer res.Close()
-
-	for res.Next() {
-		var gallery persist.SplitDB
-		if err := res.Scan(&gallery.ID, pq.Array(&gallery.Collections)); err != nil {
-			return err
-		}
-
-		mergedCollections = append(mergedCollections, gallery.Collections...)
-
-		if _, err := deleteSplitStmt.ExecContext(pCtx, gallery.ID); err != nil {
-			return err
-		}
-	}
-
-	if err := res.Err(); err != nil {
-		return err
-	}
-
-	nextRes, err := u.getSplitsStmt.QueryContext(pCtx, pInitialUser)
-	if err != nil {
-		return err
-	}
-	defer nextRes.Close()
-
-	if nextRes.Next() {
-		var gallery persist.SplitDB
-		if err := nextRes.Scan(&gallery.ID, pq.Array(&gallery.Collections)); err != nil {
-			return err
-		}
-
-		if _, err := tx.StmtContext(pCtx, u.updateCollectionsStmt).ExecContext(pCtx, gallery.ID, pq.Array(append(gallery.Collections, mergedCollections...))); err != nil {
-			return err
-		}
-	}
-
-	if _, err := tx.StmtContext(pCtx, u.deleteStmt).ExecContext(pCtx, secondUser.ID); err != nil {
-		return err
-	}
-
-	return tx.Commit()
 }
 
 func (u *UserRepository) AddFollower(pCtx context.Context, follower persist.DBID, followee persist.DBID) (refollowed bool, err error) {

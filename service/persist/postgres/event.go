@@ -22,8 +22,6 @@ func (r *EventRepository) Add(ctx context.Context, event db.Event) (*db.Event, e
 		return r.AddUserEvent(ctx, event)
 	case persist.ResourceTypeToken:
 		return r.AddTokenEvent(ctx, event)
-	case persist.ResourceTypeCollection:
-		return r.AddCollectionEvent(ctx, event)
 	case persist.ResourceTypeSplit:
 		return r.AddSplitEvent(ctx, event)
 	default:
@@ -57,21 +55,6 @@ func (r *EventRepository) AddTokenEvent(ctx context.Context, event db.Event) (*d
 		Caption:        event.Caption,
 		SplitID:        event.SplitID,
 		CollectionID:   event.CollectionID,
-	})
-	return &event, err
-}
-
-func (r *EventRepository) AddCollectionEvent(ctx context.Context, event db.Event) (*db.Event, error) {
-	event, err := r.Queries.CreateCollectionEvent(ctx, db.CreateCollectionEventParams{
-		ID:             persist.GenerateID(),
-		ActorID:        event.ActorID,
-		Action:         event.Action,
-		ResourceTypeID: event.ResourceTypeID,
-		CollectionID:   event.SubjectID,
-		Data:           event.Data,
-		Caption:        event.Caption,
-		GroupID:        event.GroupID,
-		SplitID:        event.SplitID,
 	})
 	return &event, err
 }
@@ -138,7 +121,7 @@ func (r *EventRepository) EventsInWindow(ctx context.Context, eventID persist.DB
 	})
 }
 
-// EventsInWindow returns events belonging to the same window of activity as the given eventID.
+// EventsInWindowForSplit returns events belonging to the same window of activity as the given eventID.
 func (r *EventRepository) EventsInWindowForSplit(ctx context.Context, eventID, splitID persist.DBID, windowSeconds int, actions persist.ActionList, includeSubject bool) ([]db.Event, error) {
 	return r.Queries.GetSplitEventsInWindow(ctx, db.GetSplitEventsInWindowParams{
 		ID:             eventID,

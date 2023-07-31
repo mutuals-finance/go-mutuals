@@ -85,7 +85,7 @@ func NewTokenRepository(db *sql.DB) *TokenRepository {
 }
 
 // GetByWallet retrieves all tokens associated with a wallet
-func (t *TokenRepository) GetByWallet(pCtx context.Context, pAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Token, []persist.Contract, error) {
+func (t *TokenRepository) GetByWallet(pCtx context.Context, pAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Token, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
@@ -94,32 +94,24 @@ func (t *TokenRepository) GetByWallet(pCtx context.Context, pAddress persist.Eth
 		rows, err = t.getByWalletStmt.QueryContext(pCtx, pAddress)
 	}
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer rows.Close()
 
 	tokens := make([]persist.Token, 0, 10)
-	contracts := make(map[persist.DBID]persist.Contract)
 	for rows.Next() {
 		token := persist.Token{}
-		contract := persist.Contract{}
 		if err := rows.Scan(&token.ID, &token.TokenType, &token.Chain, &token.Name, &token.Symbol, &token.Logo, &token.Decimals, &token.TotalSupply, &token.ContractAddress, &token.BlockNumber, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated, &token.IsSpam); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		tokens = append(tokens, token)
-		contracts[contract.ID] = contract
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	resultContracts := make([]persist.Contract, 0, len(contracts))
-	for _, contract := range contracts {
-		resultContracts = append(resultContracts, contract)
-	}
-
-	return tokens, resultContracts, nil
+	return tokens, nil
 
 }
 
@@ -250,32 +242,6 @@ func (t *TokenRepository) UpdateByID(pCtx context.Context, pID persist.DBID, pUp
 	return nil
 }
 
-// MostRecentBlock UpdateByTokenIdentifiers updates a token by its identifiers
-/*func (t *TokenRepository) UpdateByTokenIdentifiers(pCtx context.Context, pContractAddress persist.EthereumAddress, pUpdate interface{}) error {
-
-	var res sql.Result
-	var err error
-	switch pUpdate.(type) {
-	case persist.TokenUpdateTotalSupplyInput:
-		update := pUpdate.(persist.TokenUpdateTotalSupplyInput)
-		res, err = t.updateTotalSupplyUnsafeStmt.ExecContext(pCtx, update.TotalSupply, update.BlockNumber, persist.LastUpdatedTime{}, pContractAddress)
-	default:
-		return fmt.Errorf("unsupported update type: %T", pUpdate)
-	}
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return persist.ErrTokenNotFoundByID{ID: pID}
-	}
-	return nil
-}
-*/
-// MostRecentBlock returns the most recent block number of any token
 func (t *TokenRepository) MostRecentBlock(pCtx context.Context) (persist.BlockNumber, error) {
 	var blockNumber persist.BlockNumber
 	err := t.mostRecentBlockStmt.QueryRowContext(pCtx).Scan(&blockNumber)
