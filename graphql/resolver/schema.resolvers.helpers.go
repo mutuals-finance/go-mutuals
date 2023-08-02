@@ -115,12 +115,8 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 		mappedErr = model.ErrUserAlreadyExists{Message: message}
 	case persist.ErrUsernameNotAvailable:
 		mappedErr = model.ErrUsernameNotAvailable{Message: message}
-	case persist.ErrCollectionNotFoundByID:
-		mappedErr = model.ErrCollectionNotFound{Message: message}
 	case persist.ErrTokenNotFoundByID:
 		mappedErr = model.ErrTokenNotFound{Message: message}
-	case persist.ErrContractNotFoundByAddress:
-		mappedErr = model.ErrCommunityNotFound{Message: message}
 	case persist.ErrAddressOwnedByUser:
 		mappedErr = model.ErrAddressOwnedByUser{Message: message}
 	case publicapi.ErrTokenRefreshFailed:
@@ -135,7 +131,7 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 	case twitter.ErrInvalidRefreshToken:
 		mappedErr = model.ErrNeedsToReconnectSocial{SocialAccountType: persist.SocialProviderTwitter, Message: message}
 	}
-
+	// TODO add missing errors
 	if mappedErr != nil {
 		if converted, ok := model.ConvertToModelType(mappedErr, gqlTypeName); ok {
 			return converted, true
