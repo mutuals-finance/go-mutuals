@@ -226,7 +226,7 @@ type TokenUpdateTotalSupplyInput struct {
 
 // TokenRepository represents a repository for interacting with persisted tokens
 type TokenRepository interface {
-	GetByWallet(context.Context, EthereumAddress, int64, int64) ([]Token, []Contract, error)
+	GetByWallet(context.Context, EthereumAddress, int64, int64) ([]Token, error)
 	GetByTokenIdentifiers(context.Context, EthereumAddress, int64, int64) ([]Token, error)
 	GetByIdentifiers(context.Context, EthereumAddress) (Token, error)
 	TokenExistsByTokenIdentifiers(context.Context, EthereumAddress) (bool, error)

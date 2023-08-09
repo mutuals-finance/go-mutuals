@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/99designs/gqlgen/graphql"
 	emailService "github.com/SplitFi/go-splitfi/emails"
 	"github.com/SplitFi/go-splitfi/graphql/generated"
 	"github.com/SplitFi/go-splitfi/graphql/model"
@@ -18,99 +17,7 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/SplitFi/go-splitfi/util"
-	"github.com/SplitFi/go-splitfi/validate"
 )
-
-// Split is the resolver for the split field.
-func (r *collectionResolver) Split(ctx context.Context, obj *model.Collection) (*model.Split, error) {
-	split, err := publicapi.For(ctx).Split.GetSplitByCollectionId(ctx, obj.Dbid)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return splitToModel(ctx, *split), nil
-}
-
-// Tokens is the resolver for the tokens field.
-func (r *collectionResolver) Tokens(ctx context.Context, obj *model.Collection, limit *int) ([]*model.CollectionToken, error) {
-	tokens, err := publicapi.For(ctx).Token.GetTokensByCollectionId(ctx, obj.Dbid, limit)
-
-	if err != nil {
-		return nil, err
-	}
-
-	output := make([]*model.CollectionToken, len(tokens))
-	for i, token := range tokens {
-		output[i] = &model.CollectionToken{
-			HelperCollectionTokenData: model.HelperCollectionTokenData{
-				TokenId:      token.ID,
-				CollectionId: obj.Dbid,
-			},
-			Token:         tokenToModel(ctx, token),
-			Collection:    obj,
-			TokenSettings: nil, // handled by dedicated resolver
-		}
-	}
-
-	return output, nil
-}
-
-// Token is the resolver for the token field.
-func (r *collectionTokenResolver) Token(ctx context.Context, obj *model.CollectionToken) (*model.Token, error) {
-	return resolveTokenByTokenID(ctx, obj.HelperCollectionTokenData.TokenId)
-}
-
-// Collection is the resolver for the collection field.
-func (r *collectionTokenResolver) Collection(ctx context.Context, obj *model.CollectionToken) (*model.Collection, error) {
-	return resolveCollectionByCollectionID(ctx, obj.HelperCollectionTokenData.CollectionId)
-}
-
-// TokenSettings is the resolver for the tokenSettings field.
-func (r *collectionTokenResolver) TokenSettings(ctx context.Context, obj *model.CollectionToken) (*model.CollectionTokenSettings, error) {
-	return resolveTokenSettingsByIDs(ctx, obj.TokenId, obj.CollectionId)
-}
-
-// TokensInCommunity is the resolver for the tokensInCommunity field.
-func (r *communityResolver) TokensInCommunity(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlySplitFiUsers *bool) (*model.TokensConnection, error) {
-	if onlySplitFiUsers == nil || (onlySplitFiUsers != nil && !*onlySplitFiUsers) {
-		refresh := false
-		if obj.ForceRefresh != nil {
-			refresh = *obj.ForceRefresh
-		}
-		err := refreshTokensInContractAsync(ctx, obj.Dbid, refresh)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return resolveTokensByContractIDWithPagination(ctx, obj.Dbid, before, after, first, last, onlySplitFiUsers)
-}
-
-// Owners is the resolver for the owners field.
-func (r *communityResolver) Owners(ctx context.Context, obj *model.Community, before *string, after *string, first *int, last *int, onlySplitFiUsers *bool) (*model.TokenHoldersConnection, error) {
-	if onlySplitFiUsers == nil || (onlySplitFiUsers != nil && !*onlySplitFiUsers) {
-		refresh := false
-		if obj.ForceRefresh != nil {
-			refresh = *obj.ForceRefresh
-		}
-		err := refreshTokensInContractAsync(ctx, obj.Dbid, refresh)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return resolveCommunityOwnersByContractID(ctx, obj.Dbid, before, after, first, last, onlySplitFiUsers)
-}
-
-// User is the resolver for the user field.
-func (r *followInfoResolver) User(ctx context.Context, obj *model.FollowInfo) (*model.SplitFiUser, error) {
-	return resolveSplitFiUserByUserID(ctx, obj.User.Dbid)
-}
-
-// User is the resolver for the user field.
-func (r *followUserPayloadResolver) User(ctx context.Context, obj *model.FollowUserPayload) (*model.SplitFiUser, error) {
-	return resolveSplitFiUserByUserID(ctx, obj.User.Dbid)
-}
 
 // AddUserWallet is the resolver for the addUserWallet field.
 func (r *mutationResolver) AddUserWallet(ctx context.Context, chainAddress persist.ChainAddress, authMechanism model.AuthMechanism) (model.AddUserWalletPayloadOrError, error) {
@@ -160,27 +67,6 @@ func (r *mutationResolver) UpdateUserInfo(ctx context.Context, input model.Updat
 
 	output := &model.UpdateUserInfoPayload{
 		Viewer: resolveViewer(ctx),
-	}
-
-	return output, nil
-}
-
-// UpdateSplitCollections is the resolver for the updateSplitCollections field.
-func (r *mutationResolver) UpdateSplitCollections(ctx context.Context, input model.UpdateSplitCollectionsInput) (model.UpdateSplitCollectionsPayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	err := api.Split.UpdateSplitCollections(ctx, input.SplitID, input.Collections)
-	if err != nil {
-		return nil, err
-	}
-
-	split, err := api.Split.GetSplitById(ctx, input.SplitID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UpdateSplitCollectionsPayload{
-		Split: splitToModel(ctx, *split),
 	}
 
 	return output, nil
@@ -263,48 +149,6 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, tokenID persist.DBI
 
 	output := &model.RefreshTokenPayload{
 		Token: token,
-	}
-
-	return output, nil
-}
-
-// RefreshCollection is the resolver for the refreshCollection field.
-func (r *mutationResolver) RefreshCollection(ctx context.Context, collectionID persist.DBID) (model.RefreshCollectionPayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	err := api.Token.RefreshCollection(ctx, collectionID)
-	if err != nil {
-		return nil, err
-	}
-
-	collection, err := resolveCollectionByCollectionID(ctx, collectionID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.RefreshCollectionPayload{
-		Collection: collection,
-	}
-
-	return output, nil
-}
-
-// RefreshContract is the resolver for the refreshContract field.
-func (r *mutationResolver) RefreshContract(ctx context.Context, contractID persist.DBID) (model.RefreshContractPayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	err := api.Contract.RefreshContract(ctx, contractID)
-	if err != nil {
-		return nil, err
-	}
-
-	contract, err := resolveContractByContractID(ctx, contractID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.RefreshContractPayload{
-		Contract: contract,
 	}
 
 	return output, nil
@@ -477,70 +321,6 @@ func (r *mutationResolver) UpdateSocialAccountDisplayed(ctx context.Context, inp
 	return output, nil
 }
 
-// FollowUser is the resolver for the followUser field.
-func (r *mutationResolver) FollowUser(ctx context.Context, userID persist.DBID) (model.FollowUserPayloadOrError, error) {
-	err := publicapi.For(ctx).User.FollowUser(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.FollowUserPayload{
-		Viewer: resolveViewer(ctx),
-		User: &model.SplitFiUser{
-			Dbid: userID, // remaining fields handled by dedicated resolver
-		},
-	}
-
-	return output, err
-}
-
-// FollowAllSocialConnections is the resolver for the followAllSocialConnections field.
-func (r *mutationResolver) FollowAllSocialConnections(ctx context.Context, accountType persist.SocialProvider) (model.FollowAllSocialConnectionsPayloadOrError, error) {
-	err := publicapi.For(ctx).User.FollowAllSocialConnections(ctx, accountType)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.FollowAllSocialConnectionsPayload{
-		Viewer: resolveViewer(ctx),
-	}
-
-	return output, nil
-}
-
-// UnfollowUser is the resolver for the unfollowUser field.
-func (r *mutationResolver) UnfollowUser(ctx context.Context, userID persist.DBID) (model.UnfollowUserPayloadOrError, error) {
-	err := publicapi.For(ctx).User.UnfollowUser(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UnfollowUserPayload{
-		Viewer: resolveViewer(ctx),
-		User: &model.SplitFiUser{
-			Dbid: userID, // remaining fields handled by dedicated resolver
-		},
-	}
-
-	return output, err
-}
-
-// ViewSplit is the resolver for the viewSplit field.
-func (r *mutationResolver) ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error) {
-	split, err := publicapi.For(ctx).Split.ViewSplit(ctx, splitID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.ViewSplitPayload{
-		Split: splitToModel(ctx, split),
-	}
-
-	return output, nil
-}
-
 // UpdateSplit is the resolver for the updateSplit field.
 func (r *mutationResolver) UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error) {
 	res, err := publicapi.For(ctx).Split.UpdateSplit(ctx, input)
@@ -643,20 +423,6 @@ func (r *mutationResolver) UpdateSplitInfo(ctx context.Context, input model.Upda
 
 	output := &model.UpdateSplitInfoPayload{
 		Split: split,
-	}
-
-	return output, nil
-}
-
-// UpdateFeaturedSplit is the resolver for the updateFeaturedSplit field.
-func (r *mutationResolver) UpdateFeaturedSplit(ctx context.Context, splitID persist.DBID) (model.UpdateFeaturedSplitPayloadOrError, error) {
-	err := publicapi.For(ctx).User.UpdateFeaturedSplit(ctx, splitID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UpdateFeaturedSplitPayload{
-		Viewer: resolveViewer(ctx),
 	}
 
 	return output, nil
@@ -765,55 +531,6 @@ func (r *mutationResolver) RevokeRolesFromUser(ctx context.Context, username str
 	return userToModel(ctx, *user), nil
 }
 
-// SyncTokensForUsername is the resolver for the syncTokensForUsername field.
-func (r *mutationResolver) SyncTokensForUsername(ctx context.Context, username string, chains []persist.Chain) (model.SyncTokensForUsernamePayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	user, err := api.User.GetUserByUsername(ctx, username)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if chains == nil || len(chains) == 0 {
-		chains = []persist.Chain{persist.ChainETH}
-	}
-
-	err = api.Token.SyncTokensAdmin(ctx, chains, user.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.SyncTokensForUsernamePayload{
-		Message: "Successfully synced tokens",
-	}
-
-	return output, nil
-}
-
-// MintPremiumCardToWallet is the resolver for the mintPremiumCardToWallet field.
-func (r *mutationResolver) MintPremiumCardToWallet(ctx context.Context, input model.MintPremiumCardToWalletInput) (model.MintPremiumCardToWalletPayloadOrError, error) {
-	tx, err := publicapi.For(ctx).Card.MintPremiumCardToWallet(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	return model.MintPremiumCardToWalletPayload{Tx: tx}, nil
-}
-
-// UploadPersistedQueries is the resolver for the uploadPersistedQueries field.
-func (r *mutationResolver) UploadPersistedQueries(ctx context.Context, input *model.UploadPersistedQueriesInput) (model.UploadPersistedQueriesPayloadOrError, error) {
-	err := publicapi.For(ctx).APQ.UploadPersistedQueries(ctx, *input.PersistedQueries)
-
-	if err != nil {
-		return nil, err
-	}
-
-	message := "Persisted queries uploaded successfully"
-
-	return model.UploadPersistedQueriesPayload{Message: &message}, nil
-}
-
 // UpdatePrimaryWallet is the resolver for the updatePrimaryWallet field.
 func (r *mutationResolver) UpdatePrimaryWallet(ctx context.Context, walletID persist.DBID) (model.UpdatePrimaryWalletPayloadOrError, error) {
 	err := publicapi.For(ctx).User.UpdateUserPrimaryWallet(ctx, walletID)
@@ -833,26 +550,6 @@ func (r *mutationResolver) UpdateUserExperience(ctx context.Context, input model
 	}
 	return model.UpdateUserExperiencePayload{
 		Viewer: resolveViewer(ctx),
-	}, nil
-}
-
-// MoveCollectionToSplit is the resolver for the moveCollectionToSplit field.
-func (r *mutationResolver) MoveCollectionToSplit(ctx context.Context, input *model.MoveCollectionToSplitInput) (model.MoveCollectionToSplitPayloadOrError, error) {
-	oldGalID, err := publicapi.For(ctx).Collection.UpdateCollectionSplit(ctx, input.SourceCollectionID, input.TargetSplitID)
-	if err != nil {
-		return nil, err
-	}
-	old, err := resolveSplitBySplitID(ctx, oldGalID)
-	if err != nil {
-		return nil, err
-	}
-	new, err := resolveSplitBySplitID(ctx, input.TargetSplitID)
-	if err != nil {
-		return nil, err
-	}
-	return model.MoveCollectionToSplitPayload{
-		OldSplit: old,
-		NewSplit: new,
 	}, nil
 }
 
@@ -893,82 +590,9 @@ func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.
 	return resolveSplitFiUserByAddress(ctx, chainAddress)
 }
 
-// UsersWithTrait is the resolver for the usersWithTrait field.
-func (r *queryResolver) UsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error) {
-	return resolveSplitFiUsersWithTrait(ctx, trait)
-}
-
-// MembershipTiers is the resolver for the membershipTiers field.
-func (r *queryResolver) MembershipTiers(ctx context.Context, forceRefresh *bool) ([]*model.MembershipTier, error) {
-	api := publicapi.For(ctx)
-
-	refresh := false
-	if forceRefresh != nil {
-		refresh = *forceRefresh
-	}
-
-	tiers, err := api.User.GetMembershipTiers(ctx, refresh)
-	if err != nil {
-		return nil, err
-	}
-
-	output := make([]*model.MembershipTier, len(tiers))
-	for i, tier := range tiers {
-		output[i] = persistMembershipTierToModel(ctx, tier)
-	}
-
-	return output, nil
-}
-
-// CollectionByID is the resolver for the collectionById field.
-func (r *queryResolver) CollectionByID(ctx context.Context, id persist.DBID) (model.CollectionByIDOrError, error) {
-	return resolveCollectionByCollectionID(ctx, id)
-}
-
-// CollectionsByIds is the resolver for the collectionsByIds field.
-func (r *queryResolver) CollectionsByIds(ctx context.Context, ids []persist.DBID) ([]model.CollectionByIDOrError, error) {
-	collections, errs := resolveCollectionsByCollectionIDs(ctx, ids)
-
-	models := make([]model.CollectionByIDOrError, len(ids))
-
-	// TODO: Figure out how to handle errors for slice returns automatically, the same way we handle typical resolvers.
-	//       Without that kind of handling, errors must be checked manually (as is happening below).
-	for i, err := range errs {
-		if err == nil {
-			models[i] = collections[i]
-		} else if notFoundErr, ok := err.(persist.ErrCollectionNotFoundByID); ok {
-			models[i] = model.ErrCollectionNotFound{Message: notFoundErr.Error()}
-		} else if validationErr, ok := err.(validate.ErrInvalidInput); ok {
-			models[i] = model.ErrInvalidInput{Message: validationErr.Error(), Parameters: validationErr.Parameters, Reasons: validationErr.Reasons}
-		} else {
-			// Unhandled error -- add it to the unhandled error stack, but don't fail the whole operation
-			// because one collection hit an unexpected error. Consider making "unhandled error" an expected type,
-			// such that it can be returned as part of a model "OrError" union instead of returning null.
-			graphql.AddError(ctx, err)
-		}
-	}
-
-	return models, nil
-}
-
 // TokenByID is the resolver for the tokenById field.
 func (r *queryResolver) TokenByID(ctx context.Context, id persist.DBID) (model.TokenByIDOrError, error) {
 	return resolveTokenByTokenID(ctx, id)
-}
-
-// CollectionTokenByID is the resolver for the collectionTokenById field.
-func (r *queryResolver) CollectionTokenByID(ctx context.Context, tokenID persist.DBID, collectionID persist.DBID) (model.CollectionTokenByIDOrError, error) {
-	return resolveCollectionTokenByID(ctx, tokenID, collectionID)
-}
-
-// CommunityByAddress is the resolver for the communityByAddress field.
-func (r *queryResolver) CommunityByAddress(ctx context.Context, communityAddress persist.ChainAddress, forceRefresh *bool) (model.CommunityByAddressOrError, error) {
-	return resolveCommunityByContractAddress(ctx, communityAddress, forceRefresh)
-}
-
-// GeneralAllowlist is the resolver for the generalAllowlist field.
-func (r *queryResolver) GeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error) {
-	return resolveGeneralAllowlist(ctx)
 }
 
 // SplitByID is the resolver for the splitById field.
@@ -1033,29 +657,6 @@ func (r *queryResolver) SearchSplits(ctx context.Context, query string, limit *i
 	}
 
 	return model.SearchSplitsPayload{Results: results}, nil
-}
-
-// SearchCommunities is the resolver for the searchCommunities field.
-func (r *queryResolver) SearchCommunities(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64, poapAddressWeight *float64) (model.SearchCommunitiesPayloadOrError, error) {
-	limitParam := util.GetOptionalValue(limit, 100)
-	nameWeightParam := util.GetOptionalValue(nameWeight, 0.4)
-	descriptionWeightParam := util.GetOptionalValue(descriptionWeight, 0.2)
-
-	contracts, err := publicapi.For(ctx).Search.SearchContracts(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam))
-	if err != nil {
-		return nil, err
-	}
-
-	forceRefresh := false
-
-	results := make([]*model.CommunitySearchResult, len(contracts))
-	for i, contract := range contracts {
-		results[i] = &model.CommunitySearchResult{
-			Community: communityToModel(ctx, contract, &forceRefresh),
-		}
-	}
-
-	return model.SearchCommunitiesPayload{Results: results}, nil
 }
 
 // UsersByRole is the resolver for the usersByRole field.
@@ -1132,26 +733,6 @@ func (r *socialQueriesResolver) SocialConnections(ctx context.Context, obj *mode
 	}, nil
 }
 
-// Followers is the resolver for the followers field.
-func (r *someoneFollowedYouBackNotificationResolver) Followers(ctx context.Context, obj *model.SomeoneFollowedYouBackNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	return resolveGroupNotificationUsersConnectionByUserIDs(ctx, obj.NotificationData.FollowerIDs, before, after, first, last)
-}
-
-// Followers is the resolver for the followers field.
-func (r *someoneFollowedYouNotificationResolver) Followers(ctx context.Context, obj *model.SomeoneFollowedYouNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	return resolveGroupNotificationUsersConnectionByUserIDs(ctx, obj.NotificationData.FollowerIDs, before, after, first, last)
-}
-
-// UserViewers is the resolver for the userViewers field.
-func (r *someoneViewedYourSplitNotificationResolver) UserViewers(ctx context.Context, obj *model.SomeoneViewedYourSplitNotification, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	return resolveGroupNotificationUsersConnectionByUserIDs(ctx, obj.NotificationData.AuthedViewerIDs, before, after, first, last)
-}
-
-// Split is the resolver for the split field.
-func (r *someoneViewedYourSplitNotificationResolver) Split(ctx context.Context, obj *model.SomeoneViewedYourSplitNotification) (*model.Split, error) {
-	return resolveSplitBySplitID(ctx, obj.SplitID)
-}
-
 // TokenPreviews is the resolver for the tokenPreviews field.
 func (r *splitResolver) TokenPreviews(ctx context.Context, obj *model.Split) ([]*model.PreviewURLSet, error) {
 	return resolveTokenPreviewsBySplitID(ctx, obj.Dbid)
@@ -1166,11 +747,6 @@ func (r *splitResolver) Owner(ctx context.Context, obj *model.Split) (*model.Spl
 	}
 
 	return resolveSplitFiUserByUserID(ctx, split.OwnerUserID)
-}
-
-// Collections is the resolver for the collections field.
-func (r *splitResolver) Collections(ctx context.Context, obj *model.Split) ([]*model.Collection, error) {
-	return resolveCollectionsBySplitID(ctx, obj.Dbid)
 }
 
 // Roles is the resolver for the roles field.
@@ -1222,67 +798,9 @@ func (r *splitFiUserResolver) PrimaryWallet(ctx context.Context, obj *model.Spli
 	return resolvePrimaryWalletByUserID(ctx, obj.HelperSplitFiUserData.UserID)
 }
 
-// FeaturedSplit is the resolver for the featuredSplit field.
-func (r *splitFiUserResolver) FeaturedSplit(ctx context.Context, obj *model.SplitFiUser) (*model.Split, error) {
-	if obj.HelperSplitFiUserData.FeaturedSplitID == nil {
-		return nil, nil
-	}
-
-	return resolveSplitBySplitID(ctx, *obj.HelperSplitFiUserData.FeaturedSplitID)
-}
-
 // Splits is the resolver for the splits field.
 func (r *splitFiUserResolver) Splits(ctx context.Context, obj *model.SplitFiUser) ([]*model.Split, error) {
 	return resolveSplitsByUserID(ctx, obj.Dbid)
-}
-
-// Badges is the resolver for the badges field.
-func (r *splitFiUserResolver) Badges(ctx context.Context, obj *model.SplitFiUser) ([]*model.Badge, error) {
-	return resolveBadgesByUserID(ctx, obj.Dbid)
-}
-
-// Followers is the resolver for the followers field.
-func (r *splitFiUserResolver) Followers(ctx context.Context, obj *model.SplitFiUser) ([]*model.SplitFiUser, error) {
-	return resolveFollowersByUserID(ctx, obj.Dbid)
-}
-
-// Following is the resolver for the following field.
-func (r *splitFiUserResolver) Following(ctx context.Context, obj *model.SplitFiUser) ([]*model.SplitFiUser, error) {
-	return resolveFollowingByUserID(ctx, obj.Dbid)
-}
-
-// SharedFollowers is the resolver for the sharedFollowers field.
-func (r *splitFiUserResolver) SharedFollowers(ctx context.Context, obj *model.SplitFiUser, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
-	users, pageInfo, err := publicapi.For(ctx).User.SharedFollowers(ctx, obj.UserID, before, after, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.UsersConnection{
-		Edges:    usersToEdges(ctx, users),
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
-}
-
-// SharedCommunities is the resolver for the sharedCommunities field.
-func (r *splitFiUserResolver) SharedCommunities(ctx context.Context, obj *model.SplitFiUser, before *string, after *string, first *int, last *int) (*model.CommunitiesConnection, error) {
-	communities, pageInfo, err := publicapi.For(ctx).User.SharedCommunities(ctx, obj.UserID, before, after, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*model.CommunityEdge, len(communities))
-	for i, community := range communities {
-		edges[i] = &model.CommunityEdge{
-			Node:   communityToModel(ctx, community, util.ToPointer(false)),
-			Cursor: nil, // not used by relay, but relay will complain without this field existing
-		}
-	}
-
-	return &model.CommunitiesConnection{
-		Edges:    edges,
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
 }
 
 // NewNotification is the resolver for the newNotification field.
@@ -1318,11 +836,6 @@ func (r *tokenResolver) OwnedByWallets(ctx context.Context, obj *model.Token) ([
 	return wallets, nil
 }
 
-// Contract is the resolver for the contract field.
-func (r *tokenResolver) Contract(ctx context.Context, obj *model.Token) (*model.Contract, error) {
-	return resolveContractByTokenID(ctx, obj.Dbid)
-}
-
 // Wallets is the resolver for the wallets field.
 func (r *tokenHolderResolver) Wallets(ctx context.Context, obj *model.TokenHolder) ([]*model.Wallet, error) {
 	wallets := make([]*model.Wallet, 0, len(obj.WalletIds))
@@ -1339,11 +852,6 @@ func (r *tokenHolderResolver) Wallets(ctx context.Context, obj *model.TokenHolde
 // User is the resolver for the user field.
 func (r *tokenHolderResolver) User(ctx context.Context, obj *model.TokenHolder) (*model.SplitFiUser, error) {
 	return resolveSplitFiUserByUserID(ctx, obj.UserId)
-}
-
-// User is the resolver for the user field.
-func (r *unfollowUserPayloadResolver) User(ctx context.Context, obj *model.UnfollowUserPayload) (*model.SplitFiUser, error) {
-	return resolveSplitFiUserByUserID(ctx, obj.User.Dbid)
 }
 
 // User is the resolver for the user field.
@@ -1421,25 +929,6 @@ func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.Chain
 	return obj.GQLSetChainFromResolver(data)
 }
 
-// Collection returns generated.CollectionResolver implementation.
-func (r *Resolver) Collection() generated.CollectionResolver { return &collectionResolver{r} }
-
-// CollectionToken returns generated.CollectionTokenResolver implementation.
-func (r *Resolver) CollectionToken() generated.CollectionTokenResolver {
-	return &collectionTokenResolver{r}
-}
-
-// Community returns generated.CommunityResolver implementation.
-func (r *Resolver) Community() generated.CommunityResolver { return &communityResolver{r} }
-
-// FollowInfo returns generated.FollowInfoResolver implementation.
-func (r *Resolver) FollowInfo() generated.FollowInfoResolver { return &followInfoResolver{r} }
-
-// FollowUserPayload returns generated.FollowUserPayloadResolver implementation.
-func (r *Resolver) FollowUserPayload() generated.FollowUserPayloadResolver {
-	return &followUserPayloadResolver{r}
-}
-
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -1465,21 +954,6 @@ func (r *Resolver) SocialConnection() generated.SocialConnectionResolver {
 // SocialQueries returns generated.SocialQueriesResolver implementation.
 func (r *Resolver) SocialQueries() generated.SocialQueriesResolver { return &socialQueriesResolver{r} }
 
-// SomeoneFollowedYouBackNotification returns generated.SomeoneFollowedYouBackNotificationResolver implementation.
-func (r *Resolver) SomeoneFollowedYouBackNotification() generated.SomeoneFollowedYouBackNotificationResolver {
-	return &someoneFollowedYouBackNotificationResolver{r}
-}
-
-// SomeoneFollowedYouNotification returns generated.SomeoneFollowedYouNotificationResolver implementation.
-func (r *Resolver) SomeoneFollowedYouNotification() generated.SomeoneFollowedYouNotificationResolver {
-	return &someoneFollowedYouNotificationResolver{r}
-}
-
-// SomeoneViewedYourSplitNotification returns generated.SomeoneViewedYourSplitNotificationResolver implementation.
-func (r *Resolver) SomeoneViewedYourSplitNotification() generated.SomeoneViewedYourSplitNotificationResolver {
-	return &someoneViewedYourSplitNotificationResolver{r}
-}
-
 // Split returns generated.SplitResolver implementation.
 func (r *Resolver) Split() generated.SplitResolver { return &splitResolver{r} }
 
@@ -1494,11 +968,6 @@ func (r *Resolver) Token() generated.TokenResolver { return &tokenResolver{r} }
 
 // TokenHolder returns generated.TokenHolderResolver implementation.
 func (r *Resolver) TokenHolder() generated.TokenHolderResolver { return &tokenHolderResolver{r} }
-
-// UnfollowUserPayload returns generated.UnfollowUserPayloadResolver implementation.
-func (r *Resolver) UnfollowUserPayload() generated.UnfollowUserPayloadResolver {
-	return &unfollowUserPayloadResolver{r}
-}
 
 // Viewer returns generated.ViewerResolver implementation.
 func (r *Resolver) Viewer() generated.ViewerResolver { return &viewerResolver{r} }
@@ -1516,11 +985,6 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 	return &chainPubKeyInputResolver{r}
 }
 
-type collectionResolver struct{ *Resolver }
-type collectionTokenResolver struct{ *Resolver }
-type communityResolver struct{ *Resolver }
-type followInfoResolver struct{ *Resolver }
-type followUserPayloadResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type ownerAtBlockResolver struct{ *Resolver }
 type previewURLSetResolver struct{ *Resolver }
@@ -1528,15 +992,11 @@ type queryResolver struct{ *Resolver }
 type setSpamPreferencePayloadResolver struct{ *Resolver }
 type socialConnectionResolver struct{ *Resolver }
 type socialQueriesResolver struct{ *Resolver }
-type someoneFollowedYouBackNotificationResolver struct{ *Resolver }
-type someoneFollowedYouNotificationResolver struct{ *Resolver }
-type someoneViewedYourSplitNotificationResolver struct{ *Resolver }
 type splitResolver struct{ *Resolver }
 type splitFiUserResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type tokenResolver struct{ *Resolver }
 type tokenHolderResolver struct{ *Resolver }
-type unfollowUserPayloadResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
 type walletResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }

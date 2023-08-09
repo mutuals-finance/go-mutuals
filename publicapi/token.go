@@ -57,16 +57,16 @@ func (api TokenAPI) GetTokenById(ctx context.Context, tokenID persist.DBID) (*db
 	return &token, nil
 }
 
-func (api TokenAPI) GetTokensByCollectionId(ctx context.Context, collectionID persist.DBID, limit *int) ([]db.Token, error) {
+func (api TokenAPI) GetAssetsByOwnerAddress(ctx context.Context, owner persist.EthereumAddress, limit *int) ([]db.Token, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"collectionID": {collectionID, "required"},
+		"owner": {owner, "required"},
 	}); err != nil {
 		return nil, err
 	}
 
-	tokens, err := api.loaders.TokensByCollectionID.Load(dataloader.IDAndLimit{
-		ID:    collectionID,
+	tokens, err := api.loaders.AssetsByOwnerAddress.Load(dataloader.IDAndLimit{
+		ID:    owner,
 		Limit: limit,
 	})
 	if err != nil {
@@ -76,26 +76,10 @@ func (api TokenAPI) GetTokensByCollectionId(ctx context.Context, collectionID pe
 	return tokens, nil
 }
 
-func (api TokenAPI) GetTokensByContractId(ctx context.Context, contractID persist.DBID) ([]db.Token, error) {
+func (api TokenAPI) GetAssetsBySplitIdPaginate(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) ([]db.Token, PageInfo, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"contractID": {contractID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	tokens, err := api.loaders.TokensByContractID.Load(contractID)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokens, nil
-}
-
-func (api TokenAPI) GetTokensByContractIdPaginate(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) ([]db.Token, PageInfo, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"contractID": {contractID, "required"},
+		"splitID": {contractID, "required"},
 	}); err != nil {
 		return nil, PageInfo{}, err
 	}
@@ -111,9 +95,9 @@ func (api TokenAPI) GetTokensByContractIdPaginate(ctx context.Context, contractI
 
 	queryFunc := func(params boolTimeIDPagingParams) ([]interface{}, error) {
 
-		logger.For(ctx).Infof("GetTokensByContractIdPaginate: %+v", params)
+		logger.For(ctx).Infof("GetAssetsBySplitIdPaginate: %+v", params)
 		tokens, err := api.queries.GetTokensByContractIdPaginate(ctx, db.GetTokensByContractIdPaginateParams{
-			Contract:           contractID,
+			Address:            contractID,
 			Limit:              params.Limit,
 			SplitfiUsersOnly:   ogu,
 			CurBeforeUniversal: params.CursorBeforeBool,

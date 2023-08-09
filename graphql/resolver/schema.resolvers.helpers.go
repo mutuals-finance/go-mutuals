@@ -209,66 +209,6 @@ func resolveSplitFiUserByAddress(ctx context.Context, chainAddress persist.Chain
 	return userToModel(ctx, *user), nil
 }
 
-func resolveSplitFiUsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error) {
-	users, err := publicapi.For(ctx).User.GetUsersWithTrait(ctx, trait)
-
-	if err != nil {
-		return nil, err
-	}
-
-	models := make([]*model.SplitFiUser, len(users))
-	for i, user := range users {
-		models[i] = userToModel(ctx, user)
-	}
-
-	return models, nil
-}
-
-func resolveBadgesByUserID(ctx context.Context, userID persist.DBID) ([]*model.Badge, error) {
-	contracts, err := publicapi.For(ctx).Contract.GetContractsDisplayedByUserID(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var result []*model.Badge
-	for _, contract := range contracts {
-		result = append(result, contractToBadgeModel(ctx, contract))
-	}
-
-	return result, nil
-}
-
-func resolveFollowersByUserID(ctx context.Context, userID persist.DBID) ([]*model.SplitFiUser, error) {
-	followers, err := publicapi.For(ctx).User.GetFollowersByUserId(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var output = make([]*model.SplitFiUser, len(followers))
-	for i, user := range followers {
-		output[i] = userToModel(ctx, user)
-	}
-
-	return output, nil
-}
-
-func resolveFollowingByUserID(ctx context.Context, userID persist.DBID) ([]*model.SplitFiUser, error) {
-	following, err := publicapi.For(ctx).User.GetFollowingByUserId(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var output = make([]*model.SplitFiUser, len(following))
-	for i, user := range following {
-		output[i] = userToModel(ctx, user)
-	}
-
-	return output, nil
-}
-
 func resolveSplitFiUserByUsername(ctx context.Context, username string) (*model.SplitFiUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserByUsername(ctx, username)
 

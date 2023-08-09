@@ -77,26 +77,14 @@ type SplitFiUser implements Node @goEmbedHelper {
   roles: [Role] @goField(forceResolver: true)
   socialAccounts: SocialAccounts @goField(forceResolver: true)
 
-  # Returns all tokens owned by this user. Useful for retrieving all tokens without any duplicates,
-  # as opposed to retrieving user -> wallets -> tokens, which would contain duplicates for any token
-  # that appears in more than one of the user's wallets.
-  tokens: [Token] @goField(forceResolver: true)
-  tokensByChain(chain: Chain!): ChainTokens @goField(forceResolver: true)
-
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
-  featuredSplit: Split @goField(forceResolver: true)
+  # Returns all splits owned by this user. Useful for retrieving all tokens without any duplicates,
+  # as opposed to retrieving user -> wallets -> splits, which would contain duplicates for any token
+  # that appears in more than one of the user's wallets.
   splits: [Split] @goField(forceResolver: true)
-  badges: [Badge] @goField(forceResolver: true)
+  splitsByChain(chain: Chain!): ChainSplits @goField(forceResolver: true)
   isAuthenticatedUser: Boolean
-  followers: [SplitFiUser] @goField(forceResolver: true)
-  following: [SplitFiUser] @goField(forceResolver: true)
-  sharedFollowers(before: String, after: String, first: Int, last: Int): UsersConnection
-    @authRequired
-    @goField(forceResolver: true)
-  sharedCommunities(before: String, after: String, first: Int, last: Int): CommunitiesConnection
-    @authRequired
-    @goField(forceResolver: true)
 }
 
 type Wallet implements Node {
@@ -105,7 +93,7 @@ type Wallet implements Node {
   chainAddress: ChainAddress
   chain: Chain
   walletType: WalletType
-  tokens: [Token] @goField(forceResolver: true)
+  splits: [Split] @goField(forceResolver: true)
 }
 
 type ChainAddress {
@@ -123,6 +111,11 @@ type ChainTokens {
   tokens: [Token]
 }
 
+type ChainSplits {
+  chain: Chain
+  splits: [Split]
+}
+
 input ChainAddressInput {
   address: Address! @goField(forceResolver: true)
   chain: Chain! @goField(forceResolver: true)
@@ -131,12 +124,6 @@ input ChainAddressInput {
 input ChainPubKeyInput {
   pubKey: PubKey! @goField(forceResolver: true)
   chain: Chain! @goField(forceResolver: true)
-}
-
-type Badge {
-  name: String
-  imageURL: String!
-  contract: Contract
 }
 
 union SplitFiUserOrWallet = SplitFiUser | Wallet
@@ -329,163 +316,53 @@ enum WalletType {
 type Token implements Node {
   id: ID!
   dbid: DBID!
+  version: Int
   creationTime: Time
   lastUpdated: Time
-  collectorsNote: String
-  media: MediaSubtype
   tokenType: TokenType
   chain: Chain
   name: String
-  description: String
-  tokenId: String
-  quantity: String # source is a hex string
-  owner: SplitFiUser @goField(forceResolver: true)
-  ownedByWallets: [Wallet] @goField(forceResolver: true)
-  ownershipHistory: [OwnerAtBlock]
-  tokenMetadata: String # source is map[string]interface{} on backend, not sure what best format is here
-  contract: Contract @goField(forceResolver: true)
-  externalUrl: String
+  symbol: String
+  decimals: Int
+  logo: String
+  totalSupply: Int
+  contractAddress: Int
   blockNumber: String # source is uint64
-  isSpamByUser: Boolean
-  isSpamByProvider: Boolean
-  # These are subject to change; unlike the other fields, they aren't present on the current persist.Token
-  # struct and may ultimately end up elsewhere
-  creatorAddress: ChainAddress
+  isSpam: Boolean
 }
 
-type OwnerAtBlock {
-  # TODO: will need to store addresses to make this resolver work
-  owner: SplitFiUserOrAddress @goField(forceResolver: true)
-  blockNumber: String # source is uint64
-}
-
-type CollectionToken implements Node @goEmbedHelper @goGqlId(fields: ["tokenId", "collectionId"]) {
-  id: ID!
-  token: Token @goField(forceResolver: true)
-  collection: Collection @goField(forceResolver: true)
-  tokenSettings: CollectionTokenSettings @goField(forceResolver: true)
-}
-
-type CollectionLayout {
-  sections: [Int]
-  sectionLayout: [CollectionSectionLayout]
-}
-
-type CollectionSectionLayout {
-  columns: Int
-  whitespace: [Int]
-}
-
-type CollectionTokenSettings {
-  renderLive: Boolean
-}
-
-type Collection implements Node {
+type Asset implements Node {
   id: ID!
   dbid: DBID!
   version: Int
-  name: String
-  collectorsNote: String
+  ownerAddress: ChainAddress
+  balance: Int
+  token: Token @goField(forceResolver: true)
+}
+
+type Recipient implements Node {
+  id: ID!
+  dbid: DBID!
+  version: Int
+  creationTime: Time
+  lastUpdated: Time
+  address: Address
   split: Split @goField(forceResolver: true)
-  layout: CollectionLayout
-  hidden: Boolean
-  tokens(limit: Int): [CollectionToken] @goField(forceResolver: true)
+  ownership: Int
 }
 
 type Split implements Node {
   id: ID!
   dbid: DBID!
+  version: Int
   name: String
   description: String
-  position: String
-  hidden: Boolean
-  tokenPreviews: [PreviewURLSet] @goField(forceResolver: true)
-  owner: SplitFiUser @goField(forceResolver: true)
-  collections: [Collection] @goField(forceResolver: true)
-}
-
-type TokenHolder @goEmbedHelper {
-  displayName: String
-  wallets: [Wallet] @goField(forceResolver: true)
-  user: SplitFiUser @goField(forceResolver: true)
-  previewTokens: [String]
-}
-
-type MembershipTier implements Node {
-  id: ID!
-  dbid: DBID!
-  name: String
-  assetUrl: String
-  tokenId: String
-  owners: [TokenHolder]
-}
-
-type TokenEdge {
-  node: Token
-  cursor: String
-}
-
-type TokensConnection {
-  edges: [TokenEdge]
-  pageInfo: PageInfo!
-}
-
-type TokenHolderEdge {
-  node: TokenHolder
-  cursor: String
-}
-
-type TokenHoldersConnection {
-  edges: [TokenHolderEdge]
-  pageInfo: PageInfo!
-}
-
-type Community implements Node @goGqlId(fields: ["contractAddress", "chain"]) @goEmbedHelper {
-  dbid: DBID!
-  id: ID!
-
-  lastUpdated: Time
-
-  contractAddress: ChainAddress
-  creatorAddress: ChainAddress
   chain: Chain
-  name: String
-  description: String
-  previewImage: String
-  profileImageURL: String
-  profileBannerURL: String
+  logoURL: String
+  bannerURL: String
   badgeURL: String
-
-  tokensInCommunity(
-    before: String
-    after: String
-    first: Int
-    last: Int
-    onlySplitFiUsers: Boolean
-  ): TokensConnection @goField(forceResolver: true)
-
-  owners(
-    before: String
-    after: String
-    first: Int
-    last: Int
-    onlySplitFiUsers: Boolean
-  ): TokenHoldersConnection @goField(forceResolver: true)
-}
-
-type Contract implements Node {
-  id: ID!
-  dbid: DBID!
-
-  lastUpdated: Time
-
-  contractAddress: ChainAddress
-  creatorAddress: ChainAddress
-  chain: Chain
-  name: String
-  profileImageURL: String
-  profileBannerURL: String
-  badgeURL: String
+  assets(limit: Int): [Asset] @goField(forceResolver: true)
+  shares(limit: Int): [Recipient] @goField(forceResolver: true)
 }
 
 # We have this extra type in case we need to stick authed data
@@ -621,25 +498,9 @@ type ErrTokenNotFound implements Error {
   message: String!
 }
 
-union CollectionByIdOrError = Collection | ErrCollectionNotFound | ErrInvalidInput
-
-union CollectionTokenByIdOrError = CollectionToken | ErrCollectionNotFound | ErrTokenNotFound
-
-union CommunityByAddressOrError = Community | ErrCommunityNotFound | ErrInvalidInput
-
 # Actions a user can take on a resource
 enum Action {
   UserCreated
-  UserFollowedUsers
-  CollectorsNoteAddedtoToken
-  CollectionCreated
-  CollectorsNoteAddedToCollection
-  TokensAddedToCollection
-}
-
-type FollowInfo {
-  user: SplitFiUser @goField(forceResolver: true)
-  followedBack: Boolean
 }
 
 type PageInfo {
@@ -686,16 +547,6 @@ type UsersConnection {
   pageInfo: PageInfo!
 }
 
-type CommunityEdge {
-  node: Community
-  cursor: String
-}
-
-type CommunitiesConnection {
-  edges: [CommunityEdge]
-  pageInfo: PageInfo!
-}
-
 enum Role {
   ADMIN
   BETA_TESTER
@@ -735,16 +586,6 @@ type SearchSplitsPayload {
 
 union SearchSplitsPayloadOrError = SearchSplitsPayload | ErrInvalidInput
 
-type CommunitySearchResult {
-  community: Community
-}
-
-type SearchCommunitiesPayload {
-  results: [CommunitySearchResult!]
-}
-
-union SearchCommunitiesPayloadOrError = SearchCommunitiesPayload | ErrInvalidInput
-
 union SocialQueriesOrError = SocialQueries | ErrNotAuthorized | ErrNeedsToReconnectSocial
 
 type Query {
@@ -754,15 +595,7 @@ type Query {
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
   usersWithTrait(trait: String!): [SplitFiUser]
-  membershipTiers(forceRefresh: Boolean): [MembershipTier]
-  collectionById(id: DBID!): CollectionByIdOrError
-  collectionsByIds(ids: [DBID!]!): [CollectionByIdOrError]
   tokenById(id: DBID!): TokenByIdOrError
-  collectionTokenById(tokenId: DBID!, collectionId: DBID!): CollectionTokenByIdOrError
-  communityByAddress(
-    communityAddress: ChainAddressInput!
-    forceRefresh: Boolean
-  ): CommunityByAddressOrError
   generalAllowlist: [ChainAddress!]
   splitById(id: DBID!): SplitByIdPayloadOrError
   viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
@@ -790,20 +623,6 @@ type Query {
     nameWeight: Float
     descriptionWeight: Float
   ): SearchSplitsPayloadOrError
-  """
-  Search for communities with optional weighting. Weights are floats in the [0.0. 1.0] range
-  that help determine how matches will be ranked. nameWeight defaults to 0.4, descriptionWeight
-  defaults to 0.2, and poapAddressWeight defaults to 0.1, meaning that a search result matching
-  a community name is considered twice as relevant as a search result matching a community
-  description, and four times as relevant as a search result matching a POAP address string.
-  """
-  searchCommunities(
-    query: String!
-    limit: Int
-    nameWeight: Float
-    descriptionWeight: Float
-    poapAddressWeight: Float
-  ): SearchCommunitiesPayloadOrError
 
   # Retool Specific
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
@@ -830,122 +649,6 @@ type SocialQueries {
     first: Int
     last: Int
   ): SocialConnectionsConnection @goField(forceResolver: true) @authRequired
-}
-
-input CollectionLayoutInput {
-  sections: [Int!]!
-  sectionLayout: [CollectionSectionLayoutInput!]!
-}
-
-input CollectionSectionLayoutInput {
-  columns: Int!
-  whitespace: [Int!]!
-}
-
-input CollectionTokenSettingsInput {
-  tokenId: DBID!
-  renderLive: Boolean!
-}
-
-input CreateCollectionInput {
-  splitId: DBID!
-  name: String!
-  collectorsNote: String!
-  tokens: [DBID!]!
-  layout: CollectionLayoutInput!
-  tokenSettings: [CollectionTokenSettingsInput!]!
-  caption: String
-}
-
-union CreateCollectionPayloadOrError = CreateCollectionPayload | ErrNotAuthorized | ErrInvalidInput
-
-type CreateCollectionPayload {
-  collection: Collection
-}
-
-union DeleteCollectionPayloadOrError =
-    DeleteCollectionPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-  | ErrCollectionNotFound
-
-type DeleteCollectionPayload {
-  split: Split
-}
-
-input UpdateCollectionInfoInput {
-  collectionId: DBID!
-  name: String!
-  collectorsNote: String!
-}
-
-union UpdateCollectionInfoPayloadOrError =
-    UpdateCollectionInfoPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-
-type UpdateCollectionInfoPayload {
-  collection: Collection
-}
-
-input UpdateCollectionTokensInput {
-  collectionId: DBID!
-  tokens: [DBID!]!
-  layout: CollectionLayoutInput!
-  tokenSettings: [CollectionTokenSettingsInput!]!
-  caption: String
-}
-
-union UpdateCollectionTokensPayloadOrError =
-    UpdateCollectionTokensPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-
-type UpdateCollectionTokensPayload {
-  collection: Collection
-}
-
-input UpdateCollectionHiddenInput {
-  collectionId: DBID!
-  hidden: Boolean!
-}
-
-union UpdateCollectionHiddenPayloadOrError =
-    UpdateCollectionHiddenPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-
-type UpdateCollectionHiddenPayload {
-  collection: Collection
-}
-
-input UpdateSplitCollectionsInput {
-  splitId: DBID!
-  collections: [DBID!]!
-}
-
-union UpdateSplitCollectionsPayloadOrError =
-    UpdateSplitCollectionsPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-
-type UpdateSplitCollectionsPayload {
-  split: Split
-}
-
-input UpdateTokenInfoInput {
-  tokenId: DBID!
-  collectorsNote: String!
-
-  # Optional (for now). Lets the backend know what collection the token was being edited in.
-  # @DEPCRECATED used to generate feedbot URLs.
-  collectionId: DBID
-}
-
-union UpdateTokenInfoPayloadOrError = UpdateTokenInfoPayload | ErrNotAuthorized | ErrInvalidInput
-
-type UpdateTokenInfoPayload {
-  token: Token
 }
 
 input SetSpamPreferenceInput {
@@ -1004,18 +707,6 @@ union RefreshTokenPayloadOrError = RefreshTokenPayload | ErrInvalidInput | ErrSy
 
 type RefreshTokenPayload {
   token: Token
-}
-
-union RefreshCollectionPayloadOrError = RefreshCollectionPayload | ErrInvalidInput | ErrSyncFailed
-
-type RefreshCollectionPayload {
-  collection: Collection
-}
-
-union RefreshContractPayloadOrError = RefreshContractPayload | ErrInvalidInput | ErrSyncFailed
-
-type RefreshContractPayload {
-  contract: Contract
 }
 
 type AuthNonce {
@@ -1189,28 +880,6 @@ type CreateUserPayload {
   viewer: Viewer
 }
 
-union FollowUserPayloadOrError =
-    FollowUserPayload
-  | ErrAuthenticationFailed
-  | ErrUserNotFound
-  | ErrInvalidInput
-
-union UnfollowUserPayloadOrError =
-    UnfollowUserPayload
-  | ErrAuthenticationFailed
-  | ErrUserNotFound
-  | ErrInvalidInput
-
-type FollowUserPayload {
-  viewer: Viewer
-  user: SplitFiUser @goField(forceResolver: true)
-}
-
-type UnfollowUserPayload {
-  viewer: Viewer
-  user: SplitFiUser @goField(forceResolver: true)
-}
-
 interface Notification implements Node {
   id: ID!
   seen: Boolean
@@ -1235,55 +904,6 @@ type GroupNotificationUserEdge {
 type GroupNotificationUsersConnection @goEmbedHelper {
   edges: [GroupNotificationUserEdge]
   pageInfo: PageInfo
-}
-
-type SomeoneFollowedYouNotification implements Notification & Node & GroupedNotification
-  @goEmbedHelper {
-  id: ID!
-  dbid: DBID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-  count: Int
-
-  followers(before: String, after: String, first: Int, last: Int): GroupNotificationUsersConnection
-    @goField(forceResolver: true)
-}
-
-type SomeoneFollowedYouBackNotification implements Notification & Node & GroupedNotification
-  @goEmbedHelper {
-  id: ID!
-  dbid: DBID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-  count: Int
-
-  followers(before: String, after: String, first: Int, last: Int): GroupNotificationUsersConnection
-    @goField(forceResolver: true)
-}
-
-type SomeoneViewedYourSplitNotification implements Notification & Node & GroupedNotification
-  @goEmbedHelper {
-  id: ID!
-  dbid: DBID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-  # the total count of notifications grouped, despite uniqueness of the viewers and whether they are logged in or not
-  count: Int
-
-  # unique user viewers, use PageInfo.Total to get the total unique user viewers
-  userViewers(
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): GroupNotificationUsersConnection @goField(forceResolver: true)
-
-  # count of unique non-user viewers
-  nonUserViewerCount: Int
-  split: Split @goField(forceResolver: true)
 }
 
 type ClearAllNotificationsPayload {
@@ -1440,35 +1060,6 @@ union UpdateSplitOrderPayloadOrError =
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type UpdateFeaturedSplitPayload {
-  viewer: Viewer
-}
-
-union UpdateFeaturedSplitPayloadOrError =
-    UpdateFeaturedSplitPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
-input UpdateCollectionInput {
-  dbid: DBID!
-  name: String!
-  collectorsNote: String!
-  tokens: [DBID!]!
-  layout: CollectionLayoutInput!
-  tokenSettings: [CollectionTokenSettingsInput!]!
-  hidden: Boolean!
-}
-
-input CreateCollectionInSplitInput {
-  name: String!
-  collectorsNote: String!
-  tokens: [DBID!]!
-  layout: CollectionLayoutInput!
-  tokenSettings: [CollectionTokenSettingsInput!]!
-  hidden: Boolean!
-  givenID: DBID!
-}
-
 input UpdateSplitInput {
   splitId: DBID!
 
@@ -1479,9 +1070,6 @@ input UpdateSplitInput {
   caption: String
 
   deletedCollections: [DBID!]
-
-  updatedCollections: [UpdateCollectionInput]
-  createdCollections: [CreateCollectionInSplitInput]
 
   order: [DBID!]
 
@@ -1547,21 +1135,6 @@ union UpdateUserExperiencePayloadOrError =
   | ErrInvalidInput
   | ErrNotAuthorized
 
-input MoveCollectionToSplitInput {
-  sourceCollectionId: DBID!
-  targetSplitId: DBID!
-}
-
-type MoveCollectionToSplitPayload {
-  oldSplit: Split
-  newSplit: Split
-}
-
-union MoveCollectionToSplitPayloadOrError =
-    MoveCollectionToSplitPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
 type ConnectSocialAccountPayload {
   viewer: Viewer
 }
@@ -1586,37 +1159,12 @@ union UpdateSocialAccountDisplayedPayloadOrError =
   | ErrNotAuthorized
   | ErrNeedsToReconnectSocial
 
-input MintPremiumCardToWalletInput {
-  tokenId: String!
-  walletAddresses: [Address!]
-}
-
-type MintPremiumCardToWalletPayload {
-  tx: String!
-}
-
-union MintPremiumCardToWalletPayloadOrError =
-    MintPremiumCardToWalletPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-  | ErrNeedsToReconnectSocial
-
 type DisconnectSocialAccountPayload {
   viewer: Viewer
 }
 
 union DisconnectSocialAccountPayloadOrError =
     DisconnectSocialAccountPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-  | ErrNeedsToReconnectSocial
-
-type FollowAllSocialConnectionsPayload {
-  viewer: Viewer
-}
-
-union FollowAllSocialConnectionsPayloadOrError =
-    FollowAllSocialConnectionsPayload
   | ErrInvalidInput
   | ErrNotAuthorized
   | ErrNeedsToReconnectSocial
@@ -1630,30 +1178,11 @@ type Mutation {
   removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsPayloadOrError @authRequired
   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
 
-  # Split Mutations
-  updateSplitCollections(
-    input: UpdateSplitCollectionsInput!
-  ): UpdateSplitCollectionsPayloadOrError @authRequired
-
-  # Collection Mutations
-
-  createCollection(input: CreateCollectionInput!): CreateCollectionPayloadOrError @authRequired
-  deleteCollection(collectionId: DBID!): DeleteCollectionPayloadOrError @authRequired
-  updateCollectionInfo(input: UpdateCollectionInfoInput!): UpdateCollectionInfoPayloadOrError
-    @authRequired
-  updateCollectionTokens(input: UpdateCollectionTokensInput!): UpdateCollectionTokensPayloadOrError
-    @authRequired
-  updateCollectionHidden(input: UpdateCollectionHiddenInput!): UpdateCollectionHiddenPayloadOrError
-    @authRequired
-
   # Token Mutations
-  updateTokenInfo(input: UpdateTokenInfoInput!): UpdateTokenInfoPayloadOrError @authRequired
   setSpamPreference(input: SetSpamPreferenceInput!): SetSpamPreferencePayloadOrError @authRequired
 
   syncTokens(chains: [Chain!]): SyncTokensPayloadOrError @authRequired
   refreshToken(tokenId: DBID!): RefreshTokenPayloadOrError
-  refreshCollection(collectionId: DBID!): RefreshCollectionPayloadOrError
-  refreshContract(contractId: DBID!): RefreshContractPayloadOrError
   deepRefresh(input: DeepRefreshInput!): DeepRefreshPayloadOrError @authRequired
 
   getAuthNonce(chainAddress: ChainAddressInput!): GetAuthNoncePayloadOrError
@@ -1680,12 +1209,6 @@ type Mutation {
     input: UpdateSocialAccountDisplayedInput!
   ): UpdateSocialAccountDisplayedPayloadOrError @authRequired
 
-  followUser(userId: DBID!): FollowUserPayloadOrError @authRequired
-  followAllSocialConnections(
-    accountType: SocialAccountType!
-  ): FollowAllSocialConnectionsPayloadOrError @authRequired
-  unfollowUser(userId: DBID!): UnfollowUserPayloadOrError @authRequired
-
   viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
   updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
@@ -1698,7 +1221,6 @@ type Mutation {
   updateSplitOrder(input: UpdateSplitOrderInput!): UpdateSplitOrderPayloadOrError
     @authRequired
   updateSplitInfo(input: UpdateSplitInfoInput!): UpdateSplitInfoPayloadOrError @authRequired
-  updateFeaturedSplit(splitId: DBID!): UpdateFeaturedSplitPayloadOrError @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired
 
@@ -1714,9 +1236,6 @@ type Mutation {
     @retoolAuth
   syncTokensForUsername(username: String!, chains: [Chain!]!): SyncTokensForUsernamePayloadOrError
     @retoolAuth
-  mintPremiumCardToWallet(
-    input: MintPremiumCardToWalletInput!
-  ): MintPremiumCardToWalletPayloadOrError @retoolAuth
 
   # Split Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
@@ -1726,10 +1245,6 @@ type Mutation {
 
   updateUserExperience(input: UpdateUserExperienceInput!): UpdateUserExperiencePayloadOrError
     @authRequired
-
-  moveCollectionToSplit(
-    input: MoveCollectionToSplitInput
-  ): MoveCollectionToSplitPayloadOrError @authRequired
 }
 
 type Subscription {
