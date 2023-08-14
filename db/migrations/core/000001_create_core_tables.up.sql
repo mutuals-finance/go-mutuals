@@ -1,23 +1,6 @@
 /* {% require_sudo %} */
 CREATE SCHEMA IF NOT EXISTS public;
 
-CREATE TABLE IF NOT EXISTS admires
-(
-    id            character varying(255) PRIMARY KEY NOT NULL,
-    version       integer                            NOT NULL DEFAULT 0,
-    feed_event_id character varying(255)             NOT NULL,
-    actor_id      character varying(255)             NOT NULL,
-    deleted       boolean                            NOT NULL DEFAULT false,
-    created_at    timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated  timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX admire_actor_feed_event_idx ON admires USING btree (actor_id, feed_event_id) WHERE (deleted = false);
-
-CREATE INDEX admire_feed_event_idx ON admires USING btree (feed_event_id);
-
-CREATE UNIQUE INDEX admires_created_at_id_feed_event_id_idx ON admires USING btree (created_at DESC, id DESC, feed_event_id) WHERE (deleted = false);
-
 CREATE TABLE IF NOT EXISTS users
 (
     id                    character varying(255) PRIMARY KEY NOT NULL,
@@ -59,38 +42,6 @@ CREATE INDEX users_fts_bio_english_idx ON users USING gin (fts_bio_english);
 CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
 CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = false);
-
-ALTER TABLE admires
-    ADD CONSTRAINT admires_actor_id_fkey
-        FOREIGN KEY (actor_id) REFERENCES users (id);
-
-CREATE TABLE IF NOT EXISTS feed_events
-(
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    version      integer                            NOT NULL DEFAULT 0,
-    owner_id     character varying(255)             NOT NULL,
-    action       character varying(255)             NOT NULL,
-    data         jsonb,
-    event_time   timestamp with time zone           NOT NULL,
-    event_ids    character varying(255)[],
-    deleted      boolean                            NOT NULL DEFAULT false,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    caption      character varying,
-    group_id     character varying(255) UNIQUE
-);
-
-CREATE INDEX feeds_event_timestamp_idx ON feed_events USING btree (event_time);
-
-CREATE INDEX feeds_global_pagination_idx ON feed_events USING btree (event_time DESC, id DESC) WHERE (deleted = false);
-
-CREATE INDEX feeds_owner_id_action_event_timestamp_idx ON feed_events USING btree (owner_id, action, event_time) WHERE (deleted = false);
-
-CREATE INDEX feeds_user_pagination_idx ON feed_events USING btree (owner_id, event_time DESC, id DESC) WHERE (deleted = false);
-
-ALTER TABLE admires
-    ADD CONSTRAINT admires_feed_event_id_fkey
-        FOREIGN KEY (feed_event_id) REFERENCES feed_events (id);
 
 CREATE TABLE IF NOT EXISTS collections
 (
@@ -135,35 +86,6 @@ CREATE INDEX splits_fts_name_idx ON splits USING gin (fts_name);
 ALTER TABLE collections
     ADD CONSTRAINT collections_split_id_fkey
         FOREIGN KEY (split_id) REFERENCES splits (id);
-
-CREATE TABLE IF NOT EXISTS comments
-(
-    id            character varying(255) PRIMARY KEY NOT NULL,
-    version       integer                            NOT NULL DEFAULT 0,
-    feed_event_id character varying(255)             NOT NULL,
-    actor_id      character varying(255)             NOT NULL,
-    reply_to      character varying(255),
-    comment       character varying                  NOT NULL,
-    deleted       boolean                            NOT NULL DEFAULT false,
-    created_at    timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated  timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX comment_feed_event_idx ON comments USING btree (feed_event_id);
-
-CREATE UNIQUE INDEX comments_created_at_id_feed_event_id_idx ON comments USING btree (created_at DESC, id DESC, feed_event_id) WHERE (deleted = false);
-
-ALTER TABLE comments
-    ADD CONSTRAINT comments_actor_id_fkey
-        FOREIGN KEY (actor_id) REFERENCES users (id);
-
-ALTER TABLE comments
-    ADD CONSTRAINT comments_feed_event_id_fkey
-        FOREIGN KEY (feed_event_id) REFERENCES feed_events (id);
-
-ALTER TABLE comments
-    ADD CONSTRAINT comments_reply_to_fkey
-        FOREIGN KEY (reply_to) REFERENCES comments (id);
 
 CREATE TABLE IF NOT EXISTS contracts
 (
@@ -284,11 +206,6 @@ ALTER TABLE dev_metadata_users
     ADD CONSTRAINT dev_metadata_users_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
 
-CREATE TABLE IF NOT EXISTS early_access
-(
-    address character varying(255) PRIMARY KEY NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS events
 (
     id               character varying(255) PRIMARY KEY NOT NULL,
@@ -306,18 +223,12 @@ CREATE TABLE IF NOT EXISTS events
     created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     split_id         character varying(255),
     comment_id       character varying(255),
-    admire_id        character varying(255),
-    feed_event_id    character varying(255),
     external_id      character varying(255),
     caption          character varying,
     group_id         character varying(255)
 );
 
 CREATE INDEX events_actor_id_action_created_at_idx ON events USING btree (actor_id, action, created_at);
-
-CREATE INDEX events_feed_interactions_idx ON events USING btree (created_at) WHERE (((action)::text = ANY
-                                                                                     ((ARRAY ['CommentedOnFeedEvent'::character varying, 'AdmiredFeedEvent'::character varying])::text[])) AND
-                                                                                    (feed_event_id IS NOT NULL));
 
 CREATE INDEX events_split_edit_idx ON events USING btree (created_at, actor_id) WHERE ((action)::text = ANY
                                                                                        ((ARRAY ['CollectionCreated'::character varying, 'CollectorsNoteAddedToCollection'::character varying, 'CollectorsNoteAddedToToken'::character varying, 'TokensAddedToCollection'::character varying, 'SplitInfoUpdated'::character varying])::text[]));
@@ -331,20 +242,8 @@ ALTER TABLE events
         FOREIGN KEY (actor_id) REFERENCES users (id);
 
 ALTER TABLE events
-    ADD CONSTRAINT events_admire_id_fkey
-        FOREIGN KEY (admire_id) REFERENCES admires (id);
-
-ALTER TABLE events
     ADD CONSTRAINT events_collection_id_fkey
         FOREIGN KEY (collection_id) REFERENCES collections (id);
-
-ALTER TABLE events
-    ADD CONSTRAINT events_comment_id_fkey
-        FOREIGN KEY (comment_id) REFERENCES comments (id);
-
-ALTER TABLE events
-    ADD CONSTRAINT events_feed_event_id_fkey
-        FOREIGN KEY (feed_event_id) REFERENCES feed_events (id);
 
 ALTER TABLE events
     ADD CONSTRAINT events_split_id_fkey
@@ -357,56 +256,6 @@ ALTER TABLE events
 ALTER TABLE events
     ADD CONSTRAINT events_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
-
-CREATE TABLE IF NOT EXISTS feed_blocklist
-(
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    user_id      character varying(255),
-    action       character varying(255)             NOT NULL,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                            NOT NULL DEFAULT false
-);
-
-CREATE UNIQUE INDEX feed_blocklist_user_id_action_idx ON feed_blocklist USING btree (user_id, action);
-
-ALTER TABLE feed_blocklist
-    ADD CONSTRAINT feed_blocklist_user_id_fkey
-        FOREIGN KEY (user_id) REFERENCES users (id);
-
-ALTER TABLE feed_events
-    ADD CONSTRAINT feed_events_owner_id_fkey
-        FOREIGN KEY (owner_id) REFERENCES users (id);
-
-CREATE TABLE IF NOT EXISTS follows
-(
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    follower     character varying(255)             NOT NULL,
-    followee     character varying(255)             NOT NULL,
-    deleted      boolean                            NOT NULL DEFAULT false,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX follows_followee_idx ON follows USING btree (followee);
-
-CREATE INDEX follows_followee_last_updated_idx ON follows USING btree (followee, last_updated DESC);
-
-CREATE INDEX follows_follower_idx ON follows USING btree (follower);
-
-CREATE INDEX follows_follower_last_updated_idx ON follows USING btree (follower, last_updated DESC);
-
-ALTER TABLE follows
-    ADD CONSTRAINT follows_follower_followee_key
-        UNIQUE (follower, followee);
-
-ALTER TABLE follows
-    ADD CONSTRAINT follows_followee_fkey
-        FOREIGN KEY (followee) REFERENCES users (id);
-
-ALTER TABLE follows
-    ADD CONSTRAINT follows_follower_fkey
-        FOREIGN KEY (follower) REFERENCES users (id);
 
 CREATE TABLE IF NOT EXISTS legacy_views
 (
@@ -430,32 +279,6 @@ ALTER TABLE marketplace_contracts
     ADD CONSTRAINT marketplace_contracts_contract_id_fkey
         FOREIGN KEY (contract_id) REFERENCES contracts (id);
 
-CREATE TABLE IF NOT EXISTS membership
-(
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    deleted      boolean                            NOT NULL DEFAULT false,
-    version      integer                                     DEFAULT 0,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    token_id     character varying UNIQUE,
-    name         character varying,
-    asset_url    character varying,
-    owners       jsonb[]
-);
-
-CREATE TABLE IF NOT EXISTS merch
-(
-    id            character varying(255) PRIMARY KEY NOT NULL,
-    deleted       boolean                            NOT NULL DEFAULT false,
-    version       integer                                     DEFAULT 0,
-    created_at    timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated  timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    token_id      character varying(255) UNIQUE,
-    object_type   integer                            NOT NULL DEFAULT 0,
-    discount_code character varying(255),
-    redeemed      boolean                            NOT NULL DEFAULT false
-);
-
 CREATE TABLE IF NOT EXISTS nonces
 (
     id           character varying(255) PRIMARY KEY NOT NULL,
@@ -471,33 +294,23 @@ CREATE TABLE IF NOT EXISTS nonces
 
 CREATE TABLE IF NOT EXISTS notifications
 (
-    id            character varying(255) PRIMARY KEY NOT NULL,
-    deleted       boolean                            NOT NULL DEFAULT false,
-    owner_id      character varying(255),
-    version       integer                                     DEFAULT 0,
-    last_updated  timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at    timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    action        character varying(255)             NOT NULL,
-    data          jsonb,
-    event_ids     character varying(255)[],
-    feed_event_id character varying(255),
-    comment_id    character varying(255),
-    split_id      character varying(255),
-    seen          boolean                            NOT NULL DEFAULT false,
-    amount        integer                            NOT NULL DEFAULT 1
+    id           character varying(255) PRIMARY KEY NOT NULL,
+    deleted      boolean                            NOT NULL DEFAULT false,
+    owner_id     character varying(255),
+    version      integer                                     DEFAULT 0,
+    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    action       character varying(255)             NOT NULL,
+    data         jsonb,
+    event_ids    character varying(255)[],
+    split_id     character varying(255),
+    seen         boolean                            NOT NULL DEFAULT false,
+    amount       integer                            NOT NULL DEFAULT 1
 );
 
 CREATE INDEX notification_created_at_id_idx ON notifications USING btree (created_at, id);
 
 CREATE INDEX notification_owner_id_idx ON notifications USING btree (owner_id);
-
-ALTER TABLE notifications
-    ADD CONSTRAINT notifications_comment_id_fkey
-        FOREIGN KEY (comment_id) REFERENCES comments (id);
-
-ALTER TABLE notifications
-    ADD CONSTRAINT notifications_feed_event_id_fkey
-        FOREIGN KEY (feed_event_id) REFERENCES feed_events (id);
 
 ALTER TABLE notifications
     ADD CONSTRAINT notifications_split_id_fkey
