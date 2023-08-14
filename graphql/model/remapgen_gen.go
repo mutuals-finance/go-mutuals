@@ -23,28 +23,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"CollectionByIdOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CollectionByIDOrError)
-		return obj, ok
-	},
-
-	"CollectionTokenByIdOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CollectionTokenByIDOrError)
-		return obj, ok
-	},
-
-	"CommunityByAddressOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CommunityByAddressOrError)
-		return obj, ok
-	},
-
 	"ConnectSocialAccountPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(ConnectSocialAccountPayloadOrError)
-		return obj, ok
-	},
-
-	"CreateCollectionPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CreateCollectionPayloadOrError)
 		return obj, ok
 	},
 
@@ -63,11 +43,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"DeleteCollectionPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(DeleteCollectionPayloadOrError)
-		return obj, ok
-	},
-
 	"DeleteSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(DeleteSplitPayloadOrError)
 		return obj, ok
@@ -83,23 +58,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"FollowAllSocialConnectionsPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(FollowAllSocialConnectionsPayloadOrError)
-		return obj, ok
-	},
-
-	"FollowUserPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(FollowUserPayloadOrError)
-		return obj, ok
-	},
-
 	"GetAuthNoncePayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(GetAuthNoncePayloadOrError)
-		return obj, ok
-	},
-
-	"GroupedNotification": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(GroupedNotification)
 		return obj, ok
 	},
 
@@ -115,16 +75,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"MediaSubtype": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(MediaSubtype)
-		return obj, ok
-	},
-
-	"MintPremiumCardToWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(MintPremiumCardToWalletPayloadOrError)
-		return obj, ok
-	},
-
-	"MoveCollectionToSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(MoveCollectionToSplitPayloadOrError)
 		return obj, ok
 	},
 
@@ -148,16 +98,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"RefreshCollectionPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RefreshCollectionPayloadOrError)
-		return obj, ok
-	},
-
-	"RefreshContractPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RefreshContractPayloadOrError)
-		return obj, ok
-	},
-
 	"RefreshTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(RefreshTokenPayloadOrError)
 		return obj, ok
@@ -175,11 +115,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"RevokeRolesFromUserPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(RevokeRolesFromUserPayloadOrError)
-		return obj, ok
-	},
-
-	"SearchCommunitiesPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SearchCommunitiesPayloadOrError)
 		return obj, ok
 	},
 
@@ -228,43 +163,13 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"SyncTokensForUsernamePayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SyncTokensForUsernamePayloadOrError)
-		return obj, ok
-	},
-
-	"SyncTokensPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SyncTokensPayloadOrError)
-		return obj, ok
-	},
-
 	"TokenByIdOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(TokenByIDOrError)
 		return obj, ok
 	},
 
-	"UnfollowUserPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UnfollowUserPayloadOrError)
-		return obj, ok
-	},
-
 	"UnsubscribeFromEmailTypePayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UnsubscribeFromEmailTypePayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateCollectionHiddenPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateCollectionHiddenPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateCollectionInfoPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateCollectionInfoPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateCollectionTokensPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateCollectionTokensPayloadOrError)
 		return obj, ok
 	},
 
@@ -278,11 +183,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"UpdateFeaturedSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateFeaturedSplitPayloadOrError)
-		return obj, ok
-	},
-
 	"UpdatePrimaryWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UpdatePrimaryWalletPayloadOrError)
 		return obj, ok
@@ -290,11 +190,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UpdateSocialAccountDisplayedPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UpdateSocialAccountDisplayedPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateSplitCollectionsPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateSplitCollectionsPayloadOrError)
 		return obj, ok
 	},
 
@@ -315,11 +210,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UpdateSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UpdateSplitPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateTokenInfoPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateTokenInfoPayloadOrError)
 		return obj, ok
 	},
 

@@ -8,10 +8,7 @@ import (
 	"strings"
 
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/graphql/model"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"golang.org/x/exp/slices"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -134,7 +131,6 @@ func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("sorted_asc", SortedAscValidator)
 	v.RegisterValidation("chain", ChainValidator)
 	v.RegisterValidation("role", IsValidRole)
-	v.RegisterValidation("created_collections", CreatedCollectionsValidator)
 	v.RegisterValidation("http", HTTPValidator)
 	v.RegisterAlias("collection_name", "max=200")
 	v.RegisterAlias("collection_note", "max=600")
@@ -144,7 +140,6 @@ func RegisterCustomValidators(v *validator.Validate) {
 
 	v.RegisterStructValidation(ChainAddressValidator, persist.ChainAddress{})
 	v.RegisterStructValidation(ConnectionPaginationParamsValidator, ConnectionPaginationParams{})
-	v.RegisterStructValidation(CollectionTokenSettingsParamsValidator, CollectionTokenSettingsParams{})
 	v.RegisterStructValidation(EventValidator, coredb.Event{})
 }
 
@@ -196,32 +191,6 @@ func ConnectionPaginationParamsValidator(sl validator.StructLevel) {
 	if pageArgs.First != nil && pageArgs.Last != nil {
 		sl.ReportError(pageArgs.First, "First", "First", "excluded_with", "firstandlast")
 		sl.ReportError(pageArgs.Last, "Last", "Last", "excluded_with", "firstandlast")
-	}
-}
-
-// CollectionTokenSettingsParams are args passed to collection create and update functions that are meant to be validated together
-type CollectionTokenSettingsParams struct {
-	Tokens        []persist.DBID                                   `json:"tokens"`
-	TokenSettings map[persist.DBID]persist.CollectionTokenSettings `json:"token_settings"`
-}
-
-// CollectionTokenSettingsParamsValidator checks that the input CollectionTokenSettingsParams struct is valid
-func CollectionTokenSettingsParamsValidator(sl validator.StructLevel) {
-	settings := sl.Current().Interface().(CollectionTokenSettingsParams)
-
-	for settingTokenID := range settings.TokenSettings {
-		var exists bool
-
-		for _, tokenID := range settings.Tokens {
-			if settingTokenID == tokenID {
-				exists = true
-				break
-			}
-		}
-
-		if !exists {
-			sl.ReportError(settingTokenID, fmt.Sprintf("TokenSettings[%s]", settingTokenID), "token_settings", "exclude", "")
-		}
 	}
 }
 
@@ -293,16 +262,6 @@ var SortedAscValidator validator.Func = func(fl validator.FieldLevel) bool {
 		return sort.IntsAreSorted(s)
 	}
 	return false
-}
-
-// CreatedCollectionsValidator validates that the create collection input has valid given IDs
-var CreatedCollectionsValidator validator.Func = func(fl validator.FieldLevel) bool {
-	if s, ok := fl.Field().Interface().([]*model.CreateCollectionInSplitInput); ok {
-		return !slices.ContainsFunc(s, func(l *model.CreateCollectionInSplitInput) bool {
-			return l.GivenID == ""
-		})
-	}
-	return true
 }
 
 // ChainValidator ensures the specified Chain is one we support

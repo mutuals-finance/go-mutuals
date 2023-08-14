@@ -93,7 +93,7 @@ func (f SyncWithContractEvalFallbackProvider) resolveTokens(ctx context.Context,
 }
 
 func (f *SyncWithContractEvalFallbackProvider) callFallback(ctx context.Context, primary ChainAgnosticToken) ChainAgnosticToken {
-	id := ChainAgnosticIdentifiers{primary.ContractAddress, primary.TokenID}
+	id := ChainAgnosticIdentifiers{primary.ContractAddress}
 	backup, _, err := f.Fallback.GetTokensByTokenIdentifiersAndOwner(ctx, id, primary.OwnerAddress)
 	if err == nil && f.Eval(ctx, backup) {
 		return backup

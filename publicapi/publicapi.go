@@ -48,12 +48,12 @@ type PublicAPI struct {
 	Split         *SplitAPI
 	User          *UserAPI
 	Token         *TokenAPI
+	Asset         *AssetAPI
 	Wallet        *WalletAPI
 	Misc          *MiscAPI
 	Notifications *NotificationsAPI
 	Admin         *admin.AdminAPI
 	Social        *SocialAPI
-	Card          *CardAPI
 	Search        *SearchAPI
 }
 
@@ -73,12 +73,12 @@ func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Rep
 		Split:         &SplitAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient},
 		User:          &UserAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
 		Token:         &TokenAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
+		Asset:         &AssetAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
 		Wallet:        &WalletAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
 		Misc:          &MiscAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, storageClient: storageClient},
 		Notifications: &NotificationsAPI{queries: queries, loaders: loaders, validator: validator},
 		Admin:         admin.NewAPI(repos, queries, validator, multichainProvider),
 		Social:        &SocialAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, redis: socialCache},
-		Card:          &CardAPI{validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, secrets: secrets},
 		Search:        &SearchAPI{queries: queries, loaders: loaders, validator: validator},
 	}
 }

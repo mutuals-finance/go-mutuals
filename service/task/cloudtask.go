@@ -34,7 +34,6 @@ type TokenProcessingContractTokensMessage struct {
 // DeepRefreshMessage is the input message to the indexer-api for deep refreshes
 type DeepRefreshMessage struct {
 	OwnerAddress    persist.EthereumAddress `json:"owner_address"`
-	TokenID         persist.TokenID         `json:"token_id"`
 	ContractAddress persist.EthereumAddress `json:"contract_address"`
 	RefreshRange    persist.BlockRange      `json:"refresh_range"`
 }

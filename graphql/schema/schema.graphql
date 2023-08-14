@@ -141,7 +141,6 @@ union MediaSubtype =
   | JsonMedia
   | GltfMedia
   | UnknownMedia
-  | SyncingMedia
   | InvalidMedia
 
 type PreviewURLSet {
@@ -269,15 +268,6 @@ type GltfMedia implements Media {
 }
 
 type UnknownMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type SyncingMedia implements Media {
   previewURLs: PreviewURLSet
   mediaURL: String
   mediaType: String
@@ -697,12 +687,6 @@ type UpdateUserInfoPayload {
   viewer: Viewer
 }
 
-union SyncTokensPayloadOrError = SyncTokensPayload | ErrNotAuthorized | ErrSyncFailed
-
-type SyncTokensPayload {
-  viewer: Viewer
-}
-
 union RefreshTokenPayloadOrError = RefreshTokenPayload | ErrInvalidInput | ErrSyncFailed
 
 type RefreshTokenPayload {
@@ -986,15 +970,6 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-type SyncTokensForUsernamePayload {
-  message: String!
-}
-
-union SyncTokensForUsernamePayloadOrError =
-    SyncTokensForUsernamePayload
-  | ErrNotAuthorized
-  | ErrSyncFailed
-
 input SplitPositionInput {
   splitId: DBID!
   position: String!
@@ -1181,7 +1156,6 @@ type Mutation {
   # Token Mutations
   setSpamPreference(input: SetSpamPreferenceInput!): SetSpamPreferencePayloadOrError @authRequired
 
-  syncTokens(chains: [Chain!]): SyncTokensPayloadOrError @authRequired
   refreshToken(tokenId: DBID!): RefreshTokenPayloadOrError
   deepRefresh(input: DeepRefreshInput!): DeepRefreshPayloadOrError @authRequired
 
@@ -1233,8 +1207,6 @@ type Mutation {
   addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @retoolAuth
   addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @retoolAuth
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
-    @retoolAuth
-  syncTokensForUsername(username: String!, chains: [Chain!]!): SyncTokensForUsernamePayloadOrError
     @retoolAuth
 
   # Split Frontend Deploy Persisted Queries

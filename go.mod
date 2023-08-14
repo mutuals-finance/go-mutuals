@@ -10,7 +10,6 @@ require (
 	cloud.google.com/go/storage v1.27.0
 	github.com/99designs/gqlgen v0.17.31
 	github.com/Khan/genqlient v0.6.0
-	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b
 	github.com/asottile/dockerfile v3.1.0+incompatible
 	github.com/benny-conn/go-ens v1.1.0
 	github.com/benny-conn/limiters v0.0.2
@@ -35,7 +34,6 @@ require (
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.0
 	github.com/lib/pq v1.10.7
-	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/magiclabs/magic-admin-go v0.2.0
 	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/ory/dockertest v3.3.5+incompatible
@@ -49,7 +47,6 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/vektah/gqlparser/v2 v2.5.1
 	golang.org/x/crypto v0.6.0
-	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/image v0.0.0-20210216034530-4410531fe030
 	golang.org/x/sync v0.1.0
 	google.golang.org/api v0.103.0

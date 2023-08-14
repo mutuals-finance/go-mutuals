@@ -5,27 +5,20 @@ import (
 	"crypto/sha256"
 	"encoding"
 	"encoding/base64"
-	"fmt"
 	"net"
-
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/util"
-	"github.com/SplitFi/go-splitfi/validate"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
 
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/SplitFi/go-splitfi/graphql/model"
 	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/util"
+	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
 )
-
-const maxCollectionsPerSplit = 1000
 
 type SplitAPI struct {
 	repos     *postgres.Repositories
@@ -40,198 +33,27 @@ func (api SplitAPI) CreateSplit(ctx context.Context, name, description *string, 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"name":        {name, "max=200"},
 		"description": {description, "max=600"},
-		"position":    {position, "required"},
 	}); err != nil {
 		return db.Split{}, err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	_, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return db.Split{}, err
 	}
 
-	split, err := api.repos.SplitRepository.Create(ctx, db.SplitRepoCreateParams{
-		SplitID:     persist.GenerateID(),
-		Name:        util.FromPointer(name),
-		Description: util.FromPointer(description),
-		Position:    position,
-		OwnerUserID: userID,
-	})
-	if err != nil {
-		return db.Split{}, err
-	}
+	// TODO
+	//split, err := api.repos.SplitRepository.Create(ctx, db.SplitRepoCreateParams{
+	//	SplitID:     persist.GenerateID(),
+	//	Name:        util.FromPointer(name),
+	//	Description: util.FromPointer(description),
+	//	OwnerUserID: userID,
+	//})
+	//if err != nil {
+	//	return db.Split{}, err
+	//}
 
-	return split, nil
-}
-
-func (api SplitAPI) UpdateSplit(ctx context.Context, update model.UpdateSplitInput) (db.Split, error) {
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID":             {update.SplitID, "required"},
-		"name":                {update.Name, "omitempty,max=200"},
-		"description":         {update.Description, "omitempty,max=600"},
-		"deleted_collections": {update.DeletedCollections, "omitempty,unique"},
-		"created_collections": {update.CreatedCollections, "omitempty,created_collections"},
-	}); err != nil {
-		return db.Split{}, err
-	}
-
-	events := make([]db.Event, 0, len(update.CreatedCollections)+len(update.UpdatedCollections)+1)
-
-	curGal, err := api.loaders.SplitBySplitID.Load(update.SplitID)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	if curGal.OwnerUserID != userID {
-		return db.Split{}, fmt.Errorf("user %s is not the owner of split %s", userID, update.SplitID)
-	}
-
-	tx, err := api.repos.BeginTx(ctx)
-	if err != nil {
-		return db.Split{}, err
-	}
-	defer tx.Rollback(ctx)
-
-	q := api.queries.WithTx(tx)
-
-	// then delete collections
-	if len(update.DeletedCollections) > 0 {
-		err = q.DeleteCollections(ctx, util.StringersToStrings(update.DeletedCollections))
-		if err != nil {
-			return db.Split{}, err
-		}
-	}
-
-	// create collections
-	mappedIDs := make(map[persist.DBID]persist.DBID)
-	for _, c := range update.CreatedCollections {
-		collectionID, err := q.CreateCollection(ctx, db.CreateCollectionParams{
-			ID:             persist.GenerateID(),
-			Name:           persist.StrPtrToNullStr(&c.Name),
-			CollectorsNote: persist.StrPtrToNullStr(&c.CollectorsNote),
-			OwnerUserID:    curGal.OwnerUserID,
-			SplitID:        update.SplitID,
-			Layout:         modelToTokenLayout(c.Layout),
-			Hidden:         c.Hidden,
-			Nfts:           c.Tokens,
-			TokenSettings:  modelToTokenSettings(c.TokenSettings),
-		})
-		if err != nil {
-			return db.Split{}, err
-		}
-
-		events = append(events, db.Event{
-			ID:             persist.GenerateID(),
-			ActorID:        persist.DBIDToNullStr(userID),
-			Action:         persist.ActionCollectionCreated,
-			ResourceTypeID: persist.ResourceTypeCollection,
-			SubjectID:      collectionID,
-			CollectionID:   collectionID,
-			SplitID:        update.SplitID,
-			Data: persist.EventData{
-				CollectionTokenIDs:       c.Tokens,
-				CollectionCollectorsNote: c.CollectorsNote,
-			},
-		})
-
-		mappedIDs[c.GivenID] = collectionID
-	}
-
-	// update collections
-
-	if len(update.UpdatedCollections) > 0 {
-		collEvents, err := updateCollectionsInfoAndTokens(ctx, q, userID, update.SplitID, update.UpdatedCollections)
-		if err != nil {
-			return db.Split{}, err
-		}
-
-		events = append(events, collEvents...)
-	}
-
-	// order collections
-	for i, c := range update.Order {
-		if newID, ok := mappedIDs[c]; ok {
-			update.Order[i] = newID
-		}
-	}
-
-	params := db.UpdateSplitInfoParams{
-		ID: update.SplitID,
-	}
-
-	util.SetConditionalValue(update.Name, &params.Name, &params.NameSet)
-	util.SetConditionalValue(update.Description, &params.Description, &params.DescriptionSet)
-
-	err = q.UpdateSplitInfo(ctx, params)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	if update.Name != nil || update.Description != nil {
-		e := db.Event{
-			ID:             persist.GenerateID(),
-			ActorID:        persist.DBIDToNullStr(userID),
-			Action:         persist.ActionSplitInfoUpdated,
-			ResourceTypeID: persist.ResourceTypeSplit,
-			SplitID:        update.SplitID,
-			SubjectID:      update.SplitID,
-		}
-
-		change := false
-
-		if update.Name != nil && *update.Name != curGal.Name {
-			e.Data.SplitName = update.Name
-			change = true
-		}
-
-		if update.Description != nil && *update.Description != curGal.Description {
-			e.Data.SplitDescription = update.Description
-			change = true
-		}
-
-		if change {
-			events = append(events, e)
-		}
-
-	}
-
-	asList := persist.DBIDList(update.Order)
-
-	if len(asList) > 0 {
-		err = q.UpdateSplitCollections(ctx, db.UpdateSplitCollectionsParams{
-			SplitID:     update.SplitID,
-			Collections: asList,
-		})
-		if err != nil {
-			return db.Split{}, err
-		}
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	newGall, err := api.loaders.SplitBySplitID.Load(update.SplitID)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	if update.Caption != nil && *update.Caption == "" {
-		update.Caption = nil
-	}
-	err = dispatchEvents(ctx, events, api.validator, update.EditID, nil)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	return newGall, nil
+	return db.Split{}, nil
 }
 
 func (api SplitAPI) PublishSplit(ctx context.Context, update model.PublishSplitInput) error {
@@ -244,143 +66,6 @@ func (api SplitAPI) PublishSplit(ctx context.Context, update model.PublishSplitI
 	}
 
 	err := publishEventGroup(ctx, update.EditID, persist.ActionSplitUpdated, update.Caption)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-func updateCollectionsInfoAndTokens(ctx context.Context, q *db.Queries, actor, split persist.DBID, update []*model.UpdateCollectionInput) ([]db.Event, error) {
-
-	events := make([]db.Event, 0)
-
-	dbids, err := util.Map(update, func(u *model.UpdateCollectionInput) (string, error) {
-		return u.Dbid.String(), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	collectorNotes, err := util.Map(update, func(u *model.UpdateCollectionInput) (string, error) {
-		return u.CollectorsNote, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	layouts, err := util.Map(update, func(u *model.UpdateCollectionInput) (pgtype.JSONB, error) {
-		return persist.ToJSONB(modelToTokenLayout(u.Layout))
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	tokenSettings, err := util.Map(update, func(u *model.UpdateCollectionInput) (pgtype.JSONB, error) {
-		settings := modelToTokenSettings(u.TokenSettings)
-		return persist.ToJSONB(settings)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	hiddens, err := util.Map(update, func(u *model.UpdateCollectionInput) (bool, error) {
-		return u.Hidden, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	names, err := util.Map(update, func(u *model.UpdateCollectionInput) (string, error) {
-		return u.Name, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, collection := range update {
-		curCol, err := q.GetCollectionById(ctx, collection.Dbid)
-		if err != nil {
-			return nil, err
-		}
-
-		// add event if collectors note updated
-		if collection.CollectorsNote != "" && collection.CollectorsNote != curCol.CollectorsNote.String {
-			events = append(events, db.Event{
-				ActorID:        persist.DBIDToNullStr(actor),
-				ResourceTypeID: persist.ResourceTypeCollection,
-				SubjectID:      collection.Dbid,
-				Action:         persist.ActionCollectorsNoteAddedToCollection,
-				CollectionID:   collection.Dbid,
-				SplitID:        split,
-				Data: persist.EventData{
-					CollectionCollectorsNote: collection.CollectorsNote,
-				},
-			})
-		}
-	}
-
-	err = q.UpdateCollectionsInfo(ctx, db.UpdateCollectionsInfoParams{
-		Ids:             dbids,
-		Names:           names,
-		CollectorsNotes: collectorNotes,
-		Layouts:         layouts,
-		TokenSettings:   tokenSettings,
-		Hidden:          hiddens,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, collection := range update {
-		curTokens, err := q.GetCollectionTokensByCollectionID(ctx, collection.Dbid)
-		if err != nil {
-			return nil, err
-		}
-
-		err = q.UpdateCollectionTokens(ctx, db.UpdateCollectionTokensParams{
-			ID:   collection.Dbid,
-			Nfts: collection.Tokens,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		diff := util.Difference(curTokens, collection.Tokens)
-
-		if len(diff) > 0 {
-			events = append(events, db.Event{
-				ResourceTypeID: persist.ResourceTypeCollection,
-				SubjectID:      collection.Dbid,
-				Action:         persist.ActionTokensAddedToCollection,
-				ActorID:        persist.DBIDToNullStr(actor),
-				CollectionID:   collection.Dbid,
-				SplitID:        split,
-				Data: persist.EventData{
-					CollectionTokenIDs: diff,
-				},
-			})
-		}
-	}
-	return events, nil
-}
-
-func (api SplitAPI) DeleteSplit(ctx context.Context, splitID persist.DBID) error {
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": {splitID, "required"},
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = api.repos.SplitRepository.Delete(ctx, db.SplitRepoDeleteParams{
-		SplitID:     splitID,
-		OwnerUserID: userID,
-	})
 	if err != nil {
 		return err
 	}
@@ -430,22 +115,6 @@ func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID
 	return &split, nil
 }
 
-func (api SplitAPI) GetSplitByCollectionId(ctx context.Context, collectionID persist.DBID) (*db.Split, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"collectionID": {collectionID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	split, err := api.loaders.SplitByCollectionID.Load(collectionID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &split, nil
-}
-
 func (api SplitAPI) GetSplitsByUserId(ctx context.Context, userID persist.DBID) ([]db.Split, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -460,52 +129,6 @@ func (api SplitAPI) GetSplitsByUserId(ctx context.Context, userID persist.DBID) 
 	}
 
 	return splits, nil
-}
-
-func (api SplitAPI) GetTokenPreviewsBySplitID(ctx context.Context, splitID persist.DBID) ([]persist.Media, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": {splitID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	medias, err := api.queries.GetSplitTokenMediasBySplitID(ctx, db.GetSplitTokenMediasBySplitIDParams{
-		ID:    splitID,
-		Limit: 4,
-	})
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return medias, nil
-}
-
-func (api SplitAPI) UpdateSplitCollections(ctx context.Context, splitID persist.DBID, collections []persist.DBID) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID":     {splitID, "required"},
-		"collections": {collections, fmt.Sprintf("required,unique,max=%d", maxCollectionsPerSplit)},
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	update := persist.SplitTokenUpdateInput{Collections: collections}
-
-	err = api.repos.SplitRepository.Update(ctx, splitID, userID, update)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, name, description *string) error {
@@ -551,57 +174,6 @@ func (api SplitAPI) UpdateSplitHidden(ctx context.Context, splitID persist.DBID,
 	})
 	if err != nil {
 		return db.Split{}, err
-	}
-
-	return split, nil
-}
-
-func (api SplitAPI) ViewSplit(ctx context.Context, splitID persist.DBID) (db.Split, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": {splitID, "required"},
-	}); err != nil {
-		return db.Split{}, err
-	}
-
-	split, err := api.loaders.SplitBySplitID.Load(splitID)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	gc := util.GinContextFromContext(ctx)
-
-	if auth.GetUserAuthedFromCtx(gc) {
-		userID, err := getAuthenticatedUserID(ctx)
-		if err != nil {
-			return db.Split{}, err
-		}
-
-		if split.OwnerUserID != userID {
-			// only view split if the user hasn't already viewed it in this most recent notification period
-
-			err = dispatchEvent(ctx, db.Event{
-				ActorID:        persist.DBIDToNullStr(userID),
-				ResourceTypeID: persist.ResourceTypeSplit,
-				SubjectID:      splitID,
-				Action:         persist.ActionViewedSplit,
-				SplitID:        splitID,
-			}, api.validator, nil)
-			if err != nil {
-				return db.Split{}, err
-			}
-		}
-	} else {
-		err := dispatchEvent(ctx, db.Event{
-			ResourceTypeID: persist.ResourceTypeSplit,
-			SubjectID:      splitID,
-			Action:         persist.ActionViewedSplit,
-			SplitID:        splitID,
-			ExternalID:     persist.StrPtrToNullStr(getExternalID(ctx)),
-		}, api.validator, nil)
-		if err != nil {
-			return db.Split{}, err
-		}
 	}
 
 	return split, nil

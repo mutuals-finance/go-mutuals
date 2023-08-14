@@ -10,29 +10,8 @@ import (
 
 type GqlID string
 
-func (r *CollectionToken) GetGqlIDField_TokenID() string {
-	return r.HelperCollectionTokenData.TokenId.String()
-}
-
-func (r *CollectionToken) GetGqlIDField_CollectionID() string {
-	return r.HelperCollectionTokenData.CollectionId.String()
-}
-
-func (r *Community) GetGqlIDField_Chain() string {
-	return fmt.Sprint(r.ContractAddress.Chain())
-}
-
-func (r *Community) GetGqlIDField_ContractAddress() string {
-	return r.ContractAddress.Address().String()
-}
-
 func (v *Viewer) GetGqlIDField_UserID() string {
 	return string(v.UserId)
-}
-
-type HelperCollectionTokenData struct {
-	TokenId      persist.DBID
-	CollectionId persist.DBID
 }
 
 type HelperTokenHolderData struct {
@@ -42,10 +21,6 @@ type HelperTokenHolderData struct {
 
 type HelperViewerData struct {
 	UserId persist.DBID
-}
-
-type HelperCommunityData struct {
-	ForceRefresh *bool
 }
 
 type HelperGroupNotificationUsersConnectionData struct {
@@ -61,31 +36,10 @@ type HelperNotificationSettingsData struct {
 	UserId persist.DBID
 }
 
-type HelperSomeoneFollowedYouNotificationData struct {
-	OwnerID          persist.DBID
-	NotificationData persist.NotificationData
-}
-type HelperSomeoneViewedYourSplitNotificationData struct {
-	OwnerID          persist.DBID
-	SplitID          persist.DBID
-	NotificationData persist.NotificationData
-}
-type HelperSomeoneFollowedYouBackNotificationData struct {
-	OwnerID          persist.DBID
-	NotificationData persist.NotificationData
-}
-
 type HelperNotificationsConnectionData struct {
 	UserId persist.DBID
 }
 
-type HelperSplitCollectionUpdateData struct {
-	CollectionID persist.DBID
-}
-
-type HelperSplitTokenUpdateData struct {
-	TokenID persist.DBID
-}
 type HelperUserEmailData struct {
 	UserId persist.DBID
 }

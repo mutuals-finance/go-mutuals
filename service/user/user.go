@@ -6,13 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-
-	"cloud.google.com/go/storage"
-	"github.com/everFinance/goar"
-	shell "github.com/ipfs/go-ipfs-api"
 
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/eth"
@@ -128,21 +123,22 @@ func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username
 		return "", "", err
 	}
 
-	split, err := splitRepo.Upsert(pCtx, coredb.SplitRepoCreateParams{
-		SplitID:     persist.GenerateID(),
-		Name:        splitName,
-		Description: splitDesc,
-	})
+	//TODO
+	//split, err := splitRepo.Upsert(pCtx, coredb.SplitRepoCreateParams{
+	//	SplitID:     persist.GenerateID(),
+	//	Name:        splitName,
+	//	Description: splitDesc,
+	//})
 	if err != nil {
 		return "", "", err
 	}
 
-	splitID = split.ID
+	//splitID = split.ID
 
 	auth.SetAuthStateForCtx(gc, userID, nil)
 	auth.SetJWTCookie(gc, jwtTokenStr)
 
-	return userID, splitID, nil
+	return userID, "0", nil //userID, splitID, nil
 }
 
 // RemoveWalletsFromUser removes any amount of addresses from a user in the DB
@@ -319,36 +315,6 @@ func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, 
 // 	return userRepo.MergeUsers(pCtx, pUserID, pInput.SecondUserID)
 
 // }
-
-// TODO need interface for interacting with other chains for this
-func validateNFTsForUser(pCtx context.Context, pUserID persist.DBID, userRepo postgres.UserRepository, tokenRepo postgres.TokenSplitRepository, contractRepo persist.ContractRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client) error {
-	// input := indexer.ValidateUsersNFTsInput{
-	// 	UserID: pUserID,
-	// }
-
-	// _, err := indexer.ValidateNFTs(pCtx, input, userRepo, tokenRepo, contractRepo, ethClient, ipfsClient, arweaveClient, stg)
-	// if err != nil {
-	// 	logger.For(pCtx).Errorf("Error validating user NFTs %s: %s", pUserID, err)
-	// 	return err
-	// }
-	return nil
-}
-
-// TODO need interface for interacting with other chains for this
-func ensureMediaContent(pCtx context.Context, pChainAddress persist.ChainAddress, tokenRepo postgres.TokenSplitRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client) error {
-
-	// input := indexer.UpdateMediaInput{
-	// 	OwnerAddress: pAddress,
-	// }
-
-	// err := indexer.UpdateMedia(pCtx, input, tokenRepo, ethClient, ipfsClient, arweaveClient, stg)
-	// if err != nil {
-	// 	logrus.Errorf("Error ensuring media content for address %s: %s", pAddress, err)
-	// 	return err
-	// }
-	return nil
-
-}
 
 // DoesUserOwnWallets checks if a user owns any wallets
 func DoesUserOwnWallets(pCtx context.Context, userID persist.DBID, walletAddresses []persist.DBID, userRepo postgres.UserRepository) (bool, error) {

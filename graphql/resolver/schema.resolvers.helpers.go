@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/SplitFi/go-splitfi/env"
@@ -16,7 +15,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/mediamapper"
-	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/notifications"
 	"github.com/SplitFi/go-splitfi/service/socialauth"
 	"github.com/SplitFi/go-splitfi/service/twitter"
@@ -37,60 +35,13 @@ var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 
 var nodeFetcher = model.NodeFetcher{
 	OnSplit:            resolveSplitBySplitID,
-	OnCollection:       resolveCollectionByCollectionID,
 	OnSplitFiUser:      resolveSplitFiUserByUserID,
-	OnMembershipTier:   resolveMembershipTierByMembershipId,
 	OnToken:            resolveTokenByTokenID,
 	OnWallet:           resolveWalletByAddress,
-	OnContract:         resolveContractByContractID,
 	OnViewer:           resolveViewerByID,
 	OnDeletedNode:      resolveDeletedNodeByID,
 	OnSocialConnection: resolveSocialConnectionByIdentifiers,
-
-	OnCollectionToken: func(ctx context.Context, tokenId string, collectionId string) (*model.CollectionToken, error) {
-		return resolveCollectionTokenByID(ctx, persist.DBID(tokenId), persist.DBID(collectionId))
-	},
-
-	OnCommunity: func(ctx context.Context, contractAddress string, chain string) (*model.Community, error) {
-		if parsed, err := strconv.Atoi(chain); err == nil {
-			return resolveCommunityByContractAddress(ctx, persist.NewChainAddress(persist.Address(contractAddress), persist.Chain(parsed)), util.ToPointer(false))
-		} else {
-			return nil, err
-		}
-	},
-	OnSomeoneFollowedYouBackNotification: func(ctx context.Context, dbid persist.DBID) (*model.SomeoneFollowedYouBackNotification, error) {
-		notif, err := resolveNotificationByID(ctx, dbid)
-		if err != nil {
-			return nil, err
-		}
-
-		notifConverted := notif.(model.SomeoneFollowedYouBackNotification)
-
-		return &notifConverted, nil
-	},
-	OnSomeoneFollowedYouNotification: func(ctx context.Context, dbid persist.DBID) (*model.SomeoneFollowedYouNotification, error) {
-		notif, err := resolveNotificationByID(ctx, dbid)
-		if err != nil {
-			return nil, err
-		}
-
-		notifConverted := notif.(model.SomeoneFollowedYouNotification)
-
-		return &notifConverted, nil
-	},
-	OnSomeoneViewedYourSplitNotification: func(ctx context.Context, dbid persist.DBID) (*model.SomeoneViewedYourSplitNotification, error) {
-		notif, err := resolveNotificationByID(ctx, dbid)
-		if err != nil {
-			return nil, err
-		}
-
-		notifConverted := notif.(model.SomeoneViewedYourSplitNotification)
-
-		return &notifConverted, nil
-	},
 }
-
-var defaultTokenSettings = persist.CollectionTokenSettings{}
 
 func init() {
 	nodeFetcher.ValidateHandlers()
@@ -234,79 +185,16 @@ func resolveSplitsByUserID(ctx context.Context, userID persist.DBID) ([]*model.S
 	return output, nil
 }
 
-func resolveCollectionByCollectionID(ctx context.Context, collectionID persist.DBID) (*model.Collection, error) {
-	collection, err := publicapi.For(ctx).Collection.GetCollectionById(ctx, collectionID)
-	if err != nil {
-		return nil, err
-	}
-
-	return collectionToModel(ctx, *collection), nil
-}
-
-func resolveCollectionsByCollectionIDs(ctx context.Context, collectionIDs []persist.DBID) ([]*model.Collection, []error) {
-	models := make([]*model.Collection, len(collectionIDs))
-	errors := make([]error, len(collectionIDs))
-
-	collections, collectionErrs := publicapi.For(ctx).Collection.GetCollectionsByIds(ctx, collectionIDs)
-
-	for i, err := range collectionErrs {
-		if err != nil {
-			errors[i] = err
-		} else {
-			models[i] = collectionToModel(ctx, *collections[i])
-		}
-	}
-
-	return models, errors
-}
-
-func resolveCollectionsBySplitID(ctx context.Context, splitID persist.DBID) ([]*model.Collection, error) {
-	collections, err := publicapi.For(ctx).Collection.GetCollectionsBySplitId(ctx, splitID)
-	if err != nil {
-		return nil, err
-	}
-
-	var output = make([]*model.Collection, len(collections))
-	for i, collection := range collections {
-		output[i] = collectionToModel(ctx, collection)
-	}
-
-	return output, nil
-}
-
-func resolveTokenPreviewsBySplitID(ctx context.Context, splitID persist.DBID) ([]*model.PreviewURLSet, error) {
-	medias, err := publicapi.For(ctx).Split.GetTokenPreviewsBySplitID(ctx, splitID)
-	if err != nil {
-		return nil, err
-	}
-
-	return util.Map(medias, func(token persist.Media) (*model.PreviewURLSet, error) {
-		return getPreviewUrls(ctx, token), nil
-	})
-}
-
-func resolveCollectionTokenByID(ctx context.Context, tokenID persist.DBID, collectionID persist.DBID) (*model.CollectionToken, error) {
-	token, err := resolveTokenByTokenID(ctx, tokenID)
-	if err != nil {
-		return nil, err
-	}
-	return tokenCollectionToModel(ctx, token, collectionID), nil
-}
-
 func resolveSplitBySplitID(ctx context.Context, splitID persist.DBID) (*model.Split, error) {
 	dbSplit, err := publicapi.For(ctx).Split.GetSplitById(ctx, splitID)
 	if err != nil {
 		return nil, err
 	}
 	split := &model.Split{
-		Dbid:          splitID,
-		Name:          &dbSplit.Name,
-		Description:   &dbSplit.Description,
-		Position:      &dbSplit.Position,
-		Hidden:        &dbSplit.Hidden,
-		TokenPreviews: nil, // handled by dedicated resolver
-		Owner:         nil, // handled by dedicated resolver
-		Collections:   nil, // handled by dedicated resolver
+		Dbid:        splitID,
+		Name:        &dbSplit.Name,
+		Description: &dbSplit.Description,
+		//TODO return full split data
 	}
 
 	return split, nil
@@ -366,41 +254,6 @@ func resolveTokensByUserIDAndContractID(ctx context.Context, userID, contractID 
 	return tokensToModel(ctx, tokens), nil
 }
 
-func resolveTokensByContractID(ctx context.Context, contractID persist.DBID) ([]*model.Token, error) {
-
-	tokens, err := publicapi.For(ctx).Token.GetTokensByContractId(ctx, contractID)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokensToModel(ctx, tokens), nil
-}
-
-func resolveTokensByContractIDWithPagination(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) (*model.TokensConnection, error) {
-
-	tokens, pageInfo, err := publicapi.For(ctx).Token.GetTokensByContractIdPaginate(ctx, contractID, before, after, first, last, onlySplitFiUsers)
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*model.TokenEdge, len(tokens))
-	for i, token := range tokens {
-		edges[i] = &model.TokenEdge{
-			Node:   tokenToModel(ctx, token),
-			Cursor: nil, // not used by relay, but relay will complain without this field existing
-		}
-	}
-
-	return &model.TokensConnection{
-		Edges:    edges,
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
-}
-
-func refreshTokensInContractAsync(ctx context.Context, contractID persist.DBID, forceRefresh bool) error {
-	return publicapi.For(ctx).Contract.RefreshOwnersAsync(ctx, contractID, forceRefresh)
-}
-
 func resolveTokensByUserID(ctx context.Context, userID persist.DBID) ([]*model.Token, error) {
 	tokens, err := publicapi.For(ctx).Token.GetTokensByUserID(ctx, userID)
 
@@ -419,26 +272,6 @@ func resolveTokenOwnerByTokenID(ctx context.Context, tokenID persist.DBID) (*mod
 	}
 
 	return resolveSplitFiUserByUserID(ctx, token.OwnerUserID)
-}
-
-func resolveContractByTokenID(ctx context.Context, tokenID persist.DBID) (*model.Contract, error) {
-	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, tokenID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resolveContractByContractID(ctx, token.Contract)
-}
-
-func resolveContractByContractID(ctx context.Context, contractID persist.DBID) (*model.Contract, error) {
-	contract, err := publicapi.For(ctx).Contract.GetContractByID(ctx, contractID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return contractToModel(ctx, *contract), nil
 }
 
 func resolveWalletByWalletID(ctx context.Context, walletID persist.DBID) (*model.Wallet, error) {
@@ -497,50 +330,6 @@ func userWithPIIToEmailModel(user *db.PiiUserView) *model.UserEmail {
 			UnsubscribedFromNotifications: user.EmailUnsubscriptions.Notifications.Bool(),
 		},
 	}
-
-}
-
-func resolveMembershipTierByMembershipId(ctx context.Context, id persist.DBID) (*model.MembershipTier, error) {
-	tier, err := publicapi.For(ctx).User.GetMembershipByMembershipId(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return membershipToModel(ctx, *tier), nil
-}
-
-func resolveCommunityByContractAddress(ctx context.Context, contractAddress persist.ChainAddress, forceRefresh *bool) (*model.Community, error) {
-	community, err := publicapi.For(ctx).Contract.GetContractByAddress(ctx, contractAddress)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return communityToModel(ctx, *community, forceRefresh), nil
-}
-
-func resolveCommunityOwnersByContractID(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) (*model.TokenHoldersConnection, error) {
-	contract, err := publicapi.For(ctx).Contract.GetContractByID(ctx, contractID)
-	if err != nil {
-		return nil, err
-	}
-	owners, pageInfo, err := publicapi.For(ctx).Contract.GetCommunityOwnersByContractAddress(ctx, persist.NewChainAddress(contract.Address, contract.Chain), before, after, first, last, onlySplitFiUsers)
-	if err != nil {
-		return nil, err
-	}
-	edges := make([]*model.TokenHolderEdge, len(owners))
-	for i, owner := range owners {
-		edges[i] = &model.TokenHolderEdge{
-			Node:   owner,
-			Cursor: nil, // not used by relay, but relay will complain without this field existing
-		}
-	}
-
-	return &model.TokenHoldersConnection{
-		Edges:    edges,
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
 
 }
 
@@ -632,52 +421,8 @@ func notificationsToEdges(notifs []db.Notification) ([]*model.NotificationEdge, 
 }
 
 func notificationToModel(notif db.Notification) (model.Notification, error) {
-	amount := int(notif.Amount)
 	switch notif.Action {
-	case persist.ActionUserFollowedUsers:
-		if !notif.Data.FollowedBack {
-			return model.SomeoneFollowedYouNotification{
-				HelperSomeoneFollowedYouNotificationData: model.HelperSomeoneFollowedYouNotificationData{
-					OwnerID:          notif.OwnerID,
-					NotificationData: notif.Data,
-				},
-				Dbid:         notif.ID,
-				Seen:         &notif.Seen,
-				CreationTime: &notif.CreatedAt,
-				UpdatedTime:  &notif.LastUpdated,
-				Count:        &amount,
-				Followers:    nil, // handled by dedicated resolver
-			}, nil
-		}
-		return model.SomeoneFollowedYouBackNotification{
-			HelperSomeoneFollowedYouBackNotificationData: model.HelperSomeoneFollowedYouBackNotificationData{
-				OwnerID:          notif.OwnerID,
-				NotificationData: notif.Data,
-			},
-			Dbid:         notif.ID,
-			Seen:         &notif.Seen,
-			CreationTime: &notif.CreatedAt,
-			UpdatedTime:  &notif.LastUpdated,
-			Count:        &amount,
-			Followers:    nil, // handled by dedicated resolver
-		}, nil
-	case persist.ActionViewedSplit:
-		nonCount := len(notif.Data.UnauthedViewerIDs)
-		return model.SomeoneViewedYourSplitNotification{
-			HelperSomeoneViewedYourSplitNotificationData: model.HelperSomeoneViewedYourSplitNotificationData{
-				OwnerID:          notif.OwnerID,
-				SplitID:          notif.SplitID,
-				NotificationData: notif.Data,
-			},
-			Dbid:               notif.ID,
-			Seen:               &notif.Seen,
-			CreationTime:       &notif.CreatedAt,
-			UpdatedTime:        &notif.LastUpdated,
-			Count:              &amount,
-			UserViewers:        nil, // handled by dedicated resolver
-			Split:              nil, // handled by dedicated resolver
-			NonUserViewerCount: &nonCount,
-		}, nil
+	// TODO extend with custom notification actions
 	default:
 		return nil, fmt.Errorf("unknown notification action: %s", notif.Action)
 	}
@@ -797,43 +542,6 @@ func resolveGroupNotificationUsersConnectionByUserIDs(ctx context.Context, userI
 	}, nil
 }
 
-func resolveCollectionTokensByTokenIDs(ctx context.Context, collectionID persist.DBID, tokenIDs persist.DBIDList) ([]*model.CollectionToken, error) {
-	tokens, err := publicapi.For(ctx).Token.GetTokensByIDs(ctx, tokenIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	newTokens := make([]*model.CollectionToken, len(tokenIDs))
-
-	tokenIDToPosition := make(map[persist.DBID]int)
-	for i, tokenID := range tokenIDs {
-		tokenIDToPosition[tokenID] = i
-	}
-
-	// Fill in the data for tokens that still exist.
-	// Tokens that have since been deleted will be nil.
-	for _, t := range tokens {
-		token := tokenToModel(ctx, t)
-		newTokens[tokenIDToPosition[t.ID]] = tokenCollectionToModel(ctx, token, collectionID)
-	}
-
-	return newTokens, nil
-}
-
-func resolveTokenSettingsByIDs(ctx context.Context, tokenID, collectionID persist.DBID) (*model.CollectionTokenSettings, error) {
-	collection, err := publicapi.For(ctx).Collection.GetCollectionById(ctx, collectionID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if settings, ok := collection.TokenSettings[tokenID]; ok {
-		return &model.CollectionTokenSettings{RenderLive: &settings.RenderLive}, nil
-	}
-
-	return &model.CollectionTokenSettings{RenderLive: &defaultTokenSettings.RenderLive}, nil
-}
-
 func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notification, error) {
 	notification, err := publicapi.For(ctx).Notifications.GetByID(ctx, id)
 
@@ -946,10 +654,7 @@ func splitToModel(ctx context.Context, split db.Split) *model.Split {
 		Dbid:        split.ID,
 		Name:        &split.Name,
 		Description: &split.Description,
-		Position:    &split.Position,
-		Hidden:      &split.Hidden,
-		Owner:       nil, // handled by dedicated resolver
-		Collections: nil, // handled by dedicated resolver
+		//TODO return full split data
 	}
 }
 
@@ -960,39 +665,6 @@ func splitsToModels(ctx context.Context, splits []db.Split) []*model.Split {
 	}
 
 	return models
-}
-
-func layoutToModel(ctx context.Context, layout persist.TokenLayout, version int) *model.CollectionLayout {
-	if version == 0 {
-		// Some older collections predate configurable columns; the default back then was 3
-		if layout.Columns == 0 {
-			layout.Columns = 3
-		}
-
-		// Treat the original collection as a single section.
-		return &model.CollectionLayout{
-			Sections: []*int{util.ToPointer(0)},
-			SectionLayout: []*model.CollectionSectionLayout{
-				{
-					Columns:    util.ToPointer(layout.Columns),
-					Whitespace: util.ToPointerSlice(layout.Whitespace),
-				},
-			},
-		}
-	}
-
-	layouts := make([]*model.CollectionSectionLayout, 0)
-	for _, l := range layout.SectionLayout {
-		layouts = append(layouts, &model.CollectionSectionLayout{
-			Columns:    util.ToPointer(l.Columns.Int()),
-			Whitespace: util.ToPointerSlice(l.Whitespace),
-		})
-	}
-
-	return &model.CollectionLayout{
-		Sections:      util.ToPointerSlice(layout.Sections),
-		SectionLayout: layouts,
-	}
 }
 
 // userToModel converts a db.User to a model.User
@@ -1017,12 +689,8 @@ func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
 		Universal: &user.Universal,
 
 		// each handled by dedicated resolver
-		Splits:    nil,
-		Followers: nil,
-		Following: nil,
-		Tokens:    nil,
-		Badges:    nil,
-		Roles:     nil,
+		Splits: nil,
+		Roles:  nil,
 
 		IsAuthenticatedUser: &isAuthenticatedUser,
 	}
@@ -1056,7 +724,6 @@ func walletToModelPersist(ctx context.Context, wallet persist.Wallet) *model.Wal
 		WalletType:   &wallet.WalletType,
 		ChainAddress: &chainAddress,
 		Chain:        &wallet.Chain,
-		Tokens:       nil, // handled by dedicated resolver
 	}
 }
 
@@ -1069,151 +736,34 @@ func walletToModelSqlc(ctx context.Context, wallet db.Wallet) *model.Wallet {
 		WalletType:   &wallet.WalletType,
 		ChainAddress: &chainAddress,
 		Chain:        &wallet.Chain,
-		Tokens:       nil, // handled by dedicated resolver
-	}
-}
-
-func contractToModel(ctx context.Context, contract db.Contract) *model.Contract {
-	chain := contract.Chain
-	addr := persist.NewChainAddress(contract.Address, chain)
-	creator := persist.NewChainAddress(contract.CreatorAddress, chain)
-
-	return &model.Contract{
-		Dbid:             contract.ID,
-		ContractAddress:  &addr,
-		CreatorAddress:   &creator,
-		Chain:            &contract.Chain,
-		Name:             &contract.Name.String,
-		LastUpdated:      &contract.LastUpdated,
-		ProfileImageURL:  &contract.ProfileImageUrl.String,
-		ProfileBannerURL: &contract.ProfileBannerUrl.String,
-		BadgeURL:         &contract.BadgeUrl.String,
-	}
-}
-
-func contractToBadgeModel(ctx context.Context, contract db.Contract) *model.Badge {
-	return &model.Badge{
-		Contract: contractToModel(ctx, contract),
-		Name:     &contract.Name.String,
-		ImageURL: contract.BadgeUrl.String,
-	}
-}
-func collectionToModel(ctx context.Context, collection db.Collection) *model.Collection {
-	version := int(collection.Version.Int32)
-
-	return &model.Collection{
-		Dbid:           collection.ID,
-		Version:        &version,
-		Name:           &collection.Name.String,
-		CollectorsNote: &collection.CollectorsNote.String,
-		Split:          nil, // handled by dedicated resolver
-		Layout:         layoutToModel(ctx, collection.Layout, version),
-		Hidden:         &collection.Hidden,
-		Tokens:         nil, // handled by dedicated resolver
-	}
-}
-
-func membershipToModel(ctx context.Context, membershipTier db.Membership) *model.MembershipTier {
-	owners := make([]*model.TokenHolder, 0, len(membershipTier.Owners))
-	for _, owner := range membershipTier.Owners {
-		if owner.UserID != "" {
-			owners = append(owners, tokenHolderToModel(ctx, owner))
-		}
-	}
-
-	return &model.MembershipTier{
-		Dbid:     membershipTier.ID,
-		Name:     &membershipTier.Name.String,
-		AssetURL: &membershipTier.AssetUrl.String,
-		TokenID:  util.ToPointer(membershipTier.TokenID.String()),
-		Owners:   owners,
-	}
-}
-
-func persistMembershipTierToModel(ctx context.Context, membershipTier persist.MembershipTier) *model.MembershipTier {
-	owners := make([]*model.TokenHolder, 0, len(membershipTier.Owners))
-	for _, owner := range membershipTier.Owners {
-		if owner.UserID != "" {
-			owners = append(owners, tokenHolderToModel(ctx, owner))
-		}
-	}
-
-	return &model.MembershipTier{
-		Dbid:     membershipTier.ID,
-		Name:     util.ToPointer(membershipTier.Name.String()),
-		AssetURL: util.ToPointer(membershipTier.AssetURL.String()),
-		TokenID:  util.ToPointer(membershipTier.TokenID.String()),
-		Owners:   owners,
-	}
-}
-
-func tokenHolderToModel(ctx context.Context, tokenHolder persist.TokenHolder) *model.TokenHolder {
-	previewTokens := make([]*string, len(tokenHolder.PreviewTokens))
-	for i, token := range tokenHolder.PreviewTokens {
-		previewTokens[i] = util.ToPointer(token.String())
-	}
-
-	return &model.TokenHolder{
-		HelperTokenHolderData: model.HelperTokenHolderData{UserId: tokenHolder.UserID, WalletIds: tokenHolder.WalletIDs},
-		User:                  nil, // handled by dedicated resolver
-		Wallets:               nil, // handled by dedicated resolver
-		PreviewTokens:         previewTokens,
-	}
-}
-
-func multichainTokenHolderToModel(ctx context.Context, tokenHolder multichain.TokenHolder, contractID persist.DBID) *model.TokenHolder {
-	previewTokens := make([]*string, len(tokenHolder.PreviewTokens))
-	for i, token := range tokenHolder.PreviewTokens {
-		previewTokens[i] = util.ToPointer(token)
-	}
-
-	return &model.TokenHolder{
-		HelperTokenHolderData: model.HelperTokenHolderData{UserId: tokenHolder.UserID, WalletIds: tokenHolder.WalletIDs},
-		DisplayName:           &tokenHolder.DisplayName,
-		User:                  nil, // handled by dedicated resolver
-		Wallets:               nil, // handled by dedicated resolver
-		PreviewTokens:         previewTokens,
 	}
 }
 
 func tokenToModel(ctx context.Context, token db.Token) *model.Token {
 	chain := token.Chain
-	metadata, _ := token.TokenMetadata.MarshalJSON()
-	metadataString := string(metadata)
+	_, _ = token.TokenMetadata.MarshalJSON()
 	blockNumber := fmt.Sprint(token.BlockNumber.Int64)
 	tokenType := model.TokenType(token.TokenType.String)
 
-	var isSpamByUser *bool
-	if token.IsUserMarkedSpam.Valid {
-		isSpamByUser = &token.IsUserMarkedSpam.Bool
-	}
-
-	var isSpamByProvider *bool
-	if token.IsProviderMarkedSpam.Valid {
-		isSpamByProvider = &token.IsProviderMarkedSpam.Bool
-	}
+	//var isSpamByUser *bool
+	//if token.IsUserMarkedSpam.Valid {
+	//	isSpamByUser = &token.IsUserMarkedSpam.Bool
+	//}
+	//
+	//var isSpamByProvider *bool
+	//if token.IsProviderMarkedSpam.Valid {
+	//	isSpamByProvider = &token.IsProviderMarkedSpam.Bool
+	//}
 
 	return &model.Token{
-		Dbid:             token.ID,
-		CreationTime:     &token.CreatedAt,
-		LastUpdated:      &token.LastUpdated,
-		CollectorsNote:   &token.CollectorsNote.String,
-		Media:            getMediaForToken(ctx, token),
-		TokenType:        &tokenType,
-		Chain:            &chain,
-		Name:             &token.Name.String,
-		Description:      &token.Description.String,
-		OwnedByWallets:   nil, // handled by dedicated resolver
-		TokenID:          util.ToPointer(token.TokenID.String()),
-		Quantity:         &token.Quantity.String,
-		Owner:            nil, // handled by dedicated resolver
-		OwnershipHistory: nil, // TODO: later
-		TokenMetadata:    &metadataString,
-		Contract:         nil, // handled by dedicated resolver
-		ExternalURL:      &token.ExternalUrl.String,
-		BlockNumber:      &blockNumber, // TODO: later
-		IsSpamByUser:     isSpamByUser,
-		IsSpamByProvider: isSpamByProvider,
+		Dbid:         token.ID,
+		CreationTime: &token.CreatedAt,
+		LastUpdated:  &token.LastUpdated,
+		TokenType:    &tokenType,
+		Chain:        &chain,
+		Name:         &token.Name.String,
+		BlockNumber:  &blockNumber, // TODO: later
+		//TODO return full token data
 	}
 }
 
@@ -1225,49 +775,8 @@ func tokensToModel(ctx context.Context, token []db.Token) []*model.Token {
 	return res
 }
 
-func tokenCollectionToModel(ctx context.Context, token *model.Token, collectionID persist.DBID) *model.CollectionToken {
-	return &model.CollectionToken{
-		HelperCollectionTokenData: model.HelperCollectionTokenData{
-			TokenId:      token.Dbid,
-			CollectionId: collectionID,
-		},
-		Token:         token,
-		Collection:    nil, // handled by dedicated resolver
-		TokenSettings: nil, // handled by dedicated resolver
-	}
-}
-
-func communityToModel(ctx context.Context, community db.Contract, forceRefresh *bool) *model.Community {
-	lastUpdated := community.LastUpdated
-	contractAddress := persist.NewChainAddress(community.Address, community.Chain)
-	creatorAddress := persist.NewChainAddress(community.CreatorAddress, community.Chain)
-	chain := community.Chain
-	return &model.Community{
-		HelperCommunityData: model.HelperCommunityData{
-			ForceRefresh: forceRefresh,
-		},
-		Dbid:            community.ID,
-		LastUpdated:     &lastUpdated,
-		ContractAddress: &contractAddress,
-		CreatorAddress:  &creatorAddress,
-		Name:            util.ToPointer(community.Name.String),
-		Description:     util.ToPointer(community.Description.String),
-		// PreviewImage:     util.ToPointer(community.Pr.String()), // TODO do we still need this with the new image fields?
-		Chain:            &chain,
-		ProfileImageURL:  util.ToPointer(community.ProfileImageUrl.String),
-		ProfileBannerURL: util.ToPointer(community.ProfileBannerUrl.String),
-		BadgeURL:         util.ToPointer(community.BadgeUrl.String),
-		Owners:           nil, // handled by dedicated resolver
-	}
-}
-
-func communitiesToModels(ctx context.Context, communities []db.Contract, forceRefresh *bool) []*model.Community {
-	models := make([]*model.Community, len(communities))
-	for i, community := range communities {
-		models[i] = communityToModel(ctx, community, forceRefresh)
-	}
-
-	return models
+func getUrlExtension(url string) string {
+	return strings.ToLower(strings.TrimPrefix(filepath.Ext(url), "."))
 }
 
 func pageInfoToModel(ctx context.Context, pageInfo publicapi.PageInfo) *model.PageInfo {
@@ -1279,10 +788,6 @@ func pageInfoToModel(ctx context.Context, pageInfo publicapi.PageInfo) *model.Pa
 		StartCursor:     pageInfo.StartCursor,
 		EndCursor:       pageInfo.EndCursor,
 	}
-}
-
-func getUrlExtension(url string) string {
-	return strings.ToLower(strings.TrimPrefix(filepath.Ext(url), "."))
 }
 
 func getMediaForToken(ctx context.Context, token db.Token) model.MediaSubtype {
@@ -1308,8 +813,6 @@ func getMediaForToken(ctx context.Context, token db.Token) model.MediaSubtype {
 		return getPdfMedia(ctx, med)
 	case persist.MediaTypeUnknown:
 		return getUnknownMedia(ctx, med)
-	case persist.MediaTypeSyncing:
-		return getSyncingMedia(ctx, med)
 	default:
 		return getInvalidMedia(ctx, med)
 	}
@@ -1451,16 +954,6 @@ func getGltfMedia(ctx context.Context, media persist.Media) model.GltfMedia {
 
 func getUnknownMedia(ctx context.Context, media persist.Media) model.UnknownMedia {
 	return model.UnknownMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getSyncingMedia(ctx context.Context, media persist.Media) model.SyncingMedia {
-	return model.SyncingMedia{
 		PreviewURLs:      getPreviewUrls(ctx, media),
 		MediaURL:         util.ToPointer(media.MediaURL.String()),
 		MediaType:        (*string)(&media.MediaType),

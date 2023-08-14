@@ -2,21 +2,13 @@ package publicapi
 
 import (
 	"context"
-	"fmt"
-	"strings"
-	"time"
-
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/SplitFi/go-splitfi/service/multichain"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/throttle"
 	"github.com/SplitFi/go-splitfi/validate"
-	"github.com/gammazero/workerpool"
-
-	"github.com/SplitFi/go-splitfi/graphql/dataloader"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
 )
@@ -55,112 +47,6 @@ func (api TokenAPI) GetTokenById(ctx context.Context, tokenID persist.DBID) (*db
 	}
 
 	return &token, nil
-}
-
-func (api TokenAPI) GetAssetsByOwnerAddress(ctx context.Context, owner persist.EthereumAddress, limit *int) ([]db.Token, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"owner": {owner, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	tokens, err := api.loaders.AssetsByOwnerAddress.Load(dataloader.IDAndLimit{
-		ID:    owner,
-		Limit: limit,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return tokens, nil
-}
-
-func (api TokenAPI) GetAssetsBySplitIdPaginate(ctx context.Context, contractID persist.DBID, before, after *string, first, last *int, onlySplitFiUsers *bool) ([]db.Token, PageInfo, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": {contractID, "required"},
-	}); err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	if err := validatePaginationParams(api.validator, first, last); err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	ogu := false
-	if onlySplitFiUsers != nil {
-		ogu = *onlySplitFiUsers
-	}
-
-	queryFunc := func(params boolTimeIDPagingParams) ([]interface{}, error) {
-
-		logger.For(ctx).Infof("GetAssetsBySplitIdPaginate: %+v", params)
-		tokens, err := api.queries.GetTokensByContractIdPaginate(ctx, db.GetTokensByContractIdPaginateParams{
-			Address:            contractID,
-			Limit:              params.Limit,
-			SplitfiUsersOnly:   ogu,
-			CurBeforeUniversal: params.CursorBeforeBool,
-			CurAfterUniversal:  params.CursorAfterBool,
-			CurBeforeTime:      params.CursorBeforeTime,
-			CurBeforeID:        params.CursorBeforeID,
-			CurAfterTime:       params.CursorAfterTime,
-			CurAfterID:         params.CursorAfterID,
-			PagingForward:      params.PagingForward,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		results := make([]interface{}, len(tokens))
-		for i, token := range tokens {
-			results[i] = token
-		}
-
-		return results, nil
-	}
-
-	countFunc := func() (int, error) {
-		total, err := api.queries.CountTokensByContractId(ctx, db.CountTokensByContractIdParams{
-			Contract:         contractID,
-			SplitfiUsersOnly: ogu,
-		})
-		return int(total), err
-	}
-
-	cursorFunc := func(i interface{}) (bool, time.Time, persist.DBID, error) {
-		if token, ok := i.(db.Token); ok {
-			owner, err := api.loaders.OwnerByTokenID.Load(token.ID)
-			if err != nil {
-				return false, time.Time{}, "", err
-			}
-			return owner.Universal, token.CreatedAt, token.ID, nil
-		}
-		return false, time.Time{}, "", fmt.Errorf("interface{} is not a token")
-	}
-
-	paginator := boolTimeIDPaginator{
-		QueryFunc:  queryFunc,
-		CursorFunc: cursorFunc,
-		CountFunc:  countFunc,
-	}
-
-	results, pageInfo, err := paginator.paginate(before, after, first, last)
-
-	if err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	tokens := make([]db.Token, len(results))
-	for i, result := range results {
-		if token, ok := result.(db.Token); ok {
-			tokens[i] = token
-		} else {
-			return nil, PageInfo{}, fmt.Errorf("interface{} is not a token: %T", token)
-		}
-	}
-
-	return tokens, pageInfo, nil
 }
 
 func (api TokenAPI) GetTokensByIDs(ctx context.Context, tokenIDs []persist.DBID) ([]db.Token, error) {
@@ -243,194 +129,6 @@ func (api TokenAPI) GetTokensByUserIDAndChain(ctx context.Context, userID persis
 	return tokens, nil
 }
 
-func (api TokenAPI) SyncTokensAdmin(ctx context.Context, chains []persist.Chain, userID persist.DBID) error {
-	if err := api.throttler.Lock(ctx, userID.String()); err != nil {
-		return ErrTokenRefreshFailed{Message: err.Error()}
-	}
-
-	defer api.throttler.Unlock(ctx, userID.String())
-
-	if err := api.multichainProvider.SyncTokens(ctx, userID, chains); err != nil {
-		// Wrap all sync failures in a generic type that can be returned to the frontend as an expected error type
-		return ErrTokenRefreshFailed{Message: err.Error()}
-	}
-
-	return nil
-}
-
-func (api TokenAPI) SyncTokens(ctx context.Context, chains []persist.Chain) error {
-	userID, err := getAuthenticatedUserID(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	if err := api.throttler.Lock(ctx, userID.String()); err != nil {
-		return ErrTokenRefreshFailed{Message: err.Error()}
-	}
-	defer api.throttler.Unlock(ctx, userID.String())
-
-	err = api.multichainProvider.SyncTokens(ctx, userID, chains)
-	if err != nil {
-		// Wrap all sync failures in a generic type that can be returned to the frontend as an expected error type
-		return ErrTokenRefreshFailed{Message: err.Error()}
-	}
-
-	return nil
-}
-
-func (api TokenAPI) RefreshToken(ctx context.Context, tokenDBID persist.DBID) error {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"tokenID": {tokenDBID, "required"},
-	}); err != nil {
-		return err
-	}
-
-	token, err := api.loaders.TokenByTokenID.Load(tokenDBID)
-	if err != nil {
-		return fmt.Errorf("failed to load token: %w", err)
-	}
-	contract, err := api.loaders.ContractByContractID.Load(token.Contract)
-	if err != nil {
-		return fmt.Errorf("failed to load contract for token: %w", err)
-	}
-
-	addresses := []persist.Address{}
-	for _, walletID := range token.OwnedByWallets {
-		wa, err := api.loaders.WalletByWalletID.Load(walletID)
-		if err != nil {
-			if strings.Contains(err.Error(), "no rows in result set") {
-				continue
-			}
-			return fmt.Errorf("failed to load wallet %s: %w", walletID, err)
-		}
-		addresses = append(addresses, wa.Address)
-	}
-
-	err = api.multichainProvider.RefreshToken(ctx, persist.NewTokenIdentifiers(contract.Address, token.TokenID, contract.Chain), addresses)
-	if err != nil {
-		return ErrTokenRefreshFailed{Message: err.Error()}
-	}
-
-	return nil
-}
-
-func (api TokenAPI) RefreshTokensInCollection(ctx context.Context, ci persist.ContractIdentifiers) error {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"contractIdentifiers": {ci, "required"},
-	}); err != nil {
-		return err
-	}
-
-	err := api.multichainProvider.RefreshTokensForContract(ctx, ci)
-	if err != nil {
-		return ErrTokenRefreshFailed{Message: err.Error()}
-	}
-
-	return nil
-}
-
-func (api TokenAPI) RefreshCollection(ctx context.Context, collectionDBID persist.DBID) error {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"collectionID": {collectionDBID, "required"},
-	}); err != nil {
-		return err
-	}
-
-	tokens, err := api.loaders.TokensByCollectionID.Load(dataloader.IDAndLimit{
-		ID: collectionDBID,
-	})
-	if err != nil {
-		return err
-	}
-	wp := workerpool.New(10)
-	errChan := make(chan error)
-	for _, token := range tokens {
-		token := token
-		wp.Submit(func() {
-			contract, err := api.loaders.ContractByContractID.Load(token.Contract)
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			addresses := []persist.Address{}
-			for _, walletID := range token.OwnedByWallets {
-				wa, err := api.loaders.WalletByWalletID.Load(walletID)
-				if err != nil {
-					errChan <- err
-					return
-				}
-				addresses = append(addresses, wa.Address)
-			}
-
-			err = api.multichainProvider.RefreshToken(ctx, persist.NewTokenIdentifiers(contract.Address, token.TokenID, contract.Chain), addresses)
-			if err != nil {
-				errChan <- ErrTokenRefreshFailed{Message: err.Error()}
-				return
-			}
-		})
-	}
-	go func() {
-		wp.StopWait()
-		errChan <- nil
-	}()
-	if err := <-errChan; err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (api TokenAPI) UpdateTokenInfo(ctx context.Context, tokenID persist.DBID, collectionID persist.DBID, collectorsNote string) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"tokenID":        {tokenID, "required"},
-		"collectorsNote": {collectorsNote, "token_note"},
-	}); err != nil {
-		return err
-	}
-
-	// Sanitize
-	collectorsNote = validate.SanitizationPolicy.Sanitize(collectorsNote)
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	update := persist.TokenUpdateInfoInput{
-		CollectorsNote: persist.NullString(collectorsNote),
-	}
-
-	err = api.repos.TokenRepository.UpdateByID(ctx, tokenID, userID, update)
-	if err != nil {
-		return err
-	}
-
-	splitID, err := api.queries.GetSplitIDByCollectionID(ctx, collectionID)
-	if err != nil {
-		return err
-	}
-
-	// Send event
-	err = dispatchEvent(ctx, db.Event{
-		ActorID:        persist.DBIDToNullStr(userID),
-		Action:         persist.ActionCollectorsNoteAddedToToken,
-		ResourceTypeID: persist.ResourceTypeToken,
-		TokenID:        tokenID,
-		CollectionID:   collectionID,
-		SplitID:        splitID,
-		SubjectID:      tokenID,
-		Data: persist.EventData{
-			TokenCollectionID:   collectionID,
-			TokenCollectorsNote: collectorsNote,
-		},
-	}, api.validator, nil)
-
-	return err
-}
-
 func (api TokenAPI) SetSpamPreference(ctx context.Context, tokens []persist.DBID, isSpam bool) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -439,31 +137,17 @@ func (api TokenAPI) SetSpamPreference(ctx context.Context, tokens []persist.DBID
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	_, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = api.repos.TokenRepository.TokensAreOwnedByUser(ctx, userID, tokens)
-	if err != nil {
-		return err
-	}
+	// TODO check if tokens are owned by any split of user
+	//err = api.repos.TokenRepository.TokensAreOwnedByUserSplit(ctx, userID, tokens)
+	//if err != nil {
+	//	return err
+	//}
 
-	return api.repos.TokenRepository.FlagTokensAsUserMarkedSpam(ctx, userID, tokens, isSpam)
-}
-
-func (api TokenAPI) DeepRefreshByChain(ctx context.Context, chain persist.Chain) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"chain": {chain, "chain"},
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	return api.multichainProvider.DeepRefreshByChain(ctx, userID, chain)
+	// TODO
+	return nil // api.repos.TokenRepository.FlagTokensAsUserMarkedSpam(ctx, userID, tokens, isSpam)
 }

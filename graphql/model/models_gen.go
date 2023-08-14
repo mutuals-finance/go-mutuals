@@ -27,24 +27,8 @@ type AuthorizationError interface {
 	IsAuthorizationError()
 }
 
-type CollectionByIDOrError interface {
-	IsCollectionByIDOrError()
-}
-
-type CollectionTokenByIDOrError interface {
-	IsCollectionTokenByIDOrError()
-}
-
-type CommunityByAddressOrError interface {
-	IsCommunityByAddressOrError()
-}
-
 type ConnectSocialAccountPayloadOrError interface {
 	IsConnectSocialAccountPayloadOrError()
-}
-
-type CreateCollectionPayloadOrError interface {
-	IsCreateCollectionPayloadOrError()
 }
 
 type CreateSplitPayloadOrError interface {
@@ -59,10 +43,6 @@ type DeepRefreshPayloadOrError interface {
 	IsDeepRefreshPayloadOrError()
 }
 
-type DeleteCollectionPayloadOrError interface {
-	IsDeleteCollectionPayloadOrError()
-}
-
 type DeleteSplitPayloadOrError interface {
 	IsDeleteSplitPayloadOrError()
 }
@@ -73,14 +53,6 @@ type DisconnectSocialAccountPayloadOrError interface {
 
 type Error interface {
 	IsError()
-}
-
-type FollowAllSocialConnectionsPayloadOrError interface {
-	IsFollowAllSocialConnectionsPayloadOrError()
-}
-
-type FollowUserPayloadOrError interface {
-	IsFollowUserPayloadOrError()
 }
 
 type GetAuthNoncePayloadOrError interface {
@@ -105,14 +77,6 @@ type MediaSubtype interface {
 	IsMediaSubtype()
 }
 
-type MintPremiumCardToWalletPayloadOrError interface {
-	IsMintPremiumCardToWalletPayloadOrError()
-}
-
-type MoveCollectionToSplitPayloadOrError interface {
-	IsMoveCollectionToSplitPayloadOrError()
-}
-
 type Node interface {
 	IsNode()
 }
@@ -130,14 +94,6 @@ type PublishSplitPayloadOrError interface {
 	IsPublishSplitPayloadOrError()
 }
 
-type RefreshCollectionPayloadOrError interface {
-	IsRefreshCollectionPayloadOrError()
-}
-
-type RefreshContractPayloadOrError interface {
-	IsRefreshContractPayloadOrError()
-}
-
 type RefreshTokenPayloadOrError interface {
 	IsRefreshTokenPayloadOrError()
 }
@@ -152,10 +108,6 @@ type ResendVerificationEmailPayloadOrError interface {
 
 type RevokeRolesFromUserPayloadOrError interface {
 	IsRevokeRolesFromUserPayloadOrError()
-}
-
-type SearchCommunitiesPayloadOrError interface {
-	IsSearchCommunitiesPayloadOrError()
 }
 
 type SearchSplitsPayloadOrError interface {
@@ -194,36 +146,12 @@ type SplitFiUserOrWallet interface {
 	IsSplitFiUserOrWallet()
 }
 
-type SyncTokensForUsernamePayloadOrError interface {
-	IsSyncTokensForUsernamePayloadOrError()
-}
-
-type SyncTokensPayloadOrError interface {
-	IsSyncTokensPayloadOrError()
-}
-
 type TokenByIDOrError interface {
 	IsTokenByIDOrError()
 }
 
-type UnfollowUserPayloadOrError interface {
-	IsUnfollowUserPayloadOrError()
-}
-
 type UnsubscribeFromEmailTypePayloadOrError interface {
 	IsUnsubscribeFromEmailTypePayloadOrError()
-}
-
-type UpdateCollectionHiddenPayloadOrError interface {
-	IsUpdateCollectionHiddenPayloadOrError()
-}
-
-type UpdateCollectionInfoPayloadOrError interface {
-	IsUpdateCollectionInfoPayloadOrError()
-}
-
-type UpdateCollectionTokensPayloadOrError interface {
-	IsUpdateCollectionTokensPayloadOrError()
 }
 
 type UpdateEmailNotificationSettingsPayloadOrError interface {
@@ -234,20 +162,12 @@ type UpdateEmailPayloadOrError interface {
 	IsUpdateEmailPayloadOrError()
 }
 
-type UpdateFeaturedSplitPayloadOrError interface {
-	IsUpdateFeaturedSplitPayloadOrError()
-}
-
 type UpdatePrimaryWalletPayloadOrError interface {
 	IsUpdatePrimaryWalletPayloadOrError()
 }
 
 type UpdateSocialAccountDisplayedPayloadOrError interface {
 	IsUpdateSocialAccountDisplayedPayloadOrError()
-}
-
-type UpdateSplitCollectionsPayloadOrError interface {
-	IsUpdateSplitCollectionsPayloadOrError()
 }
 
 type UpdateSplitHiddenPayloadOrError interface {
@@ -264,10 +184,6 @@ type UpdateSplitOrderPayloadOrError interface {
 
 type UpdateSplitPayloadOrError interface {
 	IsUpdateSplitPayloadOrError()
-}
-
-type UpdateTokenInfoPayloadOrError interface {
-	IsUpdateTokenInfoPayloadOrError()
 }
 
 type UpdateUserExperiencePayloadOrError interface {
@@ -328,6 +244,16 @@ type AdminAddWalletPayload struct {
 
 func (AdminAddWalletPayload) IsAdminAddWalletPayloadOrError() {}
 
+type Asset struct {
+	Dbid         persist.DBID          `json:"dbid"`
+	Version      *int                  `json:"version"`
+	OwnerAddress *persist.ChainAddress `json:"ownerAddress"`
+	Balance      *int                  `json:"balance"`
+	Token        *Token                `json:"token"`
+}
+
+func (Asset) IsNode() {}
+
 type AudioMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
 	MediaURL         *string          `json:"mediaURL"`
@@ -353,10 +279,9 @@ type AuthNonce struct {
 
 func (AuthNonce) IsGetAuthNoncePayloadOrError() {}
 
-type Badge struct {
-	Name     *string   `json:"name"`
-	ImageURL string    `json:"imageURL"`
-	Contract *Contract `json:"contract"`
+type ChainSplits struct {
+	Chain  *persist.Chain `json:"chain"`
+	Splits []*Split       `json:"splits"`
 }
 
 type ChainTokens struct {
@@ -368,138 +293,11 @@ type ClearAllNotificationsPayload struct {
 	Notifications []Notification `json:"notifications"`
 }
 
-type Collection struct {
-	Dbid           persist.DBID       `json:"dbid"`
-	Version        *int               `json:"version"`
-	Name           *string            `json:"name"`
-	CollectorsNote *string            `json:"collectorsNote"`
-	Split          *Split             `json:"split"`
-	Layout         *CollectionLayout  `json:"layout"`
-	Hidden         *bool              `json:"hidden"`
-	Tokens         []*CollectionToken `json:"tokens"`
-}
-
-func (Collection) IsNode()                  {}
-func (Collection) IsCollectionByIDOrError() {}
-
-type CollectionLayout struct {
-	Sections      []*int                     `json:"sections"`
-	SectionLayout []*CollectionSectionLayout `json:"sectionLayout"`
-}
-
-type CollectionLayoutInput struct {
-	Sections      []int                           `json:"sections"`
-	SectionLayout []*CollectionSectionLayoutInput `json:"sectionLayout"`
-}
-
-type CollectionSectionLayout struct {
-	Columns    *int   `json:"columns"`
-	Whitespace []*int `json:"whitespace"`
-}
-
-type CollectionSectionLayoutInput struct {
-	Columns    int   `json:"columns"`
-	Whitespace []int `json:"whitespace"`
-}
-
-type CollectionToken struct {
-	HelperCollectionTokenData
-	Token         *Token                   `json:"token"`
-	Collection    *Collection              `json:"collection"`
-	TokenSettings *CollectionTokenSettings `json:"tokenSettings"`
-}
-
-func (CollectionToken) IsNode()                       {}
-func (CollectionToken) IsCollectionTokenByIDOrError() {}
-
-type CollectionTokenSettings struct {
-	RenderLive *bool `json:"renderLive"`
-}
-
-type CollectionTokenSettingsInput struct {
-	TokenID    persist.DBID `json:"tokenId"`
-	RenderLive bool         `json:"renderLive"`
-}
-
-type CommunitiesConnection struct {
-	Edges    []*CommunityEdge `json:"edges"`
-	PageInfo *PageInfo        `json:"pageInfo"`
-}
-
-type Community struct {
-	HelperCommunityData
-	Dbid              persist.DBID            `json:"dbid"`
-	LastUpdated       *time.Time              `json:"lastUpdated"`
-	ContractAddress   *persist.ChainAddress   `json:"contractAddress"`
-	CreatorAddress    *persist.ChainAddress   `json:"creatorAddress"`
-	Chain             *persist.Chain          `json:"chain"`
-	Name              *string                 `json:"name"`
-	Description       *string                 `json:"description"`
-	PreviewImage      *string                 `json:"previewImage"`
-	ProfileImageURL   *string                 `json:"profileImageURL"`
-	ProfileBannerURL  *string                 `json:"profileBannerURL"`
-	BadgeURL          *string                 `json:"badgeURL"`
-	TokensInCommunity *TokensConnection       `json:"tokensInCommunity"`
-	Owners            *TokenHoldersConnection `json:"owners"`
-}
-
-func (Community) IsNode()                      {}
-func (Community) IsCommunityByAddressOrError() {}
-
-type CommunityEdge struct {
-	Node   *Community `json:"node"`
-	Cursor *string    `json:"cursor"`
-}
-
-type CommunitySearchResult struct {
-	Community *Community `json:"community"`
-}
-
 type ConnectSocialAccountPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
 func (ConnectSocialAccountPayload) IsConnectSocialAccountPayloadOrError() {}
-
-type Contract struct {
-	Dbid             persist.DBID          `json:"dbid"`
-	LastUpdated      *time.Time            `json:"lastUpdated"`
-	ContractAddress  *persist.ChainAddress `json:"contractAddress"`
-	CreatorAddress   *persist.ChainAddress `json:"creatorAddress"`
-	Chain            *persist.Chain        `json:"chain"`
-	Name             *string               `json:"name"`
-	ProfileImageURL  *string               `json:"profileImageURL"`
-	ProfileBannerURL *string               `json:"profileBannerURL"`
-	BadgeURL         *string               `json:"badgeURL"`
-}
-
-func (Contract) IsNode() {}
-
-type CreateCollectionInSplitInput struct {
-	Name           string                          `json:"name"`
-	CollectorsNote string                          `json:"collectorsNote"`
-	Tokens         []persist.DBID                  `json:"tokens"`
-	Layout         *CollectionLayoutInput          `json:"layout"`
-	TokenSettings  []*CollectionTokenSettingsInput `json:"tokenSettings"`
-	Hidden         bool                            `json:"hidden"`
-	GivenID        persist.DBID                    `json:"givenID"`
-}
-
-type CreateCollectionInput struct {
-	SplitID        persist.DBID                    `json:"splitId"`
-	Name           string                          `json:"name"`
-	CollectorsNote string                          `json:"collectorsNote"`
-	Tokens         []persist.DBID                  `json:"tokens"`
-	Layout         *CollectionLayoutInput          `json:"layout"`
-	TokenSettings  []*CollectionTokenSettingsInput `json:"tokenSettings"`
-	Caption        *string                         `json:"caption"`
-}
-
-type CreateCollectionPayload struct {
-	Collection *Collection `json:"collection"`
-}
-
-func (CreateCollectionPayload) IsCreateCollectionPayloadOrError() {}
 
 type CreateSplitInput struct {
 	Name        *string `json:"name"`
@@ -553,12 +351,6 @@ type DeepRefreshPayload struct {
 
 func (DeepRefreshPayload) IsDeepRefreshPayloadOrError() {}
 
-type DeleteCollectionPayload struct {
-	Split *Split `json:"split"`
-}
-
-func (DeleteCollectionPayload) IsDeleteCollectionPayloadOrError() {}
-
 type DeleteSplitPayload struct {
 	DeletedID *DeletedNode `json:"deletedId"`
 }
@@ -604,25 +396,19 @@ func (ErrAuthenticationFailed) IsAddUserWalletPayloadOrError() {}
 func (ErrAuthenticationFailed) IsError()                       {}
 func (ErrAuthenticationFailed) IsLoginPayloadOrError()         {}
 func (ErrAuthenticationFailed) IsCreateUserPayloadOrError()    {}
-func (ErrAuthenticationFailed) IsFollowUserPayloadOrError()    {}
-func (ErrAuthenticationFailed) IsUnfollowUserPayloadOrError()  {}
 func (ErrAuthenticationFailed) IsViewSplitPayloadOrError()     {}
 
 type ErrCollectionNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrCollectionNotFound) IsError()                          {}
-func (ErrCollectionNotFound) IsCollectionByIDOrError()          {}
-func (ErrCollectionNotFound) IsCollectionTokenByIDOrError()     {}
-func (ErrCollectionNotFound) IsDeleteCollectionPayloadOrError() {}
+func (ErrCollectionNotFound) IsError() {}
 
 type ErrCommunityNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrCommunityNotFound) IsCommunityByAddressOrError() {}
-func (ErrCommunityNotFound) IsError()                     {}
+func (ErrCommunityNotFound) IsError() {}
 
 type ErrDoesNotOwnRequiredToken struct {
 	Message string `json:"message"`
@@ -643,29 +429,15 @@ type ErrInvalidInput struct {
 func (ErrInvalidInput) IsUserByUsernameOrError()                         {}
 func (ErrInvalidInput) IsUserByIDOrError()                               {}
 func (ErrInvalidInput) IsUserByAddressOrError()                          {}
-func (ErrInvalidInput) IsCollectionByIDOrError()                         {}
-func (ErrInvalidInput) IsCommunityByAddressOrError()                     {}
 func (ErrInvalidInput) IsSocialConnectionsOrError()                      {}
 func (ErrInvalidInput) IsSearchUsersPayloadOrError()                     {}
 func (ErrInvalidInput) IsSearchSplitsPayloadOrError()                    {}
-func (ErrInvalidInput) IsSearchCommunitiesPayloadOrError()               {}
-func (ErrInvalidInput) IsCreateCollectionPayloadOrError()                {}
-func (ErrInvalidInput) IsDeleteCollectionPayloadOrError()                {}
-func (ErrInvalidInput) IsUpdateCollectionInfoPayloadOrError()            {}
-func (ErrInvalidInput) IsUpdateCollectionTokensPayloadOrError()          {}
-func (ErrInvalidInput) IsUpdateCollectionHiddenPayloadOrError()          {}
-func (ErrInvalidInput) IsUpdateSplitCollectionsPayloadOrError()          {}
-func (ErrInvalidInput) IsUpdateTokenInfoPayloadOrError()                 {}
 func (ErrInvalidInput) IsAddUserWalletPayloadOrError()                   {}
 func (ErrInvalidInput) IsRemoveUserWalletsPayloadOrError()               {}
 func (ErrInvalidInput) IsUpdateUserInfoPayloadOrError()                  {}
 func (ErrInvalidInput) IsRefreshTokenPayloadOrError()                    {}
-func (ErrInvalidInput) IsRefreshCollectionPayloadOrError()               {}
-func (ErrInvalidInput) IsRefreshContractPayloadOrError()                 {}
 func (ErrInvalidInput) IsError()                                         {}
 func (ErrInvalidInput) IsCreateUserPayloadOrError()                      {}
-func (ErrInvalidInput) IsFollowUserPayloadOrError()                      {}
-func (ErrInvalidInput) IsUnfollowUserPayloadOrError()                    {}
 func (ErrInvalidInput) IsVerifyEmailPayloadOrError()                     {}
 func (ErrInvalidInput) IsPreverifyEmailPayloadOrError()                  {}
 func (ErrInvalidInput) IsUpdateEmailPayloadOrError()                     {}
@@ -677,17 +449,13 @@ func (ErrInvalidInput) IsUpdateSplitInfoPayloadOrError()                 {}
 func (ErrInvalidInput) IsUpdateSplitHiddenPayloadOrError()               {}
 func (ErrInvalidInput) IsDeleteSplitPayloadOrError()                     {}
 func (ErrInvalidInput) IsUpdateSplitOrderPayloadOrError()                {}
-func (ErrInvalidInput) IsUpdateFeaturedSplitPayloadOrError()             {}
 func (ErrInvalidInput) IsUpdateSplitPayloadOrError()                     {}
 func (ErrInvalidInput) IsPublishSplitPayloadOrError()                    {}
 func (ErrInvalidInput) IsUpdatePrimaryWalletPayloadOrError()             {}
 func (ErrInvalidInput) IsUpdateUserExperiencePayloadOrError()            {}
-func (ErrInvalidInput) IsMoveCollectionToSplitPayloadOrError()           {}
 func (ErrInvalidInput) IsConnectSocialAccountPayloadOrError()            {}
 func (ErrInvalidInput) IsUpdateSocialAccountDisplayedPayloadOrError()    {}
-func (ErrInvalidInput) IsMintPremiumCardToWalletPayloadOrError()         {}
 func (ErrInvalidInput) IsDisconnectSocialAccountPayloadOrError()         {}
-func (ErrInvalidInput) IsFollowAllSocialConnectionsPayloadOrError()      {}
 
 type ErrInvalidToken struct {
 	Message string `json:"message"`
@@ -704,9 +472,7 @@ type ErrNeedsToReconnectSocial struct {
 func (ErrNeedsToReconnectSocial) IsSocialQueriesOrError()                       {}
 func (ErrNeedsToReconnectSocial) IsError()                                      {}
 func (ErrNeedsToReconnectSocial) IsUpdateSocialAccountDisplayedPayloadOrError() {}
-func (ErrNeedsToReconnectSocial) IsMintPremiumCardToWalletPayloadOrError()      {}
 func (ErrNeedsToReconnectSocial) IsDisconnectSocialAccountPayloadOrError()      {}
-func (ErrNeedsToReconnectSocial) IsFollowAllSocialConnectionsPayloadOrError()   {}
 
 type ErrNoCookie struct {
 	Message string `json:"message"`
@@ -722,41 +488,28 @@ type ErrNotAuthorized struct {
 
 func (ErrNotAuthorized) IsViewerOrError()                              {}
 func (ErrNotAuthorized) IsSocialQueriesOrError()                       {}
-func (ErrNotAuthorized) IsCreateCollectionPayloadOrError()             {}
-func (ErrNotAuthorized) IsDeleteCollectionPayloadOrError()             {}
-func (ErrNotAuthorized) IsUpdateCollectionInfoPayloadOrError()         {}
-func (ErrNotAuthorized) IsUpdateCollectionTokensPayloadOrError()       {}
-func (ErrNotAuthorized) IsUpdateCollectionHiddenPayloadOrError()       {}
-func (ErrNotAuthorized) IsUpdateSplitCollectionsPayloadOrError()       {}
-func (ErrNotAuthorized) IsUpdateTokenInfoPayloadOrError()              {}
 func (ErrNotAuthorized) IsSetSpamPreferencePayloadOrError()            {}
 func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()                {}
 func (ErrNotAuthorized) IsRemoveUserWalletsPayloadOrError()            {}
 func (ErrNotAuthorized) IsUpdateUserInfoPayloadOrError()               {}
-func (ErrNotAuthorized) IsSyncTokensPayloadOrError()                   {}
 func (ErrNotAuthorized) IsError()                                      {}
 func (ErrNotAuthorized) IsDeepRefreshPayloadOrError()                  {}
 func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()               {}
 func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()          {}
 func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError()       {}
-func (ErrNotAuthorized) IsSyncTokensForUsernamePayloadOrError()        {}
 func (ErrNotAuthorized) IsCreateSplitPayloadOrError()                  {}
 func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()              {}
 func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()            {}
 func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()                  {}
 func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()             {}
-func (ErrNotAuthorized) IsUpdateFeaturedSplitPayloadOrError()          {}
 func (ErrNotAuthorized) IsUpdateSplitPayloadOrError()                  {}
 func (ErrNotAuthorized) IsPublishSplitPayloadOrError()                 {}
 func (ErrNotAuthorized) IsUpdatePrimaryWalletPayloadOrError()          {}
 func (ErrNotAuthorized) IsAdminAddWalletPayloadOrError()               {}
 func (ErrNotAuthorized) IsUpdateUserExperiencePayloadOrError()         {}
-func (ErrNotAuthorized) IsMoveCollectionToSplitPayloadOrError()        {}
 func (ErrNotAuthorized) IsConnectSocialAccountPayloadOrError()         {}
 func (ErrNotAuthorized) IsUpdateSocialAccountDisplayedPayloadOrError() {}
-func (ErrNotAuthorized) IsMintPremiumCardToWalletPayloadOrError()      {}
 func (ErrNotAuthorized) IsDisconnectSocialAccountPayloadOrError()      {}
-func (ErrNotAuthorized) IsFollowAllSocialConnectionsPayloadOrError()   {}
 
 type ErrSplitNotFound struct {
 	Message string `json:"message"`
@@ -770,20 +523,15 @@ type ErrSyncFailed struct {
 	Message string `json:"message"`
 }
 
-func (ErrSyncFailed) IsSyncTokensPayloadOrError()            {}
-func (ErrSyncFailed) IsRefreshTokenPayloadOrError()          {}
-func (ErrSyncFailed) IsRefreshCollectionPayloadOrError()     {}
-func (ErrSyncFailed) IsRefreshContractPayloadOrError()       {}
-func (ErrSyncFailed) IsError()                               {}
-func (ErrSyncFailed) IsSyncTokensForUsernamePayloadOrError() {}
+func (ErrSyncFailed) IsRefreshTokenPayloadOrError() {}
+func (ErrSyncFailed) IsError()                      {}
 
 type ErrTokenNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrTokenNotFound) IsTokenByIDOrError()           {}
-func (ErrTokenNotFound) IsError()                      {}
-func (ErrTokenNotFound) IsCollectionTokenByIDOrError() {}
+func (ErrTokenNotFound) IsTokenByIDOrError() {}
+func (ErrTokenNotFound) IsError()            {}
 
 type ErrUserAlreadyExists struct {
 	Message string `json:"message"`
@@ -801,8 +549,6 @@ func (ErrUserNotFound) IsUserByIDOrError()              {}
 func (ErrUserNotFound) IsUserByAddressOrError()         {}
 func (ErrUserNotFound) IsError()                        {}
 func (ErrUserNotFound) IsLoginPayloadOrError()          {}
-func (ErrUserNotFound) IsFollowUserPayloadOrError()     {}
-func (ErrUserNotFound) IsUnfollowUserPayloadOrError()   {}
 func (ErrUserNotFound) IsAdminAddWalletPayloadOrError() {}
 
 type ErrUsernameNotAvailable struct {
@@ -812,24 +558,6 @@ type ErrUsernameNotAvailable struct {
 func (ErrUsernameNotAvailable) IsUpdateUserInfoPayloadOrError() {}
 func (ErrUsernameNotAvailable) IsError()                        {}
 func (ErrUsernameNotAvailable) IsCreateUserPayloadOrError()     {}
-
-type FollowAllSocialConnectionsPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (FollowAllSocialConnectionsPayload) IsFollowAllSocialConnectionsPayloadOrError() {}
-
-type FollowInfo struct {
-	User         *SplitFiUser `json:"user"`
-	FollowedBack *bool        `json:"followedBack"`
-}
-
-type FollowUserPayload struct {
-	Viewer *Viewer      `json:"viewer"`
-	User   *SplitFiUser `json:"user"`
-}
-
-func (FollowUserPayload) IsFollowUserPayloadOrError() {}
 
 type GIFMedia struct {
 	PreviewURLs       *PreviewURLSet   `json:"previewURLs"`
@@ -935,39 +663,6 @@ type MediaDimensions struct {
 	AspectRatio *float64 `json:"aspectRatio"`
 }
 
-type MembershipTier struct {
-	Dbid     persist.DBID   `json:"dbid"`
-	Name     *string        `json:"name"`
-	AssetURL *string        `json:"assetUrl"`
-	TokenID  *string        `json:"tokenId"`
-	Owners   []*TokenHolder `json:"owners"`
-}
-
-func (MembershipTier) IsNode() {}
-
-type MintPremiumCardToWalletInput struct {
-	TokenID         string            `json:"tokenId"`
-	WalletAddresses []persist.Address `json:"walletAddresses"`
-}
-
-type MintPremiumCardToWalletPayload struct {
-	Tx string `json:"tx"`
-}
-
-func (MintPremiumCardToWalletPayload) IsMintPremiumCardToWalletPayloadOrError() {}
-
-type MoveCollectionToSplitInput struct {
-	SourceCollectionID persist.DBID `json:"sourceCollectionId"`
-	TargetSplitID      persist.DBID `json:"targetSplitId"`
-}
-
-type MoveCollectionToSplitPayload struct {
-	OldSplit *Split `json:"oldSplit"`
-	NewSplit *Split `json:"newSplit"`
-}
-
-func (MoveCollectionToSplitPayload) IsMoveCollectionToSplitPayloadOrError() {}
-
 type NotificationEdge struct {
 	Node   Notification `json:"node"`
 	Cursor *string      `json:"cursor"`
@@ -988,11 +683,6 @@ type NotificationsConnection struct {
 	Edges       []*NotificationEdge `json:"edges"`
 	UnseenCount *int                `json:"unseenCount"`
 	PageInfo    *PageInfo           `json:"pageInfo"`
-}
-
-type OwnerAtBlock struct {
-	Owner       SplitFiUserOrAddress `json:"owner"`
-	BlockNumber *string              `json:"blockNumber"`
 }
 
 type PageInfo struct {
@@ -1049,17 +739,17 @@ type PublishSplitPayload struct {
 
 func (PublishSplitPayload) IsPublishSplitPayloadOrError() {}
 
-type RefreshCollectionPayload struct {
-	Collection *Collection `json:"collection"`
+type Recipient struct {
+	Dbid         persist.DBID     `json:"dbid"`
+	Version      *int             `json:"version"`
+	CreationTime *time.Time       `json:"creationTime"`
+	LastUpdated  *time.Time       `json:"lastUpdated"`
+	Address      *persist.Address `json:"address"`
+	Split        *Split           `json:"split"`
+	Ownership    *int             `json:"ownership"`
 }
 
-func (RefreshCollectionPayload) IsRefreshCollectionPayloadOrError() {}
-
-type RefreshContractPayload struct {
-	Contract *Contract `json:"contract"`
-}
-
-func (RefreshContractPayload) IsRefreshContractPayloadOrError() {}
+func (Recipient) IsNode() {}
 
 type RefreshTokenPayload struct {
 	Token *Token `json:"token"`
@@ -1078,12 +768,6 @@ type ResendVerificationEmailPayload struct {
 }
 
 func (ResendVerificationEmailPayload) IsResendVerificationEmailPayloadOrError() {}
-
-type SearchCommunitiesPayload struct {
-	Results []*CommunitySearchResult `json:"results"`
-}
-
-func (SearchCommunitiesPayload) IsSearchCommunitiesPayloadOrError() {}
 
 type SearchSplitsPayload struct {
 	Results []*SplitSearchResult `json:"results"`
@@ -1147,59 +831,17 @@ type SocialQueries struct {
 
 func (SocialQueries) IsSocialQueriesOrError() {}
 
-type SomeoneFollowedYouBackNotification struct {
-	HelperSomeoneFollowedYouBackNotificationData
-	Dbid         persist.DBID                      `json:"dbid"`
-	Seen         *bool                             `json:"seen"`
-	CreationTime *time.Time                        `json:"creationTime"`
-	UpdatedTime  *time.Time                        `json:"updatedTime"`
-	Count        *int                              `json:"count"`
-	Followers    *GroupNotificationUsersConnection `json:"followers"`
-}
-
-func (SomeoneFollowedYouBackNotification) IsNotification()        {}
-func (SomeoneFollowedYouBackNotification) IsNode()                {}
-func (SomeoneFollowedYouBackNotification) IsGroupedNotification() {}
-
-type SomeoneFollowedYouNotification struct {
-	HelperSomeoneFollowedYouNotificationData
-	Dbid         persist.DBID                      `json:"dbid"`
-	Seen         *bool                             `json:"seen"`
-	CreationTime *time.Time                        `json:"creationTime"`
-	UpdatedTime  *time.Time                        `json:"updatedTime"`
-	Count        *int                              `json:"count"`
-	Followers    *GroupNotificationUsersConnection `json:"followers"`
-}
-
-func (SomeoneFollowedYouNotification) IsNotification()        {}
-func (SomeoneFollowedYouNotification) IsNode()                {}
-func (SomeoneFollowedYouNotification) IsGroupedNotification() {}
-
-type SomeoneViewedYourSplitNotification struct {
-	HelperSomeoneViewedYourSplitNotificationData
-	Dbid               persist.DBID                      `json:"dbid"`
-	Seen               *bool                             `json:"seen"`
-	CreationTime       *time.Time                        `json:"creationTime"`
-	UpdatedTime        *time.Time                        `json:"updatedTime"`
-	Count              *int                              `json:"count"`
-	UserViewers        *GroupNotificationUsersConnection `json:"userViewers"`
-	NonUserViewerCount *int                              `json:"nonUserViewerCount"`
-	Split              *Split                            `json:"split"`
-}
-
-func (SomeoneViewedYourSplitNotification) IsNotification()        {}
-func (SomeoneViewedYourSplitNotification) IsNode()                {}
-func (SomeoneViewedYourSplitNotification) IsGroupedNotification() {}
-
 type Split struct {
-	Dbid          persist.DBID     `json:"dbid"`
-	Name          *string          `json:"name"`
-	Description   *string          `json:"description"`
-	Position      *string          `json:"position"`
-	Hidden        *bool            `json:"hidden"`
-	TokenPreviews []*PreviewURLSet `json:"tokenPreviews"`
-	Owner         *SplitFiUser     `json:"owner"`
-	Collections   []*Collection    `json:"collections"`
+	Dbid        persist.DBID   `json:"dbid"`
+	Version     *int           `json:"version"`
+	Name        *string        `json:"name"`
+	Description *string        `json:"description"`
+	Chain       *persist.Chain `json:"chain"`
+	LogoURL     *string        `json:"logoURL"`
+	BannerURL   *string        `json:"bannerURL"`
+	BadgeURL    *string        `json:"badgeURL"`
+	Assets      []*Asset       `json:"assets"`
+	Shares      []*Recipient   `json:"shares"`
 }
 
 func (Split) IsNode()                    {}
@@ -1207,25 +849,18 @@ func (Split) IsSplitByIDPayloadOrError() {}
 
 type SplitFiUser struct {
 	HelperSplitFiUserData
-	Dbid                persist.DBID           `json:"dbid"`
-	Username            *string                `json:"username"`
-	Bio                 *string                `json:"bio"`
-	Traits              *string                `json:"traits"`
-	Universal           *bool                  `json:"universal"`
-	Roles               []*persist.Role        `json:"roles"`
-	SocialAccounts      *SocialAccounts        `json:"socialAccounts"`
-	Tokens              []*Token               `json:"tokens"`
-	TokensByChain       *ChainTokens           `json:"tokensByChain"`
-	Wallets             []*Wallet              `json:"wallets"`
-	PrimaryWallet       *Wallet                `json:"primaryWallet"`
-	FeaturedSplit       *Split                 `json:"featuredSplit"`
-	Splits              []*Split               `json:"splits"`
-	Badges              []*Badge               `json:"badges"`
-	IsAuthenticatedUser *bool                  `json:"isAuthenticatedUser"`
-	Followers           []*SplitFiUser         `json:"followers"`
-	Following           []*SplitFiUser         `json:"following"`
-	SharedFollowers     *UsersConnection       `json:"sharedFollowers"`
-	SharedCommunities   *CommunitiesConnection `json:"sharedCommunities"`
+	Dbid                persist.DBID    `json:"dbid"`
+	Username            *string         `json:"username"`
+	Bio                 *string         `json:"bio"`
+	Traits              *string         `json:"traits"`
+	Universal           *bool           `json:"universal"`
+	Roles               []*persist.Role `json:"roles"`
+	SocialAccounts      *SocialAccounts `json:"socialAccounts"`
+	Wallets             []*Wallet       `json:"wallets"`
+	PrimaryWallet       *Wallet         `json:"primaryWallet"`
+	Splits              []*Split        `json:"splits"`
+	SplitsByChain       *ChainSplits    `json:"splitsByChain"`
+	IsAuthenticatedUser *bool           `json:"isAuthenticatedUser"`
 }
 
 func (SplitFiUser) IsNode()                              {}
@@ -1246,29 +881,6 @@ type SplitSearchResult struct {
 	Split *Split `json:"split"`
 }
 
-type SyncTokensForUsernamePayload struct {
-	Message string `json:"message"`
-}
-
-func (SyncTokensForUsernamePayload) IsSyncTokensForUsernamePayloadOrError() {}
-
-type SyncTokensPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (SyncTokensPayload) IsSyncTokensPayloadOrError() {}
-
-type SyncingMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (SyncingMedia) IsMediaSubtype() {}
-func (SyncingMedia) IsMedia()        {}
-
 type TextMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
 	MediaURL         *string          `json:"mediaURL"`
@@ -1281,59 +893,24 @@ func (TextMedia) IsMediaSubtype() {}
 func (TextMedia) IsMedia()        {}
 
 type Token struct {
-	Dbid             persist.DBID          `json:"dbid"`
-	CreationTime     *time.Time            `json:"creationTime"`
-	LastUpdated      *time.Time            `json:"lastUpdated"`
-	CollectorsNote   *string               `json:"collectorsNote"`
-	Media            MediaSubtype          `json:"media"`
-	TokenType        *TokenType            `json:"tokenType"`
-	Chain            *persist.Chain        `json:"chain"`
-	Name             *string               `json:"name"`
-	Description      *string               `json:"description"`
-	TokenID          *string               `json:"tokenId"`
-	Quantity         *string               `json:"quantity"`
-	Owner            *SplitFiUser          `json:"owner"`
-	OwnedByWallets   []*Wallet             `json:"ownedByWallets"`
-	OwnershipHistory []*OwnerAtBlock       `json:"ownershipHistory"`
-	TokenMetadata    *string               `json:"tokenMetadata"`
-	Contract         *Contract             `json:"contract"`
-	ExternalURL      *string               `json:"externalUrl"`
-	BlockNumber      *string               `json:"blockNumber"`
-	IsSpamByUser     *bool                 `json:"isSpamByUser"`
-	IsSpamByProvider *bool                 `json:"isSpamByProvider"`
-	CreatorAddress   *persist.ChainAddress `json:"creatorAddress"`
+	Dbid            persist.DBID   `json:"dbid"`
+	Version         *int           `json:"version"`
+	CreationTime    *time.Time     `json:"creationTime"`
+	LastUpdated     *time.Time     `json:"lastUpdated"`
+	TokenType       *TokenType     `json:"tokenType"`
+	Chain           *persist.Chain `json:"chain"`
+	Name            *string        `json:"name"`
+	Symbol          *string        `json:"symbol"`
+	Decimals        *int           `json:"decimals"`
+	Logo            *string        `json:"logo"`
+	TotalSupply     *int           `json:"totalSupply"`
+	ContractAddress *int           `json:"contractAddress"`
+	BlockNumber     *string        `json:"blockNumber"`
+	IsSpam          *bool          `json:"isSpam"`
 }
 
 func (Token) IsNode()             {}
 func (Token) IsTokenByIDOrError() {}
-
-type TokenEdge struct {
-	Node   *Token  `json:"node"`
-	Cursor *string `json:"cursor"`
-}
-
-type TokenHolder struct {
-	HelperTokenHolderData
-	DisplayName   *string      `json:"displayName"`
-	Wallets       []*Wallet    `json:"wallets"`
-	User          *SplitFiUser `json:"user"`
-	PreviewTokens []*string    `json:"previewTokens"`
-}
-
-type TokenHolderEdge struct {
-	Node   *TokenHolder `json:"node"`
-	Cursor *string      `json:"cursor"`
-}
-
-type TokenHoldersConnection struct {
-	Edges    []*TokenHolderEdge `json:"edges"`
-	PageInfo *PageInfo          `json:"pageInfo"`
-}
-
-type TokensConnection struct {
-	Edges    []*TokenEdge `json:"edges"`
-	PageInfo *PageInfo    `json:"pageInfo"`
-}
 
 type TwitterAuth struct {
 	Code string `json:"code"`
@@ -1349,13 +926,6 @@ type TwitterSocialAccount struct {
 }
 
 func (TwitterSocialAccount) IsSocialAccount() {}
-
-type UnfollowUserPayload struct {
-	Viewer *Viewer      `json:"viewer"`
-	User   *SplitFiUser `json:"user"`
-}
-
-func (UnfollowUserPayload) IsUnfollowUserPayloadOrError() {}
 
 type UnknownMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
@@ -1379,53 +949,6 @@ type UnsubscribeFromEmailTypePayload struct {
 
 func (UnsubscribeFromEmailTypePayload) IsUnsubscribeFromEmailTypePayloadOrError() {}
 
-type UpdateCollectionHiddenInput struct {
-	CollectionID persist.DBID `json:"collectionId"`
-	Hidden       bool         `json:"hidden"`
-}
-
-type UpdateCollectionHiddenPayload struct {
-	Collection *Collection `json:"collection"`
-}
-
-func (UpdateCollectionHiddenPayload) IsUpdateCollectionHiddenPayloadOrError() {}
-
-type UpdateCollectionInfoInput struct {
-	CollectionID   persist.DBID `json:"collectionId"`
-	Name           string       `json:"name"`
-	CollectorsNote string       `json:"collectorsNote"`
-}
-
-type UpdateCollectionInfoPayload struct {
-	Collection *Collection `json:"collection"`
-}
-
-func (UpdateCollectionInfoPayload) IsUpdateCollectionInfoPayloadOrError() {}
-
-type UpdateCollectionInput struct {
-	Dbid           persist.DBID                    `json:"dbid"`
-	Name           string                          `json:"name"`
-	CollectorsNote string                          `json:"collectorsNote"`
-	Tokens         []persist.DBID                  `json:"tokens"`
-	Layout         *CollectionLayoutInput          `json:"layout"`
-	TokenSettings  []*CollectionTokenSettingsInput `json:"tokenSettings"`
-	Hidden         bool                            `json:"hidden"`
-}
-
-type UpdateCollectionTokensInput struct {
-	CollectionID  persist.DBID                    `json:"collectionId"`
-	Tokens        []persist.DBID                  `json:"tokens"`
-	Layout        *CollectionLayoutInput          `json:"layout"`
-	TokenSettings []*CollectionTokenSettingsInput `json:"tokenSettings"`
-	Caption       *string                         `json:"caption"`
-}
-
-type UpdateCollectionTokensPayload struct {
-	Collection *Collection `json:"collection"`
-}
-
-func (UpdateCollectionTokensPayload) IsUpdateCollectionTokensPayloadOrError() {}
-
 type UpdateEmailInput struct {
 	Email persist.Email `json:"email"`
 }
@@ -1447,12 +970,6 @@ type UpdateEmailPayload struct {
 
 func (UpdateEmailPayload) IsUpdateEmailPayloadOrError() {}
 
-type UpdateFeaturedSplitPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (UpdateFeaturedSplitPayload) IsUpdateFeaturedSplitPayloadOrError() {}
-
 type UpdatePrimaryWalletPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
@@ -1469,17 +986,6 @@ type UpdateSocialAccountDisplayedPayload struct {
 }
 
 func (UpdateSocialAccountDisplayedPayload) IsUpdateSocialAccountDisplayedPayloadOrError() {}
-
-type UpdateSplitCollectionsInput struct {
-	SplitID     persist.DBID   `json:"splitId"`
-	Collections []persist.DBID `json:"collections"`
-}
-
-type UpdateSplitCollectionsPayload struct {
-	Split *Split `json:"split"`
-}
-
-func (UpdateSplitCollectionsPayload) IsUpdateSplitCollectionsPayloadOrError() {}
 
 type UpdateSplitHiddenInput struct {
 	ID     persist.DBID `json:"id"`
@@ -1505,15 +1011,13 @@ type UpdateSplitInfoPayload struct {
 func (UpdateSplitInfoPayload) IsUpdateSplitInfoPayloadOrError() {}
 
 type UpdateSplitInput struct {
-	SplitID            persist.DBID                    `json:"splitId"`
-	Name               *string                         `json:"name"`
-	Description        *string                         `json:"description"`
-	Caption            *string                         `json:"caption"`
-	DeletedCollections []persist.DBID                  `json:"deletedCollections"`
-	UpdatedCollections []*UpdateCollectionInput        `json:"updatedCollections"`
-	CreatedCollections []*CreateCollectionInSplitInput `json:"createdCollections"`
-	Order              []persist.DBID                  `json:"order"`
-	EditID             *string                         `json:"editId"`
+	SplitID            persist.DBID   `json:"splitId"`
+	Name               *string        `json:"name"`
+	Description        *string        `json:"description"`
+	Caption            *string        `json:"caption"`
+	DeletedCollections []persist.DBID `json:"deletedCollections"`
+	Order              []persist.DBID `json:"order"`
+	EditID             *string        `json:"editId"`
 }
 
 type UpdateSplitOrderInput struct {
@@ -1531,18 +1035,6 @@ type UpdateSplitPayload struct {
 }
 
 func (UpdateSplitPayload) IsUpdateSplitPayloadOrError() {}
-
-type UpdateTokenInfoInput struct {
-	TokenID        persist.DBID  `json:"tokenId"`
-	CollectorsNote string        `json:"collectorsNote"`
-	CollectionID   *persist.DBID `json:"collectionId"`
-}
-
-type UpdateTokenInfoPayload struct {
-	Token *Token `json:"token"`
-}
-
-func (UpdateTokenInfoPayload) IsUpdateTokenInfoPayloadOrError() {}
 
 type UpdateUserExperienceInput struct {
 	ExperienceType UserExperienceType `json:"experienceType"`
@@ -1662,7 +1154,7 @@ type Wallet struct {
 	ChainAddress *persist.ChainAddress `json:"chainAddress"`
 	Chain        *persist.Chain        `json:"chain"`
 	WalletType   *persist.WalletType   `json:"walletType"`
-	Tokens       []*Token              `json:"tokens"`
+	Splits       []*Split              `json:"splits"`
 }
 
 func (Wallet) IsNode()                {}

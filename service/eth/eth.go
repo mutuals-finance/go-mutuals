@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-	"math/big"
 	"strings"
 
 	"github.com/SplitFi/go-splitfi/contracts"
@@ -14,53 +13,6 @@ import (
 )
 
 const ensContractAddress = "0xFaC7BEA255a6990f749363002136aF6556b31e04"
-
-// HasNFT checks if a wallet address has a given NFT
-func HasNFT(pCtx context.Context, contractAddress persist.EthereumAddress, id persist.TokenID, userAddr persist.EthereumAddress, ethcl *ethclient.Client) (bool, error) {
-
-	instance, err := contracts.NewIERC1155Caller(contractAddress.Address(), ethcl)
-	if err != nil {
-		return false, err
-	}
-
-	call, err := instance.BalanceOf(&bind.CallOpts{Context: pCtx}, userAddr.Address(), id.BigInt())
-	if err != nil {
-		return false, err
-	}
-
-	return call.Cmp(big.NewInt(0)) > 0, nil
-
-}
-
-// HasNFTs checks if a wallet address has a given set of NFTs
-func HasNFTs(pCtx context.Context, contractAddress persist.EthereumAddress, ids []persist.TokenID, userAddr persist.EthereumAddress, ethcl *ethclient.Client) (bool, error) {
-
-	instance, err := contracts.NewIERC1155Caller(contractAddress.Address(), ethcl)
-	if err != nil {
-		return false, err
-	}
-
-	bigIntIDs := make([]*big.Int, len(ids))
-	addrs := make([]common.Address, len(ids))
-	for i := 0; i < len(ids); i++ {
-
-		bigIntIDs[i] = ids[i].BigInt()
-		addrs[i] = userAddr.Address()
-	}
-
-	call, err := instance.BalanceOfBatch(&bind.CallOpts{Context: pCtx}, addrs, bigIntIDs)
-	if err != nil {
-		return false, err
-	}
-	for _, v := range call {
-		if v.Cmp(big.NewInt(0)) > 0 {
-			return true, nil
-		}
-	}
-
-	return false, nil
-
-}
 
 // ResolvesENS checks if an ENS resolves to a given address
 func ResolvesENS(pCtx context.Context, ens string, userAddr persist.EthereumAddress, ethcl *ethclient.Client) (bool, error) {

@@ -19,6 +19,11 @@ import (
 	"github.com/SplitFi/go-splitfi/util"
 )
 
+// Token is the resolver for the token field.
+func (r *assetResolver) Token(ctx context.Context, obj *model.Asset) (*model.Token, error) {
+	panic(fmt.Errorf("not implemented: Token - token"))
+}
+
 // AddUserWallet is the resolver for the addUserWallet field.
 func (r *mutationResolver) AddUserWallet(ctx context.Context, chainAddress persist.ChainAddress, authMechanism model.AuthMechanism) (model.AddUserWalletPayloadOrError, error) {
 	api := publicapi.For(ctx)
@@ -72,32 +77,6 @@ func (r *mutationResolver) UpdateUserInfo(ctx context.Context, input model.Updat
 	return output, nil
 }
 
-// UpdateTokenInfo is the resolver for the updateTokenInfo field.
-func (r *mutationResolver) UpdateTokenInfo(ctx context.Context, input model.UpdateTokenInfoInput) (model.UpdateTokenInfoPayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	collectionID := persist.DBID("")
-	if input.CollectionID != nil {
-		collectionID = *input.CollectionID
-	}
-
-	err := api.Token.UpdateTokenInfo(ctx, input.TokenID, collectionID, input.CollectorsNote)
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := api.Token.GetTokenById(ctx, input.TokenID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UpdateTokenInfoPayload{
-		Token: tokenToModel(ctx, *token),
-	}
-
-	return output, nil
-}
-
 // SetSpamPreference is the resolver for the setSpamPreference field.
 func (r *mutationResolver) SetSpamPreference(ctx context.Context, input model.SetSpamPreferenceInput) (model.SetSpamPreferencePayloadOrError, error) {
 	err := publicapi.For(ctx).Token.SetSpamPreference(ctx, input.Tokens, input.IsSpam)
@@ -111,26 +90,6 @@ func (r *mutationResolver) SetSpamPreference(ctx context.Context, input model.Se
 	}
 
 	return model.SetSpamPreferencePayload{Tokens: tokens}, nil
-}
-
-// SyncTokens is the resolver for the syncTokens field.
-func (r *mutationResolver) SyncTokens(ctx context.Context, chains []persist.Chain) (model.SyncTokensPayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	if chains == nil || len(chains) == 0 {
-		chains = []persist.Chain{persist.ChainETH}
-	}
-
-	err := api.Token.SyncTokens(ctx, chains)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.SyncTokensPayload{
-		Viewer: resolveViewer(ctx),
-	}
-
-	return output, nil
 }
 
 // RefreshToken is the resolver for the refreshToken field.
@@ -319,6 +278,11 @@ func (r *mutationResolver) UpdateSocialAccountDisplayed(ctx context.Context, inp
 	}
 
 	return output, nil
+}
+
+// ViewSplit is the resolver for the viewSplit field.
+func (r *mutationResolver) ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: ViewSplit - viewSplit"))
 }
 
 // UpdateSplit is the resolver for the updateSplit field.
@@ -531,6 +495,11 @@ func (r *mutationResolver) RevokeRolesFromUser(ctx context.Context, username str
 	return userToModel(ctx, *user), nil
 }
 
+// UploadPersistedQueries is the resolver for the uploadPersistedQueries field.
+func (r *mutationResolver) UploadPersistedQueries(ctx context.Context, input *model.UploadPersistedQueriesInput) (model.UploadPersistedQueriesPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: UploadPersistedQueries - uploadPersistedQueries"))
+}
+
 // UpdatePrimaryWallet is the resolver for the updatePrimaryWallet field.
 func (r *mutationResolver) UpdatePrimaryWallet(ctx context.Context, walletID persist.DBID) (model.UpdatePrimaryWalletPayloadOrError, error) {
 	err := publicapi.For(ctx).User.UpdateUserPrimaryWallet(ctx, walletID)
@@ -551,11 +520,6 @@ func (r *mutationResolver) UpdateUserExperience(ctx context.Context, input model
 	return model.UpdateUserExperiencePayload{
 		Viewer: resolveViewer(ctx),
 	}, nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *ownerAtBlockResolver) Owner(ctx context.Context, obj *model.OwnerAtBlock) (model.SplitFiUserOrAddress, error) {
-	panic(fmt.Errorf("not implemented"))
 }
 
 // Blurhash is the resolver for the blurhash field.
@@ -590,9 +554,19 @@ func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.
 	return resolveSplitFiUserByAddress(ctx, chainAddress)
 }
 
+// UsersWithTrait is the resolver for the usersWithTrait field.
+func (r *queryResolver) UsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error) {
+	panic(fmt.Errorf("not implemented: UsersWithTrait - usersWithTrait"))
+}
+
 // TokenByID is the resolver for the tokenById field.
 func (r *queryResolver) TokenByID(ctx context.Context, id persist.DBID) (model.TokenByIDOrError, error) {
 	return resolveTokenByTokenID(ctx, id)
+}
+
+// GeneralAllowlist is the resolver for the generalAllowlist field.
+func (r *queryResolver) GeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error) {
+	panic(fmt.Errorf("not implemented: GeneralAllowlist - generalAllowlist"))
 }
 
 // SplitByID is the resolver for the splitById field.
@@ -695,6 +669,11 @@ func (r *queryResolver) SocialQueries(ctx context.Context) (model.SocialQueriesO
 	return &model.SocialQueries{}, nil
 }
 
+// Split is the resolver for the split field.
+func (r *recipientResolver) Split(ctx context.Context, obj *model.Recipient) (*model.Split, error) {
+	panic(fmt.Errorf("not implemented: Split - split"))
+}
+
 // Tokens is the resolver for the tokens field.
 func (r *setSpamPreferencePayloadResolver) Tokens(ctx context.Context, obj *model.SetSpamPreferencePayload) ([]*model.Token, error) {
 	tokenIDs := make([]persist.DBID, len(obj.Tokens))
@@ -733,20 +712,14 @@ func (r *socialQueriesResolver) SocialConnections(ctx context.Context, obj *mode
 	}, nil
 }
 
-// TokenPreviews is the resolver for the tokenPreviews field.
-func (r *splitResolver) TokenPreviews(ctx context.Context, obj *model.Split) ([]*model.PreviewURLSet, error) {
-	return resolveTokenPreviewsBySplitID(ctx, obj.Dbid)
+// Assets is the resolver for the assets field.
+func (r *splitResolver) Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error) {
+	panic(fmt.Errorf("not implemented: Assets - assets"))
 }
 
-// Owner is the resolver for the owner field.
-func (r *splitResolver) Owner(ctx context.Context, obj *model.Split) (*model.SplitFiUser, error) {
-	split, err := publicapi.For(ctx).Split.GetSplitById(ctx, obj.Dbid)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resolveSplitFiUserByUserID(ctx, split.OwnerUserID)
+// Shares is the resolver for the shares field.
+func (r *splitResolver) Shares(ctx context.Context, obj *model.Split, limit *int) ([]*model.Recipient, error) {
+	panic(fmt.Errorf("not implemented: Shares - shares"))
 }
 
 // Roles is the resolver for the roles field.
@@ -770,24 +743,6 @@ func (r *splitFiUserResolver) SocialAccounts(ctx context.Context, obj *model.Spl
 	return resolveUserSocialsByUserID(ctx, obj.Dbid)
 }
 
-// Tokens is the resolver for the tokens field.
-func (r *splitFiUserResolver) Tokens(ctx context.Context, obj *model.SplitFiUser) ([]*model.Token, error) {
-	return resolveTokensByUserID(ctx, obj.Dbid)
-}
-
-// TokensByChain is the resolver for the tokensByChain field.
-func (r *splitFiUserResolver) TokensByChain(ctx context.Context, obj *model.SplitFiUser, chain persist.Chain) (*model.ChainTokens, error) {
-	tokens, err := publicapi.For(ctx).Token.GetTokensByUserIDAndChain(ctx, obj.Dbid, chain)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.ChainTokens{
-		Chain:  &chain,
-		Tokens: tokensToModel(ctx, tokens),
-	}, nil
-}
-
 // Wallets is the resolver for the wallets field.
 func (r *splitFiUserResolver) Wallets(ctx context.Context, obj *model.SplitFiUser) ([]*model.Wallet, error) {
 	return resolveWalletsByUserID(ctx, obj.Dbid)
@@ -803,6 +758,11 @@ func (r *splitFiUserResolver) Splits(ctx context.Context, obj *model.SplitFiUser
 	return resolveSplitsByUserID(ctx, obj.Dbid)
 }
 
+// SplitsByChain is the resolver for the splitsByChain field.
+func (r *splitFiUserResolver) SplitsByChain(ctx context.Context, obj *model.SplitFiUser, chain persist.Chain) (*model.ChainSplits, error) {
+	panic(fmt.Errorf("not implemented: SplitsByChain - splitsByChain"))
+}
+
 // NewNotification is the resolver for the newNotification field.
 func (r *subscriptionResolver) NewNotification(ctx context.Context) (<-chan model.Notification, error) {
 	return resolveNewNotificationSubscription(ctx), nil
@@ -811,47 +771,6 @@ func (r *subscriptionResolver) NewNotification(ctx context.Context) (<-chan mode
 // NotificationUpdated is the resolver for the notificationUpdated field.
 func (r *subscriptionResolver) NotificationUpdated(ctx context.Context) (<-chan model.Notification, error) {
 	return resolveUpdatedNotificationSubscription(ctx), nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *tokenResolver) Owner(ctx context.Context, obj *model.Token) (*model.SplitFiUser, error) {
-	return resolveTokenOwnerByTokenID(ctx, obj.Dbid)
-}
-
-// OwnedByWallets is the resolver for the ownedByWallets field.
-func (r *tokenResolver) OwnedByWallets(ctx context.Context, obj *model.Token) ([]*model.Wallet, error) {
-	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, obj.Dbid)
-	if err != nil {
-		return nil, err
-	}
-
-	wallets := make([]*model.Wallet, len(token.OwnedByWallets))
-	for i, walletID := range token.OwnedByWallets {
-		wallets[i], err = resolveWalletByWalletID(ctx, walletID)
-		if err != nil {
-			sentryutil.ReportError(ctx, err)
-		}
-	}
-
-	return wallets, nil
-}
-
-// Wallets is the resolver for the wallets field.
-func (r *tokenHolderResolver) Wallets(ctx context.Context, obj *model.TokenHolder) ([]*model.Wallet, error) {
-	wallets := make([]*model.Wallet, 0, len(obj.WalletIds))
-	for _, id := range obj.WalletIds {
-		wallet, err := resolveWalletByWalletID(ctx, id)
-		if err == nil {
-			wallets = append(wallets, wallet)
-		}
-	}
-
-	return wallets, nil
-}
-
-// User is the resolver for the user field.
-func (r *tokenHolderResolver) User(ctx context.Context, obj *model.TokenHolder) (*model.SplitFiUser, error) {
-	return resolveSplitFiUserByUserID(ctx, obj.UserId)
 }
 
 // User is the resolver for the user field.
@@ -904,9 +823,9 @@ func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer)
 	return resolveViewerExperiencesByUserID(ctx, obj.UserId)
 }
 
-// Tokens is the resolver for the tokens field.
-func (r *walletResolver) Tokens(ctx context.Context, obj *model.Wallet) ([]*model.Token, error) {
-	return resolveTokensByWalletID(ctx, obj.Dbid)
+// Splits is the resolver for the splits field.
+func (r *walletResolver) Splits(ctx context.Context, obj *model.Wallet) ([]*model.Split, error) {
+	panic(fmt.Errorf("not implemented: Splits - splits"))
 }
 
 // Address is the resolver for the address field.
@@ -929,17 +848,20 @@ func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.Chain
 	return obj.GQLSetChainFromResolver(data)
 }
 
+// Asset returns generated.AssetResolver implementation.
+func (r *Resolver) Asset() generated.AssetResolver { return &assetResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-// OwnerAtBlock returns generated.OwnerAtBlockResolver implementation.
-func (r *Resolver) OwnerAtBlock() generated.OwnerAtBlockResolver { return &ownerAtBlockResolver{r} }
 
 // PreviewURLSet returns generated.PreviewURLSetResolver implementation.
 func (r *Resolver) PreviewURLSet() generated.PreviewURLSetResolver { return &previewURLSetResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+
+// Recipient returns generated.RecipientResolver implementation.
+func (r *Resolver) Recipient() generated.RecipientResolver { return &recipientResolver{r} }
 
 // SetSpamPreferencePayload returns generated.SetSpamPreferencePayloadResolver implementation.
 func (r *Resolver) SetSpamPreferencePayload() generated.SetSpamPreferencePayloadResolver {
@@ -963,12 +885,6 @@ func (r *Resolver) SplitFiUser() generated.SplitFiUserResolver { return &splitFi
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
-// Token returns generated.TokenResolver implementation.
-func (r *Resolver) Token() generated.TokenResolver { return &tokenResolver{r} }
-
-// TokenHolder returns generated.TokenHolderResolver implementation.
-func (r *Resolver) TokenHolder() generated.TokenHolderResolver { return &tokenHolderResolver{r} }
-
 // Viewer returns generated.ViewerResolver implementation.
 func (r *Resolver) Viewer() generated.ViewerResolver { return &viewerResolver{r} }
 
@@ -985,19 +901,92 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 	return &chainPubKeyInputResolver{r}
 }
 
+type assetResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
-type ownerAtBlockResolver struct{ *Resolver }
 type previewURLSetResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type recipientResolver struct{ *Resolver }
 type setSpamPreferencePayloadResolver struct{ *Resolver }
 type socialConnectionResolver struct{ *Resolver }
 type socialQueriesResolver struct{ *Resolver }
 type splitResolver struct{ *Resolver }
 type splitFiUserResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-type tokenResolver struct{ *Resolver }
-type tokenHolderResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
 type walletResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) SyncTokens(ctx context.Context, chains []persist.Chain) (model.SyncTokensPayloadOrError, error) {
+	api := publicapi.For(ctx)
+
+	if chains == nil || len(chains) == 0 {
+		chains = []persist.Chain{persist.ChainETH}
+	}
+
+	err := api.Token.SyncTokens(ctx, chains)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.SyncTokensPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
+}
+func (r *splitResolver) Owner(ctx context.Context, obj *model.Split) (*model.SplitFiUser, error) {
+	split, err := publicapi.For(ctx).Split.GetSplitById(ctx, obj.Dbid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resolveSplitFiUserByUserID(ctx, split.OwnerUserID)
+}
+func (r *splitFiUserResolver) Tokens(ctx context.Context, obj *model.SplitFiUser) ([]*model.Token, error) {
+	return resolveTokensByUserID(ctx, obj.Dbid)
+}
+func (r *splitFiUserResolver) TokensByChain(ctx context.Context, obj *model.SplitFiUser, chain persist.Chain) (*model.ChainTokens, error) {
+	tokens, err := publicapi.For(ctx).Token.GetTokensByUserIDAndChain(ctx, obj.Dbid, chain)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.ChainTokens{
+		Chain:  &chain,
+		Tokens: tokensToModel(ctx, tokens),
+	}, nil
+}
+func (r *tokenResolver) Owner(ctx context.Context, obj *model.Token) (*model.SplitFiUser, error) {
+	return resolveTokenOwnerByTokenID(ctx, obj.Dbid)
+}
+func (r *tokenResolver) OwnedByWallets(ctx context.Context, obj *model.Token) ([]*model.Wallet, error) {
+	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, obj.Dbid)
+	if err != nil {
+		return nil, err
+	}
+
+	wallets := make([]*model.Wallet, len(token.OwnedByWallets))
+	for i, walletID := range token.OwnedByWallets {
+		wallets[i], err = resolveWalletByWalletID(ctx, walletID)
+		if err != nil {
+			sentryutil.ReportError(ctx, err)
+		}
+	}
+
+	return wallets, nil
+}
+func (r *walletResolver) Tokens(ctx context.Context, obj *model.Wallet) ([]*model.Token, error) {
+	return resolveTokensByWalletID(ctx, obj.Dbid)
+}
+
+type ownerAtBlockResolver struct{ *Resolver }
+type tokenResolver struct{ *Resolver }
+type tokenHolderResolver struct{ *Resolver }

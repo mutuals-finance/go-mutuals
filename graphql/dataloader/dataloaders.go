@@ -3,12 +3,8 @@
 //go:generate go run github.com/gallery-so/dataloaden UserLoaderByAddress github.com/SplitFi/go-splitfi/db/gen/coredb.GetUserByAddressBatchParams github.com/SplitFi/go-splitfi/db/gen/coredb.User
 //go:generate go run github.com/gallery-so/dataloaden UserLoaderByString string github.com/SplitFi/go-splitfi/db/gen/coredb.User
 //go:generate go run github.com/gallery-so/dataloaden UsersLoaderByString string []github.com/SplitFi/go-splitfi/db/gen/coredb.User
-//go:generate go run github.com/gallery-so/dataloaden UsersLoaderByContractID github.com/SplitFi/go-splitfi/db/gen/coredb.GetOwnersByContractIdBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.User
 //go:generate go run github.com/gallery-so/dataloaden SplitLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Split
 //go:generate go run github.com/gallery-so/dataloaden SplitsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Split
-//go:generate go run github.com/gallery-so/dataloaden CollectionLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Collection
-//go:generate go run github.com/gallery-so/dataloaden CollectionsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Collection
-//go:generate go run github.com/gallery-so/dataloaden MembershipLoaderById github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Membership
 //go:generate go run github.com/gallery-so/dataloaden WalletLoaderById github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
 //go:generate go run github.com/gallery-so/dataloaden WalletLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
 //go:generate go run github.com/gallery-so/dataloaden WalletsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
@@ -18,21 +14,16 @@
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByContractID github.com/SplitFi/go-splitfi/db/gen/coredb.GetTokensByContractIdBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDTuple github.com/SplitFi/go-splitfi/service/persist.DBIDTuple []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDAndChain github.com/SplitFi/go-splitfi/graphql/dataloader.IDAndChain []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden ContractLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Contract
-//go:generate go run github.com/gallery-so/dataloaden ContractsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Contract
-//go:generate go run github.com/gallery-so/dataloaden ContractLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress github.com/SplitFi/go-splitfi/db/gen/coredb.Contract
+//go:generate go run github.com/gallery-so/dataloaden AssetsByOwnerAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress []github.com/SplitFi/go-splitfi/db/gen/coredb.Asset
 //go:generate go run github.com/gallery-so/dataloaden EventLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.FeedEvent
 //go:generate go run github.com/gallery-so/dataloaden NotificationLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden NotificationsLoaderByUserID github.com/SplitFi/go-splitfi/db/gen/coredb.GetUserNotificationsBatchParams []github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden IntLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID int
-//go:generate go run github.com/gallery-so/dataloaden SharedFollowersLoaderByIDs github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedFollowersBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedFollowersBatchPaginateRow
-//go:generate go run github.com/gallery-so/dataloaden SharedContractsLoaderByIDs github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedContractsBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.GetSharedContractsBatchPaginateRow
 
 package dataloader
 
 import (
 	"context"
-	"database/sql"
 	"sync"
 	"time"
 
@@ -78,6 +69,7 @@ type Loaders struct {
 	TokensByUserIDAndContractID      *TokensLoaderByIDTuple
 	TokensByContractIDWithPagination *TokensLoaderByContractID
 	TokensByUserIDAndChain           *TokensLoaderByIDAndChain
+	AssetsByOwnerAddress             *AssetsByOwnerAddress
 	OwnerByTokenID                   *UserLoaderByID
 	ContractByContractID             *ContractLoaderByID
 	ContractsByUserID                *ContractsLoaderByID
@@ -161,21 +153,7 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 		AutoCacheWithKey: func(split db.Split) persist.DBID { return split.ID },
 	})
 
-	loaders.SplitByCollectionID = NewSplitLoaderByID(defaults, loadSplitByCollectionId(q), SplitLoaderByIDCacheSubscriptions{
-		AutoCacheWithKeys: func(split db.Split) []persist.DBID { return split.Collections },
-	})
-
 	loaders.SplitsByUserID = NewSplitsLoaderByID(defaults, loadSplitsByUserId(q))
-
-	loaders.CollectionByCollectionID = NewCollectionLoaderByID(defaults, loadCollectionByCollectionId(q), CollectionLoaderByIDCacheSubscriptions{
-		AutoCacheWithKey: func(collection db.Collection) persist.DBID { return collection.ID },
-	})
-
-	loaders.CollectionsBySplitID = NewCollectionsLoaderByID(defaults, loadCollectionsBySplitId(q))
-
-	loaders.MembershipByMembershipID = NewMembershipLoaderById(defaults, loadMembershipByMembershipId(q), MembershipLoaderByIdCacheSubscriptions{
-		AutoCacheWithKey: func(membership db.Membership) persist.DBID { return membership.ID },
-	})
 
 	loaders.WalletByWalletID = NewWalletLoaderById(defaults, loadWalletByWalletId(q), WalletLoaderByIdCacheSubscriptions{
 		AutoCacheWithKey: func(wallet db.Wallet) persist.DBID { return wallet.ID },
@@ -189,19 +167,9 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 		},
 	})
 
-	loaders.FollowersByUserID = NewUsersLoaderByID(defaults, loadFollowersByUserId(q))
-
-	loaders.FollowingByUserID = NewUsersLoaderByID(defaults, loadFollowingByUserId(q))
-
-	loaders.SharedFollowersByUserIDs = NewSharedFollowersLoaderByIDs(defaults, loadSharedFollowersByIDs(q))
-
-	loaders.SharedContractsByUserIDs = NewSharedContractsLoaderByIDs(defaults, loadSharedContractsByIDs(q))
-
 	loaders.TokenByTokenID = NewTokenLoaderByID(defaults, loadTokenByTokenID(q), TokenLoaderByIDCacheSubscriptions{
 		AutoCacheWithKey: func(token db.Token) persist.DBID { return token.ID },
 	})
-
-	loaders.TokensByCollectionID = NewTokensLoaderByIDAndLimit(defaults, loadTokensByCollectionID(q))
 
 	loaders.TokensByWalletID = NewTokensLoaderByID(defaults, loadTokensByWalletID(q))
 
@@ -220,20 +188,6 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 	loaders.OwnerByTokenID = NewUserLoaderByID(defaults, loadOwnerByTokenID(q), UserLoaderByIDCacheSubscriptions{
 		AutoCacheWithKey: func(user db.User) persist.DBID { return user.ID },
 	})
-
-	loaders.ContractByContractID = NewContractLoaderByID(defaults, loadContractByContractID(q), ContractLoaderByIDCacheSubscriptions{
-		AutoCacheWithKey: func(contract db.Contract) persist.DBID { return contract.ID },
-	})
-
-	loaders.ContractByChainAddress = NewContractLoaderByChainAddress(defaults, loadContractByChainAddress(q), ContractLoaderByChainAddressCacheSubscriptions{
-		AutoCacheWithKey: func(contract db.Contract) persist.ChainAddress {
-			return persist.NewChainAddress(contract.Address, contract.Chain)
-		},
-	})
-
-	loaders.ContractsByUserID = NewContractsLoaderByID(defaults, loadContractsByUserID(q))
-
-	loaders.ContractsDisplayedByUserID = NewContractsLoaderByID(defaults, loadContractsDisplayedByUserID(q))
 
 	loaders.NotificationsByUserID = NewNotificationsLoaderByUserID(defaults, loadUserNotifications(q))
 
@@ -357,27 +311,6 @@ func loadSplitBySplitId(q *db.Queries) func(context.Context, []persist.DBID) ([]
 	}
 }
 
-func loadSplitByCollectionId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Split, []error) {
-	return func(ctx context.Context, collectionIds []persist.DBID) ([]db.Split, []error) {
-		splits := make([]db.Split, len(collectionIds))
-		errors := make([]error, len(collectionIds))
-
-		b := q.GetSplitByCollectionIdBatch(ctx, collectionIds)
-		defer b.Close()
-
-		b.QueryRow(func(i int, g db.Split, err error) {
-			splits[i] = g
-			errors[i] = err
-
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrSplitNotFound{CollectionID: collectionIds[i]}
-			}
-		})
-
-		return splits, errors
-	}
-}
-
 func loadSplitsByUserId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Split, []error) {
 	return func(ctx context.Context, userIds []persist.DBID) ([][]db.Split, []error) {
 		splits := make([][]db.Split, len(userIds))
@@ -412,64 +345,6 @@ func loadNotificationById(q *db.Queries) func(context.Context, []persist.DBID) (
 	}
 }
 
-func loadCollectionByCollectionId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Collection, []error) {
-	return func(ctx context.Context, collectionIds []persist.DBID) ([]db.Collection, []error) {
-		collections := make([]db.Collection, len(collectionIds))
-		errors := make([]error, len(collectionIds))
-
-		b := q.GetCollectionByIdBatch(ctx, collectionIds)
-		defer b.Close()
-
-		b.QueryRow(func(i int, c db.Collection, err error) {
-			collections[i] = c
-			errors[i] = err
-
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrCollectionNotFoundByID{ID: collectionIds[i]}
-			}
-		})
-
-		return collections, errors
-	}
-}
-
-func loadCollectionsBySplitId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Collection, []error) {
-	return func(ctx context.Context, splitIds []persist.DBID) ([][]db.Collection, []error) {
-		collections := make([][]db.Collection, len(splitIds))
-		errors := make([]error, len(splitIds))
-
-		b := q.GetCollectionsBySplitIdBatch(ctx, splitIds)
-		defer b.Close()
-
-		b.Query(func(i int, c []db.Collection, err error) {
-			collections[i] = c
-			errors[i] = err
-		})
-
-		return collections, errors
-	}
-}
-
-func loadMembershipByMembershipId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Membership, []error) {
-	return func(ctx context.Context, membershipIds []persist.DBID) ([]db.Membership, []error) {
-		memberships := make([]db.Membership, len(membershipIds))
-		errors := make([]error, len(membershipIds))
-
-		b := q.GetMembershipByMembershipIdBatch(ctx, membershipIds)
-		defer b.Close()
-
-		b.QueryRow(func(i int, m db.Membership, err error) {
-			memberships[i] = m
-			errors[i] = err
-
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrMembershipNotFoundByID{ID: membershipIds[i]}
-			}
-		})
-
-		return memberships, errors
-	}
-}
 func loadWalletByWalletId(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Wallet, []error) {
 	return func(ctx context.Context, walletIds []persist.DBID) ([]db.Wallet, []error) {
 		wallets := make([]db.Wallet, len(walletIds))
@@ -532,74 +407,6 @@ func loadWalletByChainAddress(q *db.Queries) func(context.Context, []persist.Cha
 	}
 }
 
-func loadFollowersByUserId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.User, []error) {
-	return func(ctx context.Context, userIds []persist.DBID) ([][]db.User, []error) {
-		followers := make([][]db.User, len(userIds))
-		errors := make([]error, len(followers))
-
-		b := q.GetFollowersByUserIdBatch(ctx, userIds)
-		defer b.Close()
-
-		b.Query(func(i int, u []db.User, err error) {
-			followers[i] = u
-			errors[i] = err
-		})
-
-		return followers, errors
-	}
-}
-
-func loadFollowingByUserId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.User, []error) {
-	return func(ctx context.Context, userIds []persist.DBID) ([][]db.User, []error) {
-		following := make([][]db.User, len(userIds))
-		errors := make([]error, len(following))
-
-		b := q.GetFollowingByUserIdBatch(ctx, userIds)
-		defer b.Close()
-
-		b.Query(func(i int, u []db.User, err error) {
-			following[i] = u
-			errors[i] = err
-		})
-
-		return following, errors
-	}
-}
-
-func loadSharedFollowersByIDs(q *db.Queries) func(context.Context, []db.GetSharedFollowersBatchPaginateParams) ([][]db.GetSharedFollowersBatchPaginateRow, []error) {
-	return func(ctx context.Context, params []db.GetSharedFollowersBatchPaginateParams) ([][]db.GetSharedFollowersBatchPaginateRow, []error) {
-		users := make([][]db.GetSharedFollowersBatchPaginateRow, len(params))
-		errors := make([]error, len(users))
-
-		b := q.GetSharedFollowersBatchPaginate(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, u []db.GetSharedFollowersBatchPaginateRow, err error) {
-			users[i] = u
-			errors[i] = err
-		})
-
-		return users, errors
-	}
-}
-
-func loadSharedContractsByIDs(q *db.Queries) func(context.Context, []db.GetSharedContractsBatchPaginateParams) ([][]db.GetSharedContractsBatchPaginateRow, []error) {
-	return func(ctx context.Context, params []db.GetSharedContractsBatchPaginateParams) ([][]db.GetSharedContractsBatchPaginateRow, []error) {
-		contracts := make([][]db.GetSharedContractsBatchPaginateRow, len(params))
-		errors := make([]error, len(contracts))
-
-		b := q.GetSharedContractsBatchPaginate(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, c []db.GetSharedContractsBatchPaginateRow, err error) {
-			contracts[i] = c
-			errors[i] = err
-		})
-
-		return contracts, errors
-	}
-}
-
 func loadTokenByTokenID(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Token, []error) {
 	return func(ctx context.Context, tokenIDs []persist.DBID) ([]db.Token, []error) {
 		tokens := make([]db.Token, len(tokenIDs))
@@ -614,34 +421,6 @@ func loadTokenByTokenID(q *db.Queries) func(context.Context, []persist.DBID) ([]
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = persist.ErrTokenNotFoundByID{ID: tokenIDs[i]}
 			}
-		})
-
-		return tokens, errors
-	}
-}
-
-func loadTokensByCollectionID(q *db.Queries) func(context.Context, []IDAndLimit) ([][]db.Token, []error) {
-	return func(ctx context.Context, collectionIDs []IDAndLimit) ([][]db.Token, []error) {
-		tokens := make([][]db.Token, len(collectionIDs))
-		errors := make([]error, len(collectionIDs))
-
-		params := make([]db.GetTokensByCollectionIdBatchParams, len(collectionIDs))
-		for i, collectionID := range collectionIDs {
-			maybeNull := sql.NullInt32{}
-			if collectionID.Limit != nil {
-				maybeNull = sql.NullInt32{Int32: int32(*collectionID.Limit), Valid: true}
-			}
-			params[i] = db.GetTokensByCollectionIdBatchParams{
-				CollectionID: collectionID.ID,
-				Limit:        maybeNull,
-			}
-		}
-
-		b := q.GetTokensByCollectionIdBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, t []db.Token, err error) {
-			tokens[i], errors[i] = t, err
 		})
 
 		return tokens, errors
@@ -778,93 +557,6 @@ func loadTokensByUserIDAndChain(q *db.Queries) func(context.Context, []IDAndChai
 		})
 
 		return tokens, errors
-	}
-}
-
-func loadContractByContractID(q *db.Queries) func(context.Context, []persist.DBID) ([]db.Contract, []error) {
-	return func(ctx context.Context, contractIDs []persist.DBID) ([]db.Contract, []error) {
-		contracts := make([]db.Contract, len(contractIDs))
-		errors := make([]error, len(contractIDs))
-
-		rows, err := q.GetContractsByIDs(ctx, contractIDs)
-		if err != nil {
-			fillErrors(errors, err)
-			return contracts, errors
-		}
-
-		contractsByID := make(map[persist.DBID]db.Contract)
-		for _, row := range rows {
-			contractsByID[row.ID] = row
-		}
-
-		for i, id := range contractIDs {
-			if contract, ok := contractsByID[id]; ok {
-				contracts[i] = contract
-			} else {
-				errors[i] = persist.ErrContractNotFoundByID{ID: id}
-			}
-		}
-
-		return contracts, errors
-	}
-}
-
-func loadContractByChainAddress(q *db.Queries) func(context.Context, []persist.ChainAddress) ([]db.Contract, []error) {
-	return func(ctx context.Context, chainAddresses []persist.ChainAddress) ([]db.Contract, []error) {
-		contracts := make([]db.Contract, len(chainAddresses))
-		errors := make([]error, len(chainAddresses))
-
-		asParams := make([]db.GetContractByChainAddressBatchParams, len(chainAddresses))
-		for i, chainAddress := range chainAddresses {
-			asParams[i] = db.GetContractByChainAddressBatchParams{
-				Chain:   chainAddress.Chain(),
-				Address: chainAddress.Address(),
-			}
-		}
-		b := q.GetContractByChainAddressBatch(ctx, asParams)
-		defer b.Close()
-
-		b.QueryRow(func(i int, t db.Contract, err error) {
-			contracts[i], errors[i] = t, err
-
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrSplitContractNotFound{Address: chainAddresses[i].Address(), Chain: chainAddresses[i].Chain()}
-			}
-		})
-
-		return contracts, errors
-	}
-}
-
-func loadContractsByUserID(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Contract, []error) {
-	return func(ctx context.Context, contractIDs []persist.DBID) ([][]db.Contract, []error) {
-		contracts := make([][]db.Contract, len(contractIDs))
-		errors := make([]error, len(contractIDs))
-
-		b := q.GetContractsByUserIDBatch(ctx, contractIDs)
-		defer b.Close()
-
-		b.Query(func(i int, c []db.Contract, err error) {
-			contracts[i], errors[i] = c, err
-		})
-
-		return contracts, errors
-	}
-}
-
-func loadContractsDisplayedByUserID(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Contract, []error) {
-	return func(ctx context.Context, contractIDs []persist.DBID) ([][]db.Contract, []error) {
-		contracts := make([][]db.Contract, len(contractIDs))
-		errors := make([]error, len(contractIDs))
-
-		b := q.GetContractsDisplayedByUserIDBatch(ctx, contractIDs)
-		defer b.Close()
-
-		b.Query(func(i int, c []db.Contract, err error) {
-			contracts[i], errors[i] = c, err
-		})
-
-		return contracts, errors
 	}
 }
 

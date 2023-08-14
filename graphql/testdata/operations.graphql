@@ -172,96 +172,6 @@ mutation removeUserWalletsMutation($walletIds: [DBID!]!) {
   }
 }
 
-mutation syncTokensMutation($chains: [Chain!]) {
-  syncTokens(chains: $chains) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on SyncTokensPayload {
-      viewer {
-        user {
-          tokens {
-            chain
-            dbid
-            tokenId
-            media {
-              ...on ImageMedia {
-                mediaURL
-                mediaType
-              }
-              ...on GIFMedia {
-                mediaURL
-                mediaType
-              }
-              ...on VideoMedia {
-                mediaURL
-                mediaType
-              }
-              ...on AudioMedia {
-                mediaURL
-                mediaType
-              }
-              ...on TextMedia {
-                mediaURL
-                mediaType
-              }
-              ...on PdfMedia {
-                mediaURL
-                mediaType
-              }
-              ...on HtmlMedia {
-                mediaURL
-                mediaType
-              }
-              ...on JsonMedia {
-                mediaURL
-                mediaType
-              }
-              ...on GltfMedia {
-                mediaURL
-                mediaType
-              }
-              ...on UnknownMedia {
-                mediaURL
-                mediaType
-              }
-              ...on SyncingMedia {
-                mediaURL
-                mediaType
-              }
-              ...on InvalidMedia {
-                mediaURL
-                mediaType
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation createCollectionMutation($input: CreateCollectionInput!) {
-  createCollection(input: $input) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on CreateCollectionPayload {
-      collection {
-        dbid
-        name
-        tokens {
-          token {
-            dbid
-          }
-        }
-      }
-    }
-  }
-}
-
 mutation viewSplitMutation($splitId: DBID!) {
   viewSplit(splitId: $splitId) {
     ... on Error {
@@ -283,15 +193,6 @@ mutation updateSplitMutation($input: UpdateSplitInput!) {
         dbid
         name
         description
-        collections {
-          dbid
-          name
-          tokens {
-            token {
-              dbid
-            }
-          }
-        }
       }
     }
   }
@@ -327,29 +228,6 @@ mutation updateUserExperience($input: UpdateUserExperienceInput!) {
   }
 }
 
-mutation moveCollectionToSplit($input: MoveCollectionToSplitInput!) {
-  moveCollectionToSplit(input: $input) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on MoveCollectionToSplitPayload {
-      oldSplit {
-        dbid
-        collections {
-          dbid
-        }
-      }
-      newSplit {
-        dbid
-        collections {
-          dbid
-        }
-      }
-    }
-  }
-}
-
 mutation createSplitMutation($input: CreateSplitInput!) {
   createSplit(input: $input) {
     ... on Error {
@@ -361,7 +239,6 @@ mutation createSplitMutation($input: CreateSplitInput!) {
         dbid
         name
         description
-        position
       }
     }
   }

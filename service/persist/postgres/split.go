@@ -15,6 +15,7 @@ import (
 type SplitRepository struct {
 	db                         *sql.DB
 	queries                    *db.Queries
+	createStmt                 *sql.Stmt
 	getByIDStmt                *sql.Stmt
 	getByAddressStmt           *sql.Stmt
 	getByRecipientStmt         *sql.Stmt
@@ -28,6 +29,9 @@ type SplitRepository struct {
 func NewSplitRepository(db *sql.DB, queries *db.Queries) *SplitRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
+
+	createStmt, err := db.PrepareContext(ctx, `INSERT INTO splits (ID,VERSION,ADDRESS,NAME,DESCRIPTION,LOGO_URL,BANNER_URL,CREATOR_ADDRESS,CHAIN,RECIPIENTS,ASSETS) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING ID;`)
+	checkNoErr(err)
 
 	getByIDStmt, err := db.PrepareContext(ctx, `SELECT ID,VERSION,CREATED_AT,LAST_UPDATED,ADDRESS,NAME,DESCRIPTION,LOGO_URL,BANNER_URL,CREATOR_ADDRESS,CHAIN,RECIPIENTS,ASSETS FROM splits WHERE ID = $1;`)
 	checkNoErr(err)
@@ -61,7 +65,17 @@ func NewSplitRepository(db *sql.DB, queries *db.Queries) *SplitRepository {
 	upsertStmt, err := db.PrepareContext(ctx, `INSERT INTO splits (ID,VERSION,ADDRESS,NAME,DESCRIPTION,LOGO_URL,BANNER_URL,CREATOR_ADDRESS,CHAIN,CREATED_AT,LAST_UPDATED) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (ADDRESS,CHAIN) DO UPDATE SET VERSION = EXCLUDED.VERSION, ADDRESS = EXCLUDED.ADDRESS, NAME = EXCLUDED.NAME, DESCRIPTION = EXCLUDED.DESCRIPTION, LOGO_URL = EXCLUDED.LOGO_URL, BANNER_URL = EXCLUDED.BANNER_URL, CREATOR_ADDRESS = EXCLUDED.CREATOR_ADDRESS, CHAIN = EXCLUDED.CHAIN, CREATED_AT = EXCLUDED.CREATED_AT, LAST_UPDATED = EXCLUDED.LAST_UPDATED;`)
 	checkNoErr(err)
 
-	return &SplitRepository{db: db, queries: queries, getByIDStmt: getByIDStmt, getByAddressStmt: getByAddressStmt, upsertStmt: upsertStmt, getByRecipientStmt: getByRecipientStmt, getRecipientStmt: getRecipientStmt, getByRecipientPaginateStmt: getByRecipientPaginateStmt, getAssetStmt: getAssetStmt}
+	return &SplitRepository{db: db, queries: queries, createStmt: createStmt, getByIDStmt: getByIDStmt, getByAddressStmt: getByAddressStmt, upsertStmt: upsertStmt, getByRecipientStmt: getByRecipientStmt, getRecipientStmt: getRecipientStmt, getByRecipientPaginateStmt: getByRecipientPaginateStmt, getAssetStmt: getAssetStmt}
+}
+
+// Create creates a new split in the database
+func (s *SplitRepository) Create(pCtx context.Context, pSplit persist.SplitDB) (persist.DBID, error) {
+	var id persist.DBID
+	err := s.createStmt.QueryRowContext(pCtx, persist.GenerateID(), pSplit.Version, pSplit.Address, pSplit.Name, pSplit.Description, pSplit.LogoURL, pSplit.BannerURL, pSplit.CreatorAddress, pSplit.Chain, pq.Array(pSplit.Recipients), pq.Array(pSplit.Assets)).Scan(&id)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
 }
 
 // GetByID returns a split by its ID
