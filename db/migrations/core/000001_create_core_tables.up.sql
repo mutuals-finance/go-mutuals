@@ -71,37 +71,27 @@ CREATE UNIQUE INDEX split_address_chain_idx ON splits USING btree (address, chai
 
 CREATE TABLE IF NOT EXISTS tokens
 (
-    id                      character varying(255) PRIMARY KEY NOT NULL,
-    deleted                 boolean                            NOT NULL DEFAULT false,
-    version                 integer                                     DEFAULT 0,
-    created_at              timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated            timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    name                    character varying,
-    description             character varying,
-    collectors_note         character varying,
-    media                   jsonb,
-    token_uri               character varying,
-    token_type              character varying,
-    token_id                character varying,
-    quantity                character varying,
-    ownership_history       jsonb[],
-    token_metadata          jsonb,
-    external_url            character varying,
-    block_number            bigint,
-    owner_user_id           character varying(255),
-    owned_by_wallets        character varying(255)[]           NOT NULL,
-    chain                   integer,
-    address                 character varying(255),
-    is_user_marked_spam     boolean,
-    is_provider_marked_spam boolean,
-    last_synced             timestamp with time zone           NOT NULL DEFAULT now()
+    id               character varying(255) PRIMARY KEY NOT NULL,
+    deleted          boolean                            NOT NULL DEFAULT false,
+    version          integer                                     DEFAULT 0,
+    created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    name             character varying,
+    symbol           character varying,
+    logo             character varying,
+    token_type       character varying,
+    block_number     bigint,
+    chain            integer,
+    contract_address character varying(255),
+    is_spam          boolean,
+    last_synced      timestamp with time zone           NOT NULL DEFAULT now()
 );
 
 -- TODO add relation token -> split?
 
 CREATE INDEX block_number_idx ON tokens USING btree (block_number);
 
-CREATE INDEX token_id_address_chain_idx ON tokens USING btree (token_id, address, chain);
+CREATE INDEX contract_address_chain_idx ON tokens USING btree (contract_address, chain);
 
 /*
 TODO create relevance for split ie according to volume
