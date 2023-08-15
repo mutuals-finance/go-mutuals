@@ -173,9 +173,7 @@ type Token struct {
 	Chain           Chain           `json:"chain"`
 	Name            NullString      `json:"name"`
 	Symbol          NullString      `json:"symbol"`
-	Decimals        NullInt32       `json:"decimals"`
 	Logo            Logo            `json:"logo"`
-	TotalSupply     NullInt32       `json:"total_supply"`
 	ContractAddress EthereumAddress `json:"contract_address"`
 	BlockNumber     BlockNumber     `json:"block_number"`
 	IsSpam          *bool           `json:"is_spam"`
