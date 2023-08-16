@@ -54,7 +54,6 @@ func (r *EventRepository) AddTokenEvent(ctx context.Context, event db.Event) (*d
 		GroupID:        event.GroupID,
 		Caption:        event.Caption,
 		SplitID:        event.SplitID,
-		CollectionID:   event.CollectionID,
 	})
 	return &event, err
 }

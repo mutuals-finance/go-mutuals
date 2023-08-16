@@ -318,7 +318,8 @@ func (h notificationHandler) findOwnerForNotificationFromEvent(event db.Event) (
 		if err != nil {
 			return "", err
 		}
-		return split.OwnerUserID, nil
+		// TODO change return value (split id is not the owner)
+		return split.ID, nil
 	case persist.ResourceTypeUser:
 		return event.SubjectID, nil
 	}

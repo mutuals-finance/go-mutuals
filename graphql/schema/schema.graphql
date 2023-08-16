@@ -411,7 +411,7 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 
   notificationSettings: NotificationSettings @goField(forceResolver: true)
 
-  userExperiences: [UserExperience!] @goField(forceResolver: true)
+#  TODO userExperiences: [UserExperience!] @goField(forceResolver: true)
 }
 
 type NotificationSettings {

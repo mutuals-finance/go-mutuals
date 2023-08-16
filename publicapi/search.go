@@ -1,11 +1,8 @@
 package publicapi
 
 import (
-	"context"
-	"fmt"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
-	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -18,30 +15,8 @@ type SearchAPI struct {
 	validator *validator.Validate
 }
 
-// SearchUsers searches for users with the given query, limit, and optional weights. Weights may be nil to accept default values.
-// Weighting will probably be removed after we settle on defaults that feel correct!
-func (api SearchAPI) SearchUsers(ctx context.Context, query string, limit int, usernameWeight float32, bioWeight float32) ([]db.User, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"query":          {query, fmt.Sprintf("required,min=1,max=%d", maxSearchQueryLength)},
-		"limit":          {limit, fmt.Sprintf("min=1,max=%d", maxSearchResults)},
-		"usernameWeight": {usernameWeight, "gte=0.0,lte=1.0"},
-		"bioWeight":      {bioWeight, "gte=0.0,lte=1.0"},
-	}); err != nil {
-		return nil, err
-	}
-
-	// Sanitize
-	query = validate.SanitizationPolicy.Sanitize(query)
-
-	return api.queries.SearchUsers(ctx, db.SearchUsersParams{
-		Limit:          int32(limit),
-		Query:          query,
-		UsernameWeight: usernameWeight,
-		BioWeight:      bioWeight,
-	})
-}
-
+/*
+TODO custom search
 // SearchSplits searches for splits with the given query, limit, and optional weights. Weights may be nil to accept default values.
 // Weighting will probably be removed after we settle on defaults that feel correct!
 func (api SearchAPI) SearchSplits(ctx context.Context, query string, limit int, nameWeight float32, descriptionWeight float32) ([]db.Split, error) {
@@ -66,6 +41,7 @@ func (api SearchAPI) SearchSplits(ctx context.Context, query string, limit int, 
 	})
 }
 
+
 // SearchContracts searches for contracts with the given query, limit, and optional weights. Weights may be nil to accept default values.
 // Weighting will probably be removed after we settle on defaults that feel correct!
 func (api SearchAPI) SearchContracts(ctx context.Context, query string, limit int, nameWeight float32, descriptionWeight float32) ([]db.Contract, error) {
@@ -89,3 +65,4 @@ func (api SearchAPI) SearchContracts(ctx context.Context, query string, limit in
 		DescriptionWeight: descriptionWeight,
 	})
 }
+*/

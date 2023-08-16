@@ -28,7 +28,6 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/go-playground/validator/v10"
 	shell "github.com/ipfs/go-ipfs-api"
-	"github.com/jinzhu/copier"
 	"roci.dev/fracdex"
 )
 
@@ -204,13 +203,12 @@ func (api UserAPI) GetUsersWithTrait(ctx context.Context, trait string) ([]db.Us
 }
 
 func (api *UserAPI) GetUserRolesByUserID(ctx context.Context, userID persist.DBID) ([]persist.Role, error) {
-	address, tokenIDs := parseAddressTokens(env.GetString("PREMIUM_CONTRACT_ADDRESS"))
+	_, tokenIDs := parseAddressTokens(env.GetString("PREMIUM_CONTRACT_ADDRESS"))
 	return api.queries.GetUserRolesByUserId(ctx, db.GetUserRolesByUserIdParams{
 		UserID:                userID,
-		MembershipAddress:     persist.Address(address),
 		MembershipTokenIds:    tokenIDs,
 		GrantedMembershipRole: persist.RoleEarlyAccess, // Role granted if user carries a matching token
-		Chain:                 persist.ChainETH,
+		// Chain:                 persist.ChainETH,
 	})
 }
 
@@ -380,11 +378,6 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 		return "", "", err
 	}
 
-	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedSplitParams{SplitID: splitID, UserID: userID})
-	if err != nil {
-		return "", "", err
-	}
-
 	if email != nil && *email != "" {
 		// TODO email validation ahead of time
 		err = emails.RequestVerificationEmail(ctx, userID)
@@ -457,28 +450,6 @@ func (api UserAPI) UpdateUserPrimaryWallet(ctx context.Context, primaryWalletID 
 	}
 
 	err = api.queries.UpdateUserPrimaryWallet(ctx, db.UpdateUserPrimaryWalletParams{WalletID: primaryWalletID, UserID: userID})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (api UserAPI) UpdateFeaturedSplit(ctx context.Context, splitID persist.DBID) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": {splitID, "required"},
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	// query will validate that the split belongs to the user
-	err = api.queries.UpdateUserFeaturedSplit(ctx, db.UpdateUserFeaturedSplitParams{SplitID: splitID, UserID: userID})
 	if err != nil {
 		return err
 	}
@@ -564,218 +535,6 @@ func (api UserAPI) UpdateUserNotificationSettings(ctx context.Context, notificat
 	return api.queries.UpdateNotificationSettingsByID(ctx, db.UpdateNotificationSettingsByIDParams{ID: userID, NotificationSettings: notificationSettings})
 }
 
-func (api UserAPI) GetMembershipByMembershipId(ctx context.Context, membershipID persist.DBID) (*db.Membership, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"membershipID": {membershipID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	membership, err := api.loaders.MembershipByMembershipID.Load(membershipID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &membership, nil
-}
-
-func (api UserAPI) GetFollowersByUserId(ctx context.Context, userID persist.DBID) ([]db.User, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": {userID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	if _, err := api.GetUserById(ctx, userID); err != nil {
-		return nil, err
-	}
-
-	followers, err := api.loaders.FollowersByUserID.Load(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return followers, nil
-}
-
-func (api UserAPI) GetFollowingByUserId(ctx context.Context, userID persist.DBID) ([]db.User, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": {userID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	if _, err := api.GetUserById(ctx, userID); err != nil {
-		return nil, err
-	}
-
-	following, err := api.loaders.FollowingByUserID.Load(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return following, nil
-}
-
-func (api UserAPI) SharedFollowers(ctx context.Context, userID persist.DBID, before, after *string, first, last *int) ([]db.User, PageInfo, error) {
-	// Validate
-	curUserID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": {userID, "required"},
-	}); err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	if err := validatePaginationParams(api.validator, first, last); err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	queryFunc := func(params timeIDPagingParams) ([]any, error) {
-		keys, err := api.loaders.SharedFollowersByUserIDs.Load(db.GetSharedFollowersBatchPaginateParams{
-			Follower:      curUserID,
-			Followee:      userID,
-			CurBeforeTime: params.CursorBeforeTime,
-			CurBeforeID:   params.CursorBeforeID,
-			CurAfterTime:  params.CursorAfterTime,
-			CurAfterID:    params.CursorAfterID,
-			PagingForward: params.PagingForward,
-			Limit:         params.Limit,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		results := make([]any, len(keys))
-		for i, key := range keys {
-			results[i] = key
-		}
-
-		return results, nil
-	}
-
-	countFunc := func() (int, error) {
-		total, err := api.queries.CountSharedFollows(ctx, db.CountSharedFollowsParams{
-			Follower: curUserID,
-			Followee: userID,
-		})
-		return int(total), err
-	}
-
-	cursorFunc := func(i any) (time.Time, persist.DBID, error) {
-		if row, ok := i.(db.GetSharedFollowersBatchPaginateRow); ok {
-			return row.FollowedOn, row.ID, nil
-		}
-		return time.Time{}, "", fmt.Errorf("node is not a db.GetSharedFollowersBatchPaginateRow")
-	}
-
-	paginator := sharedFollowersPaginator{
-		timeIDPaginator{
-			QueryFunc:  queryFunc,
-			CursorFunc: cursorFunc,
-			CountFunc:  countFunc,
-		},
-	}
-
-	results, pageInfo, err := paginator.paginate(before, after, first, last)
-
-	users := make([]db.User, len(results))
-	for i, result := range results {
-		if row, ok := result.(db.GetSharedFollowersBatchPaginateRow); ok {
-			var u db.User
-			copier.Copy(&u, &row)
-			users[i] = u
-		}
-	}
-
-	return users, pageInfo, nil
-}
-
-func (api UserAPI) SharedCommunities(ctx context.Context, userID persist.DBID, before, after *string, first, last *int) ([]db.Contract, PageInfo, error) {
-	// Validate
-	curUserID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": {userID, "required"},
-	}); err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	if err := validatePaginationParams(api.validator, first, last); err != nil {
-		return nil, PageInfo{}, err
-	}
-
-	queryFunc := func(params sharedContractsPaginatorParams) ([]any, error) {
-		keys, err := api.loaders.SharedContractsByUserIDs.Load(db.GetSharedContractsBatchPaginateParams{
-			UserAID:                   curUserID,
-			UserBID:                   userID,
-			CurBeforeDisplayedByUserA: params.CursorBeforeDisplayedByUserA,
-			CurBeforeDisplayedByUserB: params.CursorBeforeDisplayedByUserB,
-			CurBeforeOwnedCount:       int32(params.CursorBeforeOwnedCount),
-			CurBeforeContractID:       params.CursorBeforeContractID,
-			CurAfterDisplayedByUserA:  params.CursorAfterDisplayedByUserA,
-			CurAfterDisplayedByUserB:  params.CursorAfterDisplayedByUserB,
-			CurAfterOwnedCount:        int32(params.CursorAfterOwnedCount),
-			CurAfterContractID:        params.CursorAfterContractID,
-			PagingForward:             params.PagingForward,
-			Limit:                     params.Limit,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		results := make([]any, len(keys))
-		for i, key := range keys {
-			results[i] = key
-		}
-
-		return results, nil
-	}
-
-	countFunc := func() (int, error) {
-		total, err := api.queries.CountSharedContracts(ctx, db.CountSharedContractsParams{
-			UserAID: curUserID,
-			UserBID: userID,
-		})
-		return int(total), err
-	}
-
-	cursorFunc := func(i any) (bool, bool, int, persist.DBID, error) {
-		if row, ok := i.(db.GetSharedContractsBatchPaginateRow); ok {
-			return row.DisplayedByUserA, row.DisplayedByUserB, int(row.OwnedCount), row.ID, nil
-		}
-		return false, false, 0, "", fmt.Errorf("node is not a db.GetSharedContractsBatchPaginateRow")
-	}
-
-	paginator := sharedContractsPaginator{
-		QueryFunc:  queryFunc,
-		CursorFunc: cursorFunc,
-		CountFunc:  countFunc,
-	}
-
-	results, pageInfo, err := paginator.paginate(before, after, first, last)
-
-	contracts := make([]db.Contract, len(results))
-	for i, result := range results {
-		if row, ok := result.(db.GetSharedContractsBatchPaginateRow); ok {
-			var c db.Contract
-			copier.Copy(&c, &row)
-			contracts[i] = c
-		}
-	}
-
-	return contracts, pageInfo, nil
-}
-
 func (api UserAPI) FollowUser(ctx context.Context, userID persist.DBID) error {
 	// Validate
 	curUserID, err := getAuthenticatedUserID(ctx)
@@ -801,46 +560,6 @@ func (api UserAPI) FollowUser(ctx context.Context, userID persist.DBID) error {
 	return nil
 }
 
-func (api UserAPI) FollowAllSocialConnections(ctx context.Context, socialType persist.SocialProvider) error {
-	// Validate
-	curUserID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"socialType": {socialType, "required"},
-	}); err != nil {
-		return err
-	}
-
-	var userIDs []string
-	switch socialType {
-	case persist.SocialProviderTwitter:
-		onlyUnfollowing := true
-		conns, err := For(ctx).Social.GetConnections(ctx, socialType, &onlyUnfollowing)
-		if err != nil {
-			return err
-		}
-		userIDs, _ = util.Map(conns, func(s model.SocialConnection) (string, error) {
-			return s.UserID.String(), nil
-		})
-
-	default:
-		return fmt.Errorf("invalid social type: %s", socialType)
-	}
-
-	newIDs, _ := util.Map(userIDs, func(id string) (string, error) {
-		return persist.GenerateID().String(), nil
-	})
-
-	return api.queries.AddManyFollows(ctx, db.AddManyFollowsParams{
-		Ids:       newIDs,
-		Follower:  curUserID,
-		Followees: userIDs,
-	})
-}
-
 func (api UserAPI) UnfollowUser(ctx context.Context, userID persist.DBID) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -857,6 +576,8 @@ func (api UserAPI) UnfollowUser(ctx context.Context, userID persist.DBID) error 
 	return api.repos.UserRepository.RemoveFollower(ctx, curUserID, userID)
 }
 
+/*
+TODO check if UserExperiences is assigned in sqlc queries (should be?)
 func (api UserAPI) GetUserExperiences(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -884,6 +605,7 @@ func (api UserAPI) GetUserExperiences(ctx context.Context, userID persist.DBID) 
 	}
 	return result, nil
 }
+*/
 
 func (api UserAPI) GetSocials(ctx context.Context, userID persist.DBID) (*model.SocialAccounts, error) {
 	// Validate

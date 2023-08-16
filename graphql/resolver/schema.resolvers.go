@@ -299,16 +299,7 @@ func (r *mutationResolver) CreateSplit(ctx context.Context, input model.CreateSp
 
 // UpdateSplitHidden is the resolver for the updateSplitHidden field.
 func (r *mutationResolver) UpdateSplitHidden(ctx context.Context, input model.UpdateSplitHiddenInput) (model.UpdateSplitHiddenPayloadOrError, error) {
-	split, err := publicapi.For(ctx).Split.UpdateSplitHidden(ctx, input.ID, input.Hidden)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UpdateSplitHiddenPayload{
-		Split: splitToModel(ctx, split),
-	}
-
-	return output, nil
+	panic(fmt.Errorf("not implemented: UpdateSplitHidden - updateSplitHidden"))
 }
 
 // DeleteSplit is the resolver for the deleteSplit field.
@@ -323,21 +314,7 @@ func (r *mutationResolver) UpdateSplitOrder(ctx context.Context, input model.Upd
 
 // UpdateSplitInfo is the resolver for the updateSplitInfo field.
 func (r *mutationResolver) UpdateSplitInfo(ctx context.Context, input model.UpdateSplitInfoInput) (model.UpdateSplitInfoPayloadOrError, error) {
-	err := publicapi.For(ctx).Split.UpdateSplitInfo(ctx, input.ID, input.Name, input.Description)
-	if err != nil {
-		return nil, err
-	}
-
-	split, err := resolveSplitBySplitID(ctx, input.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UpdateSplitInfoPayload{
-		Split: split,
-	}
-
-	return output, nil
+	panic(fmt.Errorf("not implemented: UpdateSplitInfo - updateSplitInfo"))
 }
 
 // ClearAllNotifications is the resolver for the clearAllNotifications field.
@@ -541,44 +518,12 @@ func (r *queryResolver) ViewerSplitByID(ctx context.Context, id persist.DBID) (m
 
 // SearchUsers is the resolver for the searchUsers field.
 func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error) {
-	limitParam := util.GetOptionalValue(limit, 100)
-	usernameWeightParam := util.GetOptionalValue(usernameWeight, 0.4)
-	bioWeightParam := util.GetOptionalValue(bioWeight, 0.2)
-
-	users, err := publicapi.For(ctx).Search.SearchUsers(ctx, query, limitParam, float32(usernameWeightParam), float32(bioWeightParam))
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]*model.UserSearchResult, len(users))
-	for i, user := range users {
-		results[i] = &model.UserSearchResult{
-			User: userToModel(ctx, user),
-		}
-	}
-
-	return model.SearchUsersPayload{Results: results}, nil
+	panic(fmt.Errorf("not implemented: SearchUsers - searchUsers"))
 }
 
 // SearchSplits is the resolver for the searchSplits field.
 func (r *queryResolver) SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error) {
-	limitParam := util.GetOptionalValue(limit, 100)
-	nameWeightParam := util.GetOptionalValue(nameWeight, 0.4)
-	descriptionWeightParam := util.GetOptionalValue(descriptionWeight, 0.2)
-
-	splits, err := publicapi.For(ctx).Search.SearchSplits(ctx, query, limitParam, float32(nameWeightParam), float32(descriptionWeightParam))
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]*model.SplitSearchResult, len(splits))
-	for i, split := range splits {
-		results[i] = &model.SplitSearchResult{
-			Split: splitToModel(ctx, split),
-		}
-	}
-
-	return model.SearchSplitsPayload{Results: results}, nil
+	panic(fmt.Errorf("not implemented: SearchSplits - searchSplits"))
 }
 
 // UsersByRole is the resolver for the usersByRole field.
@@ -703,7 +648,7 @@ func (r *splitFiUserResolver) PrimaryWallet(ctx context.Context, obj *model.Spli
 
 // Splits is the resolver for the splits field.
 func (r *splitFiUserResolver) Splits(ctx context.Context, obj *model.SplitFiUser) ([]*model.Split, error) {
-	return resolveSplitsByUserID(ctx, obj.Dbid)
+	panic(fmt.Errorf("not implemented: Splits - splits"))
 }
 
 // SplitsByChain is the resolver for the splitsByChain field.
@@ -734,21 +679,25 @@ func (r *viewerResolver) SocialAccounts(ctx context.Context, obj *model.Viewer) 
 
 // ViewerSplits is the resolver for the viewerSplits field.
 func (r *viewerResolver) ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error) {
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	splits, err := resolveSplitsByUserID(ctx, userID)
+	panic(fmt.Errorf("not implemented: ViewerSplits -- viewerSplits"))
+	/*
+		TODO
+			userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+			splits, err := resolveSplitsByUserID(ctx, userID)
 
-	if err != nil {
-		return nil, err
-	}
+			if err != nil {
+				return nil, err
+			}
 
-	output := make([]*model.ViewerSplit, len(splits))
-	for i, split := range splits {
-		output[i] = &model.ViewerSplit{
-			Split: split,
-		}
-	}
+			output := make([]*model.ViewerSplit, len(splits))
+			for i, split := range splits {
+				output[i] = &model.ViewerSplit{
+					Split: split,
+				}
+			}
 
-	return output, nil
+			return output, nil
+	*/
 }
 
 // Email is the resolver for the email field.
@@ -764,11 +713,6 @@ func (r *viewerResolver) Notifications(ctx context.Context, obj *model.Viewer, b
 // NotificationSettings is the resolver for the notificationSettings field.
 func (r *viewerResolver) NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error) {
 	return resolveViewerNotificationSettings(ctx)
-}
-
-// UserExperiences is the resolver for the userExperiences field.
-func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer) ([]*model.UserExperience, error) {
-	return resolveViewerExperiencesByUserID(ctx, obj.UserId)
 }
 
 // Splits is the resolver for the splits field.

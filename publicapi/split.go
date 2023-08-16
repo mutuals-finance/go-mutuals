@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"net"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
@@ -97,40 +96,21 @@ func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID
 		return nil, err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
-
-	if err != nil {
-		return nil, persist.ErrSplitNotFound{ID: splitID}
-	}
+	//userID, err := getAuthenticatedUserID(ctx)
+	//if err != nil {
+	//	return nil, persist.ErrSplitNotFound{ID: splitID}
+	//}
 
 	split, err := api.loaders.SplitBySplitID.Load(splitID)
 	if err != nil {
 		return nil, err
 	}
 
-	if userID != split.OwnerUserID {
-		return nil, persist.ErrSplitNotFound{ID: splitID}
-	}
-
 	return &split, nil
 }
 
-func (api SplitAPI) GetSplitsByUserId(ctx context.Context, userID persist.DBID) ([]db.Split, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": {userID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	splits, err := api.loaders.SplitsByUserID.Load(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return splits, nil
-}
-
+/*
+TODO add missing methods
 func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, name, description *string) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -159,7 +139,6 @@ func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, n
 	}
 	return nil
 }
-
 func (api SplitAPI) UpdateSplitHidden(ctx context.Context, splitID persist.DBID, hidden bool) (coredb.Split, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -178,6 +157,7 @@ func (api SplitAPI) UpdateSplitHidden(ctx context.Context, splitID persist.DBID,
 
 	return split, nil
 }
+*/
 
 func getExternalID(ctx context.Context) *string {
 	gc := util.GinContextFromContext(ctx)

@@ -170,6 +170,8 @@ func resolveSplitFiUserByUsername(ctx context.Context, username string) (*model.
 	return userToModel(ctx, *user), nil
 }
 
+/*
+TODO
 func resolveSplitsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Split, error) {
 	splits, err := publicapi.For(ctx).Split.GetSplitsByUserId(ctx, userID)
 
@@ -183,7 +185,7 @@ func resolveSplitsByUserID(ctx context.Context, userID persist.DBID) ([]*model.S
 	}
 
 	return output, nil
-}
+}*/
 
 func resolveSplitBySplitID(ctx context.Context, splitID persist.DBID) (*model.Split, error) {
 	dbSplit, err := publicapi.For(ctx).Split.GetSplitById(ctx, splitID)
@@ -212,9 +214,12 @@ func resolveViewerSplitBySplitID(ctx context.Context, splitID persist.DBID) (*mo
 	}, nil
 }
 
+/*
+TODO
 func resolveViewerExperiencesByUserID(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {
 	return publicapi.For(ctx).User.GetUserExperiences(ctx, userID)
 }
+*/
 
 func resolveViewerSocialsByUserID(ctx context.Context, userID persist.DBID) (*model.SocialAccounts, error) {
 	return publicapi.For(ctx).User.GetSocials(ctx, userID)

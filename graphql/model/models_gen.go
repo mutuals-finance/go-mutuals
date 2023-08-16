@@ -1137,7 +1137,6 @@ type Viewer struct {
 	// Seen notifications come after unseen notifications
 	Notifications        *NotificationsConnection `json:"notifications"`
 	NotificationSettings *NotificationSettings    `json:"notificationSettings"`
-	UserExperiences      []*UserExperience        `json:"userExperiences"`
 }
 
 func (Viewer) IsNode()          {}

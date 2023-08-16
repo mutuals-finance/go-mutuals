@@ -14,16 +14,11 @@ const (
 	ResourceTypeToken
 	ResourceTypeCollection
 	ResourceTypeSplit
-	ActionUserCreated                     Action = "UserCreated"
-	ActionUserFollowedUsers               Action = "UserFollowedUsers"
-	ActionCollectorsNoteAddedToToken      Action = "CollectorsNoteAddedToToken"
-	ActionCollectionCreated               Action = "CollectionCreated"
-	ActionCollectorsNoteAddedToCollection Action = "CollectorsNoteAddedToCollection"
-	ActionTokensAddedToCollection         Action = "TokensAddedToCollection"
-	ActionViewedSplit                     Action = "ViewedSplit"
-	ActionCollectionUpdated               Action = "CollectionUpdated"
-	ActionSplitUpdated                    Action = "SplitUpdated"
-	ActionSplitInfoUpdated                Action = "SplitInfoUpdated"
+	ActionUserCreated       Action = "UserCreated"
+	ActionUserFollowedUsers Action = "UserFollowedUsers"
+	ActionCollectionCreated Action = "CollectionCreated"
+	ActionViewedSplit       Action = "ViewedSplit"
+	ActionSplitUpdated      Action = "SplitUpdated"
 )
 
 type EventData struct {

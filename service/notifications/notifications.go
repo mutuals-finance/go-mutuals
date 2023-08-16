@@ -416,9 +416,10 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 }
 
 func addNotification(ctx context.Context, notif db.Notification, queries *db.Queries) (db.Notification, error) {
-	id := persist.GenerateID()
+	//id := persist.GenerateID()
 	switch notif.Action {
-	case persist.ActionUserFollowedUsers:
+	/*	TODO add custom notifs
+		case persist.ActionUserFollowedUsers:
 		return queries.CreateFollowNotification(ctx, db.CreateFollowNotificationParams{
 			ID:       id,
 			OwnerID:  notif.OwnerID,
@@ -426,16 +427,7 @@ func addNotification(ctx context.Context, notif db.Notification, queries *db.Que
 			Data:     notif.Data,
 			EventIds: notif.EventIds,
 		})
-	case persist.ActionViewedSplit:
-		return queries.CreateViewSplitNotification(ctx, db.CreateViewSplitNotificationParams{
-			ID:       id,
-			OwnerID:  notif.OwnerID,
-			Action:   notif.Action,
-			Data:     notif.Data,
-			EventIds: notif.EventIds,
-			SplitID:  notif.SplitID,
-		})
-
+	*/
 	default:
 		return db.Notification{}, fmt.Errorf("unknown notification action: %s", notif.Action)
 	}

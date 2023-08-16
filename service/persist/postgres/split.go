@@ -211,13 +211,6 @@ func (s *SplitRepository) Upsert(pCtx context.Context, pSplit persist.SplitDB) e
 }
 */
 
-func (s *SplitRepository) GetPreviewsURLsByUserID(pCtx context.Context, pUserID persist.DBID, limit int) ([]string, error) {
-	return s.queries.SplitRepoGetPreviewsForUserID(pCtx, db.SplitRepoGetPreviewsForUserIDParams{
-		OwnerUserID: pUserID,
-		Limit:       int32(limit),
-	})
-}
-
 func getReceipientsAndAssets(pCtx context.Context, s *SplitRepository, recipientIDs, assetIDs []persist.DBID) ([]persist.Recipient, []persist.Asset, error) {
 	recipients := make([]persist.Recipient, len(recipientIDs))
 	assets := make([]persist.Asset, len(assetIDs))

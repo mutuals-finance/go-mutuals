@@ -58,10 +58,7 @@ require (
 	roci.dev/fracdex v0.0.0-20220111221836-dbd126571100
 )
 
-require (
-	github.com/jinzhu/copier v0.3.5
-	go.mozilla.org/sops/v3 v3.7.3
-)
+require go.mozilla.org/sops/v3 v3.7.3
 
 require (
 	cloud.google.com/go v0.105.0 // indirect

@@ -99,21 +99,21 @@ func (api SocialAPI) GetConnectionsPaginate(ctx context.Context, socialProvider 
 			return m.ProfileImage, nil
 		})
 		results, err := api.queries.GetSocialConnectionsPaginate(ctx, db.GetSocialConnectionsPaginateParams{
-			Limit:               params.Limit,
-			UserID:              userID,
+			Limit: params.Limit,
+			// UserID:              userID,
 			SocialIds:           socialIDs,
 			SocialUsernames:     usernames,
 			SocialDisplaynames:  displaynames,
 			Social:              socialProvider.String(),
 			SocialProfileImages: profileImages,
 			OnlyUnfollowing:     ouf,
-			CurBeforeFollowing:  params.CursorBeforeBool,
-			CurBeforeTime:       params.CursorBeforeTime,
-			CurBeforeID:         params.CursorBeforeID,
-			CurAfterFollowing:   params.CursorAfterBool,
-			CurAfterTime:        params.CursorAfterTime,
-			CurAfterID:          params.CursorAfterID,
-			PagingForward:       params.PagingForward,
+			//CurBeforeFollowing:  params.CursorBeforeBool,
+			//CurBeforeTime:       params.CursorBeforeTime,
+			//CurBeforeID:         params.CursorBeforeID,
+			//CurAfterFollowing:   params.CursorAfterBool,
+			//CurAfterTime:        params.CursorAfterTime,
+			//CurAfterID:          params.CursorAfterID,
+			PagingForward: params.PagingForward,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error getting social connections: %w", err)
@@ -142,7 +142,7 @@ func (api SocialAPI) GetConnectionsPaginate(ctx context.Context, socialProvider 
 			SocialIds:       socialIDs,
 			Social:          socialProvider.String(),
 			OnlyUnfollowing: ouf,
-			UserID:          userID,
+			//UserID:          userID,
 		})
 		if err != nil {
 			return 0, fmt.Errorf("error counting social connections: %w", err)
@@ -232,7 +232,7 @@ func (api SocialAPI) GetConnections(ctx context.Context, socialProvider persist.
 		})
 		results, err := api.queries.GetSocialConnections(ctx, db.GetSocialConnectionsParams{
 
-			UserID:              userID,
+			//UserID:              userID,
 			SocialIds:           socialIDs,
 			SocialUsernames:     usernames,
 			SocialDisplaynames:  displaynames,
