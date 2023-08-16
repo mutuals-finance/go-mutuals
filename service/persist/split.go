@@ -23,20 +23,20 @@ type Recipient struct {
 // a join relationship in the database
 // This struct will only be used in database operations
 type SplitDB struct {
-	Version      NullInt32       `json:"version"` // schema version for this model
-	ID           DBID            `json:"id" binding:"required"`
-	CreationTime CreationTime    `json:"created_at"`
-	Deleted      NullBool        `json:"-"`
-	LastUpdated  LastUpdatedTime `json:"last_updated"`
-
+	ID             DBID            `json:"id" binding:"required"`
+	Version        NullInt32       `json:"version"` // schema version for this model
+	CreationTime   CreationTime    `json:"created_at"`
+	LastUpdated    LastUpdatedTime `json:"last_updated"`
+	Deleted        NullBool        `json:"-"`
 	Chain          Chain           `json:"chain"`
 	Address        Address         `json:"address"`
 	Name           sql.NullString  `json:"name"`
 	Description    NullString      `json:"description"`
 	CreatorAddress EthereumAddress `json:"creator_address"`
-	Recipients     []DBID          `json:"recipients"`
 	LogoURL        NullString      `json:"logo_url"`
 	BannerURL      NullString      `json:"banner_url"`
+	BadgeURL       NullString      `json:"badge_url"`
+	Recipients     []DBID          `json:"recipients"`
 	Assets         []DBID          `json:"assets"`
 }
 
@@ -45,22 +45,21 @@ type SplitDB struct {
 // This struct will be decoded from a find database operation and used throughout
 // the application where SplitDB is not used
 type Split struct {
-	Version      NullInt32       `json:"version"` // schema version for this model
-	ID           DBID            `json:"id" binding:"required"`
-	CreationTime CreationTime    `json:"created_at"`
-	Deleted      NullBool        `json:"-"`
-	LastUpdated  LastUpdatedTime `json:"last_updated"`
-
-	Chain          Chain          `json:"chain"`
-	Address        Address        `json:"address"`
-	Name           sql.NullString `json:"name"`
-	Description    NullString     `json:"description"`
-	CreatorAddress Address        `json:"creator_address"`
-	Recipients     []Recipient    `json:"recipients"`
-	LogoURL        NullString     `json:"profile_image_url"`
-	BannerURL      NullString     `json:"profile_banner_url"`
-	BadgeURL       NullString     `json:"badge_url"`
-	Assets         []TokenBalance `json:"assets"`
+	ID             DBID            `json:"id" binding:"required"`
+	Version        NullInt32       `json:"version"` // schema version for this model
+	CreationTime   CreationTime    `json:"created_at"`
+	LastUpdated    LastUpdatedTime `json:"last_updated"`
+	Deleted        NullBool        `json:"-"`
+	Chain          Chain           `json:"chain"`
+	Address        Address         `json:"address"`
+	Name           sql.NullString  `json:"name"`
+	Description    NullString      `json:"description"`
+	CreatorAddress EthereumAddress `json:"creator_address"`
+	LogoURL        NullString      `json:"logo_url"`
+	BannerURL      NullString      `json:"banner_url"`
+	BadgeURL       NullString      `json:"badge_url"`
+	Recipients     []Recipient     `json:"recipients"`
+	Assets         []Asset         `json:"assets"`
 }
 
 // SplitTokenUpdateInput represents a struct that is used to update a splits list of collections in the databse

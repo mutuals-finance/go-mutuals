@@ -43,19 +43,34 @@ CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
 CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = false);
 
+CREATE TABLE IF NOT EXISTS recipients
+(
+    id           character varying(255) PRIMARY KEY,
+    version      integer                           DEFAULT 0,
+    last_updated timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at   timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted      boolean                  NOT NULL DEFAULT false,
+    split_id     character varying(255)   NOT NULL REFERENCES splits ON DELETE CASCADE,
+    address      character varying(255),
+    ownership    integer                  NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS splits
 (
-    id                      character varying(255) PRIMARY KEY NOT NULL,
-    deleted                 boolean                            NOT NULL DEFAULT false,
-    last_updated            timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at              timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    version                 integer                                     DEFAULT 0,
-    name                    character varying                  NOT NULL DEFAULT ''::character varying,
-    description             character varying                  NOT NULL DEFAULT ''::character varying,
-    address                 character varying(255),
+    id                      character varying(255) PRIMARY KEY,
+    version                 integer                           DEFAULT 0,
+    last_updated            timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at              timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted                 boolean                  NOT NULL DEFAULT false,
     chain                   integer,
-    hidden                  boolean                            NOT NULL DEFAULT false,
+    address                 character varying(255),
+    name                    character varying        NOT NULL DEFAULT ''::character varying,
+    description             character varying        NOT NULL DEFAULT ''::character varying,
+    creator_address         character varying(255),
+    logo_url                character varying,
+    banner_url              character varying,
     badge_url               character varying,
+    total_ownership         integer                  NOT NULL,
     fts_name                tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED,
     fts_description_english tsvector GENERATED ALWAYS AS (to_tsvector('english'::regconfig, (description)::text)) STORED,
 --     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
@@ -82,9 +97,7 @@ CREATE TABLE IF NOT EXISTS tokens
     token_type       character varying,
     block_number     bigint,
     chain            integer,
-    contract_address character varying(255),
-    is_spam          boolean,
-    last_synced      timestamp with time zone           NOT NULL DEFAULT now()
+    contract_address character varying(255)
 );
 
 -- TODO add relation token -> split?
