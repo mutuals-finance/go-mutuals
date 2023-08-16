@@ -10,7 +10,7 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
-// AssetRepository represents a asset repository in the postgres database
+// AssetRepository represents an asset repository in the postgres database
 type AssetRepository struct {
 	db                                 *sql.DB
 	queries                            *db.Queries
@@ -95,7 +95,7 @@ func (a *AssetRepository) GetByOwner(pCtx context.Context, pAddress persist.Ethe
 	assets := make([]persist.Asset, 0, 10)
 	for rows.Next() {
 		asset := persist.Asset{}
-		if err := rows.Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Asset, &asset.BlockNumber, &asset.Token); err != nil {
+		if err := rows.Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Balance, &asset.BlockNumber, &asset.Token); err != nil {
 			return nil, err
 		}
 		assets = append(assets, asset)
@@ -126,7 +126,7 @@ func (a *AssetRepository) GetByToken(pCtx context.Context, pAddress persist.Ethe
 	assets := make([]persist.Asset, 0, 10)
 	for rows.Next() {
 		asset := persist.Asset{}
-		if err := rows.Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Asset, &asset.BlockNumber, &asset.Token); err != nil {
+		if err := rows.Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Balance, &asset.BlockNumber, &asset.Token); err != nil {
 			return nil, err
 		}
 		assets = append(assets, asset)
@@ -143,7 +143,7 @@ func (a *AssetRepository) GetByToken(pCtx context.Context, pAddress persist.Ethe
 // GetByIdentifiers gets a token by its owner address, token address and chain
 func (a *AssetRepository) GetByIdentifiers(pCtx context.Context, pOwnerAddress, pTokenAddress persist.EthereumAddress, pChain persist.Chain) (persist.Asset, error) {
 	var asset persist.Asset
-	err := a.getByIdentifiersStmt.QueryRowContext(pCtx, pOwnerAddress, pTokenAddress, pChain).Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Asset, &asset.BlockNumber, &asset.Token)
+	err := a.getByIdentifiersStmt.QueryRowContext(pCtx, pOwnerAddress, pTokenAddress, pChain).Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Balance, &asset.BlockNumber, &asset.Token)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return asset, persist.ErrAssetNotFoundByIdentifiers{OwnerAddress: pOwnerAddress, TokenAddress: pTokenAddress, Chain: pChain}
@@ -155,7 +155,7 @@ func (a *AssetRepository) GetByIdentifiers(pCtx context.Context, pOwnerAddress, 
 
 // UpsertByAddress upserts the asset with the given owner address and token address
 func (a *AssetRepository) UpsertByIdentifiers(pCtx context.Context, pOwnerAddress, pTokenAddress persist.EthereumAddress, pAsset persist.Asset) error {
-	_, err := a.upsertByIdentifiersStmt.ExecContext(pCtx, persist.GenerateID(), pAsset.Version, pOwnerAddress, pTokenAddress, pAsset.Asset, pAsset.BlockNumber, pAsset.CreationTime, pAsset.LastUpdated)
+	_, err := a.upsertByIdentifiersStmt.ExecContext(pCtx, persist.GenerateID(), pAsset.Version, pOwnerAddress, pTokenAddress, pAsset.Balance, pAsset.BlockNumber, pAsset.CreationTime, pAsset.LastUpdated)
 	if err != nil {
 		return err
 	}

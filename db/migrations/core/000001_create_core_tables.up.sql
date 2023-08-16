@@ -141,6 +141,20 @@ FROM min_count,
 CREATE UNIQUE INDEX contract_relevance_id_idx ON contract_relevance USING btree (id);
 */
 
+CREATE TABLE IF NOT EXISTS assets
+(
+    id            character varying(255) PRIMARY KEY,
+    version       integer                           DEFAULT 0,
+    last_updated  timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at    timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    token_id      character varying(255)   NOT NULL REFERENCES tokens ON DELETE CASCADE,
+    owner_address character varying(255)   NOT NULL,
+    balance       integer                           DEFAULT 0,
+    block_number  bigint
+);
+
+CREATE UNIQUE INDEX asset_owner_address_token_id_idx ON assets USING btree (owner_address, token_id);
+
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (
     user_id           character varying(255) PRIMARY KEY NOT NULL,

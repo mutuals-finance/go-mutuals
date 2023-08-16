@@ -15,13 +15,13 @@ type AssetIdentifiers string
 type Asset struct {
 	ID           DBID            `json:"id" binding:"required"`
 	Version      NullInt32       `json:"version"` // schema version for this model
-	CreationTime CreationTime    `json:"created_at"`
 	LastUpdated  LastUpdatedTime `json:"last_updated"`
+	CreationTime CreationTime    `json:"created_at"`
 	OwnerAddress EthereumAddress `json:"owner_address"`
 	Token        Token           `json:"token"`
-	Asset        NullInt32       `json:"asset"`
+	Balance      NullInt32       `json:"balance"`
 	BlockNumber  BlockNumber     `json:"block_number"`
-	// TODO make asset dependent on chain param
+	// TODO make asset dependent on chain param?
 	// Chain        Chain           `json:"chain"`
 }
 
