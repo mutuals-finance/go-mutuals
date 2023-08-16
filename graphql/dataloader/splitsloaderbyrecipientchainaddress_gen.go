@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
-type TokensLoaderByContractIDSettings interface {
+type SplitsLoaderByRecipientChainAddressSettings interface {
 	getContext() context.Context
 	getWait() time.Duration
 	getMaxBatchOne() int
@@ -23,37 +24,37 @@ type TokensLoaderByContractIDSettings interface {
 	getMutexRegistry() *[]*sync.Mutex
 }
 
-func (l *TokensLoaderByContractID) setContext(ctx context.Context) {
+func (l *SplitsLoaderByRecipientChainAddress) setContext(ctx context.Context) {
 	l.ctx = ctx
 }
 
-func (l *TokensLoaderByContractID) setWait(wait time.Duration) {
+func (l *SplitsLoaderByRecipientChainAddress) setWait(wait time.Duration) {
 	l.wait = wait
 }
 
-func (l *TokensLoaderByContractID) setMaxBatch(maxBatch int) {
+func (l *SplitsLoaderByRecipientChainAddress) setMaxBatch(maxBatch int) {
 	l.maxBatch = maxBatch
 }
 
-func (l *TokensLoaderByContractID) setDisableCaching(disableCaching bool) {
+func (l *SplitsLoaderByRecipientChainAddress) setDisableCaching(disableCaching bool) {
 	l.disableCaching = disableCaching
 }
 
-func (l *TokensLoaderByContractID) setPublishResults(publishResults bool) {
+func (l *SplitsLoaderByRecipientChainAddress) setPublishResults(publishResults bool) {
 	l.publishResults = publishResults
 }
 
-func (l *TokensLoaderByContractID) setPreFetchHook(preFetchHook func(context.Context, string) context.Context) {
+func (l *SplitsLoaderByRecipientChainAddress) setPreFetchHook(preFetchHook func(context.Context, string) context.Context) {
 	l.preFetchHook = preFetchHook
 }
 
-func (l *TokensLoaderByContractID) setPostFetchHook(postFetchHook func(context.Context, string)) {
+func (l *SplitsLoaderByRecipientChainAddress) setPostFetchHook(postFetchHook func(context.Context, string)) {
 	l.postFetchHook = postFetchHook
 }
 
-// NewTokensLoaderByContractID creates a new TokensLoaderByContractID with the given settings, functions, and options
-func NewTokensLoaderByContractID(
-	settings TokensLoaderByContractIDSettings, fetch func(ctx context.Context, keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error),
+// NewSplitsLoaderByRecipientChainAddress creates a new SplitsLoaderByRecipientChainAddress with the given settings, functions, and options
+func NewSplitsLoaderByRecipientChainAddress(
+	settings SplitsLoaderByRecipientChainAddressSettings, fetch func(ctx context.Context, keys []persist.ChainAddress) ([][]coredb.Split, []error),
 	opts ...func(interface {
 		setContext(context.Context)
 		setWait(time.Duration)
@@ -63,8 +64,8 @@ func NewTokensLoaderByContractID(
 		setPreFetchHook(func(context.Context, string) context.Context)
 		setPostFetchHook(func(context.Context, string))
 	}),
-) *TokensLoaderByContractID {
-	loader := &TokensLoaderByContractID{
+) *SplitsLoaderByRecipientChainAddress {
+	loader := &SplitsLoaderByRecipientChainAddress{
 		ctx:                  settings.getContext(),
 		wait:                 settings.getWait(),
 		disableCaching:       settings.getDisableCaching(),
@@ -81,18 +82,18 @@ func NewTokensLoaderByContractID(
 	}
 
 	// Set this after applying options, in case a different context was set via options
-	loader.fetch = func(keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error) {
+	loader.fetch = func(keys []persist.ChainAddress) ([][]coredb.Split, []error) {
 		ctx := loader.ctx
 
 		// Allow the preFetchHook to modify and return a new context
 		if loader.preFetchHook != nil {
-			ctx = loader.preFetchHook(ctx, "TokensLoaderByContractID")
+			ctx = loader.preFetchHook(ctx, "SplitsLoaderByRecipientChainAddress")
 		}
 
 		results, errors := fetch(ctx, keys)
 
 		if loader.postFetchHook != nil {
-			loader.postFetchHook(ctx, "TokensLoaderByContractID")
+			loader.postFetchHook(ctx, "SplitsLoaderByRecipientChainAddress")
 		}
 
 		return results, errors
@@ -112,13 +113,13 @@ func NewTokensLoaderByContractID(
 	return loader
 }
 
-// TokensLoaderByContractID batches and caches requests
-type TokensLoaderByContractID struct {
+// SplitsLoaderByRecipientChainAddress batches and caches requests
+type SplitsLoaderByRecipientChainAddress struct {
 	// context passed to fetch functions
 	ctx context.Context
 
 	// this method provides the data for the loader
-	fetch func(keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error)
+	fetch func(keys []persist.ChainAddress) ([][]coredb.Split, []error)
 
 	// how long to wait before sending a batch
 	wait time.Duration
@@ -150,18 +151,18 @@ type TokensLoaderByContractID struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[coredb.GetTokensByContractIdBatchPaginateParams][]coredb.Token
+	cache map[persist.ChainAddress][]coredb.Split
 
 	// typed cache functions
-	//subscribers []func([]coredb.Token)
-	subscribers []tokensLoaderByContractIDSubscriber
+	//subscribers []func([]coredb.Split)
+	subscribers []splitsLoaderByRecipientChainAddressSubscriber
 
 	// functions used to cache published results from other dataloaders
 	cacheFuncs []interface{}
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
-	batch *tokensLoaderByContractIDBatch
+	batch *splitsLoaderByRecipientChainAddressBatch
 
 	// mutex to prevent races
 	mu sync.Mutex
@@ -170,43 +171,43 @@ type TokensLoaderByContractID struct {
 	once sync.Once
 }
 
-type tokensLoaderByContractIDBatch struct {
-	keys    []coredb.GetTokensByContractIdBatchPaginateParams
-	data    [][]coredb.Token
+type splitsLoaderByRecipientChainAddressBatch struct {
+	keys    []persist.ChainAddress
+	data    [][]coredb.Split
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
-// Load a Token by key, batching and caching will be applied automatically
-func (l *TokensLoaderByContractID) Load(key coredb.GetTokensByContractIdBatchPaginateParams) ([]coredb.Token, error) {
+// Load a Split by key, batching and caching will be applied automatically
+func (l *SplitsLoaderByRecipientChainAddress) Load(key persist.ChainAddress) ([]coredb.Split, error) {
 	return l.LoadThunk(key)()
 }
 
-// LoadThunk returns a function that when called will block waiting for a Token.
+// LoadThunk returns a function that when called will block waiting for a Split.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TokensLoaderByContractID) LoadThunk(key coredb.GetTokensByContractIdBatchPaginateParams) func() ([]coredb.Token, error) {
+func (l *SplitsLoaderByRecipientChainAddress) LoadThunk(key persist.ChainAddress) func() ([]coredb.Split, error) {
 	l.mu.Lock()
 	if !l.disableCaching {
 		if it, ok := l.cache[key]; ok {
 			l.mu.Unlock()
-			return func() ([]coredb.Token, error) {
+			return func() ([]coredb.Split, error) {
 				return it, nil
 			}
 		}
 	}
 	if l.batch == nil {
-		l.batch = &tokensLoaderByContractIDBatch{done: make(chan struct{})}
+		l.batch = &splitsLoaderByRecipientChainAddressBatch{done: make(chan struct{})}
 	}
 	batch := l.batch
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() ([]coredb.Token, error) {
+	return func() ([]coredb.Split, error) {
 		<-batch.done
 
-		var data []coredb.Token
+		var data []coredb.Split
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -237,43 +238,43 @@ func (l *TokensLoaderByContractID) LoadThunk(key coredb.GetTokensByContractIdBat
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *TokensLoaderByContractID) LoadAll(keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error) {
-	results := make([]func() ([]coredb.Token, error), len(keys))
+func (l *SplitsLoaderByRecipientChainAddress) LoadAll(keys []persist.ChainAddress) ([][]coredb.Split, []error) {
+	results := make([]func() ([]coredb.Split, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	tokens := make([][]coredb.Token, len(keys))
+	splits := make([][]coredb.Split, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
-		tokens[i], errors[i] = thunk()
+		splits[i], errors[i] = thunk()
 	}
-	return tokens, errors
+	return splits, errors
 }
 
-// LoadAllThunk returns a function that when called will block waiting for a Tokens.
+// LoadAllThunk returns a function that when called will block waiting for a Splits.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TokensLoaderByContractID) LoadAllThunk(keys []coredb.GetTokensByContractIdBatchPaginateParams) func() ([][]coredb.Token, []error) {
-	results := make([]func() ([]coredb.Token, error), len(keys))
+func (l *SplitsLoaderByRecipientChainAddress) LoadAllThunk(keys []persist.ChainAddress) func() ([][]coredb.Split, []error) {
+	results := make([]func() ([]coredb.Split, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([][]coredb.Token, []error) {
-		tokens := make([][]coredb.Token, len(keys))
+	return func() ([][]coredb.Split, []error) {
+		splits := make([][]coredb.Split, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
-			tokens[i], errors[i] = thunk()
+			splits[i], errors[i] = thunk()
 		}
-		return tokens, errors
+		return splits, errors
 	}
 }
 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *TokensLoaderByContractID) Prime(key coredb.GetTokensByContractIdBatchPaginateParams, value []coredb.Token) bool {
+func (l *SplitsLoaderByRecipientChainAddress) Prime(key persist.ChainAddress, value []coredb.Split) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -282,7 +283,7 @@ func (l *TokensLoaderByContractID) Prime(key coredb.GetTokensByContractIdBatchPa
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := make([]coredb.Token, len(value))
+		cpy := make([]coredb.Split, len(value))
 		copy(cpy, value)
 		l.unsafeSet(key, cpy)
 	}
@@ -291,7 +292,7 @@ func (l *TokensLoaderByContractID) Prime(key coredb.GetTokensByContractIdBatchPa
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *TokensLoaderByContractID) Clear(key coredb.GetTokensByContractIdBatchPaginateParams) {
+func (l *SplitsLoaderByRecipientChainAddress) Clear(key persist.ChainAddress) {
 	if l.disableCaching {
 		return
 	}
@@ -300,16 +301,16 @@ func (l *TokensLoaderByContractID) Clear(key coredb.GetTokensByContractIdBatchPa
 	l.mu.Unlock()
 }
 
-func (l *TokensLoaderByContractID) unsafeSet(key coredb.GetTokensByContractIdBatchPaginateParams, value []coredb.Token) {
+func (l *SplitsLoaderByRecipientChainAddress) unsafeSet(key persist.ChainAddress, value []coredb.Split) {
 	if l.cache == nil {
-		l.cache = map[coredb.GetTokensByContractIdBatchPaginateParams][]coredb.Token{}
+		l.cache = map[persist.ChainAddress][]coredb.Split{}
 	}
 	l.cache[key] = value
 }
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *tokensLoaderByContractIDBatch) keyIndex(l *TokensLoaderByContractID, key coredb.GetTokensByContractIdBatchPaginateParams) int {
+func (b *splitsLoaderByRecipientChainAddressBatch) keyIndex(l *SplitsLoaderByRecipientChainAddress, key persist.ChainAddress) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -333,7 +334,7 @@ func (b *tokensLoaderByContractIDBatch) keyIndex(l *TokensLoaderByContractID, ke
 	return pos
 }
 
-func (b *tokensLoaderByContractIDBatch) startTimer(l *TokensLoaderByContractID) {
+func (b *splitsLoaderByRecipientChainAddressBatch) startTimer(l *SplitsLoaderByRecipientChainAddress) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -349,24 +350,24 @@ func (b *tokensLoaderByContractIDBatch) startTimer(l *TokensLoaderByContractID) 
 	b.end(l)
 }
 
-func (b *tokensLoaderByContractIDBatch) end(l *TokensLoaderByContractID) {
+func (b *splitsLoaderByRecipientChainAddressBatch) end(l *SplitsLoaderByRecipientChainAddress) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }
 
-type tokensLoaderByContractIDSubscriber struct {
-	cacheFunc func(coredb.Token)
+type splitsLoaderByRecipientChainAddressSubscriber struct {
+	cacheFunc func(coredb.Split)
 	mutex     *sync.Mutex
 }
 
-func (l *TokensLoaderByContractID) publishToSubscribers(value []coredb.Token) {
+func (l *SplitsLoaderByRecipientChainAddress) publishToSubscribers(value []coredb.Split) {
 	// Lazy build our list of typed cache functions once
 	l.once.Do(func() {
 		for i, subscription := range *l.subscriptionRegistry {
-			if typedFunc, ok := subscription.(*func(coredb.Token)); ok {
+			if typedFunc, ok := subscription.(*func(coredb.Split)); ok {
 				// Don't invoke our own cache function
 				if !l.ownsCacheFunc(typedFunc) {
-					l.subscribers = append(l.subscribers, tokensLoaderByContractIDSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
+					l.subscribers = append(l.subscribers, splitsLoaderByRecipientChainAddressSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
 				}
 			}
 		}
@@ -384,13 +385,13 @@ func (l *TokensLoaderByContractID) publishToSubscribers(value []coredb.Token) {
 	}
 }
 
-func (l *TokensLoaderByContractID) registerCacheFunc(cacheFunc interface{}, mutex *sync.Mutex) {
+func (l *SplitsLoaderByRecipientChainAddress) registerCacheFunc(cacheFunc interface{}, mutex *sync.Mutex) {
 	l.cacheFuncs = append(l.cacheFuncs, cacheFunc)
 	*l.subscriptionRegistry = append(*l.subscriptionRegistry, cacheFunc)
 	*l.mutexRegistry = append(*l.mutexRegistry, mutex)
 }
 
-func (l *TokensLoaderByContractID) ownsCacheFunc(f *func(coredb.Token)) bool {
+func (l *SplitsLoaderByRecipientChainAddress) ownsCacheFunc(f *func(coredb.Split)) bool {
 	for _, cacheFunc := range l.cacheFuncs {
 		if cacheFunc == f {
 			return true

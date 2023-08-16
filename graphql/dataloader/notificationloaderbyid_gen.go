@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
@@ -25,18 +26,18 @@ type NotificationLoaderByIDSettings interface {
 
 // NotificationLoaderByIDCacheSubscriptions
 type NotificationLoaderByIDCacheSubscriptions struct {
-	// AutoCacheWithKey is a function that returns the persist.DBID cache key for a Notification.
+	// AutoCacheWithKey is a function that returns the persist.DBID cache key for a coredb.Notification.
 	// If AutoCacheWithKey is not nil, this loader will automatically cache published results from other loaders
-	// that return a Notification. Loaders that return pointers or slices of Notification
-	// will be dereferenced/iterated automatically, invoking this function with the base Notification type.
-	AutoCacheWithKey func(Notification) persist.DBID
+	// that return a coredb.Notification. Loaders that return pointers or slices of coredb.Notification
+	// will be dereferenced/iterated automatically, invoking this function with the base coredb.Notification type.
+	AutoCacheWithKey func(coredb.Notification) persist.DBID
 
-	// AutoCacheWithKeys is a function that returns the []persist.DBID cache keys for a Notification.
+	// AutoCacheWithKeys is a function that returns the []persist.DBID cache keys for a coredb.Notification.
 	// Similar to AutoCacheWithKey, but for cases where a single value gets cached by many keys.
 	// If AutoCacheWithKeys is not nil, this loader will automatically cache published results from other loaders
-	// that return a Notification. Loaders that return pointers or slices of Notification
-	// will be dereferenced/iterated automatically, invoking this function with the base Notification type.
-	AutoCacheWithKeys func(Notification) []persist.DBID
+	// that return a coredb.Notification. Loaders that return pointers or slices of coredb.Notification
+	// will be dereferenced/iterated automatically, invoking this function with the base coredb.Notification type.
+	AutoCacheWithKeys func(coredb.Notification) []persist.DBID
 
 	// TODO: Allow custom cache functions once we're able to use generics. It could be done without generics, but
 	// would be messy and error-prone. A non-generic implementation might look something like:
@@ -78,7 +79,7 @@ func (l *NotificationLoaderByID) setPostFetchHook(postFetchHook func(context.Con
 
 // NewNotificationLoaderByID creates a new NotificationLoaderByID with the given settings, functions, and options
 func NewNotificationLoaderByID(
-	settings NotificationLoaderByIDSettings, fetch func(ctx context.Context, keys []persist.DBID) ([]Notification, []error),
+	settings NotificationLoaderByIDSettings, fetch func(ctx context.Context, keys []persist.DBID) ([]coredb.Notification, []error),
 	funcs NotificationLoaderByIDCacheSubscriptions,
 	opts ...func(interface {
 		setContext(context.Context)
@@ -107,7 +108,7 @@ func NewNotificationLoaderByID(
 	}
 
 	// Set this after applying options, in case a different context was set via options
-	loader.fetch = func(keys []persist.DBID) ([]Notification, []error) {
+	loader.fetch = func(keys []persist.DBID) ([]coredb.Notification, []error) {
 		ctx := loader.ctx
 
 		// Allow the preFetchHook to modify and return a new context
@@ -135,7 +136,7 @@ func NewNotificationLoaderByID(
 	if !loader.disableCaching {
 		// One-to-one mappings: cache one value with one key
 		if funcs.AutoCacheWithKey != nil {
-			cacheFunc := func(t Notification) {
+			cacheFunc := func(t coredb.Notification) {
 				loader.unsafePrime(funcs.AutoCacheWithKey(t), t)
 			}
 			loader.registerCacheFunc(&cacheFunc, &loader.mu)
@@ -143,7 +144,7 @@ func NewNotificationLoaderByID(
 
 		// One-to-many mappings: cache one value with many keys
 		if funcs.AutoCacheWithKeys != nil {
-			cacheFunc := func(t Notification) {
+			cacheFunc := func(t coredb.Notification) {
 				keys := funcs.AutoCacheWithKeys(t)
 				for _, key := range keys {
 					loader.unsafePrime(key, t)
@@ -162,7 +163,7 @@ type NotificationLoaderByID struct {
 	ctx context.Context
 
 	// this method provides the data for the loader
-	fetch func(keys []persist.DBID) ([]Notification, []error)
+	fetch func(keys []persist.DBID) ([]coredb.Notification, []error)
 
 	// how long to wait before sending a batch
 	wait time.Duration
@@ -194,10 +195,10 @@ type NotificationLoaderByID struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[persist.DBID]Notification
+	cache map[persist.DBID]coredb.Notification
 
 	// typed cache functions
-	//subscribers []func(Notification)
+	//subscribers []func(coredb.Notification)
 	subscribers []notificationLoaderByIDSubscriber
 
 	// functions used to cache published results from other dataloaders
@@ -216,26 +217,26 @@ type NotificationLoaderByID struct {
 
 type notificationLoaderByIDBatch struct {
 	keys    []persist.DBID
-	data    []Notification
+	data    []coredb.Notification
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Notification by key, batching and caching will be applied automatically
-func (l *NotificationLoaderByID) Load(key persist.DBID) (Notification, error) {
+func (l *NotificationLoaderByID) Load(key persist.DBID) (coredb.Notification, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Notification.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *NotificationLoaderByID) LoadThunk(key persist.DBID) func() (Notification, error) {
+func (l *NotificationLoaderByID) LoadThunk(key persist.DBID) func() (coredb.Notification, error) {
 	l.mu.Lock()
 	if !l.disableCaching {
 		if it, ok := l.cache[key]; ok {
 			l.mu.Unlock()
-			return func() (Notification, error) {
+			return func() (coredb.Notification, error) {
 				return it, nil
 			}
 		}
@@ -247,10 +248,10 @@ func (l *NotificationLoaderByID) LoadThunk(key persist.DBID) func() (Notificatio
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (Notification, error) {
+	return func() (coredb.Notification, error) {
 		<-batch.done
 
-		var data Notification
+		var data coredb.Notification
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -281,14 +282,14 @@ func (l *NotificationLoaderByID) LoadThunk(key persist.DBID) func() (Notificatio
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *NotificationLoaderByID) LoadAll(keys []persist.DBID) ([]Notification, []error) {
-	results := make([]func() (Notification, error), len(keys))
+func (l *NotificationLoaderByID) LoadAll(keys []persist.DBID) ([]coredb.Notification, []error) {
+	results := make([]func() (coredb.Notification, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	notifications := make([]Notification, len(keys))
+	notifications := make([]coredb.Notification, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		notifications[i], errors[i] = thunk()
@@ -299,13 +300,13 @@ func (l *NotificationLoaderByID) LoadAll(keys []persist.DBID) ([]Notification, [
 // LoadAllThunk returns a function that when called will block waiting for a Notifications.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *NotificationLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([]Notification, []error) {
-	results := make([]func() (Notification, error), len(keys))
+func (l *NotificationLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([]coredb.Notification, []error) {
+	results := make([]func() (coredb.Notification, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]Notification, []error) {
-		notifications := make([]Notification, len(keys))
+	return func() ([]coredb.Notification, []error) {
+		notifications := make([]coredb.Notification, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			notifications[i], errors[i] = thunk()
@@ -317,7 +318,7 @@ func (l *NotificationLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([]Not
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *NotificationLoaderByID) Prime(key persist.DBID, value Notification) bool {
+func (l *NotificationLoaderByID) Prime(key persist.DBID, value coredb.Notification) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -331,7 +332,7 @@ func (l *NotificationLoaderByID) Prime(key persist.DBID, value Notification) boo
 }
 
 // Prime the cache without acquiring locks. Should only be used when the lock is already held.
-func (l *NotificationLoaderByID) unsafePrime(key persist.DBID, value Notification) bool {
+func (l *NotificationLoaderByID) unsafePrime(key persist.DBID, value coredb.Notification) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -352,9 +353,9 @@ func (l *NotificationLoaderByID) Clear(key persist.DBID) {
 	l.mu.Unlock()
 }
 
-func (l *NotificationLoaderByID) unsafeSet(key persist.DBID, value Notification) {
+func (l *NotificationLoaderByID) unsafeSet(key persist.DBID, value coredb.Notification) {
 	if l.cache == nil {
-		l.cache = map[persist.DBID]Notification{}
+		l.cache = map[persist.DBID]coredb.Notification{}
 	}
 	l.cache[key] = value
 }
@@ -407,15 +408,15 @@ func (b *notificationLoaderByIDBatch) end(l *NotificationLoaderByID) {
 }
 
 type notificationLoaderByIDSubscriber struct {
-	cacheFunc func(Notification)
+	cacheFunc func(coredb.Notification)
 	mutex     *sync.Mutex
 }
 
-func (l *NotificationLoaderByID) publishToSubscribers(value Notification) {
+func (l *NotificationLoaderByID) publishToSubscribers(value coredb.Notification) {
 	// Lazy build our list of typed cache functions once
 	l.once.Do(func() {
 		for i, subscription := range *l.subscriptionRegistry {
-			if typedFunc, ok := subscription.(*func(Notification)); ok {
+			if typedFunc, ok := subscription.(*func(coredb.Notification)); ok {
 				// Don't invoke our own cache function
 				if !l.ownsCacheFunc(typedFunc) {
 					l.subscribers = append(l.subscribers, notificationLoaderByIDSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
@@ -440,7 +441,7 @@ func (l *NotificationLoaderByID) registerCacheFunc(cacheFunc interface{}, mutex 
 	*l.mutexRegistry = append(*l.mutexRegistry, mutex)
 }
 
-func (l *NotificationLoaderByID) ownsCacheFunc(f *func(Notification)) bool {
+func (l *NotificationLoaderByID) ownsCacheFunc(f *func(coredb.Notification)) bool {
 	for _, cacheFunc := range l.cacheFuncs {
 		if cacheFunc == f {
 			return true

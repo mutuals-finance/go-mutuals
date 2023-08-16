@@ -312,20 +312,21 @@ func (q *Queries) GetActorForGroup(ctx context.Context, groupID sql.NullString) 
 	return actor_id, err
 }
 
-const getAssetsBySplitChainAddress = `-- name: GetAssetsBySplitChainAddress :many
-SELECT a.id, a.version, a.last_updated, a.created_at, a.token_id, a.owner_address, a.balance, a.block_number FROM splits s
-    JOIN assets a ON a.owner_address = s.address
-    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
+const getAssetsByChainAddress = `-- name: GetAssetsByChainAddress :many
+SELECT a.id, a.version, a.last_updated, a.created_at, a.token_id, a.owner_address, a.balance, a.block_number FROM assets a
+    LEFT JOIN tokens t
+    ON a.token_id = t.id
+    WHERE a.owner_address = $1 AND t.chain = $2 AND t.deleted = false
     ORDER BY a.balance
 `
 
-type GetAssetsBySplitChainAddressParams struct {
-	Address persist.Address
-	Chain   persist.Chain
+type GetAssetsByChainAddressParams struct {
+	OwnerAddress persist.Address
+	Chain        persist.Chain
 }
 
-func (q *Queries) GetAssetsBySplitChainAddress(ctx context.Context, arg GetAssetsBySplitChainAddressParams) ([]Asset, error) {
-	rows, err := q.db.Query(ctx, getAssetsBySplitChainAddress, arg.Address, arg.Chain)
+func (q *Queries) GetAssetsByChainAddress(ctx context.Context, arg GetAssetsByChainAddressParams) ([]Asset, error) {
+	rows, err := q.db.Query(ctx, getAssetsByChainAddress, arg.OwnerAddress, arg.Chain)
 	if err != nil {
 		return nil, err
 	}
@@ -858,6 +859,37 @@ func (q *Queries) GetSocialsByUserID(ctx context.Context, id persist.DBID) (pers
 	var pii_socials persist.Socials
 	err := row.Scan(&pii_socials)
 	return pii_socials, err
+}
+
+const getSplitByChainAddress = `-- name: GetSplitByChainAddress :one
+SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
+`
+
+type GetSplitByChainAddressParams struct {
+	Address persist.Address
+	Chain   persist.Chain
+}
+
+func (q *Queries) GetSplitByChainAddress(ctx context.Context, arg GetSplitByChainAddressParams) (Split, error) {
+	row := q.db.QueryRow(ctx, getSplitByChainAddress, arg.Address, arg.Chain)
+	var i Split
+	err := row.Scan(
+		&i.ID,
+		&i.Version,
+		&i.LastUpdated,
+		&i.CreatedAt,
+		&i.Deleted,
+		&i.Chain,
+		&i.Address,
+		&i.Name,
+		&i.Description,
+		&i.CreatorAddress,
+		&i.LogoUrl,
+		&i.BannerUrl,
+		&i.BadgeUrl,
+		&i.TotalOwnership,
+	)
+	return i, err
 }
 
 const getSplitById = `-- name: GetSplitById :one

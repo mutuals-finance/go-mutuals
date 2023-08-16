@@ -42,6 +42,12 @@ SELECT * FROM splits WHERE id = $1 AND deleted = false;
 -- name: GetSplitByIdBatch :batchone
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
+-- name: GetSplitByChainAddress :one
+SELECT * FROM splits WHERE address = $1 AND chain = $2 AND deleted = false;
+
+-- name: GetSplitByChainAddressBatch :batchone
+SELECT * FROM splits WHERE address = $1 AND chain = $2 AND deleted = false;
+
 -- name: GetSplitsByRecipientAddress :many
 SELECT s.* FROM recipients r
     JOIN splits s ON s.id = r.split_id
@@ -68,16 +74,18 @@ SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 -- name: GetTokenByIdBatch :batchone
 SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 
--- name: GetAssetsBySplitChainAddress :many
-SELECT a.* FROM splits s
-    JOIN assets a ON a.owner_address = s.address
-    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
+-- name: GetAssetsByChainAddress :many
+SELECT a.* FROM assets a
+    LEFT JOIN tokens t
+    ON a.token_id = t.id
+    WHERE a.owner_address = $1 AND t.chain = $2 AND t.deleted = false
     ORDER BY a.balance;
 
--- name: GetAssetsBySplitChainAddressBatch :batchmany
-SELECT a.* FROM splits s
-    JOIN assets a ON a.owner_address = s.address
-    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
+-- name: GetAssetsByChainAddressBatch :batchmany
+SELECT a.* FROM assets a
+    LEFT JOIN tokens t
+    ON a.token_id = t.id
+    WHERE a.owner_address = $1 AND t.chain = $2 AND t.deleted = false
     ORDER BY a.balance;
 
 /*

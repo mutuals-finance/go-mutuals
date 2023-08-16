@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
-type TokensLoaderByContractIDSettings interface {
+type AssetsByChainAddressSettings interface {
 	getContext() context.Context
 	getWait() time.Duration
 	getMaxBatchOne() int
@@ -23,37 +24,37 @@ type TokensLoaderByContractIDSettings interface {
 	getMutexRegistry() *[]*sync.Mutex
 }
 
-func (l *TokensLoaderByContractID) setContext(ctx context.Context) {
+func (l *AssetsByChainAddress) setContext(ctx context.Context) {
 	l.ctx = ctx
 }
 
-func (l *TokensLoaderByContractID) setWait(wait time.Duration) {
+func (l *AssetsByChainAddress) setWait(wait time.Duration) {
 	l.wait = wait
 }
 
-func (l *TokensLoaderByContractID) setMaxBatch(maxBatch int) {
+func (l *AssetsByChainAddress) setMaxBatch(maxBatch int) {
 	l.maxBatch = maxBatch
 }
 
-func (l *TokensLoaderByContractID) setDisableCaching(disableCaching bool) {
+func (l *AssetsByChainAddress) setDisableCaching(disableCaching bool) {
 	l.disableCaching = disableCaching
 }
 
-func (l *TokensLoaderByContractID) setPublishResults(publishResults bool) {
+func (l *AssetsByChainAddress) setPublishResults(publishResults bool) {
 	l.publishResults = publishResults
 }
 
-func (l *TokensLoaderByContractID) setPreFetchHook(preFetchHook func(context.Context, string) context.Context) {
+func (l *AssetsByChainAddress) setPreFetchHook(preFetchHook func(context.Context, string) context.Context) {
 	l.preFetchHook = preFetchHook
 }
 
-func (l *TokensLoaderByContractID) setPostFetchHook(postFetchHook func(context.Context, string)) {
+func (l *AssetsByChainAddress) setPostFetchHook(postFetchHook func(context.Context, string)) {
 	l.postFetchHook = postFetchHook
 }
 
-// NewTokensLoaderByContractID creates a new TokensLoaderByContractID with the given settings, functions, and options
-func NewTokensLoaderByContractID(
-	settings TokensLoaderByContractIDSettings, fetch func(ctx context.Context, keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error),
+// NewAssetsByChainAddress creates a new AssetsByChainAddress with the given settings, functions, and options
+func NewAssetsByChainAddress(
+	settings AssetsByChainAddressSettings, fetch func(ctx context.Context, keys []persist.ChainAddress) ([][]coredb.Asset, []error),
 	opts ...func(interface {
 		setContext(context.Context)
 		setWait(time.Duration)
@@ -63,8 +64,8 @@ func NewTokensLoaderByContractID(
 		setPreFetchHook(func(context.Context, string) context.Context)
 		setPostFetchHook(func(context.Context, string))
 	}),
-) *TokensLoaderByContractID {
-	loader := &TokensLoaderByContractID{
+) *AssetsByChainAddress {
+	loader := &AssetsByChainAddress{
 		ctx:                  settings.getContext(),
 		wait:                 settings.getWait(),
 		disableCaching:       settings.getDisableCaching(),
@@ -81,18 +82,18 @@ func NewTokensLoaderByContractID(
 	}
 
 	// Set this after applying options, in case a different context was set via options
-	loader.fetch = func(keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error) {
+	loader.fetch = func(keys []persist.ChainAddress) ([][]coredb.Asset, []error) {
 		ctx := loader.ctx
 
 		// Allow the preFetchHook to modify and return a new context
 		if loader.preFetchHook != nil {
-			ctx = loader.preFetchHook(ctx, "TokensLoaderByContractID")
+			ctx = loader.preFetchHook(ctx, "AssetsByChainAddress")
 		}
 
 		results, errors := fetch(ctx, keys)
 
 		if loader.postFetchHook != nil {
-			loader.postFetchHook(ctx, "TokensLoaderByContractID")
+			loader.postFetchHook(ctx, "AssetsByChainAddress")
 		}
 
 		return results, errors
@@ -112,13 +113,13 @@ func NewTokensLoaderByContractID(
 	return loader
 }
 
-// TokensLoaderByContractID batches and caches requests
-type TokensLoaderByContractID struct {
+// AssetsByChainAddress batches and caches requests
+type AssetsByChainAddress struct {
 	// context passed to fetch functions
 	ctx context.Context
 
 	// this method provides the data for the loader
-	fetch func(keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error)
+	fetch func(keys []persist.ChainAddress) ([][]coredb.Asset, []error)
 
 	// how long to wait before sending a batch
 	wait time.Duration
@@ -150,18 +151,18 @@ type TokensLoaderByContractID struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[coredb.GetTokensByContractIdBatchPaginateParams][]coredb.Token
+	cache map[persist.ChainAddress][]coredb.Asset
 
 	// typed cache functions
-	//subscribers []func([]coredb.Token)
-	subscribers []tokensLoaderByContractIDSubscriber
+	//subscribers []func([]coredb.Asset)
+	subscribers []assetsByChainAddressSubscriber
 
 	// functions used to cache published results from other dataloaders
 	cacheFuncs []interface{}
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
-	batch *tokensLoaderByContractIDBatch
+	batch *assetsByChainAddressBatch
 
 	// mutex to prevent races
 	mu sync.Mutex
@@ -170,43 +171,43 @@ type TokensLoaderByContractID struct {
 	once sync.Once
 }
 
-type tokensLoaderByContractIDBatch struct {
-	keys    []coredb.GetTokensByContractIdBatchPaginateParams
-	data    [][]coredb.Token
+type assetsByChainAddressBatch struct {
+	keys    []persist.ChainAddress
+	data    [][]coredb.Asset
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
-// Load a Token by key, batching and caching will be applied automatically
-func (l *TokensLoaderByContractID) Load(key coredb.GetTokensByContractIdBatchPaginateParams) ([]coredb.Token, error) {
+// Load a Asset by key, batching and caching will be applied automatically
+func (l *AssetsByChainAddress) Load(key persist.ChainAddress) ([]coredb.Asset, error) {
 	return l.LoadThunk(key)()
 }
 
-// LoadThunk returns a function that when called will block waiting for a Token.
+// LoadThunk returns a function that when called will block waiting for a Asset.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TokensLoaderByContractID) LoadThunk(key coredb.GetTokensByContractIdBatchPaginateParams) func() ([]coredb.Token, error) {
+func (l *AssetsByChainAddress) LoadThunk(key persist.ChainAddress) func() ([]coredb.Asset, error) {
 	l.mu.Lock()
 	if !l.disableCaching {
 		if it, ok := l.cache[key]; ok {
 			l.mu.Unlock()
-			return func() ([]coredb.Token, error) {
+			return func() ([]coredb.Asset, error) {
 				return it, nil
 			}
 		}
 	}
 	if l.batch == nil {
-		l.batch = &tokensLoaderByContractIDBatch{done: make(chan struct{})}
+		l.batch = &assetsByChainAddressBatch{done: make(chan struct{})}
 	}
 	batch := l.batch
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() ([]coredb.Token, error) {
+	return func() ([]coredb.Asset, error) {
 		<-batch.done
 
-		var data []coredb.Token
+		var data []coredb.Asset
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -237,43 +238,43 @@ func (l *TokensLoaderByContractID) LoadThunk(key coredb.GetTokensByContractIdBat
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *TokensLoaderByContractID) LoadAll(keys []coredb.GetTokensByContractIdBatchPaginateParams) ([][]coredb.Token, []error) {
-	results := make([]func() ([]coredb.Token, error), len(keys))
+func (l *AssetsByChainAddress) LoadAll(keys []persist.ChainAddress) ([][]coredb.Asset, []error) {
+	results := make([]func() ([]coredb.Asset, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	tokens := make([][]coredb.Token, len(keys))
+	assets := make([][]coredb.Asset, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
-		tokens[i], errors[i] = thunk()
+		assets[i], errors[i] = thunk()
 	}
-	return tokens, errors
+	return assets, errors
 }
 
-// LoadAllThunk returns a function that when called will block waiting for a Tokens.
+// LoadAllThunk returns a function that when called will block waiting for a Assets.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TokensLoaderByContractID) LoadAllThunk(keys []coredb.GetTokensByContractIdBatchPaginateParams) func() ([][]coredb.Token, []error) {
-	results := make([]func() ([]coredb.Token, error), len(keys))
+func (l *AssetsByChainAddress) LoadAllThunk(keys []persist.ChainAddress) func() ([][]coredb.Asset, []error) {
+	results := make([]func() ([]coredb.Asset, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([][]coredb.Token, []error) {
-		tokens := make([][]coredb.Token, len(keys))
+	return func() ([][]coredb.Asset, []error) {
+		assets := make([][]coredb.Asset, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
-			tokens[i], errors[i] = thunk()
+			assets[i], errors[i] = thunk()
 		}
-		return tokens, errors
+		return assets, errors
 	}
 }
 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *TokensLoaderByContractID) Prime(key coredb.GetTokensByContractIdBatchPaginateParams, value []coredb.Token) bool {
+func (l *AssetsByChainAddress) Prime(key persist.ChainAddress, value []coredb.Asset) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -282,7 +283,7 @@ func (l *TokensLoaderByContractID) Prime(key coredb.GetTokensByContractIdBatchPa
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := make([]coredb.Token, len(value))
+		cpy := make([]coredb.Asset, len(value))
 		copy(cpy, value)
 		l.unsafeSet(key, cpy)
 	}
@@ -291,7 +292,7 @@ func (l *TokensLoaderByContractID) Prime(key coredb.GetTokensByContractIdBatchPa
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *TokensLoaderByContractID) Clear(key coredb.GetTokensByContractIdBatchPaginateParams) {
+func (l *AssetsByChainAddress) Clear(key persist.ChainAddress) {
 	if l.disableCaching {
 		return
 	}
@@ -300,16 +301,16 @@ func (l *TokensLoaderByContractID) Clear(key coredb.GetTokensByContractIdBatchPa
 	l.mu.Unlock()
 }
 
-func (l *TokensLoaderByContractID) unsafeSet(key coredb.GetTokensByContractIdBatchPaginateParams, value []coredb.Token) {
+func (l *AssetsByChainAddress) unsafeSet(key persist.ChainAddress, value []coredb.Asset) {
 	if l.cache == nil {
-		l.cache = map[coredb.GetTokensByContractIdBatchPaginateParams][]coredb.Token{}
+		l.cache = map[persist.ChainAddress][]coredb.Asset{}
 	}
 	l.cache[key] = value
 }
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *tokensLoaderByContractIDBatch) keyIndex(l *TokensLoaderByContractID, key coredb.GetTokensByContractIdBatchPaginateParams) int {
+func (b *assetsByChainAddressBatch) keyIndex(l *AssetsByChainAddress, key persist.ChainAddress) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -333,7 +334,7 @@ func (b *tokensLoaderByContractIDBatch) keyIndex(l *TokensLoaderByContractID, ke
 	return pos
 }
 
-func (b *tokensLoaderByContractIDBatch) startTimer(l *TokensLoaderByContractID) {
+func (b *assetsByChainAddressBatch) startTimer(l *AssetsByChainAddress) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -349,24 +350,24 @@ func (b *tokensLoaderByContractIDBatch) startTimer(l *TokensLoaderByContractID) 
 	b.end(l)
 }
 
-func (b *tokensLoaderByContractIDBatch) end(l *TokensLoaderByContractID) {
+func (b *assetsByChainAddressBatch) end(l *AssetsByChainAddress) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }
 
-type tokensLoaderByContractIDSubscriber struct {
-	cacheFunc func(coredb.Token)
+type assetsByChainAddressSubscriber struct {
+	cacheFunc func(coredb.Asset)
 	mutex     *sync.Mutex
 }
 
-func (l *TokensLoaderByContractID) publishToSubscribers(value []coredb.Token) {
+func (l *AssetsByChainAddress) publishToSubscribers(value []coredb.Asset) {
 	// Lazy build our list of typed cache functions once
 	l.once.Do(func() {
 		for i, subscription := range *l.subscriptionRegistry {
-			if typedFunc, ok := subscription.(*func(coredb.Token)); ok {
+			if typedFunc, ok := subscription.(*func(coredb.Asset)); ok {
 				// Don't invoke our own cache function
 				if !l.ownsCacheFunc(typedFunc) {
-					l.subscribers = append(l.subscribers, tokensLoaderByContractIDSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
+					l.subscribers = append(l.subscribers, assetsByChainAddressSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
 				}
 			}
 		}
@@ -384,13 +385,13 @@ func (l *TokensLoaderByContractID) publishToSubscribers(value []coredb.Token) {
 	}
 }
 
-func (l *TokensLoaderByContractID) registerCacheFunc(cacheFunc interface{}, mutex *sync.Mutex) {
+func (l *AssetsByChainAddress) registerCacheFunc(cacheFunc interface{}, mutex *sync.Mutex) {
 	l.cacheFuncs = append(l.cacheFuncs, cacheFunc)
 	*l.subscriptionRegistry = append(*l.subscriptionRegistry, cacheFunc)
 	*l.mutexRegistry = append(*l.mutexRegistry, mutex)
 }
 
-func (l *TokensLoaderByContractID) ownsCacheFunc(f *func(coredb.Token)) bool {
+func (l *AssetsByChainAddress) ownsCacheFunc(f *func(coredb.Asset)) bool {
 	for _, cacheFunc := range l.cacheFuncs {
 		if cacheFunc == f {
 			return true

@@ -2,57 +2,150 @@
 
 package model
 
-func (r *GroupedNotification) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
-}
+import (
+	"context"
+	"fmt"
+	"strings"
 
-func (r *Viewer) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
-}
-
-func (r *Recipient) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
-}
+	"github.com/SplitFi/go-splitfi/service/persist"
+)
 
 func (r *Asset) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
-}
-
-func (r *Split) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
-}
-
-func (r *SocialConnection) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
-}
-
-func (r *Wallet) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
+	return GqlID(fmt.Sprintf("Asset:%s", r.Dbid))
 }
 
 func (r *DeletedNode) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
+	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
 }
 
-func (r *Token) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
+func (r *Recipient) ID() GqlID {
+	return GqlID(fmt.Sprintf("Recipient:%s", r.Dbid))
+}
+
+func (r *SocialConnection) ID() GqlID {
+	return GqlID(fmt.Sprintf("SocialConnection:%s:%s", r.SocialID, r.SocialType))
+}
+
+func (r *Split) ID() GqlID {
+	return GqlID(fmt.Sprintf("Split:%s", r.Dbid))
 }
 
 func (r *SplitFiUser) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
+	return GqlID(fmt.Sprintf("SplitFiUser:%s", r.Dbid))
 }
 
-func (r *Notification) ID() GqlID {
-	// Auto-generated stub. Should automatically be replaced by a real implementation during codegen,
-	// unless something went wrong.
+func (r *Token) ID() GqlID {
+	return GqlID(fmt.Sprintf("Token:%s", r.Dbid))
+}
+
+func (r *Viewer) ID() GqlID {
+	//-----------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------
+	// Some fields specified by @goGqlId require manual binding because one of the following is true:
+	// (a) the field does not exist on the Viewer type, or
+	// (b) the field exists but is not a string type
+	//-----------------------------------------------------------------------------------------------
+	// Please create binding methods on the Viewer type with the following signatures:
+	// func (r *Viewer) GetGqlIDField_UserID() string
+	//-----------------------------------------------------------------------------------------------
+	return GqlID(fmt.Sprintf("Viewer:%s", r.GetGqlIDField_UserID()))
+}
+
+func (r *Wallet) ID() GqlID {
+	return GqlID(fmt.Sprintf("Wallet:%s", r.Dbid))
+}
+
+type NodeFetcher struct {
+	OnAsset            func(ctx context.Context, dbid persist.DBID) (*Asset, error)
+	OnDeletedNode      func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
+	OnRecipient        func(ctx context.Context, dbid persist.DBID) (*Recipient, error)
+	OnSocialConnection func(ctx context.Context, socialId string, socialType persist.SocialProvider) (*SocialConnection, error)
+	OnSplit            func(ctx context.Context, dbid persist.DBID) (*Split, error)
+	OnSplitFiUser      func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
+	OnToken            func(ctx context.Context, dbid persist.DBID) (*Token, error)
+	OnViewer           func(ctx context.Context, userId string) (*Viewer, error)
+	OnWallet           func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
+}
+
+func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
+	parts := strings.Split(string(id), ":")
+	if len(parts) == 1 {
+		return nil, ErrInvalidIDFormat{message: "no ID components specified after type name"}
+	}
+
+	typeName := parts[0]
+	ids := parts[1:]
+
+	switch typeName {
+	case "Asset":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Asset' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnAsset(ctx, persist.DBID(ids[0]))
+	case "DeletedNode":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnDeletedNode(ctx, persist.DBID(ids[0]))
+	case "Recipient":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Recipient' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnRecipient(ctx, persist.DBID(ids[0]))
+	case "SocialConnection":
+		if len(ids) != 2 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SocialConnection' type requires 2 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnSocialConnection(ctx, string(ids[0]), persist.SocialProvider(ids[1]))
+	case "Split":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Split' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnSplit(ctx, persist.DBID(ids[0]))
+	case "SplitFiUser":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SplitFiUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnSplitFiUser(ctx, persist.DBID(ids[0]))
+	case "Token":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Token' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnToken(ctx, persist.DBID(ids[0]))
+	case "Viewer":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Viewer' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnViewer(ctx, string(ids[0]))
+	case "Wallet":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Wallet' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnWallet(ctx, persist.DBID(ids[0]))
+	}
+
+	return nil, ErrInvalidIDFormat{typeName}
+}
+
+func (n *NodeFetcher) ValidateHandlers() {
+	switch {
+	case n.OnAsset == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAsset")
+	case n.OnDeletedNode == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
+	case n.OnRecipient == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnRecipient")
+	case n.OnSocialConnection == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSocialConnection")
+	case n.OnSplit == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplit")
+	case n.OnSplitFiUser == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplitFiUser")
+	case n.OnToken == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnToken")
+	case n.OnViewer == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnViewer")
+	case n.OnWallet == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnWallet")
+	}
 }

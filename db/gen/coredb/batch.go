@@ -18,38 +18,39 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const getAssetsBySplitChainAddressBatch = `-- name: GetAssetsBySplitChainAddressBatch :batchmany
-SELECT a.id, a.version, a.last_updated, a.created_at, a.token_id, a.owner_address, a.balance, a.block_number FROM splits s
-    JOIN assets a ON a.owner_address = s.address
-    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
+const getAssetsByChainAddressBatch = `-- name: GetAssetsByChainAddressBatch :batchmany
+SELECT a.id, a.version, a.last_updated, a.created_at, a.token_id, a.owner_address, a.balance, a.block_number FROM assets a
+    LEFT JOIN tokens t
+    ON a.token_id = t.id
+    WHERE a.owner_address = $1 AND t.chain = $2 AND t.deleted = false
     ORDER BY a.balance
 `
 
-type GetAssetsBySplitChainAddressBatchBatchResults struct {
+type GetAssetsByChainAddressBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-type GetAssetsBySplitChainAddressBatchParams struct {
-	Address persist.Address
-	Chain   persist.Chain
+type GetAssetsByChainAddressBatchParams struct {
+	OwnerAddress persist.Address
+	Chain        persist.Chain
 }
 
-func (q *Queries) GetAssetsBySplitChainAddressBatch(ctx context.Context, arg []GetAssetsBySplitChainAddressBatchParams) *GetAssetsBySplitChainAddressBatchBatchResults {
+func (q *Queries) GetAssetsByChainAddressBatch(ctx context.Context, arg []GetAssetsByChainAddressBatchParams) *GetAssetsByChainAddressBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range arg {
 		vals := []interface{}{
-			a.Address,
+			a.OwnerAddress,
 			a.Chain,
 		}
-		batch.Queue(getAssetsBySplitChainAddressBatch, vals...)
+		batch.Queue(getAssetsByChainAddressBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetAssetsBySplitChainAddressBatchBatchResults{br, len(arg), false}
+	return &GetAssetsByChainAddressBatchBatchResults{br, len(arg), false}
 }
 
-func (b *GetAssetsBySplitChainAddressBatchBatchResults) Query(f func(int, []Asset, error)) {
+func (b *GetAssetsByChainAddressBatchBatchResults) Query(f func(int, []Asset, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var items []Asset
@@ -89,7 +90,7 @@ func (b *GetAssetsBySplitChainAddressBatchBatchResults) Query(f func(int, []Asse
 	}
 }
 
-func (b *GetAssetsBySplitChainAddressBatchBatchResults) Close() error {
+func (b *GetAssetsByChainAddressBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -148,6 +149,72 @@ func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification
 }
 
 func (b *GetNotificationByIDBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getSplitByChainAddressBatch = `-- name: GetSplitByChainAddressBatch :batchone
+SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
+`
+
+type GetSplitByChainAddressBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type GetSplitByChainAddressBatchParams struct {
+	Address persist.Address
+	Chain   persist.Chain
+}
+
+func (q *Queries) GetSplitByChainAddressBatch(ctx context.Context, arg []GetSplitByChainAddressBatchParams) *GetSplitByChainAddressBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.Address,
+			a.Chain,
+		}
+		batch.Queue(getSplitByChainAddressBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetSplitByChainAddressBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetSplitByChainAddressBatchBatchResults) QueryRow(f func(int, Split, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Split
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Version,
+			&i.LastUpdated,
+			&i.CreatedAt,
+			&i.Deleted,
+			&i.Chain,
+			&i.Address,
+			&i.Name,
+			&i.Description,
+			&i.CreatorAddress,
+			&i.LogoUrl,
+			&i.BannerUrl,
+			&i.BadgeUrl,
+			&i.TotalOwnership,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetSplitByChainAddressBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

@@ -4,7 +4,8 @@
 //go:generate go run github.com/gallery-so/dataloaden UserLoaderByString string github.com/SplitFi/go-splitfi/db/gen/coredb.User
 //go:generate go run github.com/gallery-so/dataloaden UsersLoaderByString string []github.com/SplitFi/go-splitfi/db/gen/coredb.User
 //go:generate go run github.com/gallery-so/dataloaden SplitLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Split
-//go:generate go run github.com/gallery-so/dataloaden SplitsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Split
+//go:generate go run github.com/gallery-so/dataloaden SplitLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress github.com/SplitFi/go-splitfi/db/gen/coredb.Split
+//go:generate go run github.com/gallery-so/dataloaden SplitsLoaderByRecipientChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress []github.com/SplitFi/go-splitfi/db/gen/coredb.Split
 //go:generate go run github.com/gallery-so/dataloaden WalletLoaderById github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
 //go:generate go run github.com/gallery-so/dataloaden WalletLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
 //go:generate go run github.com/gallery-so/dataloaden WalletsLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID []github.com/SplitFi/go-splitfi/db/gen/coredb.Wallet
@@ -14,7 +15,7 @@
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByContractID github.com/SplitFi/go-splitfi/db/gen/coredb.GetTokensByContractIdBatchPaginateParams []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDTuple github.com/SplitFi/go-splitfi/service/persist.DBIDTuple []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDAndChain github.com/SplitFi/go-splitfi/graphql/dataloader.IDAndChain []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
-//go:generate go run github.com/gallery-so/dataloaden AssetsByOwnerAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress []github.com/SplitFi/go-splitfi/db/gen/coredb.Asset
+//go:generate go run github.com/gallery-so/dataloaden AssetsLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress []github.com/SplitFi/go-splitfi/db/gen/coredb.Asset
 //go:generate go run github.com/gallery-so/dataloaden EventLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.FeedEvent
 //go:generate go run github.com/gallery-so/dataloaden NotificationLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden NotificationsLoaderByUserID github.com/SplitFi/go-splitfi/db/gen/coredb.GetUserNotificationsBatchParams []github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
@@ -48,32 +49,20 @@ type IDAndLimit struct {
 // a single request, nor should they be shared between requests (since the data returned is
 // relative to the current request context, including the user and their auth status).
 type Loaders struct {
-	UserByUserID                     *UserLoaderByID
-	UserByUsername                   *UserLoaderByString
-	UserByAddress                    *UserLoaderByAddress
-	UsersWithTrait                   *UsersLoaderByString
-	SplitBySplitID                   *SplitLoaderByID
-	SplitByCollectionID              *SplitLoaderByID
-	SplitsByUserID                   *SplitsLoaderByID
-	CollectionByCollectionID         *CollectionLoaderByID
-	CollectionsBySplitID             *CollectionsLoaderByID
-	MembershipByMembershipID         *MembershipLoaderById
-	WalletByWalletID                 *WalletLoaderById
-	WalletsByUserID                  *WalletsLoaderByID
-	WalletByChainAddress             *WalletLoaderByChainAddress
-	TokenByTokenID                   *TokenLoaderByID
-	TokensByContractID               *TokensLoaderByID
-	TokensByCollectionID             *TokensLoaderByIDAndLimit
-	TokensByWalletID                 *TokensLoaderByID
-	TokensByUserID                   *TokensLoaderByID
-	TokensByUserIDAndContractID      *TokensLoaderByIDTuple
-	TokensByContractIDWithPagination *TokensLoaderByContractID
-	TokensByUserIDAndChain           *TokensLoaderByIDAndChain
-	AssetsByOwnerAddress             *AssetsByOwnerAddress
-	OwnerByTokenID                   *UserLoaderByID
-	EventByEventID                   *EventLoaderByID
-	NotificationByID                 *NotificationLoaderByID
-	NotificationsByUserID            *NotificationsLoaderByUserID
+	UserByUserID                  *UserLoaderByID
+	UserByUsername                *UserLoaderByString
+	UserByAddress                 *UserLoaderByAddress
+	UsersWithTrait                *UsersLoaderByString
+	SplitBySplitID                *SplitLoaderByID
+	SplitByChainAddress           *SplitLoaderByChainAddress
+	SplitsByRecipientChainAddress *SplitsLoaderByRecipientChainAddress
+	WalletByWalletID              *WalletLoaderById
+	WalletsByUserID               *WalletsLoaderByID
+	WalletByChainAddress          *WalletLoaderByChainAddress
+	TokenByTokenID                *TokenLoaderByID
+	AssetsByChainAddress          *AssetsLoaderByChainAddress
+	NotificationByID              *NotificationLoaderByID
+	NotificationsByUserID         *NotificationsLoaderByUserID
 }
 
 func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loaders {
@@ -142,7 +131,13 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 		AutoCacheWithKey: func(split db.Split) persist.DBID { return split.ID },
 	})
 
-	loaders.SplitsByUserID = NewSplitsLoaderByID(defaults, loadSplitsByUserId(q))
+	loaders.SplitByChainAddress = NewSplitLoaderByChainAddress(defaults, loadSplitByChainAddress(q), SplitLoaderByChainAddressCacheSubscriptions{
+		AutoCacheWithKey: func(split db.Split) persist.ChainAddress {
+			return persist.NewChainAddress(split.Address, split.Chain)
+		},
+	})
+
+	loaders.SplitsByRecipientChainAddress = NewSplitsLoaderByRecipientChainAddress(defaults, loadSplitsByRecipientChainAddress(q))
 
 	loaders.WalletByWalletID = NewWalletLoaderById(defaults, loadWalletByWalletId(q), WalletLoaderByIdCacheSubscriptions{
 		AutoCacheWithKey: func(wallet db.Wallet) persist.DBID { return wallet.ID },
@@ -160,23 +155,7 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 		AutoCacheWithKey: func(token db.Token) persist.DBID { return token.ID },
 	})
 
-	loaders.TokensByWalletID = NewTokensLoaderByID(defaults, loadTokensByWalletID(q))
-
-	loaders.TokensByContractID = NewTokensLoaderByID(defaults, loadTokensByContractID(q))
-
-	loaders.TokensByContractIDWithPagination = NewTokensLoaderByContractID(defaults, loadTokensByContractIDWithPagination(q))
-
-	loaders.TokensByUserID = NewTokensLoaderByID(defaults, loadTokensByUserID(q))
-
-	loaders.TokensByUserIDAndContractID = NewTokensLoaderByIDTuple(defaults, loadTokensByUserIDAndContractID(q))
-
-	loaders.TokensByUserIDAndChain = NewTokensLoaderByIDAndChain(defaults, loadTokensByUserIDAndChain(q))
-
-	loaders.TokensByUserIDAndChain = NewTokensLoaderByIDAndChain(defaults, loadTokensByUserIDAndChain(q))
-
-	loaders.OwnerByTokenID = NewUserLoaderByID(defaults, loadOwnerByTokenID(q), UserLoaderByIDCacheSubscriptions{
-		AutoCacheWithKey: func(user db.User) persist.DBID { return user.ID },
-	})
+	loaders.AssetsByChainAddress = NewAssetsLoaderByChainAddress(defaults, loadAssetsByChainAddress(q))
 
 	loaders.NotificationsByUserID = NewNotificationsLoaderByUserID(defaults, loadUserNotifications(q))
 
@@ -247,22 +226,6 @@ func loadUserByAddress(q *db.Queries) func(context.Context, []db.GetUserByAddres
 	}
 }
 
-func loadOwnersByContractIDs(q *db.Queries) func(context.Context, []db.GetOwnersByContractIdBatchPaginateParams) ([][]db.User, []error) {
-	return func(ctx context.Context, params []db.GetOwnersByContractIdBatchPaginateParams) ([][]db.User, []error) {
-		users := make([][]db.User, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetOwnersByContractIdBatchPaginate(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, user []db.User, err error) {
-			users[i], errors[i] = user, err
-		})
-
-		return users, errors
-	}
-}
-
 func loadUsersWithTrait(q *db.Queries) func(context.Context, []string) ([][]db.User, []error) {
 	return func(ctx context.Context, trait []string) ([][]db.User, []error) {
 		users := make([][]db.User, len(trait))
@@ -300,16 +263,53 @@ func loadSplitBySplitId(q *db.Queries) func(context.Context, []persist.DBID) ([]
 	}
 }
 
-func loadSplitsByUserId(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Split, []error) {
-	return func(ctx context.Context, userIds []persist.DBID) ([][]db.Split, []error) {
-		splits := make([][]db.Split, len(userIds))
-		errors := make([]error, len(userIds))
+func loadSplitByChainAddress(q *db.Queries) func(context.Context, []persist.ChainAddress) ([]db.Split, []error) {
+	return func(ctx context.Context, chainAddresses []persist.ChainAddress) ([]db.Split, []error) {
+		splits := make([]db.Split, len(chainAddresses))
+		errors := make([]error, len(chainAddresses))
 
-		b := q.GetSplitsByUserIdBatch(ctx, userIds)
+		sqlChainAddress := make([]db.GetSplitByChainAddressBatchParams, len(chainAddresses))
+		for i, chainAddress := range chainAddresses {
+			sqlChainAddress[i] = db.GetSplitByChainAddressBatchParams{
+				Address: chainAddress.Address(),
+				Chain:   chainAddress.Chain(),
+			}
+		}
+
+		b := q.GetSplitByChainAddressBatch(ctx, sqlChainAddress)
 		defer b.Close()
 
-		b.Query(func(i int, g []db.Split, err error) {
+		b.QueryRow(func(i int, g db.Split, err error) {
 			splits[i] = g
+			errors[i] = err
+
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = persist.ErrSplitNotFoundByAddress{Address: persist.EthereumAddress(chainAddresses[i].Address()), Chain: chainAddresses[i].Chain()}
+			}
+		})
+
+		return splits, errors
+	}
+}
+
+func loadSplitsByRecipientChainAddress(q *db.Queries) func(context.Context, []persist.ChainAddress) ([][]db.Split, []error) {
+	return func(ctx context.Context, chainAddresses []persist.ChainAddress) ([][]db.Split, []error) {
+		splits := make([][]db.Split, len(chainAddresses))
+		errors := make([]error, len(chainAddresses))
+
+		sqlChainAddress := make([]db.GetSplitsByRecipientChainAddressBatchParams, len(chainAddresses))
+		for i, chainAddress := range chainAddresses {
+			sqlChainAddress[i] = db.GetSplitsByRecipientChainAddressBatchParams{
+				Address: chainAddress.Address(),
+				Chain:   chainAddress.Chain(),
+			}
+		}
+
+		b := q.GetSplitsByRecipientChainAddressBatch(ctx, sqlChainAddress)
+		defer b.Close()
+
+		b.Query(func(i int, s []db.Split, err error) {
+			splits[i] = s
 			errors[i] = err
 		})
 
@@ -416,39 +416,9 @@ func loadTokenByTokenID(q *db.Queries) func(context.Context, []persist.DBID) ([]
 	}
 }
 
-func loadTokensByContractID(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Token, []error) {
-	return func(ctx context.Context, contractIDs []persist.DBID) ([][]db.Token, []error) {
-		tokens := make([][]db.Token, len(contractIDs))
-		errors := make([]error, len(contractIDs))
-
-		b := q.GetTokensByContractIdBatch(ctx, contractIDs)
-		defer b.Close()
-
-		b.Query(func(i int, t []db.Token, err error) {
-			tokens[i], errors[i] = t, err
-		})
-
-		return tokens, errors
-	}
-}
-
-func loadOwnerByTokenID(q *db.Queries) func(context.Context, []persist.DBID) ([]db.User, []error) {
-	return func(ctx context.Context, tokenIDs []persist.DBID) ([]db.User, []error) {
-		users := make([]db.User, len(tokenIDs))
-		errors := make([]error, len(tokenIDs))
-
-		b := q.GetTokenOwnerByIDBatch(ctx, tokenIDs)
-		defer b.Close()
-
-		b.QueryRow(func(i int, u db.User, err error) {
-			users[i], errors[i] = u, err
-		})
-
-		return users, errors
-	}
-}
-
-func loadTokensByContractIDWithPagination(q *db.Queries) func(context.Context, []db.GetTokensByContractIdBatchPaginateParams) ([][]db.Token, []error) {
+/*
+TODO
+func loadAssetsByChainAddressWithPagination(q *db.Queries) func(context.Context, []db.GetTokensByContractIdBatchPaginateParams) ([][]db.Token, []error) {
 	return func(ctx context.Context, params []db.GetTokensByContractIdBatchPaginateParams) ([][]db.Token, []error) {
 		tokens := make([][]db.Token, len(params))
 		errors := make([]error, len(params))
@@ -463,89 +433,29 @@ func loadTokensByContractIDWithPagination(q *db.Queries) func(context.Context, [
 		return tokens, errors
 	}
 }
+*/
 
-func loadTokensByWalletID(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Token, []error) {
-	return func(ctx context.Context, walletIds []persist.DBID) ([][]db.Token, []error) {
-		tokens := make([][]db.Token, len(walletIds))
-		errors := make([]error, len(walletIds))
+func loadAssetsByChainAddress(q *db.Queries) func(context.Context, []persist.ChainAddress) ([][]db.Asset, []error) {
+	return func(ctx context.Context, chainAddresses []persist.ChainAddress) ([][]db.Asset, []error) {
+		assets := make([][]db.Asset, len(chainAddresses))
+		errors := make([]error, len(chainAddresses))
 
-		convertedIds := make([]persist.DBIDList, len(walletIds))
-		for i, id := range walletIds {
-			convertedIds[i] = persist.DBIDList{id}
-		}
-
-		b := q.GetTokensByWalletIdsBatch(ctx, convertedIds)
-		defer b.Close()
-
-		b.Query(func(i int, t []db.Token, err error) {
-			tokens[i], errors[i] = t, err
-		})
-
-		return tokens, errors
-	}
-}
-
-func loadTokensByUserID(q *db.Queries) func(context.Context, []persist.DBID) ([][]db.Token, []error) {
-	return func(ctx context.Context, userIDs []persist.DBID) ([][]db.Token, []error) {
-		tokens := make([][]db.Token, len(userIDs))
-		errors := make([]error, len(userIDs))
-
-		b := q.GetTokensByUserIdBatch(ctx, userIDs)
-		defer b.Close()
-
-		b.Query(func(i int, t []db.Token, err error) {
-			tokens[i], errors[i] = t, err
-		})
-
-		return tokens, errors
-	}
-}
-
-func loadTokensByUserIDAndContractID(q *db.Queries) func(context.Context, []persist.DBIDTuple) ([][]db.Token, []error) {
-	return func(ctx context.Context, idTuples []persist.DBIDTuple) ([][]db.Token, []error) {
-		tokens := make([][]db.Token, len(idTuples))
-		errors := make([]error, len(idTuples))
-
-		params := make([]db.GetTokensByUserIdAndContractIDBatchParams, len(idTuples))
-		for i, tuple := range idTuples {
-			params[i] = db.GetTokensByUserIdAndContractIDBatchParams{
-				OwnerUserID: tuple[0],
-				Contract:    tuple[1],
+		sqlChainAddress := make([]db.GetAssetsByChainAddressBatchParams, len(chainAddresses))
+		for i, chainAddress := range chainAddresses {
+			sqlChainAddress[i] = db.GetAssetsByChainAddressBatchParams{
+				OwnerAddress: chainAddress.Address(),
+				Chain:        chainAddress.Chain(),
 			}
 		}
 
-		b := q.GetTokensByUserIdAndContractIDBatch(ctx, params)
+		b := q.GetAssetsByChainAddressBatch(ctx, sqlChainAddress)
 		defer b.Close()
 
-		b.Query(func(i int, t []db.Token, err error) {
-			tokens[i], errors[i] = t, err
+		b.Query(func(i int, a []db.Asset, err error) {
+			assets[i], errors[i] = a, err
 		})
 
-		return tokens, errors
-	}
-}
-
-func loadTokensByUserIDAndChain(q *db.Queries) func(context.Context, []IDAndChain) ([][]db.Token, []error) {
-	return func(ctx context.Context, userIDsAndChains []IDAndChain) ([][]db.Token, []error) {
-		tokens := make([][]db.Token, len(userIDsAndChains))
-		errors := make([]error, len(userIDsAndChains))
-
-		params := make([]db.GetTokensByUserIdAndChainBatchParams, len(userIDsAndChains))
-		for i, userIDAndChain := range userIDsAndChains {
-			params[i] = db.GetTokensByUserIdAndChainBatchParams{
-				OwnerUserID: userIDAndChain.ID,
-				Chain:       userIDAndChain.Chain,
-			}
-		}
-
-		b := q.GetTokensByUserIdAndChainBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, t []db.Token, err error) {
-			tokens[i], errors[i] = t, err
-		})
-
-		return tokens, errors
+		return assets, errors
 	}
 }
 

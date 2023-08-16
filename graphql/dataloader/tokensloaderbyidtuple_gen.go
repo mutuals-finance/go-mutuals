@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
@@ -53,7 +54,7 @@ func (l *TokensLoaderByIDTuple) setPostFetchHook(postFetchHook func(context.Cont
 
 // NewTokensLoaderByIDTuple creates a new TokensLoaderByIDTuple with the given settings, functions, and options
 func NewTokensLoaderByIDTuple(
-	settings TokensLoaderByIDTupleSettings, fetch func(ctx context.Context, keys []persist.DBIDTuple) ([][]Token, []error),
+	settings TokensLoaderByIDTupleSettings, fetch func(ctx context.Context, keys []persist.DBIDTuple) ([][]coredb.Token, []error),
 	opts ...func(interface {
 		setContext(context.Context)
 		setWait(time.Duration)
@@ -81,7 +82,7 @@ func NewTokensLoaderByIDTuple(
 	}
 
 	// Set this after applying options, in case a different context was set via options
-	loader.fetch = func(keys []persist.DBIDTuple) ([][]Token, []error) {
+	loader.fetch = func(keys []persist.DBIDTuple) ([][]coredb.Token, []error) {
 		ctx := loader.ctx
 
 		// Allow the preFetchHook to modify and return a new context
@@ -118,7 +119,7 @@ type TokensLoaderByIDTuple struct {
 	ctx context.Context
 
 	// this method provides the data for the loader
-	fetch func(keys []persist.DBIDTuple) ([][]Token, []error)
+	fetch func(keys []persist.DBIDTuple) ([][]coredb.Token, []error)
 
 	// how long to wait before sending a batch
 	wait time.Duration
@@ -150,10 +151,10 @@ type TokensLoaderByIDTuple struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[persist.DBIDTuple][]Token
+	cache map[persist.DBIDTuple][]coredb.Token
 
 	// typed cache functions
-	//subscribers []func([]Token)
+	//subscribers []func([]coredb.Token)
 	subscribers []tokensLoaderByIDTupleSubscriber
 
 	// functions used to cache published results from other dataloaders
@@ -172,26 +173,26 @@ type TokensLoaderByIDTuple struct {
 
 type tokensLoaderByIDTupleBatch struct {
 	keys    []persist.DBIDTuple
-	data    [][]Token
+	data    [][]coredb.Token
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Token by key, batching and caching will be applied automatically
-func (l *TokensLoaderByIDTuple) Load(key persist.DBIDTuple) ([]Token, error) {
+func (l *TokensLoaderByIDTuple) Load(key persist.DBIDTuple) ([]coredb.Token, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Token.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TokensLoaderByIDTuple) LoadThunk(key persist.DBIDTuple) func() ([]Token, error) {
+func (l *TokensLoaderByIDTuple) LoadThunk(key persist.DBIDTuple) func() ([]coredb.Token, error) {
 	l.mu.Lock()
 	if !l.disableCaching {
 		if it, ok := l.cache[key]; ok {
 			l.mu.Unlock()
-			return func() ([]Token, error) {
+			return func() ([]coredb.Token, error) {
 				return it, nil
 			}
 		}
@@ -203,10 +204,10 @@ func (l *TokensLoaderByIDTuple) LoadThunk(key persist.DBIDTuple) func() ([]Token
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() ([]Token, error) {
+	return func() ([]coredb.Token, error) {
 		<-batch.done
 
-		var data []Token
+		var data []coredb.Token
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -237,14 +238,14 @@ func (l *TokensLoaderByIDTuple) LoadThunk(key persist.DBIDTuple) func() ([]Token
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *TokensLoaderByIDTuple) LoadAll(keys []persist.DBIDTuple) ([][]Token, []error) {
-	results := make([]func() ([]Token, error), len(keys))
+func (l *TokensLoaderByIDTuple) LoadAll(keys []persist.DBIDTuple) ([][]coredb.Token, []error) {
+	results := make([]func() ([]coredb.Token, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	tokens := make([][]Token, len(keys))
+	tokens := make([][]coredb.Token, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		tokens[i], errors[i] = thunk()
@@ -255,13 +256,13 @@ func (l *TokensLoaderByIDTuple) LoadAll(keys []persist.DBIDTuple) ([][]Token, []
 // LoadAllThunk returns a function that when called will block waiting for a Tokens.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TokensLoaderByIDTuple) LoadAllThunk(keys []persist.DBIDTuple) func() ([][]Token, []error) {
-	results := make([]func() ([]Token, error), len(keys))
+func (l *TokensLoaderByIDTuple) LoadAllThunk(keys []persist.DBIDTuple) func() ([][]coredb.Token, []error) {
+	results := make([]func() ([]coredb.Token, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([][]Token, []error) {
-		tokens := make([][]Token, len(keys))
+	return func() ([][]coredb.Token, []error) {
+		tokens := make([][]coredb.Token, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			tokens[i], errors[i] = thunk()
@@ -273,7 +274,7 @@ func (l *TokensLoaderByIDTuple) LoadAllThunk(keys []persist.DBIDTuple) func() ([
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *TokensLoaderByIDTuple) Prime(key persist.DBIDTuple, value []Token) bool {
+func (l *TokensLoaderByIDTuple) Prime(key persist.DBIDTuple, value []coredb.Token) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -282,7 +283,7 @@ func (l *TokensLoaderByIDTuple) Prime(key persist.DBIDTuple, value []Token) bool
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := make([]Token, len(value))
+		cpy := make([]coredb.Token, len(value))
 		copy(cpy, value)
 		l.unsafeSet(key, cpy)
 	}
@@ -300,9 +301,9 @@ func (l *TokensLoaderByIDTuple) Clear(key persist.DBIDTuple) {
 	l.mu.Unlock()
 }
 
-func (l *TokensLoaderByIDTuple) unsafeSet(key persist.DBIDTuple, value []Token) {
+func (l *TokensLoaderByIDTuple) unsafeSet(key persist.DBIDTuple, value []coredb.Token) {
 	if l.cache == nil {
-		l.cache = map[persist.DBIDTuple][]Token{}
+		l.cache = map[persist.DBIDTuple][]coredb.Token{}
 	}
 	l.cache[key] = value
 }
@@ -355,15 +356,15 @@ func (b *tokensLoaderByIDTupleBatch) end(l *TokensLoaderByIDTuple) {
 }
 
 type tokensLoaderByIDTupleSubscriber struct {
-	cacheFunc func(Token)
+	cacheFunc func(coredb.Token)
 	mutex     *sync.Mutex
 }
 
-func (l *TokensLoaderByIDTuple) publishToSubscribers(value []Token) {
+func (l *TokensLoaderByIDTuple) publishToSubscribers(value []coredb.Token) {
 	// Lazy build our list of typed cache functions once
 	l.once.Do(func() {
 		for i, subscription := range *l.subscriptionRegistry {
-			if typedFunc, ok := subscription.(*func(Token)); ok {
+			if typedFunc, ok := subscription.(*func(coredb.Token)); ok {
 				// Don't invoke our own cache function
 				if !l.ownsCacheFunc(typedFunc) {
 					l.subscribers = append(l.subscribers, tokensLoaderByIDTupleSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
@@ -390,7 +391,7 @@ func (l *TokensLoaderByIDTuple) registerCacheFunc(cacheFunc interface{}, mutex *
 	*l.mutexRegistry = append(*l.mutexRegistry, mutex)
 }
 
-func (l *TokensLoaderByIDTuple) ownsCacheFunc(f *func(Token)) bool {
+func (l *TokensLoaderByIDTuple) ownsCacheFunc(f *func(coredb.Token)) bool {
 	for _, cacheFunc := range l.cacheFuncs {
 		if cacheFunc == f {
 			return true
