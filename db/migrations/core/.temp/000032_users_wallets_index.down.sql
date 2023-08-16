@@ -1,1 +1,0 @@
-drop index if exists users_wallets_idx;

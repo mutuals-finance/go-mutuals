@@ -69,13 +69,13 @@ SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 
 -- name: GetAssetsBySplitChainAddress :many
-SELECT a.* FROM split s
+SELECT a.* FROM splits s
     JOIN assets a ON a.owner_address = s.address
     WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
     ORDER BY a.balance;
 
 -- name: GetAssetsBySplitChainAddressBatch :batchmany
-SELECT a.* FROM split s
+SELECT a.* FROM splits s
     JOIN assets a ON a.owner_address = s.address
     WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
     ORDER BY a.balance;
@@ -271,7 +271,7 @@ SELECT * FROM notifications
 
 /*
 TODO example for notification creation
--- name: CreateViewSplitNotification :one
+name: CreateViewSplitNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 */
 
@@ -369,7 +369,7 @@ select role from (
       from tokens
       where owner_user_id = $1
         and token_id = any(@membership_token_ids::varchar[])
-        and contract = (select id from contracts where address = @membership_address and contracts.chain = @chain and contracts.deleted = false)
+       -- and contract = (select id from contracts where address = @membership_address and contracts.chain = @chain and contracts.deleted = false)
         and exists(select 1 from users where id = $1 and email_verified = 1 and deleted = false)
         and deleted = false
       )
@@ -411,35 +411,30 @@ update pii.for_users set pii_socials = @socials where user_id = @user_id;
 -- name: UpdateEventCaptionByGroup :exec
 update events set caption = @caption where group_id = @group_id and deleted = false;
 
--- this query will take in enoug info to create a sort of fake table of social accounts matching them up to users in split with twitter connected.
+-- this query will take in enough info to create a sort of fake table of social accounts matching them up to users in split with twitter connected.
 -- it will also go and search for whether the specified user follows any of the users returned
 -- name: GetSocialConnectionsPaginate :many
 select s.*, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following
 from (select unnest(@social_ids::varchar[]) as social_id, unnest(@social_usernames::varchar[]) as social_username, unnest(@social_displaynames::varchar[]) as social_displayname, unnest(@social_profile_images::varchar[]) as social_profile_image) as s
     inner join pii.user_view on user_view.pii_socials->sqlc.arg('social')::text->>'id'::varchar = s.social_id and user_view.deleted = false
-    left outer join follows f on f.follower = @user_id and f.followee = user_view.id and f.deleted = false
-where case when @only_unfollowing::bool then f.id is null else true end
-    and (f.id is not null,user_view.created_at,user_view.id) < (@cur_before_following::bool, @cur_before_time::timestamptz, @cur_before_id)
-    and (f.id is not null,user_view.created_at,user_view.id) > (@cur_after_following::bool, @cur_after_time::timestamptz, @cur_after_id)
-order by case when @paging_forward::bool then (f.id is not null,user_view.created_at,user_view.id) end asc,
-    case when not @paging_forward::bool then (f.id is not null,user_view.created_at,user_view.id) end desc
+where case when @only_unfollowing::bool then true end
+order by case when @paging_forward::bool then (true,user_view.created_at,user_view.id) end asc,
+    case when not @paging_forward::bool then (true,user_view.created_at,user_view.id) end desc
 limit $1;
 
 -- name: GetSocialConnections :many
 select s.*, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following
 from (select unnest(@social_ids::varchar[]) as social_id, unnest(@social_usernames::varchar[]) as social_username, unnest(@social_displaynames::varchar[]) as social_displayname, unnest(@social_profile_images::varchar[]) as social_profile_image) as s
     inner join pii.user_view on user_view.pii_socials->sqlc.arg('social')::text->>'id'::varchar = s.social_id and user_view.deleted = false
-    left outer join follows f on f.follower = @user_id and f.followee = user_view.id and f.deleted = false
-where case when @only_unfollowing::bool then f.id is null else true end
-order by (f.id is not null,user_view.created_at,user_view.id);
+where case when @only_unfollowing::bool then true end
+order by (true,user_view.created_at,user_view.id);
 
 
 -- name: CountSocialConnections :one
 select count(*)
 from (select unnest(@social_ids::varchar[]) as social_id) as s
     inner join pii.user_view on user_view.pii_socials->sqlc.arg('social')::text->>'id'::varchar = s.social_id and user_view.deleted = false
-    left outer join follows f on f.follower = @user_id and f.followee = user_view.id and f.deleted = false
-where case when @only_unfollowing::bool then f.id is null else true end;
+where case when @only_unfollowing::bool then true end;
 
 
 -- name: AddPiiAccountCreationInfo :exec

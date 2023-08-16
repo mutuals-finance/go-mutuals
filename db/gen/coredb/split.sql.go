@@ -7,194 +7,87 @@ package coredb
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
-const splitRepoAddCollections = `-- name: SplitRepoAddCollections :execrows
-update splits set last_updated = now(), collections = $1::text[] || collections where splits.id = $2 and (select count(*) from collections c where c.id = any($1) and c.split_id = $2 and c.deleted = false) = coalesce(array_length($1, 1), 0)
+const splitRepoCountAllAssets = `-- name: SplitRepoCountAllAssets :one
+select count(*) from assets a join tokens t on a.token_id = t.id where a.owner_address = $1 and t.deleted = false
 `
 
-type SplitRepoAddCollectionsParams struct {
-	CollectionIds []string
-	SplitID       persist.DBID
-}
-
-func (q *Queries) SplitRepoAddCollections(ctx context.Context, arg SplitRepoAddCollectionsParams) (int64, error) {
-	result, err := q.db.Exec(ctx, splitRepoAddCollections, arg.CollectionIds, arg.SplitID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
-const splitRepoCheckOwnCollections = `-- name: SplitRepoCheckOwnCollections :one
-select count(*) from collections where id = any($2) and owner_user_id = $1
-`
-
-type SplitRepoCheckOwnCollectionsParams struct {
-	OwnerUserID   persist.DBID
-	CollectionIds persist.DBIDList
-}
-
-func (q *Queries) SplitRepoCheckOwnCollections(ctx context.Context, arg SplitRepoCheckOwnCollectionsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, splitRepoCheckOwnCollections, arg.OwnerUserID, arg.CollectionIds)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const splitRepoCountAllCollections = `-- name: SplitRepoCountAllCollections :one
-select count(*) from collections where owner_user_id = $1 and deleted = false
-`
-
-func (q *Queries) SplitRepoCountAllCollections(ctx context.Context, ownerUserID persist.DBID) (int64, error) {
-	row := q.db.QueryRow(ctx, splitRepoCountAllCollections, ownerUserID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const splitRepoCountColls = `-- name: SplitRepoCountColls :one
-select count(c.id) from splits g, unnest(g.collections) with ordinality as u(coll, coll_ord)
-    left join collections c on c.id = coll where g.id = $1 and c.deleted = false and g.deleted = false
-`
-
-func (q *Queries) SplitRepoCountColls(ctx context.Context, id persist.DBID) (int64, error) {
-	row := q.db.QueryRow(ctx, splitRepoCountColls, id)
+func (q *Queries) SplitRepoCountAllAssets(ctx context.Context, ownerAddress persist.Address) (int64, error) {
+	row := q.db.QueryRow(ctx, splitRepoCountAllAssets, ownerAddress)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const splitRepoCreate = `-- name: SplitRepoCreate :one
-insert into splits (id, owner_user_id, name, description, position) values ($1, $2, $3, $4, $5) returning id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position
+insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
 `
 
 type SplitRepoCreateParams struct {
-	SplitID     persist.DBID
-	OwnerUserID persist.DBID
-	Name        string
-	Description string
-	Position    string
+	SplitID        persist.DBID
+	Chain          persist.Chain
+	Address        persist.Address
+	Name           string
+	Description    string
+	CreatorAddress persist.Address
+	LogoUrl        sql.NullString
+	BannerUrl      sql.NullString
+	BadgeUrl       sql.NullString
+	TotalOwnership int32
 }
 
 func (q *Queries) SplitRepoCreate(ctx context.Context, arg SplitRepoCreateParams) (Split, error) {
 	row := q.db.QueryRow(ctx, splitRepoCreate,
 		arg.SplitID,
-		arg.OwnerUserID,
+		arg.Chain,
+		arg.Address,
 		arg.Name,
 		arg.Description,
-		arg.Position,
+		arg.CreatorAddress,
+		arg.LogoUrl,
+		arg.BannerUrl,
+		arg.BadgeUrl,
+		arg.TotalOwnership,
 	)
 	var i Split
 	err := row.Scan(
 		&i.ID,
-		&i.Deleted,
+		&i.Version,
 		&i.LastUpdated,
 		&i.CreatedAt,
-		&i.Version,
-		&i.OwnerUserID,
-		&i.Collections,
+		&i.Deleted,
+		&i.Chain,
+		&i.Address,
 		&i.Name,
 		&i.Description,
-		&i.Hidden,
-		&i.Position,
+		&i.CreatorAddress,
+		&i.LogoUrl,
+		&i.BannerUrl,
+		&i.BadgeUrl,
+		&i.TotalOwnership,
 	)
 	return i, err
 }
 
-const splitRepoDelete = `-- name: SplitRepoDelete :exec
-update splits set deleted = true where splits.id = $1 and (select count(*) from splits g where g.owner_user_id = $2 and g.deleted = false and not g.id = $1) > 0 and not coalesce((select featured_split::varchar from users u where u.id = $2), '') = $1
+const splitRepoGetSplitAssets = `-- name: SplitRepoGetSplitAssets :many
+SELECT a.id FROM splits s
+    LEFT JOIN assets a ON a.owner_address = s.address
+    LEFT JOIN tokens t ON t.id = a.token_id
+    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false AND t.deleted = false
+    ORDER BY a.balance
 `
 
-type SplitRepoDeleteParams struct {
-	SplitID     persist.DBID
-	OwnerUserID persist.DBID
+type SplitRepoGetSplitAssetsParams struct {
+	Address persist.Address
+	Chain   persist.Chain
 }
 
-func (q *Queries) SplitRepoDelete(ctx context.Context, arg SplitRepoDeleteParams) error {
-	_, err := q.db.Exec(ctx, splitRepoDelete, arg.SplitID, arg.OwnerUserID)
-	return err
-}
-
-const splitRepoGetByUserIDRaw = `-- name: SplitRepoGetByUserIDRaw :many
-select id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position from splits g where g.owner_user_id = $1 and g.deleted = false order by position
-`
-
-func (q *Queries) SplitRepoGetByUserIDRaw(ctx context.Context, ownerUserID persist.DBID) ([]Split, error) {
-	rows, err := q.db.Query(ctx, splitRepoGetByUserIDRaw, ownerUserID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Split
-	for rows.Next() {
-		var i Split
-		if err := rows.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Version,
-			&i.OwnerUserID,
-			&i.Collections,
-			&i.Name,
-			&i.Description,
-			&i.Hidden,
-			&i.Position,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const splitRepoGetPreviewsForUserID = `-- name: SplitRepoGetPreviewsForUserID :many
-select (t.media ->> 'thumbnail_url')::text from splits g,
-    unnest(g.collections) with ordinality as collection_ids(id, ord) inner join collections c on c.id = collection_ids.id and c.deleted = false,
-    unnest(c.nfts) with ordinality as token_ids(id, ord) inner join tokens t on t.id = token_ids.id and t.deleted = false
-    where g.owner_user_id = $1 and g.deleted = false and t.media ->> 'thumbnail_url' != ''
-    order by collection_ids.ord, token_ids.ord limit $2
-`
-
-type SplitRepoGetPreviewsForUserIDParams struct {
-	OwnerUserID persist.DBID
-	Limit       int32
-}
-
-func (q *Queries) SplitRepoGetPreviewsForUserID(ctx context.Context, arg SplitRepoGetPreviewsForUserIDParams) ([]string, error) {
-	rows, err := q.db.Query(ctx, splitRepoGetPreviewsForUserID, arg.OwnerUserID, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var column_1 string
-		if err := rows.Scan(&column_1); err != nil {
-			return nil, err
-		}
-		items = append(items, column_1)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const splitRepoGetSplitCollections = `-- name: SplitRepoGetSplitCollections :many
-select c.id from splits g, unnest(g.collections) with ordinality as u(coll, coll_ord)
-    left join collections c on c.id = u.coll
-    where g.id = $1 and c.deleted = false and g.deleted = false order by u.coll_ord
-`
-
-func (q *Queries) SplitRepoGetSplitCollections(ctx context.Context, id persist.DBID) ([]persist.DBID, error) {
-	rows, err := q.db.Query(ctx, splitRepoGetSplitCollections, id)
+func (q *Queries) SplitRepoGetSplitAssets(ctx context.Context, arg SplitRepoGetSplitAssetsParams) ([]persist.DBID, error) {
+	rows, err := q.db.Query(ctx, splitRepoGetSplitAssets, arg.Address, arg.Chain)
 	if err != nil {
 		return nil, err
 	}
@@ -214,16 +107,11 @@ func (q *Queries) SplitRepoGetSplitCollections(ctx context.Context, id persist.D
 }
 
 const splitRepoUpdate = `-- name: SplitRepoUpdate :execrows
-update splits set last_updated = now(), collections = $1 where splits.id = $2 and (select count(*) from collections c where c.id = any($1) and c.split_id = $2 and c.deleted = false) = coalesce(array_length($1, 1), 0)
+update splits set last_updated = now() where splits.id = $1
 `
 
-type SplitRepoUpdateParams struct {
-	CollectionIds persist.DBIDList
-	SplitID       persist.DBID
-}
-
-func (q *Queries) SplitRepoUpdate(ctx context.Context, arg SplitRepoUpdateParams) (int64, error) {
-	result, err := q.db.Exec(ctx, splitRepoUpdate, arg.CollectionIds, arg.SplitID)
+func (q *Queries) SplitRepoUpdate(ctx context.Context, splitID persist.DBID) (int64, error) {
+	result, err := q.db.Exec(ctx, splitRepoUpdate, splitID)
 	if err != nil {
 		return 0, err
 	}

@@ -1,5 +1,7 @@
 /* {% require_sudo %} */
 CREATE SCHEMA IF NOT EXISTS public;
+CREATE SCHEMA IF NOT EXISTS pii;
+CREATE SCHEMA IF NOT EXISTS scrubbed_pii;
 
 CREATE TABLE IF NOT EXISTS users
 (
@@ -72,7 +74,7 @@ CREATE TABLE IF NOT EXISTS splits
     badge_url               character varying,
     total_ownership         integer                  NOT NULL,
     fts_name                tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED,
-    fts_description_english tsvector GENERATED ALWAYS AS (to_tsvector('english'::regconfig, (description)::text)) STORED,
+    fts_description_english tsvector GENERATED ALWAYS AS (to_tsvector('english'::regconfig, (description)::text)) STORED
 --     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
 );
 
@@ -346,3 +348,102 @@ CREATE INDEX wallets_fts_address_idx ON wallets USING gin (fts_address);
 ALTER TABLE users
     ADD CONSTRAINT users_primary_wallet_id_fkey
         FOREIGN KEY (primary_wallet_id) REFERENCES wallets (id);
+
+
+-- sqlc type will be "PiiForUser"
+CREATE TABLE IF NOT EXISTS pii.for_users
+(
+    user_id           character varying(255) PRIMARY KEY REFERENCES users,
+    pii_email_address character varying,
+    deleted           boolean NOT NULL DEFAULT false,
+    pii_socials       jsonb   NOT NULL DEFAULT '{}'
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS pii_for_users_pii_email_address_idx ON pii.for_users (pii_email_address) WHERE deleted = false;
+
+CREATE VIEW pii.user_view AS
+SELECT users.*, for_users.pii_email_address, for_users.pii_socials
+FROM users
+         LEFT JOIN pii.for_users ON users.id = for_users.user_id AND for_users.deleted = false;
+
+CREATE TABLE IF NOT EXISTS pii.socials_auth
+(
+    id            character varying(255) PRIMARY KEY,
+    deleted       boolean                  DEFAULT false             NOT NULL,
+    version       integer                  DEFAULT 0,
+    created_at    timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    last_updated  timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    user_id       character varying(255)                             NOT NULL REFERENCES users,
+    provider      character varying                                  NOT NULL,
+    access_token  character varying,
+    refresh_token character varying
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS social_auth_user_id_provider_idx ON pii.socials_auth (user_id, provider) WHERE deleted = false;
+
+CREATE VIEW scrubbed_pii.for_users as
+(
+with socials_kvp as (
+    -- Redundant jsonb_each because sqlc throws an error if we select "(jsonb_each(pii_socials)).*"
+    select user_id, (jsonb_each(pii_socials)).key as key, (jsonb_each(pii_socials)).value as value from pii.for_users),
+
+     socials_scrubbed AS (select user_id,
+                                 socials_kvp.key as k,
+                                 case
+                                     when (socials_kvp.value -> 'display')::bool then socials_kvp.value
+                                     else '{
+                                       "display": false,
+                                       "metadata": {}
+                                     }'::jsonb ||
+                                          jsonb_build_object('provider', socials_kvp.value -> 'provider') ||
+                                          jsonb_build_object('id', users.username_idempotent || '-dummy-id')
+                                     end         as v
+                          from socials_kvp
+                                   join users on socials_kvp.user_id = users.id),
+
+     socials_aggregated AS (select user_id, jsonb_object_agg(k, v) as socials
+                            from socials_scrubbed
+                            group by user_id),
+
+     -- includes social data when display = true, otherwise makes a dummy id and omits metadata
+     scrubbed_socials AS (select for_users.user_id,
+                                 coalesce(socials_aggregated.socials, '{}'::jsonb) as scrubbed_socials
+                          FROM pii.for_users
+                                   LEFT JOIN socials_aggregated on socials_aggregated.user_id = for_users.user_id),
+
+     -- <username>@dummy-email.gallery.so for users who have email addresses, null otherwise
+     scrubbed_email_address as (select u.id    as user_id,
+                                       case
+                                           when p.pii_email_address is not null
+                                               then u.username_idempotent || '@dummy-email.gallery.so'
+                                           end as scrubbed_address
+                                from users u,
+                                     pii.for_users p
+                                where u.id = p.user_id)
+
+     -- Doing this limit 0 union ensures we have appropriate column types for our view
+        (select * from pii.for_users limit 0)
+UNION ALL
+select p.user_id, e.scrubbed_address, p.deleted, s.scrubbed_socials
+from pii.for_users p
+         join scrubbed_email_address e on e.user_id = p.user_id
+         join scrubbed_socials s on s.user_id = p.user_id
+    );
+
+
+CREATE TABLE IF NOT EXISTS pii.account_creation_info
+(
+    user_id    character varying(255) PRIMARY KEY REFERENCES users,
+    ip_address text        NOT NULL,
+    created_at timestamptz not null
+);
+
+/*
+TODO pii cron -> add later?
+alter role access_rw_pii with login;
+grant usage on schema cron to access_rw_pii;
+
+set role to access_rw_pii;
+select cron.schedule('purge-account-creation-info', '@weekly', 'delete from pii.account_creation_info where created_at < now() - interval ''180 days''');
+set role to access_rw;
+*/

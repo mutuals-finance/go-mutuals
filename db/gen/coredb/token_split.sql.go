@@ -116,7 +116,7 @@ do update set
   , is_user_marked_spam = tokens.is_user_marked_spam
   , is_provider_marked_spam = excluded.is_provider_marked_spam
   , last_synced = greatest(excluded.last_synced,tokens.last_synced)
-returning id, deleted, version, created_at, last_updated, name, description, collectors_note, media, token_uri, token_type, token_id, quantity, ownership_history, token_metadata, external_url, block_number, owner_user_id, owned_by_wallets, chain, contract, is_user_marked_spam, is_provider_marked_spam, last_synced
+returning id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address
 `
 
 type UpsertTokensParams struct {
@@ -195,24 +195,12 @@ func (q *Queries) UpsertTokens(ctx context.Context, arg UpsertTokensParams) ([]T
 			&i.CreatedAt,
 			&i.LastUpdated,
 			&i.Name,
-			&i.Description,
-			&i.CollectorsNote,
-			&i.Media,
-			&i.TokenUri,
+			&i.Symbol,
+			&i.Logo,
 			&i.TokenType,
-			&i.TokenID,
-			&i.Quantity,
-			&i.OwnershipHistory,
-			&i.TokenMetadata,
-			&i.ExternalUrl,
 			&i.BlockNumber,
-			&i.OwnerUserID,
-			&i.OwnedByWallets,
 			&i.Chain,
-			&i.Contract,
-			&i.IsUserMarkedSpam,
-			&i.IsProviderMarkedSpam,
-			&i.LastSynced,
+			&i.ContractAddress,
 		); err != nil {
 			return nil, err
 		}

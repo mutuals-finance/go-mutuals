@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
@@ -54,7 +53,7 @@ func (l *AssetsByOwnerAddress) setPostFetchHook(postFetchHook func(context.Conte
 
 // NewAssetsByOwnerAddress creates a new AssetsByOwnerAddress with the given settings, functions, and options
 func NewAssetsByOwnerAddress(
-	settings AssetsByOwnerAddressSettings, fetch func(ctx context.Context, keys []persist.ChainAddress) ([][]coredb.Asset, []error),
+	settings AssetsByOwnerAddressSettings, fetch func(ctx context.Context, keys []persist.ChainAddress) ([][]Asset, []error),
 	opts ...func(interface {
 		setContext(context.Context)
 		setWait(time.Duration)
@@ -82,7 +81,7 @@ func NewAssetsByOwnerAddress(
 	}
 
 	// Set this after applying options, in case a different context was set via options
-	loader.fetch = func(keys []persist.ChainAddress) ([][]coredb.Asset, []error) {
+	loader.fetch = func(keys []persist.ChainAddress) ([][]Asset, []error) {
 		ctx := loader.ctx
 
 		// Allow the preFetchHook to modify and return a new context
@@ -119,7 +118,7 @@ type AssetsByOwnerAddress struct {
 	ctx context.Context
 
 	// this method provides the data for the loader
-	fetch func(keys []persist.ChainAddress) ([][]coredb.Asset, []error)
+	fetch func(keys []persist.ChainAddress) ([][]Asset, []error)
 
 	// how long to wait before sending a batch
 	wait time.Duration
@@ -151,10 +150,10 @@ type AssetsByOwnerAddress struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[persist.ChainAddress][]coredb.Asset
+	cache map[persist.ChainAddress][]Asset
 
 	// typed cache functions
-	//subscribers []func([]coredb.Asset)
+	//subscribers []func([]Asset)
 	subscribers []assetsByOwnerAddressSubscriber
 
 	// functions used to cache published results from other dataloaders
@@ -173,26 +172,26 @@ type AssetsByOwnerAddress struct {
 
 type assetsByOwnerAddressBatch struct {
 	keys    []persist.ChainAddress
-	data    [][]coredb.Asset
+	data    [][]Asset
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Asset by key, batching and caching will be applied automatically
-func (l *AssetsByOwnerAddress) Load(key persist.ChainAddress) ([]coredb.Asset, error) {
+func (l *AssetsByOwnerAddress) Load(key persist.ChainAddress) ([]Asset, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Asset.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *AssetsByOwnerAddress) LoadThunk(key persist.ChainAddress) func() ([]coredb.Asset, error) {
+func (l *AssetsByOwnerAddress) LoadThunk(key persist.ChainAddress) func() ([]Asset, error) {
 	l.mu.Lock()
 	if !l.disableCaching {
 		if it, ok := l.cache[key]; ok {
 			l.mu.Unlock()
-			return func() ([]coredb.Asset, error) {
+			return func() ([]Asset, error) {
 				return it, nil
 			}
 		}
@@ -204,10 +203,10 @@ func (l *AssetsByOwnerAddress) LoadThunk(key persist.ChainAddress) func() ([]cor
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() ([]coredb.Asset, error) {
+	return func() ([]Asset, error) {
 		<-batch.done
 
-		var data []coredb.Asset
+		var data []Asset
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -238,14 +237,14 @@ func (l *AssetsByOwnerAddress) LoadThunk(key persist.ChainAddress) func() ([]cor
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *AssetsByOwnerAddress) LoadAll(keys []persist.ChainAddress) ([][]coredb.Asset, []error) {
-	results := make([]func() ([]coredb.Asset, error), len(keys))
+func (l *AssetsByOwnerAddress) LoadAll(keys []persist.ChainAddress) ([][]Asset, []error) {
+	results := make([]func() ([]Asset, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	assets := make([][]coredb.Asset, len(keys))
+	assets := make([][]Asset, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		assets[i], errors[i] = thunk()
@@ -256,13 +255,13 @@ func (l *AssetsByOwnerAddress) LoadAll(keys []persist.ChainAddress) ([][]coredb.
 // LoadAllThunk returns a function that when called will block waiting for a Assets.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *AssetsByOwnerAddress) LoadAllThunk(keys []persist.ChainAddress) func() ([][]coredb.Asset, []error) {
-	results := make([]func() ([]coredb.Asset, error), len(keys))
+func (l *AssetsByOwnerAddress) LoadAllThunk(keys []persist.ChainAddress) func() ([][]Asset, []error) {
+	results := make([]func() ([]Asset, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([][]coredb.Asset, []error) {
-		assets := make([][]coredb.Asset, len(keys))
+	return func() ([][]Asset, []error) {
+		assets := make([][]Asset, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			assets[i], errors[i] = thunk()
@@ -274,7 +273,7 @@ func (l *AssetsByOwnerAddress) LoadAllThunk(keys []persist.ChainAddress) func() 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *AssetsByOwnerAddress) Prime(key persist.ChainAddress, value []coredb.Asset) bool {
+func (l *AssetsByOwnerAddress) Prime(key persist.ChainAddress, value []Asset) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -283,7 +282,7 @@ func (l *AssetsByOwnerAddress) Prime(key persist.ChainAddress, value []coredb.As
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := make([]coredb.Asset, len(value))
+		cpy := make([]Asset, len(value))
 		copy(cpy, value)
 		l.unsafeSet(key, cpy)
 	}
@@ -301,9 +300,9 @@ func (l *AssetsByOwnerAddress) Clear(key persist.ChainAddress) {
 	l.mu.Unlock()
 }
 
-func (l *AssetsByOwnerAddress) unsafeSet(key persist.ChainAddress, value []coredb.Asset) {
+func (l *AssetsByOwnerAddress) unsafeSet(key persist.ChainAddress, value []Asset) {
 	if l.cache == nil {
-		l.cache = map[persist.ChainAddress][]coredb.Asset{}
+		l.cache = map[persist.ChainAddress][]Asset{}
 	}
 	l.cache[key] = value
 }
@@ -356,15 +355,15 @@ func (b *assetsByOwnerAddressBatch) end(l *AssetsByOwnerAddress) {
 }
 
 type assetsByOwnerAddressSubscriber struct {
-	cacheFunc func(coredb.Asset)
+	cacheFunc func(Asset)
 	mutex     *sync.Mutex
 }
 
-func (l *AssetsByOwnerAddress) publishToSubscribers(value []coredb.Asset) {
+func (l *AssetsByOwnerAddress) publishToSubscribers(value []Asset) {
 	// Lazy build our list of typed cache functions once
 	l.once.Do(func() {
 		for i, subscription := range *l.subscriptionRegistry {
-			if typedFunc, ok := subscription.(*func(coredb.Asset)); ok {
+			if typedFunc, ok := subscription.(*func(Asset)); ok {
 				// Don't invoke our own cache function
 				if !l.ownsCacheFunc(typedFunc) {
 					l.subscribers = append(l.subscribers, assetsByOwnerAddressSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
@@ -391,7 +390,7 @@ func (l *AssetsByOwnerAddress) registerCacheFunc(cacheFunc interface{}, mutex *s
 	*l.mutexRegistry = append(*l.mutexRegistry, mutex)
 }
 
-func (l *AssetsByOwnerAddress) ownsCacheFunc(f *func(coredb.Asset)) bool {
+func (l *AssetsByOwnerAddress) ownsCacheFunc(f *func(Asset)) bool {
 	for _, cacheFunc := range l.cacheFuncs {
 		if cacheFunc == f {
 			return true

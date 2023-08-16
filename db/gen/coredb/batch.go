@@ -7,12 +7,10 @@ package coredb
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"time"
 
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -20,234 +18,41 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const getCollectionByIdBatch = `-- name: GetCollectionByIdBatch :batchone
-SELECT id, deleted, owner_user_id, nfts, version, last_updated, created_at, hidden, collectors_note, name, layout, token_settings, split_id FROM collections WHERE id = $1 AND deleted = false
+const getAssetsBySplitChainAddressBatch = `-- name: GetAssetsBySplitChainAddressBatch :batchmany
+SELECT a.id, a.version, a.last_updated, a.created_at, a.token_id, a.owner_address, a.balance, a.block_number FROM splits s
+    JOIN assets a ON a.owner_address = s.address
+    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
+    ORDER BY a.balance
 `
 
-type GetCollectionByIdBatchBatchResults struct {
+type GetAssetsBySplitChainAddressBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetCollectionByIdBatch(ctx context.Context, id []persist.DBID) *GetCollectionByIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getCollectionByIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetCollectionByIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetCollectionByIdBatchBatchResults) QueryRow(f func(int, Collection, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Collection
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.OwnerUserID,
-			&i.Nfts,
-			&i.Version,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Hidden,
-			&i.CollectorsNote,
-			&i.Name,
-			&i.Layout,
-			&i.TokenSettings,
-			&i.SplitID,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetCollectionByIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getCollectionsBySplitIdBatch = `-- name: GetCollectionsBySplitIdBatch :batchmany
-SELECT c.id, c.deleted, c.owner_user_id, c.nfts, c.version, c.last_updated, c.created_at, c.hidden, c.collectors_note, c.name, c.layout, c.token_settings, c.split_id FROM splits g, unnest(g.collections)
-    WITH ORDINALITY AS x(coll_id, coll_ord)
-    INNER JOIN collections c ON c.id = x.coll_id
-    WHERE g.id = $1 AND g.deleted = false AND c.deleted = false ORDER BY x.coll_ord
-`
-
-type GetCollectionsBySplitIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetCollectionsBySplitIdBatch(ctx context.Context, id []persist.DBID) *GetCollectionsBySplitIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getCollectionsBySplitIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetCollectionsBySplitIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetCollectionsBySplitIdBatchBatchResults) Query(f func(int, []Collection, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Collection
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Collection
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.OwnerUserID,
-					&i.Nfts,
-					&i.Version,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Hidden,
-					&i.CollectorsNote,
-					&i.Name,
-					&i.Layout,
-					&i.TokenSettings,
-					&i.SplitID,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetCollectionsBySplitIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getContractByChainAddressBatch = `-- name: GetContractByChainAddressBatch :batchone
-select id, deleted, version, created_at, last_updated, name, symbol, address, creator_address, chain, profile_banner_url, profile_image_url, badge_url, description FROM contracts WHERE address = $1 AND chain = $2 AND deleted = false
-`
-
-type GetContractByChainAddressBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetContractByChainAddressBatchParams struct {
+type GetAssetsBySplitChainAddressBatchParams struct {
 	Address persist.Address
 	Chain   persist.Chain
 }
 
-func (q *Queries) GetContractByChainAddressBatch(ctx context.Context, arg []GetContractByChainAddressBatchParams) *GetContractByChainAddressBatchBatchResults {
+func (q *Queries) GetAssetsBySplitChainAddressBatch(ctx context.Context, arg []GetAssetsBySplitChainAddressBatchParams) *GetAssetsBySplitChainAddressBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range arg {
 		vals := []interface{}{
 			a.Address,
 			a.Chain,
 		}
-		batch.Queue(getContractByChainAddressBatch, vals...)
+		batch.Queue(getAssetsBySplitChainAddressBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetContractByChainAddressBatchBatchResults{br, len(arg), false}
+	return &GetAssetsBySplitChainAddressBatchBatchResults{br, len(arg), false}
 }
 
-func (b *GetContractByChainAddressBatchBatchResults) QueryRow(f func(int, Contract, error)) {
+func (b *GetAssetsBySplitChainAddressBatchBatchResults) Query(f func(int, []Asset, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
-		var i Contract
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.CreatedAt,
-			&i.LastUpdated,
-			&i.Name,
-			&i.Symbol,
-			&i.Address,
-			&i.CreatorAddress,
-			&i.Chain,
-			&i.ProfileBannerUrl,
-			&i.ProfileImageUrl,
-			&i.BadgeUrl,
-			&i.Description,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetContractByChainAddressBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getContractsByUserIDBatch = `-- name: GetContractsByUserIDBatch :batchmany
-SELECT DISTINCT ON (contracts.id) contracts.id, contracts.deleted, contracts.version, contracts.created_at, contracts.last_updated, contracts.name, contracts.symbol, contracts.address, contracts.creator_address, contracts.chain, contracts.profile_banner_url, contracts.profile_image_url, contracts.badge_url, contracts.description FROM contracts, tokens
-    WHERE tokens.owner_user_id = $1 AND tokens.contract = contracts.id
-    AND tokens.deleted = false AND contracts.deleted = false
-`
-
-type GetContractsByUserIDBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetContractsByUserIDBatch(ctx context.Context, ownerUserID []persist.DBID) *GetContractsByUserIDBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range ownerUserID {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getContractsByUserIDBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetContractsByUserIDBatchBatchResults{br, len(ownerUserID), false}
-}
-
-func (b *GetContractsByUserIDBatchBatchResults) Query(f func(int, []Contract, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Contract
+		var items []Asset
 		if b.closed {
 			if f != nil {
 				f(t, items, ErrBatchAlreadyClosed)
@@ -261,22 +66,16 @@ func (b *GetContractsByUserIDBatchBatchResults) Query(f func(int, []Contract, er
 				return err
 			}
 			for rows.Next() {
-				var i Contract
+				var i Asset
 				if err := rows.Scan(
 					&i.ID,
-					&i.Deleted,
 					&i.Version,
-					&i.CreatedAt,
 					&i.LastUpdated,
-					&i.Name,
-					&i.Symbol,
-					&i.Address,
-					&i.CreatorAddress,
-					&i.Chain,
-					&i.ProfileBannerUrl,
-					&i.ProfileImageUrl,
-					&i.BadgeUrl,
-					&i.Description,
+					&i.CreatedAt,
+					&i.TokenID,
+					&i.OwnerAddress,
+					&i.Balance,
+					&i.BlockNumber,
 				); err != nil {
 					return err
 				}
@@ -290,321 +89,13 @@ func (b *GetContractsByUserIDBatchBatchResults) Query(f func(int, []Contract, er
 	}
 }
 
-func (b *GetContractsByUserIDBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getContractsDisplayedByUserIDBatch = `-- name: GetContractsDisplayedByUserIDBatch :batchmany
-with last_refreshed as (
-  select last_updated from owned_contracts limit 1
-),
-displayed as (
-  select contract_id
-  from owned_contracts
-  where owned_contracts.user_id = $1 and displayed = true
-  union
-  select contracts.id
-  from last_refreshed, splits, contracts, tokens
-  join collections on tokens.id = any(collections.nfts) and collections.deleted = false
-  where tokens.owner_user_id = $1
-    and tokens.contract = contracts.id
-    and collections.owner_user_id = tokens.owner_user_id
-    and splits.owner_user_id = tokens.owner_user_id
-    and tokens.deleted = false
-    and splits.deleted = false
-    and contracts.deleted = false
-    and splits.last_updated > last_refreshed.last_updated
-    and collections.last_updated > last_refreshed.last_updated
-)
-select contracts.id, contracts.deleted, contracts.version, contracts.created_at, contracts.last_updated, contracts.name, contracts.symbol, contracts.address, contracts.creator_address, contracts.chain, contracts.profile_banner_url, contracts.profile_image_url, contracts.badge_url, contracts.description from contracts, displayed
-where contracts.id = displayed.contract_id and contracts.deleted = false
-`
-
-type GetContractsDisplayedByUserIDBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetContractsDisplayedByUserIDBatch(ctx context.Context, userID []persist.DBID) *GetContractsDisplayedByUserIDBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range userID {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getContractsDisplayedByUserIDBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetContractsDisplayedByUserIDBatchBatchResults{br, len(userID), false}
-}
-
-func (b *GetContractsDisplayedByUserIDBatchBatchResults) Query(f func(int, []Contract, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Contract
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Contract
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Symbol,
-					&i.Address,
-					&i.CreatorAddress,
-					&i.Chain,
-					&i.ProfileBannerUrl,
-					&i.ProfileImageUrl,
-					&i.BadgeUrl,
-					&i.Description,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetContractsDisplayedByUserIDBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getFollowersByUserIdBatch = `-- name: GetFollowersByUserIdBatch :batchmany
-SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences FROM follows f
-    INNER JOIN users u ON f.follower = u.id
-    WHERE f.followee = $1 AND f.deleted = false
-    ORDER BY f.last_updated DESC
-`
-
-type GetFollowersByUserIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetFollowersByUserIdBatch(ctx context.Context, followee []persist.DBID) *GetFollowersByUserIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range followee {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getFollowersByUserIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetFollowersByUserIdBatchBatchResults{br, len(followee), false}
-}
-
-func (b *GetFollowersByUserIdBatchBatchResults) Query(f func(int, []User, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []User
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i User
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Username,
-					&i.UsernameIdempotent,
-					&i.Wallets,
-					&i.Bio,
-					&i.Traits,
-					&i.Universal,
-					&i.NotificationSettings,
-					&i.EmailVerified,
-					&i.EmailUnsubscriptions,
-					&i.FeaturedSplit,
-					&i.PrimaryWalletID,
-					&i.UserExperiences,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetFollowersByUserIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getFollowingByUserIdBatch = `-- name: GetFollowingByUserIdBatch :batchmany
-SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences FROM follows f
-    INNER JOIN users u ON f.followee = u.id
-    WHERE f.follower = $1 AND f.deleted = false
-    ORDER BY f.last_updated DESC
-`
-
-type GetFollowingByUserIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetFollowingByUserIdBatch(ctx context.Context, follower []persist.DBID) *GetFollowingByUserIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range follower {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getFollowingByUserIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetFollowingByUserIdBatchBatchResults{br, len(follower), false}
-}
-
-func (b *GetFollowingByUserIdBatchBatchResults) Query(f func(int, []User, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []User
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i User
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Username,
-					&i.UsernameIdempotent,
-					&i.Wallets,
-					&i.Bio,
-					&i.Traits,
-					&i.Universal,
-					&i.NotificationSettings,
-					&i.EmailVerified,
-					&i.EmailUnsubscriptions,
-					&i.FeaturedSplit,
-					&i.PrimaryWalletID,
-					&i.UserExperiences,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetFollowingByUserIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getMembershipByMembershipIdBatch = `-- name: GetMembershipByMembershipIdBatch :batchone
-SELECT id, deleted, version, created_at, last_updated, token_id, name, asset_url, owners FROM membership WHERE id = $1 AND deleted = false
-`
-
-type GetMembershipByMembershipIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetMembershipByMembershipIdBatch(ctx context.Context, id []persist.DBID) *GetMembershipByMembershipIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getMembershipByMembershipIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetMembershipByMembershipIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetMembershipByMembershipIdBatchBatchResults) QueryRow(f func(int, Membership, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Membership
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.CreatedAt,
-			&i.LastUpdated,
-			&i.TokenID,
-			&i.Name,
-			&i.AssetUrl,
-			&i.Owners,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetMembershipByMembershipIdBatchBatchResults) Close() error {
+func (b *GetAssetsBySplitChainAddressBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
 
 const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, feed_event_id, comment_id, split_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
 `
 
 type GetNotificationByIDBatchBatchResults struct {
@@ -646,8 +137,6 @@ func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
-			&i.FeedEventID,
-			&i.CommentID,
 			&i.SplitID,
 			&i.Seen,
 			&i.Amount,
@@ -663,464 +152,8 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getOwnersByContractIdBatchPaginate = `-- name: GetOwnersByContractIdBatchPaginate :batchmany
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences from (
-    select distinct on (u.id) u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u, tokens t
-        where t.contract = $1 and t.owner_user_id = u.id
-        and (not $2::bool or u.universal = false)
-        and t.deleted = false and u.deleted = false
-    ) as users
-    where (users.universal,users.created_at,users.id) < ($3, $4::timestamptz, $5)
-    and (users.universal,users.created_at,users.id) > ($6, $7::timestamptz, $8)
-    order by case when $9::bool then (users.universal,users.created_at,users.id) end asc,
-         case when not $9::bool then (users.universal,users.created_at,users.id) end desc limit $10
-`
-
-type GetOwnersByContractIdBatchPaginateBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetOwnersByContractIdBatchPaginateParams struct {
-	Contract           persist.DBID
-	SplitfiUsersOnly   bool
-	CurBeforeUniversal bool
-	CurBeforeTime      time.Time
-	CurBeforeID        persist.DBID
-	CurAfterUniversal  bool
-	CurAfterTime       time.Time
-	CurAfterID         persist.DBID
-	PagingForward      bool
-	Limit              sql.NullInt32
-}
-
-// Note: sqlc has trouble recognizing that the output of the "select distinct" subquery below will
-//
-//	return complete rows from the users table. As a workaround, aliasing the subquery to
-//	"users" seems to fix the issue (along with aliasing the users table inside the subquery
-//	to "u" to avoid confusion -- otherwise, sqlc creates a custom row type that includes
-//	all users.* fields twice).
-func (q *Queries) GetOwnersByContractIdBatchPaginate(ctx context.Context, arg []GetOwnersByContractIdBatchPaginateParams) *GetOwnersByContractIdBatchPaginateBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.Contract,
-			a.SplitfiUsersOnly,
-			a.CurBeforeUniversal,
-			a.CurBeforeTime,
-			a.CurBeforeID,
-			a.CurAfterUniversal,
-			a.CurAfterTime,
-			a.CurAfterID,
-			a.PagingForward,
-			a.Limit,
-		}
-		batch.Queue(getOwnersByContractIdBatchPaginate, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetOwnersByContractIdBatchPaginateBatchResults{br, len(arg), false}
-}
-
-func (b *GetOwnersByContractIdBatchPaginateBatchResults) Query(f func(int, []User, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []User
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i User
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Username,
-					&i.UsernameIdempotent,
-					&i.Wallets,
-					&i.Bio,
-					&i.Traits,
-					&i.Universal,
-					&i.NotificationSettings,
-					&i.EmailVerified,
-					&i.EmailUnsubscriptions,
-					&i.FeaturedSplit,
-					&i.PrimaryWalletID,
-					&i.UserExperiences,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetOwnersByContractIdBatchPaginateBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getSharedContractsBatchPaginate = `-- name: GetSharedContractsBatchPaginate :batchmany
-select contracts.id, contracts.deleted, contracts.version, contracts.created_at, contracts.last_updated, contracts.name, contracts.symbol, contracts.address, contracts.creator_address, contracts.chain, contracts.profile_banner_url, contracts.profile_image_url, contracts.badge_url, contracts.description, a.displayed as displayed_by_user_a, b.displayed as displayed_by_user_b, a.owned_count
-from owned_contracts a, owned_contracts b, contracts
-left join marketplace_contracts on contracts.id = marketplace_contracts.contract_id
-where a.user_id = $1
-  and b.user_id = $2
-  and a.contract_id = b.contract_id
-  and a.contract_id = contracts.id
-  and marketplace_contracts.contract_id is null
-  and contracts.name is not null
-  and contracts.name != ''
-  and contracts.name != 'Unidentified contract'
-  and (
-    a.displayed,
-    b.displayed,
-    a.owned_count,
-    contracts.id
-  ) > (
-    $3,
-    $4,
-    $5::int,
-    $6
-  )
-  and (
-    a.displayed,
-    b.displayed,
-    a.owned_count,
-    contracts.id
-  ) < (
-    $7,
-    $8,
-    $9::int,
-    $10
-  )
-order by case when $11::bool then (a.displayed, b.displayed, a.owned_count, contracts.id) end desc,
-        case when not $11::bool then (a.displayed, b.displayed, a.owned_count, contracts.id) end asc
-limit $12
-`
-
-type GetSharedContractsBatchPaginateBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetSharedContractsBatchPaginateParams struct {
-	UserAID                   persist.DBID
-	UserBID                   persist.DBID
-	CurBeforeDisplayedByUserA bool
-	CurBeforeDisplayedByUserB bool
-	CurBeforeOwnedCount       int32
-	CurBeforeContractID       persist.DBID
-	CurAfterDisplayedByUserA  bool
-	CurAfterDisplayedByUserB  bool
-	CurAfterOwnedCount        int32
-	CurAfterContractID        persist.DBID
-	PagingForward             bool
-	Limit                     int32
-}
-
-type GetSharedContractsBatchPaginateRow struct {
-	ID               persist.DBID
-	Deleted          bool
-	Version          sql.NullInt32
-	CreatedAt        time.Time
-	LastUpdated      time.Time
-	Name             sql.NullString
-	Symbol           sql.NullString
-	Address          persist.Address
-	CreatorAddress   persist.Address
-	Chain            persist.Chain
-	ProfileBannerUrl sql.NullString
-	ProfileImageUrl  sql.NullString
-	BadgeUrl         sql.NullString
-	Description      sql.NullString
-	DisplayedByUserA bool
-	DisplayedByUserB bool
-	OwnedCount       int64
-}
-
-func (q *Queries) GetSharedContractsBatchPaginate(ctx context.Context, arg []GetSharedContractsBatchPaginateParams) *GetSharedContractsBatchPaginateBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.UserAID,
-			a.UserBID,
-			a.CurBeforeDisplayedByUserA,
-			a.CurBeforeDisplayedByUserB,
-			a.CurBeforeOwnedCount,
-			a.CurBeforeContractID,
-			a.CurAfterDisplayedByUserA,
-			a.CurAfterDisplayedByUserB,
-			a.CurAfterOwnedCount,
-			a.CurAfterContractID,
-			a.PagingForward,
-			a.Limit,
-		}
-		batch.Queue(getSharedContractsBatchPaginate, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetSharedContractsBatchPaginateBatchResults{br, len(arg), false}
-}
-
-func (b *GetSharedContractsBatchPaginateBatchResults) Query(f func(int, []GetSharedContractsBatchPaginateRow, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []GetSharedContractsBatchPaginateRow
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i GetSharedContractsBatchPaginateRow
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Symbol,
-					&i.Address,
-					&i.CreatorAddress,
-					&i.Chain,
-					&i.ProfileBannerUrl,
-					&i.ProfileImageUrl,
-					&i.BadgeUrl,
-					&i.Description,
-					&i.DisplayedByUserA,
-					&i.DisplayedByUserB,
-					&i.OwnedCount,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetSharedContractsBatchPaginateBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getSharedFollowersBatchPaginate = `-- name: GetSharedFollowersBatchPaginate :batchmany
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences, a.created_at followed_on
-from users, follows a, follows b
-where a.follower = $1
-	and a.followee = b.follower
-	and b.followee = $2
-	and users.id = b.follower
-	and a.deleted = false
-	and b.deleted = false
-	and users.deleted = false
-  and (a.created_at, users.id) > ($3, $4)
-  and (a.created_at, users.id) < ($5, $6)
-order by case when $7::bool then (a.created_at, users.id) end desc,
-        case when not $7::bool then (a.created_at, users.id) end asc
-limit $8
-`
-
-type GetSharedFollowersBatchPaginateBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetSharedFollowersBatchPaginateParams struct {
-	Follower      persist.DBID
-	Followee      persist.DBID
-	CurBeforeTime time.Time
-	CurBeforeID   persist.DBID
-	CurAfterTime  time.Time
-	CurAfterID    persist.DBID
-	PagingForward bool
-	Limit         int32
-}
-
-type GetSharedFollowersBatchPaginateRow struct {
-	ID                   persist.DBID
-	Deleted              bool
-	Version              sql.NullInt32
-	LastUpdated          time.Time
-	CreatedAt            time.Time
-	Username             sql.NullString
-	UsernameIdempotent   sql.NullString
-	Wallets              persist.WalletList
-	Bio                  sql.NullString
-	Traits               pgtype.JSONB
-	Universal            bool
-	NotificationSettings persist.UserNotificationSettings
-	EmailVerified        persist.EmailVerificationStatus
-	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedSplit        *persist.DBID
-	PrimaryWalletID      persist.DBID
-	UserExperiences      pgtype.JSONB
-	FollowedOn           time.Time
-}
-
-func (q *Queries) GetSharedFollowersBatchPaginate(ctx context.Context, arg []GetSharedFollowersBatchPaginateParams) *GetSharedFollowersBatchPaginateBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.Follower,
-			a.Followee,
-			a.CurBeforeTime,
-			a.CurBeforeID,
-			a.CurAfterTime,
-			a.CurAfterID,
-			a.PagingForward,
-			a.Limit,
-		}
-		batch.Queue(getSharedFollowersBatchPaginate, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetSharedFollowersBatchPaginateBatchResults{br, len(arg), false}
-}
-
-func (b *GetSharedFollowersBatchPaginateBatchResults) Query(f func(int, []GetSharedFollowersBatchPaginateRow, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []GetSharedFollowersBatchPaginateRow
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i GetSharedFollowersBatchPaginateRow
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Username,
-					&i.UsernameIdempotent,
-					&i.Wallets,
-					&i.Bio,
-					&i.Traits,
-					&i.Universal,
-					&i.NotificationSettings,
-					&i.EmailVerified,
-					&i.EmailUnsubscriptions,
-					&i.FeaturedSplit,
-					&i.PrimaryWalletID,
-					&i.UserExperiences,
-					&i.FollowedOn,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetSharedFollowersBatchPaginateBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getSplitByCollectionIdBatch = `-- name: GetSplitByCollectionIdBatch :batchone
-SELECT g.id, g.deleted, g.last_updated, g.created_at, g.version, g.owner_user_id, g.collections, g.name, g.description, g.hidden, g.position FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false
-`
-
-type GetSplitByCollectionIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetSplitByCollectionIdBatch(ctx context.Context, id []persist.DBID) *GetSplitByCollectionIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getSplitByCollectionIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetSplitByCollectionIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetSplitByCollectionIdBatchBatchResults) QueryRow(f func(int, Split, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Split
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Version,
-			&i.OwnerUserID,
-			&i.Collections,
-			&i.Name,
-			&i.Description,
-			&i.Hidden,
-			&i.Position,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetSplitByCollectionIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
 const getSplitByIdBatch = `-- name: GetSplitByIdBatch :batchone
-SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE id = $1 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false
 `
 
 type GetSplitByIdBatchBatchResults struct {
@@ -1154,16 +187,19 @@ func (b *GetSplitByIdBatchBatchResults) QueryRow(f func(int, Split, error)) {
 		row := b.br.QueryRow()
 		err := row.Scan(
 			&i.ID,
-			&i.Deleted,
+			&i.Version,
 			&i.LastUpdated,
 			&i.CreatedAt,
-			&i.Version,
-			&i.OwnerUserID,
-			&i.Collections,
+			&i.Deleted,
+			&i.Chain,
+			&i.Address,
 			&i.Name,
 			&i.Description,
-			&i.Hidden,
-			&i.Position,
+			&i.CreatorAddress,
+			&i.LogoUrl,
+			&i.BannerUrl,
+			&i.BadgeUrl,
+			&i.TotalOwnership,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -1176,29 +212,31 @@ func (b *GetSplitByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getSplitsByUserIdBatch = `-- name: GetSplitsByUserIdBatch :batchmany
-SELECT id, deleted, last_updated, created_at, version, owner_user_id, collections, name, description, hidden, position FROM splits WHERE owner_user_id = $1 AND deleted = false order by position
+const getSplitsByRecipientAddressBatch = `-- name: GetSplitsByRecipientAddressBatch :batchmany
+SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
+    JOIN splits s ON s.id = r.split_id
+    WHERE r.address = $1 AND s.deleted = false
 `
 
-type GetSplitsByUserIdBatchBatchResults struct {
+type GetSplitsByRecipientAddressBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetSplitsByUserIdBatch(ctx context.Context, ownerUserID []persist.DBID) *GetSplitsByUserIdBatchBatchResults {
+func (q *Queries) GetSplitsByRecipientAddressBatch(ctx context.Context, address []persist.Address) *GetSplitsByRecipientAddressBatchBatchResults {
 	batch := &pgx.Batch{}
-	for _, a := range ownerUserID {
+	for _, a := range address {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getSplitsByUserIdBatch, vals...)
+		batch.Queue(getSplitsByRecipientAddressBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetSplitsByUserIdBatchBatchResults{br, len(ownerUserID), false}
+	return &GetSplitsByRecipientAddressBatchBatchResults{br, len(address), false}
 }
 
-func (b *GetSplitsByUserIdBatchBatchResults) Query(f func(int, []Split, error)) {
+func (b *GetSplitsByRecipientAddressBatchBatchResults) Query(f func(int, []Split, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var items []Split
@@ -1218,16 +256,19 @@ func (b *GetSplitsByUserIdBatchBatchResults) Query(f func(int, []Split, error)) 
 				var i Split
 				if err := rows.Scan(
 					&i.ID,
-					&i.Deleted,
+					&i.Version,
 					&i.LastUpdated,
 					&i.CreatedAt,
-					&i.Version,
-					&i.OwnerUserID,
-					&i.Collections,
+					&i.Deleted,
+					&i.Chain,
+					&i.Address,
 					&i.Name,
 					&i.Description,
-					&i.Hidden,
-					&i.Position,
+					&i.CreatorAddress,
+					&i.LogoUrl,
+					&i.BannerUrl,
+					&i.BadgeUrl,
+					&i.TotalOwnership,
 				); err != nil {
 					return err
 				}
@@ -1241,13 +282,94 @@ func (b *GetSplitsByUserIdBatchBatchResults) Query(f func(int, []Split, error)) 
 	}
 }
 
-func (b *GetSplitsByUserIdBatchBatchResults) Close() error {
+func (b *GetSplitsByRecipientAddressBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getSplitsByRecipientChainAddressBatch = `-- name: GetSplitsByRecipientChainAddressBatch :batchmany
+SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
+    JOIN splits s ON s.id = r.split_id
+    WHERE r.address = $1 AND s.chain = $2 AND s.deleted = false
+`
+
+type GetSplitsByRecipientChainAddressBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type GetSplitsByRecipientChainAddressBatchParams struct {
+	Address persist.Address
+	Chain   persist.Chain
+}
+
+func (q *Queries) GetSplitsByRecipientChainAddressBatch(ctx context.Context, arg []GetSplitsByRecipientChainAddressBatchParams) *GetSplitsByRecipientChainAddressBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.Address,
+			a.Chain,
+		}
+		batch.Queue(getSplitsByRecipientChainAddressBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetSplitsByRecipientChainAddressBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetSplitsByRecipientChainAddressBatchBatchResults) Query(f func(int, []Split, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Split
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Split
+				if err := rows.Scan(
+					&i.ID,
+					&i.Version,
+					&i.LastUpdated,
+					&i.CreatedAt,
+					&i.Deleted,
+					&i.Chain,
+					&i.Address,
+					&i.Name,
+					&i.Description,
+					&i.CreatorAddress,
+					&i.LogoUrl,
+					&i.BannerUrl,
+					&i.BadgeUrl,
+					&i.TotalOwnership,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetSplitsByRecipientChainAddressBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
 
 const getTokenByIdBatch = `-- name: GetTokenByIdBatch :batchone
-SELECT id, deleted, version, created_at, last_updated, name, description, collectors_note, media, token_uri, token_type, token_id, quantity, ownership_history, token_metadata, external_url, block_number, owner_user_id, owned_by_wallets, chain, contract, is_user_marked_spam, is_provider_marked_spam, last_synced FROM tokens WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE id = $1 AND deleted = false
 `
 
 type GetTokenByIdBatchBatchResults struct {
@@ -1286,24 +408,12 @@ func (b *GetTokenByIdBatchBatchResults) QueryRow(f func(int, Token, error)) {
 			&i.CreatedAt,
 			&i.LastUpdated,
 			&i.Name,
-			&i.Description,
-			&i.CollectorsNote,
-			&i.Media,
-			&i.TokenUri,
+			&i.Symbol,
+			&i.Logo,
 			&i.TokenType,
-			&i.TokenID,
-			&i.Quantity,
-			&i.OwnershipHistory,
-			&i.TokenMetadata,
-			&i.ExternalUrl,
 			&i.BlockNumber,
-			&i.OwnerUserID,
-			&i.OwnedByWallets,
 			&i.Chain,
-			&i.Contract,
-			&i.IsUserMarkedSpam,
-			&i.IsProviderMarkedSpam,
-			&i.LastSynced,
+			&i.ContractAddress,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -1312,720 +422,6 @@ func (b *GetTokenByIdBatchBatchResults) QueryRow(f func(int, Token, error)) {
 }
 
 func (b *GetTokenByIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokenOwnerByIDBatch = `-- name: GetTokenOwnerByIDBatch :batchone
-SELECT u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences FROM tokens t
-    JOIN users u ON u.id = t.owner_user_id
-    WHERE t.id = $1 AND t.deleted = false AND u.deleted = false
-`
-
-type GetTokenOwnerByIDBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetTokenOwnerByIDBatch(ctx context.Context, id []persist.DBID) *GetTokenOwnerByIDBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getTokenOwnerByIDBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokenOwnerByIDBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetTokenOwnerByIDBatchBatchResults) QueryRow(f func(int, User, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i User
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Username,
-			&i.UsernameIdempotent,
-			&i.Wallets,
-			&i.Bio,
-			&i.Traits,
-			&i.Universal,
-			&i.NotificationSettings,
-			&i.EmailVerified,
-			&i.EmailUnsubscriptions,
-			&i.FeaturedSplit,
-			&i.PrimaryWalletID,
-			&i.UserExperiences,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetTokenOwnerByIDBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByCollectionIdBatch = `-- name: GetTokensByCollectionIdBatch :batchmany
-SELECT t.id, t.deleted, t.version, t.created_at, t.last_updated, t.name, t.description, t.collectors_note, t.media, t.token_uri, t.token_type, t.token_id, t.quantity, t.ownership_history, t.token_metadata, t.external_url, t.block_number, t.owner_user_id, t.owned_by_wallets, t.chain, t.contract, t.is_user_marked_spam, t.is_provider_marked_spam, t.last_synced FROM users u, collections c, unnest(c.nfts)
-    WITH ORDINALITY AS x(nft_id, nft_ord)
-    INNER JOIN tokens t ON t.id = x.nft_id
-    WHERE u.id = t.owner_user_id AND t.owned_by_wallets && u.wallets
-    AND c.id = $1 AND u.deleted = false AND c.deleted = false AND t.deleted = false ORDER BY x.nft_ord LIMIT $2
-`
-
-type GetTokensByCollectionIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetTokensByCollectionIdBatchParams struct {
-	CollectionID persist.DBID
-	Limit        sql.NullInt32
-}
-
-func (q *Queries) GetTokensByCollectionIdBatch(ctx context.Context, arg []GetTokensByCollectionIdBatchParams) *GetTokensByCollectionIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.CollectionID,
-			a.Limit,
-		}
-		batch.Queue(getTokensByCollectionIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByCollectionIdBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetTokensByCollectionIdBatchBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Description,
-					&i.CollectorsNote,
-					&i.Media,
-					&i.TokenUri,
-					&i.TokenType,
-					&i.TokenID,
-					&i.Quantity,
-					&i.OwnershipHistory,
-					&i.TokenMetadata,
-					&i.ExternalUrl,
-					&i.BlockNumber,
-					&i.OwnerUserID,
-					&i.OwnedByWallets,
-					&i.Chain,
-					&i.Contract,
-					&i.IsUserMarkedSpam,
-					&i.IsProviderMarkedSpam,
-					&i.LastSynced,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByCollectionIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByContractIdBatch = `-- name: GetTokensByContractIdBatch :batchmany
-SELECT id, deleted, version, created_at, last_updated, name, description, collectors_note, media, token_uri, token_type, token_id, quantity, ownership_history, token_metadata, external_url, block_number, owner_user_id, owned_by_wallets, chain, contract, is_user_marked_spam, is_provider_marked_spam, last_synced FROM tokens WHERE contract = $1 AND deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC
-`
-
-type GetTokensByContractIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetTokensByContractIdBatch(ctx context.Context, contract []persist.DBID) *GetTokensByContractIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range contract {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getTokensByContractIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByContractIdBatchBatchResults{br, len(contract), false}
-}
-
-func (b *GetTokensByContractIdBatchBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Description,
-					&i.CollectorsNote,
-					&i.Media,
-					&i.TokenUri,
-					&i.TokenType,
-					&i.TokenID,
-					&i.Quantity,
-					&i.OwnershipHistory,
-					&i.TokenMetadata,
-					&i.ExternalUrl,
-					&i.BlockNumber,
-					&i.OwnerUserID,
-					&i.OwnedByWallets,
-					&i.Chain,
-					&i.Contract,
-					&i.IsUserMarkedSpam,
-					&i.IsProviderMarkedSpam,
-					&i.LastSynced,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByContractIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByContractIdBatchPaginate = `-- name: GetTokensByContractIdBatchPaginate :batchmany
-SELECT t.id, t.deleted, t.version, t.created_at, t.last_updated, t.name, t.description, t.collectors_note, t.media, t.token_uri, t.token_type, t.token_id, t.quantity, t.ownership_history, t.token_metadata, t.external_url, t.block_number, t.owner_user_id, t.owned_by_wallets, t.chain, t.contract, t.is_user_marked_spam, t.is_provider_marked_spam, t.last_synced FROM tokens t
-    JOIN users u ON u.id = t.owner_user_id
-    WHERE t.contract = $1 AND t.deleted = false
-    AND (NOT $2::bool OR u.universal = false)
-    AND (u.universal,t.created_at,t.id) < ($3, $4::timestamptz, $5)
-    AND (u.universal,t.created_at,t.id) > ($6, $7::timestamptz, $8)
-    ORDER BY CASE WHEN $9::bool THEN (u.universal,t.created_at,t.id) END ASC,
-             CASE WHEN NOT $9::bool THEN (u.universal,t.created_at,t.id) END DESC
-    LIMIT $10
-`
-
-type GetTokensByContractIdBatchPaginateBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetTokensByContractIdBatchPaginateParams struct {
-	Contract           persist.DBID
-	SplitfiUsersOnly   bool
-	CurBeforeUniversal bool
-	CurBeforeTime      time.Time
-	CurBeforeID        persist.DBID
-	CurAfterUniversal  bool
-	CurAfterTime       time.Time
-	CurAfterID         persist.DBID
-	PagingForward      bool
-	Limit              int32
-}
-
-func (q *Queries) GetTokensByContractIdBatchPaginate(ctx context.Context, arg []GetTokensByContractIdBatchPaginateParams) *GetTokensByContractIdBatchPaginateBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.Contract,
-			a.SplitfiUsersOnly,
-			a.CurBeforeUniversal,
-			a.CurBeforeTime,
-			a.CurBeforeID,
-			a.CurAfterUniversal,
-			a.CurAfterTime,
-			a.CurAfterID,
-			a.PagingForward,
-			a.Limit,
-		}
-		batch.Queue(getTokensByContractIdBatchPaginate, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByContractIdBatchPaginateBatchResults{br, len(arg), false}
-}
-
-func (b *GetTokensByContractIdBatchPaginateBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Description,
-					&i.CollectorsNote,
-					&i.Media,
-					&i.TokenUri,
-					&i.TokenType,
-					&i.TokenID,
-					&i.Quantity,
-					&i.OwnershipHistory,
-					&i.TokenMetadata,
-					&i.ExternalUrl,
-					&i.BlockNumber,
-					&i.OwnerUserID,
-					&i.OwnedByWallets,
-					&i.Chain,
-					&i.Contract,
-					&i.IsUserMarkedSpam,
-					&i.IsProviderMarkedSpam,
-					&i.LastSynced,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByContractIdBatchPaginateBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByUserIdAndChainBatch = `-- name: GetTokensByUserIdAndChainBatch :batchmany
-SELECT tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.last_updated, tokens.name, tokens.description, tokens.collectors_note, tokens.media, tokens.token_uri, tokens.token_type, tokens.token_id, tokens.quantity, tokens.ownership_history, tokens.token_metadata, tokens.external_url, tokens.block_number, tokens.owner_user_id, tokens.owned_by_wallets, tokens.chain, tokens.contract, tokens.is_user_marked_spam, tokens.is_provider_marked_spam, tokens.last_synced FROM tokens, users
-WHERE tokens.owner_user_id = $1 AND users.id = $1
-  AND tokens.owned_by_wallets && users.wallets
-  AND tokens.deleted = false AND users.deleted = false
-  AND tokens.chain = $2
-ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC
-`
-
-type GetTokensByUserIdAndChainBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetTokensByUserIdAndChainBatchParams struct {
-	OwnerUserID persist.DBID
-	Chain       persist.Chain
-}
-
-func (q *Queries) GetTokensByUserIdAndChainBatch(ctx context.Context, arg []GetTokensByUserIdAndChainBatchParams) *GetTokensByUserIdAndChainBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.OwnerUserID,
-			a.Chain,
-		}
-		batch.Queue(getTokensByUserIdAndChainBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByUserIdAndChainBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetTokensByUserIdAndChainBatchBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Description,
-					&i.CollectorsNote,
-					&i.Media,
-					&i.TokenUri,
-					&i.TokenType,
-					&i.TokenID,
-					&i.Quantity,
-					&i.OwnershipHistory,
-					&i.TokenMetadata,
-					&i.ExternalUrl,
-					&i.BlockNumber,
-					&i.OwnerUserID,
-					&i.OwnedByWallets,
-					&i.Chain,
-					&i.Contract,
-					&i.IsUserMarkedSpam,
-					&i.IsProviderMarkedSpam,
-					&i.LastSynced,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByUserIdAndChainBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByUserIdAndContractIDBatch = `-- name: GetTokensByUserIdAndContractIDBatch :batchmany
-SELECT tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.last_updated, tokens.name, tokens.description, tokens.collectors_note, tokens.media, tokens.token_uri, tokens.token_type, tokens.token_id, tokens.quantity, tokens.ownership_history, tokens.token_metadata, tokens.external_url, tokens.block_number, tokens.owner_user_id, tokens.owned_by_wallets, tokens.chain, tokens.contract, tokens.is_user_marked_spam, tokens.is_provider_marked_spam, tokens.last_synced FROM tokens, users
-    WHERE tokens.owner_user_id = $1 AND users.id = $1
-      AND tokens.owned_by_wallets && users.wallets
-      AND tokens.contract = $2
-      AND tokens.deleted = false AND users.deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC
-`
-
-type GetTokensByUserIdAndContractIDBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetTokensByUserIdAndContractIDBatchParams struct {
-	OwnerUserID persist.DBID
-	Contract    persist.DBID
-}
-
-func (q *Queries) GetTokensByUserIdAndContractIDBatch(ctx context.Context, arg []GetTokensByUserIdAndContractIDBatchParams) *GetTokensByUserIdAndContractIDBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.OwnerUserID,
-			a.Contract,
-		}
-		batch.Queue(getTokensByUserIdAndContractIDBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByUserIdAndContractIDBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetTokensByUserIdAndContractIDBatchBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Description,
-					&i.CollectorsNote,
-					&i.Media,
-					&i.TokenUri,
-					&i.TokenType,
-					&i.TokenID,
-					&i.Quantity,
-					&i.OwnershipHistory,
-					&i.TokenMetadata,
-					&i.ExternalUrl,
-					&i.BlockNumber,
-					&i.OwnerUserID,
-					&i.OwnedByWallets,
-					&i.Chain,
-					&i.Contract,
-					&i.IsUserMarkedSpam,
-					&i.IsProviderMarkedSpam,
-					&i.LastSynced,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByUserIdAndContractIDBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByUserIdBatch = `-- name: GetTokensByUserIdBatch :batchmany
-SELECT tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.last_updated, tokens.name, tokens.description, tokens.collectors_note, tokens.media, tokens.token_uri, tokens.token_type, tokens.token_id, tokens.quantity, tokens.ownership_history, tokens.token_metadata, tokens.external_url, tokens.block_number, tokens.owner_user_id, tokens.owned_by_wallets, tokens.chain, tokens.contract, tokens.is_user_marked_spam, tokens.is_provider_marked_spam, tokens.last_synced FROM tokens, users
-    WHERE tokens.owner_user_id = $1 AND users.id = $1
-      AND tokens.owned_by_wallets && users.wallets
-      AND tokens.deleted = false AND users.deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC
-`
-
-type GetTokensByUserIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetTokensByUserIdBatch(ctx context.Context, ownerUserID []persist.DBID) *GetTokensByUserIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range ownerUserID {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getTokensByUserIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByUserIdBatchBatchResults{br, len(ownerUserID), false}
-}
-
-func (b *GetTokensByUserIdBatchBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Description,
-					&i.CollectorsNote,
-					&i.Media,
-					&i.TokenUri,
-					&i.TokenType,
-					&i.TokenID,
-					&i.Quantity,
-					&i.OwnershipHistory,
-					&i.TokenMetadata,
-					&i.ExternalUrl,
-					&i.BlockNumber,
-					&i.OwnerUserID,
-					&i.OwnedByWallets,
-					&i.Chain,
-					&i.Contract,
-					&i.IsUserMarkedSpam,
-					&i.IsProviderMarkedSpam,
-					&i.LastSynced,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByUserIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByWalletIdsBatch = `-- name: GetTokensByWalletIdsBatch :batchmany
-SELECT id, deleted, version, created_at, last_updated, name, description, collectors_note, media, token_uri, token_type, token_id, quantity, ownership_history, token_metadata, external_url, block_number, owner_user_id, owned_by_wallets, chain, contract, is_user_marked_spam, is_provider_marked_spam, last_synced FROM tokens WHERE owned_by_wallets && $1 AND deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC
-`
-
-type GetTokensByWalletIdsBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetTokensByWalletIdsBatch(ctx context.Context, ownedByWallets []persist.DBIDList) *GetTokensByWalletIdsBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range ownedByWallets {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getTokensByWalletIdsBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByWalletIdsBatchBatchResults{br, len(ownedByWallets), false}
-}
-
-func (b *GetTokensByWalletIdsBatchBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Description,
-					&i.CollectorsNote,
-					&i.Media,
-					&i.TokenUri,
-					&i.TokenType,
-					&i.TokenID,
-					&i.Quantity,
-					&i.OwnershipHistory,
-					&i.TokenMetadata,
-					&i.ExternalUrl,
-					&i.BlockNumber,
-					&i.OwnerUserID,
-					&i.OwnedByWallets,
-					&i.Chain,
-					&i.Contract,
-					&i.IsUserMarkedSpam,
-					&i.IsProviderMarkedSpam,
-					&i.LastSynced,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByWalletIdsBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -2232,7 +628,7 @@ func (b *GetUserByUsernameBatchBatchResults) Close() error {
 }
 
 const getUserNotificationsBatch = `-- name: GetUserNotificationsBatch :batchmany
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, feed_event_id, comment_id, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
     AND (created_at, id) < ($2, $3)
     AND (created_at, id) > ($4, $5)
     ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
@@ -2302,8 +698,6 @@ func (b *GetUserNotificationsBatchBatchResults) Query(f func(int, []Notification
 					&i.Action,
 					&i.Data,
 					&i.EventIds,
-					&i.FeedEventID,
-					&i.CommentID,
 					&i.SplitID,
 					&i.Seen,
 					&i.Amount,

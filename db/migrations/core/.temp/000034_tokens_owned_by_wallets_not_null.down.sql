@@ -1,1 +1,0 @@
-alter table tokens alter column owned_by_wallets drop not null;

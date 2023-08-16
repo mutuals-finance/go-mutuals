@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
@@ -26,18 +25,18 @@ type EventLoaderByIDSettings interface {
 
 // EventLoaderByIDCacheSubscriptions
 type EventLoaderByIDCacheSubscriptions struct {
-	// AutoCacheWithKey is a function that returns the persist.DBID cache key for a coredb.FeedEvent.
+	// AutoCacheWithKey is a function that returns the persist.DBID cache key for a FeedEvent.
 	// If AutoCacheWithKey is not nil, this loader will automatically cache published results from other loaders
-	// that return a coredb.FeedEvent. Loaders that return pointers or slices of coredb.FeedEvent
-	// will be dereferenced/iterated automatically, invoking this function with the base coredb.FeedEvent type.
-	AutoCacheWithKey func(coredb.FeedEvent) persist.DBID
+	// that return a FeedEvent. Loaders that return pointers or slices of FeedEvent
+	// will be dereferenced/iterated automatically, invoking this function with the base FeedEvent type.
+	AutoCacheWithKey func(FeedEvent) persist.DBID
 
-	// AutoCacheWithKeys is a function that returns the []persist.DBID cache keys for a coredb.FeedEvent.
+	// AutoCacheWithKeys is a function that returns the []persist.DBID cache keys for a FeedEvent.
 	// Similar to AutoCacheWithKey, but for cases where a single value gets cached by many keys.
 	// If AutoCacheWithKeys is not nil, this loader will automatically cache published results from other loaders
-	// that return a coredb.FeedEvent. Loaders that return pointers or slices of coredb.FeedEvent
-	// will be dereferenced/iterated automatically, invoking this function with the base coredb.FeedEvent type.
-	AutoCacheWithKeys func(coredb.FeedEvent) []persist.DBID
+	// that return a FeedEvent. Loaders that return pointers or slices of FeedEvent
+	// will be dereferenced/iterated automatically, invoking this function with the base FeedEvent type.
+	AutoCacheWithKeys func(FeedEvent) []persist.DBID
 
 	// TODO: Allow custom cache functions once we're able to use generics. It could be done without generics, but
 	// would be messy and error-prone. A non-generic implementation might look something like:
@@ -79,7 +78,7 @@ func (l *EventLoaderByID) setPostFetchHook(postFetchHook func(context.Context, s
 
 // NewEventLoaderByID creates a new EventLoaderByID with the given settings, functions, and options
 func NewEventLoaderByID(
-	settings EventLoaderByIDSettings, fetch func(ctx context.Context, keys []persist.DBID) ([]coredb.FeedEvent, []error),
+	settings EventLoaderByIDSettings, fetch func(ctx context.Context, keys []persist.DBID) ([]FeedEvent, []error),
 	funcs EventLoaderByIDCacheSubscriptions,
 	opts ...func(interface {
 		setContext(context.Context)
@@ -108,7 +107,7 @@ func NewEventLoaderByID(
 	}
 
 	// Set this after applying options, in case a different context was set via options
-	loader.fetch = func(keys []persist.DBID) ([]coredb.FeedEvent, []error) {
+	loader.fetch = func(keys []persist.DBID) ([]FeedEvent, []error) {
 		ctx := loader.ctx
 
 		// Allow the preFetchHook to modify and return a new context
@@ -136,7 +135,7 @@ func NewEventLoaderByID(
 	if !loader.disableCaching {
 		// One-to-one mappings: cache one value with one key
 		if funcs.AutoCacheWithKey != nil {
-			cacheFunc := func(t coredb.FeedEvent) {
+			cacheFunc := func(t FeedEvent) {
 				loader.unsafePrime(funcs.AutoCacheWithKey(t), t)
 			}
 			loader.registerCacheFunc(&cacheFunc, &loader.mu)
@@ -144,7 +143,7 @@ func NewEventLoaderByID(
 
 		// One-to-many mappings: cache one value with many keys
 		if funcs.AutoCacheWithKeys != nil {
-			cacheFunc := func(t coredb.FeedEvent) {
+			cacheFunc := func(t FeedEvent) {
 				keys := funcs.AutoCacheWithKeys(t)
 				for _, key := range keys {
 					loader.unsafePrime(key, t)
@@ -163,7 +162,7 @@ type EventLoaderByID struct {
 	ctx context.Context
 
 	// this method provides the data for the loader
-	fetch func(keys []persist.DBID) ([]coredb.FeedEvent, []error)
+	fetch func(keys []persist.DBID) ([]FeedEvent, []error)
 
 	// how long to wait before sending a batch
 	wait time.Duration
@@ -195,10 +194,10 @@ type EventLoaderByID struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[persist.DBID]coredb.FeedEvent
+	cache map[persist.DBID]FeedEvent
 
 	// typed cache functions
-	//subscribers []func(coredb.FeedEvent)
+	//subscribers []func(FeedEvent)
 	subscribers []eventLoaderByIDSubscriber
 
 	// functions used to cache published results from other dataloaders
@@ -217,26 +216,26 @@ type EventLoaderByID struct {
 
 type eventLoaderByIDBatch struct {
 	keys    []persist.DBID
-	data    []coredb.FeedEvent
+	data    []FeedEvent
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a FeedEvent by key, batching and caching will be applied automatically
-func (l *EventLoaderByID) Load(key persist.DBID) (coredb.FeedEvent, error) {
+func (l *EventLoaderByID) Load(key persist.DBID) (FeedEvent, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a FeedEvent.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *EventLoaderByID) LoadThunk(key persist.DBID) func() (coredb.FeedEvent, error) {
+func (l *EventLoaderByID) LoadThunk(key persist.DBID) func() (FeedEvent, error) {
 	l.mu.Lock()
 	if !l.disableCaching {
 		if it, ok := l.cache[key]; ok {
 			l.mu.Unlock()
-			return func() (coredb.FeedEvent, error) {
+			return func() (FeedEvent, error) {
 				return it, nil
 			}
 		}
@@ -248,10 +247,10 @@ func (l *EventLoaderByID) LoadThunk(key persist.DBID) func() (coredb.FeedEvent, 
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (coredb.FeedEvent, error) {
+	return func() (FeedEvent, error) {
 		<-batch.done
 
-		var data coredb.FeedEvent
+		var data FeedEvent
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -282,14 +281,14 @@ func (l *EventLoaderByID) LoadThunk(key persist.DBID) func() (coredb.FeedEvent, 
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *EventLoaderByID) LoadAll(keys []persist.DBID) ([]coredb.FeedEvent, []error) {
-	results := make([]func() (coredb.FeedEvent, error), len(keys))
+func (l *EventLoaderByID) LoadAll(keys []persist.DBID) ([]FeedEvent, []error) {
+	results := make([]func() (FeedEvent, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	feedEvents := make([]coredb.FeedEvent, len(keys))
+	feedEvents := make([]FeedEvent, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		feedEvents[i], errors[i] = thunk()
@@ -300,13 +299,13 @@ func (l *EventLoaderByID) LoadAll(keys []persist.DBID) ([]coredb.FeedEvent, []er
 // LoadAllThunk returns a function that when called will block waiting for a FeedEvents.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *EventLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([]coredb.FeedEvent, []error) {
-	results := make([]func() (coredb.FeedEvent, error), len(keys))
+func (l *EventLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([]FeedEvent, []error) {
+	results := make([]func() (FeedEvent, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]coredb.FeedEvent, []error) {
-		feedEvents := make([]coredb.FeedEvent, len(keys))
+	return func() ([]FeedEvent, []error) {
+		feedEvents := make([]FeedEvent, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			feedEvents[i], errors[i] = thunk()
@@ -318,7 +317,7 @@ func (l *EventLoaderByID) LoadAllThunk(keys []persist.DBID) func() ([]coredb.Fee
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *EventLoaderByID) Prime(key persist.DBID, value coredb.FeedEvent) bool {
+func (l *EventLoaderByID) Prime(key persist.DBID, value FeedEvent) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -332,7 +331,7 @@ func (l *EventLoaderByID) Prime(key persist.DBID, value coredb.FeedEvent) bool {
 }
 
 // Prime the cache without acquiring locks. Should only be used when the lock is already held.
-func (l *EventLoaderByID) unsafePrime(key persist.DBID, value coredb.FeedEvent) bool {
+func (l *EventLoaderByID) unsafePrime(key persist.DBID, value FeedEvent) bool {
 	if l.disableCaching {
 		return false
 	}
@@ -353,9 +352,9 @@ func (l *EventLoaderByID) Clear(key persist.DBID) {
 	l.mu.Unlock()
 }
 
-func (l *EventLoaderByID) unsafeSet(key persist.DBID, value coredb.FeedEvent) {
+func (l *EventLoaderByID) unsafeSet(key persist.DBID, value FeedEvent) {
 	if l.cache == nil {
-		l.cache = map[persist.DBID]coredb.FeedEvent{}
+		l.cache = map[persist.DBID]FeedEvent{}
 	}
 	l.cache[key] = value
 }
@@ -408,15 +407,15 @@ func (b *eventLoaderByIDBatch) end(l *EventLoaderByID) {
 }
 
 type eventLoaderByIDSubscriber struct {
-	cacheFunc func(coredb.FeedEvent)
+	cacheFunc func(FeedEvent)
 	mutex     *sync.Mutex
 }
 
-func (l *EventLoaderByID) publishToSubscribers(value coredb.FeedEvent) {
+func (l *EventLoaderByID) publishToSubscribers(value FeedEvent) {
 	// Lazy build our list of typed cache functions once
 	l.once.Do(func() {
 		for i, subscription := range *l.subscriptionRegistry {
-			if typedFunc, ok := subscription.(*func(coredb.FeedEvent)); ok {
+			if typedFunc, ok := subscription.(*func(FeedEvent)); ok {
 				// Don't invoke our own cache function
 				if !l.ownsCacheFunc(typedFunc) {
 					l.subscribers = append(l.subscribers, eventLoaderByIDSubscriber{cacheFunc: *typedFunc, mutex: (*l.mutexRegistry)[i]})
@@ -441,7 +440,7 @@ func (l *EventLoaderByID) registerCacheFunc(cacheFunc interface{}, mutex *sync.M
 	*l.mutexRegistry = append(*l.mutexRegistry, mutex)
 }
 
-func (l *EventLoaderByID) ownsCacheFunc(f *func(coredb.FeedEvent)) bool {
+func (l *EventLoaderByID) ownsCacheFunc(f *func(FeedEvent)) bool {
 	for _, cacheFunc := range l.cacheFuncs {
 		if cacheFunc == f {
 			return true
