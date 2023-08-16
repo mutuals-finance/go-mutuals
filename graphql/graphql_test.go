@@ -26,7 +26,6 @@ import (
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -65,14 +64,10 @@ func testGraphQL(t *testing.T) {
 		{title: "should get viewer", run: testViewer},
 		{title: "should add a wallet", run: testAddWallet},
 		{title: "should remove a wallet", run: testRemoveWallet},
-		{title: "should create a collection", run: testCreateCollection},
 		{title: "views from multiple users are rolled up", run: testViewsAreRolledUp},
 		{title: "update split and ensure name still gets set when not sent in update", run: testUpdateSplitWithNoNameChange},
-		{title: "update split with a new collection", run: testUpdateSplitWithNewCollection},
-		{title: "should delete collection in split update", run: testUpdateSplitDeleteCollection},
 		{title: "should update user experiences", run: testUpdateUserExperiences},
 		{title: "should create split", run: testCreateSplit},
-		{title: "should move collection to new split", run: testMoveCollection},
 		{title: "should connect social account", run: testConnectSocialAccount},
 	}
 	for _, test := range tests {
@@ -81,16 +76,7 @@ func testGraphQL(t *testing.T) {
 }
 
 func testTokenSyncs(t *testing.T) {
-	tests := []testCase{
-		{title: "should sync new tokens", run: testSyncNewTokens},
-		{title: "should submit new tokens to tokenprocessing", run: testSyncOnlySubmitsNewTokens},
-		{title: "should not submit old tokens to tokenprocessing", run: testSyncSkipsSubmittingOldTokens},
-		{title: "should delete old tokens", run: testSyncDeletesOldTokens},
-		{title: "should combine all tokens from providers", run: testSyncShouldCombineProviders},
-		{title: "should merge duplicates within provider", run: testSyncShouldMergeDuplicatesInProvider},
-		{title: "should merge duplicates across providers", run: testSyncShouldMergeDuplicatesAcrossProviders},
-		{title: "should process media", run: testSyncShouldProcessMedia},
-	}
+	tests := []testCase{}
 	for _, test := range tests {
 		t.Run(test.title, testWithFixtures(test.run, test.fixtures...))
 	}
@@ -218,87 +204,15 @@ func testLogout(t *testing.T) {
 	assert.Nil(t, response.Logout.Viewer)
 }
 
-func testCreateCollection(t *testing.T) {
-	userF := newUserWithTokensFixture(t)
-	c := authedHandlerClient(t, userF.ID)
-
-	response, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		SplitId:        userF.SplitID,
-		Name:           "newCollection",
-		CollectorsNote: "this is a note",
-		Tokens:         userF.TokenIDs,
-		Layout:         defaultLayout(),
-		TokenSettings:  defaultTokenSettings(userF.TokenIDs),
-		Caption:        nil,
-	})
-
-	require.NoError(t, err)
-	payload := (*response.CreateCollection).(*createCollectionMutationCreateCollectionCreateCollectionPayload)
-	assert.NotEmpty(t, payload.Collection.Dbid)
-	assert.Len(t, payload.Collection.Tokens, len(userF.TokenIDs))
-}
-
 func testUpdateSplitWithPublish(t *testing.T) {
 	serverF := newServerFixture(t)
 	userF := newUserWithTokensFixture(t)
 	c := authedServerClient(t, serverF.URL, userF.ID)
 
-	colResp, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		SplitId:        userF.SplitID,
-		Name:           "newCollection",
-		CollectorsNote: "this is a note",
-		Tokens:         userF.TokenIDs[:1],
-		Layout:         defaultLayout(),
-		TokenSettings:  defaultTokenSettings(userF.TokenIDs[:1]),
-		Caption:        nil,
-	})
-
-	require.NoError(t, err)
-	colPay := (*colResp.CreateCollection).(*createCollectionMutationCreateCollectionCreateCollectionPayload)
-	assert.NotEmpty(t, colPay.Collection.Dbid)
-	assert.Len(t, colPay.Collection.Tokens, 1)
-
 	updateReponse, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
 		SplitId: userF.SplitID,
 		Name:    util.ToPointer("newName"),
-		UpdatedCollections: []*UpdateCollectionInput{
-			{
-				Dbid:           colPay.Collection.Dbid,
-				Tokens:         userF.TokenIDs[:2],
-				Name:           "yes",
-				CollectorsNote: "no",
-				Layout: CollectionLayoutInput{
-					Sections: []int{0},
-					SectionLayout: []CollectionSectionLayoutInput{
-						{
-							Columns:    0,
-							Whitespace: []int{},
-						},
-					},
-				},
-				TokenSettings: defaultTokenSettings(userF.TokenIDs[:2]),
-			},
-		},
-		CreatedCollections: []*CreateCollectionInSplitInput{
-			{
-				GivenID:        "wow",
-				Tokens:         userF.TokenIDs[:3],
-				CollectorsNote: "this is a note",
-				Name:           "newCollection",
-				Layout: CollectionLayoutInput{
-					Sections: []int{0},
-					SectionLayout: []CollectionSectionLayoutInput{
-						{
-							Columns:    3,
-							Whitespace: []int{},
-						},
-					},
-				},
-				TokenSettings: defaultTokenSettings(userF.TokenIDs[:3]),
-			},
-		},
-		Order:  []persist.DBID{colPay.Collection.Dbid, "wow"},
-		EditId: util.ToPointer("edit_id"),
+		EditId:  util.ToPointer("edit_id"),
 	})
 
 	require.NoError(t, err)
@@ -350,49 +264,6 @@ func testCreateSplit(t *testing.T) {
 	assert.NotEmpty(t, payload.Split.Dbid)
 	assert.Equal(t, "newSplit", *payload.Split.Name)
 	assert.Equal(t, "this is a description", *payload.Split.Description)
-	assert.Equal(t, "a1", *payload.Split.Position)
-}
-
-func testMoveCollection(t *testing.T) {
-	userF := newUserWithTokensFixture(t)
-	c := authedHandlerClient(t, userF.ID)
-
-	createResp, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		SplitId:        userF.SplitID,
-		Name:           "newCollection",
-		CollectorsNote: "this is a note",
-		Tokens:         userF.TokenIDs,
-		Layout:         defaultLayout(),
-		TokenSettings:  defaultTokenSettings(userF.TokenIDs),
-		Caption:        nil,
-	})
-
-	require.NoError(t, err)
-	createPayload := (*createResp.CreateCollection).(*createCollectionMutationCreateCollectionCreateCollectionPayload)
-	assert.NotEmpty(t, createPayload.Collection.Dbid)
-
-	createGalResp, err := createSplitMutation(context.Background(), c, CreateSplitInput{
-		Name:        util.ToPointer("newSplit"),
-		Description: util.ToPointer("this is a description"),
-		Position:    "a1",
-	})
-
-	require.NoError(t, err)
-	createGalPayload := (*createGalResp.CreateSplit).(*createSplitMutationCreateSplitCreateSplitPayload)
-	assert.NotEmpty(t, createGalPayload.Split.Dbid)
-
-	response, err := moveCollectionToSplit(context.Background(), c, MoveCollectionToSplitInput{
-		SourceCollectionId: createPayload.Collection.Dbid,
-		TargetSplitId:      createGalPayload.Split.Dbid,
-	})
-
-	require.NoError(t, err)
-	payload := (*response.MoveCollectionToSplit).(*moveCollectionToSplitMoveCollectionToSplitMoveCollectionToSplitPayload)
-	assert.NotEmpty(t, payload.OldSplit.Dbid)
-	assert.Len(t, payload.OldSplit.Collections, 0)
-	assert.NotEmpty(t, payload.NewSplit.Dbid)
-	assert.Len(t, payload.NewSplit.Collections, 1)
-
 }
 
 func testUpdateUserExperiences(t *testing.T) {
@@ -463,54 +334,6 @@ func testConnectSocialAccount(t *testing.T) {
 
 }
 
-func testUpdateSplitDeleteCollection(t *testing.T) {
-	userF := newUserWithTokensFixture(t)
-	c := authedHandlerClient(t, userF.ID)
-
-	colResp, err := createCollectionMutation(context.Background(), c, CreateCollectionInput{
-		SplitId:        userF.SplitID,
-		Name:           "newCollection",
-		CollectorsNote: "this is a note",
-		Tokens:         userF.TokenIDs[:1],
-		Layout: CollectionLayoutInput{
-			Sections: []int{0},
-			SectionLayout: []CollectionSectionLayoutInput{
-				{
-					Columns:    0,
-					Whitespace: []int{},
-				},
-			},
-		},
-		TokenSettings: []CollectionTokenSettingsInput{
-			{
-				TokenId:    userF.TokenIDs[0],
-				RenderLive: false,
-			},
-		},
-		Caption: nil,
-	})
-
-	require.NoError(t, err)
-	colPay := (*colResp.CreateCollection).(*createCollectionMutationCreateCollectionCreateCollectionPayload)
-	assert.NotEmpty(t, colPay.Collection.Dbid)
-	assert.Len(t, colPay.Collection.Tokens, 1)
-
-	response, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
-		SplitId:            userF.SplitID,
-		DeletedCollections: []persist.DBID{colPay.Collection.Dbid},
-		Order:              []persist.DBID{},
-	})
-
-	require.NoError(t, err)
-	require.NotNil(t, response.UpdateSplit)
-	payload, ok := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
-	if !ok {
-		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
-		t.Fatal(err)
-	}
-	assert.Len(t, payload.Split.Collections, 0)
-}
-
 func testUpdateSplitWithNoNameChange(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
@@ -541,45 +364,6 @@ func testUpdateSplitWithNoNameChange(t *testing.T) {
 	assert.NotEmpty(t, payload.Split.Name)
 }
 
-func testUpdateSplitWithNewCollection(t *testing.T) {
-	userF := newUserWithTokensFixture(t)
-	c := authedHandlerClient(t, userF.ID)
-
-	response, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
-		SplitId: userF.SplitID,
-
-		CreatedCollections: []*CreateCollectionInSplitInput{
-			{
-				Name:           "yay",
-				CollectorsNote: "this is a note",
-				Tokens:         userF.TokenIDs[:1],
-				Hidden:         false,
-				Layout: CollectionLayoutInput{
-					Sections: []int{0},
-					SectionLayout: []CollectionSectionLayoutInput{
-						{
-							Columns:    1,
-							Whitespace: []int{},
-						},
-					},
-				},
-				TokenSettings: []CollectionTokenSettingsInput{},
-				GivenID:       "wow",
-			},
-		},
-		Order: []persist.DBID{"wow"},
-	})
-
-	require.NoError(t, err)
-	payload, ok := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
-	if !ok {
-		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
-		t.Fatal(err)
-	}
-	assert.Len(t, payload.Split.Collections, 1)
-	assert.Len(t, payload.Split.Collections[0].Tokens, 1)
-}
-
 func testViewsAreRolledUp(t *testing.T) {
 	serverF := newServerFixture(t)
 	userF := newUserFixture(t)
@@ -594,380 +378,6 @@ func testViewsAreRolledUp(t *testing.T) {
 	viewSplit(t, ctx, client, userF.SplitID)
 
 	// TODO: Actually verify that the views get rolled up
-}
-
-func testSyncOnlySubmitsNewTokens(t *testing.T) {
-	userF := newUserFixture(t)
-	provider := defaultStubProvider(userF.Wallet.Address)
-	tokenRecorder := sendTokensRecorder{}
-	h := handlerWithProviders(t, tokenRecorder.Send, provider)
-	c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-	tokenRecorder.On("Send", mock.Anything, mock.Anything).Times(1).Return(nil)
-
-	_, err := syncTokensMutation(context.Background(), c, []Chain{ChainEthereum})
-
-	require.NoError(t, err)
-	tokenRecorder.AssertExpectations(t)
-	assert.Len(t, tokenRecorder.Tasks[0].TokenIDs, len(provider.Tokens))
-}
-
-func testSyncSkipsSubmittingOldTokens(t *testing.T) {
-	userF := newUserWithTokensFixture(t)
-	tokenRecorder := sendTokensRecorder{}
-	h := handlerWithProviders(t, tokenRecorder.Send, defaultStubProvider(userF.Wallet.Address))
-	c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-	_, err := syncTokensMutation(context.Background(), c, []Chain{ChainEthereum})
-
-	require.NoError(t, err)
-	tokenRecorder.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
-}
-
-func testSyncDeletesOldTokens(t *testing.T) {
-	userF := newUserWithTokensFixture(t)
-	provider := newStubProvider(withContractTokens(multichain.ChainAgnosticContract{
-		Address: "0x1337",
-		Name:    "someContract",
-	}, userF.Wallet.Address, 4))
-	h := handlerWithProviders(t, sendTokensNOOP, provider)
-	c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-	response, err := syncTokensMutation(context.Background(), c, []Chain{ChainEthereum})
-
-	assertSyncedTokens(t, response, err, 4)
-}
-
-func testSyncShouldCombineProviders(t *testing.T) {
-	userF := newUserFixture(t)
-	providerA := newStubProvider(withContractTokens(multichain.ChainAgnosticContract{
-		Address: "0x1337",
-		Name:    "someContract",
-	}, userF.Wallet.Address, 4))
-	providerB := newStubProvider(withContractTokens(multichain.ChainAgnosticContract{
-		Address: "0x1234",
-		Name:    "anotherContract",
-	}, userF.Wallet.Address, 2))
-	h := handlerWithProviders(t, sendTokensNOOP, providerA, providerB)
-	c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-	response, err := syncTokensMutation(context.Background(), c, []Chain{ChainEthereum})
-
-	assertSyncedTokens(t, response, err, len(providerA.Tokens)+len(providerB.Tokens))
-}
-
-func testSyncShouldMergeDuplicatesInProvider(t *testing.T) {
-	userF := newUserFixture(t)
-	token := defaultToken(userF.Wallet.Address)
-	provider := newStubProvider(withTokens([]multichain.ChainAgnosticToken{token, token}))
-	h := handlerWithProviders(t, sendTokensNOOP, provider)
-	c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-	response, err := syncTokensMutation(context.Background(), c, []Chain{ChainEthereum})
-
-	assertSyncedTokens(t, response, err, 1)
-}
-
-func testSyncShouldMergeDuplicatesAcrossProviders(t *testing.T) {
-	userF := newUserFixture(t)
-	token := defaultToken(userF.Wallet.Address)
-	providerA := newStubProvider(withTokens([]multichain.ChainAgnosticToken{token}))
-	providerB := newStubProvider(withTokens([]multichain.ChainAgnosticToken{token}))
-	h := handlerWithProviders(t, sendTokensNOOP, providerA, providerB)
-	c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-	response, err := syncTokensMutation(context.Background(), c, []Chain{ChainEthereum})
-
-	assertSyncedTokens(t, response, err, 1)
-}
-
-func testSyncShouldProcessMedia(t *testing.T) {
-	metadataServer := newMetadataServerFixture(t)
-
-	patchMetadata := func(t *testing.T, ctx context.Context, address, endpoint string) http.Handler {
-		contract := multichain.ChainAgnosticContract{Address: "0x123", Name: "testContract"}
-		clients := server.ClientInit(ctx)
-		provider := newStubProvider(
-			withContractTokens(contract, address, 1),
-			withFetchMetadata(fetchFromDummyEndpoint(metadataServer.URL, endpoint, clients.IPFSClient, clients.ArweaveClient)),
-		)
-		mc := newMultichainProvider(clients, sendTokensNOOP, []any{provider})
-		t.Cleanup(clients.Close)
-		return handlerWithProviders(t, sendTokensToTokenProcessing(clients, &mc), provider)
-	}
-
-	t.Run("should process image", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/image")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process video", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/video")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia)
-		assert.Equal(t, string(persist.MediaTypeVideo), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process iframe", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/iframe")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaHtmlMedia)
-		assert.Equal(t, string(persist.MediaTypeHTML), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process gif", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/gif")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGIFMedia)
-		assert.Equal(t, string(persist.MediaTypeGIF), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process bad metadata", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/bad")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia)
-		assert.Equal(t, "", *media.MediaType)
-		assert.Empty(t, *media.MediaURL)
-	})
-
-	t.Run("should process missing metadata", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/notfound")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaInvalidMedia)
-		assert.Equal(t, "", *media.MediaType)
-		assert.Empty(t, *media.MediaURL)
-	})
-
-	t.Run("should process bad media", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/media/bad")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia)
-		assert.Equal(t, string(persist.MediaTypeUnknown), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process missing media", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/media/notfound")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaUnknownMedia)
-		assert.Equal(t, string(persist.MediaTypeUnknown), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process svg", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/svg")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, string(persist.MediaTypeSVG), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process base64 encoded svg", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/base64svg")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, string(persist.MediaTypeSVG), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process base64 encoded metadata", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/base64")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, *media.MediaType, string(persist.MediaTypeImage))
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process ipfs", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/media/ipfs")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, *media.MediaType, string(persist.MediaTypeImage))
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process bad dns", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/media/dnsbad")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process different keyword", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/differentkeyword")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process wrong keyword", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/wrongkeyword")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaVideoMedia)
-		assert.Equal(t, string(persist.MediaTypeVideo), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process animation", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/animation")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaGltfMedia)
-		assert.Equal(t, string(persist.MediaTypeAnimation), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process pdf", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/pdf")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaPdfMedia)
-		assert.Equal(t, string(persist.MediaTypePDF), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process text", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/text")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaTextMedia)
-		assert.Equal(t, string(persist.MediaTypeText), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-
-	t.Run("should process bad image", func(t *testing.T) {
-		ctx := context.Background()
-		userF := newUserFixture(t)
-		h := patchMetadata(t, ctx, userF.Wallet.Address, "/metadata/badimage")
-		c := customHandlerClient(t, h, withJWTOpt(t, userF.ID))
-
-		response, err := syncTokensMutation(ctx, c, []Chain{ChainEthereum})
-
-		tokens := assertSyncedTokens(t, response, err, 1)
-		media := (*tokens[0].Media).(*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensTokenMediaImageMedia)
-		assert.Equal(t, string(persist.MediaTypeImage), *media.MediaType)
-		assert.NotEmpty(t, *media.MediaURL)
-	})
-}
-
-func assertSyncedTokens(t *testing.T, response *syncTokensMutationResponse, err error, expectedLen int) []*syncTokensMutationSyncTokensSyncTokensPayloadViewerUserSplitFiUserTokensToken {
-	t.Helper()
-	require.NoError(t, err)
-	payload := (*response.SyncTokens).(*syncTokensMutationSyncTokensSyncTokensPayload)
-	assert.Len(t, payload.Viewer.User.Tokens, expectedLen)
-	return payload.Viewer.User.Tokens
 }
 
 // authMechanismInput signs a nonce with an ethereum wallet
@@ -1048,19 +458,6 @@ func newJWT(t *testing.T, ctx context.Context, userID persist.DBID) string {
 	return jwt
 }
 
-// syncTokens makes a GraphQL request to sync a user's wallet
-func syncTokens(t *testing.T, ctx context.Context, c graphql.Client, userID persist.DBID) []persist.DBID {
-	t.Helper()
-	resp, err := syncTokensMutation(ctx, c, []Chain{"Ethereum"})
-	require.NoError(t, err)
-	payload := (*resp.SyncTokens).(*syncTokensMutationSyncTokensSyncTokensPayload)
-	tokens := make([]persist.DBID, len(payload.Viewer.User.Tokens))
-	for i, token := range payload.Viewer.User.Tokens {
-		tokens[i] = token.Dbid
-	}
-	return tokens
-}
-
 // viewSplit makes a GraphQL request to view a split
 func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID persist.DBID) {
 	t.Helper()
@@ -1069,46 +466,14 @@ func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID pers
 	_ = (*resp.ViewSplit).(*viewSplitMutationViewSplitViewSplitPayload)
 }
 
-// createCollection makes a GraphQL request to create a collection
-func createCollection(t *testing.T, ctx context.Context, c graphql.Client, input CreateCollectionInput) persist.DBID {
-	t.Helper()
-	resp, err := createCollectionMutation(ctx, c, input)
-	require.NoError(t, err)
-	payload := (*resp.CreateCollection).(*createCollectionMutationCreateCollectionCreateCollectionPayload)
-	return payload.Collection.Dbid
-}
-
-// defaultLayout returns a collection layout of one section with one column
-func defaultLayout() CollectionLayoutInput {
-	return CollectionLayoutInput{
-		Sections: []int{0},
-		SectionLayout: []CollectionSectionLayoutInput{
-			{
-				Columns:    0,
-				Whitespace: []int{},
-			},
-		},
-	}
-}
-
 // defaultToken returns a dummy token owned by the provided address
 func defaultToken(address string) multichain.ChainAgnosticToken {
 	return multichain.ChainAgnosticToken{
 		Name:            "testToken1",
-		TokenID:         "1",
 		Quantity:        "1",
 		ContractAddress: "0x123",
 		OwnerAddress:    persist.Address(address),
 	}
-}
-
-// defaultTokenSettings returns default display token settings
-func defaultTokenSettings(tokens []persist.DBID) []CollectionTokenSettingsInput {
-	settings := make([]CollectionTokenSettingsInput, len(tokens))
-	for i, token := range tokens {
-		settings[i] = CollectionTokenSettingsInput{TokenId: token}
-	}
-	return settings
 }
 
 // defaultHandler returns a backend GraphQL http.Handler

@@ -15,7 +15,6 @@
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDTuple github.com/SplitFi/go-splitfi/service/persist.DBIDTuple []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
 //go:generate go run github.com/gallery-so/dataloaden TokensLoaderByIDAndChain github.com/SplitFi/go-splitfi/graphql/dataloader.IDAndChain []github.com/SplitFi/go-splitfi/db/gen/coredb.Token
 //go:generate go run github.com/gallery-so/dataloaden AssetsLoaderByChainAddress github.com/SplitFi/go-splitfi/service/persist.ChainAddress []github.com/SplitFi/go-splitfi/db/gen/coredb.Asset
-//go:generate go run github.com/gallery-so/dataloaden EventLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.FeedEvent
 //go:generate go run github.com/gallery-so/dataloaden NotificationLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden NotificationsLoaderByUserID github.com/SplitFi/go-splitfi/db/gen/coredb.GetUserNotificationsBatchParams []github.com/SplitFi/go-splitfi/db/gen/coredb.Notification
 //go:generate go run github.com/gallery-so/dataloaden IntLoaderByID github.com/SplitFi/go-splitfi/service/persist.DBID int
@@ -60,7 +59,6 @@ type Loaders struct {
 	WalletByChainAddress          *WalletLoaderByChainAddress
 	TokenByTokenID                *TokenLoaderByID
 	AssetsByChainAddress          *AssetsLoaderByChainAddress
-	EventByEventId                *EventLoaderByID
 	NotificationByID              *NotificationLoaderByID
 	NotificationsByUserID         *NotificationsLoaderByUserID
 }

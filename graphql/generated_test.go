@@ -3345,18 +3345,12 @@ func (v *updateUserExperienceUpdateUserExperienceErrNotAuthorized) GetMessage() 
 
 // updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload includes the requested fields of the GraphQL type UpdateUserExperiencePayload.
 type updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload struct {
-	Typename *string                                                                    `json:"__typename"`
-	Viewer   *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer `json:"viewer"`
+	Typename *string `json:"__typename"`
 }
 
 // GetTypename returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload.Typename, and is useful for accessing the field via an interface.
 func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload) GetTypename() *string {
 	return v.Typename
-}
-
-// GetViewer returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload.Viewer, and is useful for accessing the field via an interface.
-func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload) GetViewer() *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer {
-	return v.Viewer
 }
 
 // updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadOrError includes the requested fields of the GraphQL interface UpdateUserExperiencePayloadOrError.
@@ -3444,32 +3438,6 @@ func __marshalupdateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloa
 		return nil, fmt.Errorf(
 			`unexpected concrete type for updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadOrError: "%T"`, v)
 	}
-}
-
-// updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer includes the requested fields of the GraphQL type Viewer.
-type updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer struct {
-	UserExperiences []updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience `json:"userExperiences"`
-}
-
-// GetUserExperiences returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer.UserExperiences, and is useful for accessing the field via an interface.
-func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer) GetUserExperiences() []updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience {
-	return v.UserExperiences
-}
-
-// updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience includes the requested fields of the GraphQL type UserExperience.
-type updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience struct {
-	Type        UserExperienceType `json:"type"`
-	Experienced bool               `json:"experienced"`
-}
-
-// GetType returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience.Type, and is useful for accessing the field via an interface.
-func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience) GetType() UserExperienceType {
-	return v.Type
-}
-
-// GetExperienced returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience.Experienced, and is useful for accessing the field via an interface.
-func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience) GetExperienced() bool {
-	return v.Experienced
 }
 
 // userByAddressQueryResponse is returned by userByAddressQuery on success.
@@ -4366,18 +4334,12 @@ func (v *viewerQueryResponse) __premarshalJSON() (*__premarshalviewerQueryRespon
 
 // viewerQueryViewer includes the requested fields of the GraphQL type Viewer.
 type viewerQueryViewer struct {
-	Typename        *string                                          `json:"__typename"`
-	UserExperiences []viewerQueryViewerUserExperiencesUserExperience `json:"userExperiences"`
-	User            *viewerQueryViewerUserSplitFiUser                `json:"user"`
+	Typename *string                           `json:"__typename"`
+	User     *viewerQueryViewerUserSplitFiUser `json:"user"`
 }
 
 // GetTypename returns viewerQueryViewer.Typename, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewer) GetTypename() *string { return v.Typename }
-
-// GetUserExperiences returns viewerQueryViewer.UserExperiences, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewer) GetUserExperiences() []viewerQueryViewerUserExperiencesUserExperience {
-	return v.UserExperiences
-}
 
 // GetUser returns viewerQueryViewer.User, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewer) GetUser() *viewerQueryViewerUserSplitFiUser { return v.User }
@@ -4393,18 +4355,6 @@ func (v *viewerQueryViewerErrNotAuthorized) GetTypename() *string { return v.Typ
 
 // GetMessage returns viewerQueryViewerErrNotAuthorized.Message, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerErrNotAuthorized) GetMessage() string { return v.Message }
-
-// viewerQueryViewerUserExperiencesUserExperience includes the requested fields of the GraphQL type UserExperience.
-type viewerQueryViewerUserExperiencesUserExperience struct {
-	Type        UserExperienceType `json:"type"`
-	Experienced bool               `json:"experienced"`
-}
-
-// GetType returns viewerQueryViewerUserExperiencesUserExperience.Type, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserExperiencesUserExperience) GetType() UserExperienceType { return v.Type }
-
-// GetExperienced returns viewerQueryViewerUserExperiencesUserExperience.Experienced, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserExperiencesUserExperience) GetExperienced() bool { return v.Experienced }
 
 // viewerQueryViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
 type viewerQueryViewerUserSplitFiUser struct {
@@ -5090,14 +5040,6 @@ mutation updateUserExperience ($input: UpdateUserExperienceInput!) {
 			__typename
 			message
 		}
-		... on UpdateUserExperiencePayload {
-			viewer {
-				userExperiences {
-					type
-					experienced
-				}
-			}
-		}
 	}
 }
 `
@@ -5316,10 +5258,6 @@ query viewerQuery {
 			message
 		}
 		... on Viewer {
-			userExperiences {
-				type
-				experienced
-			}
 			user {
 				username
 				dbid

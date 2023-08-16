@@ -49,10 +49,6 @@ query viewerQuery {
       message
     }
     ... on Viewer {
-      userExperiences {
-        type
-        experienced
-      }
       user {
         username
         dbid
@@ -216,14 +212,6 @@ mutation updateUserExperience($input: UpdateUserExperienceInput!) {
     ... on Error {
       __typename
       message
-    }
-    ... on UpdateUserExperiencePayload {
-      viewer {
-        userExperiences {
-          type
-          experienced
-        }
-      }
     }
   }
 }
