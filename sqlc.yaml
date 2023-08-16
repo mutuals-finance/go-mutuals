@@ -50,54 +50,14 @@ sql:
             go_type: "*github.com/SplitFi/go-splitfi/service/persist.DBID"
           - column: "*.user*.pii_socials"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.Socials"
-          # Splits
-          - column: "splits.collections"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
 
           # Socials
           - column: "pii.socials_auth.provider"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.SocialProvider"
 
-          # Collections
-          - column: "collections.nfts"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
-          - column: "collections.layout"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenLayout"
-          - column: "collections.token_settings"
-            go_type:
-              { "type": "map[persist.DBID]persist.CollectionTokenSettings" }
-
-          # Nfts
-          - column: "nfts.contract"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.NFTContract"
-
-          # Tokens
-          - column: "tokens.owned_by_wallets"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
-          - column: "tokens.contract"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
-          - column: "tokens.token_id"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenID"
-          - column: "tokens.media"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Media"
-          - column: "tokens.ownership_history"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.AddressAtBlockList"
-          - column: "tokens.token_metadata"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenMetadata"
-
-          # Membership
-          - column: "membership.owners"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenHolderList"
-
           # Wallet
           - column: "wallets.wallet_type"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.WalletType"
-
-          # Follows
-          - column: "follows.followee"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
-          - column: "follows.follower"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
 
           # Events
           - column: "events.resource_type_id"

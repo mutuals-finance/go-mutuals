@@ -93,7 +93,7 @@ func (s *SplitRepository) GetByID(ctx context.Context, ID persist.DBID) (persist
 	}
 
 	recipients := make([]persist.Recipient, len(assetIDs))
-	assets := make([]persist.TokenBalance, len(assetIDs))
+	assets := make([]persist.Asset, len(assetIDs))
 
 	recipients, assets, err = getReceipientsAndAssets(ctx, s, recipientIDs, assetIDs)
 
@@ -121,7 +121,7 @@ func (s *SplitRepository) GetByAddress(ctx context.Context, address persist.Ethe
 	}
 
 	recipients := make([]persist.Recipient, len(assetIDs))
-	assets := make([]persist.TokenBalance, len(assetIDs))
+	assets := make([]persist.Asset, len(assetIDs))
 
 	recipients, assets, err = getReceipientsAndAssets(ctx, s, recipientIDs, assetIDs)
 
@@ -160,7 +160,7 @@ func (s *SplitRepository) GetByRecipient(pCtx context.Context, pRecipientAddress
 		}
 
 		recipients := make([]persist.Recipient, len(assetIDs))
-		assets := make([]persist.TokenBalance, len(assetIDs))
+		assets := make([]persist.Asset, len(assetIDs))
 		recipients, assets, err = getReceipientsAndAssets(pCtx, s, recipientIDs, assetIDs)
 
 		if err != nil {
@@ -191,8 +191,8 @@ func (s *SplitRepository) Upsert(pCtx context.Context, pSplit persist.SplitDB) e
 	var res sql.Result
 	var err error
 	switch pUpdate.(type) {
-	case persist.TokenBalanceUpdateInput:
-		update := pUpdate.(persist.TokenBalanceUpdateInput)
+	case persist.AssetUpdateInput:
+		update := pUpdate.(persist.AssetUpdateInput)
 		res, err = s.update.ExecContext(pCtx, update.Balance, update.BlockNumber, persist.LastUpdatedTime{}, pID)
 	default:
 		return fmt.Errorf("unsupported update type: %T", pUpdate)
@@ -205,7 +205,7 @@ func (s *SplitRepository) Upsert(pCtx context.Context, pSplit persist.SplitDB) e
 		return err
 	}
 	if rowsAffected == 0 {
-		return persist.ErrTokenBalanceNotFoundByID{ID: pID}
+		return persist.ErrAssetNotFoundByID{ID: pID}
 	}
 	return nil
 }
@@ -218,24 +218,24 @@ func (s *SplitRepository) GetPreviewsURLsByUserID(pCtx context.Context, pUserID 
 	})
 }
 
-func getReceipientsAndAssets(pCtx context.Context, s *SplitRepository, recipientIDs, assetIDs []persist.DBID) ([]persist.Recipient, []persist.TokenBalance, error) {
+func getReceipientsAndAssets(pCtx context.Context, s *SplitRepository, recipientIDs, assetIDs []persist.DBID) ([]persist.Recipient, []persist.Asset, error) {
 	recipients := make([]persist.Recipient, len(recipientIDs))
-	assets := make([]persist.TokenBalance, len(assetIDs))
+	assets := make([]persist.Asset, len(assetIDs))
 
 	for i, recipientID := range recipientIDs {
 		recipient := persist.Recipient{ID: recipientID}
 		err := s.getRecipientStmt.QueryRowContext(pCtx, recipientID).Scan(&recipient.Version, &recipient.CreationTime, &recipient.LastUpdated, &recipient.Address, &recipient.Ownership)
 		if err != nil {
-			return []persist.Recipient{}, []persist.TokenBalance{}, fmt.Errorf("failed to get recipient: %r", err)
+			return []persist.Recipient{}, []persist.Asset{}, fmt.Errorf("failed to get recipient: %r", err)
 		}
 		recipients[i] = recipient
 	}
 
 	for i, assetID := range assetIDs {
-		asset := persist.TokenBalance{ID: assetID}
+		asset := persist.Asset{ID: assetID}
 		err := s.getAssetStmt.QueryRowContext(pCtx, assetID).Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Balance, &asset.BlockNumber, &asset.Token)
 		if err != nil {
-			return []persist.Recipient{}, []persist.TokenBalance{}, fmt.Errorf("failed to get assets: %r", err)
+			return []persist.Recipient{}, []persist.Asset{}, fmt.Errorf("failed to get assets: %r", err)
 		}
 		assets[i] = asset
 	}
