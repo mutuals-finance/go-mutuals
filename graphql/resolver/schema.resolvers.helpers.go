@@ -234,55 +234,6 @@ func resolveTokenByTokenID(ctx context.Context, tokenID persist.DBID) (*model.To
 	return tokenToModel(ctx, *token), nil
 }
 
-func resolveTokensByWalletID(ctx context.Context, walletID persist.DBID) ([]*model.Token, error) {
-	tokens, err := publicapi.For(ctx).Token.GetTokensByWalletID(ctx, walletID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return tokensToModel(ctx, tokens), nil
-}
-
-func resolveTokensByUserIDAndContractID(ctx context.Context, userID, contractID persist.DBID) ([]*model.Token, error) {
-
-	tokens, err := publicapi.For(ctx).Token.GetTokensByUserIDAndContractID(ctx, userID, contractID)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokensToModel(ctx, tokens), nil
-}
-
-func resolveTokensByUserID(ctx context.Context, userID persist.DBID) ([]*model.Token, error) {
-	tokens, err := publicapi.For(ctx).Token.GetTokensByUserID(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return tokensToModel(ctx, tokens), nil
-}
-
-func resolveTokenOwnerByTokenID(ctx context.Context, tokenID persist.DBID) (*model.SplitFiUser, error) {
-	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, tokenID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resolveSplitFiUserByUserID(ctx, token.OwnerUserID)
-}
-
-func resolveWalletByWalletID(ctx context.Context, walletID persist.DBID) (*model.Wallet, error) {
-	wallet, err := publicapi.For(ctx).Wallet.GetWalletByID(ctx, walletID)
-	if err != nil {
-		return nil, err
-	}
-
-	return walletToModelSqlc(ctx, *wallet), nil
-}
-
 func resolveWalletByAddress(ctx context.Context, address persist.DBID) (*model.Wallet, error) {
 
 	wallet := model.Wallet{
@@ -741,7 +692,7 @@ func walletToModelSqlc(ctx context.Context, wallet db.Wallet) *model.Wallet {
 
 func tokenToModel(ctx context.Context, token db.Token) *model.Token {
 	chain := token.Chain
-	_, _ = token.TokenMetadata.MarshalJSON()
+	// _, _ = token.TokenMetadata.MarshalJSON()
 	blockNumber := fmt.Sprint(token.BlockNumber.Int64)
 	tokenType := model.TokenType(token.TokenType.String)
 
@@ -788,35 +739,6 @@ func pageInfoToModel(ctx context.Context, pageInfo publicapi.PageInfo) *model.Pa
 		StartCursor:     pageInfo.StartCursor,
 		EndCursor:       pageInfo.EndCursor,
 	}
-}
-
-func getMediaForToken(ctx context.Context, token db.Token) model.MediaSubtype {
-	med := token.Media
-	switch med.MediaType {
-	case persist.MediaTypeImage, persist.MediaTypeSVG:
-		return getImageMedia(ctx, med)
-	case persist.MediaTypeGIF:
-		return getGIFMedia(ctx, med)
-	case persist.MediaTypeVideo:
-		return getVideoMedia(ctx, med)
-	case persist.MediaTypeAudio:
-		return getAudioMedia(ctx, med)
-	case persist.MediaTypeHTML:
-		return getHtmlMedia(ctx, med)
-	case persist.MediaTypeAnimation:
-		return getGltfMedia(ctx, med)
-	case persist.MediaTypeJSON:
-		return getJsonMedia(ctx, med)
-	case persist.MediaTypeText, persist.MediaTypeBase64Text:
-		return getTextMedia(ctx, med)
-	case persist.MediaTypePDF:
-		return getPdfMedia(ctx, med)
-	case persist.MediaTypeUnknown:
-		return getUnknownMedia(ctx, med)
-	default:
-		return getInvalidMedia(ctx, med)
-	}
-
 }
 
 func getPreviewUrls(ctx context.Context, media persist.Media, options ...mediamapper.Option) *model.PreviewURLSet {

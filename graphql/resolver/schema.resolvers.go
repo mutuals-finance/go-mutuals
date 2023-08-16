@@ -15,7 +15,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/mediamapper"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/SplitFi/go-splitfi/util"
 )
 
@@ -94,35 +93,12 @@ func (r *mutationResolver) SetSpamPreference(ctx context.Context, input model.Se
 
 // RefreshToken is the resolver for the refreshToken field.
 func (r *mutationResolver) RefreshToken(ctx context.Context, tokenID persist.DBID) (model.RefreshTokenPayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	err := api.Token.RefreshToken(ctx, tokenID)
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := resolveTokenByTokenID(ctx, tokenID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.RefreshTokenPayload{
-		Token: token,
-	}
-
-	return output, nil
+	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
 }
 
 // DeepRefresh is the resolver for the deepRefresh field.
 func (r *mutationResolver) DeepRefresh(ctx context.Context, input model.DeepRefreshInput) (model.DeepRefreshPayloadOrError, error) {
-	err := publicapi.For(ctx).Token.DeepRefreshByChain(ctx, input.Chain)
-	if err != nil {
-		return nil, err
-	}
-	return model.DeepRefreshPayload{
-		Chain:     &input.Chain,
-		Submitted: util.ToPointer(true),
-	}, nil
+	panic(fmt.Errorf("not implemented: DeepRefresh - deepRefresh"))
 }
 
 // GetAuthNonce is the resolver for the getAuthNonce field.
@@ -287,15 +263,7 @@ func (r *mutationResolver) ViewSplit(ctx context.Context, splitID persist.DBID) 
 
 // UpdateSplit is the resolver for the updateSplit field.
 func (r *mutationResolver) UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error) {
-	res, err := publicapi.For(ctx).Split.UpdateSplit(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UpdateSplitPayload{
-		Split: splitToModel(ctx, res),
-	}
-	return output, nil
+	panic(fmt.Errorf("not implemented: UpdateSplit - updateSplit"))
 }
 
 // PublishSplit is the resolver for the publishSplit field.
@@ -345,32 +313,12 @@ func (r *mutationResolver) UpdateSplitHidden(ctx context.Context, input model.Up
 
 // DeleteSplit is the resolver for the deleteSplit field.
 func (r *mutationResolver) DeleteSplit(ctx context.Context, splitID persist.DBID) (model.DeleteSplitPayloadOrError, error) {
-	err := publicapi.For(ctx).Split.DeleteSplit(ctx, splitID)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.DeleteSplitPayload{
-		DeletedID: &model.DeletedNode{
-			Dbid: splitID,
-		},
-	}
-
-	return output, nil
+	panic(fmt.Errorf("not implemented: DeleteSplit - deleteSplit"))
 }
 
 // UpdateSplitOrder is the resolver for the updateSplitOrder field.
 func (r *mutationResolver) UpdateSplitOrder(ctx context.Context, input model.UpdateSplitOrderInput) (model.UpdateSplitOrderPayloadOrError, error) {
-	err := publicapi.For(ctx).Split.UpdateSplitPositions(ctx, input.Positions)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.UpdateSplitOrderPayload{
-		Viewer: resolveViewer(ctx),
-	}
-
-	return output, nil
+	panic(fmt.Errorf("not implemented: UpdateSplitOrder - updateSplitOrder"))
 }
 
 // UpdateSplitInfo is the resolver for the updateSplitInfo field.
@@ -916,77 +864,3 @@ type viewerResolver struct{ *Resolver }
 type walletResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *mutationResolver) SyncTokens(ctx context.Context, chains []persist.Chain) (model.SyncTokensPayloadOrError, error) {
-	api := publicapi.For(ctx)
-
-	if chains == nil || len(chains) == 0 {
-		chains = []persist.Chain{persist.ChainETH}
-	}
-
-	err := api.Token.SyncTokens(ctx, chains)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.SyncTokensPayload{
-		Viewer: resolveViewer(ctx),
-	}
-
-	return output, nil
-}
-func (r *splitResolver) Owner(ctx context.Context, obj *model.Split) (*model.SplitFiUser, error) {
-	split, err := publicapi.For(ctx).Split.GetSplitById(ctx, obj.Dbid)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resolveSplitFiUserByUserID(ctx, split.OwnerUserID)
-}
-func (r *splitFiUserResolver) Tokens(ctx context.Context, obj *model.SplitFiUser) ([]*model.Token, error) {
-	return resolveTokensByUserID(ctx, obj.Dbid)
-}
-func (r *splitFiUserResolver) TokensByChain(ctx context.Context, obj *model.SplitFiUser, chain persist.Chain) (*model.ChainTokens, error) {
-	tokens, err := publicapi.For(ctx).Token.GetTokensByUserIDAndChain(ctx, obj.Dbid, chain)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.ChainTokens{
-		Chain:  &chain,
-		Tokens: tokensToModel(ctx, tokens),
-	}, nil
-}
-func (r *tokenResolver) Owner(ctx context.Context, obj *model.Token) (*model.SplitFiUser, error) {
-	return resolveTokenOwnerByTokenID(ctx, obj.Dbid)
-}
-func (r *tokenResolver) OwnedByWallets(ctx context.Context, obj *model.Token) ([]*model.Wallet, error) {
-	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, obj.Dbid)
-	if err != nil {
-		return nil, err
-	}
-
-	wallets := make([]*model.Wallet, len(token.OwnedByWallets))
-	for i, walletID := range token.OwnedByWallets {
-		wallets[i], err = resolveWalletByWalletID(ctx, walletID)
-		if err != nil {
-			sentryutil.ReportError(ctx, err)
-		}
-	}
-
-	return wallets, nil
-}
-func (r *walletResolver) Tokens(ctx context.Context, obj *model.Wallet) ([]*model.Token, error) {
-	return resolveTokensByWalletID(ctx, obj.Dbid)
-}
-
-type ownerAtBlockResolver struct{ *Resolver }
-type tokenResolver struct{ *Resolver }
-type tokenHolderResolver struct{ *Resolver }
