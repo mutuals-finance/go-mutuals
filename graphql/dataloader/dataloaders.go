@@ -71,18 +71,9 @@ type Loaders struct {
 	TokensByUserIDAndChain           *TokensLoaderByIDAndChain
 	AssetsByOwnerAddress             *AssetsByOwnerAddress
 	OwnerByTokenID                   *UserLoaderByID
-	ContractByContractID             *ContractLoaderByID
-	ContractsByUserID                *ContractsLoaderByID
-	ContractByChainAddress           *ContractLoaderByChainAddress
-	FollowersByUserID                *UsersLoaderByID
-	FollowingByUserID                *UsersLoaderByID
-	SharedFollowersByUserIDs         *SharedFollowersLoaderByIDs
-	SharedContractsByUserIDs         *SharedContractsLoaderByIDs
 	EventByEventID                   *EventLoaderByID
 	NotificationByID                 *NotificationLoaderByID
 	NotificationsByUserID            *NotificationsLoaderByUserID
-	ContractsDisplayedByUserID       *ContractsLoaderByID
-	OwnersByContractID               *UsersLoaderByContractID
 }
 
 func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loaders {
@@ -146,8 +137,6 @@ func NewLoaders(ctx context.Context, q *db.Queries, disableCaching bool) *Loader
 	loaders.UserByAddress = NewUserLoaderByAddress(defaults, loadUserByAddress(q), UserLoaderByAddressCacheSubscriptions{})
 
 	loaders.UsersWithTrait = NewUsersLoaderByString(defaults, loadUsersWithTrait(q))
-
-	loaders.OwnersByContractID = NewUsersLoaderByContractID(defaults, loadOwnersByContractIDs(q))
 
 	loaders.SplitBySplitID = NewSplitLoaderByID(defaults, loadSplitBySplitId(q), SplitLoaderByIDCacheSubscriptions{
 		AutoCacheWithKey: func(split db.Split) persist.DBID { return split.ID },

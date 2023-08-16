@@ -42,35 +42,25 @@ SELECT * FROM splits WHERE id = $1 AND deleted = false;
 -- name: GetSplitByIdBatch :batchone
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
--- name: GetSplitByCollectionId :one
-SELECT g.* FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false;
+-- name: GetSplitsByRecipientAddress :many
+SELECT s.* FROM recipients r
+    JOIN splits s ON s.id = r.split_id
+    WHERE r.address = $1 AND s.deleted = false;
 
--- name: GetSplitByCollectionIdBatch :batchone
-SELECT g.* FROM splits g, collections c WHERE c.id = $1 AND c.deleted = false AND $1 = ANY(g.collections) AND g.deleted = false;
+-- name: GetSplitsByRecipientAddressBatch :batchmany
+SELECT s.* FROM recipients r
+    JOIN splits s ON s.id = r.split_id
+    WHERE r.address = $1 AND s.deleted = false;
 
--- name: GetSplitsByUserId :many
-SELECT * FROM splits WHERE owner_user_id = $1 AND deleted = false order by position;
+-- name: GetSplitsByRecipientChainAddress :many
+SELECT s.* FROM recipients r
+    JOIN splits s ON s.id = r.split_id
+    WHERE r.address = $1 AND s.chain = $2 AND s.deleted = false;
 
--- name: GetSplitsByUserIdBatch :batchmany
-SELECT * FROM splits WHERE owner_user_id = $1 AND deleted = false order by position;
-
--- name: GetCollectionById :one
-SELECT * FROM collections WHERE id = $1 AND deleted = false;
-
--- name: GetCollectionByIdBatch :batchone
-SELECT * FROM collections WHERE id = $1 AND deleted = false;
-
--- name: GetCollectionsBySplitId :many
-SELECT c.* FROM splits g, unnest(g.collections)
-    WITH ORDINALITY AS x(coll_id, coll_ord)
-    INNER JOIN collections c ON c.id = x.coll_id
-    WHERE g.id = $1 AND g.deleted = false AND c.deleted = false ORDER BY x.coll_ord;
-
--- name: GetCollectionsBySplitIdBatch :batchmany
-SELECT c.* FROM splits g, unnest(g.collections)
-    WITH ORDINALITY AS x(coll_id, coll_ord)
-    INNER JOIN collections c ON c.id = x.coll_id
-    WHERE g.id = $1 AND g.deleted = false AND c.deleted = false ORDER BY x.coll_ord;
+-- name: GetSplitsByRecipientChainAddressBatch :batchmany
+SELECT s.* FROM recipients r
+    JOIN splits s ON s.id = r.split_id
+    WHERE r.address = $1 AND s.chain = $2 AND s.deleted = false;
 
 -- name: GetTokenById :one
 SELECT * FROM tokens WHERE id = $1 AND deleted = false;
@@ -78,25 +68,45 @@ SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 -- name: GetTokenByIdBatch :batchone
 SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 
--- name: GetTokensByCollectionId :many
-SELECT t.* FROM users u, collections c, unnest(c.nfts)
-    WITH ORDINALITY AS x(nft_id, nft_ord)
-    INNER JOIN tokens t ON t.id = x.nft_id
-    WHERE u.id = t.owner_user_id AND t.owned_by_wallets && u.wallets
-    AND c.id = sqlc.arg('collection_id') AND u.deleted = false AND c.deleted = false AND t.deleted = false ORDER BY x.nft_ord LIMIT sqlc.narg('limit');
+-- name: GetAssetsBySplitChainAddress :many
+SELECT a.* FROM split s
+    JOIN assets a ON a.owner_address = s.address
+    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
+    ORDER BY a.balance;
 
--- name: GetTokensByCollectionIdBatch :batchmany
-SELECT t.* FROM users u, collections c, unnest(c.nfts)
-    WITH ORDINALITY AS x(nft_id, nft_ord)
-    INNER JOIN tokens t ON t.id = x.nft_id
-    WHERE u.id = t.owner_user_id AND t.owned_by_wallets && u.wallets
-    AND c.id = sqlc.arg('collection_id') AND u.deleted = false AND c.deleted = false AND t.deleted = false ORDER BY x.nft_ord LIMIT sqlc.narg('limit');
+-- name: GetAssetsBySplitChainAddressBatch :batchmany
+SELECT a.* FROM split s
+    JOIN assets a ON a.owner_address = s.address
+    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false
+    ORDER BY a.balance;
 
--- name: GetMembershipByMembershipId :one
-SELECT * FROM membership WHERE id = $1 AND deleted = false;
+/*
+TODO pagination for assets per split
+-- name: GetAssetsBySplitChainAddressPaginate :many
+SELECT t.* FROM tokens t
+                    JOIN users u ON u.id = t.owner_user_id
+WHERE t.contract = $1 AND t.deleted = false
+  AND (NOT @splitfi_users_only::bool OR u.universal = false)
+  AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
+  AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
+ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
+         CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
+LIMIT $2;
 
--- name: GetMembershipByMembershipIdBatch :batchone
-SELECT * FROM membership WHERE id = $1 AND deleted = false;
+-- name: GetAssetsBySplitChainAddressBatchPaginate :batchmany
+SELECT t.* FROM tokens t
+                    JOIN users u ON u.id = t.owner_user_id
+WHERE t.contract = sqlc.arg('contract') AND t.deleted = false
+  AND (NOT @splitfi_users_only::bool OR u.universal = false)
+  AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
+  AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
+ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
+         CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
+LIMIT sqlc.arg('limit');
+
+-- name: CountAssetsBySplitChainAddress :one
+SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE contract = $1 AND (NOT @splitfi_users_only::bool OR users.universal = false) AND tokens.deleted = false;
+*/
 
 -- name: GetWalletByID :one
 SELECT * FROM wallets WHERE id = $1 AND deleted = false;
@@ -116,189 +126,12 @@ SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, walle
 -- name: GetWalletsByUserIDBatch :batchmany
 SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
 
--- name: GetContractByID :one
-select * FROM contracts WHERE id = $1 AND deleted = false;
-
--- name: GetContractsByIDs :many
-SELECT * from contracts WHERE id = ANY(@contract_ids) AND deleted = false;
-
--- name: GetContractByChainAddress :one
-select * FROM contracts WHERE address = $1 AND chain = $2 AND deleted = false;
-
--- name: GetContractByChainAddressBatch :batchone
-select * FROM contracts WHERE address = $1 AND chain = $2 AND deleted = false;
-
--- name: GetContractsByUserID :many
-SELECT DISTINCT ON (contracts.id) contracts.* FROM contracts, tokens
-    WHERE tokens.owner_user_id = $1 AND tokens.contract = contracts.id
-    AND tokens.deleted = false AND contracts.deleted = false;
-
--- name: GetContractsByUserIDBatch :batchmany
-SELECT DISTINCT ON (contracts.id) contracts.* FROM contracts, tokens
-    WHERE tokens.owner_user_id = $1 AND tokens.contract = contracts.id
-    AND tokens.deleted = false AND contracts.deleted = false;
-
--- name: GetContractsDisplayedByUserIDBatch :batchmany
-with last_refreshed as (
-  select last_updated from owned_contracts limit 1
-),
-displayed as (
-  select contract_id
-  from owned_contracts
-  where owned_contracts.user_id = $1 and displayed = true
-  union
-  select contracts.id
-  from last_refreshed, splits, contracts, tokens
-  join collections on tokens.id = any(collections.nfts) and collections.deleted = false
-  where tokens.owner_user_id = $1
-    and tokens.contract = contracts.id
-    and collections.owner_user_id = tokens.owner_user_id
-    and splits.owner_user_id = tokens.owner_user_id
-    and tokens.deleted = false
-    and splits.deleted = false
-    and contracts.deleted = false
-    and splits.last_updated > last_refreshed.last_updated
-    and collections.last_updated > last_refreshed.last_updated
-)
-select contracts.* from contracts, displayed
-where contracts.id = displayed.contract_id and contracts.deleted = false;
-
--- name: GetFollowersByUserIdBatch :batchmany
-SELECT u.* FROM follows f
-    INNER JOIN users u ON f.follower = u.id
-    WHERE f.followee = $1 AND f.deleted = false
-    ORDER BY f.last_updated DESC;
-
--- name: GetFollowingByUserIdBatch :batchmany
-SELECT u.* FROM follows f
-    INNER JOIN users u ON f.followee = u.id
-    WHERE f.follower = $1 AND f.deleted = false
-    ORDER BY f.last_updated DESC;
-
--- name: GetTokensByWalletIds :many
-SELECT * FROM tokens WHERE owned_by_wallets && $1 AND deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByWalletIdsBatch :batchmany
-SELECT * FROM tokens WHERE owned_by_wallets && $1 AND deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByContractId :many
-SELECT * FROM tokens WHERE contract = $1 AND deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByContractIdBatch :batchmany
-SELECT * FROM tokens WHERE contract = $1 AND deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByContractIdPaginate :many
-SELECT t.* FROM tokens t
-    JOIN users u ON u.id = t.owner_user_id
-    WHERE t.contract = $1 AND t.deleted = false
-    AND (NOT @splitfi_users_only::bool OR u.universal = false)
-    AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
-    AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
-    ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
-             CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
-    LIMIT $2;
-
--- name: GetTokensByContractIdBatchPaginate :batchmany
-SELECT t.* FROM tokens t
-    JOIN users u ON u.id = t.owner_user_id
-    WHERE t.contract = sqlc.arg('contract') AND t.deleted = false
-    AND (NOT @splitfi_users_only::bool OR u.universal = false)
-    AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
-    AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
-    ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
-             CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
-    LIMIT sqlc.arg('limit');
-
--- name: CountTokensByContractId :one
-SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE contract = $1 AND (NOT @splitfi_users_only::bool OR users.universal = false) AND tokens.deleted = false;
-
--- name: GetOwnersByContractIdBatchPaginate :batchmany
--- Note: sqlc has trouble recognizing that the output of the "select distinct" subquery below will
---       return complete rows from the users table. As a workaround, aliasing the subquery to
---       "users" seems to fix the issue (along with aliasing the users table inside the subquery
---       to "u" to avoid confusion -- otherwise, sqlc creates a custom row type that includes
---       all users.* fields twice).
-select users.* from (
-    select distinct on (u.id) u.* from users u, tokens t
-        where t.contract = sqlc.arg('contract') and t.owner_user_id = u.id
-        and (not @splitfi_users_only::bool or u.universal = false)
-        and t.deleted = false and u.deleted = false
-    ) as users
-    where (users.universal,users.created_at,users.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
-    and (users.universal,users.created_at,users.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
-    order by case when @paging_forward::bool then (users.universal,users.created_at,users.id) end asc,
-         case when not @paging_forward::bool then (users.universal,users.created_at,users.id) end desc limit sqlc.narg('limit');
-
-
--- name: CountOwnersByContractId :one
-SELECT count(DISTINCT users.id) FROM users, tokens
-    WHERE tokens.contract = $1 AND tokens.owner_user_id = users.id
-    AND (NOT @splitfi_users_only::bool OR users.universal = false)
-    AND tokens.deleted = false AND users.deleted = false;
-
--- name: GetTokenOwnerByID :one
-SELECT u.* FROM tokens t
-    JOIN users u ON u.id = t.owner_user_id
-    WHERE t.id = $1 AND t.deleted = false AND u.deleted = false;
-
--- name: GetTokenOwnerByIDBatch :batchone
-SELECT u.* FROM tokens t
-    JOIN users u ON u.id = t.owner_user_id
-    WHERE t.id = $1 AND t.deleted = false AND u.deleted = false;
-
--- name: GetPreviewURLsByContractIdAndUserId :many
-SELECT (MEDIA->>'thumbnail_url')::varchar as thumbnail_url FROM tokens WHERE CONTRACT = $1 AND DELETED = false AND OWNER_USER_ID = $2 AND LENGTH(MEDIA->>'thumbnail_url'::varchar) > 0 ORDER BY ID LIMIT 3;
-
--- name: GetTokensByUserId :many
-SELECT tokens.* FROM tokens, users
-    WHERE tokens.owner_user_id = $1 AND users.id = $1
-      AND tokens.owned_by_wallets && users.wallets
-      AND tokens.deleted = false AND users.deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByUserIdBatch :batchmany
-SELECT tokens.* FROM tokens, users
-    WHERE tokens.owner_user_id = $1 AND users.id = $1
-      AND tokens.owned_by_wallets && users.wallets
-      AND tokens.deleted = false AND users.deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByUserIdAndContractID :many
-SELECT tokens.* FROM tokens, users
-    WHERE tokens.owner_user_id = $1 AND users.id = $1
-      AND tokens.owned_by_wallets && users.wallets
-      AND tokens.contract = $2
-      AND tokens.deleted = false AND users.deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByUserIdAndContractIDBatch :batchmany
-SELECT tokens.* FROM tokens, users
-    WHERE tokens.owner_user_id = $1 AND users.id = $1
-      AND tokens.owned_by_wallets && users.wallets
-      AND tokens.contract = $2
-      AND tokens.deleted = false AND users.deleted = false
-    ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
-
--- name: GetTokensByUserIdAndChainBatch :batchmany
-SELECT tokens.* FROM tokens, users
-WHERE tokens.owner_user_id = $1 AND users.id = $1
-  AND tokens.owned_by_wallets && users.wallets
-  AND tokens.deleted = false AND users.deleted = false
-  AND tokens.chain = $2
-ORDER BY tokens.created_at DESC, tokens.name DESC, tokens.id DESC;
 
 -- name: CreateUserEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING *;
 
 -- name: CreateTokenEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, token_id, subject_id, data, group_id, caption, split_id, collection_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9, $10) RETURNING *;
-
--- name: CreateCollectionEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, collection_id, subject_id, data, caption, group_id, split_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
+INSERT INTO events (id, actor_id, action, resource_type_id, token_id, subject_id, data, group_id, caption, split_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
 
 -- name: CreateSplitEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, split_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
@@ -436,11 +269,11 @@ SELECT * FROM notifications
     WHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at > @created_after
     ORDER BY created_at DESC;
 
--- name: CreateFollowNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING *;
-
+/*
+TODO example for notification creation
 -- name: CreateViewSplitNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+*/
 
 -- name: UpdateNotification :exec
 UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4;
@@ -543,132 +376,19 @@ select role from (
       then @granted_membership_role end as role
 ) r where role is not null;
 
--- name: RedeemMerch :one
-update merch set redeemed = true, token_id = @token_hex, last_updated = now() where id = (select m.id from merch m where m.object_type = @object_type and m.token_id is null and m.redeemed = false and m.deleted = false order by m.id limit 1) and token_id is null and redeemed = false returning discount_code;
-
--- name: GetMerchDiscountCodeByTokenID :one
-select discount_code from merch where token_id = @token_hex and redeemed = true and deleted = false;
-
--- name: GetUserOwnsTokenByIdentifiers :one
-select exists(select 1 from tokens where owner_user_id = @user_id and token_id = @token_hex and contract = @contract and chain = @chain and deleted = false) as owns_token;
-
+/*
 -- name: UpdateSplitHidden :one
 update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
 
--- name: UpdateSplitPositions :exec
-with updates as (
-    select unnest(@split_ids::text[]) as id, unnest(@positions::text[]) as position
-)
-update splits g set position = updates.position, last_updated = now() from updates where g.id = updates.id and deleted = false and g.owner_user_id = @owner_user_id;
-
--- name: UserHasDuplicateSplitPositions :one
-select exists(select position,count(*) from splits where owner_user_id = $1 and deleted = false group by position having count(*) > 1);
-
 -- name: UpdateSplitInfo :exec
 update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, last_updated = now() where id = @id and deleted = false;
-
--- name: UpdateSplitCollections :exec
-update splits set collections = @collections, last_updated = now() where splits.id = @split_id and splits.deleted = false and (select count(*) from collections c where c.id = any(@collections) and c.split_id = @split_id and c.deleted = false) = cardinality(@collections);
-
--- name: UpdateUserFeaturedSplit :exec
-update users set featured_split = @split_id, last_updated = now() from splits where users.id = @user_id and splits.id = @split_id and splits.owner_user_id = @user_id and splits.deleted = false;
-
--- name: GetSplitTokenMediasBySplitID :many
-select t.media from tokens t, collections c, splits g where g.id = $1 and c.id = any(g.collections) and t.id = any(c.nfts) and t.deleted = false and g.deleted = false and c.deleted = false and (length(t.media->>'thumbnail_url'::varchar) > 0 or length(t.media->>'media_url'::varchar) > 0) order by array_position(g.collections, c.id),array_position(c.nfts, t.id) limit $2;
-
--- name: GetTokenByTokenIdentifiers :one
-select * from tokens where tokens.token_id = @token_hex and contract = (select contracts.id from contracts where contracts.address = @contract_address) and tokens.chain = @chain and tokens.deleted = false;
-
--- name: GetTokensByIDs :many
-select * from tokens join unnest(@token_ids::varchar[]) with ordinality t(id, pos) using (id) where deleted = false order by t.pos asc;
-
--- name: DeleteCollections :exec
-update collections set deleted = true, last_updated = now() where id = any(@ids::varchar[]);
-
--- name: UpdateCollectionsInfo :exec
-with updates as (
-    select unnest(@ids::varchar[]) as id, unnest(@names::varchar[]) as name, unnest(@collectors_notes::varchar[]) as collectors_note, unnest(@layouts::jsonb[]) as layout, unnest(@token_settings::jsonb[]) as token_settings, unnest(@hidden::bool[]) as hidden
-)
-update collections c set collectors_note = updates.collectors_note, layout = updates.layout, token_settings = updates.token_settings, hidden = updates.hidden, name = updates.name, last_updated = now(), version = 1 from updates where c.id = updates.id and c.deleted = false;
-
--- name: GetCollectionTokensByCollectionID :one
-select nfts from collections where id = $1 and deleted = false;
-
--- name: UpdateCollectionTokens :exec
-update collections set nfts = @nfts, last_updated = now() where id = @id and deleted = false;
-
--- name: CreateCollection :one
-insert into collections (id, version, name, collectors_note, owner_user_id, split_id, layout, nfts, hidden, token_settings, created_at, last_updated) values (@id, 1, @name, @collectors_note, @owner_user_id, @split_id, @layout, @nfts, @hidden, @token_settings, now(), now()) returning id;
-
--- name: GetSplitIDByCollectionID :one
-select split_id from collections where id = $1 and deleted = false;
-
--- name: GetAllTimeTrendingUserIDs :many
-select users.id
-from events, splits, users
-left join legacy_views on users.id = legacy_views.user_id and legacy_views.deleted = false
-where action = 'ViewedSplit'
-  and events.split_id = splits.id
-  and users.id = splits.owner_user_id
-  and splits.deleted = false
-  and users.deleted = false
-group by users.id
-order by row_number() over(order by count(events.id) + coalesce(max(legacy_views.view_count), 0) desc, max(users.created_at) desc) asc
-limit $1;
-
--- name: GetWindowedTrendingUserIDs :many
-with viewers as (
-  select split_id, count(distinct coalesce(actor_id, external_id)) viewer_count
-  from events
-  where action = 'ViewedSplit' and events.created_at >= @window_end
-  group by split_id
-),
-edit_events as (
-  select actor_id
-  from events
-  where action in (
-    'CollectionCreated',
-    'CollectorsNoteAddedToCollection',
-    'CollectorsNoteAddedToToken',
-    'TokensAddedToCollection',
-    'SplitInfoUpdated'
-  ) and created_at >= @window_end
-  group by actor_id
-)
-select users.id
-from viewers, splits, users, edit_events
-where viewers.split_id = splits.id
-	and splits.owner_user_id = users.id
-	and users.deleted = false
-	and splits.deleted = false
-  and users.id = edit_events.actor_id
-group by users.id
-order by row_number() over(order by sum(viewers.viewer_count) desc, max(users.created_at) desc) asc
-limit $1;
+*/
 
 -- name: GetUserExperiencesByUserID :one
 select user_experiences from users where id = $1;
 
 -- name: UpdateUserExperience :exec
 update users set user_experiences = user_experiences || @experience where id = @user_id;
-
--- name: GetTrendingUsersByIDs :many
-select users.* from users join unnest(@user_ids::varchar[]) with ordinality t(id, pos) using (id) where deleted = false order by t.pos asc;
-
--- name: UpdateCollectionSplit :exec
-update collections set split_id = @split_id, last_updated = now() where id = @id and deleted = false;
-
--- name: AddCollectionToSplit :exec
-update splits set collections = array_append(collections, @collection_id), last_updated = now() where id = @split_id and deleted = false;
-
--- name: RemoveCollectionFromSplit :exec
-update splits set collections = array_remove(collections, @collection_id), last_updated = now() where id = @split_id and deleted = false;
-
--- name: UserOwnsSplit :one
-select exists(select 1 from splits where id = $1 and owner_user_id = $2 and deleted = false);
-
--- name: UserOwnsCollection :one
-select exists(select 1 from collections where id = $1 and owner_user_id = $2 and deleted = false);
 
 -- name: GetSocialAuthByUserID :one
 select * from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false;
@@ -721,86 +441,6 @@ from (select unnest(@social_ids::varchar[]) as social_id) as s
     left outer join follows f on f.follower = @user_id and f.followee = user_view.id and f.deleted = false
 where case when @only_unfollowing::bool then f.id is null else true end;
 
--- name: AddManyFollows :exec
-insert into follows (id, follower, followee, deleted) select unnest(@ids::varchar[]), @follower, unnest(@followees::varchar[]), false on conflict (follower, followee) where deleted = false do update set deleted = false, last_updated = now() returning last_updated > created_at;
-
--- name: GetSharedFollowersBatchPaginate :batchmany
-select users.*, a.created_at followed_on
-from users, follows a, follows b
-where a.follower = @follower
-	and a.followee = b.follower
-	and b.followee = @followee
-	and users.id = b.follower
-	and a.deleted = false
-	and b.deleted = false
-	and users.deleted = false
-  and (a.created_at, users.id) > (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id'))
-  and (a.created_at, users.id) < (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
-order by case when sqlc.arg('paging_forward')::bool then (a.created_at, users.id) end desc,
-        case when not sqlc.arg('paging_forward')::bool then (a.created_at, users.id) end asc
-limit sqlc.arg('limit');
-
--- name: CountSharedFollows :one
-select count(*)
-from users, follows a, follows b
-where a.follower = @follower
-	and a.followee = b.follower
-	and b.followee = @followee
-	and users.id = b.follower
-	and a.deleted = false
-	and b.deleted = false
-	and users.deleted = false;
-
--- name: GetSharedContractsBatchPaginate :batchmany
-select contracts.*, a.displayed as displayed_by_user_a, b.displayed as displayed_by_user_b, a.owned_count
-from owned_contracts a, owned_contracts b, contracts
-left join marketplace_contracts on contracts.id = marketplace_contracts.contract_id
-where a.user_id = @user_a_id
-  and b.user_id = @user_b_id
-  and a.contract_id = b.contract_id
-  and a.contract_id = contracts.id
-  and marketplace_contracts.contract_id is null
-  and contracts.name is not null
-  and contracts.name != ''
-  and contracts.name != 'Unidentified contract'
-  and (
-    a.displayed,
-    b.displayed,
-    a.owned_count,
-    contracts.id
-  ) > (
-    sqlc.arg('cur_before_displayed_by_user_a'),
-    sqlc.arg('cur_before_displayed_by_user_b'),
-    sqlc.arg('cur_before_owned_count')::int,
-    sqlc.arg('cur_before_contract_id')
-  )
-  and (
-    a.displayed,
-    b.displayed,
-    a.owned_count,
-    contracts.id
-  ) < (
-    sqlc.arg('cur_after_displayed_by_user_a'),
-    sqlc.arg('cur_after_displayed_by_user_b'),
-    sqlc.arg('cur_after_owned_count')::int,
-    sqlc.arg('cur_after_contract_id')
-  )
-order by case when sqlc.arg('paging_forward')::bool then (a.displayed, b.displayed, a.owned_count, contracts.id) end desc,
-        case when not sqlc.arg('paging_forward')::bool then (a.displayed, b.displayed, a.owned_count, contracts.id) end asc
-limit sqlc.arg('limit');
-
--- name: CountSharedContracts :one
-select count(*)
-from owned_contracts a, owned_contracts b, contracts
-left join marketplace_contracts on contracts.id = marketplace_contracts.contract_id
-where a.user_id = @user_a_id
-  and b.user_id = @user_b_id
-  and a.contract_id = b.contract_id
-  and a.contract_id = contracts.id
-  and marketplace_contracts.contract_id is null
-  and contracts.name is not null
-  and contracts.name != ''
-  and contracts.name != 'Unidentified contract';
 
 -- name: AddPiiAccountCreationInfo :exec
 insert into pii.account_creation_info (user_id, ip_address, created_at) values (@user_id, @ip_address, now())
