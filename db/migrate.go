@@ -124,7 +124,7 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		if splitMigrate != nil {
 			return nil
 		}
-		splitClient, err := postgres.NewClient(postgres.WithUser("split_migrator"))
+		splitClient, err := postgres.NewClient(postgres.WithUser("postgres"))
 		var errNoRole postgres.ErrRoleDoesNotExist
 		if errors.As(err, &errNoRole) {
 			return nil

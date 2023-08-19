@@ -45,18 +45,6 @@ CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
 CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = false);
 
-CREATE TABLE IF NOT EXISTS recipients
-(
-    id           character varying(255) PRIMARY KEY,
-    version      integer                           DEFAULT 0,
-    last_updated timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                  NOT NULL DEFAULT false,
-    split_id     character varying(255)   NOT NULL REFERENCES splits ON DELETE CASCADE,
-    address      character varying(255),
-    ownership    integer                  NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS splits
 (
     id                      character varying(255) PRIMARY KEY,
@@ -76,6 +64,18 @@ CREATE TABLE IF NOT EXISTS splits
     fts_name                tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED,
     fts_description_english tsvector GENERATED ALWAYS AS (to_tsvector('english'::regconfig, (description)::text)) STORED
 --     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
+);
+
+CREATE TABLE IF NOT EXISTS recipients
+(
+    id           character varying(255) PRIMARY KEY,
+    version      integer                           DEFAULT 0,
+    last_updated timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at   timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted      boolean                  NOT NULL DEFAULT false,
+    split_id     character varying(255)   NOT NULL REFERENCES splits ON DELETE CASCADE,
+    address      character varying(255),
+    ownership    integer                  NOT NULL
 );
 
 CREATE INDEX splits_fts_description_english_idx ON splits USING gin (fts_description_english);

@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS recipients;
 DROP TABLE IF EXISTS splits;
+DROP TABLE IF EXISTS recipients;
 DROP TABLE IF EXISTS tokens;
 DROP TABLE IF EXISTS assets;
 DROP TABLE IF EXISTS dev_metadata_users;
@@ -11,3 +11,6 @@ DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS spam_user_scores;
 DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS wallets;
+DROP TABLE IF EXISTS for_users;
+DROP TABLE IF EXISTS socials_auth;
+DROP TABLE IF EXISTS account_creation_info;

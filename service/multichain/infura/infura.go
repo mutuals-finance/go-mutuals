@@ -30,16 +30,6 @@ func (t TokenID) String() string {
 	return string(t)
 }
 
-func (t TokenID) ToTokenID() persist.TokenID {
-
-	big, ok := new(big.Int).SetString(t.String(), 10)
-	if !ok {
-		return ""
-	}
-	return persist.TokenID(big.Text(16))
-
-}
-
 type Metadata map[string]any
 
 func (m *Metadata) UnmarshalJSON(b []byte) error {
@@ -174,7 +164,7 @@ func (d *Provider) getOwnersPaginate(ctx context.Context, tids multichain.ChainA
 
 	owners := []Owner{}
 
-	url := fmt.Sprintf("%s/nfts/%s/%s/owners", baseURL, tids.ContractAddress, tids.TokenID.Base10String())
+	url := fmt.Sprintf("%s/nfts/%s/%s/owners", baseURL, tids.ContractAddress, "1")
 
 	if pageKey != "" {
 		url = fmt.Sprintf("%s?cursor=%s", url, pageKey)
@@ -299,13 +289,12 @@ func getNFTsPaginate[T tokensPaginated](ctx context.Context, startingURL string,
 
 type TokenMetadata struct {
 	Contract persist.Address `json:"contract"`
-	TokenID  persist.TokenID `json:"token_id"`
 	Metadata Metadata        `json:"metadata"`
 }
 
 // GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
 func (p *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (persist.TokenMetadata, error) {
-	url := fmt.Sprintf("%s/nfts/%s/tokens/%s?resyncMetadata=true", baseURL, ti.ContractAddress, ti.TokenID.Base10String())
+	url := fmt.Sprintf("%s/nfts/%s/tokens/%s?resyncMetadata=true", baseURL, ti.ContractAddress, "1")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -427,12 +416,9 @@ func ownedTokenToChainAgnosticToken(owner persist.Address, token Token) multicha
 	var tokenType persist.TokenType
 
 	switch token.TokenType {
-	case "ERC721":
-		tokenType = persist.TokenTypeERC721
-	case "ERC1155":
-		tokenType = persist.TokenTypeERC1155
+	case "ERC20":
+		tokenType = persist.TokenTypeERC20
 	}
-
 	b, ok := new(big.Int).SetString(token.Supply, 10)
 	if !ok {
 		b = big.NewInt(1)
@@ -441,7 +427,6 @@ func ownedTokenToChainAgnosticToken(owner persist.Address, token Token) multicha
 	chainAgnosticToken := multichain.ChainAgnosticToken{
 		TokenType:       tokenType,
 		TokenMetadata:   persist.TokenMetadata(token.Metadata),
-		TokenID:         token.TokenID.ToTokenID(),
 		OwnerAddress:    owner,
 		ContractAddress: persist.Address(token.Contract),
 		Quantity:        persist.HexString(b.Text(16)),

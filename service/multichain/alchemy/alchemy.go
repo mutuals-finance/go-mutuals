@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/SplitFi/go-splitfi/env"
@@ -80,23 +79,6 @@ type TokenID string
 
 func (t TokenID) String() string {
 	return string(t)
-}
-
-func (t TokenID) ToTokenID() persist.TokenID {
-
-	if strings.HasPrefix(t.String(), "0x") {
-		big, ok := new(big.Int).SetString(strings.TrimPrefix(t.String(), "0x"), 16)
-		if !ok {
-			return ""
-		}
-		return persist.TokenID(big.Text(16))
-	}
-	big, ok := new(big.Int).SetString(t.String(), 10)
-	if !ok {
-		return ""
-	}
-	return persist.TokenID(big.Text(16))
-
 }
 
 type TokenMetadata struct {
@@ -353,7 +335,7 @@ func (d *Provider) getTokenWithMetadata(ctx context.Context, ti multichain.Chain
 	if timeout == 0 {
 		timeout = (time.Second * 20) / time.Millisecond
 	}
-	url := fmt.Sprintf("%s/getNFTMetadata?contractAddress=%s&tokenId=%s&tokenUriTimeoutInMs=%d&refreshCache=%t", d.alchemyAPIURL, ti.ContractAddress, ti.TokenID.Base10String(), timeout, forceRefresh)
+	url := fmt.Sprintf("%s/getNFTMetadata?contractAddress=%s&tokenId=%s&tokenUriTimeoutInMs=%d&refreshCache=%t", d.alchemyAPIURL, ti.ContractAddress, 1, timeout, forceRefresh)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, multichain.ChainAgnosticContract{}, err
@@ -435,14 +417,14 @@ func (d *Provider) GetTokensByTokenIdentifiersAndOwner(ctx context.Context, toke
 	}
 
 	if len(tokens) == 0 {
-		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, fmt.Errorf("no token found for contract address %s and token ID %s", tokenIdentifiers.ContractAddress, tokenIdentifiers.TokenID)
+		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, fmt.Errorf("no token found for contract address %s", tokenIdentifiers.ContractAddress)
 	}
 
 	token, ok := util.FindFirst(tokens, func(t multichain.ChainAgnosticToken) bool {
 		return t.OwnerAddress == ownerAddress
 	})
 	if !ok {
-		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, fmt.Errorf("no token found for contract address %s and token ID %s and owner address %s", tokenIdentifiers.ContractAddress, tokenIdentifiers.TokenID, ownerAddress)
+		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, fmt.Errorf("no token found for contract address %s and owner address %s", tokenIdentifiers.ContractAddress, ownerAddress)
 	}
 
 	return token, contract, nil
@@ -646,10 +628,8 @@ func alchemyTokenToChainAgnosticToken(owner persist.EthereumAddress, token Token
 
 	var tokenType persist.TokenType
 	switch token.ID.TokenMetadata.TokenType {
-	case "ERC721":
-		tokenType = persist.TokenTypeERC721
-	case "ERC1155":
-		tokenType = persist.TokenTypeERC1155
+	case "ERC20":
+		tokenType = persist.TokenTypeERC20
 	}
 
 	bal, ok := new(big.Int).SetString(token.Balance, 10)
@@ -661,9 +641,7 @@ func alchemyTokenToChainAgnosticToken(owner persist.EthereumAddress, token Token
 		TokenType:       tokenType,
 		Name:            token.Title,
 		Description:     token.Description,
-		TokenURI:        persist.TokenURI(token.TokenURI.Raw),
 		TokenMetadata:   alchemyTokenToMetadata(token),
-		TokenID:         token.ID.TokenID.ToTokenID(),
 		Quantity:        persist.HexString(bal.Text(16)),
 		OwnerAddress:    persist.Address(owner),
 		ContractAddress: persist.Address(token.Contract.Address),

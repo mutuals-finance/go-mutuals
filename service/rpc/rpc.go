@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/image/bmp"
 	"image/jpeg"
 	"io"
 	"io/fs"
@@ -21,8 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/image/bmp"
 
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/logger"
@@ -72,7 +71,6 @@ type Transfer struct {
 	BlockNumber     persist.BlockNumber
 	From            persist.EthereumAddress
 	To              persist.EthereumAddress
-	TokenID         persist.TokenID
 	TokenType       persist.TokenType
 	Amount          uint64
 	ContractAddress persist.EthereumAddress
@@ -306,7 +304,7 @@ func GetTokenContractMetadata(ctx context.Context, address persist.EthereumAddre
 }
 
 // GetMetadataFromURI parses and returns the ERC20 metadata for a given token URI
-func GetMetadataFromURI(ctx context.Context, turi persist.TokenURI, ipfsClient *shell.Shell, arweaveClient *goar.Client) (persist.TokenMetadata, error) {
+func GetMetadataFromURI(ctx context.Context, turi string, ipfsClient *shell.Shell, arweaveClient *goar.Client) (persist.TokenMetadata, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
@@ -321,13 +319,13 @@ func GetMetadataFromURI(ctx context.Context, turi persist.TokenURI, ipfsClient *
 }
 
 // GetDataFromURI calls URI and returns the data
-func GetDataFromURI(ctx context.Context, turi persist.TokenURI, ipfsClient *shell.Shell, arweaveClient *goar.Client) ([]byte, error) {
+func GetDataFromURI(ctx context.Context, turi string, ipfsClient *shell.Shell, arweaveClient *goar.Client) ([]byte, error) {
 
 	d, _ := ctx.Deadline()
-	logger.For(ctx).Infof("Getting data from URI: %s -timeout: %s -type: %s", turi.String(), time.Until(d), turi.Type())
-	asString := turi.String()
+	logger.For(ctx).Infof("Getting data from URI: %s -timeout: %s -type: %s", turi, time.Until(d), turi)
+	asString := turi
 
-	switch turi.Type() {
+	switch persist.URITypeIPFS {
 	case persist.URITypeBase64JSON, persist.URITypeBase64SVG:
 		// decode the base64 encoded json
 		b64data := asString[strings.IndexByte(asString, ',')+1:]
@@ -425,13 +423,13 @@ func GetDataFromURI(ctx context.Context, turi persist.TokenURI, ipfsClient *shel
 }
 
 // GetDataFromURIAsReader calls URI and returns the data as an unread reader with the headers pre-read
-func GetDataFromURIAsReader(ctx context.Context, turi persist.TokenURI, ipfsClient *shell.Shell, arweaveClient *goar.Client) (*util.FileHeaderReader, error) {
+func GetDataFromURIAsReader(ctx context.Context, turi string, ipfsClient *shell.Shell, arweaveClient *goar.Client) (*util.FileHeaderReader, error) {
 
 	d, _ := ctx.Deadline()
-	logger.For(ctx).Infof("Getting data from URI: %s -timeout: %s -type: %s", turi.String(), time.Until(d), turi.Type())
-	asString := turi.String()
+	logger.For(ctx).Infof("Getting data from URI: %s -timeout: %s -type: %s", turi, time.Until(d), turi)
+	asString := turi
 
-	switch turi.Type() {
+	switch persist.URITypeIPFS {
 	case persist.URITypeBase64JSON, persist.URITypeBase64SVG:
 		// decode the base64 encoded json
 		b64data := asString[strings.IndexByte(asString, ',')+1:]
@@ -506,7 +504,7 @@ func GetDataFromURIAsReader(ctx context.Context, turi persist.TokenURI, ipfsClie
 		asString, err := url.QueryUnescape(asString)
 		if err != nil {
 			logger.For(ctx).Errorf("error unescaping uri: %s", err)
-			asString = turi.String()
+			asString = turi
 		}
 		idx := strings.IndexByte(asString, ',')
 		if idx == -1 {
@@ -542,15 +540,15 @@ func GetDataFromURIAsReader(ctx context.Context, turi persist.TokenURI, ipfsClie
 }
 
 // DecodeMetadataFromURI calls URI and decodes the data into a metadata map
-func DecodeMetadataFromURI(ctx context.Context, turi persist.TokenURI, into *persist.TokenMetadata, ipfsClient *shell.Shell, arweaveClient *goar.Client) error {
+func DecodeMetadataFromURI(ctx context.Context, turi string, into *persist.TokenMetadata, ipfsClient *shell.Shell, arweaveClient *goar.Client) error {
 
 	d, _ := ctx.Deadline()
-	logger.For(ctx).Debugf("Getting metadata from URI: %s -timeout: %s", turi.String(), time.Until(d))
-	asString := turi.String()
+	logger.For(ctx).Debugf("Getting metadata from URI: %s -timeout: %s", turi, time.Until(d))
+	asString := turi
 
-	logger.For(ctx).Debugf("Getting metadata from %s with type %s", asString, turi.Type())
+	logger.For(ctx).Debugf("Getting metadata from %s with type %s", asString, turi)
 
-	switch turi.Type() {
+	switch persist.URITypeBase64SVG {
 	case persist.URITypeBase64JSON:
 		// decode the base64 encoded json
 		b64data := asString[strings.IndexByte(asString, ',')+1:]
@@ -621,7 +619,7 @@ func DecodeMetadataFromURI(ctx context.Context, turi persist.TokenURI, into *per
 		return json.Unmarshal(util.RemoveBOM([]byte(asString[idx:])), into)
 
 	default:
-		return fmt.Errorf("unknown token URI type for metadata: %s", turi.Type())
+		return fmt.Errorf("unknown token URI type for metadata: %s", turi)
 	}
 
 }
@@ -829,77 +827,8 @@ func GetHTTPHeaders(ctx context.Context, url string) (contentType string, conten
 	return getContentHeaders(ctx, url)
 }
 
-// GetTokenURI returns metadata URI for a given token address.
-func GetTokenURI(ctx context.Context, pTokenType persist.TokenType, pContractAddress persist.EthereumAddress, pTokenID persist.TokenID, ethClient *ethclient.Client) (persist.TokenURI, error) {
-
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-	defer cancel()
-	contract := common.HexToAddress(string(pContractAddress))
-	switch pTokenType {
-	case persist.TokenTypeERC721:
-
-		instance, err := contracts.NewIERC721MetadataCaller(contract, ethClient)
-		if err != nil {
-			return "", err
-		}
-
-		logger.For(ctx).Debugf("Token ID: %s\tToken Address: %s", pTokenID.String(), contract.Hex())
-
-		turi, err := instance.TokenURI(&bind.CallOpts{
-			Context: ctx,
-		}, pTokenID.BigInt())
-		if err != nil {
-			return "", err
-		}
-
-		return persist.TokenURI(strings.ReplaceAll(turi, "\x00", "")), nil
-	case persist.TokenTypeERC1155:
-
-		instance, err := contracts.NewIERC1155MetadataURICaller(contract, ethClient)
-		if err != nil {
-			return "", err
-		}
-
-		logger.For(ctx).Debugf("Token ID: %d\tToken Address: %s", pTokenID.BigInt().Uint64(), contract.Hex())
-
-		turi, err := instance.Uri(&bind.CallOpts{
-			Context: ctx,
-		}, pTokenID.BigInt())
-		if err != nil {
-			return "", err
-		}
-
-		return persist.TokenURI(strings.ReplaceAll(turi, "\x00", "")), nil
-
-	default:
-		if tokenURI, err := GetTokenURI(ctx, persist.TokenTypeERC721, pContractAddress, pTokenID, ethClient); err == nil {
-			return tokenURI, nil
-		}
-
-		if tokenURI, err := GetTokenURI(ctx, persist.TokenTypeERC1155, pContractAddress, pTokenID, ethClient); err == nil {
-			return tokenURI, nil
-		}
-
-		return "", fmt.Errorf("unsupported token type: %s", pTokenType)
-	}
-}
-
-// RetryGetTokenURI calls GetTokenURI with backoff.
-func RetryGetTokenURI(ctx context.Context, tokenType persist.TokenType, contractAddress persist.EthereumAddress, tokenID persist.TokenID, ethClient *ethclient.Client) (persist.TokenURI, error) {
-	var u persist.TokenURI
-	var err error
-	for i := 0; i < retry.DefaultRetry.Tries; i++ {
-		u, err = GetTokenURI(ctx, tokenType, contractAddress, tokenID, ethClient)
-		if !isRateLimitedError(err) {
-			break
-		}
-		retry.DefaultRetry.Sleep(i)
-	}
-	return u, err
-}
-
 // GetBalanceOfERC1155Token returns the balance of an ERC1155 token
-func GetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddress persist.EthereumAddress, pTokenID persist.TokenID, ethClient *ethclient.Client) (*big.Int, error) {
+func GetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (*big.Int, error) {
 	contract := common.HexToAddress(string(pContractAddress))
 	owner := common.HexToAddress(string(pOwnerAddress))
 	instance, err := contracts.NewIERC1155(contract, ethClient)
@@ -909,7 +838,7 @@ func GetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddre
 
 	bal, err := instance.BalanceOf(&bind.CallOpts{
 		Context: ctx,
-	}, owner, pTokenID.BigInt())
+	}, owner, big.NewInt(1))
 	if err != nil {
 		return nil, err
 	}
@@ -918,11 +847,11 @@ func GetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddre
 }
 
 // RetryGetBalanceOfERC1155Token calls GetBalanceOfERC1155Token with backoff.
-func RetryGetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddress persist.EthereumAddress, pTokenID persist.TokenID, ethClient *ethclient.Client) (*big.Int, error) {
+func RetryGetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (*big.Int, error) {
 	var balance *big.Int
 	var err error
 	for i := 0; i < retry.DefaultRetry.Tries; i++ {
-		balance, err = GetBalanceOfERC1155Token(ctx, pOwnerAddress, pContractAddress, pTokenID, ethClient)
+		balance, err = GetBalanceOfERC1155Token(ctx, pOwnerAddress, pContractAddress, ethClient)
 		if !isRateLimitedError(err) {
 			break
 		}
@@ -932,7 +861,7 @@ func RetryGetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContract
 }
 
 // GetOwnerOfERC721Token returns the Owner of an ERC721 token
-func GetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.EthereumAddress, pTokenID persist.TokenID, ethClient *ethclient.Client) (persist.EthereumAddress, error) {
+func GetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (persist.EthereumAddress, error) {
 	contract := common.HexToAddress(string(pContractAddress))
 
 	instance, err := contracts.NewIERC721Caller(contract, ethClient)
@@ -942,7 +871,7 @@ func GetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.Ethereu
 
 	owner, err := instance.OwnerOf(&bind.CallOpts{
 		Context: ctx,
-	}, pTokenID.BigInt())
+	}, big.NewInt(1))
 	if err != nil {
 		return "", err
 	}
@@ -951,11 +880,11 @@ func GetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.Ethereu
 }
 
 // RetryGetOwnerOfERC721Token calls GetOwnerOfERC721Token with backoff.
-func RetryGetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.EthereumAddress, pTokenID persist.TokenID, ethClient *ethclient.Client) (persist.EthereumAddress, error) {
+func RetryGetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (persist.EthereumAddress, error) {
 	var owner persist.EthereumAddress
 	var err error
 	for i := 0; i < retry.DefaultRetry.Tries; i++ {
-		owner, err = GetOwnerOfERC721Token(ctx, pContractAddress, pTokenID, ethClient)
+		owner, err = GetOwnerOfERC721Token(ctx, pContractAddress, ethClient)
 		if !isRateLimitedError(err) {
 			break
 		}
