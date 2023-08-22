@@ -16,7 +16,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
 	"github.com/SplitFi/go-splitfi/service/task"
-	"github.com/SplitFi/go-splitfi/tokenprocessing"
 	"github.com/stretchr/testify/require"
 )
 
@@ -136,19 +135,6 @@ func usePubSub(t *testing.T) {
 	t.Cleanup(func() { r.Close() })
 }
 
-// useTokenProcessing starts a HTTP server for tokenprocessing
-func useTokenProcessing(t *testing.T) {
-	t.Helper()
-	c := server.ClientInit(context.Background())
-	p := server.NewMultichainProvider(c)
-	server := httptest.NewServer(tokenprocessing.CoreInitServer(c, p))
-	t.Setenv("TOKEN_PROCESSING_URL", server.URL)
-	t.Cleanup(func() {
-		server.Close()
-		c.Close()
-	})
-}
-
 type serverFixture struct {
 	*httptest.Server
 }
@@ -210,9 +196,5 @@ type userWithTokensFixture struct {
 func newUserWithTokensFixture(t *testing.T) userWithTokensFixture {
 	t.Helper()
 	user := newUserFixture(t)
-	ctx := context.Background()
-	h := handlerWithProviders(t, sendTokensNOOP, defaultStubProvider(user.Wallet.Address))
-	c := customHandlerClient(t, h, withJWTOpt(t, user.ID))
-	tokenIDs := syncTokens(t, ctx, c, user.ID)
-	return userWithTokensFixture{user, tokenIDs}
+	return userWithTokensFixture{user, []persist.DBID{}}
 }

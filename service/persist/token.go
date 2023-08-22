@@ -170,11 +170,12 @@ type Token struct {
 	Deleted         NullBool        `json:"-"`
 	LastUpdated     LastUpdatedTime `json:"last_updated"`
 	TokenType       TokenType       `json:"token_type"`
+	ContractAddress EthereumAddress `json:"contract_address"`
 	Chain           Chain           `json:"chain"`
 	Name            NullString      `json:"name"`
 	Symbol          NullString      `json:"symbol"`
+	Decimals        NullInt32       `json:"decimals"`
 	Logo            Logo            `json:"logo"`
-	ContractAddress EthereumAddress `json:"contract_address"`
 	BlockNumber     BlockNumber     `json:"block_number"`
 	IsSpam          *bool           `json:"is_spam"`
 }

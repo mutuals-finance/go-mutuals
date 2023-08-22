@@ -24,9 +24,9 @@ type GetContractInput struct {
 	Address persist.EthereumAddress `form:"address,required"`
 }
 
-// UpdateContractMetadataInput is used to refresh metadata for a given contract
-type UpdateContractMetadataInput struct {
-	Address persist.EthereumAddress `json:"address,required"`
+// UpdateTokenMetadataInput is used to refresh metadata for a given token
+type UpdateTokenMetadataInput struct {
+	Address persist.Address `json:"address,required"`
 }
 
 func getContract(contractsRepo persist.ContractRepository) gin.HandlerFunc {
@@ -50,14 +50,14 @@ func getContract(contractsRepo persist.ContractRepository) gin.HandlerFunc {
 
 func updateContractMetadata(contractsRepo persist.ContractRepository, ethClient *ethclient.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var input UpdateContractMetadataInput
+		var input UpdateTokenMetadataInput
 		if err := c.ShouldBindJSON(&input); err != nil {
 			err = util.ErrInvalidInput{Reason: fmt.Sprintf("must specify 'address' field: %v", err)}
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
-		err := updateMetadataForContract(c, input, ethClient, contractsRepo)
+		err := updateMetadataForToken(c, input, ethClient, contractsRepo)
 		if err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
@@ -67,7 +67,7 @@ func updateContractMetadata(contractsRepo persist.ContractRepository, ethClient 
 	}
 }
 
-func updateMetadataForContract(c context.Context, input UpdateContractMetadataInput, ethClient *ethclient.Client, contractsRepo persist.ContractRepository) error {
+func updateMetadataForToken(c context.Context, input UpdateTokenMetadataInput, ethClient *ethclient.Client, contractsRepo persist.ContractRepository) error {
 	newMetadata, err := rpc.GetTokenContractMetadata(c, input.Address, ethClient)
 	if err != nil {
 		return err
@@ -78,9 +78,11 @@ func updateMetadataForContract(c context.Context, input UpdateContractMetadataIn
 		return err
 	}
 
-	up := persist.ContractUpdateInput{
+	up := persist.TokenUpdateInput{
 		Name:        persist.NullString(newMetadata.Name),
 		Symbol:      persist.NullString(newMetadata.Symbol),
+		Decimals:    persist.NullString(newMetadata.Symbol),
+		Logo:        persist.NullString(newMetadata.Symbol),
 		LatestBlock: persist.BlockNumber(latestBlock),
 	}
 

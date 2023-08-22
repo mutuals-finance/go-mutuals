@@ -5,12 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/server"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/rpc"
 	"github.com/SplitFi/go-splitfi/service/task"
-	"github.com/SplitFi/go-splitfi/tokenprocessing"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/everFinance/goar"
 	shell "github.com/ipfs/go-ipfs-api"
@@ -78,7 +76,6 @@ func withContractTokens(contract multichain.ChainAgnosticContract, address strin
 		for i := 0; i < n; i++ {
 			tokens = append(tokens, multichain.ChainAgnosticToken{
 				Name:            fmt.Sprintf("%s_testToken%d", contract.Name, i),
-				TokenID:         persist.TokenID(fmt.Sprintf("%X", i)),
 				Quantity:        "1",
 				ContractAddress: contract.Address,
 				OwnerAddress:    persist.Address(address),
@@ -136,14 +133,6 @@ func sendTokensToHTTPHandler(handler http.Handler, method, endpoint string) mult
 	}
 }
 
-// sendTokensToTokenProcessing processes a batch of tokens synchronously through tokenprocessing
-func sendTokensToTokenProcessing(c *server.Clients, provider *multichain.Provider) multichain.SendTokens {
-	return func(ctx context.Context, t task.TokenProcessingUserMessage) error {
-		h := tokenprocessing.CoreInitServer(c, provider)
-		return sendTokensToHTTPHandler(h, http.MethodPost, "/media/process")(ctx, t)
-	}
-}
-
 // fetchMetadataFromDummyMetadata returns static metadata from the dummymetadata server
 func fetchMetadataFromDummyMetadata(url, endpoint string, ipfsClient *shell.Shell, arweaveClient *goar.Client) (persist.TokenMetadata, error) {
 	r := httptest.NewRequest(http.MethodGet, url+endpoint, nil)
@@ -160,7 +149,7 @@ func fetchMetadataFromDummyMetadata(url, endpoint string, ipfsClient *shell.Shel
 		return nil, err
 	}
 
-	return rpc.GetMetadataFromURI(context.Background(), persist.TokenURI(body), ipfsClient, arweaveClient)
+	return rpc.GetMetadataFromURI(context.Background(), string(body), ipfsClient, arweaveClient)
 }
 
 // fetchFromDummyEndpoint fetches metadata from the given endpoint

@@ -82,8 +82,9 @@ type Transfer struct {
 
 // TokenContractMetadata represents a token contract's metadata
 type TokenContractMetadata struct {
-	Name   string
-	Symbol string
+	Name     string
+	Symbol   string
+	Decimals int
 }
 
 // ErrHTTP represents an error returned from an HTTP request
@@ -279,10 +280,9 @@ func GetTransaction(ctx context.Context, ethClient *ethclient.Client, txHash com
 	return ethClient.TransactionByHash(ctx, txHash)
 }
 
-// GetTokenContractMetadata returns the metadata for a given contract (without URI)
-func GetTokenContractMetadata(ctx context.Context, address persist.EthereumAddress, ethClient *ethclient.Client) (*TokenContractMetadata, error) {
-	contract := address.Address()
-	instance, err := contracts.NewIERC721MetadataCaller(contract, ethClient)
+// GetTokenContractMetadata returns the metadata for a given token
+func GetTokenContractMetadata(ctx context.Context, address common.Address, ethClient *ethclient.Client) (*TokenContractMetadata, error) {
+	instance, err := contracts.NewIERC20MetadataCaller(address, ethClient)
 	if err != nil {
 		return nil, err
 	}

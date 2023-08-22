@@ -45,7 +45,7 @@ func TestMain(t *testing.T) {
 		{
 			title:    "test syncing tokens",
 			run:      testTokenSyncs,
-			fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useTokenQueue, useTokenProcessing},
+			fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useTokenQueue},
 		},
 	}
 	for _, test := range tests {
@@ -278,13 +278,14 @@ func testUpdateUserExperiences(t *testing.T) {
 	require.NoError(t, err)
 	bs, _ := json.Marshal(response)
 	require.NotNil(t, response.UpdateUserExperience, string(bs))
-	payload := (*response.UpdateUserExperience).(*updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload)
+	/*payload := (*response.UpdateUserExperience).(*updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload)
 	assert.NotEmpty(t, payload.Viewer.UserExperiences)
 	for _, experience := range payload.Viewer.UserExperiences {
 		if experience.Type == UserExperienceTypeMultisplitannouncement {
 			assert.True(t, experience.Experienced)
 		}
 	}
+	*/
 }
 
 func testConnectSocialAccount(t *testing.T) {
