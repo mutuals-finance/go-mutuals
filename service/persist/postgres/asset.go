@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
 // AssetRepository represents an asset repository in the postgres database
 type AssetRepository struct {
 	db                                 *sql.DB
-	queries                            *db.Queries
 	getByOwnerStmt                     *sql.Stmt
 	getByOwnerPaginateStmt             *sql.Stmt
 	getByTokenStmt                     *sql.Stmt
@@ -25,7 +23,7 @@ type AssetRepository struct {
 }
 
 // NewAssetRepository creates a new postgres repository for interacting with assets
-func NewAssetRepository(db *sql.DB, queries *db.Queries) *AssetRepository {
+func NewAssetRepository(db *sql.DB) *AssetRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -75,7 +73,7 @@ func NewAssetRepository(db *sql.DB, queries *db.Queries) *AssetRepository {
 	updateAssetByIdentifiersUnsafeStmt, err := db.PrepareContext(ctx, `UPDATE assets SET BALANCE = $1, BLOCK_NUMBER = $2, LAST_UPDATED = now() WHERE OWNER_ADDRESS = $3 AND TOKEN_ADDRESS = $4;`)
 	checkNoErr(err)
 
-	return &AssetRepository{db: db, queries: queries, getByOwnerStmt: getByOwnerStmt, getByOwnerPaginateStmt: getByOwnerPaginateStmt, getByTokenStmt: getByTokenStmt, getByTokenPaginateStmt: getByTokenPaginateStmt, getByIdentifiersStmt: getByIdentifiersStmt, upsertByIdentifiersStmt: upsertByIdentifiersStmt, updateAssetUnsafeStmt: updateAssetUnsafeStmt, updateAssetByIdentifiersUnsafeStmt: updateAssetByIdentifiersUnsafeStmt}
+	return &AssetRepository{db: db, getByOwnerStmt: getByOwnerStmt, getByOwnerPaginateStmt: getByOwnerPaginateStmt, getByTokenStmt: getByTokenStmt, getByTokenPaginateStmt: getByTokenPaginateStmt, getByIdentifiersStmt: getByIdentifiersStmt, upsertByIdentifiersStmt: upsertByIdentifiersStmt, updateAssetUnsafeStmt: updateAssetUnsafeStmt, updateAssetByIdentifiersUnsafeStmt: updateAssetByIdentifiersUnsafeStmt}
 }
 
 // GetByOwner retrieves all assets associated with an owner ethereum address

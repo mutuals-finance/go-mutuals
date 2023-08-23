@@ -1,8 +1,11 @@
 package indexer
 
+/*
+
 import (
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"net/http"
 	"time"
 
@@ -16,7 +19,7 @@ import (
 
 // GetContractOutput is the response for getting a single smart contract
 type GetContractOutput struct {
-	Contract persist.Contract `json:"contract"`
+	Contract rpc.Contract `json:"contract"`
 }
 
 // GetContractInput is the input to the Get Contract endpoint
@@ -26,7 +29,7 @@ type GetContractInput struct {
 
 // UpdateTokenMetadataInput is used to refresh metadata for a given token
 type UpdateTokenMetadataInput struct {
-	Address persist.Address `json:"address,required"`
+	Address common.Address `json:"address,required"`
 }
 
 func getContract(contractsRepo persist.ContractRepository) gin.HandlerFunc {
@@ -98,3 +101,4 @@ func updateMetadataForToken(c context.Context, input UpdateTokenMetadataInput, e
 
 	return contractsRepo.UpdateByAddress(c, input.Address, up)
 }
+*/

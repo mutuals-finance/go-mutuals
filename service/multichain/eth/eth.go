@@ -1,7 +1,6 @@
 package eth
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -58,7 +57,7 @@ func (d *Provider) GetBlockchainInfo(ctx context.Context) (multichain.Blockchain
 
 // GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
 func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (persist.TokenMetadata, error) {
-	url := fmt.Sprintf("%s/nfts/get/metadata?contract_address=%s&token_id=%s", d.indexerBaseURL, ti.ContractAddress, ti.TokenID)
+	url := fmt.Sprintf("%s/nfts/get/metadata?contract_address=%s&token_id=%s", d.indexerBaseURL, ti.ContractAddress, "1")
 	if ownerAddress != "" {
 		url = fmt.Sprintf("%s&address=%s", url, ownerAddress)
 	}
@@ -85,31 +84,6 @@ func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti mu
 	return tokens.Metadata, nil
 }
 
-// GetContractByAddress retrieves an ethereum contract by address
-func (d *Provider) GetContractByAddress(ctx context.Context, addr persist.Address) (multichain.ChainAgnosticContract, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/contracts/get?address=%s", d.indexerBaseURL, addr), nil)
-	if err != nil {
-		return multichain.ChainAgnosticContract{}, err
-	}
-	res, err := d.httpClient.Do(req)
-	if err != nil {
-		return multichain.ChainAgnosticContract{}, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return multichain.ChainAgnosticContract{}, util.GetErrFromResp(res)
-	}
-	var contract indexer.GetContractOutput
-	err = json.NewDecoder(res.Body).Decode(&contract)
-	if err != nil {
-		return multichain.ChainAgnosticContract{}, err
-	}
-
-	return contractToChainAgnostic(contract.Contract), nil
-
-}
-
 func (d *Provider) GetDisplayNameByAddress(ctx context.Context, addr persist.Address) string {
 
 	resultChan := make(chan string)
@@ -133,36 +107,6 @@ func (d *Provider) GetDisplayNameByAddress(ctx context.Context, addr persist.Add
 		logger.For(ctx).Errorf("error resolving ens domain: %s", ctx.Err().Error())
 		return addr.String()
 	}
-}
-
-// RefreshContract refreshes the metadata for a contract
-func (d *Provider) RefreshContract(ctx context.Context, addr persist.Address) error {
-	input := indexer.UpdateContractMetadataInput{
-		Address: persist.EthereumAddress(persist.ChainETH.NormalizeAddress(addr)),
-	}
-
-	asJSON, err := json.Marshal(input)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/contracts/refresh", d.indexerBaseURL), bytes.NewReader(asJSON))
-	if err != nil {
-		return err
-	}
-
-	res, err := d.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return util.GetErrFromResp(res)
-	}
-
-	return nil
 }
 
 // WalletCreated runs whenever a new wallet is created
@@ -290,13 +234,4 @@ func verifySignature(pSignatureStr string,
 		return false, errors.New("wallet type not supported")
 	}
 
-}
-
-func contractToChainAgnostic(contract persist.Contract) multichain.ChainAgnosticContract {
-	return multichain.ChainAgnosticContract{
-		Address:        persist.Address(contract.Address.String()),
-		Name:           contract.Name.String(),
-		Symbol:         contract.Symbol.String(),
-		CreatorAddress: persist.Address(contract.CreatorAddress.String()),
-	}
 }

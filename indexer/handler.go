@@ -9,25 +9,25 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
-func handlersInit(router *gin.Engine, i *indexer, tokenRepository persist.TokenRepository, contractRepository persist.ContractRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client) *gin.Engine {
+func handlersInit(router *gin.Engine, i *indexer, tokenRepository persist.TokenRepository, assetRepository persist.AssetRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client) *gin.Engine {
 	router.GET("/status", getStatus(i, tokenRepository))
 
 	return router
 }
 
-func handlersInitServer(router *gin.Engine, queueChan chan processTokensInput, tokenRepository persist.TokenRepository, contractRepository persist.ContractRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, idxer *indexer) *gin.Engine {
+func handlersInitServer(router *gin.Engine, tokenRepository persist.TokenRepository, assetRepository persist.AssetRepository, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, idxer *indexer) *gin.Engine {
 
 	activityGroup := router.Group("/activity")
 	activityGroup.POST("/", updateActivity(tokenRepository, ethClient, ipfsClient, arweaveClient))
-	activityGroup.GET("/", getTokens(queueChan, tokenRepository, contractRepository, ipfsClient, ethClient, arweaveClient))
+	activityGroup.GET("/", getTokenMetadata(ipfsClient, ethClient, arweaveClient))
 
-	factoryGroup := router.Group("/factory")
-	factoryGroup.GET("/", getContract(contractRepository))
-	factoryGroup.POST("/", updateContractMetadata(contractRepository, ethClient))
+	/*	factoryGroup := router.Group("/factory")
+		factoryGroup.GET("/", getContract(contractRepository))
+		factoryGroup.POST("/", updateContractMetadata(contractRepository, ethClient))
 
-	splitsGroup := router.Group("/splits")
-	splitsGroup.GET("/", getContract(contractRepository))
-	splitsGroup.POST("/", updateContractMetadata(contractRepository, ethClient))
-
+		splitsGroup := router.Group("/splits")
+		splitsGroup.GET("/", getContract(contractRepository))
+		splitsGroup.POST("/", updateContractMetadata(contractRepository, ethClient))
+	*/
 	return router
 }

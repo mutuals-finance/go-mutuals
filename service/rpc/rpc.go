@@ -66,6 +66,18 @@ var (
 // rateLimited is the content returned from an RPC call when rate limited.
 var rateLimited = "429 Too Many Requests"
 
+type Contract struct {
+	BlockNumber persist.BlockNumber
+	Address     persist.EthereumAddress
+}
+
+// TokenContractMetadata represents a token contract's metadata
+type TokenContractMetadata struct {
+	Name     string
+	Symbol   string
+	Decimals int
+}
+
 // Transfer represents a Transfer from the RPC response
 type Transfer struct {
 	BlockNumber     persist.BlockNumber
@@ -78,13 +90,6 @@ type Transfer struct {
 	TxHash    common.Hash
 	BlockHash common.Hash
 	TxIndex   uint
-}
-
-// TokenContractMetadata represents a token contract's metadata
-type TokenContractMetadata struct {
-	Name     string
-	Symbol   string
-	Decimals int
 }
 
 // ErrHTTP represents an error returned from an HTTP request

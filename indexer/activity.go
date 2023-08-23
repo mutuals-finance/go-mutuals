@@ -93,7 +93,7 @@ func processActivities(ctx context.Context, activities []Activity, tokenReposito
 }
 
 func processTokenActivity(pCtx context.Context, contractAddress persist.EthereumAddress, tokenRepo persist.TokenRepository, ec *ethclient.Client) (t persist.Token, err error) {
-	tokens, err := tokenRepo.GetByContract(pCtx, contractAddress, 1, 0)
+	tokens, err := tokenRepo.GetByTokenIdentifiers(pCtx, contractAddress, 1, 0)
 	if err != nil {
 		return t, err
 	}

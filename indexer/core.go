@@ -14,10 +14,8 @@ import (
 	"github.com/SplitFi/go-splitfi/service/media"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/SplitFi/go-splitfi/service/rpc"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/service/throttle"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
@@ -52,7 +50,7 @@ func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engin
 	})
 
 	s := media.NewStorageClient(context.Background())
-	tokenRepo, contractRepo, addressFilterRepo := newRepos(s)
+	tokenRepo, assetRepo, addressFilterRepo := newRepos(s)
 	ethClient := rpc.NewEthSocketClient()
 	ipfsClient := rpc.NewIPFSShell()
 	arweaveClient := rpc.NewArweaveClient()
@@ -61,7 +59,7 @@ func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engin
 		rpcEnabled = true
 	}
 
-	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, tokenRepo, contractRepo, addressFilterRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, fromBlock, toBlock)
+	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, tokenRepo, assetRepo, addressFilterRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, fromBlock, toBlock)
 
 	router := gin.Default()
 
@@ -73,7 +71,7 @@ func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engin
 	}
 
 	logger.For(nil).Info("Registering handlers...")
-	return handlersInit(router, i, tokenRepo, contractRepo, ethClient, ipfsClient, arweaveClient, s), i
+	return handlersInit(router, i, tokenRepo, assetRepo, ethClient, ipfsClient, arweaveClient, s), i
 }
 
 func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
@@ -108,13 +106,9 @@ func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
 
 	logger.For(ctx).Info("Registering handlers...")
 
-	queueChan := make(chan processTokensInput)
-	t := newThrottler()
-
 	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, tokenRepo, contractRepo, addressFilterRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, nil, nil)
 
-	go processMissingMetadata(ctx, queueChan, tokenRepo, contractRepo, ipfsClient, ethClient, arweaveClient, s, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"), t)
-	return handlersInitServer(router, queueChan, tokenRepo, contractRepo, ethClient, ipfsClient, arweaveClient, s, i)
+	return handlersInitServer(router, tokenRepo, contractRepo, ethClient, ipfsClient, arweaveClient, s, i)
 }
 
 func SetDefaults() {
@@ -157,13 +151,9 @@ func ValidateEnv() {
 	}
 }
 
-func newRepos(storageClient *storage.Client) (persist.TokenRepository, persist.ContractRepository, refresh.AddressFilterRepository) {
+func newRepos(storageClient *storage.Client) (persist.TokenRepository, persist.AssetRepository, refresh.AddressFilterRepository) {
 	pgClient := postgres.MustCreateClient()
-	return postgres.NewTokenRepository(pgClient), postgres.NewContractRepository(pgClient), refresh.AddressFilterRepository{Bucket: storageClient.Bucket(env.GetString("GCLOUD_TOKEN_LOGS_BUCKET"))}
-}
-
-func newThrottler() *throttle.Locker {
-	return throttle.NewThrottleLocker(redis.NewCache(redis.IndexerServerThrottleDB), time.Minute*5)
+	return postgres.NewTokenRepository(pgClient), postgres.NewAssetRepository(pgClient), refresh.AddressFilterRepository{Bucket: storageClient.Bucket(env.GetString("GCLOUD_TOKEN_LOGS_BUCKET"))}
 }
 
 func initSentry() {

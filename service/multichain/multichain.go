@@ -41,6 +41,11 @@ type BlockchainInfo struct {
 	ChainID int           `json:"chain_id"`
 }
 
+type ChainAddress struct {
+	Chain   persist.Chain
+	Address persist.Address
+}
+
 // ChainAgnosticToken is a token that is agnostic to the chain it is on
 type ChainAgnosticToken struct {
 	TokenType persist.TokenType `json:"token_type"`
