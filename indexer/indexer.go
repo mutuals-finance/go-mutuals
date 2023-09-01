@@ -1,10 +1,13 @@
 package indexer
 
 import (
+	gcptasks "cloud.google.com/go/cloudtasks/apiv2"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/SplitFi/go-splitfi/contracts"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/db/gen/indexerdb"
 	"math/big"
 	"net/http"
 	"sort"
@@ -16,7 +19,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/indexer/refresh"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
 	"github.com/SplitFi/go-splitfi/service/persist"
@@ -115,18 +117,18 @@ type getLogsFunc func(ctx context.Context, curBlock, nextBlock *big.Int, topics 
 // indexer is the indexer for the blockchain that uses JSON RPC to scan through logs and process them
 // into a format used by the application
 type indexer struct {
-	ethClient         *ethclient.Client
-	ipfsClient        *shell.Shell
-	arweaveClient     *goar.Client
-	storageClient     *storage.Client
-	httpClient        *http.Client
-	tokenRepo         persist.TokenRepository
-	assetRepo         persist.AssetRepository
-	addressFilterRepo refresh.AddressFilterRepository
-	dbMu              *sync.Mutex // Manages writes to the db
-	stateMu           *sync.Mutex // Manages updates to the indexer's state
-
-	seenContracts *sync.Map // Stores the contract addresses that have been seen during indexing (so they won't be reprocessed)
+	ethClient     *ethclient.Client
+	httpClient    *http.Client
+	ipfsClient    *shell.Shell
+	arweaveClient *goar.Client
+	storageClient *storage.Client
+	queries       *indexerdb.Queries
+	splitRepo     persist.SplitRepository
+	tokenRepo     persist.TokenRepository
+	assetRepo     persist.AssetRepository
+	dbMu          *sync.Mutex // Manages writes to the db
+	stateMu       *sync.Mutex // Manages updates to the indexer's state
+	memoryMu      *sync.Mutex // Manages large memory operations
 
 	tokenBucket string
 
@@ -147,24 +149,25 @@ type indexer struct {
 }
 
 // newIndexer sets up an indexer for retrieving the specified events that will process tokens
-func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, tokenRepo persist.TokenRepository, assetRepo persist.AssetRepository, addressFilterRepo refresh.AddressFilterRepository, pChain persist.Chain, pEvents []eventHash, getLogsFunc getLogsFunc, startingBlock, maxBlock *uint64) *indexer {
+func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, iQueries *indexerdb.Queries, bQueries *coredb.Queries, taskClient *gcptasks.Client, splitRepo persist.SplitRepository, tokenRepo persist.TokenRepository, assetRepo persist.AssetRepository, pChain persist.Chain, pEvents []eventHash, getLogsFunc getLogsFunc, startingBlock, maxBlock *uint64) *indexer {
+
 	if rpcEnabled && ethClient == nil {
 		panic("RPC is enabled but an ethClient wasn't provided!")
 	}
 
 	i := &indexer{
-		ethClient:         ethClient,
-		ipfsClient:        ipfsClient,
-		arweaveClient:     arweaveClient,
-		storageClient:     storageClient,
-		httpClient:        httpClient,
-		tokenRepo:         tokenRepo,
-		assetRepo:         assetRepo,
-		addressFilterRepo: addressFilterRepo,
-		dbMu:              &sync.Mutex{},
-		stateMu:           &sync.Mutex{},
-
-		seenContracts: &sync.Map{},
+		ethClient:     ethClient,
+		ipfsClient:    ipfsClient,
+		arweaveClient: arweaveClient,
+		storageClient: storageClient,
+		httpClient:    httpClient,
+		splitRepo:     splitRepo,
+		tokenRepo:     tokenRepo,
+		assetRepo:     assetRepo,
+		queries:       iQueries,
+		dbMu:          &sync.Mutex{},
+		stateMu:       &sync.Mutex{},
+		memoryMu:      &sync.Mutex{},
 
 		tokenBucket: env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"),
 
@@ -176,8 +179,12 @@ func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient
 
 		getLogsFunc: getLogsFunc,
 
-		assetDBHooks: newAssetHooks(assetRepo, httpClient),
-		tokenDBHooks: newTokenHooks(),
+		tokenDBHooks: newTokenHooks(taskClient, bQueries),
+		assetDBHooks: newAssetHooks(taskClient, bQueries),
+
+		mostRecentBlock: 0,
+		lastSyncedChunk: 0,
+		isListening:     false,
 	}
 
 	if startingBlock != nil {
@@ -304,9 +311,13 @@ func (i *indexer) startPipeline(ctx context.Context, start persist.BlockNumber, 
 	startTime := time.Now()
 	transfers := make(chan []transfersAtBlock)
 	plugins := NewTransferPlugins(ctx)
-	enabledPlugins := []chan<- TransferPluginMsg{plugins.contracts.in}
+	enabledPlugins := []chan<- TransferPluginMsg{plugins.contracts.in, plugins.tokens.in}
 
-	logsToCheckAgainst := make(chan []types.Log)
+	//statsID, err := i.queries.InsertStatistic(ctx, indexerdb.InsertStatisticParams{ID: persist.GenerateID(), BlockStart: start, BlockEnd: start + blocksPerLogsCall})
+	//if err != nil {
+	//	panic(err)
+	//}
+
 	go func() {
 		ctx := sentryutil.NewSentryHubContext(ctx)
 		span, ctx := tracing.StartSpan(ctx, "indexer.logs", "processLogs")
@@ -314,11 +325,14 @@ func (i *indexer) startPipeline(ctx context.Context, start persist.BlockNumber, 
 
 		logs := i.fetchLogs(ctx, start, topics)
 		i.processLogs(ctx, transfers, logs)
-		logsToCheckAgainst <- logs
 	}()
 	go i.processAllTransfers(sentryutil.NewSentryHubContext(ctx), transfers, enabledPlugins)
 	i.processTokens(ctx, plugins.tokens.out, plugins.contracts.out)
-	i.afterPipelineCleanup(ctx)
+
+	//err = i.queries.UpdateStatisticSuccess(ctx, indexerdb.UpdateStatisticSuccessParams{ID: statsID, Success: true, ProcessingTimeSeconds: sql.NullInt64{Int64: int64(time.Since(startTime) / time.Second), Valid: true}})
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	logger.For(ctx).Warnf("Finished processing %d blocks from block %d in %s", blocksPerLogsCall, start.Uint64(), time.Since(startTime))
 }
@@ -329,13 +343,26 @@ func (i *indexer) startNewBlocksPipeline(ctx context.Context, topics [][]common.
 
 	transfers := make(chan []transfersAtBlock)
 	plugins := NewTransferPlugins(ctx)
-	enabledPlugins := []chan<- TransferPluginMsg{plugins.contracts.in}
+	enabledPlugins := []chan<- TransferPluginMsg{plugins.contracts.in, plugins.tokens.in}
 
-	go i.pollNewLogs(sentryutil.NewSentryHubContext(ctx), transfers, topics)
+	mostRecentBlock, err := rpc.RetryGetBlockNumber(ctx, i.ethClient)
+	if err != nil {
+		panic(err)
+	}
+
+	if i.lastSyncedChunk+blocksPerLogsCall > mostRecentBlock {
+		logger.For(ctx).Infof("No new blocks to process. Last synced block: %d, most recent block: %d", i.lastSyncedChunk, mostRecentBlock)
+		return
+	}
+
+	//statsID, err := i.queries.InsertStatistic(ctx, indexerdb.InsertStatisticParams{ID: persist.GenerateID(), BlockStart: persist.BlockNumber(i.lastSyncedChunk), BlockEnd: persist.BlockNumber(mostRecentBlock - (i.mostRecentBlock % blocksPerLogsCall))})
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	go i.pollNewLogs(sentryutil.NewSentryHubContext(ctx), transfers, topics, mostRecentBlock)
 	go i.processAllTransfers(sentryutil.NewSentryHubContext(ctx), transfers, enabledPlugins)
 	i.processTokens(ctx, plugins.tokens.out, plugins.contracts.out)
-	i.afterPipelineCleanup(ctx)
-
 }
 
 func (i *indexer) listenForNewBlocks(ctx context.Context) {
@@ -365,6 +392,14 @@ func (i *indexer) fetchLogs(ctx context.Context, startingBlock persist.BlockNumb
 		panic(fmt.Sprintf("error getting logs: %s", err))
 	}
 
+	//err = i.queries.UpdateStatisticTotalLogs(ctx, indexerdb.UpdateStatisticTotalLogsParams{
+	//	ID:        statsID,
+	//	TotalLogs: sql.NullInt64{Int64: int64(len(logsTo)), Valid: true},
+	//})
+	//if err != nil {
+	//	panic(err)
+	//}
+
 	logger.For(ctx).Infof("Found %d logs at block %d", len(logsTo), curBlock.Uint64())
 
 	return logsTo
@@ -376,12 +411,18 @@ func (i *indexer) defaultGetLogs(ctx context.Context, curBlock, nextBlock *big.I
 	if err != nil {
 		logger.For(ctx).WithError(err).Warn("error getting logs from GCP")
 	} else {
-		defer reader.Close()
-		err = json.NewDecoder(reader).Decode(&logsTo)
-		if err != nil {
-			panic(err)
-		}
+		func() {
+			logger.For(ctx).Infof("Reading logs from GCP")
+			i.memoryMu.Lock()
+			defer i.memoryMu.Unlock()
+			defer reader.Close()
+			err = json.NewDecoder(reader).Decode(&logsTo)
+			if err != nil {
+				panic(err)
+			}
+		}()
 	}
+
 	if len(logsTo) > 0 {
 		lastLog := logsTo[len(logsTo)-1]
 		if nextBlock.Uint64()-lastLog.BlockNumber > (blocksPerLogsCall / 5) {
@@ -394,6 +435,7 @@ func (i *indexer) defaultGetLogs(ctx context.Context, curBlock, nextBlock *big.I
 	defer cancel()
 
 	if len(logsTo) == 0 && rpcEnabled {
+		logger.For(ctx).Infof("Reading logs from Blockchain")
 		logsTo, err = rpc.RetryGetLogs(rpcCtx, i.ethClient, ethereum.FilterQuery{
 			FromBlock: curBlock,
 			ToBlock:   nextBlock,
@@ -411,7 +453,7 @@ func (i *indexer) defaultGetLogs(ctx context.Context, curBlock, nextBlock *big.I
 			logEntry.Error("failed to fetch logs")
 			return []types.Log{}, nil
 		}
-		go saveLogsInBlockRange(ctx, curBlock.String(), nextBlock.String(), logsTo, i.storageClient)
+		go saveLogsInBlockRange(ctx, curBlock.String(), nextBlock.String(), logsTo, i.storageClient, i.memoryMu)
 	}
 	logger.For(ctx).Infof("Found %d logs at block %d", len(logsTo), curBlock.Uint64())
 	return logsTo, nil
@@ -476,19 +518,16 @@ func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
 	return result
 }
 
-func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transfersAtBlock, topics [][]common.Hash) {
+func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transfersAtBlock, topics [][]common.Hash, mostRecentBlock uint64) {
 	span, ctx := tracing.StartSpan(ctx, "indexer.logs", "pollLogs")
 	defer tracing.FinishSpan(span)
 	defer close(transfersChan)
 	defer recoverAndWait(ctx)
 	defer sentryutil.RecoverAndRaise(ctx)
 
-	mostRecentBlock, err := rpc.RetryGetBlockNumber(ctx, i.ethClient)
-	if err != nil {
-		panic(err)
-	}
-
 	logger.For(ctx).Infof("Subscribing to new logs from block %d starting with block %d", mostRecentBlock, i.lastSyncedChunk)
+
+	totalLogs := &atomic.Int64{}
 
 	wp := workerpool.New(10)
 	// starting at the last chunk that we synced, poll for logs in chunks of blocksPerLogsCall
@@ -518,7 +557,9 @@ func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transf
 				return
 			}
 
-			go saveLogsInBlockRange(ctx, strconv.Itoa(int(curBlock)), strconv.Itoa(int(nextBlock)), logsTo, i.storageClient)
+			totalLogs.Add(int64(len(logsTo)))
+
+			go saveLogsInBlockRange(ctx, strconv.Itoa(int(curBlock)), strconv.Itoa(int(nextBlock)), logsTo, i.storageClient, i.memoryMu)
 
 			logger.For(ctx).Infof("Found %d logs at block %d", len(logsTo), curBlock)
 
@@ -532,7 +573,20 @@ func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transf
 		})
 	}
 
-	logger.For(ctx).Infof("Processed logs from %d to %d.", i.lastSyncedChunk, mostRecentBlock)
+	wp.StopWait()
+
+	total := totalLogs.Load()
+
+	//err := i.queries.UpdateStatisticTotalLogs(ctx, indexerdb.UpdateStatisticTotalLogsParams{
+	//	TotalLogs: sql.NullInt64{Int64: total, Valid: true},
+	//	ID:        statsID,
+	//})
+	//if err != nil {
+	//	logger.For(ctx).WithError(err).Error("Failed to update total logs")
+	//	panic(err)
+	//}
+
+	logger.For(ctx).Infof("Processed %d logs from %d to %d.", total, i.lastSyncedChunk, mostRecentBlock)
 
 	i.updateLastSynced(mostRecentBlock - (mostRecentBlock % blocksPerLogsCall))
 
@@ -551,10 +605,13 @@ func (i *indexer) processAllTransfers(ctx context.Context, incomingTransfers <-c
 	wp := workerpool.New(5)
 
 	logger.For(ctx).Info("Starting to process transfers...")
+	var totatTransfers int64
 	for transfers := range incomingTransfers {
-		if transfers == nil || len(transfers) == 0 {
+		if len(transfers) == 0 {
 			continue
 		}
+
+		totatTransfers += int64(len(transfers))
 
 		submit := transfers
 		wp.Submit(func() {
@@ -565,8 +622,19 @@ func (i *indexer) processAllTransfers(ctx context.Context, incomingTransfers <-c
 			logger.For(ctx).Infof("Processed %d transfers in %s", len(submit), time.Since(timeStart))
 		})
 	}
+
 	logger.For(ctx).Info("Waiting for transfers to finish...")
 	wp.StopWait()
+
+	//err := i.queries.UpdateStatisticTotalTransfers(ctx, indexerdb.UpdateStatisticTotalTransfersParams{
+	//	TotalTransfers: sql.NullInt64{Int64: totatTransfers, Valid: true},
+	//	ID:             statsID,
+	//})
+	//if err != nil {
+	//	logger.For(ctx).WithError(err).Error("Failed to update total transfers")
+	//	panic(err)
+	//}
+
 	logger.For(ctx).Info("Closing field channels...")
 }
 
@@ -575,21 +643,12 @@ func (i *indexer) processTransfers(ctx context.Context, transfers []transfersAtB
 	for _, transferAtBlock := range transfers {
 		for _, transfer := range transferAtBlock.transfers {
 
-			initial := time.Now()
 			contractAddress := persist.EthereumAddress(transfer.ContractAddress.String())
-			from := transfer.From
-			to := transfer.To
 
 			key := persist.NewEthereumTokenIdentifiers(contractAddress)
 
 			RunTransferPlugins(ctx, transfer, key, plugins)
 
-			logger.For(ctx).WithFields(logrus.Fields{
-				"contractAddress": contractAddress,
-				"fromAddress":     from,
-				"toAddress":       to,
-				"duration":        time.Since(initial),
-			}).Debugf("Processed transfer %s to %s and from %s ", key, to, from)
 		}
 
 	}
@@ -631,10 +690,6 @@ func tokensAtBlockToTokens(tokensAtBlock map[persist.EthereumTokenIdentifiers]to
 	return tokens
 }
 
-func (i *indexer) afterPipelineCleanup(ctx context.Context) {
-	i.seenContracts = &sync.Map{}
-}
-
 func contractsAtBlockToContracts(contractsAtBlock map[persist.EthereumTokenIdentifiers]contractAtBlock) []rpc.Contract {
 	contracts := make([]rpc.Contract, 0, len(contractsAtBlock))
 	seen := make(map[persist.EthereumAddress]bool)
@@ -648,7 +703,7 @@ func contractsAtBlockToContracts(contractsAtBlock map[persist.EthereumTokenIdent
 	return contracts
 }
 
-func (i *indexer) runDBHooks(ctx context.Context, conracts []rpc.Contract, tokens []persist.Token) {
+func (i *indexer) runDBHooks(ctx context.Context, contracts []rpc.Contract, tokens []persist.Token) {
 	defer recoverAndWait(ctx)
 
 	wp := workerpool.New(10)
@@ -656,14 +711,21 @@ func (i *indexer) runDBHooks(ctx context.Context, conracts []rpc.Contract, token
 	//for _, hook := range i.assetDBHooks {
 	//	hook := hook
 	//	wp.Submit(func() {
-	//		hook(ctx, assets)
+	//		err := hook(ctx, assets)
+	//		if err != nil {
+	//			logger.For(ctx).WithError(err).Errorf("Failed to run asset db hook %s", err)
+	//		}
 	//	})
 	//}
 
 	for _, hook := range i.tokenDBHooks {
 		hook := hook
 		wp.Submit(func() {
-			hook(ctx, tokens)
+			err := hook(ctx, tokens)
+			if err != nil {
+				logger.For(ctx).WithError(err).Errorf("Failed to run token db hook %s", err)
+			}
+
 		})
 	}
 
@@ -678,9 +740,15 @@ func tokensPluginReceiver(cur tokenAtBlock, inc tokenAtBlock) tokenAtBlock {
 	return inc
 }
 
-type alchemyContractMetadata struct {
-	Address  persist.EthereumAddress  `json:"address"`
-	Metadata alchemy.ContractMetadata `json:"contractMetadata"`
+type AlchemyContract struct {
+	Address          persist.EthereumAddress `json:"address"`
+	ContractMetadata AlchemyContractMetadata `json:"contractMetadata"`
+}
+
+type AlchemyContractMetadata struct {
+	Address          persist.EthereumAddress  `json:"address"`
+	Metadata         alchemy.ContractMetadata `json:"contractMetadata"`
+	ContractDeployer persist.EthereumAddress  `json:"contractDeployer"`
 }
 
 // HELPER FUNCS ---------------------------------------------------------------
@@ -714,7 +782,9 @@ func transfersToTransfersAtBlock(transfers []rpc.Transfer) []transfersAtBlock {
 	return allTransfersAtBlock
 }
 
-func saveLogsInBlockRange(ctx context.Context, curBlock, nextBlock string, logsTo []types.Log, storageClient *storage.Client) {
+func saveLogsInBlockRange(ctx context.Context, curBlock, nextBlock string, logsTo []types.Log, storageClient *storage.Client, memoryMu *sync.Mutex) {
+	memoryMu.Lock()
+	defer memoryMu.Unlock()
 	logger.For(ctx).Infof("Saving logs in block range %s to %s", curBlock, nextBlock)
 	obj := storageClient.Bucket(env.GetString("GCLOUD_TOKEN_LOGS_BUCKET")).Object(fmt.Sprintf("%s-%s", curBlock, nextBlock))
 	obj.Delete(ctx)
@@ -732,18 +802,6 @@ func recoverAndWait(ctx context.Context) {
 	if err := recover(); err != nil {
 		logger.For(ctx).Errorf("Error in indexer: %v", err)
 		time.Sleep(time.Second * 10)
-	}
-}
-
-func logEthCallRPCError(entry *logrus.Entry, err error, message string) {
-	if rpcErr, ok := err.(gethrpc.Error); ok {
-		entry = entry.WithFields(logrus.Fields{"rpcErrorCode": strconv.Itoa(rpcErr.ErrorCode())})
-		// If the contract is missing a method then we only want to Warn rather than Error on it.
-		if rpcErr.ErrorCode() == -32000 && rpcErr.Error() == "execution reverted" {
-			entry.Warn(message)
-		}
-	} else {
-		entry.Error(message)
 	}
 }
 

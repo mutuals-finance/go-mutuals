@@ -1,6 +1,7 @@
 package persist
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 )
@@ -52,7 +53,7 @@ type Split struct {
 	Deleted        NullBool        `json:"-"`
 	Chain          Chain           `json:"chain"`
 	Address        Address         `json:"address"`
-	Name           sql.NullString  `json:"name"`
+	Name           NullString      `json:"name"`
 	Description    NullString      `json:"description"`
 	CreatorAddress EthereumAddress `json:"creator_address"`
 	LogoURL        NullString      `json:"logo_url"`
@@ -60,6 +61,15 @@ type Split struct {
 	BadgeURL       NullString      `json:"badge_url"`
 	Recipients     []Recipient     `json:"recipients"`
 	Assets         []Asset         `json:"assets"`
+}
+
+// SplitRepository represents a repository for interacting with persisted splits
+type SplitRepository interface {
+	Create(context.Context, SplitDB) (DBID, error)
+	GetByID(context.Context, DBID) (Split, error)
+	GetByAddress(context.Context, EthereumAddress) (Split, error)
+	GetByRecipient(context.Context, EthereumAddress, int64, int64) ([]Split, error)
+	Upsert(context.Context, Split) error
 }
 
 // SplitTokenUpdateInput represents a struct that is used to update a splits list of collections in the databse

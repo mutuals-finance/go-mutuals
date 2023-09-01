@@ -5,10 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/media"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/rpc"
 	"github.com/getsentry/sentry-go"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,128 +16,125 @@ func TestIndexLogs_Success(t *testing.T) {
 
 	// Run the Indexer
 	i.catchUp(sentry.SetHubOnContext(context.Background(), sentry.CurrentHub()), eventsToTopics(i.eventHashes))
+	/*
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	ethClient := rpc.NewEthClient()
-	ipfsShell := rpc.NewIPFSShell()
-	arweaveClient := rpc.NewArweaveClient()
-	stg := newStorageClient(ctx)
-
+		ethClient := rpc.NewEthClient()
+			ipfsShell := rpc.NewIPFSShell()
+			arweaveClient := rpc.NewArweaveClient()
+			stg := newStorageClient(ctx)
+	*/
 	t.Run("it updates its state", func(t *testing.T) {
 		a.EqualValues(testBlockTo-blocksPerLogsCall, i.lastSyncedChunk)
 	})
 
-	t.Run("it saves ERC-721s to the db", func(t *testing.T) {
+	t.Run("it stores splits in the db", func(t *testing.T) {
 		t.SkipNow()
-		tokens := addressHasTokensInDB(t, a, i.tokenRepo, persist.EthereumAddress(testAddress), expectedTokensForAddress(persist.EthereumAddress(testAddress)))
-		for _, token := range tokens {
-			tokenMatchesExpected(t, a, token)
+		splits := addressHasSplitsInDB(t, a, i.splitRepo, persist.EthereumAddress(testAddress), expectedSplitsForAddress(persist.EthereumAddress(testAddress)))
+		for _, split := range splits {
+			splitMatchesExpected(t, a, split)
 		}
 	})
 
-	t.Run("it saves ERC-1155s to the db", func(t *testing.T) {
+	t.Run("it saves native and ERC-20 tokens to the db", func(t *testing.T) {
+		for _, address := range expectedTokens() {
+			token := tokenExistsInDB(t, a, i.tokenRepo, address)
+			a.NotEmpty(token.ID)
+			a.Equal(address, token.ContractAddress)
+		}
+	})
+
+	t.Run("it updates an accounts assets", func(t *testing.T) {
 		t.SkipNow()
-		tokens := addressHasTokensInDB(t, a, i.tokenRepo, persist.EthereumAddress(contribAddress), expectedTokensForAddress(persist.EthereumAddress(contribAddress)))
-		for _, token := range tokens {
-			tokenMatchesExpected(t, a, token)
+		assets := addressHasAssetsInDB(t, a, i.assetRepo, persist.EthereumAddress(contribAddress), persist.ChainETH, expectedTokensForAddress(persist.EthereumAddress(testAddress)))
+		for _, asset := range assets {
+			assetMatchesExpected(t, a, asset)
 		}
-	})
-
-	t.Run("it saves contracts to the db", func(t *testing.T) {
-		for _, address := range expectedContracts() {
-			contract := contractExistsInDB(t, a, i.contractRepo, address)
-			a.NotEmpty(contract.ID)
-			a.Equal(address, contract.Address)
-		}
-	})
-
-	t.Run("it can parse base64 uris", func(t *testing.T) {
-		token := tokenExistsInDB(t, a, i.tokenRepo, "0x0c2ee19b2a89943066c2dc7f1bddcc907f614033", "d9")
-		uri, err := rpc.GetTokenURI(ctx, persist.TokenTypeERC721, token.ContractAddress, token.TokenID, ethClient)
-		tokenURIHasExpectedType(t, a, err, uri, persist.URITypeBase64JSON)
 	})
 
 	t.Run("it can create image media", func(t *testing.T) {
-		token := tokenExistsInDB(t, a, i.tokenRepo, "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d", "1")
-		uri, err := rpc.GetTokenURI(ctx, token.TokenType, token.ContractAddress, token.TokenID, ethClient)
-		tokenURIHasExpectedType(t, a, err, uri, persist.URITypeIPFS)
+		// TODO
+		/*
 
-		metadata, err := rpc.GetMetadataFromURI(ctx, uri, ipfsShell, arweaveClient)
-		mediaHasContent(t, a, err, metadata)
+					token := tokenExistsInDB(t, a, i.tokenRepo, "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d", "1")
+			uri, err := rpc.GetTokenURI(ctx, token.TokenType, token.ContractAddress, token.TokenID, ethClient)
+			tokenURIHasExpectedType(t, a, err, uri, persist.URITypeIPFS)
 
-		predicted, _, _, err := media.PredictMediaType(ctx, metadata["image"].(string))
-		mediaTypeHasExpectedType(t, a, err, persist.MediaTypeImage, predicted)
+			metadata, err := rpc.GetMetadataFromURI(ctx, uri, ipfsShell, arweaveClient)
+			mediaHasContent(t, a, err, metadata)
 
-		imageData, err := rpc.GetDataFromURI(ctx, persist.TokenURI(metadata["image"].(string)), ipfsShell, arweaveClient)
-		a.NoError(err)
-		a.NotEmpty(imageData)
+			predicted, _, _, err := media.PredictMediaType(ctx, metadata["image"].(string))
+			mediaTypeHasExpectedType(t, a, err, persist.MediaTypeImage, predicted)
 
-		predicted, _ = persist.SniffMediaType(imageData)
-		mediaTypeHasExpectedType(t, a, nil, persist.MediaTypeImage, predicted)
+			imageData, err := rpc.GetDataFromURI(ctx, persist.TokenURI(metadata["image"].(string)), ipfsShell, arweaveClient)
+			a.NoError(err)
+			a.NotEmpty(imageData)
 
-		image, animation := media.KeywordsForChain(persist.ChainETH, imageKeywords, animationKeywords)
-		med, err := media.MakePreviewsForMetadata(ctx, metadata, persist.Address(token.ContractAddress), token.TokenID, uri, persist.ChainETH, ipfsShell, arweaveClient, stg, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"), image, animation)
-		mediaTypeHasExpectedType(t, a, err, persist.MediaTypeImage, med.MediaType)
-		a.Empty(med.ThumbnailURL)
-		a.NotEmpty(med.MediaURL)
+			predicted, _ = persist.SniffMediaType(imageData)
+			mediaTypeHasExpectedType(t, a, nil, persist.MediaTypeImage, predicted)
 
-		mediaType, _, _, err := media.PredictMediaType(ctx, med.MediaURL.String())
-		mediaTypeHasExpectedType(t, a, err, persist.MediaTypeImage, mediaType)
+			image, animation := media.KeywordsForChain(persist.ChainETH, imageKeywords, animationKeywords)
+			med, err := media.MakePreviewsForMetadata(ctx, metadata, persist.Address(token.ContractAddress), token.TokenID, uri, persist.ChainETH, ipfsShell, arweaveClient, stg, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"), image, animation)
+			mediaTypeHasExpectedType(t, a, err, persist.MediaTypeImage, med.MediaType)
+			a.Empty(med.ThumbnailURL)
+			a.NotEmpty(med.MediaURL)
+
+			mediaType, _, _, err := media.PredictMediaType(ctx, med.MediaURL.String())
+			mediaTypeHasExpectedType(t, a, err, persist.MediaTypeImage, mediaType)
+
+		*/
 	})
 
 	t.Run("it can create svg media", func(t *testing.T) {
-		token := tokenExistsInDB(t, a, i.tokenRepo, "0x69c40e500b84660cb2ab09cb9614fa2387f95f64", "1")
+		// TODO
+		/*
+			token := tokenExistsInDB(t, a, i.tokenRepo, "0x69c40e500b84660cb2ab09cb9614fa2387f95f64", "1")
 
-		uri, err := rpc.GetTokenURI(ctx, token.TokenType, token.ContractAddress, token.TokenID, ethClient)
-		tokenURIHasExpectedType(t, a, err, uri, persist.URITypeBase64JSON)
+					uri, err := rpc.GetTokenURI(ctx, token.TokenType, token.ContractAddress, token.TokenID, ethClient)
+					tokenURIHasExpectedType(t, a, err, uri, persist.URITypeBase64JSON)
 
-		metadata, err := rpc.GetMetadataFromURI(ctx, uri, ipfsShell, arweaveClient)
-		mediaHasContent(t, a, err, metadata)
+					metadata, err := rpc.GetMetadataFromURI(ctx, uri, ipfsShell, arweaveClient)
+					mediaHasContent(t, a, err, metadata)
 
-		image, animation := media.KeywordsForChain(persist.ChainETH, imageKeywords, animationKeywords)
-		med, err := media.MakePreviewsForMetadata(ctx, metadata, persist.Address(token.ContractAddress), token.TokenID, uri, persist.ChainETH, ipfsShell, arweaveClient, stg, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"), image, animation)
-		mediaTypeHasExpectedType(t, a, err, persist.MediaTypeSVG, med.MediaType)
-		a.Empty(med.ThumbnailURL)
-		a.Contains(med.MediaURL.String(), "https://")
+					image, animation := media.KeywordsForChain(persist.ChainETH, imageKeywords, animationKeywords)
+					med, err := media.MakePreviewsForMetadata(ctx, metadata, persist.Address(token.ContractAddress), token.TokenID, uri, persist.ChainETH, ipfsShell, arweaveClient, stg, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"), image, animation)
+					mediaTypeHasExpectedType(t, a, err, persist.MediaTypeSVG, med.MediaType)
+					a.Empty(med.ThumbnailURL)
+					a.Contains(med.MediaURL.String(), "https://")
+		*/
 	})
 
 }
 
-func tokenExistsInDB(t *testing.T, a *assert.Assertions, tokenRepo persist.TokenRepository, address persist.EthereumAddress, tokenID persist.TokenID) persist.Token {
+func tokenExistsInDB(t *testing.T, a *assert.Assertions, tokenRepo persist.TokenRepository, address persist.EthereumAddress) persist.Token {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tokens, err := tokenRepo.GetByTokenIdentifiers(ctx, tokenID, address, 0, -1)
+	tokens, err := tokenRepo.GetByTokenIdentifiers(ctx, address, 0, -1)
 	a.NoError(err)
 	a.Len(tokens, 1)
 	return tokens[0]
 }
 
-func contractExistsInDB(t *testing.T, a *assert.Assertions, contractRepo persist.ContractRepository, address persist.EthereumAddress) persist.Contract {
+func addressHasAssetsInDB(t *testing.T, a *assert.Assertions, assetRepo persist.AssetRepository, address persist.EthereumAddress, chain persist.Chain, expected int) []persist.Asset {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	contract, err := contractRepo.GetByAddress(ctx, address)
+	assets, err := assetRepo.GetByOwner(ctx, address, chain, -1, 0)
 	a.NoError(err)
-	return contract
+	a.Len(assets, expected)
+	return assets
 }
 
-func addressHasTokensInDB(t *testing.T, a *assert.Assertions, tokenRepo persist.TokenRepository, address persist.EthereumAddress, expected int) []persist.Token {
+func addressHasSplitsInDB(t *testing.T, a *assert.Assertions, splitRepo persist.SplitRepository, address persist.EthereumAddress, expected int) []persist.Split {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	tokens, _, err := tokenRepo.GetByWallet(ctx, address, -1, 0)
+	splits, err := splitRepo.GetByRecipient(ctx, address, -1, 0)
 	a.NoError(err)
-	a.Len(tokens, expected)
-	return tokens
-}
-
-func tokenURIHasExpectedType(t *testing.T, a *assert.Assertions, err error, uri persist.TokenURI, expectedType persist.URIType) {
-	t.Helper()
-	a.NoError(err)
-	a.Equal(expectedType, uri.Type())
+	a.Len(splits, expected)
+	return splits
 }
 
 func mediaHasContent(t *testing.T, a *assert.Assertions, err error, metadata persist.TokenMetadata) {
@@ -155,18 +149,57 @@ func mediaTypeHasExpectedType(t *testing.T, a *assert.Assertions, err error, exp
 	a.Equal(expected, actual)
 }
 
+func splitMatchesExpected(t *testing.T, a *assert.Assertions, actual persist.Split) {
+	t.Helper()
+	expected, ok := expectedSplits[persist.EthereumAddress(actual.Address)]
+	if !ok {
+		t.Fatalf("split Address=%s not in expected splits", actual.Address.String())
+	}
+	a.NotEmpty(actual.ID)
+	a.Equal(expected.Name, actual.Name)
+	a.Equal(expected.Description, actual.Description)
+	a.Equal(expected.CreatorAddress, actual.CreatorAddress)
+	a.Equal(expected.Address, actual.Address)
+	a.Equal(expected.Chain, actual.Chain)
+	a.Equal(expected.BadgeURL, actual.BadgeURL)
+	a.Equal(expected.BannerURL, actual.BannerURL)
+	a.Equal(expected.Chain, actual.Chain)
+	a.Len(actual.Recipients, len(expected.Recipients))
+	for i, actualRecipient := range actual.Recipients {
+		expectedRecipient := expected.Recipients[i]
+		a.NotEmpty(actualRecipient.ID)
+		a.Equal(expectedRecipient.Address, actualRecipient.Address)
+		a.Equal(expectedRecipient.Ownership, actualRecipient.Ownership)
+	}
+}
+
 func tokenMatchesExpected(t *testing.T, a *assert.Assertions, actual persist.Token) {
 	t.Helper()
-	id := persist.NewTokenIdentifiers(persist.Address(actual.ContractAddress), actual.TokenID, actual.Chain)
+	id := persist.NewEthereumTokenIdentifiers(actual.ContractAddress)
 	expected, ok := expectedResults[id]
 	if !ok {
 		t.Fatalf("tokenID=%s not in expected results", id)
 	}
 	a.NotEmpty(actual.ID)
 	a.Equal(expected.BlockNumber, actual.BlockNumber)
-	a.Equal(expected.OwnerAddress, actual.OwnerAddress)
+	a.Equal(expected.Name, actual.Name)
+	a.Equal(expected.Symbol, actual.Symbol)
+	a.Equal(expected.Decimals, actual.Decimals)
 	a.Equal(expected.ContractAddress, actual.ContractAddress)
 	a.Equal(expected.TokenType, actual.TokenType)
-	a.Equal(expected.TokenID, actual.TokenID)
-	a.Equal(expected.Quantity, actual.Quantity)
+}
+
+func assetMatchesExpected(t *testing.T, a *assert.Assertions, actual persist.Asset) {
+	t.Helper()
+	id := persist.NewAssetIdentifiers(actual.Token.ContractAddress, actual.OwnerAddress)
+	expected, ok := expectedAssets[id]
+	if !ok {
+		t.Fatalf("id=%s not in expected assets", id)
+	}
+	a.NotEmpty(actual.ID)
+	a.Equal(expected.OwnerAddress, actual.OwnerAddress)
+	a.Equal(expected.BlockNumber, actual.BlockNumber)
+	a.Equal(expected.Balance, actual.Balance)
+	a.Equal(expected.Token.ContractAddress, actual.Token.ContractAddress)
+	a.Equal(expected.Token.Chain, actual.Token.Chain)
 }

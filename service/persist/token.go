@@ -21,6 +21,8 @@ import (
 const (
 	// TokenTypeERC20 is the type of ERC20 token
 	TokenTypeERC20 TokenType = "ERC-20"
+	// TokenTypeNative is the type of a native token
+	TokenTypeNative TokenType = "NATIVE"
 )
 
 const (

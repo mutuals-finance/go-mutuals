@@ -26,12 +26,11 @@ import (
 )
 
 var (
-	testBlockFrom            = 0
-	testBlockTo              = 100
-	testAddress              = "0x9a3f9764b21adaf3c6fdf6f947e6d3340a3f8ac5"
-	splitfiMembershipAddress = "0xe01569ca9b39e55bc7c0dfa09f05fa15cb4c7698"
-	ensAddress               = "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
-	contribAddress           = "0xda3845b44736b57e05ee80fc011a52a9c777423a" // Jarrel's address with a contributor card in it
+	testBlockFrom  = 0
+	testBlockTo    = 100
+	testAddress    = "0x9a3f9764b21adaf3c6fdf6f947e6d3340a3f8ac5"
+	ensAddress     = "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
+	contribAddress = "0xda3845b44736b57e05ee80fc011a52a9c777423a" // Jarrel's address with a contributor card in it
 )
 
 var allLogs = func() []types.Log {
@@ -39,7 +38,6 @@ var allLogs = func() []types.Log {
 	logs = append(logs, ipfsLogs...)
 	logs = append(logs, customHandlerLogs...)
 	logs = append(logs, svgLogs...)
-	logs = append(logs, erc1155Logs...)
 	logs = append(logs, ensLogs...)
 	return logs
 }()
@@ -80,7 +78,7 @@ func newMockIndexer(db *sql.DB, pool *pgxpool.Pool) *indexer {
 	storageClient := newStorageClient(context.Background())
 	bucket := storageClient.Bucket(env.GetString("GCLOUD_TOKEN_LOGS_BUCKET"))
 
-	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, nil, nil, nil, postgres.NewTokenRepository(db), postgres.NewContractRepository(db), refresh.AddressFilterRepository{Bucket: bucket}, persist.ChainETH, defaultTransferEvents, func(ctx context.Context, curBlock, nextBlock *big.Int, topics [][]common.Hash) ([]types.Log, error) {
+	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, nil, nil, nil, postgres.NewTokenRepository(db), postgres.NewAssetRepository(db), refresh.AddressFilterRepository{Bucket: bucket}, persist.ChainETH, defaultTransferEvents, func(ctx context.Context, curBlock, nextBlock *big.Int, topics [][]common.Hash) ([]types.Log, error) {
 		transferAgainLogs := []types.Log{{
 			Address:     common.HexToAddress("0x0c2ee19b2a89943066c2dc7f1bddcc907f614033"),
 			Topics:      []common.Hash{common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"), common.HexToHash(testAddress), common.HexToHash("0x0000000000000000000000008914496dc01efcc49a2fa340331fb90969b6f1d2"), common.HexToHash("0x00000000000000000000000000000000000000000000000000000000000000d9")},
@@ -162,19 +160,6 @@ var svgLogs = []types.Log{
 		BlockNumber: 3,
 	},
 }
-var erc1155Logs = []types.Log{
-	{
-		Address: common.HexToAddress(splitfiMembershipAddress),
-		Topics: []common.Hash{
-			common.HexToHash(string(transferSingleEventHash)),
-			common.HexToHash(persist.ZeroAddress.String()),
-			common.HexToHash(persist.ZeroAddress.String()),
-			common.HexToHash(contribAddress),
-		},
-		Data:        common.Hex2Bytes("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"),
-		BlockNumber: 5,
-	},
-}
 var ensLogs = []types.Log{
 	{
 		Address: common.HexToAddress(ensAddress),
@@ -199,93 +184,98 @@ var ensLogs = []types.Log{
 	},
 }
 
-type expectedTokenResults map[persist.TokenIdentifiers]persist.Token
+type expectedSplitsResults map[persist.EthereumAddress]persist.Split
+type expectedTokenResults map[persist.EthereumTokenIdentifiers]persist.Token
+type expectedAssetResults map[persist.AssetIdentifiers]persist.Asset
+
+var expectedSplits expectedSplitsResults = expectedSplitsResults{
+	persist.ZeroAddress: persist.Split{
+		Name:           "Test Name",
+		Description:    "Test Description",
+		CreatorAddress: persist.EthereumAddress(testAddress),
+		Address:        persist.Address(persist.ZeroAddress),
+		Chain:          persist.ChainETH,
+		LogoURL:        "https://example.com/logo/1.png",
+		BadgeURL:       "https://example.com/badge/1.png",
+		BannerURL:      "https://example.com/banner/1.png",
+		Recipients:     []persist.Recipient{{Address: persist.EthereumAddress(testAddress), Ownership: 1}},
+	},
+}
 
 var expectedResults expectedTokenResults = expectedTokenResults{
-	persist.NewTokenIdentifiers("0x059edd72cd353df5106d2b9cc5ab83a52287ac3a", "1", 0): {
+	persist.NewEthereumTokenIdentifiers(""): persist.Token{
+		Name:            "Ether",
+		Symbol:          "ETH",
+		Decimals:        18,
+		TokenType:       persist.TokenTypeNative,
+		ContractAddress: "",
+		Chain:           persist.ChainETH,
 		BlockNumber:     1,
-		OwnerAddress:    persist.EthereumAddress(testAddress),
-		ContractAddress: persist.EthereumAddress("0x059edd72cd353df5106d2b9cc5ab83a52287ac3a"),
-		TokenType:       persist.TokenTypeERC721,
-		TokenID:         "1",
-		Quantity:        "1",
 	},
-	persist.NewTokenIdentifiers("0x69c40e500b84660cb2ab09cb9614fa2387f95f64", "1", 0): persist.Token{
-		BlockNumber:     3,
-		OwnerAddress:    persist.EthereumAddress(testAddress),
-		ContractAddress: persist.EthereumAddress("0x69c40e500b84660cb2ab09cb9614fa2387f95f64"),
-		TokenType:       persist.TokenTypeERC721,
-		TokenID:         "1",
-		Quantity:        "1",
-	},
-	persist.NewTokenIdentifiers("0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d", "1", 0): persist.Token{
+	persist.NewEthereumTokenIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7"): {
+		Name:            "Tether USD",
+		Symbol:          "USDT",
+		Decimals:        18,
+		TokenType:       persist.TokenTypeERC20,
+		ContractAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+		Chain:           persist.ChainETH,
 		BlockNumber:     2,
-		OwnerAddress:    persist.EthereumAddress(testAddress),
-		ContractAddress: persist.EthereumAddress("0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d"),
-		TokenType:       persist.TokenTypeERC721,
-		TokenID:         "1",
-		Quantity:        "1",
 	},
-	persist.NewTokenIdentifiers("0xd4e4078ca3495de5b1d4db434bebc5a986197782", "1", 0): persist.Token{
+	persist.NewEthereumTokenIdentifiers("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"): persist.Token{
+		Name:            "Wrapped Ether",
+		Symbol:          "WETH",
+		Decimals:        18,
+		TokenType:       persist.TokenTypeERC20,
+		ContractAddress: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		Chain:           persist.ChainETH,
 		BlockNumber:     22,
-		OwnerAddress:    persist.EthereumAddress(testAddress),
-		ContractAddress: persist.EthereumAddress("0xd4e4078ca3495de5b1d4db434bebc5a986197782"),
-		TokenType:       persist.TokenTypeERC721,
-		TokenID:         "1",
-		Quantity:        "1",
 	},
-	persist.NewTokenIdentifiers("0x0c2ee19b2a89943066c2dc7f1bddcc907f614033", "d9", 0): persist.Token{
-		BlockNumber:     51,
-		OwnerAddress:    persist.EthereumAddress("0x8914496dc01efcc49a2fa340331fb90969b6f1d2"),
-		ContractAddress: persist.EthereumAddress("0x0c2ee19b2a89943066c2dc7f1bddcc907f614033"),
-		TokenType:       persist.TokenTypeERC721,
-		TokenID:         "d9",
-		Quantity:        "1",
+}
+
+var expectedAssets expectedAssetResults = expectedAssetResults{
+	persist.NewAssetIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7", persist.EthereumAddress(testAddress)): {
+		OwnerAddress: persist.EthereumAddress(testAddress),
+		Token:        expectedResults[persist.NewEthereumTokenIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7")],
+		Balance:      100,
+		BlockNumber:  23,
 	},
-	persist.NewTokenIdentifiers(persist.Address(splitfiMembershipAddress), "0", 0): persist.Token{
-		BlockNumber:     5,
-		OwnerAddress:    persist.EthereumAddress(contribAddress),
-		ContractAddress: persist.EthereumAddress(splitfiMembershipAddress),
-		TokenType:       persist.TokenTypeERC1155,
-		TokenID:         "0",
-		Quantity:        "1",
-	},
-	persist.NewTokenIdentifiers(persist.Address(ensAddress), "c1cb7903f69821967b365cce775cd62d694cd7ae7cfe00efe1917a55fdae2bb7", 0): persist.Token{
-		BlockNumber:     42,
-		OwnerAddress:    persist.EthereumAddress(testAddress),
-		ContractAddress: persist.EthereumAddress(ensAddress),
-		TokenType:       persist.TokenTypeERC721,
-		TokenID:         "c1cb7903f69821967b365cce775cd62d694cd7ae7cfe00efe1917a55fdae2bb7",
-		Quantity:        "1",
-	},
-	persist.NewTokenIdentifiers(persist.Address(ensAddress), "8c111a4e7c31becd720bde47f538417068e102d45b7732f24cfeda9e2b22a45", 0): persist.Token{
-		BlockNumber:     42,
-		OwnerAddress:    persist.EthereumAddress(testAddress),
-		ContractAddress: persist.EthereumAddress(ensAddress),
-		TokenType:       persist.TokenTypeERC721,
-		TokenID:         "8c111a4e7c31becd720bde47f538417068e102d45b7732f24cfeda9e2b22a45",
-		Quantity:        "1",
+	persist.NewAssetIdentifiers("", persist.EthereumAddress(testAddress)): {
+		OwnerAddress: persist.EthereumAddress(testAddress),
+		Token:        expectedResults[persist.NewEthereumTokenIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7")],
+		Balance:      12,
+		BlockNumber:  24,
 	},
 }
 
 func expectedTokensForAddress(address persist.EthereumAddress) int {
 	count := 0
-	for _, token := range expectedResults {
-		if token.OwnerAddress == address {
+	for _, asset := range expectedAssets {
+		if asset.OwnerAddress == address {
 			count++
 		}
 	}
 	return count
 }
+func expectedSplitsForAddress(address persist.EthereumAddress) int {
+	count := 0
+	for _, split := range expectedSplits {
+		for _, recipient := range split.Recipients {
+			if recipient.Address == address {
+				count++
+			}
+		}
+	}
+	return count
+}
 
-func expectedContracts() []persist.EthereumAddress {
-	contracts := make([]persist.EthereumAddress, 0, len(expectedResults))
+func expectedTokens() []persist.EthereumAddress {
+	addresses := make([]persist.EthereumAddress, 0, len(expectedResults))
 	seen := map[persist.EthereumAddress]struct{}{}
 	for _, token := range expectedResults {
 		if _, ok := seen[token.ContractAddress]; !ok {
 			seen[token.ContractAddress] = struct{}{}
-			contracts = append(contracts, token.ContractAddress)
+			addresses = append(addresses, token.ContractAddress)
 		}
 	}
-	return contracts
+	return addresses
 }
