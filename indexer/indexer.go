@@ -8,6 +8,7 @@ import (
 	"github.com/SplitFi/go-splitfi/contracts"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/db/gen/indexerdb"
+	"github.com/sourcegraph/conc/iter"
 	"math/big"
 	"net/http"
 	"sort"
@@ -20,7 +21,6 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/rpc"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
@@ -112,6 +112,20 @@ func (o tokenAtBlock) OrderInfo() blockchainOrderInfo {
 	return o.boi
 }
 
+type assetAtBlock struct {
+	ai    persist.AssetIdentifiers
+	boi   blockchainOrderInfo
+	asset persist.Asset
+}
+
+func (a assetAtBlock) AssetIdentifiers() persist.AssetIdentifiers {
+	return a.ai
+}
+
+func (a assetAtBlock) OrderInfo() blockchainOrderInfo {
+	return a.boi
+}
+
 type getLogsFunc func(ctx context.Context, curBlock, nextBlock *big.Int, topics [][]common.Hash) ([]types.Log, error)
 
 // indexer is the indexer for the blockchain that uses JSON RPC to scan through logs and process them
@@ -179,7 +193,7 @@ func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient
 
 		getLogsFunc: getLogsFunc,
 
-		tokenDBHooks: newTokenHooks(taskClient, bQueries),
+		tokenDBHooks: newTokenHooks(tokenRepo, ethClient, httpClient),
 		assetDBHooks: newAssetHooks(taskClient, bQueries),
 
 		mostRecentBlock: 0,
@@ -662,18 +676,18 @@ func (i *indexer) processTokens(ctx context.Context, tokensOut <-chan tokenAtBlo
 	wg := &sync.WaitGroup{}
 	mu := &sync.Mutex{}
 
-	contractsMap := make(map[persist.EthereumTokenIdentifiers]contractAtBlock)
+	assetsMap := make(map[persist.EthereumTokenIdentifiers]assetsAtBlock)
 	tokensMap := make(map[persist.EthereumTokenIdentifiers]tokenAtBlock)
 
-	RunTransferPluginReceiver(ctx, wg, mu, contractsPluginReceiver, contractsOut, contractsMap)
+	RunTransferPluginReceiver(ctx, wg, mu, assetsPluginReceiver, assetsOut, assetsMap)
 	RunTransferPluginReceiver(ctx, wg, mu, tokensPluginReceiver, tokensOut, tokensMap)
 
 	wg.Wait()
 
-	contracts := contractsAtBlockToContracts(contractsMap)
+	assets := assetsAtBlockToAssets(assetsMap)
 	tokens := tokensAtBlockToTokens(tokensMap)
 
-	i.runDBHooks(ctx, contracts, tokens)
+	i.runDBHooks(ctx, assets, tokens)
 }
 
 func tokensAtBlockToTokens(tokensAtBlock map[persist.EthereumTokenIdentifiers]tokenAtBlock) []persist.Token {
@@ -690,8 +704,8 @@ func tokensAtBlockToTokens(tokensAtBlock map[persist.EthereumTokenIdentifiers]to
 	return tokens
 }
 
-func contractsAtBlockToContracts(contractsAtBlock map[persist.EthereumTokenIdentifiers]contractAtBlock) []rpc.Contract {
-	contracts := make([]rpc.Contract, 0, len(contractsAtBlock))
+func assetsAtBlockToAssets(assetsAtBlock map[persist.AssetIdentifiers]assetsAtBlock) []persist.Asset {
+	assets := make([]persist.Asset, 0, len(assetsAtBlock))
 	seen := make(map[persist.EthereumAddress]bool)
 	for _, contract := range contractsAtBlock {
 		if seen[contract.contract.Address] {
@@ -703,20 +717,20 @@ func contractsAtBlockToContracts(contractsAtBlock map[persist.EthereumTokenIdent
 	return contracts
 }
 
-func (i *indexer) runDBHooks(ctx context.Context, contracts []rpc.Contract, tokens []persist.Token) {
+func (i *indexer) runDBHooks(ctx context.Context, assets []persist.Asset, tokens []persist.Token) {
 	defer recoverAndWait(ctx)
 
 	wp := workerpool.New(10)
 
-	//for _, hook := range i.assetDBHooks {
-	//	hook := hook
-	//	wp.Submit(func() {
-	//		err := hook(ctx, assets)
-	//		if err != nil {
-	//			logger.For(ctx).WithError(err).Errorf("Failed to run asset db hook %s", err)
-	//		}
-	//	})
-	//}
+	for _, hook := range i.assetDBHooks {
+		hook := hook
+		wp.Submit(func() {
+			err := hook(ctx, assets)
+			if err != nil {
+				logger.For(ctx).WithError(err).Errorf("Failed to run asset db hook %s", err)
+			}
+		})
+	}
 
 	for _, hook := range i.tokenDBHooks {
 		hook := hook
@@ -740,15 +754,87 @@ func tokensPluginReceiver(cur tokenAtBlock, inc tokenAtBlock) tokenAtBlock {
 	return inc
 }
 
-type AlchemyContract struct {
-	Address          persist.EthereumAddress `json:"address"`
-	ContractMetadata AlchemyContractMetadata `json:"contractMetadata"`
+func fillTokenFields(ctx context.Context, tokens []persist.Token, tokenRepo persist.TokenRepository, httpClient *http.Client, ethClient *ethclient.Client, upChan chan<- []persist.Token) {
+	defer close(upChan)
+
+	tokensNotInDB := make(chan persist.Token)
+
+	batched := make(chan []persist.Token)
+
+	go func() {
+		defer close(tokensNotInDB)
+
+		iter.ForEach(tokens, func(t *persist.Token) {
+			_, err := tokenRepo.GetByIdentifiers(ctx, t.ContractAddress)
+			if err == nil {
+				return
+			}
+			tokensNotInDB <- *t
+		})
+	}()
+
+	go func() {
+		defer close(batched)
+		var curBatch []persist.Token
+		for token := range tokensNotInDB {
+			curBatch = append(curBatch, token)
+			if len(curBatch) == 100 {
+				logger.For(ctx).Infof("Batching %d tokens for metadata", len(curBatch))
+				batched <- curBatch
+				curBatch = []persist.Token{}
+			}
+		}
+		if len(curBatch) > 0 {
+			logger.For(ctx).Infof("Batching %d tokens for metadata", len(curBatch))
+			batched <- curBatch
+		}
+	}()
+
+	// process tokens in batches of 100
+	for batch := range batched {
+		// get token metadata
+		toUp, _ := GetTokenMetadatas(ctx, batch, httpClient, ethClient)
+
+		logger.For(ctx).Infof("Fetched metadata for %d tokens", len(toUp))
+
+		upChan <- toUp
+	}
+
+	/*	err = queries.UpdateStatisticContractStats(ctx, indexerdb.UpdateStatisticContractStatsParams{
+			ContractStats: pgtype.JSONB{Bytes: marshalled, Status: pgtype.Present},
+			ID:            statsID,
+		})
+		if err != nil {
+			logger.For(ctx).WithError(err).Error("Failed to update contract stats")
+			panic(err)
+		}
+	*/
+	logger.For(ctx).Infof("Fetched metadata for total %d tokens", len(tokens))
+
 }
 
-type AlchemyContractMetadata struct {
-	Address          persist.EthereumAddress  `json:"address"`
-	Metadata         alchemy.ContractMetadata `json:"contractMetadata"`
-	ContractDeployer persist.EthereumAddress  `json:"contractDeployer"`
+func GetTokenMetadatas(ctx context.Context, batch []persist.Token, httpClient *http.Client, ethClient *ethclient.Client) ([]persist.Token, error) {
+	toUp := make([]persist.Token, 0, 100)
+
+	for _, t := range batch {
+		result := persist.Token{}
+
+		tMetadata, err := rpc.GetTokenContractMetadata(ctx, t.ContractAddress.Address(), ethClient)
+		if err != nil {
+			logger.For(ctx).WithError(err).WithFields(logrus.Fields{
+				"tokenAddress": t.ContractAddress,
+			}).Error("error getting token metadata")
+		} else {
+			result.Name = persist.NullString(tMetadata.Name)
+			result.Symbol = persist.NullString(tMetadata.Symbol)
+			result.Decimals = persist.NullInt32(tMetadata.Decimals)
+			// TODO fill Logo metadata
+			result.Logo = ""
+		}
+
+		toUp = append(toUp, result)
+	}
+	return toUp, nil
 }
 
 // HELPER FUNCS ---------------------------------------------------------------

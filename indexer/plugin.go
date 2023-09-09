@@ -20,7 +20,7 @@ const (
 	pluginPoolSize = 32
 	pluginTimeout  = 2 * time.Minute
 )
-
+ 
 // TransferPluginMsg is used to communicate to a plugin.
 type TransferPluginMsg struct {
 	transfer rpc.Transfer

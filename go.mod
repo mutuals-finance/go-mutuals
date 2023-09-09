@@ -58,7 +58,10 @@ require (
 	roci.dev/fracdex v0.0.0-20220111221836-dbd126571100
 )
 
-require go.mozilla.org/sops/v3 v3.7.3
+require (
+	github.com/sourcegraph/conc v0.3.0
+	go.mozilla.org/sops/v3 v3.7.3
+)
 
 require (
 	cloud.google.com/go v0.105.0 // indirect
@@ -229,7 +232,7 @@ require (
 	go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
+	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
