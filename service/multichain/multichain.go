@@ -32,8 +32,8 @@ var contractNameBlacklist = map[string]bool{
 	"unknown":               true,
 }
 
-// SubmitUserTokensF is called to process a user's batch of tokens
-type SubmitUserTokensF func(ctx context.Context, userID persist.DBID, tokenIDs []persist.DBID, tokens []persist.TokenChainAddress) error
+// SubmitAssetsForOwnerF is called to process a user's batch of tokens
+type SubmitAssetsForOwnerF func(ctx context.Context, ownerAddress persist.Address, assetIDs []persist.DBID, assets []persist.AssetIdentifiers) error
 
 type Provider struct {
 	Repos   *postgres.Repositories
@@ -42,8 +42,8 @@ type Provider struct {
 	Chains  map[persist.Chain][]any
 
 	// some chains use the addresses of other chains, this will map of chain we want tokens from => chain that's address will be used for lookup
-	WalletOverrides  WalletOverrideMap
-	SubmitUserTokens SubmitUserTokensF
+	WalletOverrides      WalletOverrideMap
+	SubmitAssetsForOwner SubmitAssetsForOwnerF
 }
 
 // BlockchainInfo retrieves blockchain info from all chains
