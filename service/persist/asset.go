@@ -11,6 +11,13 @@ import (
 // AssetIdentifiers represents a unique identifier for a asset
 type AssetIdentifiers string
 
+// AssetChainAddress represents a unique identifier for an asset
+type AssetChainAddress struct {
+	Chain        Chain
+	TokenAddress EthereumAddress
+	OwnerAddress EthereumAddress
+}
+
 // Asset represents an address that owns a balance of tokens
 type Asset struct {
 	ID           DBID            `json:"id" binding:"required"`
@@ -49,6 +56,7 @@ type AssetRepository interface {
 	GetByOwner(context.Context, EthereumAddress, Chain, int64, int64) ([]Asset, error)
 	GetByToken(context.Context, EthereumAddress, Chain, int64, int64) ([]Asset, error)
 	GetByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Chain) (Asset, error)
+	BulkUpsert(context.Context, []Asset) error
 	UpsertByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Asset) error
 	UpdateByID(context.Context, DBID, interface{}) error
 	UpdateByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Chain, interface{}) error

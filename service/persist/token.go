@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/lib/pq"
@@ -159,6 +160,65 @@ type HexString string
 type EthereumAddressAtBlock struct {
 	Address EthereumAddress `json:"address"`
 	Block   BlockNumber     `json:"block"`
+}
+
+// TokenChainAddress represents an address and a chain for a token
+type TokenChainAddress struct {
+	Address Address
+	Chain   Chain
+}
+
+// NewTokenChainAddress creates a new token chain address
+func NewTokenChainAddress(pContractAddress Address, pChain Chain) TokenChainAddress {
+	return TokenChainAddress{
+		Address: Address(pChain.NormalizeAddress(pContractAddress)),
+		Chain:   pChain,
+	}
+}
+
+func (t TokenChainAddress) String() string {
+	return fmt.Sprintf("%s+%d", t.Chain.NormalizeAddress(t.Address), t.Chain)
+}
+
+// Value implements the driver.Valuer interface
+func (t TokenChainAddress) Value() (driver.Value, error) {
+	return t.String(), nil
+}
+
+// Scan implements the database/sql Scanner interface for the TokenIdentifiers type
+func (t *TokenChainAddress) Scan(i interface{}) error {
+	if i == nil {
+		*t = TokenChainAddress{}
+		return nil
+	}
+	res := strings.Split(i.(string), "+")
+	if len(res) != 1 {
+		return fmt.Errorf("invalid token chain address: %v - %T", i, i)
+	}
+	chain, err := strconv.Atoi(res[1])
+	if err != nil {
+		return err
+	}
+	*t = TokenChainAddress{
+		Address: Address(res[0]),
+		Chain:   Chain(chain),
+	}
+	return nil
+}
+
+func TokenChainAddressFromString(s string) (TokenChainAddress, error) {
+	res := strings.Split(s, "+")
+	if len(res) != 2 {
+		return TokenChainAddress{}, fmt.Errorf("invalid token chain address: %v", s)
+	}
+	chain, err := strconv.Atoi(res[1])
+	if err != nil {
+		return TokenChainAddress{}, err
+	}
+	return TokenChainAddress{
+		Address: Address(res[0]),
+		Chain:   Chain(chain),
+	}, nil
 }
 
 // EthereumTokenIdentifiers represents a unique identifier for a token on the Ethereum Blockchain

@@ -3,6 +3,7 @@ package tokenprocessing
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"net/http"
 	"time"
 
@@ -208,22 +209,86 @@ func processOwnersForContractTokens(mc *multichain.Provider, contractRepo *postg
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
 		}
-		key := fmt.Sprintf("%s-%d", contract.Address, contract.Chain)
+
+		lockID := fmt.Sprintf("%s-%d", contract.Address, contract.Chain)
 
 		if !input.ForceRefresh {
-			if err := throttler.Lock(c, key); err != nil {
+			if err := throttler.Lock(c, lockID); err != nil {
 				util.ErrResponse(c, http.StatusOK, err)
 				return
 			}
 		}
 
 		// do not unlock, let expiry handle the unlock
-		logger.For(c).Infof("Processing: %s - Processing Collection Refresh", key)
+		logger.For(c).Infof("Processing: %s - Processing Split Refresh", lockID)
 		if err := mc.RefreshTokensForContract(c, contract.ContractIdentifiers()); err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
 		}
-		logger.For(c).Infof("Processing: %s - Finished Processing Collection Refresh", key)
+		logger.For(c).Infof("Processing: %s - Finished Processing Split Refresh", lockID)
+
+		c.JSON(http.StatusOK, util.SuccessResponse{Success: true})
+	}
+}
+
+func processOwnersForUserTokens(mc *multichain.Provider, queries *coredb.Queries, validator *validator.Validate) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input task.TokenProcessingUserTokensMessage
+		if err := c.ShouldBindJSON(&input); err != nil {
+			util.ErrResponse(c, http.StatusOK, err)
+			return
+		}
+
+		logger.For(c).WithFields(logrus.Fields{"owner_address": input.OwnerAddress, "total_tokens": len(input.TokenIdentifiers), "token_ids": input.TokenIdentifiers}).Infof("Processing: %s - Processing User Tokens Refresh (total: %d)", input.OwnerAddress.String(), len(input.TokenIdentifiers))
+		newTokens, err := mc.SyncTokensByUserIDAndTokenIdentifiers(c, input.OwnerAddress, util.MapKeys(input.TokenIdentifiers))
+		if err != nil {
+			util.ErrResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		if len(newTokens) > 0 {
+
+			for _, token := range newTokens {
+				var curTotal persist.HexString
+				dbUniqueTokenIDs, err := queries.GetUniqueTokenIdentifiersByTokenID(c, token.ID)
+				if err != nil {
+					logger.For(c).Errorf("error getting unique token identifiers: %s", err)
+					continue
+				}
+				for _, q := range dbUniqueTokenIDs.OwnerAddresses {
+					curTotal = input.TokenIdentifiers[persist.TokenUniqueIdentifiers{
+						Chain:           dbUniqueTokenIDs.Chain,
+						ContractAddress: dbUniqueTokenIDs.ContractAddress,
+						TokenID:         dbUniqueTokenIDs.TokenID,
+						OwnerAddress:    persist.Address(q),
+					}].Add(curTotal)
+				}
+
+				// verify the total is less than or equal to the total in the db
+				if curTotal.BigInt().Cmp(token.Quantity.BigInt()) > 0 {
+					logger.For(c).Errorf("error: total quantity of tokens in db is greater than total quantity of tokens on chain")
+					continue
+				}
+
+				// one event per token identifier (grouping ERC-1155s)
+				_, err = event.DispatchEvent(c, coredb.Event{
+					ID:             persist.GenerateID(),
+					ActorID:        persist.DBIDToNullStr(input.UserID),
+					ResourceTypeID: persist.ResourceTypeToken,
+					SubjectID:      token.ID,
+					UserID:         input.UserID,
+					TokenID:        token.ID,
+					Action:         persist.ActionNewTokensReceived,
+					Data: persist.EventData{
+						NewTokenID:       token.ID,
+						NewTokenQuantity: curTotal,
+					},
+				}, validator, nil)
+				if err != nil {
+					logger.For(c).Errorf("error dispatching event: %s", err)
+				}
+			}
+		}
 
 		c.JSON(http.StatusOK, util.SuccessResponse{Success: true})
 	}

@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/lib/pq"
 	"time"
 
 	"github.com/SplitFi/go-splitfi/service/persist"
@@ -31,14 +34,14 @@ func NewAssetRepository(db *sql.DB) *AssetRepository {
 		t.ID,t.TOKEN_TYPE,t.CHAIN,t.NAME,t.SYMBOL,t.LOGO,t.DECIMALS,t.TOTAL_SUPPLY,t.CONTRACT_ADDRESS,t.BLOCK_NUMBER,t.VERSION,t.CREATED_AT,t.LAST_UPDATED,t.IS_SPAM		
 		FROM assets a
 		JOIN tokens t ON t.CONTRACT_ADDRESS = a.TOKEN_ADDRESS
-		WHERE a.OWNER_ADDRESS = $1 AND t.CHAIN = $2 AND t.DELETED = false;`)
+		WHERE a.OWNER_ADDRESS = $1 AND t.DELETED = false;`)
 	checkNoErr(err)
 
 	getByOwnerPaginateStmt, err := db.PrepareContext(ctx, `SELECT a.ID,a.VERSION,a.CREATED_AT,a.LAST_UPDATED,a.OWNER_ADDRESS,a.BALANCE,a.BLOCK_NUMBER,
 		t.ID,t.TOKEN_TYPE,t.CHAIN,t.NAME,t.SYMBOL,t.LOGO,t.DECIMALS,t.TOTAL_SUPPLY,t.CONTRACT_ADDRESS,t.BLOCK_NUMBER,t.VERSION,t.CREATED_AT,t.LAST_UPDATED,t.IS_SPAM		
 		FROM assets a
 		JOIN tokens t ON t.CONTRACT_ADDRESS = a.TOKEN_ADDRESS
-		WHERE a.OWNER_ADDRESS = $1 AND t.CHAIN = $2 AND t.DELETED = false;
+		WHERE a.OWNER_ADDRESS = $1 AND t.DELETED = false;
 		ORDER BY a.BALANCE DESC LIMIT $2 OFFSET $3`)
 	checkNoErr(err)
 
@@ -77,13 +80,13 @@ func NewAssetRepository(db *sql.DB) *AssetRepository {
 }
 
 // GetByOwner retrieves all assets associated with an owner ethereum address
-func (a *AssetRepository) GetByOwner(pCtx context.Context, pAddress persist.EthereumAddress, pChain persist.Chain, limit int64, offset int64) ([]persist.Asset, error) {
+func (a *AssetRepository) GetByOwner(pCtx context.Context, pAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Asset, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
-		rows, err = a.getByOwnerPaginateStmt.QueryContext(pCtx, pAddress, pChain, limit, offset)
+		rows, err = a.getByOwnerPaginateStmt.QueryContext(pCtx, pAddress, limit, offset)
 	} else {
-		rows, err = a.getByOwnerStmt.QueryContext(pCtx, pAddress, pChain)
+		rows, err = a.getByOwnerStmt.QueryContext(pCtx, pAddress)
 	}
 	if err != nil {
 		return nil, err
@@ -151,7 +154,7 @@ func (a *AssetRepository) GetByIdentifiers(pCtx context.Context, pOwnerAddress, 
 	return asset, nil
 }
 
-// UpsertByAddress upserts the asset with the given owner address and token address
+// UpsertByIdentifiers upserts the asset with the given owner address and token address
 func (a *AssetRepository) UpsertByIdentifiers(pCtx context.Context, pOwnerAddress, pTokenAddress persist.EthereumAddress, pAsset persist.Asset) error {
 	_, err := a.upsertByIdentifiersStmt.ExecContext(pCtx, persist.GenerateID(), pAsset.Version, pOwnerAddress, pTokenAddress, pAsset.Balance, pAsset.BlockNumber, pAsset.CreationTime, pAsset.LastUpdated)
 	if err != nil {
@@ -159,6 +162,84 @@ func (a *AssetRepository) UpsertByIdentifiers(pCtx context.Context, pOwnerAddres
 	}
 
 	return nil
+}
+
+// BulkUpsert upserts the asset with the given owner address and token address
+func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Asset) (time.Time, []persist.Asset, error) {
+	assets, err := a.excludeZeroBalanceAssets(ctx, pAssets)
+	if err != nil {
+		return time.Time{}, nil, err
+	}
+
+	// If we're not upserting anything, we still need to return the current database time
+	// since it may be used by the caller and is assumed valid if err == nil
+	if len(assets) == 0 {
+		currentTime, err := a.queries.GetCurrentTime(ctx)
+		if err != nil {
+			return time.Time{}, nil, err
+		}
+		return currentTime, []persist.Asset{}, nil
+	}
+
+	logger.For(pCtx).Infof("Deduping %d assets", len(assets))
+
+	assets = a.dedupeAssets(assets)
+
+	logger.For(pCtx).Infof("Deduped down to %d assets", len(assets))
+
+	logger.For(pCtx).Infof("Starting upsert...")
+
+	var errors []error
+
+	params := db.UpsertTokensParams{
+		OwnedByWallets: []string{},
+	}
+
+	for i := range assets {
+		a := &assets[i]
+		params.ID = append(params.ID, persist.GenerateID().String())
+		params.Version = append(params.Version, a.Version.Int32())
+		params.Quantity = append(params.Quantity, a.Balance.String())
+		params.BlockNumber = append(params.BlockNumber, a.BlockNumber.BigInt().Int64())
+		params.OwnerUserID = append(params.OwnerUserID, a.OwnerAddress.String())
+		params.Chain = append(params.Chain, int32(a.Token.Chain))
+		params.Contract = append(params.Contract, a.Token.ContractAddress.String())
+
+		// Defer error checking until now to keep the code above from being
+		// littered with multiline "if" statements
+		if len(errors) > 0 {
+			return time.Time{}, nil, errors[0]
+		}
+	}
+
+	upserted, err := a.queries.UpsertTokens(ctx, params)
+	if err != nil {
+		return time.Time{}, nil, err
+	}
+
+	// Update tokens with the existing data if the token already exists.
+	for i := range assets {
+		a := &assets[i]
+		(*a).ID = upserted[i].ID
+		(*a).CreationTime = upserted[i].CreatedAt
+		(*a).LastUpdated = upserted[i].LastUpdated
+		(*a).LastSynced = upserted[i].LastSynced
+	}
+
+	return upserted[0].LastSynced, assets, nil
+
+}
+
+func (a *AssetRepository) excludeZeroBalanceAssets(pCtx context.Context, pAssets []persist.Asset) ([]persist.Asset, error) {
+	newAssets := make([]persist.Asset, 0, len(pAssets))
+	for _, asset := range pAssets {
+		if asset.Balance <= 0 {
+			logger.For(pCtx).Warnf("Asset %s from %s has zero balance", asset.Token.Name, asset.OwnerAddress)
+			continue
+		}
+		newAssets = append(newAssets, asset)
+	}
+	return newAssets, nil
 }
 
 // UpdateByID updates an asset by its ID
@@ -211,44 +292,59 @@ func (a *AssetRepository) UpdateByIdentifiers(pCtx context.Context, pOwnerAddres
 	return nil
 }
 
-// BulkUpsert bulk upserts the assets by address
-/*func (b *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Asset) error {
+func (a *AssetRepository) upsertAssets(pCtx context.Context, pAssets []persist.Asset) error {
 	if len(pAssets) == 0 {
 		return nil
 	}
-	pAssets = removeDuplicateAsset(pAssets)
-	sqlStr := `INSERT INTO assets (ID,VERSION,ADDRESS,SYMBOL,NAME,CREATOR_ADDRESS,CHAIN) VALUES `
-	vals := make([]interface{}, 0, len(pAssets)*7)
-	for i, asset := range pAssets {
-		sqlStr += generateValuesPlaceholders(7, i*7, nil)
-		vals = append(vals, persist.GenerateID(), asset.Version, asset.Address, asset.Symbol, asset.Name, asset.CreatorAddress, asset.Chain)
-		sqlStr += ","
-	}
-	sqlStr = sqlStr[:len(sqlStr)-1]
-	sqlStr += ` ON CONFLICT (ADDRESS, CHAIN) DO UPDATE SET SYMBOL = EXCLUDED.SYMBOL,NAME = EXCLUDED.NAME,CREATOR_ADDRESS = EXCLUDED.CREATOR_ADDRESS,CHAIN = EXCLUDED.CHAIN;`
-	_, err := b.db.ExecContext(pCtx, sqlStr, vals...)
-	if err != nil {
-		return fmt.Errorf("error bulk upserting assets: %v - SQL: %s -- VALS: %+v", err, sqlStr, vals)
+	// Postgres only allows 65535 parameters at a time.
+	// TODO: Consider trying this implementation at some point instead of chunking:
+	//       https://klotzandrew.com/blog/postgres-passing-65535-parameter-limit
+	paramsPerRow := 20
+	rowsPerQuery := 65535 / paramsPerRow
+
+	if len(pAssets) > rowsPerQuery {
+		logger.For(pCtx).Debugf("Chunking %d tokens recursively into %d queries", len(pAssets), len(pAssets)/rowsPerQuery)
+		next := pAssets[rowsPerQuery:]
+		current := pAssets[:rowsPerQuery]
+		if err := a.upsertByIdentifiersStmt(pCtx, next); err != nil {
+			return fmt.Errorf("error with asset upsert: %w", err)
+		}
+		pAssets = current
 	}
 
+	sqlStr := `INSERT INTO assets (ID,TOKEN_TYPE,CHAIN,NAME,DESCRIPTION,TOKEN_ID,TOKEN_URI,QUANTITY,OWNER_ADDRESS,OWNERSHIP_HISTORY,TOKEN_METADATA,CONTRACT_ADDRESS,EXTERNAL_URL,BLOCK_NUMBER,VERSION,CREATED_AT,LAST_UPDATED,DELETED,IS_SPAM) VALUES `
+	vals := make([]interface{}, 0, len(pAssets)*paramsPerRow)
+	for i, asset := range pAssets {
+		sqlStr += generateValuesPlaceholders(paramsPerRow, i*paramsPerRow, nil) + ","
+		vals = append(vals, persist.GenerateID(), asset.TokenType, asset.Chain, asset.Name, asset.Description, asset.TokenID, asset.TokenURI, asset.Quantity, asset.OwnerAddress, pq.Array(asset.OwnershipHistory), asset.TokenMetadata, asset.ContractAddress, asset.ExternalURL, asset.BlockNumber, asset.Version, asset.CreationTime, asset.LastUpdated, asset.Deleted, asset.IsSpam)
+	}
+
+	sqlStr = sqlStr[:len(sqlStr)-1]
+
+	sqlStr += ` ON CONFLICT (TOKEN_ID,CONTRACT_ADDRESS) WHERE TOKEN_TYPE = 'ERC-721' DO UPDATE SET TOKEN_TYPE = EXCLUDED.TOKEN_TYPE,CHAIN = EXCLUDED.CHAIN,NAME = EXCLUDED.NAME,DESCRIPTION = EXCLUDED.DESCRIPTION,TOKEN_URI = EXCLUDED.TOKEN_URI,QUANTITY = EXCLUDED.QUANTITY,OWNER_ADDRESS = EXCLUDED.OWNER_ADDRESS,OWNERSHIP_HISTORY = tokens.OWNERSHIP_HISTORY || EXCLUDED.OWNERSHIP_HISTORY,TOKEN_METADATA = EXCLUDED.TOKEN_METADATA,EXTERNAL_URL = EXCLUDED.EXTERNAL_URL,BLOCK_NUMBER = EXCLUDED.BLOCK_NUMBER,VERSION = EXCLUDED.VERSION,CREATED_AT = EXCLUDED.CREATED_AT,LAST_UPDATED = EXCLUDED.LAST_UPDATED,DELETED = EXCLUDED.DELETED,IS_SPAM = EXCLUDED.IS_SPAM WHERE EXCLUDED.BLOCK_NUMBER > tokens.BLOCK_NUMBER;`
+
+	_, err := a.db.ExecContext(pCtx, sqlStr, vals...)
+	if err != nil {
+		logger.For(pCtx).Errorf("SQL: %s", sqlStr)
+		return fmt.Errorf("failed to upsert assets: %w", err)
+	}
 	return nil
 }
 
-func removeDuplicateAsset(pAssets []persist.Asset) []persist.Asset {
-	if len(pAssets) == 0 {
-		return pAssets
-	}
-	unique := map[persist.AssetIdentifiers]bool{}
-	result := make([]persist.Asset, 0, len(pAssets))
-	for _, b := range pAssets {
-		key := persist.NewAssetIdentifiers(b.Token.ContractAddress, b.OwnerAddress)
-
-		if unique[key] {
-			continue
+func (a *AssetRepository) dedupeAssets(pAssets []persist.Asset) []persist.Asset {
+	seen := map[persist.AssetIdentifiers]persist.Asset{}
+	for _, asset := range pAssets {
+		key := persist.NewAssetIdentifiers(asset.Token.ContractAddress, asset.OwnerAddress)
+		if seenToken, ok := seen[key]; ok {
+			if seenToken.BlockNumber.Uint64() > asset.BlockNumber.Uint64() {
+				continue
+			}
 		}
-		result = append(result, b)
-		unique[key] = true
+		seen[key] = asset
+	}
+	result := make([]persist.Asset, 0, len(seen))
+	for _, v := range seen {
+		result = append(result, v)
 	}
 	return result
 }
-*/

@@ -16,6 +16,8 @@ func handlersInitServer(router *gin.Engine, mc *multichain.Provider, repos *post
 	mediaGroup.POST("/process", processMediaForUsersTokensOfChain(mc, repos.TokenRepository, repos.ContractRepository, repos.WalletRepository, ethClient, ipfsClient, arweaveClient, stg, tokenBucket, throttler))
 	mediaGroup.POST("/process/token", processMediaForToken(mc, repos.TokenRepository, repos.UserRepository, repos.WalletRepository, ethClient, ipfsClient, arweaveClient, stg, tokenBucket, throttler))
 	ownersGroup := router.Group("/owners")
-	ownersGroup.POST("/process/contract", processOwnersForContractTokens(mc, repos.ContractRepository, throttler))
+	ownersGroup.POST("/process/token", processOwnersForContractTokens(mc, repos.ContractRepository, throttler))
+	ownersGroup.POST("/process/user", processOwnersForUserTokens(mc, mc.Queries, validator))
+
 	return router
 }

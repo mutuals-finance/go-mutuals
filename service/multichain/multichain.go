@@ -3,6 +3,11 @@ package multichain
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/util"
+	"github.com/sirupsen/logrus"
+	"github.com/sourcegraph/conc"
+	"math/big"
+	"sort"
 	"sync"
 	"time"
 
@@ -116,7 +121,13 @@ type ErrChainNotFound struct {
 type chainTokens struct {
 	priority int
 	chain    persist.Chain
-	tokens   []ChainAgnosticToken
+	tokens   []persist.Token
+}
+
+type chainAssets struct {
+	priority int
+	chain    persist.Chain
+	assets   []persist.Asset
 }
 
 // configurer maintains provider settings
@@ -142,7 +153,8 @@ type walletHooker interface {
 // tokensOwnerFetcher supports fetching tokens for syncing
 type tokensOwnerFetcher interface {
 	GetTokensByWalletAddress(ctx context.Context, address persist.Address, limit int, offset int) ([]ChainAgnosticToken, []ChainAgnosticContract, error)
-	GetTokensByTokenIdentifiersAndOwner(context.Context, ChainAgnosticIdentifiers, persist.Address) (ChainAgnosticToken, ChainAgnosticContract, error)
+	GetTokenByTokenIdentifiers(context.Context, persist.TokenChainAddress) (persist.Token, error)
+	GetAssetByTokenIdentifiersAndOwner(context.Context, persist.TokenChainAddress, persist.Address) (persist.Asset, error)
 }
 
 type tokensContractFetcher interface {
@@ -301,6 +313,179 @@ func validateProviders(ctx context.Context, providers []any) map[persist.Chain][
 	}
 
 	return chains
+}
+
+// providersMatchingInterface returns providers that adhere to the given interface
+func providersMatchingInterface[T any](providers []any) []T {
+	matches := make([]T, 0)
+	seen := map[string]bool{}
+	for _, p := range providers {
+
+		if conf, ok := p.(Configurer); ok && seen[conf.GetBlockchainInfo().ProviderID] {
+			continue
+		} else if ok {
+			seen[conf.GetBlockchainInfo().ProviderID] = true
+		} else {
+			panic(fmt.Sprintf("provider %T does not implement Configurer", p))
+		}
+
+		if match, ok := p.(T); ok {
+			matches = append(matches, match)
+
+			// if the provider has subproviders, make sure we don't add them later
+			if ps, ok := p.(ProviderSupplier); ok {
+				for _, sp := range ps.GetSubproviders() {
+					if conf, ok := sp.(Configurer); ok {
+						seen[conf.GetBlockchainInfo().ProviderID] = true
+					} else {
+						panic(fmt.Sprintf("subprovider %T does not implement Configurer", sp))
+					}
+				}
+			}
+		}
+	}
+	return matches
+}
+
+// matchingProvidersByChains returns providers that adhere to the given interface by chain
+func matchingProvidersByChains[T any](availableProviders map[persist.Chain][]any, requestedChains ...persist.Chain) map[persist.Chain][]T {
+	matches := make(map[persist.Chain][]T, 0)
+	for _, chain := range requestedChains {
+		matching := providersMatchingInterface[T](availableProviders[chain])
+		matches[chain] = matching
+	}
+	return matches
+}
+
+func matchingProvidersForChain[T any](availableProviders map[persist.Chain][]any, chain persist.Chain) []T {
+	return matchingProvidersByChains[T](availableProviders, chain)[chain]
+}
+
+// matchingWallets returns wallet addresses that belong to any of the passed chains
+func (p *Provider) matchingWallets(wallets []persist.Wallet, chains []persist.Chain) map[persist.Chain][]persist.Address {
+	matches := make(map[persist.Chain][]persist.Address)
+	for _, chain := range chains {
+		for _, wallet := range wallets {
+			if wallet.Chain == chain {
+				matches[chain] = append(matches[chain], wallet.Address)
+			} else if overrides, ok := p.ChainAddressOverrides[chain]; ok && util.Contains(overrides, wallet.Chain) {
+				matches[chain] = append(matches[chain], wallet.Address)
+			}
+		}
+	}
+	for chain, addresses := range matches {
+		matches[chain] = util.Dedupe(addresses, true)
+	}
+	return matches
+}
+
+// SyncTokensByUserIDAndTokenIdentifiers updates the media for specific tokens for an owner
+func (p *Provider) SyncTokensByUserIDAndTokenIdentifiers(ctx context.Context, ownerAddress persist.Address, tokenIdentifiers []persist.TokenChainAddress) ([]persist.Asset, error) {
+
+	ctx = logger.NewContextWithFields(ctx, logrus.Fields{"tids": tokenIdentifiers, "owner_address": ownerAddress})
+
+	chains, _ := util.Map(tokenIdentifiers, func(i persist.TokenChainAddress) (persist.Chain, error) {
+		return i.Chain, nil
+	})
+
+	chains = util.Dedupe(chains, false)
+
+	errChan := make(chan error)
+	incomingAssets := make(chan chainAssets)
+	chainsToTokenIdentifiers := make(map[persist.Chain][]persist.TokenChainAddress)
+	for _, tid := range tokenIdentifiers {
+		chainsToTokenIdentifiers[tid.Chain] = append(chainsToTokenIdentifiers[tid.Chain], tid)
+	}
+
+	for c, a := range chainsToTokenIdentifiers {
+		chainsToTokenIdentifiers[c] = util.Dedupe(a, false)
+	}
+
+	wg := &conc.WaitGroup{}
+	for chain, tids := range chainsToTokenIdentifiers {
+		logger.For(ctx).Infof("syncing %d chain %d tokens for owner address %s", len(tids), chain, ownerAddress.String())
+		tokenFetchers := matchingProvidersForChain[tokensOwnerFetcher](p.Chains, chain)
+		wg.Go(func() {
+			subWg := &conc.WaitGroup{}
+			for i, p := range tokenFetchers {
+				innerIncomingAssets := make(chan persist.Asset)
+				innerErrChan := make(chan error)
+				assets := make([]persist.Asset, 0, len(tids))
+				fetcher := p
+				priority := i
+				for _, tid := range tids {
+					subWg.Go(func() {
+						// TODO fetch token, but only if its new
+						// token, err := fetcher.GetTokenByTokenIdentifiers(ctx, tid)
+						asset, err := fetcher.GetAssetByTokenIdentifiersAndOwner(ctx, tid, ownerAddress)
+						if err != nil {
+							innerErrChan <- err
+							return
+						}
+						innerIncomingAssets <- asset
+					})
+				}
+				for i := 0; i < len(tids)*2; i++ {
+					select {
+					case asset := <-innerIncomingAssets:
+						assets = append(assets, asset)
+					case err := <-innerErrChan:
+						errChan <- errWithPriority{err: err, priority: priority}
+						return
+					}
+				}
+				incomingAssets <- chainAssets{chain: chain, assets: assets, priority: priority}
+			}
+			subWg.Wait()
+		})
+
+	}
+
+	go func() {
+		defer close(incomingAssets)
+		wg.Wait()
+	}()
+
+	return p.receiveSyncedAssetsForOwner(ctx, ownerAddress, chains, incomingAssets, errChan)
+}
+
+func (p *Provider) receiveSyncedAssetsForOwner(ctx context.Context, ownerAddress persist.Address, chains []persist.Chain, incomingAssets chan chainAssets, errChan chan error) ([]persist.Asset, error) {
+	assetsFromProviders := make([]chainAssets, 0, len(chains))
+
+	errs := []error{}
+	discrepencyLog := map[int]int{}
+
+outer:
+	for {
+		select {
+		case incomingAssets, ok := <-incomingAssets:
+			discrepencyLog[incomingAssets.priority] = len(incomingAssets.assets)
+			assetsFromProviders = append(assetsFromProviders, incomingAssets)
+			if !ok {
+				// TODO check if breaking the loop over here is allowed
+				break outer
+			}
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case err := <-errChan:
+			logger.For(ctx).Errorf("error while syncing tokens for owner address %s: %s", ownerAddress, err)
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 && len(assetsFromProviders) == 0 {
+		return nil, util.MultiErr(errs)
+	}
+	if !util.AllEqual(util.MapValues(discrepencyLog)) {
+		logger.For(ctx).Debugf("discrepency: %+v", discrepencyLog)
+	}
+
+	_, newAssets, err := p.processTokensForUser(ctx, ownerAddress, assetsFromProviders, chains)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return newAssets, nil
 }
 
 // GetTokenMetadataByTokenIdentifiers will get the metadata for a given token identifier
@@ -619,4 +804,186 @@ func (e ErrChainNotFound) Error() string {
 
 func (e errWithPriority) Error() string {
 	return fmt.Sprintf("error with priority %d: %s", e.priority, e.err)
+}
+
+func (p *Provider) processTokensForUser(ctx context.Context, ownerAddress persist.Address, assetsFromProviders []chainAssets, chains []persist.Chain) ([]persist.Asset, []persist.Asset, error) {
+	existingAssets, err := p.Repos.AssetRepository.GetByOwner(ctx, persist.EthereumAddress(ownerAddress), 0, 0)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	wallets := []persist.Address{ownerAddress}
+	providerAssetMap := map[persist.Address][]chainAssets{ownerAddress: assetsFromProviders}
+	existingAssetMap := map[persist.Address][]persist.Asset{ownerAddress: existingAssets}
+
+	persistedAssets, newAssets, err := p.processTokensForUsers(ctx, wallets, providerAssetMap, existingAssetMap, chains)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return persistedAssets[ownerAddress], newAssets[ownerAddress], nil
+}
+
+func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, assetsFromProviders []chainAssets, existingAssets []persist.Asset, walletAddress persist.Address) ([]persist.Asset, map[persist.TokenChainAddress]bool, error) {
+	providerAssets, _ := tokensToNewDedupedTokens(assetsFromProviders, walletAddress)
+
+	// Extract new assets for given owner by their absence in existingAssets
+	// assetLookup allows for finding a token in existingAssets in O(1)
+	assetLookup := make(map[persist.TokenChainAddress]persist.Asset)
+	for _, asset := range existingAssets {
+		assetLookup[persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), asset.Token.Chain)] = asset
+	}
+
+	newTokensMap := make(map[persist.TokenChainAddress]bool)
+
+	for _, asset := range providerAssets {
+		tokenChainAddress := persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), asset.Token.Chain)
+		_, exists := assetLookup[tokenChainAddress]
+
+		if !exists {
+			newTokensMap[tokenChainAddress] = true
+		}
+	}
+
+	return providerAssets, newTokensMap, nil
+}
+
+func (p *Provider) processTokensForUsers(ctx context.Context, wallets []persist.Address, chainAssetsForOwners map[persist.Address][]chainAssets,
+	existingAssetsForUsers map[persist.Address][]persist.Asset, chains []persist.Chain) (map[persist.Address][]persist.Asset, map[persist.Address][]persist.Asset, error) {
+
+	assetsToUpsert := make([]persist.Asset, 0, len(chainAssetsForOwners)*3)
+	tokenIsNewForOwner := make(map[persist.Address]map[persist.TokenChainAddress]bool)
+
+	// Find assets to upsert, which are all deduped assets of a wallet address
+	// Find all new tokens for a wallet address
+	for _, walletAddress := range wallets {
+		assets, newTokensMap, err := p.prepTokensForTokenProcessing(ctx, chainAssetsForOwners[walletAddress], existingAssetsForUsers[walletAddress], walletAddress)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		assetsToUpsert = append(assetsToUpsert, assets...)
+		tokenIsNewForOwner[walletAddress] = newTokensMap
+	}
+
+	// Upsert all assets
+	_, persistedAssets, err := p.Repos.AssetRepository.BulkUpsert(ctx, assetsToUpsert)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	persistedAssetsByOwner := make(map[persist.Address][]persist.Asset)
+	for _, asset := range persistedAssets {
+		ownerAddress := persist.Address(asset.OwnerAddress)
+		persistedAssetsByOwner[ownerAddress] = append(persistedAssetsByOwner[ownerAddress], asset)
+	}
+
+	// Upsert all assets
+	newAssetsForOwner := make(map[persist.Address][]persist.Asset)
+
+	errors := make([]error, 0)
+
+	for _, walletAddress := range wallets {
+		newTokensForUser := tokenIsNewForOwner[walletAddress]
+		persistedAssetsForOwner := persistedAssetsByOwner[walletAddress]
+
+		newPersistedAssets := make([]persist.Asset, 0, len(persistedAssetsForOwner))
+		newPersistedAssetIDs := make([]persist.DBID, 0, len(persistedAssetsForOwner))
+		newPersistedAssetIdentifiers := make([]persist.AssetIdentifiers, 0, len(persistedAssetsForOwner))
+
+		for _, asset := range persistedAssetsForOwner {
+			if newTokensForUser[persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), asset.Token.Chain)] {
+				newPersistedAssets = append(newPersistedAssets, asset)
+				newPersistedAssetIDs = append(newPersistedAssetIDs, asset.ID)
+				newPersistedAssetIdentifiers = append(newPersistedAssetIdentifiers, persist.NewAssetIdentifiers(asset.Token.ContractAddress, asset.OwnerAddress))
+			}
+		}
+
+		newAssetsForOwner[walletAddress] = newPersistedAssets
+
+		err = p.SubmitAssetsForOwner(ctx, walletAddress, newPersistedAssetIDs, newPersistedAssetIdentifiers)
+
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 1 {
+		return nil, nil, errors[0]
+	}
+
+	return persistedAssetsByOwner, newAssetsForOwner, nil
+}
+
+func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address) ([]persist.Asset, map[persist.DBID]persist.Address) {
+
+	seenTokens := make(map[persist.TokenChainAddress]persist.Asset)
+
+	seenQuantities := make(map[persist.TokenChainAddress]persist.HexString)
+	tokenDBIDToAddress := make(map[persist.DBID]persist.Address)
+
+	sort.SliceStable(assets, func(i int, j int) bool {
+		return assets[i].priority < assets[j].priority
+	})
+
+	for _, chainAsset := range assets {
+		normalizedAddress := chainAsset.chain.NormalizeAddress(ownerWallet)
+
+		for _, asset := range chainAsset.assets {
+
+			if asset.Balance.BigInt().Cmp(big.NewInt(0)) == 0 {
+				continue
+			}
+
+			ti := persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), chainAsset.chain)
+			existingToken, seen := seenTokens[ti]
+
+			contractAddress := chainAsset.chain.NormalizeAddress(persist.Address(asset.Token.ContractAddress))
+			candidateAsset := persist.Asset{
+				Token:        persist.Token{Chain: chainAsset.chain, TokenType: asset.Token.TokenType, ContractAddress: contractAddress},
+				BlockNumber:  asset.BlockNumber,
+				OwnerAddress: persist.EthereumAddress(ownerWallet),
+			}
+
+			// If we've never seen the incoming token before, then add it.
+			if !seen {
+				seenTokens[ti] = candidateAsset
+			}
+
+			var found bool
+			for _, wallet := range seenWallets[ti] {
+				if wallet.Address == token.OwnerAddress {
+					found = true
+				}
+			}
+			if !found {
+				if q, ok := seenQuantities[ti]; ok {
+					seenQuantities[ti] = q.Add(token.Quantity)
+				} else {
+					seenQuantities[ti] = token.Quantity
+				}
+			}
+
+			if w, ok := addressToWallets[chainToken.chain.NormalizeAddress(token.OwnerAddress)]; ok {
+				seenWallets[ti] = append(seenWallets[ti], w)
+				seenWallets[ti] = dedupeWallets(seenWallets[ti])
+			}
+
+			seenToken := seenTokens[ti]
+			ownership := fromMultichainToAddressAtBlock(token.OwnershipHistory)
+			seenToken.OwnershipHistory = ownership
+			seenToken.OwnedByWallets = seenWallets[ti]
+			seenToken.Quantity = seenQuantities[ti]
+			seenTokens[ti] = seenToken
+			tokenDBIDToAddress[seenTokens[ti].ID] = ti.ContractAddress
+		}
+	}
+
+	res := make([]persist.Asset, len(seenTokens))
+	i := 0
+	for _, t := range seenTokens {
+		res[i] = t
+		i++
+	}
+	return res, tokenDBIDToAddress
 }

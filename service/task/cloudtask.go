@@ -20,8 +20,8 @@ import (
 )
 
 type TokenProcessingUserMessage struct {
-	UserID   persist.DBID   `json:"user_id" binding:"required"`
-	TokenIDs []persist.DBID `json:"token_ids" binding:"required"`
+	OwnerAddress     persist.Address             `json:"owner_address" binding:"required"`
+	TokenIdentifiers []persist.TokenChainAddress `json:"token_identifiers" binding:"required"`
 }
 
 type TokenProcessingContractTokensMessage struct {
@@ -29,6 +29,38 @@ type TokenProcessingContractTokensMessage struct {
 	Imagekeywords     []string     `json:"image_keywords" binding:"required"`
 	Animationkeywords []string     `json:"animation_keywords" binding:"required"`
 	ForceRefresh      bool         `json:"force_refresh"`
+}
+
+type TokenIdentifiersQuantities map[persist.TokenChainAddress]persist.HexString
+
+func (t TokenIdentifiersQuantities) MarshalJSON() ([]byte, error) {
+	m := make(map[string]string)
+	for k, v := range t {
+		m[k.String()] = v.String()
+	}
+	return json.Marshal(m)
+}
+
+func (t *TokenIdentifiersQuantities) UnmarshalJSON(b []byte) error {
+	m := make(map[string]string)
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+	result := make(TokenIdentifiersQuantities)
+	for k, v := range m {
+		identifiers, err := persist.TokenChainAddressFromString(k)
+		if err != nil {
+			return err
+		}
+		result[identifiers] = persist.HexString(v)
+	}
+	*t = result
+	return nil
+}
+
+type TokenProcessingUserTokensMessage struct {
+	OwnerAddress     persist.EthereumAddress    `json:"owner_address" binding:"required"`
+	TokenIdentifiers TokenIdentifiersQuantities `json:"token_identifiers" binding:"required"`
 }
 
 // DeepRefreshMessage is the input message to the indexer-api for deep refreshes
@@ -46,7 +78,7 @@ func CreateTaskForTokenProcessing(ctx context.Context, client *gcptasks.Client, 
 	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForTokenProcessing")
 	defer tracing.FinishSpan(span)
 
-	tracing.AddEventDataToSpan(span, map[string]interface{}{"User ID": message.UserID})
+	tracing.AddEventDataToSpan(span, map[string]interface{}{"User ID": message.OwnerAddress})
 
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
 	task := &taskspb.Task{
@@ -151,6 +183,101 @@ func CreateTaskForWalletValidation(ctx context.Context, message ValidateNFTsMess
 
 	return submitHttpTask(ctx, client, queue, task, body)
 }
+
+func CreateTaskForTokenProcessingUser(ctx context.Context, message TokenProcessingUserMessage, client *gcptasks.Client) error {
+	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForTokenProcessingUser")
+	defer tracing.FinishSpan(span)
+
+	tracing.AddEventDataToSpan(span, map[string]interface{}{
+		"Owner Address": message.OwnerAddress,
+	})
+
+	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
+
+	task := &taskspb.Task{
+		MessageType: &taskspb.Task_HttpRequest{
+			HttpRequest: &taskspb.HttpRequest{
+				HttpMethod: taskspb.HttpMethod_POST,
+				Url:        fmt.Sprintf("%s/owners/process/user", env.GetString("TOKEN_PROCESSING_URL")),
+				Headers: map[string]string{
+					"Content-type": "application/json",
+					"sentry-trace": span.TraceID.String(),
+				},
+			},
+		},
+	}
+
+	body, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	return submitHttpTask(ctx, client, queue, task, body)
+}
+
+/*
+func CreateTaskForWalletRemoval(ctx context.Context, message TokenProcessingWalletRemovalMessage, client *gcptasks.Client) error {
+	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForWalletRemoval")
+	defer tracing.FinishSpan(span)
+
+	tracing.AddEventDataToSpan(span, map[string]interface{}{
+		"User ID":    message.UserID,
+		"Wallet IDs": message.WalletIDs,
+	})
+
+	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
+
+	task := &taskspb.Task{
+		MessageType: &taskspb.Task_HttpRequest{
+			HttpRequest: &taskspb.HttpRequest{
+				HttpMethod: taskspb.HttpMethod_POST,
+				Url:        fmt.Sprintf("%s/owners/process/wallet-removal", env.GetString("TOKEN_PROCESSING_URL")),
+				Headers: map[string]string{
+					"Content-type": "application/json",
+					"sentry-trace": span.TraceID.String(),
+				},
+			},
+		},
+	}
+
+	body, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	return submitHttpTask(ctx, client, queue, task, body)
+}
+
+func CreateTaskForAddingEmailToMailingList(ctx context.Context, message AddEmailToMailingListMessage, client *gcptasks.Client) error {
+	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForAddingEmailToMailingList")
+	defer tracing.FinishSpan(span)
+
+	tracing.AddEventDataToSpan(span, map[string]interface{}{"User ID": message.UserID})
+
+	queue := env.GetString("EMAILS_QUEUE")
+
+	task := &taskspb.Task{
+		MessageType: &taskspb.Task_HttpRequest{
+			HttpRequest: &taskspb.HttpRequest{
+				HttpMethod: taskspb.HttpMethod_POST,
+				Url:        fmt.Sprintf("%s/send/process/add-to-mailing-list", env.GetString("EMAILS_HOST")),
+				Headers: map[string]string{
+					"Content-type":  "application/json",
+					"Authorization": basicauth.MakeHeader(nil, env.GetString("EMAILS_TASK_SECRET")),
+					"sentry-trace":  span.TraceID.String(),
+				},
+			},
+		},
+	}
+
+	body, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	return submitHttpTask(ctx, client, queue, task, body)
+}
+*/
 
 // NewClient returns a new task client with tracing enabled.
 func NewClient(ctx context.Context) *gcptasks.Client {

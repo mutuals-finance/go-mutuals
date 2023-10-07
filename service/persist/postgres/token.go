@@ -167,6 +167,22 @@ func (t *TokenRepository) TokenExistsByTokenIdentifiers(pCtx context.Context, pC
 	return exists, nil
 }
 
+type TokenUpsertParams struct {
+	SetCreatorFields bool
+	SetHolderFields  bool
+
+	// If OptionalDelete is nil, no delete will be performed
+	OptionalDelete *TokenUpsertDeletionParams
+}
+
+type TokenUpsertDeletionParams struct {
+	DeleteCreatorStatus bool
+	DeleteHolderStatus  bool
+	OnlyFromUserID      *persist.DBID
+	OnlyFromContracts   []persist.DBID
+	OnlyFromChains      []persist.Chain
+}
+
 func (t *TokenRepository) upsertTokens(pCtx context.Context, pTokens []persist.Token) error {
 	if len(pTokens) == 0 {
 		return nil
