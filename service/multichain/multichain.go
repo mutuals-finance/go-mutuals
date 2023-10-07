@@ -10,7 +10,6 @@ import (
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/sirupsen/logrus"
 	"github.com/sourcegraph/conc"
-	"math/big"
 	"sort"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
@@ -730,7 +729,7 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 
 		for _, asset := range chainAsset.assets {
 
-			if asset.Balance.BigInt().Cmp(big.NewInt(0)) == 0 {
+			if asset.Balance <= 0 {
 				continue
 			}
 
