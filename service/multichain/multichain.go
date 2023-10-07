@@ -725,7 +725,7 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 	})
 
 	for _, chainAsset := range assets {
-		normalizedAddress := chainAsset.chain.NormalizeAddress(ownerWallet)
+		// normalizedAddress := chainAsset.chain.NormalizeAddress(ownerWallet)
 
 		for _, asset := range chainAsset.assets {
 
@@ -734,7 +734,7 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 			}
 
 			ti := persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), chainAsset.chain)
-			existingToken, seen := seenTokens[ti]
+			_, seen := seenTokens[ti]
 
 			contractAddress := chainAsset.chain.NormalizeAddress(persist.Address(asset.Token.ContractAddress))
 			candidateAsset := persist.Asset{
