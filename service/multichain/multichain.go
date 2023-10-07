@@ -3,24 +3,20 @@ package multichain
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/sirupsen/logrus"
 	"github.com/sourcegraph/conc"
 	"math/big"
 	"sort"
-	"sync"
-	"time"
-
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/redis"
-	"github.com/SplitFi/go-splitfi/service/task"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/gammazero/workerpool"
 )
 
 func init() {
@@ -595,203 +591,6 @@ type tokenForUser struct {
 	token    ChainAgnosticToken
 	chain    persist.Chain
 	priority int
-}
-
-// this function returns a map of user IDs to their new tokens as well as a map of user IDs to the users themselves
-func (p *Provider) createUsersForTokens(ctx context.Context, tokens []chainTokens, chain persist.Chain) (map[persist.DBID][]chainTokens, map[persist.DBID]persist.User, error) {
-	users := map[persist.DBID]persist.User{}
-	userTokens := map[persist.DBID]map[int]chainTokens{}
-	seenTokens := map[tokenUniqueIdentifiers]bool{}
-
-	userChan := make(chan persist.User)
-	tokensForUserChan := make(chan tokenForUser)
-	errChan := make(chan error)
-	done := make(chan struct{})
-	wp := workerpool.New(100)
-
-	mu := &sync.Mutex{}
-
-	ownerAddresses := make([]string, 0, len(tokens))
-
-	for _, chainToken := range tokens {
-		for _, token := range chainToken.tokens {
-			ownerAddresses = append(ownerAddresses, token.OwnerAddress.String())
-		}
-	}
-
-	// get all current users
-
-	allCurrentUsers, err := p.Queries.GetUsersByChainAddresses(ctx, coredb.GetUsersByChainAddressesParams{
-		Addresses: ownerAddresses,
-		Chain:     int32(chain),
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// figure out which users are not in the database
-
-	addressesToUsers := map[string]persist.User{}
-
-	for _, user := range allCurrentUsers {
-		traits := persist.Traits{}
-		err = user.Traits.AssignTo(&traits)
-		if err != nil {
-			return nil, nil, err
-		}
-		addressesToUsers[string(user.Address)] = persist.User{
-			Version:            persist.NullInt32(user.Version.Int32),
-			ID:                 user.ID,
-			CreationTime:       persist.CreationTime(user.CreatedAt),
-			Deleted:            persist.NullBool(user.Deleted),
-			LastUpdated:        persist.LastUpdatedTime(user.LastUpdated),
-			Username:           persist.NullString(user.Username.String),
-			UsernameIdempotent: persist.NullString(user.UsernameIdempotent.String),
-			Wallets:            user.Wallets,
-			Bio:                persist.NullString(user.Bio.String),
-			Traits:             traits,
-			Universal:          persist.NullBool(user.Universal),
-		}
-	}
-
-	logger.For(ctx).Debugf("found %d users", len(addressesToUsers))
-
-	// create users for those that are not in the database
-
-	for _, chainToken := range tokens {
-		providers, err := p.getProvidersForChain(chainToken.chain)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		nameResolvers := getChainProvidersForTask[nameResolver](providers)
-
-		for _, agnosticToken := range chainToken.tokens {
-			if agnosticToken.OwnerAddress == "" {
-				continue
-			}
-			tid := tokenUniqueIdentifiers{chain: chainToken.chain, address: agnosticToken.ContractAddress}
-			if seenTokens[tid] {
-				continue
-			}
-			seenTokens[tid] = true
-			ct := chainToken
-			t := agnosticToken
-			wp.Submit(func() {
-				user, ok := addressesToUsers[string(t.OwnerAddress)]
-				if !ok {
-					username := t.OwnerAddress.String()
-					for _, resolver := range nameResolvers {
-						doBreak := func() bool {
-							displayCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-							defer cancel()
-							display := resolver.GetDisplayNameByAddress(displayCtx, t.OwnerAddress)
-							if display != "" {
-								username = display
-								return true
-							}
-							return false
-						}()
-						if doBreak {
-							break
-						}
-					}
-					func() {
-						mu.Lock()
-						defer mu.Unlock()
-						userID, err := p.Repos.UserRepository.Create(ctx, persist.CreateUserInput{
-							Username:     username,
-							ChainAddress: persist.NewChainAddress(t.OwnerAddress, ct.chain),
-							Universal:    true,
-						})
-						if err != nil {
-							if _, ok := err.(persist.ErrUsernameNotAvailable); ok {
-								user, err = p.Repos.UserRepository.GetByUsername(ctx, username)
-								if err != nil {
-									errChan <- err
-									return
-								}
-							} else if _, ok := err.(persist.ErrAddressOwnedByUser); ok {
-								user, err = p.Repos.UserRepository.GetByChainAddress(ctx, persist.NewChainAddress(t.OwnerAddress, ct.chain))
-								if err != nil {
-									errChan <- err
-									return
-								}
-							} else if _, ok := err.(persist.ErrWalletCreateFailed); ok {
-								user, err = p.Repos.UserRepository.GetByChainAddress(ctx, persist.NewChainAddress(t.OwnerAddress, ct.chain))
-								if err != nil {
-									errChan <- err
-									return
-								}
-							} else {
-								errChan <- err
-								return
-							}
-						} else {
-							user, err = p.Repos.UserRepository.GetByID(ctx, userID)
-							if err != nil {
-								errChan <- err
-								return
-							}
-						}
-					}()
-				}
-
-				err = p.Repos.UserRepository.FillWalletDataForUser(ctx, &user)
-				if err != nil {
-					errChan <- err
-					return
-				}
-				userChan <- user
-				tokensForUserChan <- tokenForUser{
-					userID:   user.ID,
-					token:    t,
-					chain:    ct.chain,
-					priority: ct.priority,
-				}
-			})
-		}
-	}
-
-	go func() {
-		defer close(done)
-		wp.StopWait()
-	}()
-
-outer:
-	for {
-		select {
-		case user := <-userChan:
-			logger.For(ctx).Debugf("got user %s", user.Username)
-			users[user.ID] = user
-			if userTokens[user.ID] == nil {
-				userTokens[user.ID] = map[int]chainTokens{}
-			}
-		case token := <-tokensForUserChan:
-			chainTokensForUser := userTokens[token.userID]
-			tokensInChainTokens, ok := chainTokensForUser[token.priority]
-			if !ok {
-				tokensInChainTokens = chainTokens{chain: token.chain, tokens: []ChainAgnosticToken{}, priority: token.priority}
-			}
-			tokensInChainTokens.tokens = append(tokensInChainTokens.tokens, token.token)
-			chainTokensForUser[token.priority] = tokensInChainTokens
-			userTokens[token.userID] = chainTokensForUser
-		case err := <-errChan:
-			return nil, nil, err
-		case <-done:
-			break outer
-		}
-	}
-
-	chainTokensForUser := map[persist.DBID][]chainTokens{}
-	for userID, chainTokens := range userTokens {
-		for _, chainToken := range chainTokens {
-			chainTokensForUser[userID] = append(chainTokensForUser[userID], chainToken)
-		}
-	}
-
-	logger.For(ctx).Infof("created %d users for tokens", len(users))
-	return chainTokensForUser, users, nil
 }
 
 func (t ChainAgnosticIdentifiers) String() string {
