@@ -332,26 +332,6 @@ outer:
 	return newAssets, nil
 }
 
-// RunWalletCreationHooks runs hooks for when a wallet is created
-func (p *Provider) RunWalletCreationHooks(ctx context.Context, userID persist.DBID, walletAddress persist.Address, walletType persist.WalletType, chain persist.Chain) error {
-
-	// User doesn't exist
-	_, err := p.Repos.UserRepository.GetByID(ctx, userID)
-	if err != nil {
-		return err
-	}
-
-	walletHookers := getChainProvidersForTask[walletHooker](p.Chains[chain])
-
-	for _, hooker := range walletHookers {
-		if err := hooker.WalletCreated(ctx, userID, walletAddress, walletType); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // VerifySignature verifies a signature for a wallet address
 func (p *Provider) VerifySignature(ctx context.Context, pSig string, pNonce string, pChainAddress persist.ChainPubKey, pWalletType persist.WalletType) (bool, error) {
 	verifiers := matchingProvidersForChain[Verifier](p.Chains, pChainAddress.Chain())
@@ -522,9 +502,9 @@ func (p *Provider) processTokensForUsers(ctx context.Context, wallets []persist.
 
 func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address) ([]persist.Asset, map[persist.DBID]persist.Address) {
 
-	seenTokens := make(map[persist.TokenChainAddress]persist.Asset)
+	seenAssets := make(map[persist.TokenChainAddress]persist.Asset)
 
-	seenQuantities := make(map[persist.TokenChainAddress]persist.HexString)
+	seenBalances := make(map[persist.TokenChainAddress]persist.NullInt32)
 	tokenDBIDToAddress := make(map[persist.DBID]persist.Address)
 
 	sort.SliceStable(assets, func(i int, j int) bool {
@@ -541,10 +521,11 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 			}
 
 			ti := persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), chainAsset.chain)
-			_, seen := seenTokens[ti]
+			_, seen := seenAssets[ti]
 
 			contractAddress := chainAsset.chain.NormalizeAddress(persist.Address(asset.Token.ContractAddress))
 			candidateAsset := persist.Asset{
+				// TODO set all asset props
 				Token:        persist.Token{Chain: chainAsset.chain, TokenType: asset.Token.TokenType, ContractAddress: persist.EthereumAddress(contractAddress)},
 				BlockNumber:  asset.BlockNumber,
 				OwnerAddress: persist.EthereumAddress(ownerWallet),
@@ -552,38 +533,25 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 
 			// If we've never seen the incoming token before, then add it.
 			if !seen {
-				seenTokens[ti] = candidateAsset
+				seenAssets[ti] = candidateAsset
 			}
 
-			var found bool
-			for _, wallet := range seenWallets[ti] {
-				if wallet.Address == token.OwnerAddress {
-					found = true
-				}
-			}
-			if !found {
-				if q, ok := seenQuantities[ti]; ok {
-					seenQuantities[ti] = q.Add(token.Quantity)
-				} else {
-					seenQuantities[ti] = token.Quantity
-				}
+			if q, ok := seenBalances[ti]; ok {
+				seenBalances[ti] = q + asset.Balance
+			} else {
+				seenBalances[ti] = asset.Balance
 			}
 
-			if w, ok := addressToWallets[chainToken.chain.NormalizeAddress(token.OwnerAddress)]; ok {
-				seenWallets[ti] = append(seenWallets[ti], w)
-				seenWallets[ti] = dedupeWallets(seenWallets[ti])
-			}
-
-			seenToken := seenTokens[ti]
-			seenToken.Balance = seenQuantities[ti]
-			seenTokens[ti] = seenToken
-			tokenDBIDToAddress[seenTokens[ti].ID] = ti.ContractAddress
+			seenAsset := seenAssets[ti]
+			seenAsset.Balance = seenBalances[ti]
+			seenAssets[ti] = seenAsset
+			tokenDBIDToAddress[seenAssets[ti].ID] = ti.Address
 		}
 	}
 
-	res := make([]persist.Asset, len(seenTokens))
+	res := make([]persist.Asset, len(seenAssets))
 	i := 0
-	for _, t := range seenTokens {
+	for _, t := range seenAssets {
 		res[i] = t
 		i++
 	}
