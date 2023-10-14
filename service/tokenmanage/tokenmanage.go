@@ -85,8 +85,8 @@ func (m Manager) StartProcessing(ctx context.Context, token persist.TokenChainAd
 }
 
 // SubmitUser enqueues a user's tokens for processing.
-func (m Manager) SubmitUser(ctx context.Context, userID persist.DBID, tokenIDs []persist.DBID, tokens []persist.TokenChainAddress) error {
-	m.processRegistry.setManyEnqueue(ctx, tokens)
+func (m Manager) SubmitUser(ctx context.Context, ownerAddress persist.Address, assetIDs []persist.DBID, assets []persist.AssetIdentifiers) error {
+	m.processRegistry.setManyEnqueue(ctx, assets)
 	message := task.TokenProcessingUserMessage{UserID: userID, TokenIDs: tokenIDs}
 	return task.CreateTaskForTokenProcessing(ctx, message, m.taskClient)
 }

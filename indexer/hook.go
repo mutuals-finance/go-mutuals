@@ -64,7 +64,7 @@ func newAssetHooks(tasks *gcptasks.Client, bQueries *coredb.Queries) []DBHook[pe
 				}
 				// send each token grouped by user ID to the task queue
 				logger.For(ctx).WithFields(logrus.Fields{"user_id": userID, "token_count": len(aids)}).Infof("submitting task for user %s with %d assets", userID, len(aids))
-				err = task.CreateTaskForUserAssetProcessing(ctx, task.AssetProcessingUserAssetsMessage{
+				err = task.CreateTaskForAssetProcessing(ctx, task.AssetProcessingUserAssetsMessage{
 					UserID:           userID,
 					AssetIdentifiers: aids,
 				}, tasks)

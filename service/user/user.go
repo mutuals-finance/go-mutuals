@@ -113,11 +113,6 @@ func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username
 		return "", "", err
 	}
 
-	err = mp.RunWalletCreationHooks(pCtx, userID, wallet.ChainAddress.Address(), wallet.WalletType, wallet.ChainAddress.Chain())
-	if err != nil {
-		return "", "", err
-	}
-
 	jwtTokenStr, err := auth.JWTGeneratePipeline(pCtx, userID)
 	if err != nil {
 		return "", "", err
@@ -188,7 +183,7 @@ func AddWalletToUser(pCtx context.Context, pUserID persist.DBID, pChainAddress p
 		return err
 	}
 
-	return mp.RunWalletCreationHooks(pCtx, pUserID, authenticatedAddress.ChainAddress.Address(), authenticatedAddress.WalletType, authenticatedAddress.ChainAddress.Chain())
+	return nil
 }
 
 // RemoveAddressesFromUserToken removes any amount of addresses from a user in the DB
