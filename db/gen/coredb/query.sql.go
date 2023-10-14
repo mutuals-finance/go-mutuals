@@ -2081,6 +2081,36 @@ func (q *Queries) UpdateSplitHidden(ctx context.Context, id persist.DBID) (pgtyp
 	return user_experiences, err
 }
 
+const updateTokenMetadataFieldsByChainAddress = `-- name: UpdateTokenMetadataFieldsByChainAddress :exec
+update tokens
+set name = $1,
+    symbol = $2,
+    logo = $3,
+    last_updated = now()
+where contract_address = $4
+  and chain = $5
+  and deleted = false
+`
+
+type UpdateTokenMetadataFieldsByChainAddressParams struct {
+	Name            sql.NullString
+	Symbol          sql.NullString
+	Logo            sql.NullString
+	ContractAddress persist.Address
+	Chain           persist.Chain
+}
+
+func (q *Queries) UpdateTokenMetadataFieldsByChainAddress(ctx context.Context, arg UpdateTokenMetadataFieldsByChainAddressParams) error {
+	_, err := q.db.Exec(ctx, updateTokenMetadataFieldsByChainAddress,
+		arg.Name,
+		arg.Symbol,
+		arg.Logo,
+		arg.ContractAddress,
+		arg.Chain,
+	)
+	return err
+}
+
 const updateUserEmail = `-- name: UpdateUserEmail :exec
 with upsert_pii as (
     insert into pii.for_users (user_id, pii_email_address) values ($1, $2)

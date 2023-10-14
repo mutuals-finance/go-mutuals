@@ -79,9 +79,10 @@ type ChainAgnosticAddressAtBlock struct {
 
 // ChainAgnosticTokenDescriptors are the fields that describe a token but cannot be used to uniquely identify it
 type ChainAgnosticTokenDescriptors struct {
-	Name    string `json:"name"`
-	Symbol  string `json:"symbol"`
-	LogoURL string `json:"logo_url"`
+	Name     string            `json:"name"`
+	Symbol   string            `json:"symbol"`
+	Logo     string            `json:"logo"`
+	Decimals persist.NullInt32 `json:"decimals"`
 }
 
 type ChainAgnosticCommunityOwner struct {
@@ -370,8 +371,11 @@ func (p *Provider) RefreshTokenDescriptorsByTokenIdentifiers(ctx context.Context
 			if token.Symbol != "" {
 				finalTokenDescriptors.Symbol = token.Symbol
 			}
-			if token.LogoURL != "" {
-				finalTokenDescriptors.LogoURL = token.LogoURL
+			if token.Logo != "" {
+				finalTokenDescriptors.Logo = token.Logo
+			}
+			if token.Decimals >= 0 {
+				finalTokenDescriptors.Decimals = token.Decimals
 			}
 		} else {
 			logger.For(ctx).Infof("token %s not found for refresh (err: %s)", ti.String(), err)
@@ -382,12 +386,13 @@ func (p *Provider) RefreshTokenDescriptorsByTokenIdentifiers(ctx context.Context
 		return persist.ErrTokenNotFoundByTokenIdentifiers{ContractAddress: persist.EthereumAddress(ti.Address)}
 	}
 
-	return p.Queries.UpdateTokenMetadataFieldsByTokenIdentifiers(ctx, db.UpdateTokenMetadataFieldsByTokenIdentifiersParams{
-		Name:    util.ToNullString(finalTokenDescriptors.Name, true),
-		Symbol:  persist.NullString(finalTokenDescriptors.Symbol),
-		LogoURL: persist.NullString(finalTokenDescriptors.LogoURL),
-		Address: persist.Address(ti.Chain.NormalizeAddress(ti.Address)),
-		Chain:   ti.Chain,
+	return p.Queries.UpdateTokenMetadataFieldsByChainAddress(ctx, db.UpdateTokenMetadataFieldsByChainAddressParams{
+		Name:   util.ToNullString(finalTokenDescriptors.Name, true),
+		Symbol: util.ToNullString(finalTokenDescriptors.Symbol, true),
+		Logo:   util.ToNullString(finalTokenDescriptors.Logo, true),
+		// Decimals:        finalTokenDescriptors.Decimals,
+		ContractAddress: persist.Address(ti.Chain.NormalizeAddress(ti.Address)),
+		Chain:           ti.Chain,
 	})
 }
 
@@ -556,18 +561,4 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 		i++
 	}
 	return res, tokenDBIDToAddress
-}
-
-func dedupeWallets(wallets []persist.Wallet) []persist.Wallet {
-	deduped := map[persist.Address]persist.Wallet{}
-	for _, wallet := range wallets {
-		deduped[wallet.Address] = wallet
-	}
-
-	ret := make([]persist.Wallet, 0, len(wallets))
-	for _, wallet := range deduped {
-		ret = append(ret, wallet)
-	}
-
-	return ret
 }

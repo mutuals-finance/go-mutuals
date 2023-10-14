@@ -74,6 +74,16 @@ SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 -- name: GetTokenByIdBatch :batchone
 SELECT * FROM tokens WHERE id = $1 AND deleted = false;
 
+-- name: UpdateTokenMetadataFieldsByChainAddress :exec
+update tokens
+set name = @name,
+    symbol = @symbol,
+    logo = @logo,
+    last_updated = now()
+where contract_address = @contract_address
+  and chain = @chain
+  and deleted = false;
+
 -- name: GetAssetsByChainAddress :many
 SELECT a.* FROM assets a
     LEFT JOIN tokens t
