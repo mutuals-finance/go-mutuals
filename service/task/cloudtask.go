@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/tokenprocessing"
 
 	"encoding/json"
 	"time"
@@ -22,13 +23,6 @@ import (
 type TokenProcessingUserMessage struct {
 	OwnerAddress     persist.Address             `json:"owner_address" binding:"required"`
 	TokenIdentifiers []persist.TokenChainAddress `json:"token_identifiers" binding:"required"`
-}
-
-type TokenProcessingContractTokensMessage struct {
-	ContractID        persist.DBID `json:"contract_id" binding:"required"`
-	Imagekeywords     []string     `json:"image_keywords" binding:"required"`
-	Animationkeywords []string     `json:"animation_keywords" binding:"required"`
-	ForceRefresh      bool         `json:"force_refresh"`
 }
 
 type TokenIdentifiersQuantities map[persist.TokenChainAddress]persist.HexString
@@ -58,9 +52,9 @@ func (t *TokenIdentifiersQuantities) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type TokenProcessingUserTokensMessage struct {
-	OwnerAddress     persist.EthereumAddress    `json:"owner_address" binding:"required"`
-	TokenIdentifiers TokenIdentifiersQuantities `json:"token_identifiers" binding:"required"`
+type TokenProcessingAssetsMessage struct {
+	OwnerAddress persist.Address            `json:"owner_address" binding:"required"`
+	Balances     TokenIdentifiersQuantities `json:"token_identifiers" binding:"required"`
 }
 
 // DeepRefreshMessage is the input message to the indexer-api for deep refreshes
@@ -85,37 +79,7 @@ func CreateTaskForTokenProcessing(ctx context.Context, client *gcptasks.Client, 
 		MessageType: &taskspb.Task_HttpRequest{
 			HttpRequest: &taskspb.HttpRequest{
 				HttpMethod: taskspb.HttpMethod_POST,
-				Url:        fmt.Sprintf("%s/media/process", env.GetString("TOKEN_PROCESSING_URL")),
-				Headers: map[string]string{
-					"Content-type": "application/json",
-					"sentry-trace": span.TraceID.String(),
-				},
-			},
-		},
-	}
-
-	body, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
-	return submitHttpTask(ctx, client, queue, task, body)
-}
-
-func CreateTaskForContractOwnerProcessing(ctx context.Context, message TokenProcessingContractTokensMessage, client *gcptasks.Client) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForContractOwnerProcessing")
-	defer tracing.FinishSpan(span)
-
-	tracing.AddEventDataToSpan(span, map[string]interface{}{
-		"Contract ID": message.ContractID,
-	})
-
-	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	task := &taskspb.Task{
-		MessageType: &taskspb.Task_HttpRequest{
-			HttpRequest: &taskspb.HttpRequest{
-				HttpMethod: taskspb.HttpMethod_POST,
-				Url:        fmt.Sprintf("%s/owners/process/contract", env.GetString("TOKEN_PROCESSING_URL")),
+				Url:        fmt.Sprintf("%s%s", env.GetString("TOKEN_PROCESSING_URL"), tokenprocessing.ProcessMediaForUsersTokensOfChainPath),
 				Headers: map[string]string{
 					"Content-type": "application/json",
 					"sentry-trace": span.TraceID.String(),
@@ -184,7 +148,7 @@ func CreateTaskForWalletValidation(ctx context.Context, message ValidateNFTsMess
 	return submitHttpTask(ctx, client, queue, task, body)
 }
 
-func CreateTaskForTokenProcessingUser(ctx context.Context, message TokenProcessingUserMessage, client *gcptasks.Client) error {
+func CreateTaskForAssetProcessing(ctx context.Context, message TokenProcessingAssetsMessage, client *gcptasks.Client) error {
 	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForTokenProcessingUser")
 	defer tracing.FinishSpan(span)
 
@@ -198,7 +162,7 @@ func CreateTaskForTokenProcessingUser(ctx context.Context, message TokenProcessi
 		MessageType: &taskspb.Task_HttpRequest{
 			HttpRequest: &taskspb.HttpRequest{
 				HttpMethod: taskspb.HttpMethod_POST,
-				Url:        fmt.Sprintf("%s/owners/process/user", env.GetString("TOKEN_PROCESSING_URL")),
+				Url:        fmt.Sprintf("%s%s", env.GetString("TOKEN_PROCESSING_URL"), tokenprocessing.ProcessAssetsForOwnerPath),
 				Headers: map[string]string{
 					"Content-type": "application/json",
 					"sentry-trace": span.TraceID.String(),

@@ -986,6 +986,50 @@ func (q *Queries) GetSplitEventsInWindow(ctx context.Context, arg GetSplitEvents
 	return items, nil
 }
 
+const getSplitsByChainsAndAddresses = `-- name: GetSplitsByChainsAndAddresses :many
+SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
+`
+
+type GetSplitsByChainsAndAddressesParams struct {
+	Chains    []int32
+	Addresses []string
+}
+
+func (q *Queries) GetSplitsByChainsAndAddresses(ctx context.Context, arg GetSplitsByChainsAndAddressesParams) ([]Split, error) {
+	rows, err := q.db.Query(ctx, getSplitsByChainsAndAddresses, arg.Chains, arg.Addresses)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Split
+	for rows.Next() {
+		var i Split
+		if err := rows.Scan(
+			&i.ID,
+			&i.Version,
+			&i.LastUpdated,
+			&i.CreatedAt,
+			&i.Deleted,
+			&i.Chain,
+			&i.Address,
+			&i.Name,
+			&i.Description,
+			&i.CreatorAddress,
+			&i.LogoUrl,
+			&i.BannerUrl,
+			&i.BadgeUrl,
+			&i.TotalOwnership,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSplitsByRecipientAddress = `-- name: GetSplitsByRecipientAddress :many
 SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
     JOIN splits s ON s.id = r.split_id

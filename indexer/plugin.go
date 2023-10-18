@@ -20,7 +20,7 @@ const (
 	pluginPoolSize = 32
 	pluginTimeout  = 2 * time.Minute
 )
- 
+
 // TransferPluginMsg is used to communicate to a plugin.
 type TransferPluginMsg struct {
 	transfer rpc.Transfer
@@ -29,8 +29,8 @@ type TransferPluginMsg struct {
 
 // TransferPlugins are plugins that add contextual data to a transfer.
 type TransferPlugins struct {
-	contracts contractTransfersPlugin
-	tokens    tokenTransfersPlugin
+	assets assetTransfersPlugin
+	tokens tokenTransfersPlugin
 }
 
 type blockchainOrderInfo struct {
@@ -67,8 +67,8 @@ func startSpan(ctx context.Context, plugin, op string) (*sentry.Span, context.Co
 func NewTransferPlugins(ctx context.Context) TransferPlugins {
 	ctx = sentryutil.NewSentryHubContext(ctx)
 	return TransferPlugins{
-		contracts: newContractsPlugin(ctx),
-		tokens:    newTokensPlugin(ctx),
+		assets: newAssetsPlugin(ctx),
+		tokens: newTokensPlugin(ctx),
 	}
 }
 
@@ -122,18 +122,18 @@ func RunTransferPluginReceiver[T, V orderedBlockChainData](ctx context.Context, 
 
 }
 
-// contractTransfersPlugin retrieves ownership information for a token.
-type contractTransfersPlugin struct {
+// assetTransfersPlugin retrieves ownership information for a token.
+type assetTransfersPlugin struct {
 	in  chan TransferPluginMsg
-	out chan contractAtBlock
+	out chan assetAtBlock
 }
 
-func newContractsPlugin(ctx context.Context) contractTransfersPlugin {
+func newAssetsPlugin(ctx context.Context) assetTransfersPlugin {
 	in := make(chan TransferPluginMsg)
-	out := make(chan contractAtBlock)
+	out := make(chan assetAtBlock)
 
 	go func() {
-		span, _ := startSpan(ctx, "contractTransfersPlugin", "handleBatch")
+		span, _ := startSpan(ctx, "assetTransfersPlugin", "handleBatch")
 		defer tracing.FinishSpan(span)
 		defer close(out)
 
@@ -153,14 +153,21 @@ func newContractsPlugin(ctx context.Context) contractTransfersPlugin {
 				child := span.StartChild("plugin.contractTransfersPlugin")
 				child.Description = "handleMessage"
 
-				out <- contractAtBlock{
+				out <- assetAtBlock{
 					ti: msg.key,
 					boi: blockchainOrderInfo{
 						blockNumber: msg.transfer.BlockNumber,
 						txIndex:     msg.transfer.TxIndex,
 					},
-					contract: rpc.Contract{
-						Address: msg.transfer.ContractAddress,
+					asset: persist.Asset{
+						ID:           "",
+						Version:      0,
+						LastUpdated:  persist.LastUpdatedTime{},
+						CreationTime: persist.CreationTime{},
+						OwnerAddress: "",
+						Token:        persist.Token{ContractAddress: msg.transfer.ContractAddress},
+						Balance:      0,
+						BlockNumber:  0,
 					},
 				}
 
@@ -174,7 +181,7 @@ func newContractsPlugin(ctx context.Context) contractTransfersPlugin {
 		logger.For(ctx).Info("contracts plugin finished sending")
 	}()
 
-	return contractTransfersPlugin{
+	return assetTransfersPlugin{
 		in:  in,
 		out: out,
 	}

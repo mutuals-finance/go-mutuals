@@ -167,23 +167,7 @@ func (t *TokenRepository) TokenExistsByTokenIdentifiers(pCtx context.Context, pC
 	return exists, nil
 }
 
-type TokenUpsertParams struct {
-	SetCreatorFields bool
-	SetHolderFields  bool
-
-	// If OptionalDelete is nil, no delete will be performed
-	OptionalDelete *TokenUpsertDeletionParams
-}
-
-type TokenUpsertDeletionParams struct {
-	DeleteCreatorStatus bool
-	DeleteHolderStatus  bool
-	OnlyFromUserID      *persist.DBID
-	OnlyFromContracts   []persist.DBID
-	OnlyFromChains      []persist.Chain
-}
-
-func (t *TokenRepository) upsertTokens(pCtx context.Context, pTokens []persist.Token) error {
+func (t *TokenRepository) BulkUpsert(pCtx context.Context, pTokens []persist.Token) error {
 	if len(pTokens) == 0 {
 		return nil
 	}
@@ -197,7 +181,7 @@ func (t *TokenRepository) upsertTokens(pCtx context.Context, pTokens []persist.T
 		logger.For(pCtx).Debugf("Chunking %d tokens recursively into %d queries", len(pTokens), len(pTokens)/rowsPerQuery)
 		next := pTokens[rowsPerQuery:]
 		current := pTokens[:rowsPerQuery]
-		if err := t.upsertTokens(pCtx, next); err != nil {
+		if err := t.BulkUpsert(pCtx, next); err != nil {
 			return fmt.Errorf("error with tokens upsert: %w", err)
 		}
 		pTokens = current
@@ -221,7 +205,7 @@ func (t *TokenRepository) upsertTokens(pCtx context.Context, pTokens []persist.T
 	return nil
 }
 
-// Upsert upserts a token by its token ID and contract address and if its token type is ERC-1155 it also upserts using the owner address
+// Upsert adds a token by its token ID and contract address and if its token type is ERC-1155 it also adds using the owner address
 func (t *TokenRepository) Upsert(pCtx context.Context, pToken persist.Token) error {
 	var err error
 	_, err = t.upsertStmt.ExecContext(pCtx, persist.GenerateID(), pToken.TokenType, pToken.Chain, pToken.Name, pToken.Symbol, pToken.Logo, pToken.ContractAddress, pToken.BlockNumber, pToken.Version, pToken.CreationTime, pToken.LastUpdated)

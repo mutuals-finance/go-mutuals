@@ -11,13 +11,22 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
+var (
+	MediaGroupPath                                = "/media"
+	ProcessMediaForUsersTokensOfChainPathRelative = "/process"
+	ProcessMediaForUsersTokensOfChainPath         = MediaGroupPath + ProcessMediaForUsersTokensOfChainPathRelative
+	ProcessMediaForTokenPathRelative              = "/process/token"
+	OwnersGroupPath                               = "/owners"
+	ProcessAssetsForOwnerPathRelative             = "/process/erc20"
+	ProcessAssetsForOwnerPath                     = MediaGroupPath + ProcessAssetsForOwnerPathRelative
+)
+
 func handlersInitServer(router *gin.Engine, mc *multichain.Provider, repos *postgres.Repositories, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, tokenBucket string, throttler *throttle.Locker) *gin.Engine {
-	mediaGroup := router.Group("/media")
-	mediaGroup.POST("/process", processMediaForUsersTokensOfChain(mc, repos.TokenRepository, repos.ContractRepository, repos.WalletRepository, ethClient, ipfsClient, arweaveClient, stg, tokenBucket, throttler))
-	mediaGroup.POST("/process/token", processMediaForToken(mc, repos.TokenRepository, repos.UserRepository, repos.WalletRepository, ethClient, ipfsClient, arweaveClient, stg, tokenBucket, throttler))
-	ownersGroup := router.Group("/owners")
-	ownersGroup.POST("/process/token", processOwnersForContractTokens(mc, repos.ContractRepository, throttler))
-	ownersGroup.POST("/process/user", processOwnersForUserTokens(mc, mc.Queries, validator))
+	mediaGroup := router.Group(MediaGroupPath)
+	mediaGroup.POST(ProcessMediaForUsersTokensOfChainPathRelative, processMediaForUsersTokensOfChain(mc, repos.TokenRepository, repos.ContractRepository, repos.WalletRepository, ethClient, ipfsClient, arweaveClient, stg, tokenBucket, throttler))
+	mediaGroup.POST(ProcessMediaForTokenPathRelative, processMediaForToken(mc, repos.TokenRepository, repos.UserRepository, repos.WalletRepository, ethClient, ipfsClient, arweaveClient, stg, tokenBucket, throttler))
+	ownersGroup := router.Group(OwnersGroupPath)
+	ownersGroup.POST(ProcessAssetsForOwnerPathRelative, processAssetsForOwner(mc, mc.Queries, validator))
 
 	return router
 }

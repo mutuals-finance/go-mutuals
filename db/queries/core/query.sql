@@ -48,6 +48,9 @@ SELECT * FROM splits WHERE address = $1 AND chain = $2 AND deleted = false;
 -- name: GetSplitByChainAddressBatch :batchone
 SELECT * FROM splits WHERE address = $1 AND chain = $2 AND deleted = false;
 
+-- name: GetSplitsByChainsAndAddresses :many
+SELECT * FROM splits WHERE chain = any(@chains::int[]) OR contract_address = any(@addresses::varchar[]) AND deleted = false;
+
 -- name: GetSplitsByRecipientAddress :many
 SELECT s.* FROM recipients r
     JOIN splits s ON s.id = r.split_id

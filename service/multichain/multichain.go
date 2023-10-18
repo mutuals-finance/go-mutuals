@@ -224,8 +224,8 @@ func (p *Provider) matchingWalletsChain(wallets []persist.Wallet, chain persist.
 	return p.matchingWallets(wallets, []persist.Chain{chain})[chain]
 }
 
-// SyncTokensByUserIDAndTokenIdentifiers updates the media for specific tokens for an owner
-func (p *Provider) SyncTokensByUserIDAndTokenIdentifiers(ctx context.Context, ownerAddress persist.Address, tokenIdentifiers []persist.TokenChainAddress) ([]persist.Asset, error) {
+// SyncAssetsByOwnerAndTokenChainAddress updates the token balances for specific tokens for an owner
+func (p *Provider) SyncAssetsByOwnerAndTokenChainAddress(ctx context.Context, ownerAddress persist.Address, tokenIdentifiers []persist.TokenChainAddress) ([]persist.Asset, error) {
 
 	ctx = logger.NewContextWithFields(ctx, logrus.Fields{"tids": tokenIdentifiers, "owner_address": ownerAddress})
 

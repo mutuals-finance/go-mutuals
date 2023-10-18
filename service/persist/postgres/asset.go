@@ -212,7 +212,7 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 		}
 	}
 
-	upserted, err := a.queries.UpsertTokens(ctx, params)
+	upserted, err := a.queries.UpsertAssets(ctx, params)
 	if err != nil {
 		return time.Time{}, nil, err
 	}
