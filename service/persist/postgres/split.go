@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/lib/pq"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 // SplitRepository is the repository for interacting with splits in a postgres database
 type SplitRepository struct {
 	db                         *sql.DB
-	queries                    *db.Queries
 	createStmt                 *sql.Stmt
 	getByIDStmt                *sql.Stmt
 	getByAddressStmt           *sql.Stmt
@@ -26,7 +24,7 @@ type SplitRepository struct {
 }
 
 // NewSplitRepository creates a new SplitRepository
-func NewSplitRepository(db *sql.DB, queries *db.Queries) *SplitRepository {
+func NewSplitRepository(db *sql.DB) *SplitRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -65,7 +63,7 @@ func NewSplitRepository(db *sql.DB, queries *db.Queries) *SplitRepository {
 	upsertStmt, err := db.PrepareContext(ctx, `INSERT INTO splits (ID,VERSION,ADDRESS,NAME,DESCRIPTION,LOGO_URL,BANNER_URL,CREATOR_ADDRESS,CHAIN,CREATED_AT,LAST_UPDATED) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (ADDRESS,CHAIN) DO UPDATE SET VERSION = EXCLUDED.VERSION, ADDRESS = EXCLUDED.ADDRESS, NAME = EXCLUDED.NAME, DESCRIPTION = EXCLUDED.DESCRIPTION, LOGO_URL = EXCLUDED.LOGO_URL, BANNER_URL = EXCLUDED.BANNER_URL, CREATOR_ADDRESS = EXCLUDED.CREATOR_ADDRESS, CHAIN = EXCLUDED.CHAIN, CREATED_AT = EXCLUDED.CREATED_AT, LAST_UPDATED = EXCLUDED.LAST_UPDATED;`)
 	checkNoErr(err)
 
-	return &SplitRepository{db: db, queries: queries, createStmt: createStmt, getByIDStmt: getByIDStmt, getByAddressStmt: getByAddressStmt, upsertStmt: upsertStmt, getByRecipientStmt: getByRecipientStmt, getRecipientStmt: getRecipientStmt, getByRecipientPaginateStmt: getByRecipientPaginateStmt, getAssetStmt: getAssetStmt}
+	return &SplitRepository{db: db, createStmt: createStmt, getByIDStmt: getByIDStmt, getByAddressStmt: getByAddressStmt, upsertStmt: upsertStmt, getByRecipientStmt: getByRecipientStmt, getRecipientStmt: getRecipientStmt, getByRecipientPaginateStmt: getByRecipientPaginateStmt, getAssetStmt: getAssetStmt}
 }
 
 // Create creates a new split in the database

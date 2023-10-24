@@ -68,34 +68,6 @@ type ValidateNFTsMessage struct {
 	OwnerAddress persist.EthereumAddress `json:"wallet"`
 }
 
-func CreateTaskForTokenProcessing(ctx context.Context, client *gcptasks.Client, message TokenProcessingUserMessage) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForTokenProcessing")
-	defer tracing.FinishSpan(span)
-
-	tracing.AddEventDataToSpan(span, map[string]interface{}{"User ID": message.OwnerAddress})
-
-	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	task := &taskspb.Task{
-		MessageType: &taskspb.Task_HttpRequest{
-			HttpRequest: &taskspb.HttpRequest{
-				HttpMethod: taskspb.HttpMethod_POST,
-				Url:        fmt.Sprintf("%s%s", env.GetString("TOKEN_PROCESSING_URL"), tokenprocessing.ProcessMediaForUsersTokensOfChainPath),
-				Headers: map[string]string{
-					"Content-type": "application/json",
-					"sentry-trace": span.TraceID.String(),
-				},
-			},
-		},
-	}
-
-	body, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
-	return submitHttpTask(ctx, client, queue, task, body)
-}
-
 func CreateTaskForDeepRefresh(ctx context.Context, message DeepRefreshMessage, client *gcptasks.Client) error {
 	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForDeepRefresh")
 	defer tracing.FinishSpan(span)

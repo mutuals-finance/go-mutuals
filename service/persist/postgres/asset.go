@@ -166,7 +166,7 @@ func (a *AssetRepository) UpsertByIdentifiers(pCtx context.Context, pOwnerAddres
 
 // BulkUpsert upserts the asset with the given owner address and token address
 func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Asset) (time.Time, []persist.Asset, error) {
-	assets, err := a.excludeZeroBalanceAssets(ctx, pAssets)
+	assets, err := a.excludeZeroBalanceAssets(pCtx, pAssets)
 	if err != nil {
 		return time.Time{}, nil, err
 	}
@@ -174,7 +174,7 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 	// If we're not upserting anything, we still need to return the current database time
 	// since it may be used by the caller and is assumed valid if err == nil
 	if len(assets) == 0 {
-		currentTime, err := a.queries.GetCurrentTime(ctx)
+		currentTime, err := a.queries.GetCurrentTime(pCtx)
 		if err != nil {
 			return time.Time{}, nil, err
 		}
@@ -212,7 +212,7 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 		}
 	}
 
-	upserted, err := a.queries.UpsertAssets(ctx, params)
+	upserted, err := a.queries.UpsertAssets(pCtx, params)
 	if err != nil {
 		return time.Time{}, nil, err
 	}

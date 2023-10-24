@@ -28,10 +28,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/media"
 	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
-	"github.com/SplitFi/go-splitfi/service/multichain/eth"
-	"github.com/SplitFi/go-splitfi/service/multichain/infura"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
 	"github.com/SplitFi/go-splitfi/service/redis"
@@ -58,9 +54,12 @@ func Init() {
 	logger.InitWithGCPDefaults()
 	initSentry()
 
-	c := ClientInit(context.Background())
-	provider := NewMultichainProvider(c)
-	router := CoreInit(c, provider)
+	ctx := context.Background()
+	c := ClientInit(ctx)
+	provider, _ := NewMultichainProvider(ctx, SetDefaults)
+	//recommender := recommend.NewRecommender(c.Queries)
+	//p := userpref.NewPersonalization(ctx, c.Queries, c.StorageClient)
+	router := CoreInit(ctx, c, provider)
 	http.Handle("/", router)
 }
 
@@ -89,11 +88,11 @@ func ClientInit(ctx context.Context) *Clients {
 	return &Clients{
 		Repos:           postgres.NewRepositories(pq, pgx),
 		Queries:         db.New(pgx),
-		HTTPClient:      &http.Client{Timeout: 10 * time.Minute},
+		HTTPClient:      &http.Client{Timeout: 0},
 		EthClient:       rpc.NewEthClient(),
-		IPFSClient:      rpc.NewIPFSShell(),
+		IPFSClient:      rpc.NewIPFSShell(), //IPFSClient:      ipfs.NewShell(),
 		ArweaveClient:   rpc.NewArweaveClient(),
-		StorageClient:   media.NewStorageClient(ctx),
+		StorageClient:   media.NewStorageClient(ctx), //StorageClient:   rpc.NewStorageClient(ctx),
 		TaskClient:      task.NewClient(ctx),
 		SecretClient:    newSecretsClient(),
 		PubSubClient:    gcp.NewClient(ctx),
@@ -107,7 +106,8 @@ func ClientInit(ctx context.Context) *Clients {
 
 // CoreInit initializes core server functionality. This is abstracted
 // so the test server can also utilize it
-func CoreInit(c *Clients, provider *multichain.Provider) *gin.Engine {
+func CoreInit(ctx context.Context, c *Clients, provider *multichain.Provider) *gin.Engine {
+
 	logger.For(nil).Info("initializing server...")
 
 	if env.GetString("ENV") != "production" {
@@ -123,16 +123,18 @@ func CoreInit(c *Clients, provider *multichain.Provider) *gin.Engine {
 		validate.RegisterCustomValidators(v)
 	}
 
+	// TODO remove clear cache?
 	err := redis.ClearCache(redis.SplitsDB)
 	if err != nil {
 		panic(err)
 	}
 
-	lock := redis.NewLockClient(redis.NotificationLockDB)
-	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQ)
-	socialCache := redis.NewCache(redis.SocialDB)
+	lock := redis.NewLockClient(redis.NotificationLockDB) //lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
+	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQ)   //graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
+	socialCache := redis.NewCache(redis.SocialDB)         // socialCache := redis.NewCache(redis.SocialCache)
+	// authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
 
-	return handlersInit(router, c.Repos, c.Queries, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, c.MagicLinkClient)
+	return handlersInit(router, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, c.MagicLinkClient)
 }
 
 func newSecretsClient() *secretmanager.Client {
@@ -256,26 +258,6 @@ func initSentry() {
 	if err != nil {
 		logger.For(nil).Fatalf("failed to start sentry: %s", err)
 	}
-}
-
-func NewMultichainProvider(c *Clients) *multichain.Provider {
-	ethChain := persist.ChainETH
-	overrides := multichain.ChainOverrideMap{persist.ChainOptimism: &ethChain, persist.ChainPolygon: &ethChain}
-	alchemyMainnetProvider := alchemy.NewProvider(persist.ChainETH, c.HTTPClient)
-	infuraProvider := infura.NewProvider(c.HTTPClient)
-	failureEthProvider := multichain.SyncFailureFallbackProvider{Primary: infuraProvider, Fallback: alchemyMainnetProvider}
-
-	ethProvider := eth.NewProvider(env.GetString("INDEXER_HOST"), c.HTTPClient, c.EthClient, c.TaskClient)
-	alchemyOptimismProvider := alchemy.NewProvider(persist.ChainOptimism, c.HTTPClient)
-	alchemyPolygonProvider := alchemy.NewProvider(persist.ChainPolygon, c.HTTPClient)
-	cache := redis.NewCache(redis.CommunitiesDB)
-	return multichain.NewProvider(context.Background(), c.Repos, c.Queries, cache, c.TaskClient,
-		overrides,
-		failureEthProvider,
-		ethProvider,
-		alchemyOptimismProvider,
-		alchemyPolygonProvider,
-	)
 }
 
 func newThrottler() *throttle.Locker {

@@ -53,10 +53,10 @@ type ErrAssetNotFoundByIdentifiers struct {
 
 // AssetRepository represents a repository for interacting with persisted contracts
 type AssetRepository interface {
-	GetByOwner(context.Context, EthereumAddress, Chain, int64, int64) ([]Asset, error)
+	GetByOwner(context.Context, EthereumAddress, int64, int64) ([]Asset, error)
 	GetByToken(context.Context, EthereumAddress, Chain, int64, int64) ([]Asset, error)
 	GetByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Chain) (Asset, error)
-	BulkUpsert(context.Context, []Asset) error
+	BulkUpsert(context.Context, []Asset) (time.Time, []Asset, error)
 	UpsertByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Asset) error
 	UpdateByID(context.Context, DBID, interface{}) error
 	UpdateByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Chain, interface{}) error

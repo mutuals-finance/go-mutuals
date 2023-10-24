@@ -67,9 +67,9 @@ type Split struct {
 type SplitRepository interface {
 	Create(context.Context, SplitDB) (DBID, error)
 	GetByID(context.Context, DBID) (Split, error)
-	GetByAddress(context.Context, EthereumAddress) (Split, error)
+	GetByAddress(context.Context, EthereumAddress, Chain) (Split, error)
 	GetByRecipient(context.Context, EthereumAddress, int64, int64) ([]Split, error)
-	Upsert(context.Context, Split) error
+	Upsert(context.Context, SplitDB) error
 }
 
 // SplitTokenUpdateInput represents a struct that is used to update a splits list of collections in the databse

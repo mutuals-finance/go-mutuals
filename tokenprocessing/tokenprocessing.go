@@ -23,17 +23,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-// InitServer initializes the mediaprocessing server
+// InitServer initializes the tokenprocessing server
 func InitServer() {
 	setDefaults()
-	c := server.ClientInit(context.Background())
-	provider := server.NewMultichainProvider(c)
-	router := CoreInitServer(c, provider)
+	ctx := context.Background()
+	c := server.ClientInit(ctx)
+	mc, _ := server.NewMultichainProvider(ctx, setDefaults)
+	router := CoreInitServer(ctx, c, mc)
 	logger.For(nil).Info("Starting tokenprocessing server...")
 	http.Handle("/", router)
 }
 
-func CoreInitServer(c *server.Clients, mc *multichain.Provider) *gin.Engine {
+func CoreInitServer(ctx context.Context, clients *server.Clients, mc *multichain.Provider) *gin.Engine {
 	initSentry()
 	logger.InitWithGCPDefaults()
 
@@ -52,7 +53,7 @@ func CoreInitServer(c *server.Clients, mc *multichain.Provider) *gin.Engine {
 
 	t := newThrottler()
 
-	return handlersInitServer(router, mc, c.Repos, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"), t)
+	return handlersInitServer(ctx, router, mc, clients.Repos, t)
 }
 
 func setDefaults() {

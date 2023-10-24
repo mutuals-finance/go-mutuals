@@ -2,12 +2,15 @@ package indexer
 
 import (
 	"context"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/db/gen/indexerdb"
+	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 	"net/http"
 	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/indexer/refresh"
 	"github.com/SplitFi/go-splitfi/middleware"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/logger"
@@ -49,17 +52,19 @@ func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engin
 		}
 	})
 
-	s := media.NewStorageClient(context.Background())
-	tokenRepo, assetRepo, addressFilterRepo := newRepos(s)
+	s := media.NewStorageClient(context.Background()) // TODO s := rpc.NewStorageClient(context.Background())
+	tokenRepo, assetRepo, splitRepo := newRepos(s)
+	iQueries := indexerdb.New(postgres.NewPgxClient())
+	bQueries := coredb.New(postgres.NewPgxClient(postgres.WithHost(env.GetString("BACKEND_POSTGRES_HOST")), postgres.WithUser(env.GetString("BACKEND_POSTGRES_USER")), postgres.WithPassword(env.GetString("BACKEND_POSTGRES_PASSWORD")), postgres.WithPort(env.GetInt("BACKEND_POSTGRES_PORT"))))
+	tClient := task.NewClient(context.Background())
 	ethClient := rpc.NewEthSocketClient()
-	ipfsClient := rpc.NewIPFSShell()
+	ipfsClient := rpc.NewIPFSShell() // TODO ipfs.NewShell()
 	arweaveClient := rpc.NewArweaveClient()
 
 	if env.GetString("ENV") == "production" || enableRPC {
 		rpcEnabled = true
 	}
-
-	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, tokenRepo, assetRepo, addressFilterRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, fromBlock, toBlock)
+	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, iQueries, bQueries, tClient, splitRepo, tokenRepo, assetRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, fromBlock, toBlock)
 
 	router := gin.Default()
 
@@ -85,10 +90,13 @@ func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
 		}
 	})
 
-	s := media.NewStorageClient(context.Background())
-	tokenRepo, contractRepo, addressFilterRepo := newRepos(s)
+	s := media.NewStorageClient(context.Background()) //s := rpc.NewStorageClient(context.Background())
+	tokenRepo, assetRepo, splitRepo := newRepos(s)
+	iQueries := indexerdb.New(postgres.NewPgxClient())
+	bQueries := coredb.New(postgres.NewPgxClient(postgres.WithHost(env.GetString("BACKEND_POSTGRES_HOST")), postgres.WithUser(env.GetString("BACKEND_POSTGRES_USER")), postgres.WithPassword(env.GetString("BACKEND_POSTGRES_PASSWORD")), postgres.WithPort(env.GetInt("BACKEND_POSTGRES_PORT"))))
+	tClient := task.NewClient(context.Background())
 	ethClient := rpc.NewEthSocketClient()
-	ipfsClient := rpc.NewIPFSShell()
+	ipfsClient := rpc.NewIPFSShell() //ipfsClient := ipfs.NewShell()
 	arweaveClient := rpc.NewArweaveClient()
 
 	if env.GetString("ENV") == "production" || enableRPC {
@@ -105,10 +113,11 @@ func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
 	}
 
 	logger.For(ctx).Info("Registering handlers...")
+	httpClient := &http.Client{Timeout: 10 * time.Minute, Transport: tracing.NewTracingTransport(http.DefaultTransport, false)}
 
-	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, tokenRepo, contractRepo, addressFilterRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, nil, nil)
+	i := newIndexer(ethClient, httpClient, ipfsClient, arweaveClient, s, iQueries, bQueries, tClient, splitRepo, tokenRepo, assetRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, nil, nil)
 
-	return handlersInitServer(router, tokenRepo, contractRepo, ethClient, ipfsClient, arweaveClient, s, i)
+	return handlersInitServer(router, tokenRepo, assetRepo, ethClient, ipfsClient, arweaveClient, s, i)
 }
 
 func SetDefaults() {
@@ -151,9 +160,9 @@ func ValidateEnv() {
 	}
 }
 
-func newRepos(storageClient *storage.Client) (persist.TokenRepository, persist.AssetRepository, refresh.AddressFilterRepository) {
+func newRepos(storageClient *storage.Client) (persist.TokenRepository, persist.AssetRepository, persist.SplitRepository) {
 	pgClient := postgres.MustCreateClient()
-	return postgres.NewTokenRepository(pgClient), postgres.NewAssetRepository(pgClient), refresh.AddressFilterRepository{Bucket: storageClient.Bucket(env.GetString("GCLOUD_TOKEN_LOGS_BUCKET"))}
+	return postgres.NewTokenRepository(pgClient), postgres.NewAssetRepository(pgClient), postgres.NewSplitRepository(pgClient)
 }
 
 func initSentry() {
