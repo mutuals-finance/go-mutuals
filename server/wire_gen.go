@@ -54,14 +54,11 @@ func NewMultichainProvider(ctx context.Context, envFunc func()) (*multichain.Pro
 	serverPolygonProviderList := polygonProviderSet(httpClient, serverTokenMetadataCache)
 	serverArbitrumProviderList := arbitrumProviderSet(httpClient, serverTokenMetadataCache)
 	v := newMultichainSet(serverEthProviderList, serverOptimismProviderList, serverTezosProviderList, serverPoapProviderList, serverZoraProviderList, serverBaseProviderList, serverPolygonProviderList, serverArbitrumProviderList)
-	manager := tokenmanage.New(ctx, client)
-	submitUserTokensF := newManagedTokens(ctx, manager)
 	provider := &multichain.Provider{
 		Repos:            repositories,
 		Queries:          queries,
 		Cache:            cache,
 		Chains:           v,
-		SubmitUserTokens: submitUserTokensF,
 	}
 	return provider, func() {
 		cleanup2()

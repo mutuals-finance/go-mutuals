@@ -27,7 +27,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/SplitFi/go-splitfi/service/rpc"
 	"github.com/SplitFi/go-splitfi/service/task"
-	"github.com/SplitFi/go-splitfi/service/tokenmanage"
 	"github.com/SplitFi/go-splitfi/util"
 )
 
@@ -468,13 +467,4 @@ func newCommunitiesCache() *redis.Cache {
 func newTokenMetadataCache() *tokenMetadataCache {
 	cache := redis.NewCache(redis.TokenProcessingMetadataCache)
 	return util.ToPointer(tokenMetadataCache(*cache))
-}
-
-func newManagedTokens(ctx context.Context, tm *tokenmanage.Manager) multichain.SubmitUserTokensF {
-	return func(ctx context.Context, userID persist.DBID, tokenIDs []persist.DBID, tokens []persist.TokenIdentifiers) error {
-		if len(tokenIDs) == 0 {
-			return nil
-		}
-		return tm.SubmitUser(ctx, userID, tokenIDs, tokens)
-	}
 }

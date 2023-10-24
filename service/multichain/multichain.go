@@ -32,9 +32,6 @@ var contractNameBlacklist = map[string]bool{
 	"unknown":               true,
 }
 
-// SubmitAssetsForOwnerF is called to process a user's batch of tokens
-type SubmitAssetsForOwnerF func(ctx context.Context, ownerAddress persist.Address, assetIDs []persist.DBID, assets []persist.AssetIdentifiers) error
-
 type Provider struct {
 	Repos   *postgres.Repositories
 	Queries *db.Queries
@@ -42,8 +39,7 @@ type Provider struct {
 	Chains  map[persist.Chain][]any
 
 	// some chains use the addresses of other chains, this will map of chain we want tokens from => chain that's address will be used for lookup
-	WalletOverrides      WalletOverrideMap
-	SubmitAssetsForOwner SubmitAssetsForOwnerF
+	WalletOverrides WalletOverrideMap
 }
 
 // BlockchainInfo retrieves blockchain info from all chains
@@ -490,12 +486,6 @@ func (p *Provider) processTokensForUsers(ctx context.Context, wallets []persist.
 		}
 
 		newAssetsForOwner[walletAddress] = newPersistedAssets
-
-		err = p.SubmitAssetsForOwner(ctx, walletAddress, newPersistedAssetIDs, newPersistedAssetIdentifiers)
-
-		if err != nil {
-			errors = append(errors, err)
-		}
 	}
 
 	if len(errors) > 1 {
