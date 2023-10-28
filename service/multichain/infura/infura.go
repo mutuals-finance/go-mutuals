@@ -292,9 +292,9 @@ type TokenMetadata struct {
 	Metadata Metadata        `json:"metadata"`
 }
 
-// GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
-func (p *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (persist.TokenMetadata, error) {
-	url := fmt.Sprintf("%s/nfts/%s/tokens/%s?resyncMetadata=true", baseURL, ti.ContractAddress, "1")
+// GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and chain
+func (p *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
+	url := fmt.Sprintf("%s/nfts/%s/tokens/%s?resyncMetadata=true", baseURL, ti.Address, "1")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

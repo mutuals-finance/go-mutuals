@@ -461,3 +461,6 @@ where case when @only_unfollowing::bool then true end;
 -- name: AddPiiAccountCreationInfo :exec
 insert into pii.account_creation_info (user_id, ip_address, created_at) values (@user_id, @ip_address, now())
   on conflict do nothing;
+
+-- name: GetCurrentTime :one
+select now()::timestamptz;

@@ -56,11 +56,8 @@ func (d *Provider) GetBlockchainInfo(ctx context.Context) (multichain.Blockchain
 }
 
 // GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
-func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (persist.TokenMetadata, error) {
-	url := fmt.Sprintf("%s/nfts/get/metadata?contract_address=%s&token_id=%s", d.indexerBaseURL, ti.ContractAddress, "1")
-	if ownerAddress != "" {
-		url = fmt.Sprintf("%s&address=%s", url, ownerAddress)
-	}
+func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
+	url := fmt.Sprintf("%s%s?contract_address=%s&chain=%d", d.indexerBaseURL, indexer.GetTokenMetadataPath, ti.Address, ti.Chain)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err

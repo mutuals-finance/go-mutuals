@@ -2,10 +2,8 @@ package task
 
 import (
 	"context"
-	"fmt"
-	"github.com/SplitFi/go-splitfi/tokenprocessing"
-
 	"encoding/json"
+	"fmt"
 	"time"
 
 	gcptasks "cloud.google.com/go/cloudtasks/apiv2"
@@ -134,7 +132,7 @@ func CreateTaskForAssetProcessing(ctx context.Context, message TokenProcessingAs
 		MessageType: &taskspb.Task_HttpRequest{
 			HttpRequest: &taskspb.HttpRequest{
 				HttpMethod: taskspb.HttpMethod_POST,
-				Url:        fmt.Sprintf("%s%s", env.GetString("TOKEN_PROCESSING_URL"), tokenprocessing.ProcessAssetsForOwnerPath),
+				Url:        fmt.Sprintf("%s%s", env.GetString("TOKEN_PROCESSING_URL"), "/owners/process/token"),
 				Headers: map[string]string{
 					"Content-type": "application/json",
 					"sentry-trace": span.TraceID.String(),

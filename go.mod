@@ -55,10 +55,10 @@ require (
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	roci.dev/fracdex v0.0.0-20220111221836-dbd126571100
 )
 
 require (
+	github.com/google/wire v0.5.0
 	github.com/sourcegraph/conc v0.3.0
 	go.mozilla.org/sops/v3 v3.7.3
 )
@@ -127,6 +127,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/pprof v0.0.0-20220412212628-83db2b799d1f // indirect
+	github.com/google/subcommands v1.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect

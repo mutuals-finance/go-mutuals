@@ -412,6 +412,17 @@ func (q *Queries) GetAssetsBySplitChainAddressPaginate(ctx context.Context, id p
 	return items, nil
 }
 
+const getCurrentTime = `-- name: GetCurrentTime :one
+select now()::timestamptz
+`
+
+func (q *Queries) GetCurrentTime(ctx context.Context) (time.Time, error) {
+	row := q.db.QueryRow(ctx, getCurrentTime)
+	var column_1 time.Time
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const getEvent = `-- name: GetEvent :one
 SELECT id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false
 `

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/lib/pq"
 	"time"
 
 	"github.com/SplitFi/go-splitfi/service/persist"
@@ -15,6 +14,7 @@ import (
 // AssetRepository represents an asset repository in the postgres database
 type AssetRepository struct {
 	db                                 *sql.DB
+	queries                            *db.Queries
 	getByOwnerStmt                     *sql.Stmt
 	getByOwnerPaginateStmt             *sql.Stmt
 	getByTokenStmt                     *sql.Stmt
@@ -26,7 +26,7 @@ type AssetRepository struct {
 }
 
 // NewAssetRepository creates a new postgres repository for interacting with assets
-func NewAssetRepository(db *sql.DB) *AssetRepository {
+func NewAssetRepository(db *sql.DB, queries *db.Queries) *AssetRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -76,7 +76,7 @@ func NewAssetRepository(db *sql.DB) *AssetRepository {
 	updateAssetByIdentifiersUnsafeStmt, err := db.PrepareContext(ctx, `UPDATE assets SET BALANCE = $1, BLOCK_NUMBER = $2, LAST_UPDATED = now() WHERE OWNER_ADDRESS = $3 AND TOKEN_ADDRESS = $4;`)
 	checkNoErr(err)
 
-	return &AssetRepository{db: db, getByOwnerStmt: getByOwnerStmt, getByOwnerPaginateStmt: getByOwnerPaginateStmt, getByTokenStmt: getByTokenStmt, getByTokenPaginateStmt: getByTokenPaginateStmt, getByIdentifiersStmt: getByIdentifiersStmt, upsertByIdentifiersStmt: upsertByIdentifiersStmt, updateAssetUnsafeStmt: updateAssetUnsafeStmt, updateAssetByIdentifiersUnsafeStmt: updateAssetByIdentifiersUnsafeStmt}
+	return &AssetRepository{db: db, queries: queries, getByOwnerStmt: getByOwnerStmt, getByOwnerPaginateStmt: getByOwnerPaginateStmt, getByTokenStmt: getByTokenStmt, getByTokenPaginateStmt: getByTokenPaginateStmt, getByIdentifiersStmt: getByIdentifiersStmt, upsertByIdentifiersStmt: upsertByIdentifiersStmt, updateAssetUnsafeStmt: updateAssetUnsafeStmt, updateAssetByIdentifiersUnsafeStmt: updateAssetByIdentifiersUnsafeStmt}
 }
 
 // GetByOwner retrieves all assets associated with an owner ethereum address
@@ -191,19 +191,16 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 
 	var errors []error
 
-	params := db.UpsertTokensParams{
-		OwnedByWallets: []string{},
-	}
+	params := db.UpsertAssetsParams{}
 
 	for i := range assets {
 		a := &assets[i]
 		params.ID = append(params.ID, persist.GenerateID().String())
 		params.Version = append(params.Version, a.Version.Int32())
-		params.Quantity = append(params.Quantity, a.Balance.String())
+		params.Balance = append(params.Balance, a.Balance.String())
+		params.OwnerAddress = append(params.OwnerAddress, a.OwnerAddress.String())
+		params.TokenAddress = append(params.TokenAddress, a.Token.ContractAddress.String())
 		params.BlockNumber = append(params.BlockNumber, a.BlockNumber.BigInt().Int64())
-		params.OwnerUserID = append(params.OwnerUserID, a.OwnerAddress.String())
-		params.Chain = append(params.Chain, int32(a.Token.Chain))
-		params.Contract = append(params.Contract, a.Token.ContractAddress.String())
 
 		// Defer error checking until now to keep the code above from being
 		// littered with multiline "if" statements
@@ -221,12 +218,11 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 	for i := range assets {
 		a := &assets[i]
 		(*a).ID = upserted[i].ID
-		(*a).CreationTime = upserted[i].CreatedAt
-		(*a).LastUpdated = upserted[i].LastUpdated
-		(*a).LastSynced = upserted[i].LastSynced
+		(*a).CreationTime = persist.CreationTime(upserted[i].CreatedAt)
+		(*a).LastUpdated = persist.LastUpdatedTime(upserted[i].LastUpdated)
 	}
 
-	return upserted[0].LastSynced, assets, nil
+	return upserted[0].LastUpdated, assets, nil
 
 }
 
@@ -288,45 +284,6 @@ func (a *AssetRepository) UpdateByIdentifiers(pCtx context.Context, pOwnerAddres
 	}
 	if rowsAffected == 0 {
 		return persist.ErrAssetNotFoundByIdentifiers{OwnerAddress: pOwnerAddress, TokenAddress: pTokenAddress, Chain: pChain}
-	}
-	return nil
-}
-
-func (a *AssetRepository) upsertAssets(pCtx context.Context, pAssets []persist.Asset) error {
-	if len(pAssets) == 0 {
-		return nil
-	}
-	// Postgres only allows 65535 parameters at a time.
-	// TODO: Consider trying this implementation at some point instead of chunking:
-	//       https://klotzandrew.com/blog/postgres-passing-65535-parameter-limit
-	paramsPerRow := 20
-	rowsPerQuery := 65535 / paramsPerRow
-
-	if len(pAssets) > rowsPerQuery {
-		logger.For(pCtx).Debugf("Chunking %d tokens recursively into %d queries", len(pAssets), len(pAssets)/rowsPerQuery)
-		next := pAssets[rowsPerQuery:]
-		current := pAssets[:rowsPerQuery]
-		if err := a.upsertByIdentifiersStmt(pCtx, next); err != nil {
-			return fmt.Errorf("error with asset upsert: %w", err)
-		}
-		pAssets = current
-	}
-
-	sqlStr := `INSERT INTO assets (ID,TOKEN_TYPE,CHAIN,NAME,DESCRIPTION,TOKEN_ID,TOKEN_URI,QUANTITY,OWNER_ADDRESS,OWNERSHIP_HISTORY,TOKEN_METADATA,CONTRACT_ADDRESS,EXTERNAL_URL,BLOCK_NUMBER,VERSION,CREATED_AT,LAST_UPDATED,DELETED,IS_SPAM) VALUES `
-	vals := make([]interface{}, 0, len(pAssets)*paramsPerRow)
-	for i, asset := range pAssets {
-		sqlStr += generateValuesPlaceholders(paramsPerRow, i*paramsPerRow, nil) + ","
-		vals = append(vals, persist.GenerateID(), asset.TokenType, asset.Chain, asset.Name, asset.Description, asset.TokenID, asset.TokenURI, asset.Quantity, asset.OwnerAddress, pq.Array(asset.OwnershipHistory), asset.TokenMetadata, asset.ContractAddress, asset.ExternalURL, asset.BlockNumber, asset.Version, asset.CreationTime, asset.LastUpdated, asset.Deleted, asset.IsSpam)
-	}
-
-	sqlStr = sqlStr[:len(sqlStr)-1]
-
-	sqlStr += ` ON CONFLICT (TOKEN_ID,CONTRACT_ADDRESS) WHERE TOKEN_TYPE = 'ERC-721' DO UPDATE SET TOKEN_TYPE = EXCLUDED.TOKEN_TYPE,CHAIN = EXCLUDED.CHAIN,NAME = EXCLUDED.NAME,DESCRIPTION = EXCLUDED.DESCRIPTION,TOKEN_URI = EXCLUDED.TOKEN_URI,QUANTITY = EXCLUDED.QUANTITY,OWNER_ADDRESS = EXCLUDED.OWNER_ADDRESS,OWNERSHIP_HISTORY = tokens.OWNERSHIP_HISTORY || EXCLUDED.OWNERSHIP_HISTORY,TOKEN_METADATA = EXCLUDED.TOKEN_METADATA,EXTERNAL_URL = EXCLUDED.EXTERNAL_URL,BLOCK_NUMBER = EXCLUDED.BLOCK_NUMBER,VERSION = EXCLUDED.VERSION,CREATED_AT = EXCLUDED.CREATED_AT,LAST_UPDATED = EXCLUDED.LAST_UPDATED,DELETED = EXCLUDED.DELETED,IS_SPAM = EXCLUDED.IS_SPAM WHERE EXCLUDED.BLOCK_NUMBER > tokens.BLOCK_NUMBER;`
-
-	_, err := a.db.ExecContext(pCtx, sqlStr, vals...)
-	if err != nil {
-		logger.For(pCtx).Errorf("SQL: %s", sqlStr)
-		return fmt.Errorf("failed to upsert assets: %w", err)
 	}
 	return nil
 }

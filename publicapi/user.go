@@ -28,7 +28,6 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/go-playground/validator/v10"
 	shell "github.com/ipfs/go-ipfs-api"
-	"roci.dev/fracdex"
 )
 
 type UserAPI struct {
@@ -363,14 +362,6 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 		"bio":      {bio, "bio"},
 	}); err != nil {
 		return "", "", err
-	}
-
-	if splitPos == "" {
-		first, err := fracdex.KeyBetween("", "")
-		if err != nil {
-			return "", "", err
-		}
-		splitPos = first
 	}
 
 	userID, splitID, err = user.CreateUser(ctx, authenticator, username, email, bio, splitName, splitDesc, splitPos, api.repos.UserRepository, api.repos.SplitRepository, api.multichainProvider)

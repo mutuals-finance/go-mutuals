@@ -10,7 +10,7 @@ import (
 
 var (
 	OwnersGroupPath                   = "/owners"
-	ProcessAssetsForOwnerPathRelative = "/process/erc20"
+	ProcessAssetsForOwnerPathRelative = "/process/token"
 	ProcessAssetsForOwnerPath         = OwnersGroupPath + ProcessAssetsForOwnerPathRelative
 )
 
