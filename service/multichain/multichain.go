@@ -10,7 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sourcegraph/conc"
 	"sort"
-	"strings"
 	"time"
 
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
@@ -125,20 +124,20 @@ type Verifier interface {
 
 // TokensOwnerFetcher supports fetching tokens for syncing
 type TokensOwnerFetcher interface {
-	GetTokensByWalletAddress(ctx context.Context, address persist.Address) ([]ChainAgnosticToken, error)
-	GetTokenByTokenIdentifiersAndOwner(context.Context, persist.TokenChainAddress, persist.Address) (ChainAgnosticToken, error)
+	GetTokensByWalletAddress(ctx context.Context, address persist.Address) ([]persist.Token, error)
+	GetTokenByTokenIdentifiersAndOwner(context.Context, persist.TokenChainAddress, persist.Address) (persist.Token, error)
 	GetAssetByTokenIdentifiersAndOwner(context.Context, persist.TokenChainAddress, persist.Address) (persist.Asset, error)
 }
 
 // TokensIncrementalOwnerFetcher supports fetching tokens for syncing incrementally
 type TokensIncrementalOwnerFetcher interface {
 	// GetTokensIncrementallyByWalletAddress NOTE: implementation MUST close the rec channel
-	GetTokensIncrementallyByWalletAddress(ctx context.Context, address persist.Address) (rec <-chan persist.TokenChainAddress, errChain <-chan error)
+	GetTokensIncrementallyByWalletAddress(ctx context.Context, address persist.Address) (rec <-chan []persist.Token, errChain <-chan error)
 }
 
 type TokensContractFetcher interface {
-	GetTokensByContractAddress(ctx context.Context, contract persist.Address, limit int, offset int) ([]ChainAgnosticToken, error)
-	GetTokensByContractAddressAndOwner(ctx context.Context, owner persist.Address, contract persist.Address, limit int, offset int) ([]ChainAgnosticToken, error)
+	GetTokensByContractAddress(ctx context.Context, contract persist.Address, limit int, offset int) ([]persist.Token, error)
+	GetTokensByContractAddressAndOwner(ctx context.Context, owner persist.Address, contract persist.Address, limit int, offset int) ([]persist.Token, error)
 }
 
 // TokenMetadataFetcher supports fetching token metadata
@@ -147,7 +146,7 @@ type TokenMetadataFetcher interface {
 }
 
 type TokenDescriptorsFetcher interface {
-	GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (ChainAgnosticTokenDescriptors, error)
+	GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error)
 }
 
 type ProviderSupplier interface {
@@ -357,22 +356,23 @@ func (p *Provider) RefreshTokenDescriptorsByTokenIdentifiers(ctx context.Context
 
 	for _, tokenFetcher := range tokenFetchers {
 
-		token, err := tokenFetcher.GetTokenDescriptorsByTokenIdentifiers(ctx, ti)
+		_, err := tokenFetcher.GetTokenDescriptorsByTokenIdentifiers(ctx, ti)
+		// token, err := tokenFetcher.GetTokenDescriptorsByTokenIdentifiers(ctx, ti)
 		if err == nil {
 			tokenExists = true
-			// token
-			if token.Name != "" && !contractNameBlacklist[strings.ToLower(token.Name)] {
-				finalTokenDescriptors.Name = token.Name
-			}
-			if token.Symbol != "" {
-				finalTokenDescriptors.Symbol = token.Symbol
-			}
-			if token.Logo != "" {
-				finalTokenDescriptors.Logo = token.Logo
-			}
-			if token.Decimals >= 0 {
-				finalTokenDescriptors.Decimals = token.Decimals
-			}
+			// TODO add token metadata
+			//if token.Name != "" && !contractNameBlacklist[strings.ToLower(token.Name)] {
+			//	finalTokenDescriptors.Name = token.Name
+			//}
+			//if token.Symbol != "" {
+			//	finalTokenDescriptors.Symbol = token.Symbol
+			//}
+			//if token.Logo != "" {
+			//	finalTokenDescriptors.Logo = token.Logo
+			//}
+			//if token.Decimals >= 0 {
+			//	finalTokenDescriptors.Decimals = token.Decimals
+			//}
 		} else {
 			logger.For(ctx).Infof("token %s not found for refresh (err: %s)", ti.String(), err)
 		}
