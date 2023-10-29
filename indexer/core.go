@@ -161,8 +161,11 @@ func ValidateEnv() {
 }
 
 func newRepos(storageClient *storage.Client) (persist.TokenRepository, persist.AssetRepository, persist.SplitRepository) {
-	pgClient := postgres.MustCreateClient()
-	return postgres.NewTokenRepository(pgClient), postgres.NewAssetRepository(pgClient), postgres.NewSplitRepository(pgClient)
+	pg := postgres.MustCreateClient()
+	pgx := postgres.NewPgxClient()
+	queries := coredb.New(pgx)
+
+	return postgres.NewTokenRepository(pg), postgres.NewAssetRepository(pg, queries), postgres.NewSplitRepository(pg)
 }
 
 func initSentry() {

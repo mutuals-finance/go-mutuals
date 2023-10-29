@@ -14,7 +14,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
 	"github.com/SplitFi/go-splitfi/service/multichain/eth"
-	"github.com/SplitFi/go-splitfi/service/multichain/infura"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/redis"
@@ -203,10 +202,8 @@ func polygonProvidersConfig(alchemyProvider *alchemy.Provider, reservoirProvider
 func ethFallbackProvider(httpClient *http.Client, cache *tokenMetadataCache) multichain.SyncFailureFallbackProvider {
 	chain := _wireChainValue5
 	provider := newAlchemyProvider(httpClient, chain, cache)
-	infuraProvider := infura.NewProvider(httpClient)
 	syncFailureFallbackProvider := multichain.SyncFailureFallbackProvider{
 		Primary:  provider,
-		Fallback: infuraProvider,
 	}
 	return syncFailureFallbackProvider
 }
