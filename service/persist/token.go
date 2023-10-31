@@ -75,6 +75,26 @@ const (
 	MaxChainValue = ChainOptimism
 )
 
+var L1Chains = map[Chain]L1Chain{
+	ChainOptimism: L1Chain(ChainETH),
+	ChainPolygon:  L1Chain(ChainETH),
+	ChainArbitrum: L1Chain(ChainETH),
+	ChainETH:      L1Chain(ChainETH),
+}
+
+var L1ChainGroups = map[L1Chain][]Chain{
+	L1Chain(ChainETH): EvmChains,
+}
+
+var AllChains = []Chain{ChainETH, ChainArbitrum, ChainPolygon, ChainOptimism}
+var EvmChains = util.MapKeys(evmChains)
+var evmChains map[Chain]bool = map[Chain]bool{
+	ChainETH:      true,
+	ChainOptimism: true,
+	ChainPolygon:  true,
+	ChainArbitrum: true,
+}
+
 const (
 	// URITypeIPFS represents an IPFS URI
 	URITypeIPFS URIType = "ipfs"
@@ -146,6 +166,8 @@ type TokenCountType string
 
 // Chain represents which blockchain a token is on
 type Chain int
+
+type L1Chain Chain
 
 // Logo represents the URL for an ERC20 token logo
 type Logo string
@@ -493,6 +515,22 @@ func (c Chain) MarshalGQL(w io.Writer) {
 	case ChainOptimism:
 		w.Write([]byte(`"Optimism"`))
 	}
+}
+
+func (c Chain) L1Chain() L1Chain {
+	lc, ok := L1Chains[c]
+	if !ok {
+		panic("l1 chain not found")
+	}
+	return lc
+}
+
+func (c Chain) L1ChainGroup() []Chain {
+	cg, ok := L1ChainGroups[c.L1Chain()]
+	if !ok {
+		panic("chain group not found")
+	}
+	return cg
 }
 
 // URL turns a token's URI into a URL

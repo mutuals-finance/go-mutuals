@@ -36,9 +36,6 @@ type Provider struct {
 	Queries *db.Queries
 	Cache   *redis.Cache
 	Chains  map[persist.Chain][]any
-
-	// some chains use the addresses of other chains, this will map of chain we want tokens from => chain that's address will be used for lookup
-	WalletOverrides WalletOverrideMap
 }
 
 // BlockchainInfo retrieves blockchain info from all chains
@@ -153,8 +150,6 @@ type ProviderSupplier interface {
 	GetSubproviders() []any
 }
 
-type WalletOverrideMap = map[persist.Chain][]persist.Chain
-
 // providersMatchingInterface returns providers that adhere to the given interface
 func providersMatchingInterface[T any](providers []any) []T {
 	matches := make([]T, 0)
@@ -203,7 +198,7 @@ func (p *Provider) matchingWallets(wallets []persist.Wallet, chains []persist.Ch
 		for _, wallet := range wallets {
 			if wallet.Chain == chain {
 				matches[chain] = append(matches[chain], wallet.Address)
-			} else if overrides, ok := p.WalletOverrides[chain]; ok && util.Contains(overrides, wallet.Chain) {
+			} else if overrides := wallet.Chain.L1ChainGroup(); util.Contains(overrides, wallet.Chain) {
 				matches[chain] = append(matches[chain], wallet.Address)
 			}
 		}
