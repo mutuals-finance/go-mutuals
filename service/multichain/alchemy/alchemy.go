@@ -205,7 +205,7 @@ func NewProvider(chain persist.Chain, httpClient *http.Client) *Provider {
 }
 
 // GetBlockchainInfo retrieves blockchain info for ETH
-func (d *Provider) GetBlockchainInfo(ctx context.Context) (multichain.BlockchainInfo, error) {
+func (d *Provider) GetBlockchainInfo() multichain.BlockchainInfo {
 	chainID := 0
 	switch d.chain {
 	case persist.ChainOptimism:
@@ -216,23 +216,35 @@ func (d *Provider) GetBlockchainInfo(ctx context.Context) (multichain.Blockchain
 	return multichain.BlockchainInfo{
 		Chain:   d.chain,
 		ChainID: chainID,
-	}, nil
+	}
 }
 
 // GetTokensByWalletAddress retrieves tokens for a wallet address on the Ethereum Blockchain
-func (d *Provider) GetTokensByWalletAddress(ctx context.Context, addr persist.Address, limit, offset int) ([]persist.Token, error) {
-	url := fmt.Sprintf("%s/getNFTs?owner=%s&withMetadata=true", d.alchemyAPIURL, addr)
+func (d *Provider) GetTokensByWalletAddress(ctx context.Context, address persist.Address) ([]persist.Token, error) {
+	url := fmt.Sprintf("%s/getNFTs?owner=%s&withMetadata=true", d.alchemyAPIURL, address)
 	if d.chain == persist.ChainPolygon {
 		url += "&excludeFilters[]=SPAM"
 	}
-	tokens, err := getNFTsPaginate(ctx, url, 100, "pageKey", limit, offset, "", d.httpClient, &getNFTsResponse{})
+	tokens, err := getNFTsPaginate(ctx, url, 100, "pageKey", 0, 0, "", d.httpClient, &getNFTsResponse{})
 	if err != nil {
 		return nil, err
 	}
 
-	cTokens := alchemyTokensToChainAgnosticTokensForOwner(persist.EthereumAddress(addr), tokens)
+	cTokens := alchemyTokensToChainAgnosticTokensForOwner(persist.EthereumAddress(address), tokens)
 
 	return cTokens, nil
+}
+
+// GetAssetByTokenIdentifiersAndOwner retrieves assets by token identifiers for a wallet address
+func (d *Provider) GetAssetByTokenIdentifiersAndOwner(ctx context.Context, ti persist.TokenChainAddress, ownerAddress persist.Address) (persist.Asset, error) {
+	// TODO
+	return persist.Asset{}, nil
+}
+
+// GetTokenByTokenIdentifiersAndOwner retrieves assets by token identifiers for a wallet address
+func (d *Provider) GetTokenByTokenIdentifiersAndOwner(ctx context.Context, ti persist.TokenChainAddress, ownerAddress persist.Address) (persist.Token, error) {
+	// TODO
+	return persist.Token{}, nil
 }
 
 func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, defaultLimit int, pageKeyName string, limit, offset int, pageKey string, httpClient *http.Client, result T) ([]Token, error) {
@@ -314,20 +326,28 @@ func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, def
 	return tokens, nil
 }
 
-// // GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
-// func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (persist.TokenMetadata, error) {
-// 	tokens, _, err := d.getTokenWithMetadata(ctx, ti, false, 0)
-// 	if err != nil {
-// 		return persist.TokenMetadata{}, err
-// 	}
+// GetTokensIncrementallyByWalletAddress retrieves tokens for a wallet address on the Ethereum Blockchain
+func (d *Provider) GetTokensIncrementallyByWalletAddress(ctx context.Context, address persist.Address) (<-chan []persist.Token, <-chan error) {
+	rec := make(chan []persist.Token)
+	errChan := make(chan error)
 
-// 	if len(tokens) == 0 {
-// 		return persist.TokenMetadata{}, fmt.Errorf("no token found for contract address %s and token ID %s", ti.ContractAddress, ti.TokenID)
-// 	}
+	return rec, errChan
+}
 
-// 	token := tokens[0]
-// 	return token.TokenMetadata, nil
-// }
+// GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
+func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
+	// 	tokens, _, err := d.getTokenWithMetadata(ctx, ti, false, 0)
+	// 	if err != nil {
+	// 		return persist.TokenMetadata{}, err
+	// 	}
+
+	// 	if len(tokens) == 0 {
+	// 		return persist.TokenMetadata{}, fmt.Errorf("no token found for contract address %s and token ID %s", ti.ContractAddress, ti.TokenID)
+	// 	}
+
+	// 	token := tokens[0]
+	return persist.TokenMetadata{}, nil
+}
 
 func (d *Provider) getTokenWithMetadata(ctx context.Context, ti persist.TokenChainAddress, forceRefresh bool, timeout time.Duration) ([]persist.Token, error) {
 	if timeout == 0 {
@@ -370,8 +390,8 @@ func (d *Provider) getTokenWithMetadata(ctx context.Context, ti persist.TokenCha
 }
 
 // GetTokensByContractAddress retrieves tokens for a contract address on the Ethereum Blockchain
-func (d *Provider) GetTokensByContractAddress(ctx context.Context, contractAddress persist.Address, limit, offset int) ([]persist.Token, error) {
-	url := fmt.Sprintf("%s/getNFTsForCollection?contractAddress=%s&withMetadata=true&tokenUriTimeoutInMs=20000", d.alchemyAPIURL, contractAddress)
+func (d *Provider) GetTokensByContractAddress(ctx context.Context, contract persist.Address, limit int, offset int) ([]persist.Token, error) {
+	url := fmt.Sprintf("%s/getNFTsForCollection?contractAddress=%s&withMetadata=true&tokenUriTimeoutInMs=20000", d.alchemyAPIURL, contract)
 	tokens, err := getNFTsPaginate(ctx, url, 100, "startToken", limit, offset, "", d.httpClient, &getNFTsForCollectionResponse{})
 	if err != nil {
 		return nil, err
@@ -382,14 +402,14 @@ func (d *Provider) GetTokensByContractAddress(ctx context.Context, contractAddre
 		return nil, err
 	}
 	if len(cTokens) == 0 {
-		return nil, fmt.Errorf("no contract found for contract address %s", contractAddress)
+		return nil, fmt.Errorf("no contract found for contract address %s", contract)
 	}
 	return cTokens, nil
 }
 
-func (d *Provider) GetTokensByContractAddressAndOwner(ctx context.Context, contractAddress persist.Address, ownerAddress persist.Address, limit, offset int) ([]persist.Token, error) {
-	url := fmt.Sprintf("%s/getNFTsForCollection?contractAddress=%s&withMetadata=true&tokenUriTimeoutInMs=20000", d.alchemyAPIURL, contractAddress)
-	tokens, err := getNFTsPaginate(ctx, url, 100, "startToken", limit, offset, "", d.httpClient, &getNFTsForCollectionWithOwnerResponse{owner: persist.EthereumAddress(ownerAddress), d: d, ctx: ctx})
+func (d *Provider) GetTokensByContractAddressAndOwner(ctx context.Context, owner persist.Address, contract persist.Address, limit int, offset int) ([]persist.Token, error) {
+	url := fmt.Sprintf("%s/getNFTsForCollection?contractAddress=%s&withMetadata=true&tokenUriTimeoutInMs=20000", d.alchemyAPIURL, contract)
+	tokens, err := getNFTsPaginate(ctx, url, 100, "startToken", limit, offset, "", d.httpClient, &getNFTsForCollectionWithOwnerResponse{owner: persist.EthereumAddress(owner), d: d, ctx: ctx})
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +419,7 @@ func (d *Provider) GetTokensByContractAddressAndOwner(ctx context.Context, contr
 		return nil, err
 	}
 	if len(cTokens) == 0 {
-		return nil, fmt.Errorf("no contract found for contract address %s", contractAddress)
+		return nil, fmt.Errorf("no contract found for contract address %s", contract)
 	}
 	return cTokens, nil
 }
@@ -426,7 +446,11 @@ func (d *Provider) GetTokensByTokenIdentifiersAndOwner(ctx context.Context, toke
 	return token, nil
 }
 
-type contractMetadataResponse struct {
+func (d *Provider) GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
+	return persist.TokenMetadata{}, nil
+}
+
+type GetContractMetadataResponse struct {
 	Address          persist.EthereumAddress `json:"address"`
 	ContractMetadata ContractMetadata        `json:"contractMetadata"`
 }

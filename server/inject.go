@@ -87,7 +87,6 @@ func ethProviderSet(envInit, *cloudtasks.Client, *http.Client, *tokenMetadataCac
 	wire.Build(
 		rpc.NewEthClient,
 		ethProvidersConfig,
-		wire.Value(persist.ChainETH),
 		// Add providers for Ethereum here
 		eth.NewProvider,
 		ethFallbackProvider,
@@ -126,7 +125,6 @@ func ethRequirements(
 // optimismProviderSet is a wire injector that creates the set of Optimism providers
 func optimismProviderSet(*http.Client, *tokenMetadataCache) optimismProviderList {
 	wire.Build(
-		rpc.NewEthClient,
 		optimismProvidersConfig,
 		wire.Value(persist.ChainOptimism),
 		// Add providers for Optimism here
@@ -160,7 +158,6 @@ func optimismRequirements(
 // arbitrumProviderSet is a wire injector that creates the set of Arbitrum providers
 func arbitrumProviderSet(*http.Client, *tokenMetadataCache) arbitrumProviderList {
 	wire.Build(
-		rpc.NewEthClient,
 		arbitrumProvidersConfig,
 		wire.Value(persist.ChainArbitrum),
 		// Add providers for Optimism here
@@ -210,6 +207,7 @@ func polygonProvidersConfig(alchemyProvider *alchemy.Provider) polygonProviderLi
 		wire.Bind(new(multichain.TokensOwnerFetcher), util.ToPointer(alchemyProvider)),
 		wire.Bind(new(multichain.TokensIncrementalOwnerFetcher), util.ToPointer(alchemyProvider)),
 		wire.Bind(new(multichain.TokensContractFetcher), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(multichain.TokenMetadataFetcher), util.ToPointer(alchemyProvider)),
 		polygonRequirements,
 	)
 	return nil

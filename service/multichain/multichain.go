@@ -122,14 +122,14 @@ type Verifier interface {
 // TokensOwnerFetcher supports fetching tokens for syncing
 type TokensOwnerFetcher interface {
 	GetTokensByWalletAddress(ctx context.Context, address persist.Address) ([]persist.Token, error)
-	GetTokenByTokenIdentifiersAndOwner(context.Context, persist.TokenChainAddress, persist.Address) (persist.Token, error)
-	GetAssetByTokenIdentifiersAndOwner(context.Context, persist.TokenChainAddress, persist.Address) (persist.Asset, error)
+	GetTokenByTokenIdentifiersAndOwner(ctx context.Context, ti persist.TokenChainAddress, ownerAddress persist.Address) (persist.Token, error)
+	GetAssetByTokenIdentifiersAndOwner(ctx context.Context, ti persist.TokenChainAddress, ownerAddress persist.Address) (persist.Asset, error)
 }
 
 // TokensIncrementalOwnerFetcher supports fetching tokens for syncing incrementally
 type TokensIncrementalOwnerFetcher interface {
 	// GetTokensIncrementallyByWalletAddress NOTE: implementation MUST close the rec channel
-	GetTokensIncrementallyByWalletAddress(ctx context.Context, address persist.Address) (rec <-chan []persist.Token, errChain <-chan error)
+	GetTokensIncrementallyByWalletAddress(ctx context.Context, address persist.Address) (<-chan []persist.Token, <-chan error)
 }
 
 type TokensContractFetcher interface {

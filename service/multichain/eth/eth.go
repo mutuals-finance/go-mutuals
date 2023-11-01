@@ -38,9 +38,9 @@ type Provider struct {
 }
 
 // NewProvider creates a new ethereum Provider
-func NewProvider(indexerBaseURL string, httpClient *http.Client, ec *ethclient.Client, tc *cloudtasks.Client) *Provider {
+func NewProvider(httpClient *http.Client, ec *ethclient.Client, tc *cloudtasks.Client) *Provider {
 	return &Provider{
-		indexerBaseURL: indexerBaseURL,
+		indexerBaseURL: env.GetString("INDEXER_HOST"),
 		httpClient:     httpClient,
 		ethClient:      ec,
 		taskClient:     tc,
@@ -52,6 +52,20 @@ func (d *Provider) GetBlockchainInfo(ctx context.Context) (multichain.Blockchain
 	return multichain.BlockchainInfo{
 		Chain:   persist.ChainETH,
 		ChainID: 0,
+	}, nil
+}
+
+func (d *Provider) GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
+	// TODO
+	metadata, err := d.GetTokenMetadataByTokenIdentifiers(ctx, ti)
+	if err != nil {
+		return persist.TokenMetadata{}, err
+	}
+	name, _ := metadata["name"].(string)
+	symbol, _ := metadata["contract_symbol"].(string)
+	return persist.TokenMetadata{
+		"Name":   name,
+		"Symbol": symbol,
 	}, nil
 }
 

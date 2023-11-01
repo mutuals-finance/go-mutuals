@@ -213,6 +213,16 @@ func (f SyncFailureFallbackProvider) GetTokenByTokenIdentifiersAndOwner(ctx cont
 	return token, nil
 }
 
+// GetAssetByTokenIdentifiersAndOwner retrieves assets by token identifiers for a wallet address
+func (f SyncFailureFallbackProvider) GetAssetByTokenIdentifiersAndOwner(ctx context.Context, ti persist.TokenChainAddress, ownerAddress persist.Address) (persist.Asset, error) {
+	asset, err := f.Primary.GetAssetByTokenIdentifiersAndOwner(ctx, ti, ownerAddress)
+	if err != nil {
+		logger.For(ctx).WithError(err).Warn("failed to get asset by token identifiers and owner from primary in failure fallback")
+		return f.Fallback.GetAssetByTokenIdentifiersAndOwner(ctx, ti, ownerAddress)
+	}
+	return asset, nil
+}
+
 func (f SyncFailureFallbackProvider) GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, id persist.TokenChainAddress) (persist.TokenMetadata, error) {
 	token, err := f.Primary.GetTokenDescriptorsByTokenIdentifiers(ctx, id)
 	if err != nil {
