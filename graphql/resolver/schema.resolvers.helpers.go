@@ -34,8 +34,10 @@ import (
 var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 
 var nodeFetcher = model.NodeFetcher{
+	OnAsset:            resolveAssetByAssetID,
 	OnSplit:            resolveSplitBySplitID,
 	OnSplitFiUser:      resolveSplitFiUserByUserID,
+	OnRecipient:        resolveRecipientByID,
 	OnToken:            resolveTokenByTokenID,
 	OnWallet:           resolveWalletByAddress,
 	OnViewer:           resolveViewerByID,
@@ -214,6 +216,20 @@ func resolveViewerSplitBySplitID(ctx context.Context, splitID persist.DBID) (*mo
 	}, nil
 }
 
+func resolveRecipientByID(ctx context.Context, recipientID persist.DBID) (*model.Recipient, error) {
+	/*
+		TODO
+		recipient, err := publicapi.For(ctx).Split.GetRecipientById(ctx, recipientID)
+
+			if err != nil {
+				return nil, err
+			}
+
+			return recipientToModel(ctx, *recipient), nil
+	*/
+	return &model.Recipient{}, nil
+}
+
 /*
 TODO
 func resolveViewerExperiencesByUserID(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {
@@ -227,6 +243,20 @@ func resolveViewerSocialsByUserID(ctx context.Context, userID persist.DBID) (*mo
 
 func resolveUserSocialsByUserID(ctx context.Context, userID persist.DBID) (*model.SocialAccounts, error) {
 	return publicapi.For(ctx).User.GetDisplayedSocials(ctx, userID)
+}
+
+func resolveAssetByAssetID(ctx context.Context, assetID persist.DBID) (*model.Asset, error) {
+	/*
+		TODO
+		asset, err := publicapi.For(ctx).Asset.GetAssetById(ctx, assetID)
+
+			if err != nil {
+				return nil, err
+			}
+
+			return assetToModel(ctx, *asset), nil
+	*/
+	return &model.Asset{}, nil
 }
 
 func resolveTokenByTokenID(ctx context.Context, tokenID persist.DBID) (*model.Token, error) {
