@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"strings"
 
@@ -270,22 +271,42 @@ func (wa WalletType) MarshalGQL(w io.Writer) {
 	}
 }
 
-func (n Address) String() string {
-	return string(n)
+func (a Address) String() string {
+	return string(a)
 }
 
 // Value implements the database/sql driver Valuer interface for the NullString type
-func (n Address) Value() (driver.Value, error) {
-	if n.String() == "" {
+func (a Address) Value() (driver.Value, error) {
+	if a.String() == "" {
 		return "", nil
 	}
-	return strings.ToValidUTF8(strings.ReplaceAll(n.String(), "\\u0000", ""), ""), nil
+	return strings.ToValidUTF8(strings.ReplaceAll(a.String(), "\\u0000", ""), ""), nil
 }
 
+// Address returns the ethereum address byte array
+func (a Address) Address() common.Address {
+	return common.HexToAddress(a.String())
+}
+
+// MarshallJSON implements the json.Marshaller interface for the address type
+//func (a Address) MarshalJSON() ([]byte, error) {
+//	return json.Marshal(a.String())
+//}
+
+// UnmarshalJSON implements the json.Unmarshaller interface for the address type
+//func (a *Address) UnmarshalJSON(b []byte) error {
+//	var s string
+//	if err := json.Unmarshal(b, &s); err != nil {
+//		return err
+//	}
+//	*a = Address(normalizeAddress(strings.ToLower(s)))
+//	return nil
+//}
+
 // Scan implements the database/sql Scanner interface for the NullString type
-func (n *Address) Scan(value interface{}) error {
+func (a *Address) Scan(value interface{}) error {
 	if value == nil {
-		*n = Address("")
+		*a = Address("")
 		return nil
 	}
 
@@ -298,7 +319,7 @@ func (n *Address) Scan(value interface{}) error {
 		asString = string(asUint8Array)
 	}
 
-	*n = Address(asString)
+	*a = Address(asString)
 	return nil
 }
 

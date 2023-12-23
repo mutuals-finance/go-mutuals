@@ -254,7 +254,7 @@ type Token struct {
 	Deleted         NullBool        `json:"-"`
 	LastUpdated     LastUpdatedTime `json:"last_updated"`
 	TokenType       TokenType       `json:"token_type"`
-	ContractAddress EthereumAddress `json:"contract_address"`
+	ContractAddress Address         `json:"contract_address"`
 	Chain           Chain           `json:"chain"`
 	Name            NullString      `json:"name"`
 	Symbol          NullString      `json:"symbol"`
@@ -309,10 +309,10 @@ type TokenUpdateTotalSupplyInput struct {
 
 // TokenRepository represents a repository for interacting with persisted tokens
 type TokenRepository interface {
-	GetByWallet(context.Context, EthereumAddress, int64, int64) ([]Token, error)
-	GetByTokenIdentifiers(context.Context, EthereumAddress, int64, int64) ([]Token, error)
-	GetByIdentifiers(context.Context, EthereumAddress) (Token, error)
-	TokenExistsByTokenIdentifiers(context.Context, EthereumAddress) (bool, error)
+	GetByWallet(context.Context, Address, int64, int64) ([]Token, error)
+	GetByTokenIdentifiers(context.Context, Address, int64, int64) ([]Token, error)
+	GetByIdentifiers(context.Context, Address) (Token, error)
+	TokenExistsByTokenIdentifiers(context.Context, Address) (bool, error)
 	Upsert(context.Context, Token) error
 	BulkUpsert(context.Context, []Token) error
 	UpdateByID(context.Context, DBID, interface{}) error
@@ -322,13 +322,13 @@ type TokenRepository interface {
 
 // ErrTokenNotFoundByTokenIdentifiers is an error that is returned when a token is not found by its identifiers (token ID and contract address)
 type ErrTokenNotFoundByTokenIdentifiers struct {
-	ContractAddress EthereumAddress
+	ContractAddress Address
 }
 
 // ErrTokenNotFoundByIdentifiers is an error that is returned when a token is not found by its identifiers (token ID and contract address and owner address)
 type ErrTokenNotFoundByIdentifiers struct {
-	ContractAddress EthereumAddress
-	OwnerAddress    EthereumAddress
+	ContractAddress Address
+	OwnerAddress    Address
 }
 
 // ErrTokenNotFoundByID is an error that is returned when a token is not found by its ID

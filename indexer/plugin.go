@@ -24,7 +24,7 @@ const (
 // TransferPluginMsg is used to communicate to a plugin.
 type TransferPluginMsg struct {
 	transfer rpc.Transfer
-	key      persist.EthereumTokenIdentifiers
+	key      persist.TokenChainAddress
 }
 
 // TransferPlugins are plugins that add contextual data to a transfer.
@@ -50,7 +50,7 @@ func (b blockchainOrderInfo) Less(other blockchainOrderInfo) bool {
 }
 
 type orderedBlockChainData interface {
-	TokenIdentifiers() persist.EthereumTokenIdentifiers
+	TokenIdentifiers() persist.TokenChainAddress
 	OrderInfo() blockchainOrderInfo
 }
 
@@ -73,7 +73,7 @@ func NewTransferPlugins(ctx context.Context) TransferPlugins {
 }
 
 // RunTransferPlugins returns when all plugins have received the message. Every plugin recieves the same message.
-func RunTransferPlugins(ctx context.Context, transfer rpc.Transfer, key persist.EthereumTokenIdentifiers, plugins []chan<- TransferPluginMsg) {
+func RunTransferPlugins(ctx context.Context, transfer rpc.Transfer, key persist.TokenChainAddress, plugins []chan<- TransferPluginMsg) {
 	span, _ := tracing.StartSpan(ctx, "indexer.plugin", "submitMessage")
 	defer tracing.FinishSpan(span)
 
@@ -88,7 +88,7 @@ func RunTransferPlugins(ctx context.Context, transfer rpc.Transfer, key persist.
 
 // RunTransferPluginReceiver runs a plugin receiver and will update the out map with the results of the receiver, ensuring that the most recent data is kept.
 // If the incoming channel is nil, the function will return immediately.
-func RunTransferPluginReceiver[T, V orderedBlockChainData](ctx context.Context, wg *sync.WaitGroup, mu *sync.Mutex, receiver TransferPluginReceiver[T, V], incoming <-chan T, out map[persist.EthereumTokenIdentifiers]V) {
+func RunTransferPluginReceiver[T, V orderedBlockChainData](ctx context.Context, wg *sync.WaitGroup, mu *sync.Mutex, receiver TransferPluginReceiver[T, V], incoming <-chan T, out map[persist.TokenChainAddress]V) {
 	span, _ := tracing.StartSpan(ctx, "indexer.plugin", "runPluginReceiver")
 	defer tracing.FinishSpan(span)
 
@@ -139,7 +139,7 @@ func newAssetsPlugin(ctx context.Context) assetTransfersPlugin {
 
 		wp := workerpool.New(pluginPoolSize)
 
-		seenContracts := map[persist.EthereumAddress]bool{}
+		seenContracts := map[persist.Address]bool{}
 
 		for msg := range in {
 
@@ -203,17 +203,11 @@ func newTokensPlugin(ctx context.Context) tokenTransfersPlugin {
 
 		wp := workerpool.New(pluginPoolSize)
 
-		seenTokens := map[persist.EthereumTokenIdentifiers]bool{}
+		seenTokens := map[persist.TokenChainAddress]bool{}
 
 		for msg := range in {
 
-			contract, err := msg.key.GetParts()
-			if err != nil {
-				panic(err)
-			}
-			ids := persist.NewEthereumTokenIdentifiers(contract)
-
-			if seenTokens[ids] && msg.transfer.TokenType != persist.TokenTypeERC20 {
+			if seenTokens[msg.key] && msg.transfer.TokenType != persist.TokenTypeERC20 {
 				continue
 			}
 
@@ -233,14 +227,14 @@ func newTokensPlugin(ctx context.Context) tokenTransfersPlugin {
 						TokenType:       msg.transfer.TokenType,
 						Chain:           persist.ChainETH,
 						BlockNumber:     msg.transfer.BlockNumber,
-						ContractAddress: contract,
+						ContractAddress: msg.key.Address,
 					},
 				}
 
 				tracing.FinishSpan(child)
 			})
 
-			seenTokens[ids] = true
+			seenTokens[msg.key] = true
 		}
 
 		wp.StopWait()

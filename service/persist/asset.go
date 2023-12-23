@@ -14,8 +14,8 @@ type AssetIdentifiers string
 // AssetChainAddress represents a unique identifier for an asset
 type AssetChainAddress struct {
 	Chain        Chain
-	TokenAddress EthereumAddress
-	OwnerAddress EthereumAddress
+	TokenAddress Address
+	OwnerAddress Address
 }
 
 // AssetDB represents an asset in the database.
@@ -23,7 +23,7 @@ type AssetChainAddress struct {
 type AssetDB struct {
 	ID           DBID            `json:"id" binding:"required"`
 	Version      NullInt32       `json:"version"` // schema version for this model
-	OwnerAddress EthereumAddress `json:"owner_address"`
+	OwnerAddress Address         `json:"owner_address"`
 	TokenAddress Address         `json:"token"`
 	Chain        Chain           `json:"chain"`
 	Balance      NullInt32       `json:"balance"`
@@ -38,7 +38,7 @@ type Asset struct {
 	Version      NullInt32       `json:"version"` // schema version for this model
 	LastUpdated  LastUpdatedTime `json:"last_updated"`
 	CreationTime CreationTime    `json:"created_at"`
-	OwnerAddress EthereumAddress `json:"owner_address"`
+	OwnerAddress Address         `json:"owner_address"`
 	Token        Token           `json:"token"`
 	Balance      NullInt32       `json:"balance"`
 	BlockNumber  BlockNumber     `json:"block_number"`
@@ -58,20 +58,20 @@ type ErrAssetNotFoundByID struct {
 
 // ErrAssetNotFoundByIdentifiers is an error that is returned when a asset is not found by its identifiers (owner address and token address)
 type ErrAssetNotFoundByIdentifiers struct {
-	OwnerAddress EthereumAddress
-	TokenAddress EthereumAddress
+	OwnerAddress Address
+	TokenAddress Address
 	Chain        Chain
 }
 
 // AssetRepository represents a repository for interacting with persisted contracts
 type AssetRepository interface {
-	GetByOwner(context.Context, EthereumAddress, int64, int64) ([]Asset, error)
-	GetByToken(context.Context, EthereumAddress, Chain, int64, int64) ([]Asset, error)
-	GetByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Chain) (Asset, error)
+	GetByOwner(context.Context, Address, int64, int64) ([]Asset, error)
+	GetByToken(context.Context, Address, Chain, int64, int64) ([]Asset, error)
+	GetByIdentifiers(context.Context, Address, Address, Chain) (Asset, error)
 	BulkUpsert(context.Context, []Asset) (time.Time, []Asset, error)
-	UpsertByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Asset) error
+	UpsertByIdentifiers(context.Context, Address, Address, Asset) error
 	UpdateByID(context.Context, DBID, interface{}) error
-	UpdateByIdentifiers(context.Context, EthereumAddress, EthereumAddress, Chain, interface{}) error
+	UpdateByIdentifiers(context.Context, Address, Address, Chain, interface{}) error
 }
 
 func (e ErrAssetNotFoundByID) Error() string {
@@ -83,7 +83,7 @@ func (e ErrAssetNotFoundByIdentifiers) Error() string {
 }
 
 // NewAssetIdentifiers creates a new asset identifier
-func NewAssetIdentifiers(pContractAddress EthereumAddress, pOwnerAddress EthereumAddress) AssetIdentifiers {
+func NewAssetIdentifiers(pContractAddress Address, pOwnerAddress Address) AssetIdentifiers {
 	return AssetIdentifiers(fmt.Sprintf("%s+%s", pContractAddress, pOwnerAddress))
 }
 
@@ -92,12 +92,12 @@ func (b AssetIdentifiers) String() string {
 }
 
 // GetParts returns the parts of the token identifiers
-func (b AssetIdentifiers) GetParts() (EthereumAddress, EthereumAddress, error) {
+func (b AssetIdentifiers) GetParts() (Address, Address, error) {
 	parts := strings.Split(b.String(), "+")
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("invalid token identifiers: %s", b)
 	}
-	return EthereumAddress(EthereumAddress(parts[0]).String()), EthereumAddress(EthereumAddress(parts[1]).String()), nil
+	return Address(parts[0]), Address(parts[1]), nil
 }
 
 // Value implements the driver.Valuer interface

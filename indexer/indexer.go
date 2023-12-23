@@ -55,8 +55,6 @@ const (
 var (
 	rpcEnabled            = false // Enables external RPC calls
 	erc20ABI, _           = contracts.IERC20MetaData.GetAbi()
-	animationKeywords     = []string{"animation", "video"}
-	imageKeywords         = []string{"image"}
 	defaultTransferEvents = []eventHash{
 		transferEventHash,
 	}
@@ -85,12 +83,12 @@ type transfersAtBlock struct {
 }
 
 type tokenAtBlock struct {
-	ti    persist.EthereumTokenIdentifiers
+	ti    persist.TokenChainAddress
 	boi   blockchainOrderInfo
 	token persist.Token
 }
 
-func (o tokenAtBlock) TokenIdentifiers() persist.EthereumTokenIdentifiers {
+func (o tokenAtBlock) TokenIdentifiers() persist.TokenChainAddress {
 	return o.ti
 }
 
@@ -99,12 +97,12 @@ func (o tokenAtBlock) OrderInfo() blockchainOrderInfo {
 }
 
 type assetAtBlock struct {
-	ti    persist.EthereumTokenIdentifiers
+	ti    persist.TokenChainAddress
 	boi   blockchainOrderInfo
 	asset persist.Asset
 }
 
-func (a assetAtBlock) TokenIdentifiers() persist.EthereumTokenIdentifiers {
+func (a assetAtBlock) TokenIdentifiers() persist.TokenChainAddress {
 	return a.ti
 }
 
@@ -497,11 +495,11 @@ func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
 			}
 
 			result = append(result, rpc.Transfer{
-				From:            persist.EthereumAddress(pLog.Topics[1].Hex()),
-				To:              persist.EthereumAddress(pLog.Topics[2].Hex()),
+				From:            persist.Address(pLog.Topics[1].Hex()),
+				To:              persist.Address(pLog.Topics[2].Hex()),
 				Amount:          value.Uint64(),
 				BlockNumber:     persist.BlockNumber(pLog.BlockNumber),
-				ContractAddress: persist.EthereumAddress(pLog.Address.Hex()),
+				ContractAddress: persist.Address(pLog.Address.Hex()),
 				TokenType:       persist.TokenTypeERC20,
 				TxHash:          pLog.TxHash,
 				BlockHash:       pLog.BlockHash,
@@ -645,7 +643,7 @@ func (i *indexer) processTransfers(ctx context.Context, transfers []transfersAtB
 	for _, transferAtBlock := range transfers {
 		for _, transfer := range transferAtBlock.transfers {
 
-			key := persist.NewEthereumTokenIdentifiers(transfer.ContractAddress)
+			key := persist.NewTokenChainAddress(transfer.ContractAddress, i.chain)
 
 			RunTransferPlugins(ctx, transfer, key, plugins)
 
@@ -662,8 +660,8 @@ func (i *indexer) processTokens(ctx context.Context, tokensOut <-chan tokenAtBlo
 	wg := &sync.WaitGroup{}
 	mu := &sync.Mutex{}
 
-	assetsMap := make(map[persist.EthereumTokenIdentifiers]assetAtBlock)
-	tokensMap := make(map[persist.EthereumTokenIdentifiers]tokenAtBlock)
+	assetsMap := make(map[persist.TokenChainAddress]assetAtBlock)
+	tokensMap := make(map[persist.TokenChainAddress]tokenAtBlock)
 
 	RunTransferPluginReceiver(ctx, wg, mu, assetsPluginReceiver, assetsOut, assetsMap)
 	RunTransferPluginReceiver(ctx, wg, mu, tokensPluginReceiver, tokensOut, tokensMap)
@@ -676,9 +674,9 @@ func (i *indexer) processTokens(ctx context.Context, tokensOut <-chan tokenAtBlo
 	i.runDBHooks(ctx, assets, tokens, statsID)
 }
 
-func tokensAtBlockToTokens(tokensAtBlock map[persist.EthereumTokenIdentifiers]tokenAtBlock) []persist.Token {
+func tokensAtBlockToTokens(tokensAtBlock map[persist.TokenChainAddress]tokenAtBlock) []persist.Token {
 	tokens := make([]persist.Token, 0, len(tokensAtBlock))
-	seen := make(map[persist.EthereumTokenIdentifiers]bool)
+	seen := make(map[persist.TokenChainAddress]bool)
 	for _, tAtB := range tokensAtBlock {
 		if seen[tAtB.TokenIdentifiers()] {
 			continue
@@ -689,9 +687,9 @@ func tokensAtBlockToTokens(tokensAtBlock map[persist.EthereumTokenIdentifiers]to
 	return tokens
 }
 
-func assetsAtBlockToAssets(assetsAtBlock map[persist.EthereumTokenIdentifiers]assetAtBlock) []persist.Asset {
+func assetsAtBlockToAssets(assetsAtBlock map[persist.TokenChainAddress]assetAtBlock) []persist.Asset {
 	assets := make([]persist.Asset, 0, len(assetsAtBlock))
-	seen := make(map[persist.EthereumTokenIdentifiers]bool)
+	seen := make(map[persist.TokenChainAddress]bool)
 	for _, aAtB := range assetsAtBlock {
 		if seen[aAtB.TokenIdentifiers()] {
 			continue

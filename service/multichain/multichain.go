@@ -374,7 +374,7 @@ func (p *Provider) RefreshTokenDescriptorsByTokenIdentifiers(ctx context.Context
 	}
 
 	if !tokenExists {
-		return persist.ErrTokenNotFoundByTokenIdentifiers{ContractAddress: persist.EthereumAddress(ti.Address)}
+		return persist.ErrTokenNotFoundByTokenIdentifiers{ContractAddress: ti.Address}
 	}
 
 	return p.Queries.UpdateTokenMetadataFieldsByChainAddress(ctx, db.UpdateTokenMetadataFieldsByChainAddressParams{
@@ -388,7 +388,7 @@ func (p *Provider) RefreshTokenDescriptorsByTokenIdentifiers(ctx context.Context
 }
 
 func (p *Provider) processTokensForUser(ctx context.Context, ownerAddress persist.Address, assetsFromProviders []chainAssets, chains []persist.Chain) ([]persist.Asset, []persist.Asset, error) {
-	existingAssets, err := p.Repos.AssetRepository.GetByOwner(ctx, persist.EthereumAddress(ownerAddress), 0, 0)
+	existingAssets, err := p.Repos.AssetRepository.GetByOwner(ctx, ownerAddress, 0, 0)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -510,15 +510,15 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 				continue
 			}
 
-			ti := persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), chainAsset.chain)
+			ti := persist.NewTokenChainAddress(asset.Token.ContractAddress, chainAsset.chain)
 			_, seen := seenAssets[ti]
 
-			contractAddress := chainAsset.chain.NormalizeAddress(persist.Address(asset.Token.ContractAddress))
+			contractAddress := persist.Address(chainAsset.chain.NormalizeAddress(persist.Address(asset.Token.ContractAddress)))
 			candidateAsset := persist.Asset{
 				// TODO set all asset props
-				Token:        persist.Token{Chain: chainAsset.chain, TokenType: asset.Token.TokenType, ContractAddress: persist.EthereumAddress(contractAddress)},
+				Token:        persist.Token{Chain: chainAsset.chain, TokenType: asset.Token.TokenType, ContractAddress: contractAddress},
 				BlockNumber:  asset.BlockNumber,
-				OwnerAddress: persist.EthereumAddress(ownerWallet),
+				OwnerAddress: ownerWallet,
 			}
 
 			// If we've never seen the incoming token before, then add it.

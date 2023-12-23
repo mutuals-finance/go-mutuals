@@ -80,7 +80,7 @@ func NewTokenRepository(db *sql.DB) *TokenRepository {
 }
 
 // GetByWallet retrieves all tokens associated with a wallet
-func (t *TokenRepository) GetByWallet(pCtx context.Context, pAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Token, error) {
+func (t *TokenRepository) GetByWallet(pCtx context.Context, pAddress persist.Address, limit int64, offset int64) ([]persist.Token, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
@@ -111,7 +111,7 @@ func (t *TokenRepository) GetByWallet(pCtx context.Context, pAddress persist.Eth
 }
 
 // GetByTokenIdentifiers gets a token by its token ID and contract address
-func (t *TokenRepository) GetByTokenIdentifiers(pCtx context.Context, pContractAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Token, error) {
+func (t *TokenRepository) GetByTokenIdentifiers(pCtx context.Context, pContractAddress persist.Address, limit int64, offset int64) ([]persist.Token, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
@@ -145,7 +145,7 @@ func (t *TokenRepository) GetByTokenIdentifiers(pCtx context.Context, pContractA
 }
 
 // GetByIdentifiers gets a token by its contract address
-func (t *TokenRepository) GetByIdentifiers(pCtx context.Context, pContractAddress persist.EthereumAddress) (persist.Token, error) {
+func (t *TokenRepository) GetByIdentifiers(pCtx context.Context, pContractAddress persist.Address) (persist.Token, error) {
 	var token persist.Token
 	err := t.getByIdentifiersStmt.QueryRowContext(pCtx, pContractAddress).Scan(&token.ID, &token.TokenType, &token.Chain, &token.Name, &token.Symbol, &token.Logo, &token.ContractAddress, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated)
 	if err != nil {
@@ -158,7 +158,7 @@ func (t *TokenRepository) GetByIdentifiers(pCtx context.Context, pContractAddres
 }
 
 // TokenExistsByTokenIdentifiers gets a token by its token ID and contract address and owner address
-func (t *TokenRepository) TokenExistsByTokenIdentifiers(pCtx context.Context, pContractAddress persist.EthereumAddress) (bool, error) {
+func (t *TokenRepository) TokenExistsByTokenIdentifiers(pCtx context.Context, pContractAddress persist.Address) (bool, error) {
 	var exists bool
 	err := t.getExistsByTokenIdentifiersStmt.QueryRowContext(pCtx, pContractAddress).Scan(&exists)
 	if err != nil {

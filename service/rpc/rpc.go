@@ -81,11 +81,11 @@ type TokenContractMetadata struct {
 // Transfer represents a Transfer from the RPC response
 type Transfer struct {
 	BlockNumber     persist.BlockNumber
-	From            persist.EthereumAddress
-	To              persist.EthereumAddress
+	From            persist.Address
+	To              persist.Address
 	TokenType       persist.TokenType
 	Amount          uint64
-	ContractAddress persist.EthereumAddress
+	ContractAddress persist.Address
 	// These are geth types which are useful for getting more details about a transaction.
 	TxHash    common.Hash
 	BlockHash common.Hash

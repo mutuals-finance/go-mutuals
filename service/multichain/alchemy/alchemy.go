@@ -629,7 +629,7 @@ func alchemyTokenToChainAgnosticToken(owner persist.EthereumAddress, token Token
 		//Balance:         persist.HexString(bal.Text(16)),
 		Name:            persist.NullString(token.ContractMetadata.Name),
 		Symbol:          persist.NullString(token.ContractMetadata.Symbol),
-		ContractAddress: persist.EthereumAddress(token.Contract.Address),
+		ContractAddress: persist.Address(token.Contract.Address),
 		TokenType:       tokenType,
 	}
 
