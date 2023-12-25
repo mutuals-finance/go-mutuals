@@ -130,15 +130,15 @@ const ZeroAddress Address = "0x0000000000000000000000000000000000000000"
 
 var gltfFields = []string{"scene", "scenes", "nodes", "meshes", "accessors", "bufferViews", "buffers", "materials", "textures", "images", "samplers", "cameras", "skins", "animations", "extensions", "extras"}
 
-// EthereumAddressList is a slice of Addresses, used to implement scanner/valuer interfaces
-type EthereumAddressList []Address
+// AddressList is a slice of Addresses, used to implement scanner/valuer interfaces
+type AddressList []Address
 
-func (l EthereumAddressList) Value() (driver.Value, error) {
+func (l AddressList) Value() (driver.Value, error) {
 	return pq.Array(l).Value()
 }
 
 // Scan implements the Scanner interface for the AddressList type
-func (l *EthereumAddressList) Scan(value interface{}) error {
+func (l *AddressList) Scan(value interface{}) error {
 	return pq.Array(l).Scan(value)
 }
 
@@ -174,8 +174,8 @@ type TokenMetadata map[string]interface{}
 // HexString represents a hex number of any size
 type HexString string
 
-// EthereumAddressAtBlock is an address connected to a block number
-type EthereumAddressAtBlock struct {
+// AddressAtBlock is an address connected to a block number
+type AddressAtBlock struct {
 	Address Address     `json:"address"`
 	Block   BlockNumber `json:"block"`
 }
@@ -733,16 +733,16 @@ func (m TokenMetadata) MarshalJSON() ([]byte, error) {
 }
 
 // Scan implements the database/sql Scanner interface for the AddressAtBlock type
-func (a *EthereumAddressAtBlock) Scan(src interface{}) error {
+func (a *AddressAtBlock) Scan(src interface{}) error {
 	if src == nil {
-		*a = EthereumAddressAtBlock{}
+		*a = AddressAtBlock{}
 		return nil
 	}
 	return json.Unmarshal(src.([]uint8), a)
 }
 
 // Value implements the database/sql/driver Valuer interface for the AddressAtBlock type
-func (a EthereumAddressAtBlock) Value() (driver.Value, error) {
+func (a AddressAtBlock) Value() (driver.Value, error) {
 	return json.Marshal(a)
 }
 
@@ -851,7 +851,7 @@ func normalizeAddress(address string) string {
 	return "0x" + withoutPrefix[len(withoutPrefix)-40:]
 }
 
-func WalletsToEthereumAddresses(pWallets []Wallet) []Address {
+func WalletsToAddresses(pWallets []Wallet) []Address {
 	result := make([]Address, len(pWallets))
 	for i, wallet := range pWallets {
 		result[i] = wallet.Address
