@@ -16,14 +16,10 @@ func handlersInit(router *gin.Engine, db *sql.DB, stmts *statements, ethcl *ethc
 	users.POST("/merge", mergeUser(db, stmts.getUserByIDStmt, stmts.updateUserStmt, stmts.deleteUserStmt, stmts.getSplitsRawStmt, stmts.deleteSplitStmt, stmts.updateSplitStmt))
 	users.POST("/update", updateUser(stmts.updateUserStmt))
 	users.POST("/delete", deleteUser(db, stmts.deleteUserStmt, stmts.getSplitsRawStmt, stmts.deleteSplitStmt, stmts.deleteCollectionStmt))
-	users.POST("/create", createUser(db, stmts.createUserStmt, stmts.createSplitStmt, stmts.createNonceStmt))
+	users.POST("/create", createUser(db, stmts.createUserStmt, stmts.createNonceStmt))
 
 	raw := api.Group("/raw")
 	raw.POST("/query", queryRaw(db))
-
-	// nfts := api.Group("/nfts")
-	// nfts.GET("/get", getNFTs(stmts.nftRepo))
-	// nfts.GET("/owns", ownsGeneral(ethcl))
 
 	splits := api.Group("/splits")
 	splits.GET("/get", getSplits(stmts.splitRepo))
@@ -33,11 +29,6 @@ func handlersInit(router *gin.Engine, db *sql.DB, stmts *statements, ethcl *ethc
 	snapshot := api.Group("/snapshot")
 	snapshot.GET("/get", getSnapshot(stg))
 	snapshot.POST("/update", updateSnapshot(stg))
-
-	collections := api.Group("/collections")
-	collections.GET("/get", getCollections(stmts.getCollectionsStmt))
-	collections.POST("/update", updateCollection(stmts.updateCollectionStmt))
-	collections.POST("/delete", deleteCollection(stmts.deleteCollectionStmt))
 
 	return router
 }

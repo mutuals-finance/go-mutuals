@@ -2,6 +2,7 @@ package adminapi
 
 import (
 	"context"
+	"github.com/SplitFi/go-splitfi/service/redis"
 
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/auth"
@@ -14,14 +15,15 @@ import (
 )
 
 type AdminAPI struct {
-	repos      *postgres.Repositories
-	queries    *db.Queries
-	validator  *validator.Validate
-	multichain *multichain.Provider
+	repos            *postgres.Repositories
+	queries          *db.Queries
+	authRefreshCache *redis.Cache
+	validator        *validator.Validate
+	multichain       *multichain.Provider
 }
 
-func NewAPI(repos *postgres.Repositories, queries *db.Queries, validator *validator.Validate, mp *multichain.Provider) *AdminAPI {
-	return &AdminAPI{repos, queries, validator, mp}
+func NewAPI(repos *postgres.Repositories, queries *db.Queries, authRefreshCache *redis.Cache, validator *validator.Validate, mp *multichain.Provider) *AdminAPI {
+	return &AdminAPI{repos, queries, authRefreshCache, validator, mp}
 }
 
 func (api *AdminAPI) AddRolesToUser(ctx context.Context, username string, roles []*persist.Role) (*db.User, error) {

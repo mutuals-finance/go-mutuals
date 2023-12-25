@@ -18,19 +18,19 @@ var errMustProvideUserIdentifier = fmt.Errorf("must provide either ID or usernam
 var errNoSplits = errors.New("no splits found for first user")
 
 type getUserInput struct {
-	ID       persist.DBID            `form:"id"`
-	Username string                  `form:"username"`
-	Address  persist.EthereumAddress `form:"address"`
+	ID       persist.DBID    `form:"id"`
+	Username string          `form:"username"`
+	Address  persist.Address `form:"address"`
 }
 type deleteUserInput struct {
 	ID persist.DBID `json:"id" binding:"required"`
 }
 
 type updateUserInput struct {
-	ID        persist.DBID              `json:"id" binding:"required"`
-	Username  string                    `json:"username" binding:"required"`
-	Bio       string                    `json:"bio"`
-	Addresses []persist.EthereumAddress `json:"addresses" binding:"required"`
+	ID        persist.DBID      `json:"id" binding:"required"`
+	Username  string            `json:"username" binding:"required"`
+	Bio       string            `json:"bio"`
+	Addresses []persist.Address `json:"addresses" binding:"required"`
 }
 
 type mergeUserInput struct {
@@ -39,14 +39,13 @@ type mergeUserInput struct {
 }
 
 type createUserInput struct {
-	Addresses []persist.EthereumAddress `json:"addresses" binding:"required"`
-	Username  string                    `json:"username" binding:"required"`
-	Bio       string                    `json:"bio"`
+	Addresses []persist.Address `json:"addresses" binding:"required"`
+	Username  string            `json:"username" binding:"required"`
+	Bio       string            `json:"bio"`
 }
 
 type createUserOutput struct {
-	UserID  persist.DBID `json:"user_id"`
-	SplitID persist.DBID `json:"split_id"`
+	UserID persist.DBID `json:"user_id"`
 }
 
 func getUser(getUserByIDStmt, getUserByUsername, getUserByAddress *sql.Stmt) gin.HandlerFunc {
@@ -80,7 +79,7 @@ func getUser(getUserByIDStmt, getUserByUsername, getUserByAddress *sql.Stmt) gin
 	}
 }
 
-func createUser(db *sql.DB, createUserStmt, createSplitStmt, createNonceStmt *sql.Stmt) gin.HandlerFunc {
+func createUser(db *sql.DB, createUserStmt, createNonceStmt *sql.Stmt) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input createUserInput
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -94,13 +93,8 @@ func createUser(db *sql.DB, createUserStmt, createSplitStmt, createNonceStmt *sq
 			return
 		}
 
-		var userID, splitID persist.DBID
+		var userID persist.DBID
 		if err := tx.StmtContext(c, createUserStmt).QueryRowContext(c, persist.GenerateID(), pq.Array(input.Addresses), input.Username, strings.ToLower(input.Username), input.Bio).Scan(&userID); err != nil {
-			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
-			return
-		}
-
-		if err := tx.StmtContext(c, createSplitStmt).QueryRowContext(c, persist.GenerateID(), userID, pq.Array([]persist.DBID{})).Scan(&splitID); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
@@ -118,8 +112,7 @@ func createUser(db *sql.DB, createUserStmt, createSplitStmt, createNonceStmt *sq
 		}
 
 		c.JSON(http.StatusOK, createUserOutput{
-			UserID:  userID,
-			SplitID: splitID,
+			UserID: userID,
 		})
 	}
 }
@@ -168,20 +161,15 @@ func deleteUser(db *sql.DB, deleteUserStmt, getSplitsStmt, deleteSplitStmt, dele
 
 		for res.Next() {
 			var g persist.SplitDB
-			if err := res.Scan(&g.ID, pq.Array(&g.Collections)); err != nil {
+			if err := res.Scan(&g.ID); err != nil {
 				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 				return
 			}
-			for _, coll := range g.Collections {
-				if _, err := tx.StmtContext(c, deleteCollectionStmt).ExecContext(c, coll); err != nil {
-					rollbackWithErr(c, tx, http.StatusInternalServerError, err)
-					return
-				}
-			}
-			if _, err := tx.StmtContext(c, deleteSplitStmt).ExecContext(c, g.ID); err != nil {
-				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
-				return
-			}
+			// TODO delete split if user is the only recipient
+			//if _, err := tx.StmtContext(c, deleteSplitStmt).ExecContext(c, g.ID); err != nil {
+			//	rollbackWithErr(c, tx, http.StatusInternalServerError, err)
+			//	return
+			//}
 		}
 
 		if err := res.Err(); err != nil {
@@ -239,7 +227,7 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 		splits := make([]persist.SplitDB, 0, 1)
 		for res.Next() {
 			var g persist.SplitDB
-			if err := res.Scan(&g.ID, pq.Array(&g.Collections)); err != nil {
+			if err := res.Scan(&g.ID); err != nil {
 				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 				return
 			}
@@ -261,7 +249,7 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 		secondSplits := make([]persist.SplitDB, 0, 1)
 		for nextRes.Next() {
 			var g persist.SplitDB
-			if err := nextRes.Scan(&g.ID, pq.Array(&g.Collections)); err != nil {
+			if err := nextRes.Scan(&g.ID); err != nil {
 				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 				return
 			}
@@ -273,26 +261,21 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 			return
 		}
 
-		if len(splits) == 0 {
-			rollbackWithErr(c, tx, http.StatusInternalServerError, errNoSplits)
-			return
-		}
-		split := splits[0]
-		if len(secondSplits) > 0 {
-			delStmt := tx.StmtContext(c, deleteSplitsStmt)
-			for _, g := range secondSplits {
-				split.Collections = append(split.Collections, g.Collections...)
-				if _, err := delStmt.ExecContext(c, g.ID); err != nil {
-					rollbackWithErr(c, tx, http.StatusInternalServerError, err)
-					return
-				}
-			}
-		}
-
-		if _, err := tx.StmtContext(c, updateSplitStmt).ExecContext(c, pq.Array(split.Collections), persist.LastUpdatedTime{}, split.ID); err != nil {
-			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
-			return
-		}
+		// TODO: delete splits only if user is last recipient of split
+		//if len(secondSplits) > 0 {
+		//	delStmt := tx.StmtContext(c, deleteSplitsStmt)
+		//	for _, g := range secondSplits {
+		//		if _, err := delStmt.ExecContext(c, g.ID); err != nil {
+		//			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
+		//			return
+		//		}
+		//	}
+		//}
+		//
+		//if _, err := tx.StmtContext(c, updateSplitStmt).ExecContext(c, persist.LastUpdatedTime{}, split.ID); err != nil {
+		//	rollbackWithErr(c, tx, http.StatusInternalServerError, err)
+		//	return
+		//}
 
 		if _, err := tx.StmtContext(c, deleteUserStmt).ExecContext(c, input.SecondUserID); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)

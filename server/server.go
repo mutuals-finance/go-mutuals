@@ -129,12 +129,12 @@ func CoreInit(ctx context.Context, c *Clients, provider *multichain.Provider) *g
 		panic(err)
 	}
 
-	lock := redis.NewLockClient(redis.NotificationLockDB) //lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
-	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQ)   //graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
-	socialCache := redis.NewCache(redis.SocialDB)         // socialCache := redis.NewCache(redis.SocialCache)
-	// authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
+	lock := redis.NewLockClient(redis.NotificationLockDB)                //lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
+	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQ)                  //graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
+	socialCache := redis.NewCache(redis.SocialDB)                        // socialCache := redis.NewCache(redis.SocialCache)
+	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache) // authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
 
-	return handlersInit(router, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, c.MagicLinkClient)
+	return handlersInit(router, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, authRefreshCache, c.MagicLinkClient)
 }
 
 func newSecretsClient() *secretmanager.Client {

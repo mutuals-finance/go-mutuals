@@ -17,15 +17,7 @@ type getSplitsInput struct {
 	UserID persist.DBID `form:"user_id"`
 }
 
-type refreshCacheInput struct {
-	UserID persist.DBID `form:"user_id" binding:"required"`
-}
-
-type backupSplitsInput struct {
-	UserID persist.DBID `form:"user_id" binding:"required"`
-}
-
-func getSplits(galleryRepo postgres.SplitRepository) gin.HandlerFunc {
+func getSplits(splitRepo postgres.SplitRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		var input getSplitsInput
@@ -41,13 +33,13 @@ func getSplits(galleryRepo postgres.SplitRepository) gin.HandlerFunc {
 
 		var splits []persist.Split
 		//var err error
-
+		//
 		//if input.ID == "" {
-		//	gallery, e := galleryRepo.GetByID(c, input.ID)
-		//	splits = []persist.Split{gallery}
+		//	split, e := splitRepo.GetByID(c, input.ID)
+		//	splits = []persist.Split{split}
 		//	err = e
 		//} else {
-		//	splits, err = galleryRepo.GetByUserID(c, input.UserID)
+		//	splits, err = splitRepo.GetByRecipient(c, input.UserID)
 		//}
 		//if err != nil {
 		//	util.ErrResponse(c, http.StatusInternalServerError, err)
