@@ -20,7 +20,7 @@ import (
 )
 
 type errNoMetadataFound struct {
-	Contract persist.EthereumAddress `json:"contract"`
+	Contract persist.Address `json:"contract"`
 }
 
 func (e errNoMetadataFound) Error() string {
@@ -28,7 +28,7 @@ func (e errNoMetadataFound) Error() string {
 }
 
 type getTokenMetadataInput struct {
-	ContractAddress persist.EthereumAddress `form:"contract_address" binding:"required"`
+	ContractAddress persist.Address `form:"contract_address" binding:"required"`
 }
 
 type GetTokenMetadataOutput struct {

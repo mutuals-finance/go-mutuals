@@ -15,7 +15,7 @@ import (
 const ensContractAddress = "0xFaC7BEA255a6990f749363002136aF6556b31e04"
 
 // ResolvesENS checks if an ENS resolves to a given address
-func ResolvesENS(pCtx context.Context, ens string, userAddr persist.EthereumAddress, ethcl *ethclient.Client) (bool, error) {
+func ResolvesENS(pCtx context.Context, ens string, userAddr persist.Address, ethcl *ethclient.Client) (bool, error) {
 
 	instance, err := contracts.NewIENSCaller(common.HexToAddress(ens), ethcl)
 	if err != nil {

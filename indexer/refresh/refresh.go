@@ -52,7 +52,7 @@ var ErrNoFilter = errors.New("no filter")
 var ErrInvalidRefreshRange = errors.New("refresh range is invalid")
 
 // AddressExists checks if an address transacted in a block range.
-func AddressExists(ctx context.Context, fm *BlockFilterManager, address persist.EthereumAddress, from, to persist.BlockNumber) (bool, error) {
+func AddressExists(ctx context.Context, fm *BlockFilterManager, address persist.Address, from, to persist.BlockNumber) (bool, error) {
 	bf, err := fm.Get(ctx, from, to)
 	if err != nil {
 		return false, err

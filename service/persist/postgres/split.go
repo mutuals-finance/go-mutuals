@@ -105,7 +105,7 @@ func (s *SplitRepository) GetByID(ctx context.Context, ID persist.DBID) (persist
 }
 
 // GetByAddress returns a split by its address
-func (s *SplitRepository) GetByAddress(ctx context.Context, address persist.EthereumAddress, chain persist.Chain) (persist.Split, error) {
+func (s *SplitRepository) GetByAddress(ctx context.Context, address persist.Address, chain persist.Chain) (persist.Split, error) {
 	split := persist.Split{}
 	var recipientIDs []persist.DBID
 	var assetIDs []persist.DBID
@@ -134,7 +134,7 @@ func (s *SplitRepository) GetByAddress(ctx context.Context, address persist.Ethe
 }
 
 // GetByRecipient returns splits from a recipient
-func (s *SplitRepository) GetByRecipient(pCtx context.Context, pRecipientAddress persist.EthereumAddress, limit int64, offset int64) ([]persist.Split, error) {
+func (s *SplitRepository) GetByRecipient(pCtx context.Context, pRecipientAddress persist.Address, limit int64, offset int64) ([]persist.Split, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {

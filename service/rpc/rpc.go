@@ -68,7 +68,7 @@ var rateLimited = "429 Too Many Requests"
 
 type Contract struct {
 	BlockNumber persist.BlockNumber
-	Address     persist.EthereumAddress
+	Address     persist.Address
 }
 
 // TokenContractMetadata represents a token contract's metadata
@@ -832,10 +832,10 @@ func GetHTTPHeaders(ctx context.Context, url string) (contentType string, conten
 	return getContentHeaders(ctx, url)
 }
 
-// GetBalanceOfERC1155Token returns the balance of an ERC1155 token
-func GetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (*big.Int, error) {
-	contract := common.HexToAddress(string(pContractAddress))
-	owner := common.HexToAddress(string(pOwnerAddress))
+// GetBalanceOfERC20Token returns the balance of an ERC20 token
+func GetBalanceOfERC20Token(ctx context.Context, pOwnerAddress, pContractAddress persist.Address, ethClient *ethclient.Client) (*big.Int, error) {
+	contract := pContractAddress.Address()
+	owner := pOwnerAddress.Address()
 	instance, err := contracts.NewIERC1155(contract, ethClient)
 	if err != nil {
 		return nil, err
@@ -851,100 +851,18 @@ func GetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddre
 	return bal, nil
 }
 
-// RetryGetBalanceOfERC1155Token calls GetBalanceOfERC1155Token with backoff.
-func RetryGetBalanceOfERC1155Token(ctx context.Context, pOwnerAddress, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (*big.Int, error) {
+// RetryGetBalanceOfERC20Token calls GetBalanceOfERC20Token with backoff.
+func RetryGetBalanceOfERC20Token(ctx context.Context, pOwnerAddress, pContractAddress persist.Address, ethClient *ethclient.Client) (*big.Int, error) {
 	var balance *big.Int
 	var err error
 	for i := 0; i < retry.DefaultRetry.Tries; i++ {
-		balance, err = GetBalanceOfERC1155Token(ctx, pOwnerAddress, pContractAddress, ethClient)
+		balance, err = GetBalanceOfERC20Token(ctx, pOwnerAddress, pContractAddress, ethClient)
 		if !isRateLimitedError(err) {
 			break
 		}
 		retry.DefaultRetry.Sleep(i)
 	}
 	return balance, err
-}
-
-// GetOwnerOfERC721Token returns the Owner of an ERC721 token
-func GetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (persist.EthereumAddress, error) {
-	contract := common.HexToAddress(string(pContractAddress))
-
-	instance, err := contracts.NewIERC721Caller(contract, ethClient)
-	if err != nil {
-		return "", err
-	}
-
-	owner, err := instance.OwnerOf(&bind.CallOpts{
-		Context: ctx,
-	}, big.NewInt(1))
-	if err != nil {
-		return "", err
-	}
-
-	return persist.EthereumAddress(strings.ToLower(owner.String())), nil
-}
-
-// RetryGetOwnerOfERC721Token calls GetOwnerOfERC721Token with backoff.
-func RetryGetOwnerOfERC721Token(ctx context.Context, pContractAddress persist.EthereumAddress, ethClient *ethclient.Client) (persist.EthereumAddress, error) {
-	var owner persist.EthereumAddress
-	var err error
-	for i := 0; i < retry.DefaultRetry.Tries; i++ {
-		owner, err = GetOwnerOfERC721Token(ctx, pContractAddress, ethClient)
-		if !isRateLimitedError(err) {
-			break
-		}
-		retry.DefaultRetry.Sleep(i)
-	}
-	return owner, err
-}
-
-// GetContractCreator returns the address of the contract creator
-func GetContractCreator(ctx context.Context, contractAddress persist.EthereumAddress, ethClient *ethclient.Client) (persist.EthereumAddress, error) {
-	highestBlock, err := ethClient.BlockNumber(ctx)
-	if err != nil {
-		return "", fmt.Errorf("error getting highest block: %s", err.Error())
-	}
-	_, err = ethClient.CodeAt(ctx, contractAddress.Address(), big.NewInt(int64(highestBlock)))
-	if err != nil {
-		return "", fmt.Errorf("error getting code at: %s", err.Error())
-	}
-	lowestBlock := uint64(0)
-
-	for lowestBlock <= highestBlock {
-		midBlock := uint64((highestBlock + lowestBlock) / 2)
-		codeAt, err := ethClient.CodeAt(ctx, contractAddress.Address(), big.NewInt(int64(midBlock)))
-		if err != nil {
-			return "", fmt.Errorf("error getting code at: %s", err.Error())
-		}
-		if len(codeAt) > 0 {
-			highestBlock = midBlock
-		} else {
-			lowestBlock = midBlock
-		}
-
-		if lowestBlock+1 == highestBlock {
-			break
-		}
-	}
-	block, err := ethClient.BlockByNumber(ctx, big.NewInt(int64(highestBlock)))
-	if err != nil {
-		return "", fmt.Errorf("error getting block: %s", err.Error())
-	}
-	txs := block.Transactions()
-	for _, tx := range txs {
-		receipt, err := ethClient.TransactionReceipt(ctx, tx.Hash())
-		if err != nil {
-			return "", fmt.Errorf("error getting transaction receipt: %s", err.Error())
-		}
-		if receipt.ContractAddress == contractAddress.Address() {
-			msg, err := tx.AsMessage(types.HomesteadSigner{}, nil)
-			if err != nil {
-				return "", fmt.Errorf("error getting message: %s", err.Error())
-			}
-			return persist.EthereumAddress(fmt.Sprintf("0x%s", strings.ToLower(msg.From().String()))), nil
-		}
-	}
-	return "", fmt.Errorf("could not find contract creator")
 }
 
 /*

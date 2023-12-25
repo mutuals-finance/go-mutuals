@@ -14,9 +14,9 @@ type Recipient struct {
 	CreationTime CreationTime    `json:"created_at"`
 	LastUpdated  LastUpdatedTime `json:"last_updated"`
 
-	SplitID   DBID            `json:"split_id"`
-	Address   EthereumAddress `json:"recipient_address"`
-	Ownership Ownership       `json:"ownership"`
+	SplitID   DBID      `json:"split_id"`
+	Address   Address   `json:"recipient_address"`
+	Ownership Ownership `json:"ownership"`
 }
 
 // SplitDB represents a split in the database.
@@ -33,7 +33,7 @@ type SplitDB struct {
 	Address        Address         `json:"address"`
 	Name           sql.NullString  `json:"name"`
 	Description    NullString      `json:"description"`
-	CreatorAddress EthereumAddress `json:"creator_address"`
+	CreatorAddress Address         `json:"creator_address"`
 	LogoURL        NullString      `json:"logo_url"`
 	BannerURL      NullString      `json:"banner_url"`
 	BadgeURL       NullString      `json:"badge_url"`
@@ -55,7 +55,7 @@ type Split struct {
 	Address        Address         `json:"address"`
 	Name           NullString      `json:"name"`
 	Description    NullString      `json:"description"`
-	CreatorAddress EthereumAddress `json:"creator_address"`
+	CreatorAddress Address         `json:"creator_address"`
 	LogoURL        NullString      `json:"logo_url"`
 	BannerURL      NullString      `json:"banner_url"`
 	BadgeURL       NullString      `json:"badge_url"`
@@ -67,8 +67,8 @@ type Split struct {
 type SplitRepository interface {
 	Create(context.Context, SplitDB) (DBID, error)
 	GetByID(context.Context, DBID) (Split, error)
-	GetByAddress(context.Context, EthereumAddress, Chain) (Split, error)
-	GetByRecipient(context.Context, EthereumAddress, int64, int64) ([]Split, error)
+	GetByAddress(context.Context, Address, Chain) (Split, error)
+	GetByRecipient(context.Context, Address, int64, int64) ([]Split, error)
 	Upsert(context.Context, SplitDB) error
 }
 
@@ -91,7 +91,7 @@ func (e ErrSplitNotFound) Error() string {
 
 // ErrSplitNotFoundByAddress is returned when a split is not found by its address
 type ErrSplitNotFoundByAddress struct {
-	Address EthereumAddress
+	Address Address
 	Chain   Chain
 }
 

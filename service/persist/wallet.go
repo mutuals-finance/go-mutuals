@@ -3,6 +3,7 @@ package persist
 import (
 	"context"
 	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
@@ -289,19 +290,19 @@ func (a Address) Address() common.Address {
 }
 
 // MarshallJSON implements the json.Marshaller interface for the address type
-//func (a Address) MarshalJSON() ([]byte, error) {
-//	return json.Marshal(a.String())
-//}
+func (a Address) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.String())
+}
 
 // UnmarshalJSON implements the json.Unmarshaller interface for the address type
-//func (a *Address) UnmarshalJSON(b []byte) error {
-//	var s string
-//	if err := json.Unmarshal(b, &s); err != nil {
-//		return err
-//	}
-//	*a = Address(normalizeAddress(strings.ToLower(s)))
-//	return nil
-//}
+func (a *Address) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	*a = Address(normalizeAddress(strings.ToLower(s)))
+	return nil
+}
 
 // Scan implements the database/sql Scanner interface for the NullString type
 func (a *Address) Scan(value interface{}) error {

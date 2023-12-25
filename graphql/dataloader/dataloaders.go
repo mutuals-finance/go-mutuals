@@ -282,7 +282,7 @@ func loadSplitByChainAddress(q *db.Queries) func(context.Context, []persist.Chai
 			errors[i] = err
 
 			if errors[i] == pgx.ErrNoRows {
-				errors[i] = persist.ErrSplitNotFoundByAddress{Address: persist.EthereumAddress(chainAddresses[i].Address()), Chain: chainAddresses[i].Chain()}
+				errors[i] = persist.ErrSplitNotFoundByAddress{Address: chainAddresses[i].Address(), Chain: chainAddresses[i].Chain()}
 			}
 		})
 

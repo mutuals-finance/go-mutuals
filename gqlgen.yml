@@ -76,9 +76,6 @@ models:
   WalletType:
     model:
       - github.com/SplitFi/go-splitfi/service/persist.WalletType
-  EthereumAddress:
-    model:
-      - github.com/SplitFi/go-splitfi/service/persist.EthereumAddress
   SocialAccountType:
     model:
       - github.com/SplitFi/go-splitfi/service/persist.SocialProvider

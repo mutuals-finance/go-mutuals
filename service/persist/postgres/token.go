@@ -251,7 +251,7 @@ func (t *TokenRepository) DeleteByID(pCtx context.Context, pID persist.DBID) err
 	return err
 }
 
-func (t *TokenRepository) deleteTokenUnsafe(pCtx context.Context, pContractAddress persist.EthereumAddress) error {
+func (t *TokenRepository) deleteTokenUnsafe(pCtx context.Context, pContractAddress persist.Address) error {
 	_, err := t.deleteStmt.ExecContext(pCtx, pContractAddress)
 	return err
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/SplitFi/go-splitfi/util"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -126,16 +125,13 @@ const (
 	URITypeNone URIType = "none"
 )
 
-// ZeroAddress is the all-zero Ethereum address
-const ZeroAddress EthereumAddress = "0x0000000000000000000000000000000000000000"
+// ZeroAddress is the all-zero address
+const ZeroAddress Address = "0x0000000000000000000000000000000000000000"
 
 var gltfFields = []string{"scene", "scenes", "nodes", "meshes", "accessors", "bufferViews", "buffers", "materials", "textures", "images", "samplers", "cameras", "skins", "animations", "extensions", "extras"}
 
-// EthereumAddress represents an Ethereum address
-type EthereumAddress string
-
 // EthereumAddressList is a slice of Addresses, used to implement scanner/valuer interfaces
-type EthereumAddressList []EthereumAddress
+type EthereumAddressList []Address
 
 func (l EthereumAddressList) Value() (driver.Value, error) {
 	return pq.Array(l).Value()
@@ -180,8 +176,8 @@ type HexString string
 
 // EthereumAddressAtBlock is an address connected to a block number
 type EthereumAddressAtBlock struct {
-	Address EthereumAddress `json:"address"`
-	Block   BlockNumber     `json:"block"`
+	Address Address     `json:"address"`
+	Block   BlockNumber `json:"block"`
 }
 
 // TokenChainAddress represents an address and a chain for a token
@@ -289,11 +285,11 @@ func (m Media) IsServable() bool {
 
 // TokenContract represents a smart contract's information for an ERC20 or native token
 type TokenContract struct {
-	ContractAddress     EthereumAddress `json:"address"`
-	ContractName        NullString      `json:"name"`
-	ContractImage       NullString      `json:"logo"`
-	ContractSymbol      NullString      `json:"symbol"`
-	ContractTotalSupply NullString      `json:"total_supply"`
+	ContractAddress     Address    `json:"address"`
+	ContractName        NullString `json:"name"`
+	ContractImage       NullString `json:"logo"`
+	ContractSymbol      NullString `json:"symbol"`
+	ContractTotalSupply NullString `json:"total_supply"`
 }
 
 // ContractCollectionNFT represents a contract within a collection nft
@@ -337,7 +333,7 @@ type ErrTokenNotFoundByID struct {
 }
 
 type ErrTokensNotFoundByContract struct {
-	ContractAddress EthereumAddress
+	ContractAddress Address
 }
 
 type svgXML struct {
@@ -673,49 +669,6 @@ func (m *Media) Scan(src interface{}) error {
 	return json.Unmarshal(src.([]uint8), &m)
 }
 
-func (a EthereumAddress) String() string {
-	return normalizeAddress(strings.ToLower(string(a)))
-}
-
-// Address returns the ethereum address byte array
-func (a EthereumAddress) Address() common.Address {
-	return common.HexToAddress(a.String())
-}
-
-// Value implements the database/sql/driver Valuer interface for the address type
-func (a EthereumAddress) Value() (driver.Value, error) {
-	return a.String(), nil
-}
-
-// MarshallJSON implements the json.Marshaller interface for the address type
-func (a EthereumAddress) MarshalJSON() ([]byte, error) {
-	return json.Marshal(a.String())
-}
-
-// UnmarshalJSON implements the json.Unmarshaller interface for the address type
-func (a *EthereumAddress) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-	*a = EthereumAddress(normalizeAddress(strings.ToLower(s)))
-	return nil
-}
-
-// Scan implements the database/sql Scanner interface
-func (a *EthereumAddress) Scan(i interface{}) error {
-	if i == nil {
-		*a = EthereumAddress("")
-		return nil
-	}
-	if it, ok := i.(string); ok {
-		*a = EthereumAddress(it)
-		return nil
-	}
-	*a = EthereumAddress(i.([]uint8))
-	return nil
-}
-
 // Uint64 returns the ethereum block number as a uint64
 func (b BlockNumber) Uint64() uint64 {
 	return uint64(b)
@@ -854,7 +807,7 @@ func (t *TokenType) Scan(src interface{}) error {
 }
 
 // NewEthereumTokenIdentifiers creates a new token identifiers
-func NewEthereumTokenIdentifiers(pContractAddress EthereumAddress) EthereumTokenIdentifiers {
+func NewEthereumTokenIdentifiers(pContractAddress Address) EthereumTokenIdentifiers {
 	return EthereumTokenIdentifiers(fmt.Sprintf("%s", pContractAddress))
 }
 
@@ -863,12 +816,12 @@ func (t EthereumTokenIdentifiers) String() string {
 }
 
 // GetParts returns the parts of the token identifiers
-func (t EthereumTokenIdentifiers) GetParts() (EthereumAddress, error) {
+func (t EthereumTokenIdentifiers) GetParts() (Address, error) {
 	parts := strings.Split(t.String(), "+")
 	if len(parts) != 1 {
 		return "", fmt.Errorf("invalid token identifiers: %s", t)
 	}
-	return EthereumAddress(EthereumAddress(parts[0]).String()), nil
+	return Address(parts[0]), nil
 }
 
 // Value implements the driver.Valuer interface
@@ -898,10 +851,10 @@ func normalizeAddress(address string) string {
 	return "0x" + withoutPrefix[len(withoutPrefix)-40:]
 }
 
-func WalletsToEthereumAddresses(pWallets []Wallet) []EthereumAddress {
-	result := make([]EthereumAddress, len(pWallets))
+func WalletsToEthereumAddresses(pWallets []Wallet) []Address {
+	result := make([]Address, len(pWallets))
 	for i, wallet := range pWallets {
-		result[i] = EthereumAddress(wallet.Address)
+		result[i] = wallet.Address
 	}
 	return result
 }

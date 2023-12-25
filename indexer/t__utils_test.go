@@ -184,7 +184,7 @@ var ensLogs = []types.Log{
 	},
 }
 
-type expectedSplitsResults map[persist.EthereumAddress]persist.Split
+type expectedSplitsResults map[persist.Address]persist.Split
 type expectedTokenResults map[persist.EthereumTokenIdentifiers]persist.Token
 type expectedAssetResults map[persist.AssetIdentifiers]persist.Asset
 
@@ -192,13 +192,13 @@ var expectedSplits expectedSplitsResults = expectedSplitsResults{
 	persist.ZeroAddress: persist.Split{
 		Name:           "Test Name",
 		Description:    "Test Description",
-		CreatorAddress: persist.EthereumAddress(testAddress),
-		Address:        persist.Address(persist.ZeroAddress),
+		CreatorAddress: persist.Address(testAddress),
+		Address:        persist.ZeroAddress,
 		Chain:          persist.ChainETH,
 		LogoURL:        "https://example.com/logo/1.png",
 		BadgeURL:       "https://example.com/badge/1.png",
 		BannerURL:      "https://example.com/banner/1.png",
-		Recipients:     []persist.Recipient{{Address: persist.EthereumAddress(testAddress), Ownership: 1}},
+		Recipients:     []persist.Recipient{{Address: persist.Address(testAddress), Ownership: 1}},
 	},
 }
 
@@ -233,21 +233,21 @@ var expectedResults expectedTokenResults = expectedTokenResults{
 }
 
 var expectedAssets expectedAssetResults = expectedAssetResults{
-	persist.NewAssetIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7", persist.EthereumAddress(testAddress)): {
-		OwnerAddress: persist.EthereumAddress(testAddress),
+	persist.NewAssetIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7", persist.Address(testAddress)): {
+		OwnerAddress: persist.Address(testAddress),
 		Token:        expectedResults[persist.NewEthereumTokenIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7")],
 		Balance:      100,
 		BlockNumber:  23,
 	},
-	persist.NewAssetIdentifiers("", persist.EthereumAddress(testAddress)): {
-		OwnerAddress: persist.EthereumAddress(testAddress),
+	persist.NewAssetIdentifiers("", persist.Address(testAddress)): {
+		OwnerAddress: persist.Address(testAddress),
 		Token:        expectedResults[persist.NewEthereumTokenIdentifiers("0xdAC17F958D2ee523a2206206994597C13D831ec7")],
 		Balance:      12,
 		BlockNumber:  24,
 	},
 }
 
-func expectedTokensForAddress(address persist.EthereumAddress) int {
+func expectedTokensForAddress(address persist.Address) int {
 	count := 0
 	for _, asset := range expectedAssets {
 		if asset.OwnerAddress == address {
@@ -256,7 +256,7 @@ func expectedTokensForAddress(address persist.EthereumAddress) int {
 	}
 	return count
 }
-func expectedSplitsForAddress(address persist.EthereumAddress) int {
+func expectedSplitsForAddress(address persist.Address) int {
 	count := 0
 	for _, split := range expectedSplits {
 		for _, recipient := range split.Recipients {
@@ -268,9 +268,9 @@ func expectedSplitsForAddress(address persist.EthereumAddress) int {
 	return count
 }
 
-func expectedTokens() []persist.EthereumAddress {
-	addresses := make([]persist.EthereumAddress, 0, len(expectedResults))
-	seen := map[persist.EthereumAddress]struct{}{}
+func expectedTokens() []persist.Address {
+	addresses := make([]persist.Address, 0, len(expectedResults))
+	seen := map[persist.Address]struct{}{}
 	for _, token := range expectedResults {
 		if _, ok := seen[token.ContractAddress]; !ok {
 			seen[token.ContractAddress] = struct{}{}

@@ -25,7 +25,7 @@ type MiscAPI struct {
 	storageClient *storage.Client
 }
 
-func (api MiscAPI) GetGeneralAllowlist(ctx context.Context) ([]persist.EthereumAddress, error) {
+func (api MiscAPI) GetGeneralAllowlist(ctx context.Context) ([]persist.Address, error) {
 	// Nothing to validate
 
 	bucket := env.GetString("SNAPSHOT_BUCKET")
@@ -38,7 +38,7 @@ func (api MiscAPI) GetGeneralAllowlist(ctx context.Context) ([]persist.EthereumA
 		return nil, err
 	}
 
-	var addresses []persist.EthereumAddress
+	var addresses []persist.Address
 	err = json.NewDecoder(r).Decode(&addresses)
 	if err != nil {
 		return nil, err

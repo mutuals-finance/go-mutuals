@@ -101,7 +101,7 @@ func (d *Provider) GetDisplayNameByAddress(ctx context.Context, addr persist.Add
 	errChan := make(chan error)
 	go func() {
 		// no context? who do these guys think they are!? I had to add a goroutine to make sure this doesn't block forever
-		domain, err := ens.ReverseResolve(d.ethClient, persist.EthereumAddress(addr).Address())
+		domain, err := ens.ReverseResolve(d.ethClient, addr.Address())
 		if err != nil {
 			errChan <- err
 			return
@@ -125,7 +125,7 @@ func (d *Provider) WalletCreated(ctx context.Context, userID persist.DBID, walle
 	if env.GetString("ENV") == "local" {
 		return nil
 	}
-	input := task.ValidateNFTsMessage{OwnerAddress: persist.EthereumAddress(wallet.String())}
+	input := task.ValidateNFTsMessage{OwnerAddress: wallet}
 
 	return task.CreateTaskForWalletValidation(ctx, input, d.taskClient)
 }

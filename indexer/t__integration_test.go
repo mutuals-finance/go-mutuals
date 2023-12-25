@@ -31,7 +31,7 @@ func TestIndexLogs_Success(t *testing.T) {
 
 	t.Run("it stores splits in the db", func(t *testing.T) {
 		t.SkipNow()
-		splits := addressHasSplitsInDB(t, a, i.splitRepo, persist.EthereumAddress(testAddress), expectedSplitsForAddress(persist.EthereumAddress(testAddress)))
+		splits := addressHasSplitsInDB(t, a, i.splitRepo, persist.Address(testAddress), expectedSplitsForAddress(persist.Address(testAddress)))
 		for _, split := range splits {
 			splitMatchesExpected(t, a, split)
 		}
@@ -47,7 +47,7 @@ func TestIndexLogs_Success(t *testing.T) {
 
 	t.Run("it updates an accounts assets", func(t *testing.T) {
 		t.SkipNow()
-		assets := addressHasAssetsInDB(t, a, i.assetRepo, persist.EthereumAddress(contribAddress), persist.ChainETH, expectedTokensForAddress(persist.EthereumAddress(testAddress)))
+		assets := addressHasAssetsInDB(t, a, i.assetRepo, persist.Address(contribAddress), persist.ChainETH, expectedTokensForAddress(persist.Address(testAddress)))
 		for _, asset := range assets {
 			assetMatchesExpected(t, a, asset)
 		}
@@ -107,7 +107,7 @@ func TestIndexLogs_Success(t *testing.T) {
 
 }
 
-func tokenExistsInDB(t *testing.T, a *assert.Assertions, tokenRepo persist.TokenRepository, address persist.EthereumAddress) persist.Token {
+func tokenExistsInDB(t *testing.T, a *assert.Assertions, tokenRepo persist.TokenRepository, address persist.Address) persist.Token {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -117,7 +117,7 @@ func tokenExistsInDB(t *testing.T, a *assert.Assertions, tokenRepo persist.Token
 	return tokens[0]
 }
 
-func addressHasAssetsInDB(t *testing.T, a *assert.Assertions, assetRepo persist.AssetRepository, address persist.EthereumAddress, chain persist.Chain, expected int) []persist.Asset {
+func addressHasAssetsInDB(t *testing.T, a *assert.Assertions, assetRepo persist.AssetRepository, address persist.Address, chain persist.Chain, expected int) []persist.Asset {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -127,7 +127,7 @@ func addressHasAssetsInDB(t *testing.T, a *assert.Assertions, assetRepo persist.
 	return assets
 }
 
-func addressHasSplitsInDB(t *testing.T, a *assert.Assertions, splitRepo persist.SplitRepository, address persist.EthereumAddress, expected int) []persist.Split {
+func addressHasSplitsInDB(t *testing.T, a *assert.Assertions, splitRepo persist.SplitRepository, address persist.Address, expected int) []persist.Split {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -151,7 +151,7 @@ func mediaTypeHasExpectedType(t *testing.T, a *assert.Assertions, err error, exp
 
 func splitMatchesExpected(t *testing.T, a *assert.Assertions, actual persist.Split) {
 	t.Helper()
-	expected, ok := expectedSplits[persist.EthereumAddress(actual.Address)]
+	expected, ok := expectedSplits[actual.Address]
 	if !ok {
 		t.Fatalf("split Address=%s not in expected splits", actual.Address.String())
 	}

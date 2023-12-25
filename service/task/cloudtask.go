@@ -57,13 +57,13 @@ type TokenProcessingAssetsMessage struct {
 
 // DeepRefreshMessage is the input message to the indexer-api for deep refreshes
 type DeepRefreshMessage struct {
-	OwnerAddress    persist.EthereumAddress `json:"owner_address"`
-	ContractAddress persist.EthereumAddress `json:"contract_address"`
-	RefreshRange    persist.BlockRange      `json:"refresh_range"`
+	OwnerAddress    persist.Address    `json:"owner_address"`
+	ContractAddress persist.Address    `json:"contract_address"`
+	RefreshRange    persist.BlockRange `json:"refresh_range"`
 }
 
 type ValidateNFTsMessage struct {
-	OwnerAddress persist.EthereumAddress `json:"wallet"`
+	OwnerAddress persist.Address `json:"wallet"`
 }
 
 func CreateTaskForDeepRefresh(ctx context.Context, message DeepRefreshMessage, client *gcptasks.Client) error {

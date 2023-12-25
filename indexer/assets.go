@@ -24,7 +24,7 @@ type GetContractOutput struct {
 
 // GetContractInput is the input to the Get Contract endpoint
 type GetContractInput struct {
-	Address persist.EthereumAddress `form:"address,required"`
+	Address persist.Address `form:"address,required"`
 }
 
 // UpdateTokenMetadataInput is used to refresh metadata for a given token

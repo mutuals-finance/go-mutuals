@@ -255,7 +255,7 @@ func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, 
 		}
 		can := false
 		for _, addr := range user.Wallets {
-			if resolves, _ := eth.ResolvesENS(pCtx, username, persist.EthereumAddress(addr.Address), ethClient); resolves {
+			if resolves, _ := eth.ResolvesENS(pCtx, username, addr.Address, ethClient); resolves {
 				can = true
 				break
 			}
