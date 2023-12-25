@@ -11,8 +11,8 @@ import (
 )
 
 func TestIndexLogs_Success(t *testing.T) {
-	a, db, pgx := setupTest(t)
-	i := newMockIndexer(db, pgx)
+	a, db, pgx, pgx2 := setupTest(t)
+	i := newMockIndexer(db, pgx, pgx2)
 
 	// Run the Indexer
 	i.catchUp(sentry.SetHubOnContext(context.Background(), sentry.CurrentHub()), eventsToTopics(i.eventHashes))
@@ -121,7 +121,7 @@ func addressHasAssetsInDB(t *testing.T, a *assert.Assertions, assetRepo persist.
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	assets, err := assetRepo.GetByOwner(ctx, address, chain, -1, 0)
+	assets, err := assetRepo.GetByOwner(ctx, address, -1, 0)
 	a.NoError(err)
 	a.Len(assets, expected)
 	return assets
