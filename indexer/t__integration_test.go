@@ -47,7 +47,7 @@ func TestIndexLogs_Success(t *testing.T) {
 
 	t.Run("it updates an accounts assets", func(t *testing.T) {
 		t.SkipNow()
-		assets := addressHasAssetsInDB(t, a, i.assetRepo, persist.Address(contribAddress), persist.ChainETH, expectedTokensForAddress(persist.Address(testAddress)))
+		assets := addressHasAssetsInDB(t, a, i.assetRepo, persist.Address(testAddress), persist.ChainETH, expectedTokensForAddress(persist.Address(testAddress)))
 		for _, asset := range assets {
 			assetMatchesExpected(t, a, asset)
 		}
@@ -175,7 +175,7 @@ func splitMatchesExpected(t *testing.T, a *assert.Assertions, actual persist.Spl
 
 func tokenMatchesExpected(t *testing.T, a *assert.Assertions, actual persist.Token) {
 	t.Helper()
-	id := persist.NewEthereumTokenIdentifiers(actual.ContractAddress)
+	id := persist.NewTokenChainAddress(actual.ContractAddress, actual.Chain)
 	expected, ok := expectedResults[id]
 	if !ok {
 		t.Fatalf("tokenID=%s not in expected results", id)

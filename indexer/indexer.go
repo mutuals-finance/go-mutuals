@@ -8,6 +8,7 @@ import (
 	"github.com/SplitFi/go-splitfi/contracts"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/db/gen/indexerdb"
+	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
 	"github.com/sourcegraph/conc/iter"
 	"math/big"
 	"net/http"
@@ -99,7 +100,7 @@ func (o tokenAtBlock) OrderInfo() blockchainOrderInfo {
 type assetAtBlock struct {
 	ti    persist.TokenChainAddress
 	boi   blockchainOrderInfo
-	asset persist.Asset
+	asset persist.AssetDB
 }
 
 func (a assetAtBlock) TokenIdentifiers() persist.TokenChainAddress {
@@ -142,7 +143,7 @@ type indexer struct {
 
 	getLogsFunc getLogsFunc
 
-	assetDBHooks []DBHook[persist.Asset]
+	assetDBHooks []DBHook[persist.AssetDB]
 	tokenDBHooks []DBHook[persist.Token]
 }
 
@@ -671,49 +672,44 @@ func (i *indexer) processTokens(ctx context.Context, tokensOut <-chan tokenAtBlo
 	assets := assetsAtBlockToAssets(assetsMap)
 	tokens := tokensAtBlockToTokens(tokensMap)
 
+	/*	i.queries.UpdateStatisticTotalTokensAndContracts(ctx, indexerdb.UpdateStatisticTotalTokensAndContractsParams{
+			TotalContracts: sql.NullInt64{Int64: int64(len(contracts)), Valid: true},
+			ID:             statsID,
+		})
+	*/
 	i.runDBHooks(ctx, assets, tokens, statsID)
 }
 
 func tokensAtBlockToTokens(tokensAtBlock map[persist.TokenChainAddress]tokenAtBlock) []persist.Token {
 	tokens := make([]persist.Token, 0, len(tokensAtBlock))
 	seen := make(map[persist.TokenChainAddress]bool)
-	for _, tAtB := range tokensAtBlock {
-		if seen[tAtB.TokenIdentifiers()] {
+	for _, tokenAtBlock := range tokensAtBlock {
+		if seen[tokenAtBlock.TokenIdentifiers()] {
 			continue
 		}
-		tokens = append(tokens, tAtB.token)
-		seen[tAtB.TokenIdentifiers()] = true
+		tokens = append(tokens, tokenAtBlock.token)
+		seen[tokenAtBlock.TokenIdentifiers()] = true
 	}
 	return tokens
 }
 
-func assetsAtBlockToAssets(assetsAtBlock map[persist.TokenChainAddress]assetAtBlock) []persist.Asset {
-	assets := make([]persist.Asset, 0, len(assetsAtBlock))
+func assetsAtBlockToAssets(assetsAtBlock map[persist.TokenChainAddress]assetAtBlock) []persist.AssetDB {
+	assets := make([]persist.AssetDB, 0, len(assetsAtBlock))
 	seen := make(map[persist.TokenChainAddress]bool)
-	for _, aAtB := range assetsAtBlock {
-		if seen[aAtB.TokenIdentifiers()] {
+	for _, assetAtBlock := range assetsAtBlock {
+		if seen[assetAtBlock.TokenIdentifiers()] {
 			continue
 		}
-		assets = append(assets, aAtB.asset)
-		seen[aAtB.TokenIdentifiers()] = true
+		assets = append(assets, assetAtBlock.asset)
+		seen[assetAtBlock.TokenIdentifiers()] = true
 	}
 	return assets
 }
 
-func (i *indexer) runDBHooks(ctx context.Context, assets []persist.Asset, tokens []persist.Token, statsID persist.DBID) {
+func (i *indexer) runDBHooks(ctx context.Context, assets []persist.AssetDB, tokens []persist.Token, statsID persist.DBID) {
 	defer recoverAndWait(ctx)
 
 	wp := workerpool.New(10)
-
-	for _, hook := range i.assetDBHooks {
-		hook := hook
-		wp.Submit(func() {
-			err := hook(ctx, assets, statsID)
-			if err != nil {
-				logger.For(ctx).WithError(err).Errorf("Failed to run asset db hook %s", err)
-			}
-		})
-	}
 
 	for _, hook := range i.tokenDBHooks {
 		hook := hook
@@ -726,7 +722,21 @@ func (i *indexer) runDBHooks(ctx context.Context, assets []persist.Asset, tokens
 		})
 	}
 
+	for _, hook := range i.assetDBHooks {
+		hook := hook
+		wp.Submit(func() {
+			err := hook(ctx, assets, statsID)
+			if err != nil {
+				logger.For(ctx).WithError(err).Errorf("Failed to run asset db hook %s", err)
+			}
+		})
+	}
+
 	wp.StopWait()
+}
+
+func tokensPluginReceiver(cur tokenAtBlock, inc tokenAtBlock) tokenAtBlock {
+	return inc
 }
 
 func assetsPluginReceiver(cur assetAtBlock, inc assetAtBlock) assetAtBlock {
@@ -734,13 +744,22 @@ func assetsPluginReceiver(cur assetAtBlock, inc assetAtBlock) assetAtBlock {
 	return inc
 }
 
-func tokensPluginReceiver(cur tokenAtBlock, inc tokenAtBlock) tokenAtBlock {
-	return inc
+type AlchemyContract struct {
+	Address          persist.Address         `json:"address"`
+	ContractMetadata AlchemyContractMetadata `json:"contractMetadata"`
+}
+
+type AlchemyContractMetadata struct {
+	Address          persist.Address          `json:"address"`
+	Metadata         alchemy.ContractMetadata `json:"contractMetadata"`
+	ContractDeployer persist.Address          `json:"contractDeployer"`
 }
 
 func fillTokenFields(ctx context.Context, tokens []persist.Token, queries *indexerdb.Queries, tokenRepo persist.TokenRepository, httpClient *http.Client, ethClient *ethclient.Client, upChan chan<- []persist.Token, statsID persist.DBID) {
 
 	defer close(upChan)
+
+	//innerPipelineStats := map[persist.ContractOwnerMethod]any{}
 
 	tokensNotInDB := make(chan persist.Token)
 
@@ -780,9 +799,31 @@ func fillTokenFields(ctx context.Context, tokens []persist.Token, queries *index
 		// get token metadata
 		toUp, _ := GetTokenMetadatas(ctx, batch, httpClient, ethClient)
 
-		logger.For(ctx).Infof("Fetched metadata for %d tokens", len(toUp))
+		/*		for _, c := range toUp {
+					it, ok := contractOwnerStats.LoadOrStore(c.OwnerMethod, 1)
+					if ok {
+						total := it.(int)
+						total++
+						contractOwnerStats.Store(c.OwnerMethod, total)
+					}
 
-		upChan <- toUp
+					it, ok = innerPipelineStats[c.OwnerMethod]
+					if ok {
+						total := it.(int)
+						total++
+						innerPipelineStats[c.OwnerMethod] = total
+					} else {
+						innerPipelineStats[c.OwnerMethod] = 1
+					}
+				}
+		*/
+		logger.For(ctx).Infof("Fetched metadata for %d tokens", len(toUp))
+		asTokens := toUp
+		/*		asTokens, _ := util.Map(toUp, func(c ContractOwnerResult) (persist.Contract, error) {
+					return c.Contract, nil
+				})
+		*/
+		upChan <- asTokens
 	}
 
 	/*	err = queries.UpdateStatisticContractStats(ctx, indexerdb.UpdateStatisticContractStatsParams{
@@ -814,7 +855,7 @@ func GetTokenMetadatas(ctx context.Context, batch []persist.Token, httpClient *h
 			result.Name = persist.NullString(tMetadata.Name)
 			result.Symbol = persist.NullString(tMetadata.Symbol)
 			result.Decimals = persist.NullInt32(tMetadata.Decimals)
-			// TODO fill Logo metadata
+			// TODO fill Logo metadata (eg by using multichain provider for alchemy?)
 			result.Logo = ""
 		}
 

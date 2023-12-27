@@ -189,7 +189,7 @@ type TokenChainAddress struct {
 // NewTokenChainAddress creates a new token chain address
 func NewTokenChainAddress(pContractAddress Address, pChain Chain) TokenChainAddress {
 	return TokenChainAddress{
-		Address: Address(pChain.NormalizeAddress(pContractAddress)),
+		Address: pContractAddress,
 		Chain:   pChain,
 	}
 }

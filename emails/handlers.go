@@ -16,6 +16,12 @@ func handlersInitServer(router *gin.Engine, loaders *dataloader.Loaders, queries
 
 	sendGroup.POST("/notifications", middleware.AdminRequired(), adminSendNotificationEmail(queries, s))
 
+	// Return 200 on auth failures to prevent task/job retries
+	// TODO
+	//authOpts := middleware.BasicAuthOptionBuilder{}
+	//basicAuthHandler := middleware.BasicHeaderAuthRequired(env.GetString("EMAILS_TASK_SECRET"), authOpts.WithFailureStatus(http.StatusOK))
+	//sendGroup.POST("/process/add-to-mailing-list", basicAuthHandler, middleware.TaskRequired(), processAddToMailingList(queries))
+
 	verificationLimiter := middleware.RateLimited(middleware.NewKeyRateLimiter(1, time.Second*5, r))
 	sendGroup.POST("/verification", verificationLimiter, sendVerificationEmail(loaders, queries, s))
 

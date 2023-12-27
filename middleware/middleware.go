@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
 	"net/http"
 
 	"github.com/SplitFi/go-splitfi/env"
@@ -36,7 +37,54 @@ func AdminRequired() gin.HandlerFunc {
 	}
 }
 
+type BasicAuthOptionBuilder struct{}
+
+func (BasicAuthOptionBuilder) WithFailureStatus(statusCode int) BasicAuthOption {
+	return func(o *basicAuthOptions) {
+		o.failureStatus = statusCode
+	}
+}
+
+func (BasicAuthOptionBuilder) WithUsername(username string) BasicAuthOption {
+	return func(o *basicAuthOptions) {
+		o.username = &username
+	}
+}
+
+type BasicAuthOption func(*basicAuthOptions)
+
+type basicAuthOptions struct {
+	username      *string
+	failureStatus int
+}
+
+// BasicHeaderAuthRequired is a middleware that checks if the request has a Basic Auth header matching
+// the specified password. A username can optionally be specified via WithUsername. Failures return
+// http.StatusUnauthorized by default, but this can be changed via WithFailureStatus (for example,
+// returning a 200 to Cloud Tasks to indicate that the task shouldn't be retried). Failures will
+// always abort the request, regardless of the failure status code returned.
+func BasicHeaderAuthRequired(password string, options ...BasicAuthOption) gin.HandlerFunc {
+	o := &basicAuthOptions{
+		username:      nil,
+		failureStatus: http.StatusUnauthorized,
+	}
+
+	for _, opt := range options {
+		opt(o)
+	}
+
+	return func(c *gin.Context) {
+		if !basicauth.AuthorizeHeader(c, o.username, password) {
+			c.AbortWithStatusJSON(o.failureStatus, util.ErrorResponse{Error: "Unauthorized"})
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // AddAuthToContext is a middleware that validates auth data and stores the results in the context
+// TODO: change to middleware.ContinueSession(queries, authRefreshCache)
 func AddAuthToContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		jwt, err := c.Cookie(auth.JWTCookieKey)

@@ -122,71 +122,6 @@ func RunTransferPluginReceiver[T, V orderedBlockChainData](ctx context.Context, 
 
 }
 
-// assetTransfersPlugin retrieves ownership information for a token.
-type assetTransfersPlugin struct {
-	in  chan TransferPluginMsg
-	out chan assetAtBlock
-}
-
-func newAssetsPlugin(ctx context.Context) assetTransfersPlugin {
-	in := make(chan TransferPluginMsg)
-	out := make(chan assetAtBlock)
-
-	go func() {
-		span, _ := startSpan(ctx, "assetTransfersPlugin", "handleBatch")
-		defer tracing.FinishSpan(span)
-		defer close(out)
-
-		wp := workerpool.New(pluginPoolSize)
-
-		seenContracts := map[persist.Address]bool{}
-
-		for msg := range in {
-
-			if seenContracts[msg.transfer.ContractAddress] {
-				continue
-			}
-
-			msg := msg
-			wp.Submit(func() {
-
-				child := span.StartChild("plugin.contractTransfersPlugin")
-				child.Description = "handleMessage"
-
-				out <- assetAtBlock{
-					ti: msg.key,
-					boi: blockchainOrderInfo{
-						blockNumber: msg.transfer.BlockNumber,
-						txIndex:     msg.transfer.TxIndex,
-					},
-					asset: persist.Asset{
-						ID:           "",
-						Version:      0,
-						LastUpdated:  persist.LastUpdatedTime{},
-						CreationTime: persist.CreationTime{},
-						OwnerAddress: "",
-						Token:        persist.Token{ContractAddress: msg.transfer.ContractAddress},
-						Balance:      0,
-						BlockNumber:  0,
-					},
-				}
-
-				tracing.FinishSpan(child)
-			})
-
-			seenContracts[msg.transfer.ContractAddress] = true
-		}
-
-		wp.StopWait()
-		logger.For(ctx).Info("contracts plugin finished sending")
-	}()
-
-	return assetTransfersPlugin{
-		in:  in,
-		out: out,
-	}
-}
-
 type tokenTransfersPlugin struct {
 	in  chan TransferPluginMsg
 	out chan tokenAtBlock
@@ -207,7 +142,8 @@ func newTokensPlugin(ctx context.Context) tokenTransfersPlugin {
 
 		for msg := range in {
 
-			if seenTokens[msg.key] && msg.transfer.TokenType != persist.TokenTypeERC20 {
+			ids := msg.key
+			if seenTokens[ids] {
 				continue
 			}
 
@@ -225,9 +161,9 @@ func newTokensPlugin(ctx context.Context) tokenTransfersPlugin {
 					},
 					token: persist.Token{
 						TokenType:       msg.transfer.TokenType,
-						Chain:           persist.ChainETH,
+						Chain:           ids.Chain,
 						BlockNumber:     msg.transfer.BlockNumber,
-						ContractAddress: msg.key.Address,
+						ContractAddress: ids.Address,
 					},
 				}
 
@@ -242,6 +178,71 @@ func newTokensPlugin(ctx context.Context) tokenTransfersPlugin {
 	}()
 
 	return tokenTransfersPlugin{
+		in:  in,
+		out: out,
+	}
+}
+
+// assetTransfersPlugin retrieves ownership information for a token.
+type assetTransfersPlugin struct {
+	in  chan TransferPluginMsg
+	out chan assetAtBlock
+}
+
+func newAssetsPlugin(ctx context.Context) assetTransfersPlugin {
+	in := make(chan TransferPluginMsg)
+	out := make(chan assetAtBlock)
+
+	go func() {
+		span, _ := startSpan(ctx, "assetTransfersPlugin", "handleBatch")
+		defer tracing.FinishSpan(span)
+		defer close(out)
+
+		wp := workerpool.New(pluginPoolSize)
+
+		seenTokens := map[persist.TokenChainAddress]bool{}
+
+		for msg := range in {
+
+			ids := msg.key
+
+			if seenTokens[ids] && msg.transfer.TokenType != persist.TokenTypeERC20 {
+				continue
+			}
+
+			msg := msg
+			wp.Submit(func() {
+
+				child := span.StartChild("plugin.assetTransfersPlugin")
+				child.Description = "handleMessage"
+
+				out <- assetAtBlock{
+					ti: msg.key,
+					boi: blockchainOrderInfo{
+						blockNumber: msg.transfer.BlockNumber,
+						txIndex:     msg.transfer.TxIndex,
+					},
+					asset: persist.AssetDB{
+						// TODO
+						OwnerAddress: msg.transfer.To,
+						TokenAddress: ids.Address,
+						Chain:        ids.Chain,
+						Balance:      0,
+						BlockNumber:  msg.transfer.BlockNumber,
+					},
+				}
+
+				tracing.FinishSpan(child)
+			})
+
+			seenTokens[ids] = true
+		}
+
+		wp.StopWait()
+		logger.For(ctx).Info("assets plugin finished sending")
+	}()
+
+	return assetTransfersPlugin{
 		in:  in,
 		out: out,
 	}

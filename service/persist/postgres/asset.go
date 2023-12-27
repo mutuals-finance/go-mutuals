@@ -80,7 +80,7 @@ func NewAssetRepository(db *sql.DB, queries *db.Queries) *AssetRepository {
 }
 
 // GetByOwner retrieves all assets associated with an owner ethereum address
-func (a *AssetRepository) GetByOwner(pCtx context.Context, pAddress persist.Address, limit int64, offset int64) ([]persist.Asset, error) {
+func (a *AssetRepository) GetByOwner(pCtx context.Context, pAddress persist.Address, limit int64, offset int64) ([]persist.AssetDB, error) {
 	var rows *sql.Rows
 	var err error
 	if limit > 0 {
@@ -93,10 +93,10 @@ func (a *AssetRepository) GetByOwner(pCtx context.Context, pAddress persist.Addr
 	}
 	defer rows.Close()
 
-	assets := make([]persist.Asset, 0, 10)
+	assets := make([]persist.AssetDB, 0, 10)
 	for rows.Next() {
-		asset := persist.Asset{}
-		if err := rows.Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Balance, &asset.BlockNumber, &asset.Token); err != nil {
+		asset := persist.AssetDB{}
+		if err := rows.Scan(&asset.ID, &asset.Version, &asset.CreationTime, &asset.LastUpdated, &asset.OwnerAddress, &asset.Balance, &asset.BlockNumber, &asset.TokenAddress, &asset.Chain); err != nil {
 			return nil, err
 		}
 		assets = append(assets, asset)
@@ -165,7 +165,7 @@ func (a *AssetRepository) UpsertByIdentifiers(pCtx context.Context, pOwnerAddres
 }
 
 // BulkUpsert upserts the asset with the given owner address and token address
-func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Asset) (time.Time, []persist.Asset, error) {
+func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.AssetDB) (time.Time, []persist.AssetDB, error) {
 	assets, err := a.excludeZeroBalanceAssets(pCtx, pAssets)
 	if err != nil {
 		return time.Time{}, nil, err
@@ -178,7 +178,7 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 		if err != nil {
 			return time.Time{}, nil, err
 		}
-		return currentTime, []persist.Asset{}, nil
+		return currentTime, []persist.AssetDB{}, nil
 	}
 
 	logger.For(pCtx).Infof("Deduping %d assets", len(assets))
@@ -199,7 +199,7 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 		params.Version = append(params.Version, a.Version.Int32())
 		params.Balance = append(params.Balance, a.Balance.String())
 		params.OwnerAddress = append(params.OwnerAddress, a.OwnerAddress.String())
-		params.TokenAddress = append(params.TokenAddress, a.Token.ContractAddress.String())
+		params.TokenAddress = append(params.TokenAddress, a.TokenAddress.String())
 		params.BlockNumber = append(params.BlockNumber, a.BlockNumber.BigInt().Int64())
 
 		// Defer error checking until now to keep the code above from being
@@ -226,11 +226,11 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 
 }
 
-func (a *AssetRepository) excludeZeroBalanceAssets(pCtx context.Context, pAssets []persist.Asset) ([]persist.Asset, error) {
-	newAssets := make([]persist.Asset, 0, len(pAssets))
+func (a *AssetRepository) excludeZeroBalanceAssets(pCtx context.Context, pAssets []persist.AssetDB) ([]persist.AssetDB, error) {
+	newAssets := make([]persist.AssetDB, 0, len(pAssets))
 	for _, asset := range pAssets {
 		if asset.Balance <= 0 {
-			logger.For(pCtx).Warnf("Asset %s from %s has zero balance", asset.Token.Name, asset.OwnerAddress)
+			logger.For(pCtx).Warnf("Asset %s from %s has zero balance", asset.TokenAddress, asset.OwnerAddress)
 			continue
 		}
 		newAssets = append(newAssets, asset)
@@ -288,10 +288,10 @@ func (a *AssetRepository) UpdateByIdentifiers(pCtx context.Context, pOwnerAddres
 	return nil
 }
 
-func (a *AssetRepository) dedupeAssets(pAssets []persist.Asset) []persist.Asset {
-	seen := map[persist.AssetIdentifiers]persist.Asset{}
+func (a *AssetRepository) dedupeAssets(pAssets []persist.AssetDB) []persist.AssetDB {
+	seen := map[persist.AssetIdentifiers]persist.AssetDB{}
 	for _, asset := range pAssets {
-		key := persist.NewAssetIdentifiers(asset.Token.ContractAddress, asset.OwnerAddress)
+		key := persist.NewAssetIdentifiers(asset.TokenAddress, asset.OwnerAddress)
 		if seenToken, ok := seen[key]; ok {
 			if seenToken.BlockNumber.Uint64() > asset.BlockNumber.Uint64() {
 				continue
@@ -299,7 +299,7 @@ func (a *AssetRepository) dedupeAssets(pAssets []persist.Asset) []persist.Asset 
 		}
 		seen[key] = asset
 	}
-	result := make([]persist.Asset, 0, len(seen))
+	result := make([]persist.AssetDB, 0, len(seen))
 	for _, v := range seen {
 		result = append(result, v)
 	}

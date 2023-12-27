@@ -355,6 +355,41 @@ func FromPointerSlice[T any](s []*T) []T {
 	return result
 }
 
+// MustGetGinContext retrieves a gin.Context previously stored in the request context via the GinContextToContext
+// middleware, or panics if no gin.Context is found.
+// TODO: change GinContextFromContext(ctx context.Context) + usages to MustGetGinContext(ctx context.Context)
+func MustGetGinContext(ctx context.Context) *gin.Context {
+	gc := GetGinContext(ctx)
+	if gc == nil {
+		panic("gin.Context not found in specified context")
+	}
+
+	return gc
+}
+
+// GetGinContext retrieves a gin.Context previously stored in the request context via the GinContextToContext
+// middleware, or nil if no gin.Context is found.
+func GetGinContext(ctx context.Context) *gin.Context {
+	// If the current context is already a gin context, return it
+	if gc, ok := ctx.(*gin.Context); ok {
+		return gc
+	}
+
+	// Otherwise, find the gin context that was stored via middleware
+	ginContext := ctx.Value(GinContextKey)
+	if ginContext == nil {
+		return nil
+	}
+
+	gc, ok := ginContext.(*gin.Context)
+	if !ok {
+		logger.For(ctx).Error("gin.Context has wrong type")
+		return nil
+	}
+
+	return gc
+}
+
 func StringersToStrings[T fmt.Stringer](stringers []T) []string {
 	strings := make([]string, len(stringers))
 	for i, stringer := range stringers {
@@ -365,6 +400,7 @@ func StringersToStrings[T fmt.Stringer](stringers []T) []string {
 
 // GinContextFromContext retrieves a gin.Context previously stored in the request context via the GinContextToContext middleware,
 // or panics if no gin.Context can be retrieved (since there's nothing left for the resolver to do if it can't obtain the context).
+// TODO: change GinContextFromContext(ctx context.Context) + usages to MustGetGinContext(ctx context.Context)
 func GinContextFromContext(ctx context.Context) *gin.Context {
 	// If the current context is already a gin context, return it
 	if gc, ok := ctx.(*gin.Context); ok {

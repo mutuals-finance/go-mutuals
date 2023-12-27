@@ -1,7 +1,6 @@
 package event
 
 import (
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"context"
 	"fmt"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
@@ -11,22 +10,28 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/SplitFi/go-splitfi/util"
+	"github.com/SplitFi/go-splitfi/validate"
+	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/sync/errgroup"
 )
 
 type sendType int
 
 const (
-	eventSenderContextKey          = "event.eventSender"
-	delayedKey            sendType = iota
+	eventSenderContextKey           = "event.eventSender"
+	sentryEventContextName          = "event context"
+	delayedKey             sendType = iota
 	immediateKey
 	groupKey
 )
 
-// Register specific event handlers
-func AddTo(ctx *gin.Context, disableDataloaderCaching bool, notif *notifications.NotificationHandlers, queries *db.Queries, taskClient *cloudtasks.Client) {
+// AddTo Register specific event handlers
+func AddTo(ctx *gin.Context, disableDataloaderCaching bool, notif *notifications.NotificationHandlers, queries *db.Queries, taskClient *task.Client) {
 	sender := newEventSender(queries)
 
 	notifications := newEventDispatcher()
@@ -38,10 +43,70 @@ func AddTo(ctx *gin.Context, disableDataloaderCaching bool, notif *notifications
 	ctx.Set(eventSenderContextKey, &sender)
 }
 
-// DispatchDelayed sends the event to all of its registered handlers.
-func DispatchDelayed(ctx context.Context, event db.Event) error {
-	gc := util.GinContextFromContext(ctx)
+func Dispatch(ctx context.Context, evt db.Event) error {
+	ctx = sentryutil.NewSentryHubGinContext(ctx)
+	go PushEvent(ctx, evt)
+	return nil
+}
+
+func DispatchCaptioned(ctx context.Context, evt db.Event, caption *string) error {
+	ctx = sentryutil.NewSentryHubGinContext(ctx)
+
+	if caption != nil {
+		evt.Caption = persist.StrPtrToNullStr(caption)
+		return dispatchImmediate(ctx, []db.Event{evt})
+	}
+
+	go PushEvent(ctx, evt)
+	return nil
+}
+
+func DispatchMany(ctx context.Context, evts []db.Event, editID *string) error {
+	if len(evts) == 0 {
+		return nil
+	}
+
+	for i := range evts {
+		evts[i].GroupID = persist.StrPtrToNullStr(editID)
+	}
+
+	ctx = sentryutil.NewSentryHubGinContext(ctx)
+
+	for _, evt := range evts {
+		go PushEvent(ctx, evt)
+	}
+
+	return nil
+}
+
+func PushEvent(ctx context.Context, evt db.Event) {
+	err := dispatchDelayed(ctx, evt)
+	if err != nil {
+		sentryutil.ReportError(ctx, err, func(scope *sentry.Scope) {
+			logger.For(ctx).Error(err)
+			setEventContext(scope, persist.NullStrToDBID(evt.ActorID), evt.SubjectID, evt.Action)
+		})
+	}
+}
+
+func setEventContext(scope *sentry.Scope, actorID, subjectID persist.DBID, action persist.Action) {
+	scope.SetContext(sentryEventContextName, sentry.Context{
+		"ActorID":   actorID,
+		"SubjectID": subjectID,
+		"Action":    action,
+	})
+}
+
+// dispatchDelayed sends the event to all of its registered handlers.
+func dispatchDelayed(ctx context.Context, event db.Event) error {
+	gc := util.MustGetGinContext(ctx)
 	sender := For(gc)
+
+	// validate event
+	err := sender.validate.Struct(event)
+	if err != nil {
+		return err
+	}
 
 	if _, handable := sender.registry[delayedKey][event.Action]; !handable {
 		logger.For(ctx).WithField("action", event.Action).Warn("no delayed handler configured for action")
@@ -58,12 +123,16 @@ func DispatchDelayed(ctx context.Context, event db.Event) error {
 	return eg.Wait()
 }
 
-// DispatchImmediate flushes the event immediately to its registered handlers.
-func DispatchImmediate(ctx context.Context, events []db.Event) error {
-	gc := util.GinContextFromContext(ctx)
+// dispatchImmediate flushes the event immediately to its registered handlers.
+func dispatchImmediate(ctx context.Context, events []db.Event) error {
+	gc := util.MustGetGinContext(ctx)
 	sender := For(gc)
 
 	for _, e := range events {
+		// Vaidate event
+		if err := sender.validate.Struct(e); err != nil {
+			return err
+		}
 		if _, handable := sender.registry[immediateKey][e.Action]; !handable {
 			logger.For(ctx).WithField("action", e.Action).Warn("no immediate handler configured for action")
 			return nil
@@ -90,12 +159,20 @@ func DispatchImmediate(ctx context.Context, events []db.Event) error {
 
 	}()
 
+	/*	feedEvent, err := sender.feed.dispatchImmediate(ctx, persistedEvents)
+		if err != nil {
+			return nil, err
+		}
+
+		return feedEvent.(*db.FeedEvent), nil
+	*/
+
 	return nil
 }
 
 // DispatchGroup flushes the event group immediately to its registered handlers.
 func DispatchGroup(ctx context.Context, groupID string, action persist.Action, caption *string) error {
-	gc := util.GinContextFromContext(ctx)
+	gc := util.MustGetGinContext(ctx)
 	sender := For(gc)
 
 	if _, handable := sender.registry[groupKey][action]; !handable {
@@ -123,6 +200,11 @@ func DispatchGroup(ctx context.Context, groupID string, action persist.Action, c
 
 	}()
 
+	/*	feedEvent, err := sender.feed.dispatchGroup(ctx, groupID, action)
+		if err != nil {
+			return nil, err
+		}
+	*/
 	return nil
 }
 
@@ -138,17 +220,17 @@ type eventSender struct {
 	registry      map[sendType]registedActions
 	queries       *db.Queries
 	eventRepo     postgres.EventRepository
+	validate      *validator.Validate
 }
 
 func newEventSender(queries *db.Queries) eventSender {
+	v := validator.New()
+	v.RegisterStructValidation(validate.EventValidator, db.Event{})
 	return eventSender{
-		registry: map[sendType]registedActions{
-			delayedKey:   {},
-			immediateKey: {},
-			groupKey:     {},
-		},
+		registry:  map[sendType]registedActions{delayedKey: {}, immediateKey: {}, groupKey: {}},
 		queries:   queries,
 		eventRepo: postgres.EventRepository{Queries: queries},
+		validate:  v,
 	}
 }
 
@@ -201,6 +283,8 @@ func (d *eventDispatcher) dispatchDelayed(ctx context.Context, event db.Event) e
 }
 
 // this will run the handler for each event and return the final non-nil result returned by the handler.
+// in the case of the feed, immediate events should be grouped such that only one feed event is created
+// and one event is returned
 func (d *eventDispatcher) dispatchImmediate(ctx context.Context, event []db.Event) (interface{}, error) {
 
 	resultChan := make(chan interface{})
@@ -263,7 +347,7 @@ type notificationHandler struct {
 func newNotificationHandler(notifiers *notifications.NotificationHandlers, disableDataloaderCaching bool, queries *db.Queries) *notificationHandler {
 	return &notificationHandler{
 		notificationHandlers: notifiers,
-		dataloaders:          dataloader.NewLoaders(context.Background(), queries, disableDataloaderCaching),
+		dataloaders:          dataloader.NewLoaders(context.Background(), queries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook),
 	}
 }
 
@@ -271,6 +355,11 @@ func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent d
 	owner, err := h.findOwnerForNotificationFromEvent(persistedEvent)
 	if err != nil {
 		return err
+	}
+
+	// if no user found to notify, don't notify
+	if owner == "" {
+		return nil
 	}
 
 	// Don't notify the user on self events
@@ -289,7 +378,25 @@ func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent d
 		Data:     h.createNotificationDataForEvent(persistedEvent),
 		EventIds: persist.DBIDList{persistedEvent.ID},
 		SplitID:  persistedEvent.SplitID,
+		TokenID:  persistedEvent.TokenID,
 	})
+}
+
+func (h notificationHandler) findOwnerForNotificationFromEvent(ctx context.Context, event db.Event) (persist.DBID, error) {
+	switch event.ResourceTypeID {
+	case persist.ResourceTypeSplit:
+		split, err := h.dataloaders.GetSplitByIdBatch.Load(event.SplitID)
+		if err != nil {
+			return "", err
+		}
+		return split.OwnerUserID, nil
+	case persist.ResourceTypeUser:
+		return event.SubjectID, nil
+	case persist.ResourceTypeToken:
+		return persist.DBID(event.ActorID.String), nil
+	}
+
+	return "", fmt.Errorf("no owner found for event: %s", event.Action)
 }
 
 func (h notificationHandler) createNotificationDataForEvent(event db.Event) (data persist.NotificationData) {
@@ -307,22 +414,57 @@ func (h notificationHandler) createNotificationDataForEvent(event db.Event) (dat
 		}
 		data.FollowedBack = persist.NullBool(event.Data.UserFollowedBack)
 		data.Refollowed = persist.NullBool(event.Data.UserRefollowed)
+	case persist.ActionNewTokensReceived:
+		data.NewTokenID = event.Data.NewTokenID
+		data.NewTokenQuantity = event.Data.NewTokenQuantity
+	case persist.ActionTopActivityBadgeReceived:
+		data.ActivityBadgeThreshold = event.Data.ActivityBadgeThreshold
+		data.NewTopActiveUser = event.Data.NewTopActiveUser
+	default:
+		logger.For(nil).Debugf("no notification data for event: %s", event.Action)
 	}
 	return
 }
 
-func (h notificationHandler) findOwnerForNotificationFromEvent(event db.Event) (persist.DBID, error) {
-	switch event.ResourceTypeID {
-	case persist.ResourceTypeSplit:
-		split, err := h.dataloaders.SplitBySplitID.Load(event.SplitID)
-		if err != nil {
-			return "", err
-		}
-		// TODO change return value (split id is not the owner)
-		return split.ID, nil
-	case persist.ResourceTypeUser:
-		return event.SubjectID, nil
-	}
+// followerNotificationHandler handles events for consumption as notifications.
+type followerNotificationHandler struct {
+	notificationHandlers *notifications.NotificationHandlers
+}
 
-	return "", fmt.Errorf("no owner found for event: %s", event.Action)
+func newFollowerNotificationHandler(notifiers *notifications.NotificationHandlers) *followerNotificationHandler {
+	return &followerNotificationHandler{
+		notificationHandlers: notifiers,
+	}
+}
+
+func (h followerNotificationHandler) handleDelayed(ctx context.Context, persistedEvent db.Event) error {
+	return h.notificationHandlers.Notifications.Dispatch(ctx, db.Notification{
+		// no owner or data for follower notifications
+		Action:   persistedEvent.Action,
+		EventIds: persist.DBIDList{persistedEvent.ID},
+		SplitID:  persistedEvent.SplitID,
+		TokenID:  persistedEvent.TokenID,
+	})
+}
+
+// global handles events for consumption as global notifications.
+type announcementNotificationHandler struct {
+	notificationHandlers *notifications.NotificationHandlers
+}
+
+func newAnnouncementNotificationHandler(notifiers *notifications.NotificationHandlers) *announcementNotificationHandler {
+	return &announcementNotificationHandler{
+		notificationHandlers: notifiers,
+	}
+}
+
+func (h announcementNotificationHandler) handleDelayed(ctx context.Context, persistedEvent db.Event) error {
+	return h.notificationHandlers.Notifications.Dispatch(ctx, db.Notification{
+		// no owner or data for follower notifications
+		Action:   persistedEvent.Action,
+		EventIds: persist.DBIDList{persistedEvent.ID},
+		Data: persist.NotificationData{
+			AnnouncementDetails: persistedEvent.Data.AnnouncementDetails,
+		},
+	})
 }

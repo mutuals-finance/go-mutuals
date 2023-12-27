@@ -215,7 +215,7 @@ func (p *Provider) matchingWalletsChain(wallets []persist.Wallet, chain persist.
 }
 
 // SyncAssetsByOwnerAndTokenChainAddress updates the token balances for specific tokens for an owner
-func (p *Provider) SyncAssetsByOwnerAndTokenChainAddress(ctx context.Context, ownerAddress persist.Address, tokenIdentifiers []persist.TokenChainAddress) ([]persist.Asset, error) {
+func (p *Provider) SyncAssetsByOwnerAndTokenChainAddress(ctx context.Context, ownerAddress persist.Address, tokenIdentifiers []persist.TokenChainAddress) ([]persist.AssetDB, error) {
 
 	ctx = logger.NewContextWithFields(ctx, logrus.Fields{"tids": tokenIdentifiers, "owner_address": ownerAddress})
 
@@ -284,7 +284,7 @@ func (p *Provider) SyncAssetsByOwnerAndTokenChainAddress(ctx context.Context, ow
 	return p.receiveSyncedAssetsForOwner(ctx, ownerAddress, chains, incomingAssets, errChan)
 }
 
-func (p *Provider) receiveSyncedAssetsForOwner(ctx context.Context, ownerAddress persist.Address, chains []persist.Chain, incomingAssets chan chainAssets, errChan chan error) ([]persist.Asset, error) {
+func (p *Provider) receiveSyncedAssetsForOwner(ctx context.Context, ownerAddress persist.Address, chains []persist.Chain, incomingAssets chan chainAssets, errChan chan error) ([]persist.AssetDB, error) {
 	assetsFromProviders := make([]chainAssets, 0, len(chains))
 
 	errs := []error{}
@@ -387,7 +387,7 @@ func (p *Provider) RefreshTokenDescriptorsByTokenIdentifiers(ctx context.Context
 	})
 }
 
-func (p *Provider) processTokensForUser(ctx context.Context, ownerAddress persist.Address, assetsFromProviders []chainAssets, chains []persist.Chain) ([]persist.Asset, []persist.Asset, error) {
+func (p *Provider) processTokensForUser(ctx context.Context, ownerAddress persist.Address, assetsFromProviders []chainAssets, chains []persist.Chain) ([]persist.AssetDB, []persist.AssetDB, error) {
 	existingAssets, err := p.Repos.AssetRepository.GetByOwner(ctx, ownerAddress, 0, 0)
 	if err != nil {
 		return nil, nil, err
@@ -395,7 +395,7 @@ func (p *Provider) processTokensForUser(ctx context.Context, ownerAddress persis
 
 	wallets := []persist.Address{ownerAddress}
 	providerAssetMap := map[persist.Address][]chainAssets{ownerAddress: assetsFromProviders}
-	existingAssetMap := map[persist.Address][]persist.Asset{ownerAddress: existingAssets}
+	existingAssetMap := map[persist.Address][]persist.AssetDB{ownerAddress: existingAssets}
 
 	persistedAssets, newAssets, err := p.processTokensForUsers(ctx, wallets, providerAssetMap, existingAssetMap, chains)
 	if err != nil {
@@ -405,20 +405,20 @@ func (p *Provider) processTokensForUser(ctx context.Context, ownerAddress persis
 	return persistedAssets[ownerAddress], newAssets[ownerAddress], nil
 }
 
-func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, assetsFromProviders []chainAssets, existingAssets []persist.Asset, walletAddress persist.Address) ([]persist.Asset, map[persist.TokenChainAddress]bool, error) {
+func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, assetsFromProviders []chainAssets, existingAssets []persist.AssetDB, walletAddress persist.Address) ([]persist.AssetDB, map[persist.TokenChainAddress]bool, error) {
 	providerAssets, _ := tokensToNewDedupedTokens(assetsFromProviders, walletAddress)
 
 	// Extract new assets for given owner by their absence in existingAssets
 	// assetLookup allows for finding a token in existingAssets in O(1)
-	assetLookup := make(map[persist.TokenChainAddress]persist.Asset)
+	assetLookup := make(map[persist.TokenChainAddress]persist.AssetDB)
 	for _, asset := range existingAssets {
-		assetLookup[persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), asset.Token.Chain)] = asset
+		assetLookup[persist.NewTokenChainAddress(persist.Address(asset.TokenAddress), asset.Chain)] = asset
 	}
 
 	newTokensMap := make(map[persist.TokenChainAddress]bool)
 
 	for _, asset := range providerAssets {
-		tokenChainAddress := persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), asset.Token.Chain)
+		tokenChainAddress := persist.NewTokenChainAddress(asset.TokenAddress, asset.Chain)
 		_, exists := assetLookup[tokenChainAddress]
 
 		if !exists {
@@ -430,9 +430,9 @@ func (p *Provider) prepTokensForTokenProcessing(ctx context.Context, assetsFromP
 }
 
 func (p *Provider) processTokensForUsers(ctx context.Context, wallets []persist.Address, chainAssetsForOwners map[persist.Address][]chainAssets,
-	existingAssetsForUsers map[persist.Address][]persist.Asset, chains []persist.Chain) (map[persist.Address][]persist.Asset, map[persist.Address][]persist.Asset, error) {
+	existingAssetsForUsers map[persist.Address][]persist.AssetDB, chains []persist.Chain) (map[persist.Address][]persist.AssetDB, map[persist.Address][]persist.AssetDB, error) {
 
-	assetsToUpsert := make([]persist.Asset, 0, len(chainAssetsForOwners)*3)
+	assetsToUpsert := make([]persist.AssetDB, 0, len(chainAssetsForOwners)*3)
 	tokenIsNewForOwner := make(map[persist.Address]map[persist.TokenChainAddress]bool)
 
 	// Find assets to upsert, which are all deduped assets of a wallet address
@@ -453,14 +453,14 @@ func (p *Provider) processTokensForUsers(ctx context.Context, wallets []persist.
 		return nil, nil, err
 	}
 
-	persistedAssetsByOwner := make(map[persist.Address][]persist.Asset)
+	persistedAssetsByOwner := make(map[persist.Address][]persist.AssetDB)
 	for _, asset := range persistedAssets {
 		ownerAddress := persist.Address(asset.OwnerAddress)
 		persistedAssetsByOwner[ownerAddress] = append(persistedAssetsByOwner[ownerAddress], asset)
 	}
 
 	// Upsert all assets
-	newAssetsForOwner := make(map[persist.Address][]persist.Asset)
+	newAssetsForOwner := make(map[persist.Address][]persist.AssetDB)
 
 	errors := make([]error, 0)
 
@@ -468,15 +468,15 @@ func (p *Provider) processTokensForUsers(ctx context.Context, wallets []persist.
 		newTokensForUser := tokenIsNewForOwner[walletAddress]
 		persistedAssetsForOwner := persistedAssetsByOwner[walletAddress]
 
-		newPersistedAssets := make([]persist.Asset, 0, len(persistedAssetsForOwner))
+		newPersistedAssets := make([]persist.AssetDB, 0, len(persistedAssetsForOwner))
 		newPersistedAssetIDs := make([]persist.DBID, 0, len(persistedAssetsForOwner))
 		newPersistedAssetIdentifiers := make([]persist.AssetIdentifiers, 0, len(persistedAssetsForOwner))
 
 		for _, asset := range persistedAssetsForOwner {
-			if newTokensForUser[persist.NewTokenChainAddress(persist.Address(asset.Token.ContractAddress), asset.Token.Chain)] {
+			if newTokensForUser[persist.NewTokenChainAddress(persist.Address(asset.TokenAddress), asset.Chain)] {
 				newPersistedAssets = append(newPersistedAssets, asset)
 				newPersistedAssetIDs = append(newPersistedAssetIDs, asset.ID)
-				newPersistedAssetIdentifiers = append(newPersistedAssetIdentifiers, persist.NewAssetIdentifiers(asset.Token.ContractAddress, asset.OwnerAddress))
+				newPersistedAssetIdentifiers = append(newPersistedAssetIdentifiers, persist.NewAssetIdentifiers(asset.TokenAddress, asset.OwnerAddress))
 			}
 		}
 
@@ -490,9 +490,9 @@ func (p *Provider) processTokensForUsers(ctx context.Context, wallets []persist.
 	return persistedAssetsByOwner, newAssetsForOwner, nil
 }
 
-func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address) ([]persist.Asset, map[persist.DBID]persist.Address) {
+func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address) ([]persist.AssetDB, map[persist.DBID]persist.Address) {
 
-	seenAssets := make(map[persist.TokenChainAddress]persist.Asset)
+	seenAssets := make(map[persist.TokenChainAddress]persist.AssetDB)
 
 	seenBalances := make(map[persist.TokenChainAddress]persist.NullInt32)
 	tokenDBIDToAddress := make(map[persist.DBID]persist.Address)
@@ -514,9 +514,10 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 			_, seen := seenAssets[ti]
 
 			contractAddress := persist.Address(chainAsset.chain.NormalizeAddress(persist.Address(asset.Token.ContractAddress)))
-			candidateAsset := persist.Asset{
+			candidateAsset := persist.AssetDB{
 				// TODO set all asset props
-				Token:        persist.Token{Chain: chainAsset.chain, TokenType: asset.Token.TokenType, ContractAddress: contractAddress},
+				TokenAddress: contractAddress,
+				Chain:        chainAsset.chain,
 				BlockNumber:  asset.BlockNumber,
 				OwnerAddress: ownerWallet,
 			}
@@ -539,7 +540,7 @@ func tokensToNewDedupedTokens(assets []chainAssets, ownerWallet persist.Address)
 		}
 	}
 
-	res := make([]persist.Asset, len(seenAssets))
+	res := make([]persist.AssetDB, len(seenAssets))
 	i := 0
 	for _, t := range seenAssets {
 		res[i] = t
