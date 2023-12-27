@@ -1,4 +1,8 @@
 version: 2
+plugins:
+  - name: jsonb
+    process:
+      cmd: db/bin/sqlc-gen-json
 sql:
   # Indexer model gen
   - schema: "db/migrations/indexer"
