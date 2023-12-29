@@ -13,221 +13,222 @@ import (
 )
 
 type Asset struct {
-	ID           persist.DBID
-	Version      sql.NullInt32
-	LastUpdated  time.Time
-	CreatedAt    time.Time
-	TokenID      persist.DBID
-	OwnerAddress persist.Address
-	Balance      sql.NullInt32
-	BlockNumber  sql.NullInt64
+	ID           persist.DBID    `db:"id" json:"id"`
+	Version      sql.NullInt32   `db:"version" json:"version"`
+	LastUpdated  time.Time       `db:"last_updated" json:"last_updated"`
+	CreatedAt    time.Time       `db:"created_at" json:"created_at"`
+	Chain        persist.Chain   `db:"chain" json:"chain"`
+	TokenAddress persist.Address `db:"token_address" json:"token_address"`
+	OwnerAddress persist.Address `db:"owner_address" json:"owner_address"`
+	Balance      sql.NullInt32   `db:"balance" json:"balance"`
+	BlockNumber  sql.NullInt64   `db:"block_number" json:"block_number"`
 }
 
 type DevMetadataUser struct {
-	UserID          persist.DBID
-	HasEmailAddress persist.Email
-	Deleted         bool
+	UserID          persist.DBID  `db:"user_id" json:"user_id"`
+	HasEmailAddress persist.Email `db:"has_email_address" json:"has_email_address"`
+	Deleted         bool          `db:"deleted" json:"deleted"`
 }
 
 type Event struct {
-	ID             persist.DBID
-	Version        int32
-	ActorID        sql.NullString
-	ResourceTypeID persist.ResourceType
-	SubjectID      persist.DBID
-	UserID         persist.DBID
-	TokenID        persist.DBID
-	Action         persist.Action
-	Data           persist.EventData
-	Deleted        bool
-	LastUpdated    time.Time
-	CreatedAt      time.Time
-	SplitID        persist.DBID
-	ExternalID     sql.NullString
-	Caption        sql.NullString
-	GroupID        sql.NullString
+	ID             persist.DBID         `db:"id" json:"id"`
+	Version        int32                `db:"version" json:"version"`
+	ActorID        sql.NullString       `db:"actor_id" json:"actor_id"`
+	ResourceTypeID persist.ResourceType `db:"resource_type_id" json:"resource_type_id"`
+	SubjectID      persist.DBID         `db:"subject_id" json:"subject_id"`
+	UserID         persist.DBID         `db:"user_id" json:"user_id"`
+	TokenID        persist.DBID         `db:"token_id" json:"token_id"`
+	Action         persist.Action       `db:"action" json:"action"`
+	Data           persist.EventData    `db:"data" json:"data"`
+	Deleted        bool                 `db:"deleted" json:"deleted"`
+	LastUpdated    time.Time            `db:"last_updated" json:"last_updated"`
+	CreatedAt      time.Time            `db:"created_at" json:"created_at"`
+	SplitID        persist.DBID         `db:"split_id" json:"split_id"`
+	ExternalID     sql.NullString       `db:"external_id" json:"external_id"`
+	Caption        sql.NullString       `db:"caption" json:"caption"`
+	GroupID        sql.NullString       `db:"group_id" json:"group_id"`
 }
 
 type LegacyView struct {
-	UserID      persist.DBID
-	ViewCount   sql.NullInt32
-	LastUpdated time.Time
-	CreatedAt   time.Time
-	Deleted     sql.NullBool
+	UserID      persist.DBID  `db:"user_id" json:"user_id"`
+	ViewCount   sql.NullInt32 `db:"view_count" json:"view_count"`
+	LastUpdated time.Time     `db:"last_updated" json:"last_updated"`
+	CreatedAt   time.Time     `db:"created_at" json:"created_at"`
+	Deleted     sql.NullBool  `db:"deleted" json:"deleted"`
 }
 
 type Nonce struct {
-	ID          persist.DBID
-	Deleted     bool
-	Version     sql.NullInt32
-	LastUpdated time.Time
-	CreatedAt   time.Time
-	UserID      persist.DBID
-	Address     persist.Address
-	Value       sql.NullString
-	Chain       persist.Chain
+	ID          persist.DBID    `db:"id" json:"id"`
+	Deleted     bool            `db:"deleted" json:"deleted"`
+	Version     sql.NullInt32   `db:"version" json:"version"`
+	LastUpdated time.Time       `db:"last_updated" json:"last_updated"`
+	CreatedAt   time.Time       `db:"created_at" json:"created_at"`
+	UserID      persist.DBID    `db:"user_id" json:"user_id"`
+	Address     persist.Address `db:"address" json:"address"`
+	Value       sql.NullString  `db:"value" json:"value"`
+	Chain       persist.Chain   `db:"chain" json:"chain"`
 }
 
 type Notification struct {
-	ID          persist.DBID
-	Deleted     bool
-	OwnerID     persist.DBID
-	Version     sql.NullInt32
-	LastUpdated time.Time
-	CreatedAt   time.Time
-	Action      persist.Action
-	Data        persist.NotificationData
-	EventIds    persist.DBIDList
-	SplitID     persist.DBID
-	Seen        bool
-	Amount      int32
+	ID          persist.DBID             `db:"id" json:"id"`
+	Deleted     bool                     `db:"deleted" json:"deleted"`
+	OwnerID     persist.DBID             `db:"owner_id" json:"owner_id"`
+	Version     sql.NullInt32            `db:"version" json:"version"`
+	LastUpdated time.Time                `db:"last_updated" json:"last_updated"`
+	CreatedAt   time.Time                `db:"created_at" json:"created_at"`
+	Action      persist.Action           `db:"action" json:"action"`
+	Data        persist.NotificationData `db:"data" json:"data"`
+	EventIds    persist.DBIDList         `db:"event_ids" json:"event_ids"`
+	SplitID     persist.DBID             `db:"split_id" json:"split_id"`
+	Seen        bool                     `db:"seen" json:"seen"`
+	Amount      int32                    `db:"amount" json:"amount"`
 }
 
 type PiiAccountCreationInfo struct {
-	UserID    persist.DBID
-	IpAddress string
-	CreatedAt time.Time
+	UserID    persist.DBID `db:"user_id" json:"user_id"`
+	IpAddress string       `db:"ip_address" json:"ip_address"`
+	CreatedAt time.Time    `db:"created_at" json:"created_at"`
 }
 
 type PiiForUser struct {
-	UserID          persist.DBID
-	PiiEmailAddress persist.Email
-	Deleted         bool
-	PiiSocials      persist.Socials
+	UserID          persist.DBID    `db:"user_id" json:"user_id"`
+	PiiEmailAddress persist.Email   `db:"pii_email_address" json:"pii_email_address"`
+	Deleted         bool            `db:"deleted" json:"deleted"`
+	PiiSocials      persist.Socials `db:"pii_socials" json:"pii_socials"`
 }
 
 type PiiSocialsAuth struct {
-	ID           persist.DBID
-	Deleted      bool
-	Version      sql.NullInt32
-	CreatedAt    time.Time
-	LastUpdated  time.Time
-	UserID       persist.DBID
-	Provider     persist.SocialProvider
-	AccessToken  sql.NullString
-	RefreshToken sql.NullString
+	ID           persist.DBID           `db:"id" json:"id"`
+	Deleted      bool                   `db:"deleted" json:"deleted"`
+	Version      sql.NullInt32          `db:"version" json:"version"`
+	CreatedAt    time.Time              `db:"created_at" json:"created_at"`
+	LastUpdated  time.Time              `db:"last_updated" json:"last_updated"`
+	UserID       persist.DBID           `db:"user_id" json:"user_id"`
+	Provider     persist.SocialProvider `db:"provider" json:"provider"`
+	AccessToken  sql.NullString         `db:"access_token" json:"access_token"`
+	RefreshToken sql.NullString         `db:"refresh_token" json:"refresh_token"`
 }
 
 type PiiUserView struct {
-	ID                   persist.DBID
-	Deleted              bool
-	Version              sql.NullInt32
-	LastUpdated          time.Time
-	CreatedAt            time.Time
-	Username             sql.NullString
-	UsernameIdempotent   sql.NullString
-	Wallets              persist.WalletList
-	Bio                  sql.NullString
-	Traits               pgtype.JSONB
-	Universal            bool
-	NotificationSettings persist.UserNotificationSettings
-	EmailVerified        persist.EmailVerificationStatus
-	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedSplit        *persist.DBID
-	PrimaryWalletID      persist.DBID
-	UserExperiences      pgtype.JSONB
-	FtsUsername          interface{}
-	FtsBioEnglish        interface{}
-	PiiEmailAddress      persist.Email
-	PiiSocials           persist.Socials
+	ID                   persist.DBID                     `db:"id" json:"id"`
+	Deleted              bool                             `db:"deleted" json:"deleted"`
+	Version              sql.NullInt32                    `db:"version" json:"version"`
+	LastUpdated          time.Time                        `db:"last_updated" json:"last_updated"`
+	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
+	Username             sql.NullString                   `db:"username" json:"username"`
+	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
+	Wallets              persist.WalletList               `db:"wallets" json:"wallets"`
+	Bio                  sql.NullString                   `db:"bio" json:"bio"`
+	Traits               pgtype.JSONB                     `db:"traits" json:"traits"`
+	Universal            bool                             `db:"universal" json:"universal"`
+	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
+	EmailVerified        persist.EmailVerificationStatus  `db:"email_verified" json:"email_verified"`
+	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
+	FeaturedSplit        *persist.DBID                    `db:"featured_split" json:"featured_split"`
+	PrimaryWalletID      persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
+	UserExperiences      pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
+	FtsUsername          interface{}                      `db:"fts_username" json:"fts_username"`
+	FtsBioEnglish        interface{}                      `db:"fts_bio_english" json:"fts_bio_english"`
+	PiiEmailAddress      persist.Email                    `db:"pii_email_address" json:"pii_email_address"`
+	PiiSocials           persist.Socials                  `db:"pii_socials" json:"pii_socials"`
 }
 
 type Recipient struct {
-	ID          persist.DBID
-	Version     sql.NullInt32
-	LastUpdated time.Time
-	CreatedAt   time.Time
-	Deleted     bool
-	SplitID     persist.DBID
-	Address     persist.Address
-	Ownership   int32
+	ID          persist.DBID    `db:"id" json:"id"`
+	Version     sql.NullInt32   `db:"version" json:"version"`
+	LastUpdated time.Time       `db:"last_updated" json:"last_updated"`
+	CreatedAt   time.Time       `db:"created_at" json:"created_at"`
+	Deleted     bool            `db:"deleted" json:"deleted"`
+	SplitID     persist.DBID    `db:"split_id" json:"split_id"`
+	Address     persist.Address `db:"address" json:"address"`
+	Ownership   int32           `db:"ownership" json:"ownership"`
 }
 
 type ScrubbedPiiForUser struct {
-	UserID          persist.DBID
-	PiiEmailAddress persist.Email
-	Deleted         bool
-	PiiSocials      persist.Socials
+	UserID          persist.DBID    `db:"user_id" json:"user_id"`
+	PiiEmailAddress persist.Email   `db:"pii_email_address" json:"pii_email_address"`
+	Deleted         bool            `db:"deleted" json:"deleted"`
+	PiiSocials      persist.Socials `db:"pii_socials" json:"pii_socials"`
 }
 
 type SpamUserScore struct {
-	UserID        persist.DBID
-	Score         int32
-	DecidedIsSpam sql.NullBool
-	DecidedAt     sql.NullTime
-	Deleted       bool
-	CreatedAt     time.Time
+	UserID        persist.DBID `db:"user_id" json:"user_id"`
+	Score         int32        `db:"score" json:"score"`
+	DecidedIsSpam sql.NullBool `db:"decided_is_spam" json:"decided_is_spam"`
+	DecidedAt     sql.NullTime `db:"decided_at" json:"decided_at"`
+	Deleted       bool         `db:"deleted" json:"deleted"`
+	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
 }
 
 type Split struct {
-	ID             persist.DBID
-	Version        sql.NullInt32
-	LastUpdated    time.Time
-	CreatedAt      time.Time
-	Deleted        bool
-	Chain          persist.Chain
-	Address        persist.Address
-	Name           string
-	Description    string
-	CreatorAddress persist.Address
-	LogoUrl        sql.NullString
-	BannerUrl      sql.NullString
-	BadgeUrl       sql.NullString
-	TotalOwnership int32
+	ID             persist.DBID    `db:"id" json:"id"`
+	Version        sql.NullInt32   `db:"version" json:"version"`
+	LastUpdated    time.Time       `db:"last_updated" json:"last_updated"`
+	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
+	Deleted        bool            `db:"deleted" json:"deleted"`
+	Chain          persist.Chain   `db:"chain" json:"chain"`
+	Address        persist.Address `db:"address" json:"address"`
+	Name           string          `db:"name" json:"name"`
+	Description    string          `db:"description" json:"description"`
+	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
+	LogoUrl        sql.NullString  `db:"logo_url" json:"logo_url"`
+	BannerUrl      sql.NullString  `db:"banner_url" json:"banner_url"`
+	BadgeUrl       sql.NullString  `db:"badge_url" json:"badge_url"`
+	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
 }
 
 type Token struct {
-	ID              persist.DBID
-	Deleted         bool
-	Version         sql.NullInt32
-	CreatedAt       time.Time
-	LastUpdated     time.Time
-	Name            sql.NullString
-	Symbol          sql.NullString
-	Logo            sql.NullString
-	TokenType       sql.NullString
-	BlockNumber     sql.NullInt64
-	Chain           persist.Chain
-	ContractAddress persist.Address
+	ID              persist.DBID    `db:"id" json:"id"`
+	Deleted         bool            `db:"deleted" json:"deleted"`
+	Version         sql.NullInt32   `db:"version" json:"version"`
+	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
+	LastUpdated     time.Time       `db:"last_updated" json:"last_updated"`
+	Name            sql.NullString  `db:"name" json:"name"`
+	Symbol          sql.NullString  `db:"symbol" json:"symbol"`
+	Logo            sql.NullString  `db:"logo" json:"logo"`
+	TokenType       sql.NullString  `db:"token_type" json:"token_type"`
+	BlockNumber     sql.NullInt64   `db:"block_number" json:"block_number"`
+	Chain           persist.Chain   `db:"chain" json:"chain"`
+	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
 }
 
 type User struct {
-	ID                   persist.DBID
-	Deleted              bool
-	Version              sql.NullInt32
-	LastUpdated          time.Time
-	CreatedAt            time.Time
-	Username             sql.NullString
-	UsernameIdempotent   sql.NullString
-	Wallets              persist.WalletList
-	Bio                  sql.NullString
-	Traits               pgtype.JSONB
-	Universal            bool
-	NotificationSettings persist.UserNotificationSettings
-	EmailVerified        persist.EmailVerificationStatus
-	EmailUnsubscriptions persist.EmailUnsubscriptions
-	FeaturedSplit        *persist.DBID
-	PrimaryWalletID      persist.DBID
-	UserExperiences      pgtype.JSONB
+	ID                   persist.DBID                     `db:"id" json:"id"`
+	Deleted              bool                             `db:"deleted" json:"deleted"`
+	Version              sql.NullInt32                    `db:"version" json:"version"`
+	LastUpdated          time.Time                        `db:"last_updated" json:"last_updated"`
+	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
+	Username             sql.NullString                   `db:"username" json:"username"`
+	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
+	Wallets              persist.WalletList               `db:"wallets" json:"wallets"`
+	Bio                  sql.NullString                   `db:"bio" json:"bio"`
+	Traits               pgtype.JSONB                     `db:"traits" json:"traits"`
+	Universal            bool                             `db:"universal" json:"universal"`
+	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
+	EmailVerified        persist.EmailVerificationStatus  `db:"email_verified" json:"email_verified"`
+	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
+	FeaturedSplit        *persist.DBID                    `db:"featured_split" json:"featured_split"`
+	PrimaryWalletID      persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
+	UserExperiences      pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
 }
 
 type UserRole struct {
-	ID          persist.DBID
-	UserID      persist.DBID
-	Role        persist.Role
-	Version     int32
-	Deleted     bool
-	CreatedAt   time.Time
-	LastUpdated time.Time
+	ID          persist.DBID `db:"id" json:"id"`
+	UserID      persist.DBID `db:"user_id" json:"user_id"`
+	Role        persist.Role `db:"role" json:"role"`
+	Version     int32        `db:"version" json:"version"`
+	Deleted     bool         `db:"deleted" json:"deleted"`
+	CreatedAt   time.Time    `db:"created_at" json:"created_at"`
+	LastUpdated time.Time    `db:"last_updated" json:"last_updated"`
 }
 
 type Wallet struct {
-	ID          persist.DBID
-	CreatedAt   time.Time
-	LastUpdated time.Time
-	Deleted     bool
-	Version     sql.NullInt32
-	Address     persist.Address
-	WalletType  persist.WalletType
-	Chain       persist.Chain
+	ID          persist.DBID       `db:"id" json:"id"`
+	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
+	LastUpdated time.Time          `db:"last_updated" json:"last_updated"`
+	Deleted     bool               `db:"deleted" json:"deleted"`
+	Version     sql.NullInt32      `db:"version" json:"version"`
+	Address     persist.Address    `db:"address" json:"address"`
+	WalletType  persist.WalletType `db:"wallet_type" json:"wallet_type"`
+	Chain       persist.Chain      `db:"chain" json:"chain"`
 }

@@ -1,0 +1,63 @@
+package dataloader
+
+import (
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/jackc/pgx/v4"
+)
+
+//func (*GetCollectionByIdBatch) getNotFoundError(key persist.DBID) error {
+//	return persist.ErrCollectionNotFoundByID{ID: key}
+//}
+
+func (*GetTokenByChainAddressBatch) getNotFoundError(key coredb.GetTokenByChainAddressBatchParams) error {
+	return persist.ErrTokenNotFoundByAddress{ContractAddress: key.ContractAddress, Chain: key.Chain}
+}
+
+//func (*GetEventByIdBatch) getNotFoundError(key persist.DBID) error {
+//	return persist.ErrFeedEventNotFoundByID{ID: key}
+//}
+
+func (*GetSplitByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrSplitNotFound{ID: key}
+}
+
+func (*GetNotificationByIDBatch) getNotFoundError(key persist.DBID) error {
+	return pgx.ErrNoRows
+}
+
+//func (*GetProfileImageByIdBatch) getNotFoundError(key coredb.GetProfileImageByIdBatchParams) error {
+//	return persist.ErrProfileImageNotFound{Err: pgx.ErrNoRows, ProfileImageID: key.ID}
+//}
+
+func (*GetTokenByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrTokenNotFoundByID{ID: key}
+}
+
+func (*GetAssetByIdentifiersBatch) getNotFoundError(key coredb.GetAssetByIdentifiersBatchParams) error {
+	return persist.ErrAssetNotFoundByIdentifiers{
+		OwnerAddress: key.OwnerAddress,
+		Chain:        key.Chain,
+		TokenAddress: key.TokenAddress,
+	}
+}
+
+//func (*GetUserByAddressAndL1Batch) getNotFoundError(key coredb.GetUserByAddressAndL1BatchParams) error {
+//	return persist.ErrUserNotFound{L1ChainAddress: persist.NewL1ChainAddress(key.Address, persist.Chain(key.L1Chain))}
+//}
+
+func (*GetUserByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrUserNotFound{UserID: key}
+}
+
+func (*GetUserByUsernameBatch) getNotFoundError(key string) error {
+	return persist.ErrUserNotFound{Username: key}
+}
+
+func (*GetWalletByIDBatch) getNotFoundError(key persist.DBID) error {
+	return pgx.ErrNoRows
+}
+
+func (*GetTokensByIDs) getNotFoundError(key string) error {
+	return pgx.ErrNoRows
+}

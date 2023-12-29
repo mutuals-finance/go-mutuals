@@ -28,16 +28,16 @@ insert into splits (id, chain, address, name, description, creator_address, logo
 `
 
 type SplitRepoCreateParams struct {
-	SplitID        persist.DBID
-	Chain          persist.Chain
-	Address        persist.Address
-	Name           string
-	Description    string
-	CreatorAddress persist.Address
-	LogoUrl        sql.NullString
-	BannerUrl      sql.NullString
-	BadgeUrl       sql.NullString
-	TotalOwnership int32
+	SplitID        persist.DBID    `db:"split_id" json:"split_id"`
+	Chain          persist.Chain   `db:"chain" json:"chain"`
+	Address        persist.Address `db:"address" json:"address"`
+	Name           string          `db:"name" json:"name"`
+	Description    string          `db:"description" json:"description"`
+	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
+	LogoUrl        sql.NullString  `db:"logo_url" json:"logo_url"`
+	BannerUrl      sql.NullString  `db:"banner_url" json:"banner_url"`
+	BadgeUrl       sql.NullString  `db:"badge_url" json:"badge_url"`
+	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
 }
 
 func (q *Queries) SplitRepoCreate(ctx context.Context, arg SplitRepoCreateParams) (Split, error) {
@@ -82,8 +82,8 @@ SELECT a.id FROM splits s
 `
 
 type SplitRepoGetSplitAssetsParams struct {
-	Address persist.Address
-	Chain   persist.Chain
+	Address persist.Address `db:"address" json:"address"`
+	Chain   persist.Chain   `db:"chain" json:"chain"`
 }
 
 func (q *Queries) SplitRepoGetSplitAssets(ctx context.Context, arg SplitRepoGetSplitAssetsParams) ([]persist.DBID, error) {

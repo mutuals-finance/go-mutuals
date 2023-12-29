@@ -42,18 +42,18 @@ on conflict (token_address, owner_address)
                 , balance       = excluded.balance
                 , block_number  = excluded.block_number
                 , last_updated  = excluded.last_updated
-returning id, version, last_updated, created_at, token_id, owner_address, balance, block_number
+returning id, version, last_updated, created_at, chain, token_address, owner_address, balance, block_number
 `
 
 type UpsertAssetsParams struct {
-	ID           []string
-	Version      []int32
-	OwnerAddress []string
-	TokenAddress []string
-	Balance      []string
-	BlockNumber  []int64
-	CreatedAt    []time.Time
-	LastUpdated  []time.Time
+	ID           []string    `db:"id" json:"id"`
+	Version      []int32     `db:"version" json:"version"`
+	OwnerAddress []string    `db:"owner_address" json:"owner_address"`
+	TokenAddress []string    `db:"token_address" json:"token_address"`
+	Balance      []string    `db:"balance" json:"balance"`
+	BlockNumber  []int64     `db:"block_number" json:"block_number"`
+	CreatedAt    []time.Time `db:"created_at" json:"created_at"`
+	LastUpdated  []time.Time `db:"last_updated" json:"last_updated"`
 }
 
 func (q *Queries) UpsertAssets(ctx context.Context, arg UpsertAssetsParams) ([]Asset, error) {
@@ -79,7 +79,8 @@ func (q *Queries) UpsertAssets(ctx context.Context, arg UpsertAssetsParams) ([]A
 			&i.Version,
 			&i.LastUpdated,
 			&i.CreatedAt,
-			&i.TokenID,
+			&i.Chain,
+			&i.TokenAddress,
 			&i.OwnerAddress,
 			&i.Balance,
 			&i.BlockNumber,

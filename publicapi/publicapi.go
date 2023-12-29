@@ -3,11 +3,11 @@ package publicapi
 import (
 	"context"
 	"errors"
-	"net/http"
-
 	admin "github.com/SplitFi/go-splitfi/adminapi"
 	"github.com/SplitFi/go-splitfi/graphql/apq"
+	"github.com/SplitFi/go-splitfi/service/task"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
+	"net/http"
 
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/redis"
@@ -16,12 +16,10 @@ import (
 	"github.com/SplitFi/go-splitfi/event"
 	"github.com/gin-gonic/gin"
 
-	gcptasks "cloud.google.com/go/cloudtasks/apiv2"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/storage"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
@@ -59,7 +57,7 @@ type PublicAPI struct {
 }
 
 func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell,
-	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *gcptasks.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, socialCache, authRefreshCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
+	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, socialCache, authRefreshCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
 	loaders := dataloader.NewLoaders(ctx, queries, disableDataloaderCaching)
 	validator := validate.WithCustomValidators()
 
@@ -121,56 +119,35 @@ func publishEventGroup(ctx context.Context, groupID string, action persist.Actio
 	return event.DispatchGroup(sentryutil.NewSentryHubGinContext(ctx), groupID, action, caption)
 }
 
-func dispatchEvent(ctx context.Context, evt db.Event, v *validator.Validate, caption *string) error {
-	ctx = sentryutil.NewSentryHubGinContext(ctx)
-	if err := v.Struct(evt); err != nil {
-		return err
-	}
-
-	if caption != nil {
-		evt.Caption = persist.StrPtrToNullStr(caption)
-		return event.DispatchImmediate(ctx, []db.Event{evt})
-	}
-
-	go pushEvent(ctx, evt)
-	return nil
+// TODO
+// dbidCache is a lazy cache that stores DBIDs from expensive queries
+/*type dbidCache struct {
+	*redis.LazyCache
 }
 
-func dispatchEvents(ctx context.Context, evts []db.Event, v *validator.Validate, editID *string, caption *string) error {
-
-	if len(evts) == 0 {
-		return nil
-	}
-
-	ctx = sentryutil.NewSentryHubGinContext(ctx)
-	for i, evt := range evts {
-		evt.GroupID = persist.StrPtrToNullStr(editID)
-		if err := v.Struct(evt); err != nil {
-			return err
+func newDBIDCache(cfg redis.CacheConfig, key string, ttl time.Duration, f func(context.Context) ([]persist.DBID, error)) dbidCache {
+	lc := &redis.LazyCache{Cache: redis.NewCache(cfg), Key: key, TTL: ttl}
+	lc.CalcFunc = func(ctx context.Context) ([]byte, error) {
+		ids, err := f(ctx)
+		if err != nil {
+			return nil, err
 		}
-		evts[i] = evt
+		cur := cursors.NewPositionCursor()
+		cur.CurrentPosition = 0
+		cur.IDs = ids
+		b, err := cur.Pack()
+		return []byte(b), err
 	}
-
-	if caption != nil {
-		for i, evt := range evts {
-			evt.Caption = persist.StrPtrToNullStr(caption)
-			evts[i] = evt
-		}
-		return event.DispatchImmediate(ctx, evts)
-	}
-
-	for _, evt := range evts {
-		go pushEvent(ctx, evt)
-	}
-	return nil
+	return dbidCache{lc}
 }
 
-func pushEvent(ctx context.Context, evt db.Event) {
-	if hub := sentryutil.SentryHubFromContext(ctx); hub != nil {
-		sentryutil.SetEventContext(hub.Scope(), persist.NullStrToDBID(evt.ActorID), evt.SubjectID, evt.Action)
+func (d dbidCache) Load(ctx context.Context) ([]persist.DBID, error) {
+	b, err := d.LazyCache.Load(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if err := event.DispatchDelayed(ctx, evt); err != nil {
-		logger.For(ctx).Error(err)
-		sentryutil.ReportError(ctx, err)
-	}
+	cur := cursors.NewPositionCursor()
+	err = cur.Unpack(string(b))
+	return cur.IDs, err
 }
+*/

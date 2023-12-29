@@ -149,7 +149,8 @@ CREATE TABLE IF NOT EXISTS assets
     version       integer                           DEFAULT 0,
     last_updated  timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at    timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    token_id      character varying(255)   NOT NULL REFERENCES tokens ON DELETE CASCADE,
+    chain         integer,
+    token_address character varying(255),
     owner_address character varying(255)   NOT NULL,
     balance       integer                           DEFAULT 0,
     block_number  bigint
