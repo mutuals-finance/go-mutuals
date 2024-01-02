@@ -11,7 +11,7 @@ import (
 //}
 
 func (*GetTokenByChainAddressBatch) getNotFoundError(key coredb.GetTokenByChainAddressBatchParams) error {
-	return persist.ErrTokenNotFoundByAddress{ContractAddress: key.ContractAddress, Chain: key.Chain}
+	return persist.ErrTokenNotFoundByIdentifiers{ContractAddress: key.ContractAddress, Chain: key.Chain}
 }
 
 //func (*GetEventByIdBatch) getNotFoundError(key persist.DBID) error {
@@ -22,8 +22,16 @@ func (*GetSplitByIdBatch) getNotFoundError(key persist.DBID) error {
 	return persist.ErrSplitNotFound{ID: key}
 }
 
+func (*GetSplitByChainAddressBatch) getNotFoundError(key coredb.GetSplitByChainAddressBatchParams) error {
+	return persist.ErrSplitNotFoundByAddress{Address: key.Address}
+}
+
 func (*GetNotificationByIDBatch) getNotFoundError(key persist.DBID) error {
 	return pgx.ErrNoRows
+}
+
+func (*GetAssetByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrAssetNotFoundByID{ID: key}
 }
 
 //func (*GetProfileImageByIdBatch) getNotFoundError(key coredb.GetProfileImageByIdBatchParams) error {
@@ -54,7 +62,15 @@ func (*GetUserByUsernameBatch) getNotFoundError(key string) error {
 	return persist.ErrUserNotFound{Username: key}
 }
 
+func (*GetUserByAddressBatch) getNotFoundError(key coredb.GetUserByAddressBatchParams) error {
+	return persist.ErrAddressNotOwnedByUser{ChainAddress: persist.NewChainAddress(key.Address, persist.Chain(key.Chain))}
+}
+
 func (*GetWalletByIDBatch) getNotFoundError(key persist.DBID) error {
+	return pgx.ErrNoRows
+}
+
+func (*GetWalletByChainAddressBatch) getNotFoundError(key coredb.GetWalletByChainAddressBatchParams) error {
 	return pgx.ErrNoRows
 }
 

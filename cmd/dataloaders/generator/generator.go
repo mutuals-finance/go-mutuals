@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"buf.build/gen/go/sqlc/sqlc/protocolbuffers/go/protos/plugin"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -15,6 +14,8 @@ import (
 	"text/template"
 	"time"
 	"unicode"
+
+	"buf.build/gen/go/sqlc/sqlc/protocolbuffers/go/protos/plugin"
 
 	"github.com/pkg/errors"
 	"golang.org/x/tools/go/packages"

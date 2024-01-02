@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"github.com/SplitFi/go-splitfi/contracts"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/indexer"
@@ -34,11 +33,11 @@ type Provider struct {
 	indexerBaseURL string
 	httpClient     *http.Client
 	ethClient      *ethclient.Client
-	taskClient     *cloudtasks.Client
+	taskClient     *task.Client
 }
 
 // NewProvider creates a new ethereum Provider
-func NewProvider(httpClient *http.Client, ec *ethclient.Client, tc *cloudtasks.Client) *Provider {
+func NewProvider(httpClient *http.Client, ec *ethclient.Client, tc *task.Client) *Provider {
 	return &Provider{
 		indexerBaseURL: env.GetString("INDEXER_HOST"),
 		httpClient:     httpClient,
@@ -125,9 +124,9 @@ func (d *Provider) WalletCreated(ctx context.Context, userID persist.DBID, walle
 	if env.GetString("ENV") == "local" {
 		return nil
 	}
-	input := task.ValidateNFTsMessage{OwnerAddress: wallet}
+	//input := task.ValidateNFTsMessage{OwnerAddress: wallet}
 
-	return task.CreateTaskForWalletValidation(ctx, input, d.taskClient)
+	return nil // TODO  task.Client{}.(ctx, input, d.taskClient)
 }
 
 // VerifySignature will verify a signature using all available methods (eth_sign and personal_sign)

@@ -352,7 +352,7 @@ func newNotificationHandler(notifiers *notifications.NotificationHandlers, disab
 }
 
 func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent db.Event) error {
-	owner, err := h.findOwnerForNotificationFromEvent(persistedEvent)
+	owner, err := h.findOwnerForNotificationFromEvent(ctx, persistedEvent)
 	if err != nil {
 		return err
 	}
@@ -378,18 +378,20 @@ func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent d
 		Data:     h.createNotificationDataForEvent(persistedEvent),
 		EventIds: persist.DBIDList{persistedEvent.ID},
 		SplitID:  persistedEvent.SplitID,
-		TokenID:  persistedEvent.TokenID,
+		//TokenID:  persistedEvent.TokenID,
 	})
 }
 
 func (h notificationHandler) findOwnerForNotificationFromEvent(ctx context.Context, event db.Event) (persist.DBID, error) {
 	switch event.ResourceTypeID {
 	case persist.ResourceTypeSplit:
-		split, err := h.dataloaders.GetSplitByIdBatch.Load(event.SplitID)
-		if err != nil {
-			return "", err
-		}
-		return split.OwnerUserID, nil
+		// TODO return the creator user id
+		//split, err := h.dataloaders.GetSplitByIdBatch.Load(event.SplitID)
+		//if err != nil {
+		//	return "", err
+		//}
+		// return split.CreatorAddress, nil
+		return persist.DBID("1"), nil
 	case persist.ResourceTypeUser:
 		return event.SubjectID, nil
 	case persist.ResourceTypeToken:
@@ -414,12 +416,12 @@ func (h notificationHandler) createNotificationDataForEvent(event db.Event) (dat
 		}
 		data.FollowedBack = persist.NullBool(event.Data.UserFollowedBack)
 		data.Refollowed = persist.NullBool(event.Data.UserRefollowed)
-	case persist.ActionNewTokensReceived:
-		data.NewTokenID = event.Data.NewTokenID
-		data.NewTokenQuantity = event.Data.NewTokenQuantity
-	case persist.ActionTopActivityBadgeReceived:
-		data.ActivityBadgeThreshold = event.Data.ActivityBadgeThreshold
-		data.NewTopActiveUser = event.Data.NewTopActiveUser
+	//case persist.ActionNewTokensReceived:
+	//	data.NewTokenID = event.Data.NewTokenID
+	//	data.NewTokenQuantity = event.Data.NewTokenQuantity
+	//case persist.ActionTopActivityBadgeReceived:
+	//	data.ActivityBadgeThreshold = event.Data.ActivityBadgeThreshold
+	//	data.NewTopActiveUser = event.Data.NewTopActiveUser
 	default:
 		logger.For(nil).Debugf("no notification data for event: %s", event.Action)
 	}
@@ -443,7 +445,7 @@ func (h followerNotificationHandler) handleDelayed(ctx context.Context, persiste
 		Action:   persistedEvent.Action,
 		EventIds: persist.DBIDList{persistedEvent.ID},
 		SplitID:  persistedEvent.SplitID,
-		TokenID:  persistedEvent.TokenID,
+		//TokenID:  persistedEvent.TokenID,
 	})
 }
 
@@ -463,8 +465,8 @@ func (h announcementNotificationHandler) handleDelayed(ctx context.Context, pers
 		// no owner or data for follower notifications
 		Action:   persistedEvent.Action,
 		EventIds: persist.DBIDList{persistedEvent.ID},
-		Data: persist.NotificationData{
-			AnnouncementDetails: persistedEvent.Data.AnnouncementDetails,
+		Data:     persist.NotificationData{
+			//AnnouncementDetails: persistedEvent.Data.AnnouncementDetails,
 		},
 	})
 }
