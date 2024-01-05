@@ -62,7 +62,7 @@ func (*GetUserByUsernameBatch) getNotFoundError(key string) error {
 	return persist.ErrUserNotFound{Username: key}
 }
 
-func (*GetUserByAddressBatch) getNotFoundError(key coredb.GetUserByAddressBatchParams) error {
+func (*GetUserByChainAddressBatch) getNotFoundError(key coredb.GetUserByChainAddressBatchParams) error {
 	return persist.ErrAddressNotOwnedByUser{ChainAddress: persist.NewChainAddress(key.Address, persist.Chain(key.Chain))}
 }
 

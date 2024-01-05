@@ -21,12 +21,28 @@ SELECT * FROM users WHERE username_idempotent = lower(sqlc.arg('username')) AND 
 -- name: GetUserByUsernameBatch :batchone
 SELECT * FROM users WHERE username_idempotent = lower($1) AND deleted = false;
 
--- name: GetUserByAddressBatch :batchone
+-- name: GetUserByVerifiedEmailAddress :one
+select u.* from users u join pii.for_users p on u.id = p.user_id
+where p.pii_email_address = lower($1)
+  and u.email_verified != 0
+  and p.deleted = false
+  and u.deleted = false;
+
+-- name: GetUserByChainAddress :one
 select users.*
 from users, wallets
 where wallets.address = sqlc.arg('address')
-  and wallets.chain = sqlc.arg('chain')::int
+  and wallets.chain = sqlc.arg('chain')
   and array[wallets.id] <@ users.wallets
+  and wallets.deleted = false
+  and users.deleted = false;
+
+-- name: GetUserByChainAddressBatch :batchone
+select users.*
+from users, wallets
+where wallets.address = sqlc.arg('address')
+  and array[wallets.id] <@ users.wallets
+  and wallets.chain = sqlc.arg('chain')
   and wallets.deleted = false
   and users.deleted = false;
 
@@ -372,13 +388,20 @@ order by case when @paging_forward::bool then (u.username_idempotent, u.id) end 
          case when not @paging_forward::bool then (u.username_idempotent, u.id) end desc
 limit $1;
 
--- name: GetUsersByPositionPaginate :many
-select u.* from users u join unnest(@user_ids::text[]) with ordinality t(id, pos) using(id) where u.deleted = false
-                                                                                              and t.pos > @cur_before_pos::int
-                                                                                              and t.pos < @cur_after_pos::int
-order by case when @paging_forward::bool then t.pos end desc,
-         case when not @paging_forward::bool then t.pos end asc
-limit sqlc.arg('limit');
+-- name: GetUsersByPositionPaginateBatch :batchmany
+select u.*
+from users u
+         join unnest(@user_ids::varchar[]) with ordinality t(id, pos) using(id)
+where not u.deleted and not u.universal and t.pos > @cur_after_pos::int and t.pos < @cur_before_pos::int
+order by t.pos asc;
+
+-- name: GetUsersByPositionPersonalizedBatch :batchmany
+select u.*
+from users u
+         join unnest(@user_ids::varchar[]) with ordinality t(id, pos) using(id)
+where not u.deleted and not u.universal
+order by t.pos
+limit 100;
 
 -- name: UpdateUserVerificationStatus :exec
 UPDATE users SET email_verified = $2 WHERE id = $1;
@@ -440,12 +463,6 @@ update splits set hidden = @hidden, last_updated = now() where id = @id and dele
 update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, last_updated = now() where id = @id and deleted = false;
 */
 
--- name: GetUserExperiencesByUserID :one
-select user_experiences from users where id = $1;
-
--- name: UpdateUserExperience :exec
-update users set user_experiences = user_experiences || @experience where id = @user_id;
-
 -- name: GetSocialAuthByUserID :one
 select * from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false;
 
@@ -463,6 +480,12 @@ select pii_socials from pii.user_view where id = $1;
 
 -- name: UpdateUserSocials :exec
 update pii.for_users set pii_socials = @socials where user_id = @user_id;
+
+-- name: UpdateUserExperience :exec
+update users set user_experiences = user_experiences || @experience where id = @user_id;
+
+-- name: GetUserExperiencesByUserID :one
+select user_experiences from users where id = $1;
 
 -- name: UpdateEventCaptionByGroup :exec
 update events set caption = @caption where group_id = @group_id and deleted = false;
@@ -497,5 +520,73 @@ where case when @only_unfollowing::bool then true end;
 insert into pii.account_creation_info (user_id, ip_address, created_at) values (@user_id, @ip_address, now())
 on conflict do nothing;
 
+-- name: UpsertSession :one
+insert into sessions (id, user_id,
+                      created_at, created_with_user_agent, created_with_platform, created_with_os,
+                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted)
+values (@id, @user_id, now(), @user_agent, @platform, @os, now(), @user_agent, @platform, @os, @current_refresh_id, @active_until, false, now(), false)
+on conflict (id) where deleted = false do update set
+                                                     last_refreshed = case when sessions.invalidated then sessions.last_refreshed else excluded.last_refreshed end,
+                                                     last_user_agent = case when sessions.invalidated then sessions.last_user_agent else excluded.last_user_agent end,
+                                                     last_platform = case when sessions.invalidated then sessions.last_platform else excluded.last_platform end,
+                                                     last_os = case when sessions.invalidated then sessions.last_os else excluded.last_os end,
+                                                     current_refresh_id = case when sessions.invalidated then sessions.current_refresh_id else excluded.current_refresh_id end,
+                                                     last_updated = case when sessions.invalidated then sessions.last_updated else excluded.last_updated end,
+                                                     active_until = case when sessions.invalidated then sessions.active_until else greatest(sessions.active_until, excluded.active_until) end
+returning *;
+
+-- name: InvalidateSession :exec
+update sessions set invalidated = true, active_until = least(active_until, now()), last_updated = now() where id = @id and deleted = false and invalidated = false;
+
+-- name: GetPushTokenByPushToken :one
+select * from push_notification_tokens where push_token = @push_token and deleted = false;
+
+-- name: CreatePushTokenForUser :one
+insert into push_notification_tokens (id, user_id, push_token, created_at, deleted) values (@id, @user_id, @push_token, now(), false) returning *;
+
+-- name: DeletePushTokensByIDs :exec
+update push_notification_tokens set deleted = true where id = any(@ids) and deleted = false;
+
+-- name: GetPushTokensByUserID :many
+select * from push_notification_tokens where user_id = @user_id and deleted = false;
+
+-- name: GetPushTokensByIDs :many
+with keys as (
+    select unnest (@ids::text[]) as id
+         , generate_subscripts(@ids::text[], 1) as index
+)
+select t.* from keys k join push_notification_tokens t on t.id = k.id and t.deleted = false
+order by k.index;
+
+-- name: CreatePushTickets :exec
+insert into push_notification_tickets (id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, status, deleted) values
+    (
+        unnest(@ids::text[]),
+        unnest(@push_token_ids::text[]),
+        unnest(@ticket_ids::text[]),
+        now(),
+        now() + interval '15 minutes',
+        0,
+        'pending',
+        false
+    );
+
+-- name: UpdatePushTickets :exec
+with updates as (
+    select unnest(@ids::text[]) as id, unnest(@check_after::timestamptz[]) as check_after, unnest(@num_check_attempts::int[]) as num_check_attempts, unnest(@status::text[]) as status, unnest(@deleted::bool[]) as deleted
+)
+update push_notification_tickets t set check_after = updates.check_after, num_check_attempts = updates.num_check_attempts, status = updates.status, deleted = updates.deleted from updates where t.id = updates.id and t.deleted = false;
+
+-- name: GetCheckablePushTickets :many
+select * from push_notification_tickets where check_after <= now() and deleted = false limit sqlc.arg('limit');
+
 -- name: GetCurrentTime :one
 select now()::timestamptz;
+
+-- name: BlockUser :one
+with user_to_block as (select id from users where users.id = @blocked_user_id and not deleted and not universal)
+insert into user_blocklist (id, user_id, blocked_user_id, active) (select @id, @user_id, user_to_block.id, true from user_to_block)
+on conflict(user_id, blocked_user_id) where not deleted do update set active = true, last_updated = now() returning id;
+
+-- name: UnblockUser :exec
+update user_blocklist set active = false, last_updated = now() where user_id = @user_id and blocked_user_id = @blocked_user_id and not deleted;

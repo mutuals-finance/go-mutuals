@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"strings"
 
 	"github.com/SplitFi/go-splitfi/service/multichain"
@@ -80,90 +81,58 @@ type MergeUsersInput struct {
 }
 
 // CreateUser creates a new user
-func CreateUser(pCtx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, splitName, splitDesc, splitPos string, userRepo *postgres.UserRepository,
-	splitRepo *postgres.SplitRepository, mp *multichain.Provider) (userID persist.DBID, splitID persist.DBID, err error) {
-	gc := util.GinContextFromContext(pCtx)
+func CreateUser(ctx context.Context, createUserParams persist.CreateUserInput, userRepo *postgres.UserRepository, queries *coredb.Queries) (userID persist.DBID, err error) {
+	gc := util.MustGetGinContext(ctx)
 
-	authResult, err := authenticator.Authenticate(pCtx)
+	userID, err = userRepo.Create(ctx, createUserParams, queries)
 	if err != nil {
-		return "", "", auth.ErrAuthenticationFailed{WrappedErr: err}
+		return "", err
 	}
 
-	if authResult.User != nil && !authResult.User.Universal.Bool() {
-		return "", "", persist.ErrUserAlreadyExists{Authenticator: authenticator.GetDescription()}
-	}
-
-	// TODO: This currently takes the first authenticated address returned by the authenticator and creates
-	// the user's account based on that address. This works because the only auth mechanism we have is nonce-based
-	// auth and that supplies a single address. In the future, a user may authenticate in a way that makes
-	// multiple authenticated addresses available for initial user creation, and we may want to add all of
-	// those addresses to the user's account here.
-	wallet := authResult.Addresses[0]
-
-	user := persist.CreateUserInput{
-		Username:     username,
-		Bio:          bio,
-		Email:        email,
-		ChainAddress: wallet.ChainAddress,
-		WalletType:   wallet.WalletType,
-	}
-
-	userID, err = userRepo.Create(pCtx, user)
+	err = auth.StartSession(gc, queries, userID)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
-	jwtTokenStr, err := auth.JWTGeneratePipeline(pCtx, userID)
-	if err != nil {
-		return "", "", err
-	}
-
-	//TODO
-	//split, err := splitRepo.Upsert(pCtx, coredb.SplitRepoCreateParams{
-	//	SplitID:     persist.GenerateID(),
-	//	Name:        splitName,
-	//	Description: splitDesc,
-	//})
-	if err != nil {
-		return "", "", err
-	}
-
-	//splitID = split.ID
-
-	auth.SetAuthStateForCtx(gc, userID, nil)
-	auth.SetJWTCookie(gc, jwtTokenStr)
-
-	return userID, "0", nil //userID, splitID, nil
+	return userID, nil
 }
 
-// RemoveWalletsFromUser removes any amount of addresses from a user in the DB
-func RemoveWalletsFromUser(pCtx context.Context, pUserID persist.DBID, pWalletIDs []persist.DBID, userRepo *postgres.UserRepository) error {
+// RemoveWalletsFromUser removes wallets from a user in the DB, and returns the IDs of the wallets that were removed.
+// The set of removed IDs is valid even in cases where this function returns an error; it will contain the IDs of wallets
+// that were successfully removed before the error occurred.
+func RemoveWalletsFromUser(pCtx context.Context, pUserID persist.DBID, pWalletIDs []persist.DBID, userRepo *postgres.UserRepository) ([]persist.DBID, error) {
+	removedIDs := make([]persist.DBID, 0, len(pWalletIDs))
+
 	user, err := userRepo.GetByID(pCtx, pUserID)
 	if err != nil {
-		return err
+		return removedIDs, err
 	}
 
 	for _, walletID := range pWalletIDs {
 		if user.PrimaryWalletID.String() == walletID.String() {
-			return errUserCannotRemovePrimaryWallet
+			return removedIDs, errUserCannotRemovePrimaryWallet
 		}
 	}
 
 	if len(user.Wallets) <= len(pWalletIDs) {
-		return errUserCannotRemoveAllWallets
+		return removedIDs, errUserCannotRemoveAllWallets
 	}
+
 	for _, walletID := range pWalletIDs {
-		if err := userRepo.RemoveWallet(pCtx, pUserID, walletID); err != nil {
-			return err
+		removed, err := userRepo.RemoveWallet(pCtx, pUserID, walletID)
+		if err != nil {
+			return removedIDs, err
+		} else if removed {
+			removedIDs = append(removedIDs, walletID)
 		}
 	}
 
-	return nil
+	return removedIDs, nil
 }
 
 // AddWalletToUser adds a single wallet to a user in the DB because a signature needs to be provided and validated per address
 func AddWalletToUser(pCtx context.Context, pUserID persist.DBID, pChainAddress persist.ChainAddress, addressAuth auth.Authenticator,
-	userRepo *postgres.UserRepository, walletRepo *postgres.WalletRepository, mp *multichain.Provider) error {
+	userRepo *postgres.UserRepository, mp *multichain.Provider) error {
 
 	authResult, err := addressAuth.Authenticate(pCtx)
 	if err != nil {
@@ -179,7 +148,7 @@ func AddWalletToUser(pCtx context.Context, pUserID persist.DBID, pChainAddress p
 		return persist.ErrAddressNotOwnedByUser{ChainAddress: pChainAddress, UserID: authResult.User.ID}
 	}
 
-	if err := userRepo.AddWallet(pCtx, pUserID, authenticatedAddress.ChainAddress, authenticatedAddress.WalletType); err != nil {
+	if err := userRepo.AddWallet(pCtx, pUserID, authenticatedAddress.ChainAddress, authenticatedAddress.WalletType, nil); err != nil {
 		return err
 	}
 

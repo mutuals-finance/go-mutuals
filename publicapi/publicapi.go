@@ -115,6 +115,11 @@ func getAuthenticatedUserID(ctx context.Context) (persist.DBID, error) {
 	return userID, nil
 }
 
+func getUserRoles(ctx context.Context) []persist.Role {
+	gc := util.MustGetGinContext(ctx)
+	return auth.GetRolesFromCtx(gc)
+}
+
 func publishEventGroup(ctx context.Context, groupID string, action persist.Action, caption *string) error {
 	return event.DispatchGroup(sentryutil.NewSentryHubGinContext(ctx), groupID, action, caption)
 }

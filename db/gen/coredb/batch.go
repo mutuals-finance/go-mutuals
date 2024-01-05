@@ -848,41 +848,41 @@ func (b *GetTokenByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getUserByAddressBatch = `-- name: GetUserByAddressBatch :batchone
+const getUserByChainAddressBatch = `-- name: GetUserByChainAddressBatch :batchone
 select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
-  and wallets.chain = $2::int
   and array[wallets.id] <@ users.wallets
+  and wallets.chain = $2
   and wallets.deleted = false
   and users.deleted = false
 `
 
-type GetUserByAddressBatchBatchResults struct {
+type GetUserByChainAddressBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-type GetUserByAddressBatchParams struct {
+type GetUserByChainAddressBatchParams struct {
 	Address persist.Address `db:"address" json:"address"`
-	Chain   int32           `db:"chain" json:"chain"`
+	Chain   persist.Chain   `db:"chain" json:"chain"`
 }
 
-func (q *Queries) GetUserByAddressBatch(ctx context.Context, arg []GetUserByAddressBatchParams) *GetUserByAddressBatchBatchResults {
+func (q *Queries) GetUserByChainAddressBatch(ctx context.Context, arg []GetUserByChainAddressBatchParams) *GetUserByChainAddressBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range arg {
 		vals := []interface{}{
 			a.Address,
 			a.Chain,
 		}
-		batch.Queue(getUserByAddressBatch, vals...)
+		batch.Queue(getUserByChainAddressBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetUserByAddressBatchBatchResults{br, len(arg), false}
+	return &GetUserByChainAddressBatchBatchResults{br, len(arg), false}
 }
 
-func (b *GetUserByAddressBatchBatchResults) QueryRow(f func(int, User, error)) {
+func (b *GetUserByChainAddressBatchBatchResults) QueryRow(f func(int, User, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var i User
@@ -918,7 +918,7 @@ func (b *GetUserByAddressBatchBatchResults) QueryRow(f func(int, User, error)) {
 	}
 }
 
-func (b *GetUserByAddressBatchBatchResults) Close() error {
+func (b *GetUserByChainAddressBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -1137,6 +1137,175 @@ func (b *GetUserNotificationsBatchBatchResults) Query(f func(int, []Notification
 }
 
 func (b *GetUserNotificationsBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
+from users u
+         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
+where not u.deleted and not u.universal and t.pos > $2::int and t.pos < $3::int
+order by t.pos asc
+`
+
+type GetUsersByPositionPaginateBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type GetUsersByPositionPaginateBatchParams struct {
+	UserIds      []string `db:"user_ids" json:"user_ids"`
+	CurAfterPos  int32    `db:"cur_after_pos" json:"cur_after_pos"`
+	CurBeforePos int32    `db:"cur_before_pos" json:"cur_before_pos"`
+}
+
+func (q *Queries) GetUsersByPositionPaginateBatch(ctx context.Context, arg []GetUsersByPositionPaginateBatchParams) *GetUsersByPositionPaginateBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.UserIds,
+			a.CurAfterPos,
+			a.CurBeforePos,
+		}
+		batch.Queue(getUsersByPositionPaginateBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetUsersByPositionPaginateBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetUsersByPositionPaginateBatchBatchResults) Query(f func(int, []User, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []User
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i User
+				if err := rows.Scan(
+					&i.ID,
+					&i.Deleted,
+					&i.Version,
+					&i.LastUpdated,
+					&i.CreatedAt,
+					&i.Username,
+					&i.UsernameIdempotent,
+					&i.Wallets,
+					&i.Bio,
+					&i.Traits,
+					&i.Universal,
+					&i.NotificationSettings,
+					&i.EmailVerified,
+					&i.EmailUnsubscriptions,
+					&i.FeaturedSplit,
+					&i.PrimaryWalletID,
+					&i.UserExperiences,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
+from users u
+         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
+where not u.deleted and not u.universal
+order by t.pos
+limit 100
+`
+
+type GetUsersByPositionPersonalizedBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetUsersByPositionPersonalizedBatch(ctx context.Context, userIds [][]string) *GetUsersByPositionPersonalizedBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range userIds {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getUsersByPositionPersonalizedBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetUsersByPositionPersonalizedBatchBatchResults{br, len(userIds), false}
+}
+
+func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []User, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []User
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i User
+				if err := rows.Scan(
+					&i.ID,
+					&i.Deleted,
+					&i.Version,
+					&i.LastUpdated,
+					&i.CreatedAt,
+					&i.Username,
+					&i.UsernameIdempotent,
+					&i.Wallets,
+					&i.Bio,
+					&i.Traits,
+					&i.Universal,
+					&i.NotificationSettings,
+					&i.EmailVerified,
+					&i.EmailUnsubscriptions,
+					&i.FeaturedSplit,
+					&i.PrimaryWalletID,
+					&i.UserExperiences,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetUsersByPositionPersonalizedBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

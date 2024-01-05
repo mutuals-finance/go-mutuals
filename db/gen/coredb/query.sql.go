@@ -60,6 +60,25 @@ func (q *Queries) AddUserRoles(ctx context.Context, arg AddUserRolesParams) erro
 	return err
 }
 
+const blockUser = `-- name: BlockUser :one
+with user_to_block as (select id from users where users.id = $3 and not deleted and not universal)
+insert into user_blocklist (id, user_id, blocked_user_id, active) (select $1, $2, user_to_block.id, true from user_to_block)
+on conflict(user_id, blocked_user_id) where not deleted do update set active = true, last_updated = now() returning id
+`
+
+type BlockUserParams struct {
+	ID            persist.DBID `db:"id" json:"id"`
+	UserID        persist.DBID `db:"user_id" json:"user_id"`
+	BlockedUserID persist.DBID `db:"blocked_user_id" json:"blocked_user_id"`
+}
+
+func (q *Queries) BlockUser(ctx context.Context, arg BlockUserParams) (persist.DBID, error) {
+	row := q.db.QueryRow(ctx, blockUser, arg.ID, arg.UserID, arg.BlockedUserID)
+	var id persist.DBID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const clearNotificationsForUser = `-- name: ClearNotificationsForUser :many
 UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount
 `
@@ -137,6 +156,54 @@ func (q *Queries) CountUserUnseenNotifications(ctx context.Context, ownerID pers
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const createPushTickets = `-- name: CreatePushTickets :exec
+insert into push_notification_tickets (id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, status, deleted) values
+    (
+        unnest($1::text[]),
+        unnest($2::text[]),
+        unnest($3::text[]),
+        now(),
+        now() + interval '15 minutes',
+        0,
+        'pending',
+        false
+    )
+`
+
+type CreatePushTicketsParams struct {
+	Ids          []string `db:"ids" json:"ids"`
+	PushTokenIds []string `db:"push_token_ids" json:"push_token_ids"`
+	TicketIds    []string `db:"ticket_ids" json:"ticket_ids"`
+}
+
+func (q *Queries) CreatePushTickets(ctx context.Context, arg CreatePushTicketsParams) error {
+	_, err := q.db.Exec(ctx, createPushTickets, arg.Ids, arg.PushTokenIds, arg.TicketIds)
+	return err
+}
+
+const createPushTokenForUser = `-- name: CreatePushTokenForUser :one
+insert into push_notification_tokens (id, user_id, push_token, created_at, deleted) values ($1, $2, $3, now(), false) returning id, user_id, push_token, created_at, deleted
+`
+
+type CreatePushTokenForUserParams struct {
+	ID        persist.DBID `db:"id" json:"id"`
+	UserID    persist.DBID `db:"user_id" json:"user_id"`
+	PushToken string       `db:"push_token" json:"push_token"`
+}
+
+func (q *Queries) CreatePushTokenForUser(ctx context.Context, arg CreatePushTokenForUserParams) (PushNotificationToken, error) {
+	row := q.db.QueryRow(ctx, createPushTokenForUser, arg.ID, arg.UserID, arg.PushToken)
+	var i PushNotificationToken
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PushToken,
+		&i.CreatedAt,
+		&i.Deleted,
+	)
+	return i, err
 }
 
 const createSplitEvent = `-- name: CreateSplitEvent :one
@@ -285,6 +352,15 @@ func (q *Queries) CreateUserEvent(ctx context.Context, arg CreateUserEventParams
 		&i.GroupID,
 	)
 	return i, err
+}
+
+const deletePushTokensByIDs = `-- name: DeletePushTokensByIDs :exec
+update push_notification_tokens set deleted = true where id = any($1) and deleted = false
+`
+
+func (q *Queries) DeletePushTokensByIDs(ctx context.Context, ids persist.DBIDList) error {
+	_, err := q.db.Exec(ctx, deletePushTokensByIDs, ids)
+	return err
 }
 
 const deleteUserRoles = `-- name: DeleteUserRoles :exec
@@ -442,6 +518,38 @@ func (q *Queries) GetAssetsBySplitChainAddressPaginate(ctx context.Context, id p
 			&i.Address,
 			&i.WalletType,
 			&i.Chain,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCheckablePushTickets = `-- name: GetCheckablePushTickets :many
+select id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, deleted from push_notification_tickets where check_after <= now() and deleted = false limit $1
+`
+
+func (q *Queries) GetCheckablePushTickets(ctx context.Context, limit int32) ([]PushNotificationTicket, error) {
+	rows, err := q.db.Query(ctx, getCheckablePushTickets, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PushNotificationTicket
+	for rows.Next() {
+		var i PushNotificationTicket
+		if err := rows.Scan(
+			&i.ID,
+			&i.PushTokenID,
+			&i.TicketID,
+			&i.CreatedAt,
+			&i.CheckAfter,
+			&i.NumCheckAttempts,
+			&i.Deleted,
 		); err != nil {
 			return nil, err
 		}
@@ -701,6 +809,88 @@ func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, a
 	return items, nil
 }
 
+const getPushTokenByPushToken = `-- name: GetPushTokenByPushToken :one
+select id, user_id, push_token, created_at, deleted from push_notification_tokens where push_token = $1 and deleted = false
+`
+
+func (q *Queries) GetPushTokenByPushToken(ctx context.Context, pushToken string) (PushNotificationToken, error) {
+	row := q.db.QueryRow(ctx, getPushTokenByPushToken, pushToken)
+	var i PushNotificationToken
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PushToken,
+		&i.CreatedAt,
+		&i.Deleted,
+	)
+	return i, err
+}
+
+const getPushTokensByIDs = `-- name: GetPushTokensByIDs :many
+with keys as (
+    select unnest ($1::text[]) as id
+         , generate_subscripts($1::text[], 1) as index
+)
+select t.id, t.user_id, t.push_token, t.created_at, t.deleted from keys k join push_notification_tokens t on t.id = k.id and t.deleted = false
+order by k.index
+`
+
+func (q *Queries) GetPushTokensByIDs(ctx context.Context, ids []string) ([]PushNotificationToken, error) {
+	rows, err := q.db.Query(ctx, getPushTokensByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PushNotificationToken
+	for rows.Next() {
+		var i PushNotificationToken
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.PushToken,
+			&i.CreatedAt,
+			&i.Deleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPushTokensByUserID = `-- name: GetPushTokensByUserID :many
+select id, user_id, push_token, created_at, deleted from push_notification_tokens where user_id = $1 and deleted = false
+`
+
+func (q *Queries) GetPushTokensByUserID(ctx context.Context, userID persist.DBID) ([]PushNotificationToken, error) {
+	rows, err := q.db.Query(ctx, getPushTokensByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PushNotificationToken
+	for rows.Next() {
+		var i PushNotificationToken
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.PushToken,
+			&i.CreatedAt,
+			&i.Deleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRecentUnseenNotifications = `-- name: GetRecentUnseenNotifications :many
 SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at > $2 order by created_at desc limit $3
 `
@@ -742,32 +932,6 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 		return nil, err
 	}
 	return items, nil
-}
-
-const getSocialAuthByUserID = `-- name: GetSocialAuthByUserID :one
-select id, deleted, version, created_at, last_updated, user_id, provider, access_token, refresh_token from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false
-`
-
-type GetSocialAuthByUserIDParams struct {
-	UserID   persist.DBID           `db:"user_id" json:"user_id"`
-	Provider persist.SocialProvider `db:"provider" json:"provider"`
-}
-
-func (q *Queries) GetSocialAuthByUserID(ctx context.Context, arg GetSocialAuthByUserIDParams) (PiiSocialsAuth, error) {
-	row := q.db.QueryRow(ctx, getSocialAuthByUserID, arg.UserID, arg.Provider)
-	var i PiiSocialsAuth
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.Version,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.UserID,
-		&i.Provider,
-		&i.AccessToken,
-		&i.RefreshToken,
-	)
-	return i, err
 }
 
 const getSocialConnections = `-- name: GetSocialConnections :many
@@ -1269,6 +1433,46 @@ func (q *Queries) GetTokensByIDs(ctx context.Context, tokenIds []string) ([]GetT
 	return items, nil
 }
 
+const getUserByChainAddress = `-- name: GetUserByChainAddress :one
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
+from users, wallets
+where wallets.address = $1
+  and wallets.chain = $2
+  and array[wallets.id] <@ users.wallets
+  and wallets.deleted = false
+  and users.deleted = false
+`
+
+type GetUserByChainAddressParams struct {
+	Address persist.Address `db:"address" json:"address"`
+	Chain   persist.Chain   `db:"chain" json:"chain"`
+}
+
+func (q *Queries) GetUserByChainAddress(ctx context.Context, arg GetUserByChainAddressParams) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByChainAddress, arg.Address, arg.Chain)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Deleted,
+		&i.Version,
+		&i.LastUpdated,
+		&i.CreatedAt,
+		&i.Username,
+		&i.UsernameIdempotent,
+		&i.Wallets,
+		&i.Bio,
+		&i.Traits,
+		&i.Universal,
+		&i.NotificationSettings,
+		&i.EmailVerified,
+		&i.EmailUnsubscriptions,
+		&i.FeaturedSplit,
+		&i.PrimaryWalletID,
+		&i.UserExperiences,
+	)
+	return i, err
+}
+
 const getUserById = `-- name: GetUserById :one
 SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
@@ -1325,6 +1529,50 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.UserExperiences,
 	)
 	return i, err
+}
+
+const getUserByVerifiedEmailAddress = `-- name: GetUserByVerifiedEmailAddress :one
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
+where p.pii_email_address = lower($1)
+  and u.email_verified != 0
+  and p.deleted = false
+  and u.deleted = false
+`
+
+func (q *Queries) GetUserByVerifiedEmailAddress(ctx context.Context, lower string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByVerifiedEmailAddress, lower)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Deleted,
+		&i.Version,
+		&i.LastUpdated,
+		&i.CreatedAt,
+		&i.Username,
+		&i.UsernameIdempotent,
+		&i.Wallets,
+		&i.Bio,
+		&i.Traits,
+		&i.Universal,
+		&i.NotificationSettings,
+		&i.EmailVerified,
+		&i.EmailUnsubscriptions,
+		&i.FeaturedSplit,
+		&i.PrimaryWalletID,
+		&i.UserExperiences,
+	)
+	return i, err
+}
+
+const getUserExperiencesByUserID = `-- name: GetUserExperiencesByUserID :one
+select user_experiences from users where id = $1
+`
+
+func (q *Queries) GetUserExperiencesByUserID(ctx context.Context, id persist.DBID) (pgtype.JSONB, error) {
+	row := q.db.QueryRow(ctx, getUserExperiencesByUserID, id)
+	var user_experiences pgtype.JSONB
+	err := row.Scan(&user_experiences)
+	return user_experiences, err
 }
 
 const getUserNotifications = `-- name: GetUserNotifications :many
@@ -1621,67 +1869,6 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 		arg.CurAfterTime,
 		arg.CurAfterID,
 		arg.PagingForward,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Username,
-			&i.UsernameIdempotent,
-			&i.Wallets,
-			&i.Bio,
-			&i.Traits,
-			&i.Universal,
-			&i.NotificationSettings,
-			&i.EmailVerified,
-			&i.EmailUnsubscriptions,
-			&i.FeaturedSplit,
-			&i.PrimaryWalletID,
-			&i.UserExperiences,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getUsersByPositionPaginate = `-- name: GetUsersByPositionPaginate :many
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u join unnest($1::text[]) with ordinality t(id, pos) using(id) where u.deleted = false
-                                                                                              and t.pos > $2::int
-                                                                                              and t.pos < $3::int
-order by case when $4::bool then t.pos end desc,
-         case when not $4::bool then t.pos end asc
-limit $5
-`
-
-type GetUsersByPositionPaginateParams struct {
-	UserIds       []string `db:"user_ids" json:"user_ids"`
-	CurBeforePos  int32    `db:"cur_before_pos" json:"cur_before_pos"`
-	CurAfterPos   int32    `db:"cur_after_pos" json:"cur_after_pos"`
-	PagingForward bool     `db:"paging_forward" json:"paging_forward"`
-	Limit         int32    `db:"limit" json:"limit"`
-}
-
-func (q *Queries) GetUsersByPositionPaginate(ctx context.Context, arg GetUsersByPositionPaginateParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, getUsersByPositionPaginate,
-		arg.UserIds,
-		arg.CurBeforePos,
-		arg.CurAfterPos,
-		arg.PagingForward,
-		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -2052,6 +2239,15 @@ func (q *Queries) HasLaterGroupedEvent(ctx context.Context, arg HasLaterGroupedE
 	return exists, err
 }
 
+const invalidateSession = `-- name: InvalidateSession :exec
+update sessions set invalidated = true, active_until = least(active_until, now()), last_updated = now() where id = $1 and deleted = false and invalidated = false
+`
+
+func (q *Queries) InvalidateSession(ctx context.Context, id persist.DBID) error {
+	_, err := q.db.Exec(ctx, invalidateSession, id)
+	return err
+}
+
 const isActorActionActive = `-- name: IsActorActionActive :one
 select exists(
     select 1 from events where deleted = false
@@ -2181,6 +2377,20 @@ func (q *Queries) RemoveSocialFromUser(ctx context.Context, arg RemoveSocialFrom
 	return err
 }
 
+const unblockUser = `-- name: UnblockUser :exec
+update user_blocklist set active = false, last_updated = now() where user_id = $1 and blocked_user_id = $2 and not deleted
+`
+
+type UnblockUserParams struct {
+	UserID        persist.DBID `db:"user_id" json:"user_id"`
+	BlockedUserID persist.DBID `db:"blocked_user_id" json:"blocked_user_id"`
+}
+
+func (q *Queries) UnblockUser(ctx context.Context, arg UnblockUserParams) error {
+	_, err := q.db.Exec(ctx, unblockUser, arg.UserID, arg.BlockedUserID)
+	return err
+}
+
 const updateEventCaptionByGroup = `-- name: UpdateEventCaptionByGroup :exec
 update events set caption = $1 where group_id = $2 and deleted = false
 `
@@ -2236,6 +2446,32 @@ func (q *Queries) UpdateNotificationSettingsByID(ctx context.Context, arg Update
 	return err
 }
 
+const updatePushTickets = `-- name: UpdatePushTickets :exec
+with updates as (
+    select unnest($1::text[]) as id, unnest($2::timestamptz[]) as check_after, unnest($3::int[]) as num_check_attempts, unnest($4::text[]) as status, unnest($5::bool[]) as deleted
+)
+update push_notification_tickets t set check_after = updates.check_after, num_check_attempts = updates.num_check_attempts, status = updates.status, deleted = updates.deleted from updates where t.id = updates.id and t.deleted = false
+`
+
+type UpdatePushTicketsParams struct {
+	Ids              []string    `db:"ids" json:"ids"`
+	CheckAfter       []time.Time `db:"check_after" json:"check_after"`
+	NumCheckAttempts []int32     `db:"num_check_attempts" json:"num_check_attempts"`
+	Status           []string    `db:"status" json:"status"`
+	Deleted          []bool      `db:"deleted" json:"deleted"`
+}
+
+func (q *Queries) UpdatePushTickets(ctx context.Context, arg UpdatePushTicketsParams) error {
+	_, err := q.db.Exec(ctx, updatePushTickets,
+		arg.Ids,
+		arg.CheckAfter,
+		arg.NumCheckAttempts,
+		arg.Status,
+		arg.Deleted,
+	)
+	return err
+}
+
 const updateSplitHidden = `-- name: UpdateSplitHidden :one
 /*
 update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
@@ -2243,14 +2479,29 @@ update splits set hidden = @hidden, last_updated = now() where id = @id and dele
 update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, last_updated = now() where id = @id and deleted = false;
 */
 
-select user_experiences from users where id = $1
+select id, deleted, version, created_at, last_updated, user_id, provider, access_token, refresh_token from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false
 `
 
-func (q *Queries) UpdateSplitHidden(ctx context.Context, id persist.DBID) (pgtype.JSONB, error) {
-	row := q.db.QueryRow(ctx, updateSplitHidden, id)
-	var user_experiences pgtype.JSONB
-	err := row.Scan(&user_experiences)
-	return user_experiences, err
+type UpdateSplitHiddenParams struct {
+	UserID   persist.DBID           `db:"user_id" json:"user_id"`
+	Provider persist.SocialProvider `db:"provider" json:"provider"`
+}
+
+func (q *Queries) UpdateSplitHidden(ctx context.Context, arg UpdateSplitHiddenParams) (PiiSocialsAuth, error) {
+	row := q.db.QueryRow(ctx, updateSplitHidden, arg.UserID, arg.Provider)
+	var i PiiSocialsAuth
+	err := row.Scan(
+		&i.ID,
+		&i.Deleted,
+		&i.Version,
+		&i.CreatedAt,
+		&i.LastUpdated,
+		&i.UserID,
+		&i.Provider,
+		&i.AccessToken,
+		&i.RefreshToken,
+	)
+	return i, err
 }
 
 const updateTokenMetadataFieldsByChainAddress = `-- name: UpdateTokenMetadataFieldsByChainAddress :exec
@@ -2377,6 +2628,63 @@ type UpdateUserVerificationStatusParams struct {
 func (q *Queries) UpdateUserVerificationStatus(ctx context.Context, arg UpdateUserVerificationStatusParams) error {
 	_, err := q.db.Exec(ctx, updateUserVerificationStatus, arg.ID, arg.EmailVerified)
 	return err
+}
+
+const upsertSession = `-- name: UpsertSession :one
+insert into sessions (id, user_id,
+                      created_at, created_with_user_agent, created_with_platform, created_with_os,
+                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted)
+values ($1, $2, now(), $3, $4, $5, now(), $3, $4, $5, $6, $7, false, now(), false)
+on conflict (id) where deleted = false do update set
+                                                     last_refreshed = case when sessions.invalidated then sessions.last_refreshed else excluded.last_refreshed end,
+                                                     last_user_agent = case when sessions.invalidated then sessions.last_user_agent else excluded.last_user_agent end,
+                                                     last_platform = case when sessions.invalidated then sessions.last_platform else excluded.last_platform end,
+                                                     last_os = case when sessions.invalidated then sessions.last_os else excluded.last_os end,
+                                                     current_refresh_id = case when sessions.invalidated then sessions.current_refresh_id else excluded.current_refresh_id end,
+                                                     last_updated = case when sessions.invalidated then sessions.last_updated else excluded.last_updated end,
+                                                     active_until = case when sessions.invalidated then sessions.active_until else greatest(sessions.active_until, excluded.active_until) end
+returning id, user_id, created_at, created_with_user_agent, created_with_platform, created_with_os, last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted
+`
+
+type UpsertSessionParams struct {
+	ID               persist.DBID `db:"id" json:"id"`
+	UserID           persist.DBID `db:"user_id" json:"user_id"`
+	UserAgent        string       `db:"user_agent" json:"user_agent"`
+	Platform         string       `db:"platform" json:"platform"`
+	Os               string       `db:"os" json:"os"`
+	CurrentRefreshID persist.DBID `db:"current_refresh_id" json:"current_refresh_id"`
+	ActiveUntil      time.Time    `db:"active_until" json:"active_until"`
+}
+
+func (q *Queries) UpsertSession(ctx context.Context, arg UpsertSessionParams) (Session, error) {
+	row := q.db.QueryRow(ctx, upsertSession,
+		arg.ID,
+		arg.UserID,
+		arg.UserAgent,
+		arg.Platform,
+		arg.Os,
+		arg.CurrentRefreshID,
+		arg.ActiveUntil,
+	)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.CreatedWithUserAgent,
+		&i.CreatedWithPlatform,
+		&i.CreatedWithOs,
+		&i.LastRefreshed,
+		&i.LastUserAgent,
+		&i.LastPlatform,
+		&i.LastOs,
+		&i.CurrentRefreshID,
+		&i.ActiveUntil,
+		&i.Invalidated,
+		&i.LastUpdated,
+		&i.Deleted,
+	)
+	return i, err
 }
 
 const upsertSocialOAuth = `-- name: UpsertSocialOAuth :exec

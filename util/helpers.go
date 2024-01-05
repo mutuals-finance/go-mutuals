@@ -217,6 +217,15 @@ func Map[T, U any](xs []T, f func(T) (U, error)) ([]U, error) {
 	return result, nil
 }
 
+// MapWithoutError applies a function to each element of a slice, returning a new slice of the same length.
+func MapWithoutError[T, U any](xs []T, f func(T) U) []U {
+	result := make([]U, len(xs))
+	for i, x := range xs {
+		result[i] = f(x)
+	}
+	return result
+}
+
 func MapKeys[T comparable, V any](m map[T]V) []T {
 	result := make([]T, 0, len(m))
 	for k := range m {
@@ -658,4 +667,18 @@ func GetOptionalValue[T any](optional *T, fallback T) T {
 	}
 
 	return fallback
+}
+
+// ErrorIs returns true if the given error is of type T
+func ErrorIs[T error](e error) bool {
+	var t T
+	return errors.As(e, &t)
+}
+
+// ErrorAs unwraps errors until it finds an error of type T. The second return value
+// will be true if an error was found and returned, and false otherwise.
+func ErrorAs[T error](e error) (T, bool) {
+	var t T
+	ok := errors.As(e, &t)
+	return t, ok
 }

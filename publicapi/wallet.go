@@ -27,17 +27,33 @@ type WalletAPI struct {
 func (api WalletAPI) GetWalletByID(ctx context.Context, walletID persist.DBID) (*db.Wallet, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"walletID": {walletID, "required"},
+		"walletID": validate.WithTag(walletID, "required"),
 	}); err != nil {
 		return nil, err
 	}
 
-	address, err := api.loaders.WalletByWalletID.Load(walletID)
+	address, err := api.loaders.GetWalletByIDBatch.Load(walletID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &address, nil
+}
+
+func (api WalletAPI) GetWalletsByUserID(ctx context.Context, userID persist.DBID) ([]db.Wallet, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"userID": validate.WithTag(userID, "required"),
+	}); err != nil {
+		return nil, err
+	}
+
+	a, err := api.loaders.GetWalletsByUserIDBatch.Load(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return a, nil
 }
 
 func (api WalletAPI) GetWalletByChainAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.Wallet, error) {
@@ -48,26 +64,13 @@ func (api WalletAPI) GetWalletByChainAddress(ctx context.Context, chainAddress p
 		return nil, err
 	}
 
-	a, err := api.loaders.WalletByChainAddress.Load(chainAddress)
+	a, err := api.loaders.GetWalletByChainAddressBatch.Load(db.GetWalletByChainAddressBatchParams{
+		Address: chainAddress.Address(),
+		Chain:   chainAddress.Chain(),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &a, nil
-}
-
-func (api WalletAPI) GetWalletsByUserID(ctx context.Context, userID persist.DBID) ([]db.Wallet, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": {userID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	a, err := api.loaders.WalletsByUserID.Load(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return a, nil
 }

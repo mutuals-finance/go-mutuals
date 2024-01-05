@@ -81,6 +81,10 @@ type ValWithTags struct {
 	Tag   string
 }
 
+func WithTag(v any, t string) ValWithTags {
+	return ValWithTags{Value: v, Tag: t}
+}
+
 type ValidationMap map[string]ValWithTags
 
 // ValidateFields validates input fields based on a set of predefined validation tags
@@ -132,9 +136,7 @@ func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("chain", ChainValidator)
 	v.RegisterValidation("role", IsValidRole)
 	v.RegisterValidation("http", HTTPValidator)
-	v.RegisterAlias("collection_name", "max=200")
-	v.RegisterAlias("collection_note", "max=600")
-	v.RegisterAlias("token_note", "max=1200")
+	v.RegisterAlias("split_name", "max=200")
 	v.RegisterAlias("bio", "max=600")
 	v.RegisterAlias("caption", "max=600")
 
@@ -193,6 +195,34 @@ func ConnectionPaginationParamsValidator(sl validator.StructLevel) {
 		sl.ReportError(pageArgs.Last, "Last", "Last", "excluded_with", "firstandlast")
 	}
 }
+
+/*
+// SplitTokenSettingsParams are args passed to split create and update functions that are meant to be validated together
+type SplitTokenSettingsParams struct {
+	Tokens        []persist.DBID                              `json:"tokens"`
+	TokenSettings map[persist.DBID]persist.SplitTokenSettings `json:"token_settings"`
+}
+
+// SplitTokenSettingsParamsValidator checks that the input CollectionTokenSettingsParams struct is valid
+func SplitTokenSettingsParamsValidator(sl validator.StructLevel) {
+	settings := sl.Current().Interface().(SplitTokenSettingsParams)
+
+	for settingTokenID := range settings.TokenSettings {
+		var exists bool
+
+		for _, tokenID := range settings.Tokens {
+			if settingTokenID == tokenID {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			sl.ReportError(settingTokenID, fmt.Sprintf("TokenSettings[%s]", settingTokenID), "token_settings", "exclude", "")
+		}
+	}
+}
+*/
 
 // EthValidator validates ethereum addresses
 var EthValidator validator.Func = func(fl validator.FieldLevel) bool {

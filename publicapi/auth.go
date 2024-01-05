@@ -3,8 +3,10 @@ package publicapi
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/SplitFi/go-splitfi/util"
+	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"github.com/magiclabs/magic-admin-go/token"
@@ -28,6 +30,8 @@ type AuthAPI struct {
 	ethClient          *ethclient.Client
 	multiChainProvider *multichain.Provider
 	magicLinkClient    *magicclient.API
+	oneTimeLoginCache  *redis.Cache
+	authRefreshCache   *redis.Cache
 }
 
 func (api AuthAPI) NewNonceAuthenticator(chainAddress persist.ChainPubKey, nonce string, signature string, walletType persist.WalletType) auth.Authenticator {
@@ -46,9 +50,11 @@ func (api AuthAPI) NewNonceAuthenticator(chainAddress persist.ChainPubKey, nonce
 }
 
 func (api AuthAPI) NewDebugAuthenticator(ctx context.Context, debugParams model.DebugAuth) (auth.Authenticator, error) {
-	if !debugtools.Enabled || env.GetString("ENV") != "local" {
-		return nil, fmt.Errorf("debug auth is only allowed in local environments with debugtools enabled")
+	if !debugtools.Enabled || !debugtools.IsDebugEnv() {
+		return nil, fmt.Errorf("debug auth is only allowed in local and development environments with debugtools enabled")
 	}
+
+	password := util.FromPointer(debugParams.DebugToolsPassword)
 
 	if debugParams.AsUsername == nil {
 		if debugParams.ChainAddresses == nil {
@@ -66,7 +72,7 @@ func (api AuthAPI) NewDebugAuthenticator(ctx context.Context, debugParams model.
 			user = &dbUser
 		}
 
-		return debugtools.NewDebugAuthenticator(user, chainAddressPointersToChainAddresses(debugParams.ChainAddresses)), nil
+		return debugtools.NewDebugAuthenticator(user, chainAddressPointersToChainAddresses(debugParams.ChainAddresses), password), nil
 	}
 
 	if debugParams.UserID != nil || debugParams.ChainAddresses != nil {
@@ -93,7 +99,7 @@ func (api AuthAPI) NewDebugAuthenticator(ctx context.Context, debugParams model.
 		addresses = append(addresses, persist.NewChainAddress(wallet.Address, wallet.Chain))
 	}
 
-	return debugtools.NewDebugAuthenticator(&user, addresses), nil
+	return debugtools.NewDebugAuthenticator(&user, addresses, password), nil
 }
 
 func (api AuthAPI) NewMagicLinkAuthenticator(token token.Token) auth.Authenticator {
@@ -101,6 +107,15 @@ func (api AuthAPI) NewMagicLinkAuthenticator(token token.Token) auth.Authenticat
 		Token:       token,
 		MagicClient: api.magicLinkClient,
 		UserRepo:    api.repos.UserRepository,
+	}
+	return authenticator
+}
+
+func (api AuthAPI) NewOneTimeLoginTokenAuthenticator(loginToken string) auth.Authenticator {
+	authenticator := auth.OneTimeLoginTokenAuthenticator{
+		ConsumedTokenCache: api.oneTimeLoginCache,
+		UserRepo:           api.repos.UserRepository,
+		LoginToken:         loginToken,
 	}
 	return authenticator
 }
@@ -123,10 +138,25 @@ func (api AuthAPI) GetAuthNonce(ctx context.Context, chainAddress persist.ChainA
 
 func (api AuthAPI) Login(ctx context.Context, authenticator auth.Authenticator) (persist.DBID, error) {
 	// Nothing to validate
-	return auth.Login(ctx, authenticator)
+	return auth.Login(ctx, api.queries, authenticator)
 }
 
 func (api AuthAPI) Logout(ctx context.Context) {
 	// Nothing to validate
-	auth.Logout(ctx)
+	auth.Logout(ctx, api.queries, api.authRefreshCache)
+}
+
+func (api AuthAPI) GenerateQRCodeLoginToken(ctx context.Context) (string, error) {
+	// Nothing to validate
+
+	userID, err := getAuthenticatedUserID(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return auth.GenerateOneTimeLoginToken(ctx, userID, "qr_code", 5*time.Minute)
+}
+
+func (api AuthAPI) ForceAuthTokenRefresh(ctx context.Context, userID persist.DBID) error {
+	return auth.ForceAuthTokenRefresh(ctx, api.authRefreshCache, userID)
 }

@@ -133,6 +133,24 @@ type PiiUserView struct {
 	PiiSocials           persist.Socials                  `db:"pii_socials" json:"pii_socials"`
 }
 
+type PushNotificationTicket struct {
+	ID               persist.DBID `db:"id" json:"id"`
+	PushTokenID      persist.DBID `db:"push_token_id" json:"push_token_id"`
+	TicketID         persist.DBID `db:"ticket_id" json:"ticket_id"`
+	CreatedAt        time.Time    `db:"created_at" json:"created_at"`
+	CheckAfter       time.Time    `db:"check_after" json:"check_after"`
+	NumCheckAttempts int32        `db:"num_check_attempts" json:"num_check_attempts"`
+	Deleted          bool         `db:"deleted" json:"deleted"`
+}
+
+type PushNotificationToken struct {
+	ID        persist.DBID `db:"id" json:"id"`
+	UserID    persist.DBID `db:"user_id" json:"user_id"`
+	PushToken string       `db:"push_token" json:"push_token"`
+	CreatedAt time.Time    `db:"created_at" json:"created_at"`
+	Deleted   bool         `db:"deleted" json:"deleted"`
+}
+
 type Recipient struct {
 	ID          persist.DBID    `db:"id" json:"id"`
 	Version     sql.NullInt32   `db:"version" json:"version"`
@@ -149,6 +167,24 @@ type ScrubbedPiiForUser struct {
 	PiiEmailAddress persist.Email   `db:"pii_email_address" json:"pii_email_address"`
 	Deleted         bool            `db:"deleted" json:"deleted"`
 	PiiSocials      persist.Socials `db:"pii_socials" json:"pii_socials"`
+}
+
+type Session struct {
+	ID                   persist.DBID `db:"id" json:"id"`
+	UserID               persist.DBID `db:"user_id" json:"user_id"`
+	CreatedAt            time.Time    `db:"created_at" json:"created_at"`
+	CreatedWithUserAgent string       `db:"created_with_user_agent" json:"created_with_user_agent"`
+	CreatedWithPlatform  string       `db:"created_with_platform" json:"created_with_platform"`
+	CreatedWithOs        string       `db:"created_with_os" json:"created_with_os"`
+	LastRefreshed        time.Time    `db:"last_refreshed" json:"last_refreshed"`
+	LastUserAgent        string       `db:"last_user_agent" json:"last_user_agent"`
+	LastPlatform         string       `db:"last_platform" json:"last_platform"`
+	LastOs               string       `db:"last_os" json:"last_os"`
+	CurrentRefreshID     persist.DBID `db:"current_refresh_id" json:"current_refresh_id"`
+	ActiveUntil          time.Time    `db:"active_until" json:"active_until"`
+	Invalidated          bool         `db:"invalidated" json:"invalidated"`
+	LastUpdated          time.Time    `db:"last_updated" json:"last_updated"`
+	Deleted              bool         `db:"deleted" json:"deleted"`
 }
 
 type SpamUserScore struct {
@@ -210,6 +246,16 @@ type User struct {
 	FeaturedSplit        *persist.DBID                    `db:"featured_split" json:"featured_split"`
 	PrimaryWalletID      persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
 	UserExperiences      pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
+}
+
+type UserBlocklist struct {
+	ID            persist.DBID `db:"id" json:"id"`
+	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
+	LastUpdated   time.Time    `db:"last_updated" json:"last_updated"`
+	Deleted       bool         `db:"deleted" json:"deleted"`
+	UserID        persist.DBID `db:"user_id" json:"user_id"`
+	BlockedUserID persist.DBID `db:"blocked_user_id" json:"blocked_user_id"`
+	Active        sql.NullBool `db:"active" json:"active"`
 }
 
 type UserRole struct {

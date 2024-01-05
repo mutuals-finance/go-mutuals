@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -34,18 +35,19 @@ var AllSocialProviders = []SocialProvider{
 
 // User represents a user with all of their addresses
 type User struct {
-	Version            NullInt32       `json:"version"` // schema version for this model
-	ID                 DBID            `json:"id" binding:"required"`
-	CreationTime       CreationTime    `json:"created_at"`
-	Deleted            NullBool        `json:"-"`
-	LastUpdated        LastUpdatedTime `json:"last_updated"`
-	Username           NullString      `json:"username"` // mutable
-	UsernameIdempotent NullString      `json:"username_idempotent"`
-	Wallets            []Wallet        `json:"wallets"`
-	Bio                NullString      `json:"bio"`
-	Traits             Traits          `json:"traits"`
-	Universal          NullBool        `json:"universal"`
-	PrimaryWalletID    NullString      `json:"primary_wallet_id"`
+	Version            NullInt32  `json:"version"` // schema version for this model
+	ID                 DBID       `json:"id" binding:"required"`
+	CreationTime       time.Time  `json:"created_at"`
+	Deleted            NullBool   `json:"-"`
+	LastUpdated        time.Time  `json:"last_updated"`
+	Username           NullString `json:"username"` // mutable
+	UsernameIdempotent NullString `json:"username_idempotent"`
+	Wallets            []Wallet   `json:"wallets"`
+	Bio                NullString `json:"bio"`
+	Traits             Traits     `json:"traits"`
+	Universal          NullBool   `json:"universal"`
+	PrimaryWalletID    NullString `json:"primary_wallet_id"`
+	EmailVerified      NullInt64  `json:"email_verified"`
 }
 
 // UserUpdateInfoInput represents the data to be updated when updating a user
@@ -75,6 +77,7 @@ type CreateUserInput struct {
 	Username                   string
 	Bio                        string
 	Email                      *Email
+	EmailStatus                EmailVerificationStatus
 	ChainAddress               ChainAddress
 	WalletType                 WalletType
 	Universal                  bool
@@ -261,6 +264,14 @@ type ErrWalletCreateFailed struct {
 
 func (e ErrWalletCreateFailed) Error() string {
 	return fmt.Sprintf("wallet create failed: address: %s, walletID: %s, error: %s", e.ChainAddress, e.WalletID, e.Err)
+}
+
+type ErrPushTokenBelongsToAnotherUser struct {
+	PushToken string
+}
+
+func (e ErrPushTokenBelongsToAnotherUser) Error() string {
+	return fmt.Sprintf("push token already belongs to another user: pushToken: %s", e.PushToken)
 }
 
 type Role string

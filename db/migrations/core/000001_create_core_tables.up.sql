@@ -448,3 +448,59 @@ set role to access_rw_pii;
 select cron.schedule('purge-account-creation-info', '@weekly', 'delete from pii.account_creation_info where created_at < now() - interval ''180 days''');
 set role to access_rw;
 */
+
+create table if not exists user_blocklist (
+                                              id character varying(255) primary key,
+                                              created_at timestamp with time zone not null default current_timestamp,
+                                              last_updated timestamp with time zone not null default current_timestamp,
+                                              deleted boolean not null default false,
+                                              user_id character varying(255) references users(id),
+                                              blocked_user_id character varying(255) references users(id),
+                                              active bool default true
+);
+create unique index user_blocklist_user_id_blocked_user_id_idx on user_blocklist(user_id, blocked_user_id) where not deleted;
+
+create table if not exists sessions (
+                                        id varchar(255) primary key,
+                                        user_id varchar(255) not null references users(id),
+                                        created_at timestamptz not null,
+                                        created_with_user_agent text not null,
+                                        created_with_platform text not null,
+                                        created_with_os text not null,
+                                        last_refreshed timestamptz not null,
+                                        last_user_agent text not null,
+                                        last_platform text not null,
+                                        last_os text not null,
+                                        current_refresh_id varchar(255) not null,
+                                        active_until timestamptz not null,
+                                        invalidated bool not null,
+                                        last_updated timestamptz not null,
+                                        deleted bool not null
+);
+
+create index if not exists sessions_user_id_idx on sessions (user_id) where deleted = false;
+create unique index if not exists sessions_id_idx on sessions (id) where deleted = false;
+
+create table if not exists push_notification_tokens (
+                                                        id varchar(255) primary key,
+                                                        user_id varchar(255) not null references users(id),
+                                                        push_token varchar(255) not null,
+                                                        created_at timestamptz not null,
+                                                        deleted bool not null
+);
+
+create index if not exists push_notification_tokens_user_id_idx on push_notification_tokens (user_id) where deleted = false;
+create unique index if not exists push_notification_tokens_push_token_idx on push_notification_tokens (push_token) where deleted = false;
+
+create table if not exists push_notification_tickets (
+                                                         id varchar(255) primary key,
+                                                         push_token_id varchar(255) not null references push_notification_tokens(id),
+                                                         ticket_id varchar(255) not null,
+                                                         created_at timestamptz not null,
+                                                         check_after timestamptz not null,
+                                                         num_check_attempts int not null,
+                                                         deleted bool not null
+);
+
+create index if not exists push_notification_tickets_created_at_idx on push_notification_tickets (created_at) where deleted = false;
+create index if not exists push_notification_tickets_check_after_idx on push_notification_tickets (check_after) where deleted = false;
