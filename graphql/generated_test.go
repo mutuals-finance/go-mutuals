@@ -104,9 +104,10 @@ func (v *CreateUserInput) GetSplitDescription() *string { return v.SplitDescript
 func (v *CreateUserInput) GetSplitPosition() *string { return v.SplitPosition }
 
 type DebugAuth struct {
-	AsUsername     *string             `json:"asUsername"`
-	UserId         *persist.DBID       `json:"userId"`
-	ChainAddresses []ChainAddressInput `json:"chainAddresses"`
+	AsUsername         *string             `json:"asUsername"`
+	UserId             *persist.DBID       `json:"userId"`
+	ChainAddresses     []ChainAddressInput `json:"chainAddresses"`
+	DebugToolsPassword *string             `json:"debugToolsPassword"`
 }
 
 // GetAsUsername returns DebugAuth.AsUsername, and is useful for accessing the field via an interface.
@@ -117,6 +118,9 @@ func (v *DebugAuth) GetUserId() *persist.DBID { return v.UserId }
 
 // GetChainAddresses returns DebugAuth.ChainAddresses, and is useful for accessing the field via an interface.
 func (v *DebugAuth) GetChainAddresses() []ChainAddressInput { return v.ChainAddresses }
+
+// GetDebugToolsPassword returns DebugAuth.DebugToolsPassword, and is useful for accessing the field via an interface.
+func (v *DebugAuth) GetDebugToolsPassword() *string { return v.DebugToolsPassword }
 
 type DebugSocialAuth struct {
 	Provider SocialAccountType `json:"provider"`

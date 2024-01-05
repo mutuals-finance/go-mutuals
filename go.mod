@@ -59,6 +59,7 @@ require (
 
 require (
 	buf.build/gen/go/sqlc/sqlc/protocolbuffers/go v1.30.0-20230621221448-196413f69ab3.1
+	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/google/wire v0.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/sourcegraph/conc v0.3.0
@@ -124,7 +125,6 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect

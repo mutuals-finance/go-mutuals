@@ -56,21 +56,18 @@ func (api WalletAPI) GetWalletsByUserID(ctx context.Context, userID persist.DBID
 	return a, nil
 }
 
-func (api WalletAPI) GetWalletByChainAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.Wallet, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"chainAddress": {chainAddress, "required"},
-	}); err != nil {
-		return nil, err
+func (api WalletAPI) GetWalletsByIDs(ctx context.Context, walletIDs []persist.DBID) ([]db.Wallet, error) {
+	if len(walletIDs) == 0 {
+		return []db.Wallet{}, nil
 	}
 
-	a, err := api.loaders.GetWalletByChainAddressBatch.Load(db.GetWalletByChainAddressBatchParams{
-		Address: chainAddress.Address(),
-		Chain:   chainAddress.Chain(),
-	})
-	if err != nil {
-		return nil, err
+	wallets, errs := api.loaders.GetWalletByIDBatch.LoadAll(walletIDs)
+
+	for _, err := range errs {
+		if err != nil {
+			return wallets, err
+		}
 	}
 
-	return &a, nil
+	return wallets, nil
 }

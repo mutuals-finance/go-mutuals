@@ -6,6 +6,7 @@ import (
 	admin "github.com/SplitFi/go-splitfi/adminapi"
 	"github.com/SplitFi/go-splitfi/graphql/apq"
 	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"net/http"
 
@@ -58,7 +59,7 @@ type PublicAPI struct {
 
 func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell,
 	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, socialCache, authRefreshCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
-	loaders := dataloader.NewLoaders(ctx, queries, disableDataloaderCaching)
+	loaders := dataloader.NewLoaders(ctx, queries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
 	validator := validate.WithCustomValidators()
 
 	return &PublicAPI{
