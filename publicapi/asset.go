@@ -1,7 +1,12 @@
 package publicapi
 
 import (
+	"context"
+	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/util"
+	"github.com/SplitFi/go-splitfi/validate"
+	"time"
 
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
@@ -21,21 +26,52 @@ type AssetAPI struct {
 	throttler          *throttle.Locker
 }
 
-/*
-TODO implement
-func (api AssetAPI) GetAssetsByChainAddress(ctx context.Context, walletID persist.DBID) ([]db.Token, error) {
+func (api AssetAPI) GetAssetsByOwnerChainAddressPaginate(ctx context.Context, ownerChainAddress persist.ChainAddress, before, after *string, first, last *int, onlySplitfiUsers bool) ([]db.Asset, PageInfo, error) {
+
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"walletID": {walletID, "required"},
+		"ownerChainAddress": validate.WithTag(ownerChainAddress, "required"),
 	}); err != nil {
-		return nil, err
+		return nil, PageInfo{}, err
 	}
 
-	tokens, err := api.loaders.AssetsByChainAddress.Load(walletID)
-	if err != nil {
-		return nil, err
+	if err := validatePaginationParams(api.validator, first, last); err != nil {
+		return nil, PageInfo{}, err
 	}
 
-	return tokens, nil
+	queryFunc := func(params boolTimeIDPagingParams) ([]db.GetAssetsByOwnerChainAddressPaginateRow, error) {
+		return api.queries.GetAssetsByOwnerChainAddressPaginate(ctx, db.GetAssetsByOwnerChainAddressPaginateParams{
+			Chain:         ownerChainAddress.Chain(),
+			OwnerAddress:  ownerChainAddress.Address(),
+			Limit:         params.Limit,
+			CurBeforeTime: params.CursorBeforeTime,
+			CurBeforeID:   params.CursorBeforeID,
+			CurAfterTime:  params.CursorAfterTime,
+			CurAfterID:    params.CursorAfterID,
+			PagingForward: params.PagingForward,
+		})
+	}
+
+	countFunc := func() (int, error) {
+		total, err := api.queries.CountAssetsByOwnerChainAddress(ctx, db.CountAssetsByOwnerChainAddressParams{
+			Chain:        ownerChainAddress.Chain(),
+			OwnerAddress: ownerChainAddress.Address(),
+		})
+		return int(total), err
+	}
+
+	cursorFunc := func(r db.GetAssetsByOwnerChainAddressPaginateRow) (bool, time.Time, persist.DBID, error) {
+		// TODO remove bool return val (`true`) from cursor
+		return true, r.Asset.CreatedAt, r.Asset.ID, nil
+	}
+
+	paginator := boolTimeIDPaginator[db.GetAssetsByOwnerChainAddressPaginateRow]{
+		QueryFunc:  queryFunc,
+		CursorFunc: cursorFunc,
+		CountFunc:  countFunc,
+	}
+
+	results, pageInfo, err := paginator.paginate(before, after, first, last)
+	assets := util.MapWithoutError(results, func(r db.GetAssetsByOwnerChainAddressPaginateRow) db.Asset { return r.Asset })
+	return assets, pageInfo, err
 }
-*/

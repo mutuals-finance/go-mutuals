@@ -116,69 +116,26 @@ where contract_address = @contract_address
   and chain = @chain
   and deleted = false;
 
--- name: GetAssetsByIdentifiers :many
-SELECT a.* FROM assets a
-                    LEFT JOIN tokens t
-                              ON a.token_id = t.id
-WHERE a.owner_address = $1 AND t.chain = $2 AND t.deleted = false
-ORDER BY a.balance;
-
--- name: GetAssetByID :one
-select sqlc.embed(a), sqlc.embed(t)
-from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-where a.id = $1 and t.deleted = false;
-
 -- name: GetAssetByIdBatch :batchone
 select sqlc.embed(a), sqlc.embed(t)
 from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
 where a.id = $1 and t.deleted = false;
 
--- name: GetAssetByIdentifiersBatch :batchone
-select *
-from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-where a.owner_address = $1 and a.token_address = $2 and a.chain = $3 and t.deleted = false;
-
--- name: GetAssetsByOwnerAddressBatch :batchmany
+/* TODO order by asset balance instead of creation data */
+-- name: GetAssetsByOwnerChainAddressPaginate :many
 select sqlc.embed(a), sqlc.embed(t)
-from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-where a.owner_address = @owner_address and t.deleted = false
-order by a.balance desc
-limit sqlc.arg('limit');
+    from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
+    where a.owner_address = $1 and a.chain = $2 and t.deleted = false
+    and (a.created_at,a.id) < (@cur_before_time::timestamptz, @cur_before_id)
+    and (a.created_at,a.id) > (@cur_after_time::timestamptz, @cur_after_id)
+    order by case when @paging_forward::bool then (a.created_at,a.id) end asc,
+             case when not @paging_forward::bool then (a.created_at,a.id) end desc
+    limit $3;
 
--- name: GetAssetsByOwnerChainAddressBatch :batchmany
-select sqlc.embed(a), sqlc.embed(t)
-from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-where a.owner_address = @owner_address and a.chain = @chain and t.deleted = false
-order by a.balance desc
-limit sqlc.arg('limit');
-
-/*
-TODO pagination for assets per split
--- name: GetAssetsBySplitChainAddressPaginate :many
-SELECT t.* FROM tokens t
-                    JOIN users u ON u.id = t.owner_user_id
-WHERE t.contract = $1 AND t.deleted = false
-  AND (NOT @splitfi_users_only::bool OR u.universal = false)
-  AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
-  AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
-ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
-         CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
-LIMIT $2;
-
--- name: GetAssetsBySplitChainAddressBatchPaginate :batchmany
-SELECT t.* FROM tokens t
-                    JOIN users u ON u.id = t.owner_user_id
-WHERE t.contract = sqlc.arg('contract') AND t.deleted = false
-  AND (NOT @splitfi_users_only::bool OR u.universal = false)
-  AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
-  AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
-ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
-         CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
-LIMIT sqlc.arg('limit');
-
--- name: CountAssetsBySplitChainAddress :one
-SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE contract = $1 AND (NOT @splitfi_users_only::bool OR users.universal = false) AND tokens.deleted = false;
-*/
+-- name: CountAssetsByOwnerChainAddress :one
+select count(*)
+from assets a join tokens t ON a.token_address = t.contract_address and a.chain = t.chain
+where a.owner_address = @owner_address and a.chain = @chain and t.deleted = false;
 
 -- name: GetWalletByID :one
 SELECT * FROM wallets WHERE id = $1 AND deleted = false;
@@ -455,13 +412,22 @@ select role from (
                                   then @granted_membership_role end as role
                  ) r where role is not null;
 
+-- name: CreateSplit :one
+insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values (@split_id, @chain, @address, @name, @description, @creator_address, @logo_url, @banner_url, @badge_url, @total_ownership, now(), now()) returning *;
+
 /*
--- name: UpdateSplitHidden :one
+// name: UpdateSplitHidden :one
 update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
+*/
 
 -- name: UpdateSplitInfo :exec
-update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, last_updated = now() where id = @id and deleted = false;
-*/
+update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, logo_url = case when @logo_url_set::bool then @logo_url else logo_url end, last_updated = now() where id = @id and deleted = false;
+
+-- name: UpdateSplitShares :exec
+with updates as (
+    select unnest(@split_ids::text[]) as split_id, unnest(@recipient_addresses::text[]) as recipient_address, unnest(@ownerships::int[]) as ownership
+)
+update recipients r set ownership = updates.ownership, last_updated = now() from updates where r.split_id = updates.split_id and r.address = updates.recipient_address;
 
 -- name: GetSocialAuthByUserID :one
 select * from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false;

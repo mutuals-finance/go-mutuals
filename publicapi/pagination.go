@@ -1123,8 +1123,6 @@ func unpackVal(d *cursorDecoder, val any) unpackF {
 		return unpackTo(v, d.readBool)
 	case *int64:
 		return unpackTo(v, d.readInt64)
-	case *[]persist.FeedEntityType:
-		return unpackSliceTo(v, d, d.readFeedEntityType)
 	case *[]persist.DBID:
 		return unpackSliceTo(v, d, d.readDBID)
 	default:

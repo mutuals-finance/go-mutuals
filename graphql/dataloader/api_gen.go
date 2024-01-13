@@ -15,9 +15,6 @@ import (
 
 type Loaders struct {
 	GetAssetByIdBatch                     *GetAssetByIdBatch
-	GetAssetByIdentifiersBatch            *GetAssetByIdentifiersBatch
-	GetAssetsByOwnerAddressBatch          *GetAssetsByOwnerAddressBatch
-	GetAssetsByOwnerChainAddressBatch     *GetAssetsByOwnerChainAddressBatch
 	GetNotificationByIDBatch              *GetNotificationByIDBatch
 	GetSplitByChainAddressBatch           *GetSplitByChainAddressBatch
 	GetSplitByIdBatch                     *GetSplitByIdBatch
@@ -42,9 +39,6 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders := &Loaders{}
 
 	loaders.GetAssetByIdBatch = newGetAssetByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAssetByIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetAssetByIdentifiersBatch = newGetAssetByIdentifiersBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAssetByIdentifiersBatch(q), preFetchHook, postFetchHook)
-	loaders.GetAssetsByOwnerAddressBatch = newGetAssetsByOwnerAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAssetsByOwnerAddressBatch(q), preFetchHook, postFetchHook)
-	loaders.GetAssetsByOwnerChainAddressBatch = newGetAssetsByOwnerChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAssetsByOwnerChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitByChainAddressBatch = newGetSplitByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitByIdBatch = newGetSplitByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByIdBatch(q), preFetchHook, postFetchHook)
@@ -85,16 +79,6 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetAssetByIdBatch.RegisterResultSubscriber(func(result coredb.GetAssetByIdBatchRow) {
 		loaders.GetTokenByChainAddressBatch.Prime(loaders.GetTokenByChainAddressBatch.getKeyForResult(result.Token), result.Token)
 	})
-	loaders.GetAssetsByOwnerAddressBatch.RegisterResultSubscriber(func(result []coredb.GetAssetsByOwnerAddressBatchRow) {
-		for _, entry := range result {
-			loaders.GetTokenByChainAddressBatch.Prime(loaders.GetTokenByChainAddressBatch.getKeyForResult(entry.Token), entry.Token)
-		}
-	})
-	loaders.GetAssetsByOwnerChainAddressBatch.RegisterResultSubscriber(func(result []coredb.GetAssetsByOwnerChainAddressBatchRow) {
-		for _, entry := range result {
-			loaders.GetTokenByChainAddressBatch.Prime(loaders.GetTokenByChainAddressBatch.getKeyForResult(entry.Token), entry.Token)
-		}
-	})
 	loaders.GetTokenByIdBatch.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokenByChainAddressBatch.Prime(loaders.GetTokenByChainAddressBatch.getKeyForResult(result), result)
 	})
@@ -103,16 +87,6 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	})
 	loaders.GetAssetByIdBatch.RegisterResultSubscriber(func(result coredb.GetAssetByIdBatchRow) {
 		loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(result.Token), result.Token)
-	})
-	loaders.GetAssetsByOwnerAddressBatch.RegisterResultSubscriber(func(result []coredb.GetAssetsByOwnerAddressBatchRow) {
-		for _, entry := range result {
-			loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(entry.Token), entry.Token)
-		}
-	})
-	loaders.GetAssetsByOwnerChainAddressBatch.RegisterResultSubscriber(func(result []coredb.GetAssetsByOwnerChainAddressBatchRow) {
-		for _, entry := range result {
-			loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(entry.Token), entry.Token)
-		}
 	})
 	loaders.GetTokenByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(result), result)
@@ -173,16 +147,6 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetAssetByIdBatch.RegisterResultSubscriber(func(result coredb.GetAssetByIdBatchRow) {
 		loaders.GetTokensByIDs.Prime(loaders.GetTokensByIDs.getKeyForResult(result.Token), result.Token)
 	})
-	loaders.GetAssetsByOwnerAddressBatch.RegisterResultSubscriber(func(result []coredb.GetAssetsByOwnerAddressBatchRow) {
-		for _, entry := range result {
-			loaders.GetTokensByIDs.Prime(loaders.GetTokensByIDs.getKeyForResult(entry.Token), entry.Token)
-		}
-	})
-	loaders.GetAssetsByOwnerChainAddressBatch.RegisterResultSubscriber(func(result []coredb.GetAssetsByOwnerChainAddressBatchRow) {
-		for _, entry := range result {
-			loaders.GetTokensByIDs.Prime(loaders.GetTokensByIDs.getKeyForResult(entry.Token), entry.Token)
-		}
-	})
 	loaders.GetTokenByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokensByIDs.Prime(loaders.GetTokensByIDs.getKeyForResult(result), result)
 	})
@@ -206,57 +170,6 @@ func loadGetAssetByIdBatch(q *coredb.Queries) func(context.Context, *GetAssetByI
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = d.getNotFoundError(params[i])
 			}
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetAssetByIdentifiersBatch(q *coredb.Queries) func(context.Context, *GetAssetByIdentifiersBatch, []coredb.GetAssetByIdentifiersBatchParams) ([]coredb.GetAssetByIdentifiersBatchRow, []error) {
-	return func(ctx context.Context, d *GetAssetByIdentifiersBatch, params []coredb.GetAssetByIdentifiersBatchParams) ([]coredb.GetAssetByIdentifiersBatchRow, []error) {
-		results := make([]coredb.GetAssetByIdentifiersBatchRow, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetAssetByIdentifiersBatch(ctx, params)
-		defer b.Close()
-
-		b.QueryRow(func(i int, r coredb.GetAssetByIdentifiersBatchRow, err error) {
-			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetAssetsByOwnerAddressBatch(q *coredb.Queries) func(context.Context, *GetAssetsByOwnerAddressBatch, []coredb.GetAssetsByOwnerAddressBatchParams) ([][]coredb.GetAssetsByOwnerAddressBatchRow, []error) {
-	return func(ctx context.Context, d *GetAssetsByOwnerAddressBatch, params []coredb.GetAssetsByOwnerAddressBatchParams) ([][]coredb.GetAssetsByOwnerAddressBatchRow, []error) {
-		results := make([][]coredb.GetAssetsByOwnerAddressBatchRow, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetAssetsByOwnerAddressBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, r []coredb.GetAssetsByOwnerAddressBatchRow, err error) {
-			results[i], errors[i] = r, err
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetAssetsByOwnerChainAddressBatch(q *coredb.Queries) func(context.Context, *GetAssetsByOwnerChainAddressBatch, []coredb.GetAssetsByOwnerChainAddressBatchParams) ([][]coredb.GetAssetsByOwnerChainAddressBatchRow, []error) {
-	return func(ctx context.Context, d *GetAssetsByOwnerChainAddressBatch, params []coredb.GetAssetsByOwnerChainAddressBatchParams) ([][]coredb.GetAssetsByOwnerChainAddressBatchRow, []error) {
-		results := make([][]coredb.GetAssetsByOwnerChainAddressBatchRow, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetAssetsByOwnerChainAddressBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, r []coredb.GetAssetsByOwnerChainAddressBatchRow, err error) {
-			results[i], errors[i] = r, err
 		})
 
 		return results, errors

@@ -882,6 +882,12 @@ type SplitSearchResult struct {
 	Split *Split `json:"split"`
 }
 
+type SplitShareInput struct {
+	SplitID          persist.DBID    `json:"splitId"`
+	RecipientAddress persist.Address `json:"recipientAddress"`
+	Ownership        int             `json:"ownership"`
+}
+
 type TextMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
 	MediaURL         *string          `json:"mediaURL"`

@@ -116,6 +116,24 @@ func (q *Queries) ClearNotificationsForUser(ctx context.Context, ownerID persist
 	return items, nil
 }
 
+const countAssetsByOwnerChainAddress = `-- name: CountAssetsByOwnerChainAddress :one
+select count(*)
+from assets a join tokens t ON a.token_address = t.contract_address and a.chain = t.chain
+where a.owner_address = $1 and a.chain = $2 and t.deleted = false
+`
+
+type CountAssetsByOwnerChainAddressParams struct {
+	OwnerAddress persist.Address `db:"owner_address" json:"owner_address"`
+	Chain        persist.Chain   `db:"chain" json:"chain"`
+}
+
+func (q *Queries) CountAssetsByOwnerChainAddress(ctx context.Context, arg CountAssetsByOwnerChainAddressParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAssetsByOwnerChainAddress, arg.OwnerAddress, arg.Chain)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSocialConnections = `-- name: CountSocialConnections :one
 select count(*)
 from (select unnest($1::varchar[]) as social_id) as s
@@ -202,6 +220,56 @@ func (q *Queries) CreatePushTokenForUser(ctx context.Context, arg CreatePushToke
 		&i.PushToken,
 		&i.CreatedAt,
 		&i.Deleted,
+	)
+	return i, err
+}
+
+const createSplit = `-- name: CreateSplit :one
+insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
+`
+
+type CreateSplitParams struct {
+	SplitID        persist.DBID    `db:"split_id" json:"split_id"`
+	Chain          persist.Chain   `db:"chain" json:"chain"`
+	Address        persist.Address `db:"address" json:"address"`
+	Name           string          `db:"name" json:"name"`
+	Description    string          `db:"description" json:"description"`
+	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
+	LogoUrl        sql.NullString  `db:"logo_url" json:"logo_url"`
+	BannerUrl      sql.NullString  `db:"banner_url" json:"banner_url"`
+	BadgeUrl       sql.NullString  `db:"badge_url" json:"badge_url"`
+	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
+}
+
+func (q *Queries) CreateSplit(ctx context.Context, arg CreateSplitParams) (Split, error) {
+	row := q.db.QueryRow(ctx, createSplit,
+		arg.SplitID,
+		arg.Chain,
+		arg.Address,
+		arg.Name,
+		arg.Description,
+		arg.CreatorAddress,
+		arg.LogoUrl,
+		arg.BannerUrl,
+		arg.BadgeUrl,
+		arg.TotalOwnership,
+	)
+	var i Split
+	err := row.Scan(
+		&i.ID,
+		&i.Version,
+		&i.LastUpdated,
+		&i.CreatedAt,
+		&i.Deleted,
+		&i.Chain,
+		&i.Address,
+		&i.Name,
+		&i.Description,
+		&i.CreatorAddress,
+		&i.LogoUrl,
+		&i.BannerUrl,
+		&i.BadgeUrl,
+		&i.TotalOwnership,
 	)
 	return i, err
 }
@@ -388,136 +456,74 @@ func (q *Queries) GetActorForGroup(ctx context.Context, groupID sql.NullString) 
 	return actor_id, err
 }
 
-const getAssetByID = `-- name: GetAssetByID :one
+const getAssetsByOwnerChainAddressPaginate = `-- name: GetAssetsByOwnerChainAddressPaginate :many
 select a.id, a.version, a.last_updated, a.created_at, a.chain, a.token_address, a.owner_address, a.balance, a.block_number, t.id, t.deleted, t.version, t.created_at, t.last_updated, t.name, t.symbol, t.logo, t.token_type, t.block_number, t.chain, t.contract_address
-from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-where a.id = $1 and t.deleted = false
+    from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
+    where a.owner_address = $1 and a.chain = $2 and t.deleted = false
+    and (a.created_at,a.id) < ($4::timestamptz, $5)
+    and (a.created_at,a.id) > ($6::timestamptz, $7)
+    order by case when $8::bool then (a.created_at,a.id) end asc,
+             case when not $8::bool then (a.created_at,a.id) end desc
+    limit $3
 `
 
-type GetAssetByIDRow struct {
+type GetAssetsByOwnerChainAddressPaginateParams struct {
+	OwnerAddress  persist.Address `db:"owner_address" json:"owner_address"`
+	Chain         persist.Chain   `db:"chain" json:"chain"`
+	Limit         int32           `db:"limit" json:"limit"`
+	CurBeforeTime time.Time       `db:"cur_before_time" json:"cur_before_time"`
+	CurBeforeID   persist.DBID    `db:"cur_before_id" json:"cur_before_id"`
+	CurAfterTime  time.Time       `db:"cur_after_time" json:"cur_after_time"`
+	CurAfterID    persist.DBID    `db:"cur_after_id" json:"cur_after_id"`
+	PagingForward bool            `db:"paging_forward" json:"paging_forward"`
+}
+
+type GetAssetsByOwnerChainAddressPaginateRow struct {
 	Asset Asset `db:"asset" json:"asset"`
 	Token Token `db:"token" json:"token"`
 }
 
-func (q *Queries) GetAssetByID(ctx context.Context, id persist.DBID) (GetAssetByIDRow, error) {
-	row := q.db.QueryRow(ctx, getAssetByID, id)
-	var i GetAssetByIDRow
-	err := row.Scan(
-		&i.Asset.ID,
-		&i.Asset.Version,
-		&i.Asset.LastUpdated,
-		&i.Asset.CreatedAt,
-		&i.Asset.Chain,
-		&i.Asset.TokenAddress,
-		&i.Asset.OwnerAddress,
-		&i.Asset.Balance,
-		&i.Asset.BlockNumber,
-		&i.Token.ID,
-		&i.Token.Deleted,
-		&i.Token.Version,
-		&i.Token.CreatedAt,
-		&i.Token.LastUpdated,
-		&i.Token.Name,
-		&i.Token.Symbol,
-		&i.Token.Logo,
-		&i.Token.TokenType,
-		&i.Token.BlockNumber,
-		&i.Token.Chain,
-		&i.Token.ContractAddress,
+// TODO order by asset balance instead of creation data
+func (q *Queries) GetAssetsByOwnerChainAddressPaginate(ctx context.Context, arg GetAssetsByOwnerChainAddressPaginateParams) ([]GetAssetsByOwnerChainAddressPaginateRow, error) {
+	rows, err := q.db.Query(ctx, getAssetsByOwnerChainAddressPaginate,
+		arg.OwnerAddress,
+		arg.Chain,
+		arg.Limit,
+		arg.CurBeforeTime,
+		arg.CurBeforeID,
+		arg.CurAfterTime,
+		arg.CurAfterID,
+		arg.PagingForward,
 	)
-	return i, err
-}
-
-const getAssetsByIdentifiers = `-- name: GetAssetsByIdentifiers :many
-SELECT a.id, a.version, a.last_updated, a.created_at, a.chain, a.token_address, a.owner_address, a.balance, a.block_number FROM assets a
-                    LEFT JOIN tokens t
-                              ON a.token_id = t.id
-WHERE a.owner_address = $1 AND t.chain = $2 AND t.deleted = false
-ORDER BY a.balance
-`
-
-type GetAssetsByIdentifiersParams struct {
-	OwnerAddress persist.Address `db:"owner_address" json:"owner_address"`
-	Chain        persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetAssetsByIdentifiers(ctx context.Context, arg GetAssetsByIdentifiersParams) ([]Asset, error) {
-	rows, err := q.db.Query(ctx, getAssetsByIdentifiers, arg.OwnerAddress, arg.Chain)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Asset
+	var items []GetAssetsByOwnerChainAddressPaginateRow
 	for rows.Next() {
-		var i Asset
+		var i GetAssetsByOwnerChainAddressPaginateRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Version,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Chain,
-			&i.TokenAddress,
-			&i.OwnerAddress,
-			&i.Balance,
-			&i.BlockNumber,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAssetsBySplitChainAddressPaginate = `-- name: GetAssetsBySplitChainAddressPaginate :many
-/*
-TODO pagination for assets per split
-SELECT t.* FROM tokens t
-                    JOIN users u ON u.id = t.owner_user_id
-WHERE t.contract = $1 AND t.deleted = false
-  AND (NOT @splitfi_users_only::bool OR u.universal = false)
-  AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
-  AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
-ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
-         CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
-LIMIT $2;
-
-SELECT t.* FROM tokens t
-                    JOIN users u ON u.id = t.owner_user_id
-WHERE t.contract = sqlc.arg('contract') AND t.deleted = false
-  AND (NOT @splitfi_users_only::bool OR u.universal = false)
-  AND (u.universal,t.created_at,t.id) < (@cur_before_universal, @cur_before_time::timestamptz, @cur_before_id)
-  AND (u.universal,t.created_at,t.id) > (@cur_after_universal, @cur_after_time::timestamptz, @cur_after_id)
-ORDER BY CASE WHEN @paging_forward::bool THEN (u.universal,t.created_at,t.id) END ASC,
-         CASE WHEN NOT @paging_forward::bool THEN (u.universal,t.created_at,t.id) END DESC
-LIMIT sqlc.arg('limit');
-
-SELECT count(*) FROM tokens JOIN users ON users.id = tokens.owner_user_id WHERE contract = $1 AND (NOT @splitfi_users_only::bool OR users.universal = false) AND tokens.deleted = false;
-*/
-
-SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain FROM wallets WHERE id = $1 AND deleted = false
-`
-
-func (q *Queries) GetAssetsBySplitChainAddressPaginate(ctx context.Context, id persist.DBID) ([]Wallet, error) {
-	rows, err := q.db.Query(ctx, getAssetsBySplitChainAddressPaginate, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Wallet
-	for rows.Next() {
-		var i Wallet
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.LastUpdated,
-			&i.Deleted,
-			&i.Version,
-			&i.Address,
-			&i.WalletType,
-			&i.Chain,
+			&i.Asset.ID,
+			&i.Asset.Version,
+			&i.Asset.LastUpdated,
+			&i.Asset.CreatedAt,
+			&i.Asset.Chain,
+			&i.Asset.TokenAddress,
+			&i.Asset.OwnerAddress,
+			&i.Asset.Balance,
+			&i.Asset.BlockNumber,
+			&i.Token.ID,
+			&i.Token.Deleted,
+			&i.Token.Version,
+			&i.Token.CreatedAt,
+			&i.Token.LastUpdated,
+			&i.Token.Name,
+			&i.Token.Symbol,
+			&i.Token.Logo,
+			&i.Token.TokenType,
+			&i.Token.BlockNumber,
+			&i.Token.Chain,
+			&i.Token.ContractAddress,
 		); err != nil {
 			return nil, err
 		}
@@ -932,6 +938,32 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 		return nil, err
 	}
 	return items, nil
+}
+
+const getSocialAuthByUserID = `-- name: GetSocialAuthByUserID :one
+select id, deleted, version, created_at, last_updated, user_id, provider, access_token, refresh_token from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false
+`
+
+type GetSocialAuthByUserIDParams struct {
+	UserID   persist.DBID           `db:"user_id" json:"user_id"`
+	Provider persist.SocialProvider `db:"provider" json:"provider"`
+}
+
+func (q *Queries) GetSocialAuthByUserID(ctx context.Context, arg GetSocialAuthByUserIDParams) (PiiSocialsAuth, error) {
+	row := q.db.QueryRow(ctx, getSocialAuthByUserID, arg.UserID, arg.Provider)
+	var i PiiSocialsAuth
+	err := row.Scan(
+		&i.ID,
+		&i.Deleted,
+		&i.Version,
+		&i.CreatedAt,
+		&i.LastUpdated,
+		&i.UserID,
+		&i.Provider,
+		&i.AccessToken,
+		&i.RefreshToken,
+	)
+	return i, err
 }
 
 const getSocialConnections = `-- name: GetSocialConnections :many
@@ -2186,6 +2218,26 @@ func (q *Queries) GetWalletByChainAddress(ctx context.Context, arg GetWalletByCh
 	return i, err
 }
 
+const getWalletByID = `-- name: GetWalletByID :one
+SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain FROM wallets WHERE id = $1 AND deleted = false
+`
+
+func (q *Queries) GetWalletByID(ctx context.Context, id persist.DBID) (Wallet, error) {
+	row := q.db.QueryRow(ctx, getWalletByID, id)
+	var i Wallet
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.LastUpdated,
+		&i.Deleted,
+		&i.Version,
+		&i.Address,
+		&i.WalletType,
+		&i.Chain,
+	)
+	return i, err
+}
+
 const getWalletsByUserID = `-- name: GetWalletsByUserID :many
 SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
 `
@@ -2472,36 +2524,54 @@ func (q *Queries) UpdatePushTickets(ctx context.Context, arg UpdatePushTicketsPa
 	return err
 }
 
-const updateSplitHidden = `-- name: UpdateSplitHidden :one
+const updateSplitInfo = `-- name: UpdateSplitInfo :exec
 /*
+// name: UpdateSplitHidden :one
 update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
-
-update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, last_updated = now() where id = @id and deleted = false;
 */
 
-select id, deleted, version, created_at, last_updated, user_id, provider, access_token, refresh_token from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false
+update splits set name = case when $1::bool then $2 else name end, description = case when $3::bool then $4 else description end, logo_url = case when $5::bool then $6 else logo_url end, last_updated = now() where id = $7 and deleted = false
 `
 
-type UpdateSplitHiddenParams struct {
-	UserID   persist.DBID           `db:"user_id" json:"user_id"`
-	Provider persist.SocialProvider `db:"provider" json:"provider"`
+type UpdateSplitInfoParams struct {
+	NameSet        bool           `db:"name_set" json:"name_set"`
+	Name           string         `db:"name" json:"name"`
+	DescriptionSet bool           `db:"description_set" json:"description_set"`
+	Description    string         `db:"description" json:"description"`
+	LogoUrlSet     bool           `db:"logo_url_set" json:"logo_url_set"`
+	LogoUrl        sql.NullString `db:"logo_url" json:"logo_url"`
+	ID             persist.DBID   `db:"id" json:"id"`
 }
 
-func (q *Queries) UpdateSplitHidden(ctx context.Context, arg UpdateSplitHiddenParams) (PiiSocialsAuth, error) {
-	row := q.db.QueryRow(ctx, updateSplitHidden, arg.UserID, arg.Provider)
-	var i PiiSocialsAuth
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.Version,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.UserID,
-		&i.Provider,
-		&i.AccessToken,
-		&i.RefreshToken,
+func (q *Queries) UpdateSplitInfo(ctx context.Context, arg UpdateSplitInfoParams) error {
+	_, err := q.db.Exec(ctx, updateSplitInfo,
+		arg.NameSet,
+		arg.Name,
+		arg.DescriptionSet,
+		arg.Description,
+		arg.LogoUrlSet,
+		arg.LogoUrl,
+		arg.ID,
 	)
-	return i, err
+	return err
+}
+
+const updateSplitShares = `-- name: UpdateSplitShares :exec
+with updates as (
+    select unnest($1::text[]) as split_id, unnest($2::text[]) as recipient_address, unnest($3::int[]) as ownership
+)
+update recipients r set ownership = updates.ownership, last_updated = now() from updates where r.split_id = updates.split_id and r.address = updates.recipient_address
+`
+
+type UpdateSplitSharesParams struct {
+	SplitIds           []string `db:"split_ids" json:"split_ids"`
+	RecipientAddresses []string `db:"recipient_addresses" json:"recipient_addresses"`
+	Ownerships         []int32  `db:"ownerships" json:"ownerships"`
+}
+
+func (q *Queries) UpdateSplitShares(ctx context.Context, arg UpdateSplitSharesParams) error {
+	_, err := q.db.Exec(ctx, updateSplitShares, arg.SplitIds, arg.RecipientAddresses, arg.Ownerships)
+	return err
 }
 
 const updateTokenMetadataFieldsByChainAddress = `-- name: UpdateTokenMetadataFieldsByChainAddress :exec

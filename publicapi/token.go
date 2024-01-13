@@ -24,7 +24,6 @@ type TokenAPI struct {
 }
 
 // ErrTokenRefreshFailed is a generic error that wraps all sync failures.
-// Should be removed once we stop using to sync NFTs.
 type ErrTokenRefreshFailed struct {
 	Message string
 }
@@ -41,7 +40,7 @@ func (api TokenAPI) GetTokenById(ctx context.Context, tokenID persist.DBID) (*db
 		return nil, err
 	}
 
-	token, err := api.loaders.TokenByTokenID.Load(tokenID)
+	token, err := api.loaders.GetTokenByIdBatch.Load(tokenID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +48,32 @@ func (api TokenAPI) GetTokenById(ctx context.Context, tokenID persist.DBID) (*db
 	return &token, nil
 }
 
+func (api TokenAPI) GetTokenByChainAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.Token, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"contractAddress": validate.WithTag(chainAddress, "required"),
+	}); err != nil {
+		return nil, err
+	}
+
+	contract, err := api.loaders.GetTokenByChainAddressBatch.Load(db.GetTokenByChainAddressBatchParams{
+		ContractAddress: chainAddress.Address(),
+		Chain:           chainAddress.Chain(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &contract, nil
+}
+
 func (api TokenAPI) GetTokensByIDs(ctx context.Context, tokenIDs []persist.DBID) ([]db.Token, error) {
-	tokens, errs := api.loaders.TokenByTokenID.LoadAll(tokenIDs)
-	foundTokens := tokens[:0]
-	for i, t := range tokens {
+	tokens, errs := api.loaders.GetTokenByIdBatch.LoadAll(tokenIDs)
+	foundTokens := make([]db.Token, 0, len(tokens))
+
+	for i, token := range tokens {
 		if errs[i] == nil {
-			foundTokens = append(foundTokens, t)
+			foundTokens = append(foundTokens, token)
 		} else if _, ok := errs[i].(persist.ErrTokenNotFoundByID); !ok {
 			return []db.Token{}, errs[i]
 		}
@@ -63,25 +82,44 @@ func (api TokenAPI) GetTokensByIDs(ctx context.Context, tokenIDs []persist.DBID)
 	return foundTokens, nil
 }
 
-func (api TokenAPI) SetSpamPreference(ctx context.Context, tokens []persist.DBID, isSpam bool) error {
+/*func (api TokenAPI) SetSpamPreference(ctx context.Context, tokens []persist.DBID, isSpam bool) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"tokens": {tokens, "required,unique"},
+		"tokens": validate.WithTag(tokens, "required,unique"),
 	}); err != nil {
 		return err
 	}
 
-	_, err := getAuthenticatedUserID(ctx)
+	userID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return err
 	}
 
-	// TODO check if tokens are owned by any split of user
-	//err = api.repos.TokenRepository.TokensAreOwnedByUserSplit(ctx, userID, tokens)
-	//if err != nil {
-	//	return err
-	//}
+	return api.queries.UpdateTokensAsUserMarkedSpam(ctx, db.UpdateTokensAsUserMarkedSpamParams{
+		IsUserMarkedSpam: sql.NullBool{Bool: isSpam, Valid: true},
+		OwnerUserID:      userID,
+		TokenIds:         tokens,
+	})
+}
+*/
+// RefreshToken refreshes the metadata for a given token DBID
+func (api TokenAPI) RefreshToken(ctx context.Context, tokenID persist.DBID) error {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"tokenID": {tokenID, "required"},
+	}); err != nil {
+		return nil
+	}
 
-	// TODO
-	return nil // api.repos.TokenRepository.FlagTokensAsUserMarkedSpam(ctx, userID, tokens, isSpam)
+	token, err := api.loaders.GetTokenByIdBatch.Load(tokenID)
+	if err != nil {
+		return nil
+	}
+
+	err = api.multichainProvider.RefreshToken(ctx, persist.NewTokenChainAddress(token.ContractAddress, token.Chain))
+	if err != nil {
+		return ErrTokenRefreshFailed{Message: err.Error()}
+	}
+
+	return nil
 }

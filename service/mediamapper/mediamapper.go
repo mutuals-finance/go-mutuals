@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/logger"
@@ -20,7 +21,7 @@ import (
 
 const contextKey = "mediamapper.instance"
 
-const assetDomain = "assets.gallery.so"
+const assetDomain = "assets.splitfi.com"
 
 const (
 	thumbnailWidth = 64
@@ -43,21 +44,14 @@ func AddTo(c *gin.Context) {
 }
 
 func For(ctx context.Context) *MediaMapper {
-	gc := util.GinContextFromContext(ctx)
+	gc := util.MustGetGinContext(ctx)
 	return gc.Value(contextKey).(*MediaMapper)
 }
 
 func buildParams(defaults []imgix.IxParam, other ...imgix.IxParam) []imgix.IxParam {
 	var output []imgix.IxParam
-
-	for _, p := range defaults {
-		output = append(output, p)
-	}
-
-	for _, p := range other {
-		output = append(output, p)
-	}
-
+	output = append(output, defaults...)
+	output = append(output, other...)
 	return output
 }
 
@@ -154,6 +148,18 @@ func WithStaticImage() Option {
 	}
 }
 
+func WithTimestamp(t time.Time) Option {
+	return func(params *[]imgix.IxParam) {
+		*params = append(*params, imgix.Param("glryts", strconv.FormatInt(t.Unix(), 10)))
+	}
+}
+
+func WithQuality(q int) Option {
+	return func(params *[]imgix.IxParam) {
+		*params = append(*params, imgix.Param("q", strconv.Itoa(q)))
+	}
+}
+
 func (u *MediaMapper) GetThumbnailImageUrl(sourceUrl string, options ...Option) string {
 	return u.buildPreviewImageUrl(sourceUrl, thumbnailWidth, u.thumbnailUrlParams, options...)
 }
@@ -222,6 +228,9 @@ func (u *MediaMapper) GetAspectRatio(sourceUrl string) *float64 {
 
 	var imgixJsonResponse ImgixJsonResponse
 	rseponseBytes, err := io.ReadAll(rawResponse.Body)
+	if err != nil {
+		return nil
+	}
 
 	json.Unmarshal(rseponseBytes, &imgixJsonResponse)
 

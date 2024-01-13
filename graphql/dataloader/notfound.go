@@ -42,14 +42,6 @@ func (*GetTokenByIdBatch) getNotFoundError(key persist.DBID) error {
 	return persist.ErrTokenNotFoundByID{ID: key}
 }
 
-func (*GetAssetByIdentifiersBatch) getNotFoundError(key coredb.GetAssetByIdentifiersBatchParams) error {
-	return persist.ErrAssetNotFoundByIdentifiers{
-		OwnerAddress: key.OwnerAddress,
-		Chain:        key.Chain,
-		TokenAddress: key.TokenAddress,
-	}
-}
-
 //func (*GetUserByAddressAndL1Batch) getNotFoundError(key coredb.GetUserByAddressAndL1BatchParams) error {
 //	return persist.ErrUserNotFound{L1ChainAddress: persist.NewL1ChainAddress(key.Address, persist.Chain(key.L1Chain))}
 //}

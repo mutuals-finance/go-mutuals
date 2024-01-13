@@ -10,13 +10,13 @@ import (
 )
 
 const firstContract = `-- name: FirstContract :one
-SELECT id, deleted, version, created_at, last_updated, name, symbol, address, creator_address, chain, latest_block FROM contracts LIMIT 1
+SELECT id, deleted, version, created_at, last_updated, name, description, contract_address, media, owner_address, token_uri, token_type, token_id, quantity, ownership_history, token_metadata, external_url, block_number, chain, is_spam FROM tokens LIMIT 1
 `
 
 // sqlc needs at least one query in order to generate the models.
-func (q *Queries) FirstContract(ctx context.Context) (Contract, error) {
+func (q *Queries) FirstContract(ctx context.Context) (Token, error) {
 	row := q.db.QueryRow(ctx, firstContract)
-	var i Contract
+	var i Token
 	err := row.Scan(
 		&i.ID,
 		&i.Deleted,
@@ -24,11 +24,20 @@ func (q *Queries) FirstContract(ctx context.Context) (Contract, error) {
 		&i.CreatedAt,
 		&i.LastUpdated,
 		&i.Name,
-		&i.Symbol,
-		&i.Address,
-		&i.CreatorAddress,
+		&i.Description,
+		&i.ContractAddress,
+		&i.Media,
+		&i.OwnerAddress,
+		&i.TokenUri,
+		&i.TokenType,
+		&i.TokenID,
+		&i.Quantity,
+		&i.OwnershipHistory,
+		&i.TokenMetadata,
+		&i.ExternalUrl,
+		&i.BlockNumber,
 		&i.Chain,
-		&i.LatestBlock,
+		&i.IsSpam,
 	)
 	return i, err
 }

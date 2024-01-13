@@ -973,6 +973,12 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
+input SplitShareInput {
+  splitId: DBID!
+  recipientAddress: Address!
+  ownership: Int!
+}
+
 input SplitPositionInput {
   splitId: DBID!
   position: String!

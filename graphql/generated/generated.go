@@ -3258,6 +3258,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSetSpamPreferenceInput,
 		ec.unmarshalInputSocialAuthMechanism,
 		ec.unmarshalInputSplitPositionInput,
+		ec.unmarshalInputSplitShareInput,
 		ec.unmarshalInputTwitterAuth,
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
 		ec.unmarshalInputUpdateEmailInput,
@@ -4321,6 +4322,12 @@ union UploadPersistedQueriesPayloadOrError = UploadPersistedQueriesPayload | Err
 
 type UploadPersistedQueriesPayload {
   message: String
+}
+
+input SplitShareInput {
+  splitId: DBID!
+  recipientAddress: Address!
+  ownership: Int!
 }
 
 input SplitPositionInput {
@@ -24060,6 +24067,53 @@ func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context
 				return it, err
 			}
 			it.Position = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSplitShareInput(ctx context.Context, obj interface{}) (model.SplitShareInput, error) {
+	var it model.SplitShareInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"splitId", "recipientAddress", "ownership"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "splitId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SplitID = data
+		case "recipientAddress":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
+			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RecipientAddress = data
+		case "ownership":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownership"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Ownership = data
 		}
 	}
 
