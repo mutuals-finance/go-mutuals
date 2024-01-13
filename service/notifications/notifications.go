@@ -5,10 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/service/limiters"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/sourcegraph/conc/pool"
+	"golang.org/x/net/html"
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/logger"
@@ -38,30 +43,104 @@ type NotificationHandlers struct {
 	pubSub                   *pubsub.Client
 }
 
+type pushLimiter struct {
+	tokens *limiters.KeyRateLimiter
+	users  *limiters.KeyRateLimiter
+}
+
+func newPushLimiter() *pushLimiter {
+	cache := redis.NewCache(redis.PushNotificationRateLimitersCache)
+	ctx := context.Background()
+	return &pushLimiter{
+		tokens: limiters.NewKeyRateLimiter(ctx, cache, "tokens", 1, time.Minute*10),
+		users:  limiters.NewKeyRateLimiter(ctx, cache, "users", 5, time.Minute),
+	}
+}
+
+func (p *pushLimiter) tryTokens(ctx context.Context, sendingUserID persist.DBID, tokenID persist.DBID) error {
+	key := fmt.Sprintf("%s:%s", sendingUserID, tokenID)
+	if p.isActionAllowed(ctx, p.tokens, key) {
+		return nil
+	}
+
+	return errRateLimited{
+		limiterName: p.follows.Name(),
+		senderID:    sendingUserID,
+	}
+}
+
+func (p *pushLimiter) tryUsers(ctx context.Context, sendingUserID persist.DBID) error {
+	key := fmt.Sprintf("%s", sendingUserID)
+	if p.isActionAllowed(ctx, p.users, key) {
+		return nil
+	}
+
+	return errRateLimited{
+		limiterName: p.users.Name(),
+		senderID:    sendingUserID,
+	}
+}
+
+func (p *pushLimiter) isActionAllowed(ctx context.Context, limiter *limiters.KeyRateLimiter, key string) bool {
+	canContinue, _, err := limiter.ForKey(ctx, key)
+	if err != nil {
+		logger.For(ctx).Warnf("error getting rate limit for key %s: %s", key, err.Error())
+		return false
+	}
+
+	return canContinue
+}
+
 // New registers specific notification handlers
-func New(queries *db.Queries, pub *pubsub.Client, lock *redislock.Client) *NotificationHandlers {
+func New(queries *db.Queries, pub *pubsub.Client, taskClient *task.Client, lock *redislock.Client, listen bool) *NotificationHandlers {
 	notifDispatcher := notificationDispatcher{handlers: map[persist.Action]notificationHandler{}, lock: lock}
+	limiter := newPushLimiter()
 
-	_ = defaultNotificationHandler{queries: queries, pubSub: pub}
-	group := groupedNotificationHandler{queries: queries, pubSub: pub}
-	view := viewedNotificationHandler{queries: queries, pubSub: pub}
+	//singleHandler := singleNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
+	//ownerGroupedHandler := ownerGroupedNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
+	tokenGroupedHandler := tokenIDGroupedNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
+	viewHandler := viewedNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
+	//topActivityHandler := topActivityHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
+	announcementHandler := announcementNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
 
-	// grouped notification actions
-	notifDispatcher.AddHandler(persist.ActionUserFollowedUsers, group)
+	// notification actions that are grouped by owner
+	//notifDispatcher.AddHandler(persist.ActionUserFollowedUsers, ownerGroupedHandler)
+	//notifDispatcher.AddHandler(persist.ActionAdmiredFeedEvent, ownerGroupedHandler)
+	//notifDispatcher.AddHandler(persist.ActionAdmiredPost, ownerGroupedHandler)
+	//notifDispatcher.AddHandler(persist.ActionAdmiredComment, ownerGroupedHandler)
+
+	// single notification actions
+	//notifDispatcher.AddHandler(persist.ActionCommentedOnFeedEvent, singleHandler)
+	//notifDispatcher.AddHandler(persist.ActionCommentedOnPost, singleHandler)
+	//notifDispatcher.AddHandler(persist.ActionReplyToComment, singleHandler)
+	//notifDispatcher.AddHandler(persist.ActionMentionUser, singleHandler)
+	//notifDispatcher.AddHandler(persist.ActionMentionCommunity, singleHandler)
+	//notifDispatcher.AddHandler(persist.ActionUserPostedYourWork, singleHandler)
+
+	// notification specifically for ensuring that top users don't get re-notified and users recently notified arent notified again
+	//notifDispatcher.AddHandler(persist.ActionTopActivityBadgeReceived, topActivityHandler)
+
+	// notification actions that are grouped by token id
+	notifDispatcher.AddHandler(persist.ActionNewTokensReceived, tokenGroupedHandler)
+	notifDispatcher.AddHandler(persist.ActionAdmiredToken, tokenGroupedHandler)
 
 	// viewed notifications are handled separately
-	notifDispatcher.AddHandler(persist.ActionViewedSplit, view)
+	notifDispatcher.AddHandler(persist.ActionViewedSplit, viewHandler)
+
+	// announcements are handled separately
+	notifDispatcher.AddHandler(persist.ActionAnnouncement, announcementHandler)
 
 	new := map[persist.DBID]chan db.Notification{}
 	updated := map[persist.DBID]chan db.Notification{}
 
 	notificationHandlers := &NotificationHandlers{Notifications: &notifDispatcher, UserNewNotifications: new, UserUpdatedNotifications: updated, pubSub: pub}
-	if pub != nil {
+	if pub != nil && listen {
 		go notificationHandlers.receiveNewNotificationsFromPubSub()
 		go notificationHandlers.receiveUpdatedNotificationsFromPubSub()
 	} else {
 		logger.For(nil).Warn("pubsub not configured, notifications will not be received")
 	}
+
 	return notificationHandlers
 }
 
@@ -132,24 +211,38 @@ func (d *notificationDispatcher) Dispatch(ctx context.Context, notif db.Notifica
 	return nil
 }
 
-type defaultNotificationHandler struct {
-	queries *coredb.Queries
-	pubSub  *pubsub.Client
+type singleNotificationHandler struct {
+	queries    *db.Queries
+	pubSub     *pubsub.Client
+	taskClient *task.Client
+	limiter    *pushLimiter
 }
 
-func (h defaultNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
-	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub)
+func (h singleNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
+	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
 }
 
-type groupedNotificationHandler struct {
-	queries *coredb.Queries
-	pubSub  *pubsub.Client
+type announcementNotificationHandler struct {
+	queries    *db.Queries
+	pubSub     *pubsub.Client
+	taskClient *task.Client
+	limiter    *pushLimiter
 }
 
-func (h groupedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
+func (h announcementNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
+	return insertAndPublishAnnouncementNotifs(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
+}
+
+type ownerGroupedNotificationHandler struct {
+	queries    *db.Queries
+	pubSub     *pubsub.Client
+	taskClient *task.Client
+	limiter    *pushLimiter
+}
+
+func (h ownerGroupedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
 	var curNotif db.Notification
-
-	// Bucket notifications
+	// Bucket notifications on a specific resource if it has one
 	curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDForActionParams{
 		OwnerID: notif.OwnerID,
 		Action:  notif.Action,
@@ -157,16 +250,49 @@ func (h groupedNotificationHandler) Handle(ctx context.Context, notif db.Notific
 
 	if time.Since(curNotif.CreatedAt) < groupedWindow {
 		logger.For(ctx).Infof("grouping notification %s: %s-%s", curNotif.ID, notif.Action, notif.OwnerID)
-		return updateAndPublishNotif(ctx, notif, curNotif, h.queries, h.pubSub)
+		return updateAndPublishNotif(ctx, notif, curNotif, h.queries, h.pubSub, h.taskClient, h.limiter)
 	}
 	logger.For(ctx).Infof("not grouping notification: %s-%s", notif.Action, notif.OwnerID)
-	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub)
+	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
+}
+
+type tokenIDGroupedNotificationHandler struct {
+	queries    *db.Queries
+	pubSub     *pubsub.Client
+	taskClient *task.Client
+	limiter    *pushLimiter
+}
+
+func (h tokenIDGroupedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
+	var curNotif db.Notification
+
+	// Bucket notifications on the feed event if it has one
+	onlyForFeed := notif.FeedEventID != ""
+	onlyForPost := notif.PostID != ""
+	curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDTokenIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDTokenIDForActionParams{
+		OwnerID:          notif.OwnerID,
+		Action:           notif.Action,
+		TokenID:          notif.TokenID,
+		OnlyForFeedEvent: onlyForFeed,
+		FeedEventID:      notif.FeedEventID,
+		PostID:           notif.PostID,
+		OnlyForPost:      onlyForPost,
+	})
+
+	if time.Since(curNotif.CreatedAt) < groupedWindow {
+		logger.For(ctx).Infof("grouping notification %s: %s-%s", curNotif.ID, notif.Action, notif.OwnerID)
+		return updateAndPublishNotif(ctx, notif, curNotif, h.queries, h.pubSub, h.taskClient, h.limiter)
+	}
+	logger.For(ctx).Infof("not grouping notification: %s-%s", notif.Action, notif.OwnerID)
+	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
 
 }
 
 type viewedNotificationHandler struct {
-	queries *coredb.Queries
-	pubSub  *pubsub.Client
+	queries    *db.Queries
+	pubSub     *pubsub.Client
+	taskClient *task.Client
+	limiter    *pushLimiter
 }
 
 // will return the beginning of the week (sunday) in PST
@@ -184,7 +310,8 @@ func beginningOfWeek(t time.Time) time.Time {
 	return time.Date(y, m, newD, 0, 0, 0, 0, pst)
 }
 
-// Handle will still group notifications in the usual window, but it will also ensure that each viewer does not show up multiple times in a week
+// this handler will still group notifications in the usual window, but it will also ensure that each viewer does
+// does not show up mutliple times in a week
 func (h viewedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
 	// all of this user's view notifications in the current week
 	notifs, _ := h.queries.GetNotificationsByOwnerIDForActionAfter(ctx, db.GetNotificationsByOwnerIDForActionAfterParams{
@@ -192,10 +319,10 @@ func (h viewedNotificationHandler) Handle(ctx context.Context, notif db.Notifica
 		Action:       notif.Action,
 		CreatedAfter: beginningOfWeek(time.Now()),
 	})
-	if notifs == nil || len(notifs) == 0 {
+	if len(notifs) == 0 {
 		// if there are no notifications this week, then we definitely are going to insert this one
 		logger.For(ctx).Debugf("no notifications this week, inserting: %s-%s", notif.Action, notif.OwnerID)
-		return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub)
+		return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
 	}
 
 	mostRecentNotif := notifs[0]
@@ -244,10 +371,10 @@ func (h viewedNotificationHandler) Handle(ctx context.Context, notif db.Notifica
 	// if the most recent notification in the last week is within the grouping window then we will update it, if not, insert it
 	if time.Since(mostRecentNotif.CreatedAt) < viewWindow {
 		logger.For(ctx).Debugf("grouping notification %s: %s-%s", mostRecentNotif.ID, notif.Action, notif.OwnerID)
-		return updateAndPublishNotif(ctx, notif, mostRecentNotif, h.queries, h.pubSub)
+		return updateAndPublishNotif(ctx, notif, mostRecentNotif, h.queries, h.pubSub, h.taskClient, h.limiter)
 	}
 	logger.For(ctx).Debugf("not grouping notification: %s-%s", notif.Action, notif.OwnerID)
-	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub)
+	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
 }
 
 // subscribe returns a subscription to the given topic
@@ -269,7 +396,7 @@ func (n *NotificationHandlers) subscribe(ctx context.Context, topic, name string
 func (n *NotificationHandlers) receiveNewNotificationsFromPubSub() {
 	sub, err := n.subscribe(context.Background(), env.GetString("PUBSUB_TOPIC_NEW_NOTIFICATIONS"), fmt.Sprintf("new-notifications-%s", persist.GenerateID()))
 	if err != nil {
-		logger.For(nil).Errorf("error creating updated notifications subscription: %s", err)
+		logger.For(nil).Errorf("error creating new notifications subscription: %s", err)
 		panic(err)
 	}
 
@@ -348,10 +475,239 @@ func (n *NotificationHandlers) receiveUpdatedNotificationsFromPubSub() {
 	}
 }
 
-func insertAndPublishNotif(ctx context.Context, notif db.Notification, queries *db.Queries, ps *pubsub.Client) error {
+func createPushMessage(ctx context.Context, notif db.Notification, queries *db.Queries, limiter *pushLimiter) (task.PushNotificationMessage, error) {
+	badgeCount, badgeErr := queries.CountUserUnseenNotifications(ctx, notif.OwnerID)
+	if badgeErr != nil {
+		return task.PushNotificationMessage{}, badgeErr
+	}
+
+	message := task.PushNotificationMessage{
+		Title: "Split",
+		Sound: true,
+		Badge: int(badgeCount),
+		Data: map[string]any{
+			"action":          notif.Action,
+			"notification_id": notif.ID,
+		},
+	}
+
+	userFacing, err := NotificationToUserFacingData(ctx, queries, notif)
+	if err != nil {
+		return task.PushNotificationMessage{}, err
+	}
+
+	message.Body = userFacing.String()
+	if notif.Action == persist.ActionNewTokensReceived {
+
+		if err := limiter.tryTokens(ctx, notif.OwnerID, notif.Data.NewTokenID); err != nil {
+			return task.PushNotificationMessage{}, err
+		}
+
+		return message, nil
+	}
+
+	if notif.Action == persist.ActionTopActivityBadgeReceived {
+		if err := limiter.tryUsers(ctx, notif.OwnerID); err != nil {
+			return task.PushNotificationMessage{}, err
+		}
+
+		return message, nil
+	}
+
+	if notif.Action == persist.ActionAnnouncement {
+		return message, nil
+	}
+
+	return task.PushNotificationMessage{}, fmt.Errorf("unsupported notification action: %s", notif.Action)
+}
+
+type UserFacingNotificationData struct {
+	Actor          string       `json:"actor"`
+	Action         string       `json:"action"`
+	CollectionName string       `json:"collectionName"`
+	CollectionID   persist.DBID `json:"collectionId"`
+	PreviewText    string       `json:"previewText"`
+}
+
+func (u UserFacingNotificationData) String() string {
+	cur := fmt.Sprintf("%s %s", u.Actor, u.Action)
+	if u.CollectionName != "" {
+		cur = fmt.Sprintf("%s %s", cur, u.CollectionName)
+	}
+	if u.PreviewText != "" {
+		cur = fmt.Sprintf("%s: %s", cur, u.PreviewText)
+	}
+	return html.UnescapeString(cur)
+}
+
+func NotificationToUserFacingData(ctx context.Context, queries *db.Queries, n db.Notification) (UserFacingNotificationData, error) {
+
+	switch n.Action {
+	case persist.ActionViewedSplit:
+		if len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs) > 1 {
+			return UserFacingNotificationData{
+				Actor:  fmt.Sprintf("%d collectors", len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs)),
+				Action: "viewed your split",
+			}, nil
+		}
+		if len(n.Data.AuthedViewerIDs) == 1 {
+			userActor, err := queries.GetUserById(ctx, n.Data.AuthedViewerIDs[0])
+			if err != nil {
+				return UserFacingNotificationData{}, fmt.Errorf("failed to get user for viewer %s: %w", n.Data.AuthedViewerIDs[0], err)
+			}
+			return UserFacingNotificationData{
+				Actor:  userActor.Username.String,
+				Action: "viewed your split",
+			}, nil
+		}
+		if len(n.Data.UnauthedViewerIDs) == 1 {
+			return UserFacingNotificationData{
+				Actor:  "Someone",
+				Action: "viewed your split",
+			}, nil
+		}
+
+		return UserFacingNotificationData{}, fmt.Errorf("no viewer ids")
+
+	case persist.ActionNewTokensReceived:
+		data := UserFacingNotificationData{}
+
+		td, err := queries.GetTokenDefinitionByTokenDbid(ctx, n.Data.NewTokenID)
+		if err != nil {
+			return UserFacingNotificationData{}, err
+		}
+
+		name := util.TruncateWithEllipsis(td.Name.String, 40)
+
+		amount := n.Data.NewTokenQuantity
+		i := amount.BigInt().Uint64()
+		if i > 1 {
+			data.Actor = "You"
+			data.Action = fmt.Sprintf("just collected %d new %s. Tap to share now.", i, name)
+		} else {
+			data.Actor = "You"
+			data.Action = fmt.Sprintf("just collected %s. Tap to share now.", name)
+		}
+
+		return data, nil
+
+	case persist.ActionTopActivityBadgeReceived:
+		return UserFacingNotificationData{
+			Actor:  "You",
+			Action: "received a new badge for being amongst the top active users on SplitFi this week!",
+		}, nil
+
+	case persist.ActionAnnouncement:
+		return UserFacingNotificationData{
+			Action: n.Data.AnnouncementDetails.PushNotificationText,
+		}, nil
+	default:
+		return UserFacingNotificationData{}, fmt.Errorf("unknown action %s", n.Action)
+	}
+}
+
+func actionSupportsPushNotifications(action persist.Action) bool {
+	switch action {
+	case persist.ActionUserFollowedUsers:
+		return true
+	case persist.ActionNewTokensReceived:
+		return true
+	case persist.ActionUserCreatedFirstSplit:
+		return true
+	case persist.ActionTopActivityBadgeReceived:
+		return false // TODO -activity
+	case persist.ActionAnnouncement:
+		return true
+	default:
+		return false
+	}
+}
+
+func sendPushNotifications(ctx context.Context, notif db.Notification, queries *db.Queries, taskClient *task.Client, limiter *pushLimiter) error {
+	if !actionSupportsPushNotifications(notif.Action) {
+		return nil
+	}
+
+	pushTokens, err := queries.GetPushTokensByUserID(ctx, notif.OwnerID)
+	if err != nil {
+		return fmt.Errorf("couldn't get push tokens for userID %s: %w", notif.OwnerID, err)
+	}
+
+	// Don't try to send anything if the user doesn't have any registered push tokens
+	if len(pushTokens) == 0 {
+		return nil
+	}
+
+	message, err := createPushMessage(ctx, notif, queries, limiter)
+	if err != nil {
+		if _, ok := err.(errRateLimited); ok {
+			// Rate limiting is expected and shouldn't be propagated upward as an error
+			logger.For(ctx).Infof("couldn't create push message: %s", err)
+			return nil
+		}
+
+		return fmt.Errorf("couldn't create push message: %w", err)
+	}
+
+	for _, token := range pushTokens {
+		toSend := message
+		toSend.PushTokenID = token.ID
+		err = taskClient.CreateTaskForPushNotification(ctx, toSend)
+		if err != nil {
+			err = fmt.Errorf("failed to create task for push notification: %w", err)
+			sentryutil.ReportError(ctx, err)
+			logger.For(ctx).Error(err)
+		}
+	}
+
+	return nil
+}
+
+func insertAndPublishNotif(ctx context.Context, notif db.Notification, queries *db.Queries, ps *pubsub.Client, taskClient *task.Client, limiter *pushLimiter) error {
 	newNotif, err := addNotification(ctx, notif, queries)
 	if err != nil {
 		return fmt.Errorf("failed to create notification: %w", err)
+	}
+
+	err = sendNotifications(ctx, newNotif, queries, taskClient, limiter, ps)
+	if err != nil {
+		return err
+	}
+
+	logger.For(ctx).Infof("pushed new notification to pubsub: %s", notif.OwnerID)
+
+	return nil
+}
+
+func insertAndPublishAnnouncementNotifs(ctx context.Context, notif db.Notification, queries *db.Queries, ps *pubsub.Client, taskClient *task.Client, limiter *pushLimiter) error {
+	notifs, err := addGlobalNotifications(ctx, notif, queries)
+	if err != nil {
+		return fmt.Errorf("failed to create notification: %w", err)
+	}
+
+	if (notif.Data.AnnouncementDetails.Platform == persist.AnnouncementPlatformAll || notif.Data.AnnouncementDetails.Platform == persist.AnnouncementPlatformMobile) && notif.Data.AnnouncementDetails.PushNotificationText != "" {
+		logger.For(ctx).Infof("sending push notifications for announcement: %s", notif.Data.AnnouncementDetails.InternalID)
+		p := pool.New().WithErrors().WithContext(ctx).WithMaxGoroutines(10)
+		for _, notif := range notifs {
+			notif := notif
+			p.Go(func(ctx context.Context) error {
+				return sendNotifications(ctx, notif, queries, taskClient, limiter, ps)
+			})
+		}
+	}
+
+	logger.For(ctx).Infof("pushed new notification to pubsub: %s", notif.OwnerID)
+
+	return nil
+}
+
+// this function only sends push notifications, could probaby be renamed
+func sendNotifications(ctx context.Context, newNotif db.Notification, queries *db.Queries, taskClient *task.Client, limiter *pushLimiter, ps *pubsub.Client) error {
+	err := sendPushNotifications(ctx, newNotif, queries, taskClient, limiter)
+	if err != nil {
+		err = fmt.Errorf("failed to send push notifications for notification with DBID=%s, error: %w", newNotif.ID, err)
+		sentryutil.ReportError(ctx, err)
+		logger.For(ctx).Error(err)
 	}
 
 	marshalled, err := json.Marshal(newNotif)
@@ -367,19 +723,17 @@ func insertAndPublishNotif(ctx context.Context, notif db.Notification, queries *
 	if err != nil {
 		return fmt.Errorf("failed to publish new notification: %w", err)
 	}
-
-	logger.For(ctx).Infof("pushed new notification to pubsub: %s", notif.OwnerID)
 	return nil
 }
 
-func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecentNotif db.Notification, queries *db.Queries, ps *pubsub.Client) error {
-	amount := notif.Amount
+func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecentNotif db.Notification, queries *db.Queries, ps *pubsub.Client, taskClient *task.Client, limiter *pushLimiter) error {
+	var amount = notif.Amount
 	resultData := mostRecentNotif.Data.Concat(notif.Data)
 	switch notif.Action {
 	case persist.ActionViewedSplit:
 		amount = int32(len(resultData.AuthedViewerIDs) + len(resultData.UnauthedViewerIDs))
-	case persist.ActionUserFollowedUsers:
-		amount = int32(len(resultData.FollowerIDs))
+	case persist.ActionNewTokensReceived:
+		amount = int32(resultData.NewTokenQuantity.BigInt().Uint64())
 	default:
 		amount = mostRecentNotif.Amount + notif.Amount
 	}
@@ -394,6 +748,14 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 	if err != nil {
 		return fmt.Errorf("error updating notification: %w", err)
 	}
+
+	err = sendPushNotifications(ctx, notif, queries, taskClient, limiter)
+	if err != nil {
+		err = fmt.Errorf("failed to send push notifications for notification with DBID=%s, error: %w", notif.ID, err)
+		sentryutil.ReportError(ctx, err)
+		logger.For(ctx).Error(err)
+	}
+
 	updatedNotif, err := queries.GetNotificationByID(ctx, mostRecentNotif.ID)
 	if err != nil {
 		return fmt.Errorf("error getting updated notification by %s: %w", mostRecentNotif.ID, err)
@@ -416,21 +778,57 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 }
 
 func addNotification(ctx context.Context, notif db.Notification, queries *db.Queries) (db.Notification, error) {
-	//id := persist.GenerateID()
+	id := persist.GenerateID()
 	switch notif.Action {
-	/*	TODO add custom notifs
-		case persist.ActionUserFollowedUsers:
-		return queries.CreateFollowNotification(ctx, db.CreateFollowNotificationParams{
+	case persist.ActionViewedSplit:
+		return queries.CreateViewSplitNotification(ctx, db.CreateViewSplitNotificationParams{
 			ID:       id,
 			OwnerID:  notif.OwnerID,
 			Action:   notif.Action,
 			Data:     notif.Data,
 			EventIds: notif.EventIds,
+			SplitID:  notif.SplitID,
 		})
-	*/
+	case persist.ActionNewTokensReceived:
+		amount := notif.Data.NewTokenQuantity.BigInt().Int64()
+		return queries.CreateTokenNotification(ctx, db.CreateTokenNotificationParams{
+			ID:       id,
+			OwnerID:  notif.OwnerID,
+			Action:   notif.Action,
+			Data:     notif.Data,
+			EventIds: notif.EventIds,
+			TokenID:  notif.TokenID,
+			Amount:   int32(amount),
+		})
 	default:
 		return db.Notification{}, fmt.Errorf("unknown notification action: %s", notif.Action)
 	}
+}
+
+func addGlobalNotifications(ctx context.Context, notif db.Notification, queries *db.Queries) ([]db.Notification, error) {
+
+	userCount, err := queries.CountAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, userCount)
+	for i := 0; i < int(userCount); i++ {
+		ids[i] = persist.GenerateID().String()
+	}
+
+	notifs, err := queries.CreateAnnouncementNotifications(ctx, db.CreateAnnouncementNotificationsParams{
+		Ids:      ids,
+		Action:   notif.Action,
+		Data:     notif.Data,
+		EventIds: notif.EventIds,
+		Internal: notif.Data.AnnouncementDetails.InternalID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create follower notifications: %w", err)
+	}
+
+	return notifs, nil
 }
 
 func (l lockKey) String() string {
@@ -450,4 +848,24 @@ func createSubscription(ctx context.Context, client *pubsub.Client, topic, name 
 		Topic:            client.Topic(topic),
 		ExpirationPolicy: time.Hour * 24 * 3,
 	})
+}
+
+type errRateLimited struct {
+	limiterName string
+	senderID    persist.DBID
+	receiverID  persist.DBID
+	feedEventID persist.DBID
+	tokenID     persist.DBID
+	commentID   persist.DBID
+}
+
+func (e errRateLimited) Error() string {
+	str := fmt.Sprintf("rate limit exceeded for limiter=%s, sender=%s, receiver=%s", e.limiterName, e.senderID, e.receiverID)
+	if e.feedEventID != "" {
+		str += fmt.Sprintf(", feedEvent=%s", e.feedEventID)
+	}
+	if e.commentID != "" {
+		str += fmt.Sprintf(", commentID=%s", e.commentID)
+	}
+	return str
 }

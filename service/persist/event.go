@@ -14,27 +14,47 @@ const (
 	ResourceTypeToken
 	ResourceTypeCollection
 	ResourceTypeSplit
-	ActionUserCreated       Action = "UserCreated"
-	ActionUserFollowedUsers Action = "UserFollowedUsers"
-	ActionCollectionCreated Action = "CollectionCreated"
-	ActionViewedSplit       Action = "ViewedSplit"
-	ActionSplitUpdated      Action = "SplitUpdated"
+	ResourceTypeAllUsers
+	ActionUserCreated              Action = "UserCreated"
+	ActionUserFollowedUsers        Action = "UserFollowedUsers"
+	ActionCollectionCreated        Action = "CollectionCreated"
+	ActionAdmiredToken             Action = "AdmiredToken"
+	ActionViewedSplit              Action = "ViewedSplit"
+	ActionViewedToken              Action = "ViewedToken"
+	ActionSplitUpdated             Action = "SplitUpdated"
+	ActionSplitInfoUpdated         Action = "SplitInfoUpdated"
+	ActionNewTokensReceived        Action = "NewTokensReceived"
+	ActionTopActivityBadgeReceived Action = "ActivityBadgeReceived"
+	ActionAnnouncement             Action = "Announcement"
 )
 
 type EventData struct {
-	UserBio                           string            `json:"user_bio"`
-	UserFollowedBack                  bool              `json:"user_followed_back"`
-	UserRefollowed                    bool              `json:"user_refollowed"`
-	TokenCollectorsNote               string            `json:"token_collectors_note"`
-	TokenCollectionID                 DBID              `json:"token_collection_id"`
-	CollectionTokenIDs                DBIDList          `json:"collection_token_ids"`
-	CollectionCollectorsNote          string            `json:"collection_collectors_note"`
-	SplitName                         *string           `json:"split_name"`
-	SplitDescription                  *string           `json:"split_description"`
-	SplitNewCollectionCollectorsNotes map[DBID]string   `json:"split_new_collection_collectors_notes"`
-	SplitNewTokenIDs                  map[DBID]DBIDList `json:"split_new_token_ids"`
-	SplitNewCollections               DBIDList          `json:"split_new_collections"`
-	SplitNewTokenCollectorsNotes      map[DBID]string   `json:"split_new_token_collectors_notes"`
+	UserBio                string               `json:"user_bio"`
+	UserFollowedBack       bool                 `json:"user_followed_back"`
+	UserRefollowed         bool                 `json:"user_refollowed"`
+	NewTokenID             DBID                 `json:"new_token_id"`
+	NewTokenQuantity       HexString            `json:"new_token_quantity"`
+	TokenContractID        DBID                 `json:"token_contract_id"`
+	TokenDefinitionID      DBID                 `json:"token_definition_id"`
+	SplitName              *string              `json:"split_name"`
+	SplitDescription       *string              `json:"split_description"`
+	SplitNewTokenIDs       map[DBID]DBIDList    `json:"split_new_token_ids"`
+	ActivityBadgeThreshold int                  `json:"activity_badge_threshold"`
+	NewTopActiveUser       bool                 `json:"new_top_active_user"`
+	AnnouncementDetails    *AnnouncementDetails `json:"announcement_details"`
+}
+
+type FeedEventData struct {
+	UserBio           string            `json:"user_bio"`
+	UserFollowedIDs   DBIDList          `json:"user_followed_ids"`
+	UserFollowedBack  []bool            `json:"user_followed_back"`
+	TokenID           DBID              `json:"token_id"`
+	TokenCollectionID DBID              `json:"token_collection_id"`
+	TokenSplitID      DBID              `json:"token_split_id"`
+	SplitID           DBID              `json:"split_id"`
+	SplitName         string            `json:"split_name"`
+	SplitDescription  string            `json:"split_description"`
+	SplitNewTokenIDs  map[DBID]DBIDList `json:"split_new_token_ids"`
 }
 
 type ErrUnknownAction struct {

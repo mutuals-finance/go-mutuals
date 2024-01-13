@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"bytes"
+	"cloud.google.com/go/storage"
 	"compress/gzip"
 	"context"
 	"crypto/tls"
@@ -9,7 +10,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/googleapis/gax-go/v2"
 	"golang.org/x/image/bmp"
+	"google.golang.org/api/option"
+	htransport "google.golang.org/api/transport/http"
 	"image/jpeg"
 	"io"
 	"io/fs"
@@ -18,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -51,10 +56,9 @@ func init() {
 }
 
 const (
-	defaultHTTPTimeout             = 30
 	defaultHTTPKeepAlive           = 600
-	defaultHTTPMaxIdleConns        = 100
-	defaultHTTPMaxIdleConnsPerHost = 100
+	defaultHTTPMaxIdleConns        = 250
+	defaultHTTPMaxIdleConnsPerHost = 250
 	GethSocketOpName               = "geth.wss"
 )
 
@@ -66,16 +70,20 @@ var (
 // rateLimited is the content returned from an RPC call when rate limited.
 var rateLimited = "429 Too Many Requests"
 
-type Contract struct {
-	BlockNumber persist.BlockNumber
-	Address     persist.Address
+type ErrEthClient struct {
+	Err error
 }
 
-// TokenContractMetadata represents a token contract's metadata
-type TokenContractMetadata struct {
-	Name     string
-	Symbol   string
-	Decimals int
+type ErrTokenURINotFound struct {
+	Err error
+}
+
+func (e ErrEthClient) Error() string {
+	return e.Err.Error()
+}
+
+func (e ErrTokenURINotFound) Error() string {
+	return e.Err.Error()
 }
 
 // Transfer represents a Transfer from the RPC response
@@ -92,10 +100,10 @@ type Transfer struct {
 	TxIndex   uint
 }
 
-// ErrHTTP represents an error returned from an HTTP request
-type ErrHTTP struct {
-	URL    string
-	Status int
+// TokenContractMetadata represents a token contract's metadata
+type TokenContractMetadata struct {
+	Name   string
+	Symbol string
 }
 
 // NewEthClient returns an ethclient.Client
@@ -103,44 +111,68 @@ func NewEthClient() *ethclient.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	rpcClient, err := rpc.DialContext(ctx, env.GetString("RPC_URL"))
-	if err != nil {
-		panic(err)
-	}
+	var client *rpc.Client
+	var err error
 
-	return ethclient.NewClient(rpcClient)
-
-}
-
-// NewEthHTTPClient returns a new http client with request tracing enabled
-func NewEthHTTPClient() *ethclient.Client {
-	if !strings.HasPrefix(env.GetString("RPC_URL"), "http") {
-		return NewEthClient()
-	}
-
-	httpClient := newHTTPClientForRPC(false, sentryutil.TransactionNameSafe("gethRPC"))
-	rpcClient, err := rpc.DialHTTPWithClient(env.GetString("RPC_URL"), httpClient)
-	if err != nil {
-		panic(err)
-	}
-
-	return ethclient.NewClient(rpcClient)
-}
-
-// NewEthSocketClient returns a new websocket client with request tracing enabled
-func NewEthSocketClient() *ethclient.Client {
-	if !strings.HasPrefix(env.GetString("RPC_URL"), "wss") {
-		return NewEthClient()
-	}
-
-	log.Root().SetHandler(log.FilterHandler(func(r *log.Record) bool {
-		if reqID := valFromSlice(r.Ctx, "reqid"); reqID == nil || r.Msg != "Handled RPC response" {
-			return false
+	if endpoint := env.GetString("RPC_URL"); strings.HasPrefix(endpoint, "https://") {
+		client, err = rpc.DialHTTPWithClient(endpoint, defaultHTTPClient)
+		if err != nil {
+			panic(err)
 		}
-		return true
-	}, defaultMetricsHandler))
+	} else {
+		client, err = rpc.DialContext(ctx, endpoint)
+		if err != nil {
+			panic(err)
+		}
+	}
 
+	return ethclient.NewClient(client)
+}
+
+// NewEthSocketClient returns a websocket client with request tracing enabled
+func NewEthSocketClient() *ethclient.Client {
+	if strings.HasPrefix(env.GetString("RPC_URL"), "wss") {
+		log.Root().SetHandler(log.FilterHandler(func(r *log.Record) bool {
+			if reqID := valFromSlice(r.Ctx, "reqid"); reqID == nil || r.Msg != "Handled RPC response" {
+				return false
+			}
+			return true
+		}, defaultMetricsHandler))
+	}
 	return NewEthClient()
+}
+
+func NewStorageClient(ctx context.Context) *storage.Client {
+	opts := append([]option.ClientOption{}, option.WithScopes([]string{storage.ScopeFullControl}...))
+
+	if env.GetString("ENV") == "local" {
+		fi, err := util.LoadEncryptedServiceKeyOrError("./secrets/dev/service-key-dev.json")
+		if err != nil {
+			logger.For(ctx).WithError(err).Error("failed to find service key file (local), running without storage client")
+			return nil
+		}
+		opts = append(opts, option.WithCredentialsJSON(fi))
+	}
+
+	transport, err := htransport.NewTransport(ctx, tracing.NewTracingTransport(http.DefaultTransport, false), opts...)
+	if err != nil {
+		panic(err)
+	}
+
+	client, _, err := htransport.NewClient(ctx)
+	if err != nil {
+		panic(err)
+	}
+	client.Transport = transport
+
+	storageClient, err := storage.NewClient(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		panic(err)
+	}
+
+	storageClient.SetRetry(storage.WithPolicy(storage.RetryAlways), storage.WithBackoff(gax.Backoff{Initial: 100 * time.Millisecond, Max: 2 * time.Minute, Multiplier: 1.3}), storage.WithErrorFunc(storage.ShouldRetry))
+
+	return storageClient
 }
 
 // metricsHandler traces RPC records that get logged by the RPC client
@@ -165,24 +197,6 @@ func (h metricsHandler) Log(r *log.Record) error {
 	return nil
 }
 
-// NewIPFSShell returns an IPFS shell
-func NewIPFSShell() *shell.Shell {
-	sh := shell.NewShellWithClient(env.GetString("IPFS_API_URL"), newClientForIPFS(env.GetString("IPFS_PROJECT_ID"), env.GetString("IPFS_PROJECT_SECRET"), false))
-	sh.SetTimeout(time.Minute * 2)
-	return sh
-}
-
-// newHTTPClientForIPFS returns an http.Client configured with default settings intended for IPFS calls.
-func newClientForIPFS(projectID, projectSecret string, continueOnly bool) *http.Client {
-	return &http.Client{
-		Transport: authTransport{
-			RoundTripper:  tracing.NewTracingTransport(http.DefaultTransport, continueOnly),
-			ProjectID:     projectID,
-			ProjectSecret: projectSecret,
-		},
-	}
-}
-
 // newHTTPClientForRPC returns an http.Client configured with default settings intended for RPC calls.
 func newHTTPClientForRPC(continueTrace bool, spanOptions ...sentry.SpanOption) *http.Client {
 	// get x509 cert pool
@@ -199,7 +213,7 @@ func newHTTPClientForRPC(continueTrace bool, spanOptions ...sentry.SpanOption) *
 		if d.IsDir() {
 			return nil
 		}
-		bs, err := ioutil.ReadFile(path)
+		bs, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
@@ -213,7 +227,7 @@ func newHTTPClientForRPC(continueTrace bool, spanOptions ...sentry.SpanOption) *
 	})
 
 	return &http.Client{
-		Timeout: time.Second * defaultHTTPTimeout,
+		Timeout: 0,
 		Transport: tracing.NewTracingTransport(&http.Transport{
 			TLSClientConfig: &tls.Config{
 				RootCAs: pool,
@@ -223,23 +237,6 @@ func newHTTPClientForRPC(continueTrace bool, spanOptions ...sentry.SpanOption) *
 			MaxIdleConnsPerHost: defaultHTTPMaxIdleConnsPerHost,
 		}, continueTrace, spanOptions...),
 	}
-}
-
-// authTransport decorates each request with a basic auth header.
-type authTransport struct {
-	http.RoundTripper
-	ProjectID     string
-	ProjectSecret string
-}
-
-func (t authTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	r.SetBasicAuth(t.ProjectID, t.ProjectSecret)
-	return t.RoundTripper.RoundTrip(r)
-}
-
-// NewArweaveClient returns an Arweave client
-func NewArweaveClient() *goar.Client {
-	return goar.NewClient("https://arweave.net")
 }
 
 // GetBlockNumber returns the current block height.
@@ -283,6 +280,21 @@ func RetryGetLogs(ctx context.Context, ethClient *ethclient.Client, query ethere
 // GetTransaction returns the transaction of the given hash.
 func GetTransaction(ctx context.Context, ethClient *ethclient.Client, txHash common.Hash) (*types.Transaction, bool, error) {
 	return ethClient.TransactionByHash(ctx, txHash)
+}
+
+// RetryGetTransaction calls GetTransaction with backoff.
+func RetryGetTransaction(ctx context.Context, ethClient *ethclient.Client, txHash common.Hash, retry retry.Retry) (*types.Transaction, bool, error) {
+	var tx *types.Transaction
+	var pending bool
+	var err error
+	for i := 0; i < retry.Tries; i++ {
+		tx, pending, err = GetTransaction(ctx, ethClient, txHash)
+		if !isRateLimitedError(err) {
+			break
+		}
+		retry.Sleep(i)
+	}
+	return tx, pending, err
 }
 
 // GetTokenContractMetadata returns the metadata for a given token
@@ -375,7 +387,7 @@ func GetDataFromURI(ctx context.Context, turi string, ipfsClient *shell.Shell, a
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode > 399 || resp.StatusCode < 200 {
-			return nil, ErrHTTP{Status: resp.StatusCode, URL: asString}
+			return nil, util.ErrHTTP{Status: resp.StatusCode, URL: asString}
 		}
 		buf := &bytes.Buffer{}
 		err = util.CopyMax(buf, resp.Body, 1024*1024*1024)
@@ -489,7 +501,7 @@ func GetDataFromURIAsReader(ctx context.Context, turi string, ipfsClient *shell.
 			return nil, fmt.Errorf("error getting data from http: %s", err)
 		}
 		if resp.StatusCode > 399 || resp.StatusCode < 200 {
-			return nil, ErrHTTP{Status: resp.StatusCode, URL: asString}
+			return nil, util.ErrHTTP{Status: resp.StatusCode, URL: asString}
 		}
 		return util.NewFileHeaderReader(resp.Body), nil
 	case persist.URITypeIPFSAPI:
@@ -601,7 +613,7 @@ func DecodeMetadataFromURI(ctx context.Context, turi string, into *persist.Token
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode > 399 || resp.StatusCode < 200 {
-			return ErrHTTP{Status: resp.StatusCode, URL: asString}
+			return util.ErrHTTP{Status: resp.StatusCode, URL: asString}
 		}
 		return json.NewDecoder(resp.Body).Decode(into)
 	case persist.URITypeIPFSAPI:
@@ -654,7 +666,7 @@ func getHeaders(ctx context.Context, method, url string) (http.Header, error) {
 	}
 
 	if resp.StatusCode > 399 || resp.StatusCode < 200 {
-		return nil, ErrHTTP{Status: resp.StatusCode, URL: url}
+		return nil, util.ErrHTTP{Status: resp.StatusCode, URL: url}
 	}
 
 	defer resp.Body.Close()
@@ -779,7 +791,7 @@ func GetIPFSResponse(pCtx context.Context, ipfsClient *shell.Shell, path string)
 				return ipfsResult{err: err}
 			}
 			if resp.StatusCode > 399 || resp.StatusCode < 200 {
-				return ipfsResult{err: ErrHTTP{Status: resp.StatusCode, URL: url}}
+				return ipfsResult{err: util.ErrHTTP{Status: resp.StatusCode, URL: url}}
 			}
 			logger.For(ctx).Infof("IPFS HTTP fallback fallback successful %s", path)
 		}
@@ -808,7 +820,7 @@ func GetIPFSResponse(pCtx context.Context, ipfsClient *shell.Shell, path string)
 		}
 
 		if resp.StatusCode > 399 || resp.StatusCode < 200 {
-			return ipfsResult{err: ErrHTTP{Status: resp.StatusCode, URL: url}}
+			return ipfsResult{err: util.ErrHTTP{Status: resp.StatusCode, URL: url}}
 		}
 
 		logger.For(ctx).Infof("IPFS API fallback successful %s", path)
@@ -1005,10 +1017,6 @@ func padHex(pHex string, pLength int) string {
 		pHex = "0" + pHex
 	}
 	return pHex
-}
-
-func (h ErrHTTP) Error() string {
-	return fmt.Sprintf("HTTP Error Status - %d | URL - %s", h.Status, h.URL)
 }
 
 // valFromSlice returns the value from a slice formatted as [key val key val ...]

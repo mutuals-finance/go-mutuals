@@ -69,15 +69,6 @@ func NewUserRepository(db *sql.DB, queries *db.Queries, pgx *pgxpool.Pool) *User
 	deleteStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
 
-	getGalleriesStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM galleries WHERE OWNER_USER_ID = $1 and DELETED = false;`)
-	checkNoErr(err)
-
-	updateCollectionsStmt, err := db.PrepareContext(ctx, `UPDATE galleries SET COLLECTIONS = $2 WHERE ID = $1;`)
-	checkNoErr(err)
-
-	deleteGalleryStmt, err := db.PrepareContext(ctx, `UPDATE galleries SET DELETED = true WHERE ID = $1;`)
-	checkNoErr(err)
-
 	getWalletIDStmt, err := db.PrepareContext(ctx, `SELECT ID FROM wallets WHERE ADDRESS = $1 AND L1_CHAIN = $2 AND DELETED = false;`)
 	checkNoErr(err)
 

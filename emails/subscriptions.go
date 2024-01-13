@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/service/auth"
 	"net/http"
 	"strings"
 
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/graphql/model"
+	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sendgrid/sendgrid-go"
@@ -25,25 +26,10 @@ func init() {
 
 var emailTypes = []model.EmailUnsubscriptionType{model.EmailUnsubscriptionTypeAll, model.EmailUnsubscriptionTypeNotifications}
 
-type UpdateSubscriptionsTypeInput struct {
-	UserID persist.DBID                 `json:"user_id,required"`
-	Unsubs persist.EmailUnsubscriptions `json:"unsubscriptions" binding:"required"`
-}
-
-type UnsubInput struct {
-	JWT    string                          `json:"jwt,required"`
-	Unsubs []model.EmailUnsubscriptionType `json:"unsubscriptions" binding:"required"`
-}
-
-type ResubInput struct {
-	JWT    string                          `json:"jwt,required"`
-	Resubs []model.EmailUnsubscriptionType `json:"resubscriptions" binding:"required"`
-}
-
 func updateSubscriptions(queries *coredb.Queries) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-		var input UpdateSubscriptionsTypeInput
+		var input emails.UpdateSubscriptionsTypeInput
 		err := c.ShouldBindJSON(&input)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
@@ -111,14 +97,14 @@ func updateSubscriptions(queries *coredb.Queries) gin.HandlerFunc {
 func unsubscribe(queries *coredb.Queries) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-		var input UnsubInput
+		var input emails.UnsubInput
 		err := c.ShouldBindJSON(&input)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
-		userID, emailFromToken, err := jwtParse(input.JWT)
+		userID, emailFromToken, err := auth.ParseEmailVerificationToken(c, input.JWT)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
@@ -186,14 +172,14 @@ func unsubscribe(queries *coredb.Queries) gin.HandlerFunc {
 func resubscribe(queries *coredb.Queries) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-		var input ResubInput
+		var input emails.ResubInput
 		err := c.ShouldBindJSON(&input)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
-		userID, emailFromToken, err := jwtParse(input.JWT)
+		userID, emailFromToken, err := auth.ParseEmailVerificationToken(c, input.JWT)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
@@ -233,6 +219,7 @@ func resubscribe(queries *coredb.Queries) gin.HandlerFunc {
 				errGroup.Go(func() error {
 					return removeEmailFromUnsubscribeGroup(c, emailAddress, env.GetString("SENDGRID_UNSUBSCRIBE_NOTIFICATIONS_GROUP_ID"))
 				})
+
 			default:
 				util.ErrResponse(c, http.StatusBadRequest, fmt.Errorf("unsupported email type: %s", emailType))
 				return

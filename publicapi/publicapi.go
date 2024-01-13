@@ -50,7 +50,6 @@ type PublicAPI struct {
 	Token         *TokenAPI
 	Asset         *AssetAPI
 	Wallet        *WalletAPI
-	Misc          *MiscAPI
 	Notifications *NotificationsAPI
 	Admin         *admin.AdminAPI
 	Social        *SocialAPI
@@ -75,7 +74,6 @@ func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Rep
 		Token:         &TokenAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
 		Asset:         &AssetAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
 		Wallet:        &WalletAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
-		Misc:          &MiscAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, storageClient: storageClient},
 		Notifications: &NotificationsAPI{queries: queries, loaders: loaders, validator: validator},
 		Admin:         admin.NewAPI(repos, queries, authRefreshCache, validator, multichainProvider),
 		Social:        &SocialAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, redis: socialCache},

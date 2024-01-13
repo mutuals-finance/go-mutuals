@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/event"
+	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/SplitFi/go-splitfi/service/emails"
+	"github.com/SplitFi/go-splitfi/service/notifications"
+	"github.com/SplitFi/go-splitfi/service/redis"
 	"net/http"
 	"sync/atomic"
 	"time"
 
-	"cloud.google.com/go/pubsub"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
@@ -17,7 +21,7 @@ import (
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sendgrid/rest"
-	sendgrid "github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"golang.org/x/sync/errgroup"
 )
@@ -26,23 +30,16 @@ func init() {
 	env.RegisterValidation("FROM_EMAIL", "required", "email")
 	env.RegisterValidation("SENDGRID_VERIFICATION_TEMPLATE_ID", "required")
 	env.RegisterValidation("PUBSUB_NOTIFICATIONS_EMAILS_SUBSCRIPTION", "required")
+	env.RegisterValidation("PUBSUB_DIGEST_EMAILS_SUBSCRIPTION", "required")
+
 }
 
 const emailsAtATime = 10_000
 
-type VerificationEmailInput struct {
-	UserID persist.DBID `json:"user_id" binding:"required"`
-}
-
 type sendNotificationEmailHttpInput struct {
-	UserID         persist.DBID  `json:"user_id,required"`
-	ToEmail        persist.Email `json:"to_email,required"`
+	UserID         persist.DBID  `json:"user_id" binding:"required"`
+	ToEmail        persist.Email `json:"to_email" binding:"required"`
 	SendRealEmails bool          `json:"send_real_emails"`
-}
-
-type verificationEmailTemplateData struct {
-	Username string
-	JWT      string
 }
 
 type errNoEmailSet struct {
@@ -56,7 +53,7 @@ type errEmailMismatch struct {
 func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Queries, s *sendgrid.Client) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
-		var input VerificationEmailInput
+		var input emails.VerificationEmailInput
 		err := c.ShouldBindJSON(&input)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
@@ -75,7 +72,7 @@ func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Quer
 		}
 
 		emailAddress := userWithPII.PiiEmailAddress.String()
-		j, err := jwtGenerate(input.UserID, emailAddress)
+		j, err := auth.GenerateEmailVerificationToken(c, input.UserID, emailAddress)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
@@ -83,7 +80,7 @@ func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Quer
 
 		//logger.For(c).Debugf("sending verification email to %s with token %s", emailAddress, j)
 
-		from := mail.NewEmail("SplitFi", env.GetString("FROM_EMAIL"))
+		from := mail.NewEmail("SpltFi", env.GetString("FROM_EMAIL"))
 		to := mail.NewEmail(userWithPII.Username.String, emailAddress)
 		m := mail.NewV3Mail()
 		m.SetFrom(from)
@@ -107,17 +104,10 @@ func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Quer
 	}
 }
 
-type notificationEmailDynamicTemplateData struct {
-	Actor          string       `json:"actor"`
-	Action         string       `json:"action"`
-	CollectionName string       `json:"collectionName"`
-	CollectionID   persist.DBID `json:"collectionId"`
-	PreviewText    string       `json:"previewText"`
-}
 type notificationsEmailDynamicTemplateData struct {
-	Notifications    []notificationEmailDynamicTemplateData `json:"notifications"`
-	Username         string                                 `json:"username"`
-	UnsubscribeToken string                                 `json:"unsubscribeToken"`
+	Notifications    []notifications.UserFacingNotificationData `json:"notifications"`
+	Username         string                                     `json:"username"`
+	UnsubscribeToken string                                     `json:"unsubscribeToken"`
 }
 
 func adminSendNotificationEmail(queries *coredb.Queries, s *sendgrid.Client) gin.HandlerFunc {
@@ -145,19 +135,54 @@ func adminSendNotificationEmail(queries *coredb.Queries, s *sendgrid.Client) gin
 	}
 }
 
-func autoSendNotificationEmails(queries *coredb.Queries, s *sendgrid.Client, psub *pubsub.Client) error {
-	ctx := context.Background()
-	sub := psub.Subscription(env.GetString("PUBSUB_NOTIFICATIONS_EMAILS_SUBSCRIPTION"))
-
-	return sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
+func sendNotificationEmails(queries *coredb.Queries, s *sendgrid.Client, r *redis.Cache) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		l, _ := r.Get(ctx, "send-notification-emails")
+		if l != nil && len(l) > 0 {
+			logger.For(ctx).Infof("notification emails already being sent")
+			return
+		}
+		r.Set(ctx, "send-notification-emails", []byte("sending"), 1*time.Hour)
 		err := sendNotificationEmailsToAllUsers(ctx, queries, s, env.GetString("ENV") == "production")
 		if err != nil {
 			logger.For(ctx).Errorf("error sending notification emails: %s", err)
-			msg.Nack()
 			return
 		}
-		msg.Ack()
-	})
+	}
+}
+
+func sendAnnouncementNotification(q *coredb.Queries) gin.HandlerFunc {
+	galleryUser, err := q.GetUserByUsername(context.Background(), "gallery")
+	if err != nil {
+		panic(err)
+	}
+	return func(c *gin.Context) {
+		var in persist.AnnouncementDetails
+		err := c.ShouldBindJSON(&in)
+		if err != nil {
+			util.ErrResponse(c, http.StatusBadRequest, err)
+			return
+		}
+
+		// kick off an event that will have notification handlers that will fan out the notification to all users
+		err = event.Dispatch(c, coredb.Event{
+			ID:             persist.GenerateID(),
+			ResourceTypeID: persist.ResourceTypeAllUsers,
+			Action:         persist.ActionAnnouncement,
+			UserID:         galleryUser.ID,
+			SubjectID:      galleryUser.ID,
+			ActorID:        persist.DBIDToNullStr(galleryUser.ID),
+			Data: persist.EventData{
+				AnnouncementDetails: &in,
+			},
+		})
+		if err != nil {
+			util.ErrResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, util.SuccessResponse{Success: true})
+	}
 }
 
 func sendNotificationEmailsToAllUsers(c context.Context, queries *coredb.Queries, s *sendgrid.Client, sendRealEmails bool) error {
@@ -196,23 +221,24 @@ func sendNotificationEmailToUser(c context.Context, u coredb.PiiUserView, emailR
 		return nil, fmt.Errorf("failed to get notifications for user %s: %w", u.ID, err)
 	}
 
-	j, err := jwtGenerate(u.ID, u.PiiEmailAddress.String())
+	j, err := auth.GenerateEmailVerificationToken(c, u.ID, u.PiiEmailAddress.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate jwt for user %s: %w", u.ID, err)
 	}
 
 	data := notificationsEmailDynamicTemplateData{
-		Notifications:    make([]notificationEmailDynamicTemplateData, 0, resultLimit),
+		Notifications:    make([]notifications.UserFacingNotificationData, 0, resultLimit),
 		Username:         u.Username.String,
 		UnsubscribeToken: j,
 	}
-	notifTemplates := make(chan notificationEmailDynamicTemplateData)
+	notifTemplates := make(chan notifications.UserFacingNotificationData)
 	errChan := make(chan error)
 
 	for _, n := range notifs {
 		notif := n
 		go func() {
-			notifTemplate, err := notifToTemplateData(c, queries, notif)
+			// notifTemplate, err := notifToTemplateData(c, queries, notif)
+			notifTemplate, err := notifications.NotificationToUserFacingData(c, queries, notif)
 			if err != nil {
 				errChan <- err
 				return
@@ -252,7 +278,7 @@ outer:
 
 	if sendRealEmail {
 		// send email
-		from := mail.NewEmail("SplitFi", env.GetString("FROM_EMAIL"))
+		from := mail.NewEmail("Gallery", env.GetString("FROM_EMAIL"))
 		to := mail.NewEmail(u.Username.String, emailRecipient.String())
 		m := mail.NewV3Mail()
 		m.SetFrom(from)
@@ -274,72 +300,21 @@ outer:
 	return &rest.Response{StatusCode: 200, Body: "not sending real emails", Headers: map[string][]string{}}, nil
 }
 
-func notifToTemplateData(ctx context.Context, queries *coredb.Queries, n coredb.Notification) (notificationEmailDynamicTemplateData, error) {
-
-	switch n.Action {
-	case persist.ActionUserFollowedUsers:
-		if len(n.Data.FollowerIDs) > 1 {
-			return notificationEmailDynamicTemplateData{
-				Actor:  fmt.Sprintf("%d users", len(n.Data.FollowerIDs)),
-				Action: "followed you",
-			}, nil
-		}
-		if len(n.Data.FollowerIDs) == 1 {
-			userActor, err := queries.GetUserById(ctx, n.Data.FollowerIDs[0])
-			if err != nil {
-				return notificationEmailDynamicTemplateData{}, fmt.Errorf("failed to get user for follower %s: %w", n.Data.FollowerIDs[0], err)
-			}
-			action := "followed you"
-			if n.Data.FollowedBack {
-				action = "followed you back"
-			}
-			return notificationEmailDynamicTemplateData{
-				Actor:  userActor.Username.String,
-				Action: action,
-			}, nil
-		}
-		return notificationEmailDynamicTemplateData{}, fmt.Errorf("no follower ids")
-	case persist.ActionViewedSplit:
-		if len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs) > 1 {
-			return notificationEmailDynamicTemplateData{
-				Actor:  fmt.Sprintf("%d collectors", len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs)),
-				Action: "viewed your split",
-			}, nil
-		}
-		if len(n.Data.AuthedViewerIDs) == 1 {
-			userActor, err := queries.GetUserById(ctx, n.Data.AuthedViewerIDs[0])
-			if err != nil {
-				return notificationEmailDynamicTemplateData{}, fmt.Errorf("failed to get user for viewer %s: %w", n.Data.AuthedViewerIDs[0], err)
-			}
-			return notificationEmailDynamicTemplateData{
-				Actor:  userActor.Username.String,
-				Action: "viewed your split",
-			}, nil
-		}
-		if len(n.Data.UnauthedViewerIDs) == 1 {
-			return notificationEmailDynamicTemplateData{
-				Actor:  "Someone",
-				Action: "viewed your split",
-			}, nil
-		}
-
-		return notificationEmailDynamicTemplateData{}, fmt.Errorf("no viewer ids")
-	default:
-		return notificationEmailDynamicTemplateData{}, fmt.Errorf("unknown action %s", n.Action)
-	}
-}
-
 func runForUsersWithNotificationsOnForEmailType(ctx context.Context, emailType persist.EmailType, queries *coredb.Queries, fn func(u coredb.PiiUserView) error) error {
 	errGroup := new(errgroup.Group)
 	var lastID persist.DBID
 	var lastCreatedAt time.Time
+	// end time seemingly ensures that we don't send emails to users who signed up after the last time we ran this function, but assumes this function could take a day to run.
+	// This could probably just be set to time.Now() and it would be fine but if it ain't broke don't fix it
 	var endTime time.Time = time.Now().Add(24 * time.Hour)
 	requiredStatus := persist.EmailVerificationStatusVerified
 	if isDevEnv() {
+		// if we are not in production, the only users returned will be those with email status admin verified
 		requiredStatus = persist.EmailVerificationStatusAdmin
 	}
 
 	for {
+		// paginate emailsAtATime users at a time, running fn on each asynchronously
 		users, err := queries.GetUsersWithEmailNotificationsOnForEmailType(ctx, coredb.GetUsersWithEmailNotificationsOnForEmailTypeParams{
 			Limit:               emailsAtATime,
 			CurAfterTime:        lastCreatedAt,
@@ -356,11 +331,7 @@ func runForUsersWithNotificationsOnForEmailType(ctx context.Context, emailType p
 		for _, user := range users {
 			u := user
 			errGroup.Go(func() error {
-				err = fn(u)
-				if err != nil {
-					return err
-				}
-				return nil
+				return fn(u)
 			})
 		}
 

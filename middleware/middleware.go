@@ -3,8 +3,14 @@ package middleware
 import (
 	"context"
 	"fmt"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
+	"github.com/SplitFi/go-splitfi/service/limiters"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"google.golang.org/api/idtoken"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/logger"
@@ -15,15 +21,16 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
 )
 
-var mixpanelDistinctIDs = map[string]string{}
+type errBadTaskRequest struct {
+	msg string
+}
 
-type errUserDoesNotHaveRequiredNFT struct {
-	addresses []persist.Wallet
+func (e errBadTaskRequest) Error() string {
+	return fmt.Sprintf("bad task request: %s", e.msg)
 }
 
 // AdminRequired is a middleware that checks if the user is authenticated as an admin
@@ -83,35 +90,34 @@ func BasicHeaderAuthRequired(password string, options ...BasicAuthOption) gin.Ha
 	}
 }
 
-// AddAuthToContext is a middleware that validates auth data and stores the results in the context
-// TODO: change to middleware.ContinueSession(queries, authRefreshCache)
-func AddAuthToContext() gin.HandlerFunc {
+// TaskRequired checks that the request comes from Cloud Tasks.
+// Returns a 200 status to remove the message from the queue if it is a bad request.
+func TaskRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		jwt, err := c.Cookie(auth.JWTCookieKey)
-
-		// Treat empty cookies the same way we treat missing cookies, since setting a cookie to the empty
-		// string is how we "delete" them.
-		if err == nil && jwt == "" {
-			err = http.ErrNoCookie
-		}
-
-		if err != nil {
-			if err == http.ErrNoCookie {
-				err = auth.ErrNoCookie
-			}
-
-			auth.SetAuthStateForCtx(c, "", err)
-			c.Next()
+		taskName := c.Request.Header.Get("X-CloudTasks-TaskName")
+		if taskName == "" {
+			c.AbortWithError(http.StatusOK, errBadTaskRequest{"invalid task"})
 			return
 		}
 
-		userID, err := auth.JWTParse(jwt, env.GetString("JWT_SECRET"))
-		auth.SetAuthStateForCtx(c, userID, err)
+		queueName := c.Request.Header.Get("X-CloudTasks-QueueName")
+		if queueName == "" {
+			c.AbortWithError(http.StatusOK, errBadTaskRequest{"invalid queue"})
+			return
+		}
 
-		// If we have a successfully authenticated user, add their ID to all subsequent logging
+		c.Next()
+	}
+}
+
+// ContinueSession is a middleware that manages session cookies
+func ContinueSession(queries *db.Queries, authRefreshCache *redis.Cache) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := auth.ContinueSession(c, queries, authRefreshCache)
 		if err == nil {
 			loggerCtx := logger.NewContextWithFields(c.Request.Context(), logrus.Fields{
-				"authedUserId": userID,
+				"authedUserId": auth.GetUserIDFromCtx(c),
+				"sessionId":    auth.GetSessionIDFromCtx(c),
 			})
 			c.Request = c.Request.WithContext(loggerCtx)
 		}
@@ -120,8 +126,8 @@ func AddAuthToContext() gin.HandlerFunc {
 	}
 }
 
-// RateLimited is a middleware that rate limits requests by IP address
-func RateLimited(lim *KeyRateLimiter) gin.HandlerFunc {
+// IPRateLimited is a middleware that rate limits requests by IP address
+func IPRateLimited(lim *limiters.KeyRateLimiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		canContinue, tryAgainAfter, err := lim.ForKey(c, c.ClientIP())
 		if err != nil {
@@ -146,7 +152,7 @@ func HandleCORS() gin.HandlerFunc {
 		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, Set-Cookie, sentry-trace, baggage")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, Set-Cookie, sentry-trace, baggage, X-Platform, X-OS")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, Set-Cookie")
 
@@ -181,8 +187,16 @@ func ErrLogger() gin.HandlerFunc {
 // See: https://gqlgen.com/recipes/gin/
 func GinContextToContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Add the Gin context to the request context, because some of our handlers (e.g. GraphQL)
+		// only receive the request context, not the Gin context
 		ctx := context.WithValue(c.Request.Context(), util.GinContextKey, c)
 		c.Request = c.Request.WithContext(ctx)
+
+		// Also add the Gin context to itself, just to ensure that this function works
+		// even when called from a handler that is using the Gin context (or one derived
+		// from it) in the first place
+		c.Set(util.GinContextKey, c)
+
 		c.Next()
 	}
 }
@@ -226,6 +240,12 @@ func Tracing() gin.HandlerFunc {
 			sentry.ContinueFromRequest(c.Request),
 		)
 
+		ctx = logger.NewContextWithFields(ctx, logrus.Fields{
+			// Call it "trace" so GCP logging will recognize it as the trace ID
+			// See: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry
+			"trace": span.TraceID,
+		})
+
 		if c.Request.Method == "OPTIONS" {
 			// Don't sample OPTIONS requests; there's nothing to trace and they eat up our Sentry quota.
 			// Using a sampling decision here (instead of simply omitting the span) ensures that any
@@ -241,6 +261,81 @@ func Tracing() gin.HandlerFunc {
 	}
 }
 
-func (e errUserDoesNotHaveRequiredNFT) Error() string {
-	return fmt.Sprintf("required tokens not owned by addresses: %v", e.addresses)
+func CloudSchedulerMiddleware(c *gin.Context) {
+
+	idToken := c.GetHeader("Authorization")
+	if idToken == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "No ID token provided"})
+		return
+	}
+
+	_, err := validateIDToken(c, idToken)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid ID token"})
+		return
+	}
+
+	c.Next()
+}
+
+func validateIDToken(ctx context.Context, idToken string) (*idtoken.Payload, error) {
+
+	idToken = strings.TrimPrefix(idToken, "Bearer ")
+
+	validator, err := idtoken.NewValidator(ctx)
+	if err != nil {
+		logger.For(nil).Errorf("error creating id token validator: %s", err)
+		return nil, err
+	}
+
+	payload, err := validator.Validate(ctx, idToken, env.GetString("SCHEDULER_AUDIENCE"))
+	if err != nil {
+		logger.For(nil).Errorf("error validating id token: %s", err)
+		return nil, err
+	}
+
+	serviceEmail, err := getServiceAccountEmail()
+	if err != nil {
+		logger.For(nil).Errorf("error getting service account email: %s", err)
+		return nil, err
+	}
+
+	if payload.Claims["email"] != serviceEmail {
+		logger.For(nil).Errorf("id token email does not match service account email: %s", err)
+		return nil, err
+	}
+
+	return payload, nil
+}
+
+func getServiceAccountEmail() (string, error) {
+	const url = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email"
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("Metadata-Flavor", "Google")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
+}
+
+func RetoolMiddleware(ctx *gin.Context) {
+	if err := auth.RetoolAuthorized(ctx); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Next()
 }

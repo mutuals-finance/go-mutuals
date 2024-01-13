@@ -374,7 +374,7 @@ with upsert_pii as (
              on conflict (user_id) do update set has_email_address = excluded.has_email_address
      )
 
-update users set email_verified = 0 where users.id = @user_id;
+update users set email_verified = @email_verification_status where users.id = @user_id;
 
 -- name: UpdateUserEmailUnsubscriptions :exec
 UPDATE users SET email_unsubscriptions = $2 WHERE id = $1;
@@ -485,6 +485,26 @@ where case when @only_unfollowing::bool then true end;
 -- name: AddPiiAccountCreationInfo :exec
 insert into pii.account_creation_info (user_id, ip_address, created_at) values (@user_id, @ip_address, now())
 on conflict do nothing;
+
+-- name: GetUserByWalletID :one
+select * from users where array[@wallet::varchar]::varchar[] <@ wallets and deleted = false;
+
+-- name: DeleteUserByID :exec
+update users set deleted = true where id = $1;
+
+-- name: InsertWallet :exec
+with new_wallet as (insert into wallets(id, address, chain, wallet_type) values ($1, $2, $3, $4) returning id)
+update users set
+                 primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),
+                 wallets = array_append(users.wallets, new_wallet.id)
+from new_wallet
+where users.id = @user_id and not users.deleted;
+
+-- name: DeleteWalletByID :exec
+update wallets set deleted = true, last_updated = now() where id = $1;
+
+-- name: InsertUser :one
+insert into users (id, username, username_idempotent, bio, universal, email_unsubscriptions) values ($1, $2, $3, $4, $5, $6) returning id;
 
 -- name: UpsertSession :one
 insert into sessions (id, user_id,

@@ -431,6 +431,15 @@ func (q *Queries) DeletePushTokensByIDs(ctx context.Context, ids persist.DBIDLis
 	return err
 }
 
+const deleteUserByID = `-- name: DeleteUserByID :exec
+update users set deleted = true where id = $1
+`
+
+func (q *Queries) DeleteUserByID(ctx context.Context, id persist.DBID) error {
+	_, err := q.db.Exec(ctx, deleteUserByID, id)
+	return err
+}
+
 const deleteUserRoles = `-- name: DeleteUserRoles :exec
 update user_roles set deleted = true, last_updated = now() where user_id = $1 and role = any($2)
 `
@@ -442,6 +451,15 @@ type DeleteUserRolesParams struct {
 
 func (q *Queries) DeleteUserRoles(ctx context.Context, arg DeleteUserRolesParams) error {
 	_, err := q.db.Exec(ctx, deleteUserRoles, arg.UserID, arg.Roles)
+	return err
+}
+
+const deleteWalletByID = `-- name: DeleteWalletByID :exec
+update wallets set deleted = true, last_updated = now() where id = $1
+`
+
+func (q *Queries) DeleteWalletByID(ctx context.Context, id persist.DBID) error {
+	_, err := q.db.Exec(ctx, deleteWalletByID, id)
 	return err
 }
 
@@ -1596,6 +1614,35 @@ func (q *Queries) GetUserByVerifiedEmailAddress(ctx context.Context, lower strin
 	return i, err
 }
 
+const getUserByWalletID = `-- name: GetUserByWalletID :one
+select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] <@ wallets and deleted = false
+`
+
+func (q *Queries) GetUserByWalletID(ctx context.Context, wallet string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByWalletID, wallet)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Deleted,
+		&i.Version,
+		&i.LastUpdated,
+		&i.CreatedAt,
+		&i.Username,
+		&i.UsernameIdempotent,
+		&i.Wallets,
+		&i.Bio,
+		&i.Traits,
+		&i.Universal,
+		&i.NotificationSettings,
+		&i.EmailVerified,
+		&i.EmailUnsubscriptions,
+		&i.FeaturedSplit,
+		&i.PrimaryWalletID,
+		&i.UserExperiences,
+	)
+	return i, err
+}
+
 const getUserExperiencesByUserID = `-- name: GetUserExperiencesByUserID :one
 select user_experiences from users where id = $1
 `
@@ -2291,6 +2338,61 @@ func (q *Queries) HasLaterGroupedEvent(ctx context.Context, arg HasLaterGroupedE
 	return exists, err
 }
 
+const insertUser = `-- name: InsertUser :one
+insert into users (id, username, username_idempotent, bio, universal, email_unsubscriptions) values ($1, $2, $3, $4, $5, $6) returning id
+`
+
+type InsertUserParams struct {
+	ID                   persist.DBID                 `db:"id" json:"id"`
+	Username             sql.NullString               `db:"username" json:"username"`
+	UsernameIdempotent   sql.NullString               `db:"username_idempotent" json:"username_idempotent"`
+	Bio                  sql.NullString               `db:"bio" json:"bio"`
+	Universal            bool                         `db:"universal" json:"universal"`
+	EmailUnsubscriptions persist.EmailUnsubscriptions `db:"email_unsubscriptions" json:"email_unsubscriptions"`
+}
+
+func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (persist.DBID, error) {
+	row := q.db.QueryRow(ctx, insertUser,
+		arg.ID,
+		arg.Username,
+		arg.UsernameIdempotent,
+		arg.Bio,
+		arg.Universal,
+		arg.EmailUnsubscriptions,
+	)
+	var id persist.DBID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertWallet = `-- name: InsertWallet :exec
+with new_wallet as (insert into wallets(id, address, chain, wallet_type) values ($1, $2, $3, $4) returning id)
+update users set
+                 primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),
+                 wallets = array_append(users.wallets, new_wallet.id)
+from new_wallet
+where users.id = $5 and not users.deleted
+`
+
+type InsertWalletParams struct {
+	ID         persist.DBID       `db:"id" json:"id"`
+	Address    persist.Address    `db:"address" json:"address"`
+	Chain      persist.Chain      `db:"chain" json:"chain"`
+	WalletType persist.WalletType `db:"wallet_type" json:"wallet_type"`
+	UserID     persist.DBID       `db:"user_id" json:"user_id"`
+}
+
+func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) error {
+	_, err := q.db.Exec(ctx, insertWallet,
+		arg.ID,
+		arg.Address,
+		arg.Chain,
+		arg.WalletType,
+		arg.UserID,
+	)
+	return err
+}
+
 const invalidateSession = `-- name: InvalidateSession :exec
 update sessions set invalidated = true, active_until = least(active_until, now()), last_updated = now() where id = $1 and deleted = false and invalidated = false
 `
@@ -2606,25 +2708,26 @@ func (q *Queries) UpdateTokenMetadataFieldsByChainAddress(ctx context.Context, a
 
 const updateUserEmail = `-- name: UpdateUserEmail :exec
 with upsert_pii as (
-    insert into pii.for_users (user_id, pii_email_address) values ($1, $2)
+    insert into pii.for_users (user_id, pii_email_address) values ($2, $3)
         on conflict (user_id) do update set pii_email_address = excluded.pii_email_address
 ),
 
      upsert_metadata as (
-         insert into dev_metadata_users (user_id, has_email_address) values ($1, ($2 is not null))
+         insert into dev_metadata_users (user_id, has_email_address) values ($2, ($3 is not null))
              on conflict (user_id) do update set has_email_address = excluded.has_email_address
      )
 
-update users set email_verified = 0 where users.id = $1
+update users set email_verified = $1 where users.id = $2
 `
 
 type UpdateUserEmailParams struct {
-	UserID       persist.DBID  `db:"user_id" json:"user_id"`
-	EmailAddress persist.Email `db:"email_address" json:"email_address"`
+	EmailVerificationStatus int32         `db:"email_verification_status" json:"email_verification_status"`
+	UserID                  persist.DBID  `db:"user_id" json:"user_id"`
+	EmailAddress            persist.Email `db:"email_address" json:"email_address"`
 }
 
 func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
-	_, err := q.db.Exec(ctx, updateUserEmail, arg.UserID, arg.EmailAddress)
+	_, err := q.db.Exec(ctx, updateUserEmail, arg.EmailVerificationStatus, arg.UserID, arg.EmailAddress)
 	return err
 }
 

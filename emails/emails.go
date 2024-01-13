@@ -2,21 +2,19 @@ package emails
 
 import (
 	"context"
-	"net/http"
-	"os"
-	"time"
-
-	"cloud.google.com/go/pubsub"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/publicapi"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
 	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/SplitFi/go-splitfi/service/rpc"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/service/throttle"
+	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/getsentry/sentry-go"
@@ -24,7 +22,8 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"google.golang.org/api/option"
+	"net/http"
+	"os"
 )
 
 // InitServer initializes the mediaprocessing server
@@ -43,11 +42,12 @@ func coreInitServer() *gin.Engine {
 
 	queries := coredb.New(pgxClient)
 
-	loaders := dataloader.NewLoaders(context.Background(), queries, false)
+	loaders := dataloader.NewLoaders(context.Background(), queries, false, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
 
 	sendgridClient := sendgrid.NewSendClient(env.GetString("SENDGRID_API_KEY"))
 
 	http.DefaultClient = &http.Client{Transport: tracing.NewTracingTransport(http.DefaultTransport, false)}
+	stg := rpc.NewStorageClient(context.Background())
 
 	router := gin.Default()
 
@@ -60,32 +60,20 @@ func coreInitServer() *gin.Engine {
 
 	logger.For(nil).Info("Registering handlers...")
 
-	var pub *pubsub.Client
-	var err error
-	if env.GetString("ENV") == "local" {
-		pub, err = pubsub.NewClient(context.Background(), env.GetString("GOOGLE_CLOUD_PROJECT"), option.WithCredentialsJSON(util.LoadEncryptedServiceKey("./secrets/dev/service-key-dev.json")))
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		pub, err = pubsub.NewClient(context.Background(), env.GetString("GOOGLE_CLOUD_PROJECT"))
-		if err != nil {
-			panic(err)
-		}
-	}
+	r := redis.NewCache(redis.EmailThrottleCache)
+	lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
+	psub := gcp.NewClient(context.Background())
+	t := task.NewClient(context.Background())
+	p := publicapi.New(context.Background(), false, postgres.NewRepositories(postgres.MustCreateClient(), pgxClient), queries, http.DefaultClient, nil, nil, nil, stg, nil, t, nil, nil, nil, nil, nil, nil)
 
-	go autoSendNotificationEmails(queries, sendgridClient, pub)
-
-	redisClient := redis.NewClient(redis.EmailRateLimiterDB)
-
-	return handlersInitServer(router, loaders, queries, sendgridClient, redisClient)
+	return handlersInitServer(router, loaders, queries, sendgridClient, r, stg, p, psub, t, lock)
 }
 
 func setDefaults() {
 	viper.SetDefault("ENV", "local")
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
+	viper.SetDefault("POSTGRES_USER", "gallery_backend")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("ALLOWED_ORIGINS", "http://localhost:3000")
@@ -94,14 +82,25 @@ func setDefaults() {
 	viper.SetDefault("VERSION", "")
 	viper.SetDefault("SENDGRID_API_KEY", "")
 	viper.SetDefault("SENDGRID_VALIDATION_KEY", "")
-	viper.SetDefault("FROM_EMAIL", "test@splitfi.com")
+	viper.SetDefault("FROM_EMAIL", "test@gallery.so")
 	viper.SetDefault("SENDGRID_DEFAULT_LIST_ID", "865cea98-bf23-4ca3-a8d7-2dc9ea29951b")
 	viper.SetDefault("SENDGRID_NOTIFICATIONS_TEMPLATE_ID", "d-6135d8f36e9946979b0dcf1800363ab4")
 	viper.SetDefault("SENDGRID_VERIFICATION_TEMPLATE_ID", "d-b575d54dc86d40fdbf67b3119589475a")
+	viper.SetDefault("SENDGRID_DIGEST_TEMPLATE_ID", "d-0b9b6b0b0b5e4b6e9b0b0b5e4b6e9b0b")
 	viper.SetDefault("SENDGRID_UNSUBSCRIBE_NOTIFICATIONS_GROUP_ID", 20676)
-	viper.SetDefault("PUBSUB_NOTIFICATIONS_EMAILS_SUBSCRIPTION", "notifications-email-sub")
-	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "")
+	viper.SetDefault("SENDGRID_UNSUBSCRIBE_DIGEST_GROUP_ID", 46079)
+	viper.SetDefault("SCHEDULER_AUDIENCE", "")
+	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "gallery-dev-322005")
 	viper.SetDefault("ADMIN_PASS", "admin")
+	viper.SetDefault("EMAILS_TASK_SECRET", "emails-task-secret")
+	viper.SetDefault("RETOOL_AUTH_TOKEN", "")
+	viper.SetDefault("CONFIGURATION_BUCKET", "gallery-dev-configurations")
+	viper.SetDefault("TASK_QUEUE_HOST", "localhost:8123")
+	viper.SetDefault("PUBSUB_EMULATOR_HOST", "[::1]:8085")
+	viper.SetDefault("PUBSUB_TOPIC_NEW_NOTIFICATIONS", "dev-new-notifications")
+	viper.SetDefault("GCLOUD_PUSH_NOTIFICATIONS_QUEUE", "projects/gallery-local/locations/here/queues/push-notifications")
+	viper.SetDefault("PUSH_NOTIFICATIONS_SECRET", "push-notifications-secret")
+	viper.SetDefault("PUSH_NOTIFICATIONS_URL", "http://localhost:8000")
 
 	viper.AutomaticEnv()
 
@@ -109,7 +108,7 @@ func setDefaults() {
 		logger.For(nil).Info("running in non-local environment, skipping environment configuration")
 	} else {
 		fi := "local"
-		if len(os.Args) > 0 {
+		if len(os.Args) > 1 {
 			fi = os.Args[1]
 		}
 		envFile := util.ResolveEnvFile("emails", fi)
@@ -120,13 +119,9 @@ func setDefaults() {
 		util.VarNotSetTo("SENTRY_DSN", "")
 		util.VarNotSetTo("VERSION", "")
 		util.VarNotSetTo("SENDGRID_API_KEY", "")
-		util.VarNotSetTo("JWT_SECRET", "")
+		util.VarNotSetTo("EMAIL_VERIFICATION_JWT_SECRET", "")
 		util.VarNotSetTo("FROM_EMAIL", "")
 	}
-}
-
-func newThrottler() *throttle.Locker {
-	return throttle.NewThrottleLocker(redis.NewCache(redis.EmailThrottleDB), time.Minute*5)
 }
 
 func initSentry() {
@@ -154,24 +149,6 @@ func initSentry() {
 	if err != nil {
 		logger.For(nil).Fatalf("failed to start sentry: %s", err)
 	}
-}
-
-func initLogger() {
-	logger.SetLoggerOptions(func(l *logrus.Logger) {
-		l.SetReportCaller(true)
-
-		if env.GetString("ENV") != "production" {
-			l.SetLevel(logrus.DebugLevel)
-		}
-
-		if env.GetString("ENV") == "local" {
-			l.SetFormatter(&logrus.TextFormatter{DisableQuote: true})
-		} else {
-			// Use a JSONFormatter for non-local environments because Google Cloud Logging works well with JSON-formatted log entries
-			l.SetFormatter(&logrus.JSONFormatter{})
-		}
-
-	})
 }
 
 func isDevEnv() bool {

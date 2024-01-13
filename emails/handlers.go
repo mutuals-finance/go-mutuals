@@ -1,36 +1,61 @@
 package emails
 
 import (
-	"time"
+	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/storage"
+	"context"
 
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/event"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/publicapi"
+	"github.com/SplitFi/go-splitfi/service/limiters"
+	"github.com/SplitFi/go-splitfi/service/notifications"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/bsm/redislock"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"github.com/sendgrid/sendgrid-go"
+	"net/http"
+	"time"
 )
 
-func handlersInitServer(router *gin.Engine, loaders *dataloader.Loaders, queries *coredb.Queries, s *sendgrid.Client, r *redis.Client) *gin.Engine {
+func handlersInitServer(router *gin.Engine, loaders *dataloader.Loaders, queries *coredb.Queries, s *sendgrid.Client, r *redis.Cache, stg *storage.Client, papi *publicapi.PublicAPI, psub *pubsub.Client, t *task.Client, notifLock *redislock.Client) *gin.Engine {
 	sendGroup := router.Group("/send")
 
 	sendGroup.POST("/notifications", middleware.AdminRequired(), adminSendNotificationEmail(queries, s))
 
 	// Return 200 on auth failures to prevent task/job retries
-	// TODO
-	//authOpts := middleware.BasicAuthOptionBuilder{}
-	//basicAuthHandler := middleware.BasicHeaderAuthRequired(env.GetString("EMAILS_TASK_SECRET"), authOpts.WithFailureStatus(http.StatusOK))
-	//sendGroup.POST("/process/add-to-mailing-list", basicAuthHandler, middleware.TaskRequired(), processAddToMailingList(queries))
+	authOpts := middleware.BasicAuthOptionBuilder{}
+	basicAuthHandler := middleware.BasicHeaderAuthRequired(env.GetString("EMAILS_TASK_SECRET"), authOpts.WithFailureStatus(http.StatusOK))
+	sendGroup.POST("/process/add-to-mailing-list", basicAuthHandler, middleware.TaskRequired(), processAddToMailingList(queries))
 
-	verificationLimiter := middleware.RateLimited(middleware.NewKeyRateLimiter(1, time.Second*5, r))
-	sendGroup.POST("/verification", verificationLimiter, sendVerificationEmail(loaders, queries, s))
+	limiterCtx := context.Background()
+	limiterCache := redis.NewCache(redis.EmailRateLimitersCache)
+
+	verificationLimiter := limiters.NewKeyRateLimiter(limiterCtx, limiterCache, "verification", 1, time.Second*5)
+	sendGroup.POST("/verification", middleware.IPRateLimited(verificationLimiter), sendVerificationEmail(loaders, queries, s))
 
 	router.POST("/subscriptions", updateSubscriptions(queries))
 	router.POST("/unsubscribe", unsubscribe(queries))
 	router.POST("/resubscribe", resubscribe(queries))
 
 	router.POST("/verify", verifyEmail(queries))
-	preVerifyLimiter := middleware.RateLimited(middleware.NewKeyRateLimiter(1, time.Millisecond*500, r))
-	router.GET("/preverify", preVerifyLimiter, preverifyEmail())
+	preverifyLimiter := limiters.NewKeyRateLimiter(limiterCtx, limiterCache, "preverify", 1, time.Millisecond*500)
+	router.GET("/preverify", middleware.IPRateLimited(preverifyLimiter), preverifyEmail())
+
+	notificationsGroup := router.Group("/notifications")
+	notificationsGroup.GET("/send", middleware.CloudSchedulerMiddleware, sendNotificationEmails(queries, s, r))
+	notificationsGroup.POST("/announcement", middleware.RetoolMiddleware, useEventHandler(queries, psub, t, notifLock), sendAnnouncementNotification(queries))
+
 	return router
+}
+
+func useEventHandler(q *coredb.Queries, p *pubsub.Client, t *task.Client, l *redislock.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event.AddTo(c, false, notifications.New(q, p, t, l, false), q, t)
+		c.Next()
+	}
 }
