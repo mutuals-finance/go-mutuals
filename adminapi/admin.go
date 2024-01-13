@@ -2,6 +2,7 @@ package adminapi
 
 import (
 	"context"
+	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/redis"
 
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
@@ -30,8 +31,8 @@ func (api *AdminAPI) AddRolesToUser(ctx context.Context, username string, roles 
 	requireRetoolAuthorized(ctx)
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": {username, "required"},
-		"roles":    {roles, "required,unique,dive,role"},
+		"username": validate.WithTag(username, "required"),
+		"roles":    validate.WithTag(roles, "required,unique,dive,role"),
 	}); err != nil {
 		return nil, err
 	}
@@ -57,6 +58,15 @@ func (api *AdminAPI) AddRolesToUser(ctx context.Context, username string, roles 
 		Roles:  newRoles,
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
+	err = auth.ForceAuthTokenRefresh(ctx, api.authRefreshCache, user.ID)
+	if err != nil {
+		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", user.ID, err)
+	}
+
 	return &user, err
 }
 
@@ -64,8 +74,8 @@ func (api *AdminAPI) RemoveRolesFromUser(ctx context.Context, username string, r
 	requireRetoolAuthorized(ctx)
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": {username, "required"},
-		"roles":    {roles, "required,unique,dive,role"},
+		"username": validate.WithTag(username, "required"),
+		"roles":    validate.WithTag(roles, "required,unique,dive,role"),
 	}); err != nil {
 		return nil, err
 	}
@@ -85,6 +95,15 @@ func (api *AdminAPI) RemoveRolesFromUser(ctx context.Context, username string, r
 		UserID: user.ID,
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
+	err = auth.ForceAuthTokenRefresh(ctx, api.authRefreshCache, user.ID)
+	if err != nil {
+		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", user.ID, err)
+	}
+
 	return &user, err
 }
 
@@ -101,8 +120,8 @@ func (api *AdminAPI) AddWalletToUserUnchecked(ctx context.Context, username stri
 	requireRetoolAuthorized(ctx)
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username":     {username, "required,username"},
-		"chainAddress": {chainAddress, "required"},
+		"username":     validate.WithTag(username, "required,username"),
+		"chainAddress": validate.WithTag(chainAddress, "required"),
 	}); err != nil {
 		return err
 	}
@@ -129,7 +148,7 @@ func (api *AdminAPI) AddWalletToUserUnchecked(ctx context.Context, username stri
 		}, nil
 	}
 
-	return user.AddWalletToUser(ctx, u.ID, chainAddress, authenticator{authMethod}, api.repos.UserRepository, api.repos.WalletRepository, api.multichain)
+	return user.AddWalletToUser(ctx, u.ID, chainAddress, authenticator{authMethod}, api.repos.UserRepository, api.multichain)
 }
 
 func requireRetoolAuthorized(ctx context.Context) {
