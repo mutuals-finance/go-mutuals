@@ -16,7 +16,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/mediamapper"
 	"github.com/SplitFi/go-splitfi/service/notifications"
-	"github.com/SplitFi/go-splitfi/service/socialauth"
 	"github.com/SplitFi/go-splitfi/service/twitter"
 	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/gammazero/workerpool"
@@ -125,23 +124,6 @@ func (r *Resolver) authMechanismToAuthenticator(ctx context.Context, m model.Aut
 	return nil, errNoAuthMechanismFound
 }
 
-// authMechanismToAuthenticator takes a GraphQL AuthMechanism and returns an Authenticator that can be used for auth
-func (r *Resolver) socialAuthMechanismToAuthenticator(ctx context.Context, m model.SocialAuthMechanism) (socialauth.Authenticator, error) {
-
-	if debugtools.Enabled {
-		if env.GetString("ENV") == "local" && m.Debug != nil {
-			return debugtools.NewDebugSocialAuthenticator(m.Debug.Provider, m.Debug.ID, map[string]interface{}{"username": m.Debug.Username}), nil
-		}
-	}
-
-	if m.Twitter != nil {
-		authedUserID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-		return publicapi.For(ctx).Social.NewTwitterAuthenticator(authedUserID, m.Twitter.Code), nil
-	}
-
-	return nil, errNoAuthMechanismFound
-}
-
 func resolveSplitFiUserByUserID(ctx context.Context, userID persist.DBID) (*model.SplitFiUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserById(ctx, userID)
 
@@ -237,14 +219,6 @@ func resolveViewerExperiencesByUserID(ctx context.Context, userID persist.DBID) 
 }
 */
 
-func resolveViewerSocialsByUserID(ctx context.Context, userID persist.DBID) (*model.SocialAccounts, error) {
-	return publicapi.For(ctx).User.GetSocials(ctx, userID)
-}
-
-func resolveUserSocialsByUserID(ctx context.Context, userID persist.DBID) (*model.SocialAccounts, error) {
-	return publicapi.For(ctx).User.GetDisplayedSocials(ctx, userID)
-}
-
 func resolveAssetByAssetID(ctx context.Context, assetID persist.DBID) (*model.Asset, error) {
 	/*
 		TODO
@@ -317,23 +291,6 @@ func userWithPIIToEmailModel(user *db.PiiUserView) *model.UserEmail {
 		},
 	}
 
-}
-
-func resolveGeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error) {
-	addresses, err := publicapi.For(ctx).Misc.GetGeneralAllowlist(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	output := make([]*persist.ChainAddress, 0, len(addresses))
-
-	for _, address := range addresses {
-		chainAddress := persist.NewChainAddress(persist.Address(address), persist.ChainETH)
-		output = append(output, &chainAddress)
-	}
-
-	return output, nil
 }
 
 func resolveWalletsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Wallet, error) {

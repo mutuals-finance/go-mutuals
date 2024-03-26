@@ -18,7 +18,10 @@ directive @goField(
 # arguments that specify the level of access required.
 directive @authRequired on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
-directive @retoolAuth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+# Add @basicAuth to any field that should be secured by a basic auth token. For example, some fields
+# should only be usable by Retool, so they'd use @basicAuth(allowed: [Retool]). Other fields might be
+# accessible by both Retool and Monitoring, so they'd use @basicAuth(allowed: [Retool, Monitoring]).
+directive @basicAuth(allowed: [BasicAuthType!]!) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 directive @frontendBuildAuth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
@@ -54,6 +57,11 @@ scalar PubKey
 scalar DBID
 scalar Email
 
+enum BasicAuthType {
+  Retool
+  Monitoring
+}
+
 interface Node {
   id: ID!
 }
@@ -75,7 +83,6 @@ type SplitFiUser implements Node @goEmbedHelper {
   traits: String
   universal: Boolean
   roles: [Role] @goField(forceResolver: true)
-  socialAccounts: SocialAccounts @goField(forceResolver: true)
 
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
@@ -372,6 +379,7 @@ type NotificationsConnection @goEmbedHelper {
   pageInfo: PageInfo
 }
 
+# TODO remove social
 enum SocialAccountType {
   Twitter
 }
@@ -382,23 +390,9 @@ interface SocialAccount {
   display: Boolean!
 }
 
-type SocialAccounts {
-  twitter: TwitterSocialAccount
-}
-
-type TwitterSocialAccount implements SocialAccount {
-  type: SocialAccountType!
-  social_id: String!
-  name: String!
-  username: String!
-  profileImageURL: String!
-  display: Boolean!
-}
-
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: SplitFiUser @goField(forceResolver: true)
-  socialAccounts: SocialAccounts @goField(forceResolver: true)
   viewerSplits: [ViewerSplit] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
@@ -576,8 +570,6 @@ type SearchSplitsPayload {
 
 union SearchSplitsPayloadOrError = SearchSplitsPayload | ErrInvalidInput
 
-union SocialQueriesOrError = SocialQueries | ErrNotAuthorized | ErrNeedsToReconnectSocial
-
 type Query {
   node(id: ID!): Node
   viewer: ViewerOrError @authRequired
@@ -586,7 +578,6 @@ type Query {
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
   usersWithTrait(trait: String!): [SplitFiUser]
   tokenById(id: DBID!): TokenByIdOrError
-  generalAllowlist: [ChainAddress!]
   splitById(id: DBID!): SplitByIdPayloadOrError
   viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
@@ -616,29 +607,7 @@ type Query {
 
   # Retool Specific
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
-    @retoolAuth
-
-  socialConnections(
-    socialAccountType: SocialAccountType!
-    excludeAlreadyFollowing: Boolean
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): SocialConnectionsConnection @goField(forceResolver: true) @authRequired
-
-  socialQueries: SocialQueriesOrError @authRequired
-}
-
-type SocialQueries {
-  socialConnections(
-    socialAccountType: SocialAccountType!
-    excludeAlreadyFollowing: Boolean
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): SocialConnectionsConnection @goField(forceResolver: true) @authRequired
+    @basicAuth(allowed: [Retool])
 }
 
 input SetSpamPreferenceInput {
@@ -724,7 +693,11 @@ type ErrCommunityNotFound implements Error {
   message: String!
 }
 
-union AuthorizationError = ErrNoCookie | ErrInvalidToken | ErrDoesNotOwnRequiredToken
+union AuthorizationError =
+  ErrNoCookie
+  | ErrInvalidToken
+  | ErrSessionInvalidated
+  | ErrDoesNotOwnRequiredToken
 
 type ErrNotAuthorized implements Error {
   message: String!
@@ -742,6 +715,10 @@ type ErrNoCookie implements Error {
 }
 
 type ErrInvalidToken implements Error {
+  message: String!
+}
+
+type ErrSessionInvalidated implements Error {
   message: String!
 }
 
@@ -930,6 +907,16 @@ type PreverifyEmailPayload {
 
 union PreverifyEmailPayloadOrError = PreverifyEmailPayload | ErrInvalidInput
 
+input VerifyEmailMagicLinkInput {
+  email: Email! @scrub
+}
+
+type VerifyEmailMagicLinkPayload {
+  canSend: Boolean!
+}
+
+union VerifyEmailMagicLinkPayloadOrError = VerifyEmailMagicLinkPayload | ErrInvalidInput
+
 input UpdateEmailInput {
   email: Email! @scrub
 }
@@ -951,7 +938,7 @@ type UpdateEmailNotificationSettingsPayload {
 }
 
 union UpdateEmailNotificationSettingsPayloadOrError =
-    UpdateEmailNotificationSettingsPayload
+  UpdateEmailNotificationSettingsPayload
   | ErrInvalidInput
 
 type UnsubscribeFromEmailTypePayload {
@@ -1002,7 +989,7 @@ input UpdateSplitInfoInput {
 input CreateSplitInput {
   name: String
   description: String
-  position: String!
+  logo: String
 }
 
 type CreateSplitPayload {
@@ -1119,40 +1106,6 @@ union UpdateUserExperiencePayloadOrError =
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type ConnectSocialAccountPayload {
-  viewer: Viewer
-}
-
-union ConnectSocialAccountPayloadOrError =
-    ConnectSocialAccountPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
-input UpdateSocialAccountDisplayedInput {
-  type: SocialAccountType!
-  displayed: Boolean!
-}
-
-type UpdateSocialAccountDisplayedPayload {
-  viewer: Viewer
-}
-
-union UpdateSocialAccountDisplayedPayloadOrError =
-    UpdateSocialAccountDisplayedPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-  | ErrNeedsToReconnectSocial
-
-type DisconnectSocialAccountPayload {
-  viewer: Viewer
-}
-
-union DisconnectSocialAccountPayloadOrError =
-    DisconnectSocialAccountPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-  | ErrNeedsToReconnectSocial
-
 type Mutation {
   # User Mutations
   addUserWallet(
@@ -1182,16 +1135,6 @@ type Mutation {
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout: LogoutPayload
 
-  connectSocialAccount(
-    input: SocialAuthMechanism!
-    display: Boolean! = true
-  ): ConnectSocialAccountPayloadOrError @authRequired
-  disconnectSocialAccount(accountType: SocialAccountType!): DisconnectSocialAccountPayloadOrError
-    @authRequired
-  updateSocialAccountDisplayed(
-    input: UpdateSocialAccountDisplayedInput!
-  ): UpdateSocialAccountDisplayedPayloadOrError @authRequired
-
   viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
   updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
@@ -1211,12 +1154,13 @@ type Mutation {
 
   preverifyEmail(input: PreverifyEmailInput!): PreverifyEmailPayloadOrError
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
+  verifyEmailMagicLink(input: VerifyEmailMagicLinkInput!): VerifyEmailMagicLinkPayloadOrError
 
   # Retool Specific Mutations
-  addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @retoolAuth
-  addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @retoolAuth
+  addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @basicAuth(allowed: [Retool])
+  addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @basicAuth(allowed: [Retool])
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
-    @retoolAuth
+    @basicAuth(allowed: [Retool])
 
   # Split Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError

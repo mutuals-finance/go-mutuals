@@ -27,10 +27,6 @@ type AuthorizationError interface {
 	IsAuthorizationError()
 }
 
-type ConnectSocialAccountPayloadOrError interface {
-	IsConnectSocialAccountPayloadOrError()
-}
-
 type CreateSplitPayloadOrError interface {
 	IsCreateSplitPayloadOrError()
 }
@@ -45,10 +41,6 @@ type DeepRefreshPayloadOrError interface {
 
 type DeleteSplitPayloadOrError interface {
 	IsDeleteSplitPayloadOrError()
-}
-
-type DisconnectSocialAccountPayloadOrError interface {
-	IsDisconnectSocialAccountPayloadOrError()
 }
 
 type Error interface {
@@ -130,10 +122,6 @@ type SocialConnectionsOrError interface {
 	IsSocialConnectionsOrError()
 }
 
-type SocialQueriesOrError interface {
-	IsSocialQueriesOrError()
-}
-
 type SplitByIDPayloadOrError interface {
 	IsSplitByIDPayloadOrError()
 }
@@ -164,10 +152,6 @@ type UpdateEmailPayloadOrError interface {
 
 type UpdatePrimaryWalletPayloadOrError interface {
 	IsUpdatePrimaryWalletPayloadOrError()
-}
-
-type UpdateSocialAccountDisplayedPayloadOrError interface {
-	IsUpdateSocialAccountDisplayedPayloadOrError()
 }
 
 type UpdateSplitHiddenPayloadOrError interface {
@@ -208,6 +192,10 @@ type UserByIDOrError interface {
 
 type UserByUsernameOrError interface {
 	IsUserByUsernameOrError()
+}
+
+type VerifyEmailMagicLinkPayloadOrError interface {
+	IsVerifyEmailMagicLinkPayloadOrError()
 }
 
 type VerifyEmailPayloadOrError interface {
@@ -293,16 +281,10 @@ type ClearAllNotificationsPayload struct {
 	Notifications []Notification `json:"notifications"`
 }
 
-type ConnectSocialAccountPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (ConnectSocialAccountPayload) IsConnectSocialAccountPayloadOrError() {}
-
 type CreateSplitInput struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
-	Position    string  `json:"position"`
+	Logo        *string `json:"logo"`
 }
 
 type CreateSplitPayload struct {
@@ -363,12 +345,6 @@ type DeletedNode struct {
 }
 
 func (DeletedNode) IsNode() {}
-
-type DisconnectSocialAccountPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (DisconnectSocialAccountPayload) IsDisconnectSocialAccountPayloadOrError() {}
 
 type EmailNotificationSettings struct {
 	UnsubscribedFromAll           bool `json:"unsubscribedFromAll"`
@@ -441,6 +417,7 @@ func (ErrInvalidInput) IsError()                                         {}
 func (ErrInvalidInput) IsCreateUserPayloadOrError()                      {}
 func (ErrInvalidInput) IsVerifyEmailPayloadOrError()                     {}
 func (ErrInvalidInput) IsPreverifyEmailPayloadOrError()                  {}
+func (ErrInvalidInput) IsVerifyEmailMagicLinkPayloadOrError()            {}
 func (ErrInvalidInput) IsUpdateEmailPayloadOrError()                     {}
 func (ErrInvalidInput) IsResendVerificationEmailPayloadOrError()         {}
 func (ErrInvalidInput) IsUpdateEmailNotificationSettingsPayloadOrError() {}
@@ -454,9 +431,6 @@ func (ErrInvalidInput) IsUpdateSplitPayloadOrError()                     {}
 func (ErrInvalidInput) IsPublishSplitPayloadOrError()                    {}
 func (ErrInvalidInput) IsUpdatePrimaryWalletPayloadOrError()             {}
 func (ErrInvalidInput) IsUpdateUserExperiencePayloadOrError()            {}
-func (ErrInvalidInput) IsConnectSocialAccountPayloadOrError()            {}
-func (ErrInvalidInput) IsUpdateSocialAccountDisplayedPayloadOrError()    {}
-func (ErrInvalidInput) IsDisconnectSocialAccountPayloadOrError()         {}
 
 type ErrInvalidToken struct {
 	Message string `json:"message"`
@@ -470,10 +444,7 @@ type ErrNeedsToReconnectSocial struct {
 	Message           string                 `json:"message"`
 }
 
-func (ErrNeedsToReconnectSocial) IsSocialQueriesOrError()                       {}
-func (ErrNeedsToReconnectSocial) IsError()                                      {}
-func (ErrNeedsToReconnectSocial) IsUpdateSocialAccountDisplayedPayloadOrError() {}
-func (ErrNeedsToReconnectSocial) IsDisconnectSocialAccountPayloadOrError()      {}
+func (ErrNeedsToReconnectSocial) IsError() {}
 
 type ErrNoCookie struct {
 	Message string `json:"message"`
@@ -487,30 +458,33 @@ type ErrNotAuthorized struct {
 	Cause   AuthorizationError `json:"cause"`
 }
 
-func (ErrNotAuthorized) IsViewerOrError()                              {}
-func (ErrNotAuthorized) IsSocialQueriesOrError()                       {}
-func (ErrNotAuthorized) IsSetSpamPreferencePayloadOrError()            {}
-func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()                {}
-func (ErrNotAuthorized) IsRemoveUserWalletsPayloadOrError()            {}
-func (ErrNotAuthorized) IsUpdateUserInfoPayloadOrError()               {}
-func (ErrNotAuthorized) IsError()                                      {}
-func (ErrNotAuthorized) IsDeepRefreshPayloadOrError()                  {}
-func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()               {}
-func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()          {}
-func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError()       {}
-func (ErrNotAuthorized) IsCreateSplitPayloadOrError()                  {}
-func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()              {}
-func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()            {}
-func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()                  {}
-func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()             {}
-func (ErrNotAuthorized) IsUpdateSplitPayloadOrError()                  {}
-func (ErrNotAuthorized) IsPublishSplitPayloadOrError()                 {}
-func (ErrNotAuthorized) IsUpdatePrimaryWalletPayloadOrError()          {}
-func (ErrNotAuthorized) IsAdminAddWalletPayloadOrError()               {}
-func (ErrNotAuthorized) IsUpdateUserExperiencePayloadOrError()         {}
-func (ErrNotAuthorized) IsConnectSocialAccountPayloadOrError()         {}
-func (ErrNotAuthorized) IsUpdateSocialAccountDisplayedPayloadOrError() {}
-func (ErrNotAuthorized) IsDisconnectSocialAccountPayloadOrError()      {}
+func (ErrNotAuthorized) IsViewerOrError()                        {}
+func (ErrNotAuthorized) IsSetSpamPreferencePayloadOrError()      {}
+func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()          {}
+func (ErrNotAuthorized) IsRemoveUserWalletsPayloadOrError()      {}
+func (ErrNotAuthorized) IsUpdateUserInfoPayloadOrError()         {}
+func (ErrNotAuthorized) IsError()                                {}
+func (ErrNotAuthorized) IsDeepRefreshPayloadOrError()            {}
+func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()         {}
+func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()    {}
+func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError() {}
+func (ErrNotAuthorized) IsCreateSplitPayloadOrError()            {}
+func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()        {}
+func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()      {}
+func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()            {}
+func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()       {}
+func (ErrNotAuthorized) IsUpdateSplitPayloadOrError()            {}
+func (ErrNotAuthorized) IsPublishSplitPayloadOrError()           {}
+func (ErrNotAuthorized) IsUpdatePrimaryWalletPayloadOrError()    {}
+func (ErrNotAuthorized) IsAdminAddWalletPayloadOrError()         {}
+func (ErrNotAuthorized) IsUpdateUserExperiencePayloadOrError()   {}
+
+type ErrSessionInvalidated struct {
+	Message string `json:"message"`
+}
+
+func (ErrSessionInvalidated) IsAuthorizationError() {}
+func (ErrSessionInvalidated) IsError()              {}
 
 type ErrSplitNotFound struct {
 	Message string `json:"message"`
@@ -793,10 +767,6 @@ type SetSpamPreferencePayload struct {
 
 func (SetSpamPreferencePayload) IsSetSpamPreferencePayloadOrError() {}
 
-type SocialAccounts struct {
-	Twitter *TwitterSocialAccount `json:"twitter"`
-}
-
 type SocialAuthMechanism struct {
 	Twitter *TwitterAuth     `json:"twitter"`
 	Debug   *DebugSocialAuth `json:"debug"`
@@ -826,12 +796,6 @@ type SocialConnectionsEdge struct {
 	Cursor *string                  `json:"cursor"`
 }
 
-type SocialQueries struct {
-	SocialConnections *SocialConnectionsConnection `json:"socialConnections"`
-}
-
-func (SocialQueries) IsSocialQueriesOrError() {}
-
 type Split struct {
 	Dbid        persist.DBID   `json:"dbid"`
 	Version     *int           `json:"version"`
@@ -856,7 +820,6 @@ type SplitFiUser struct {
 	Traits              *string         `json:"traits"`
 	Universal           *bool           `json:"universal"`
 	Roles               []*persist.Role `json:"roles"`
-	SocialAccounts      *SocialAccounts `json:"socialAccounts"`
 	Wallets             []*Wallet       `json:"wallets"`
 	PrimaryWallet       *Wallet         `json:"primaryWallet"`
 	Splits              []*Split        `json:"splits"`
@@ -923,17 +886,6 @@ type TwitterAuth struct {
 	Code string `json:"code"`
 }
 
-type TwitterSocialAccount struct {
-	Type            persist.SocialProvider `json:"type"`
-	SocialID        string                 `json:"social_id"`
-	Name            string                 `json:"name"`
-	Username        string                 `json:"username"`
-	ProfileImageURL string                 `json:"profileImageURL"`
-	Display         bool                   `json:"display"`
-}
-
-func (TwitterSocialAccount) IsSocialAccount() {}
-
 type UnknownMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
 	MediaURL         *string          `json:"mediaURL"`
@@ -982,17 +934,6 @@ type UpdatePrimaryWalletPayload struct {
 }
 
 func (UpdatePrimaryWalletPayload) IsUpdatePrimaryWalletPayloadOrError() {}
-
-type UpdateSocialAccountDisplayedInput struct {
-	Type      persist.SocialProvider `json:"type"`
-	Displayed bool                   `json:"displayed"`
-}
-
-type UpdateSocialAccountDisplayedPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (UpdateSocialAccountDisplayedPayload) IsUpdateSocialAccountDisplayedPayloadOrError() {}
 
 type UpdateSplitHiddenInput struct {
 	ID     persist.DBID `json:"id"`
@@ -1104,6 +1045,16 @@ type VerifyEmailInput struct {
 	Token string `json:"token"`
 }
 
+type VerifyEmailMagicLinkInput struct {
+	Email persist.Email `json:"email"`
+}
+
+type VerifyEmailMagicLinkPayload struct {
+	CanSend bool `json:"canSend"`
+}
+
+func (VerifyEmailMagicLinkPayload) IsVerifyEmailMagicLinkPayloadOrError() {}
+
 type VerifyEmailPayload struct {
 	Email persist.Email `json:"email"`
 }
@@ -1136,10 +1087,9 @@ func (ViewSplitPayload) IsViewSplitPayloadOrError() {}
 
 type Viewer struct {
 	HelperViewerData
-	User           *SplitFiUser    `json:"user"`
-	SocialAccounts *SocialAccounts `json:"socialAccounts"`
-	ViewerSplits   []*ViewerSplit  `json:"viewerSplits"`
-	Email          *UserEmail      `json:"email"`
+	User         *SplitFiUser   `json:"user"`
+	ViewerSplits []*ViewerSplit `json:"viewerSplits"`
+	Email        *UserEmail     `json:"email"`
 	// Returns a list of notifications in reverse chronological order.
 	// Seen notifications come after unseen notifications
 	Notifications        *NotificationsConnection `json:"notifications"`

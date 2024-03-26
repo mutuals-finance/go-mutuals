@@ -9,12 +9,12 @@ import (
 	"github.com/SplitFi/go-splitfi/service/tracing"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"net/http"
+	"time"
 
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/redis"
 
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/event"
 	"github.com/gin-gonic/gin"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
@@ -23,7 +23,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/SplitFi/go-splitfi/service/throttle"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/SplitFi/go-splitfi/validate"
@@ -57,18 +56,20 @@ type PublicAPI struct {
 }
 
 func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell,
-	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, socialCache, authRefreshCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
+	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
+
 	loaders := dataloader.NewLoaders(ctx, queries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
 	validator := validate.WithCustomValidators()
+	// privyClient := privy.NewPrivyClient(httpClient)
+	// highlightProvider := highlight.NewProvider(httpClient)
 
 	return &PublicAPI{
-		repos:     repos,
-		queries:   queries,
-		loaders:   loaders,
-		validator: validator,
-		APQ:       apq,
-
-		Auth:          &AuthAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multiChainProvider: multichainProvider, magicLinkClient: magicClient},
+		repos:         repos,
+		queries:       queries,
+		loaders:       loaders,
+		validator:     validator,
+		APQ:           apq,
+		Auth:          &AuthAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multiChainProvider: multichainProvider, magicLinkClient: magicClient, oneTimeLoginCache: oneTimeLoginCache, authRefreshCache: authRefreshCache}, // privyClient: privyClient
 		Split:         &SplitAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient},
 		User:          &UserAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
 		Token:         &TokenAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
@@ -98,12 +99,12 @@ func For(ctx context.Context) *PublicAPI {
 	}
 
 	// If not, fall back to the one added to the gin context
-	gc := util.GinContextFromContext(ctx)
+	gc := util.MustGetGinContext(ctx)
 	return gc.Value(apiContextKey).(*PublicAPI)
 }
 
 func getAuthenticatedUserID(ctx context.Context) (persist.DBID, error) {
-	gc := util.GinContextFromContext(ctx)
+	gc := util.MustGetGinContext(ctx)
 	authError := auth.GetAuthErrorFromCtx(gc)
 
 	if authError != nil {
@@ -119,13 +120,8 @@ func getUserRoles(ctx context.Context) []persist.Role {
 	return auth.GetRolesFromCtx(gc)
 }
 
-func publishEventGroup(ctx context.Context, groupID string, action persist.Action, caption *string) error {
-	return event.DispatchGroup(sentryutil.NewSentryHubGinContext(ctx), groupID, action, caption)
-}
-
-// TODO
 // dbidCache is a lazy cache that stores DBIDs from expensive queries
-/*type dbidCache struct {
+type dbidCache struct {
 	*redis.LazyCache
 }
 
@@ -154,4 +150,3 @@ func (d dbidCache) Load(ctx context.Context) ([]persist.DBID, error) {
 	err = cur.Unpack(string(b))
 	return cur.IDs, err
 }
-*/

@@ -23,11 +23,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"ConnectSocialAccountPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(ConnectSocialAccountPayloadOrError)
-		return obj, ok
-	},
-
 	"CreateSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(CreateSplitPayloadOrError)
 		return obj, ok
@@ -45,11 +40,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"DeleteSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(DeleteSplitPayloadOrError)
-		return obj, ok
-	},
-
-	"DisconnectSocialAccountPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(DisconnectSocialAccountPayloadOrError)
 		return obj, ok
 	},
 
@@ -133,18 +123,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"SocialAccount": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SocialAccount)
-		return obj, ok
-	},
-
 	"SocialConnectionsOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(SocialConnectionsOrError)
-		return obj, ok
-	},
-
-	"SocialQueriesOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SocialQueriesOrError)
 		return obj, ok
 	},
 
@@ -185,11 +165,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UpdatePrimaryWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UpdatePrimaryWalletPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateSocialAccountDisplayedPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateSocialAccountDisplayedPayloadOrError)
 		return obj, ok
 	},
 
@@ -240,6 +215,11 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UserByUsernameOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UserByUsernameOrError)
+		return obj, ok
+	},
+
+	"VerifyEmailMagicLinkPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(VerifyEmailMagicLinkPayloadOrError)
 		return obj, ok
 	},
 

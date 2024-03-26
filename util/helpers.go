@@ -8,15 +8,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/service/logger"
 	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
+	"github.com/sourcegraph/conc/pool"
 	"github.com/spf13/viper"
 	"go.mozilla.org/sops/v3/decrypt"
 )
@@ -45,46 +46,11 @@ type MultiErr []error
 func (m MultiErr) Error() string {
 	var errStr string
 	for _, err := range m {
-		errStr += "(" + err.Error() + "),"
+		if err != nil {
+			errStr += "(" + err.Error() + "),"
+		}
 	}
 	return fmt.Sprint("Multiple errors: [", errStr, "]")
-}
-
-// FileHeaderReader is a struct that wraps an io.Reader and pre-reads the first 512 bytes of the reader
-// When the reader is read, the first 512 bytes are returned first, then the rest of the reader is read,
-// so that the first 512 bytes are not lost
-type FileHeaderReader struct {
-	*bufio.Reader
-	headers   []byte
-	subreader io.Reader
-}
-
-// NewFileHeaderReader returns a new FileHeaderReader
-func NewFileHeaderReader(reader io.Reader) *FileHeaderReader {
-	return &FileHeaderReader{bufio.NewReader(reader), nil, reader}
-}
-
-// Close closes the given io.Reader if it is also a closer
-func (f FileHeaderReader) Close() error {
-	if closer, ok := f.subreader.(io.Closer); ok {
-		return closer.Close()
-	}
-	return nil
-}
-
-// Headers returns the first 512 bytes of the reader
-func (f FileHeaderReader) Headers() ([]byte, error) {
-	if f.headers != nil {
-		return f.headers, nil
-	}
-
-	byt, err := f.Peek(512)
-	if err != nil && err != io.EOF {
-		return nil, err
-	}
-
-	f.headers = byt
-	return f.headers, nil
 }
 
 // RemoveBOM removes the byte order mark from a byte array
@@ -272,6 +238,25 @@ func Dedupe[T comparable](src []T, filterInPlace bool) []T {
 	return result
 }
 
+// DedupeWithTranslate can be used when T is not good for comparison or there should be some other value used for comparison as opposed to golang equality check
+func DedupeWithTranslate[T any, V comparable](src []T, filterInPlace bool, translate func(T) V) []T {
+	var result []T
+	if filterInPlace {
+		result = src[:0]
+	} else {
+		result = make([]T, 0, len(src))
+	}
+	seen := make(map[V]bool)
+	for _, x := range src {
+		v := translate(x)
+		if !seen[v] {
+			result = append(result, x)
+			seen[v] = true
+		}
+	}
+	return result
+}
+
 func Contains[T comparable](s []T, str T) bool {
 	for _, v := range s {
 		if v == str {
@@ -280,6 +265,14 @@ func Contains[T comparable](s []T, str T) bool {
 	}
 
 	return false
+}
+
+func FillSliceWithValue[T any](s []T, fillWith T) []T {
+	for i, l := 0, len(s); i < l; i++ {
+		s[i] = fillWith
+	}
+
+	return s
 }
 
 // Difference will take in 2 arrays and return the elements that exist in the second array but are not in the first
@@ -311,6 +304,13 @@ func FindFirst[T any](s []T, f func(T) bool) (T, bool) {
 	return *new(T), false
 }
 
+func MapFindOrNil[K comparable, T any](s map[K]T, key K) *T {
+	if val, ok := s[key]; ok {
+		return &val
+	}
+	return nil
+}
+
 func Filter[T any](s []T, f func(T) bool, filterInPlace bool) []T {
 	var r []T
 	if filterInPlace {
@@ -324,6 +324,27 @@ func Filter[T any](s []T, f func(T) bool, filterInPlace bool) []T {
 		}
 	}
 	return r
+}
+
+func Chunk[T any](s []T, chunkSize int) [][]T {
+	var chunks [][]T
+	for i := 0; i < len(s); i += chunkSize {
+		end := i + chunkSize
+		if end > len(s) {
+			end = len(s)
+		}
+		chunks = append(chunks, s[i:end])
+	}
+	return chunks
+}
+
+func GroupBy[T any, K comparable](s []T, f func(T) K) map[K][]T {
+	m := make(map[K][]T)
+	for _, v := range s {
+		key := f(v)
+		m[key] = append(m[key], v)
+	}
+	return m
 }
 
 // StringToPointerIfNotEmpty returns a pointer to the string if it is a non-empty string
@@ -351,6 +372,10 @@ func FromPointer[T comparable](s *T) T {
 	return *s
 }
 
+func IsEmpty[T any](s *T) bool {
+	return s == nil || any(*s) == reflect.Zero(reflect.TypeOf(s).Elem()).Interface()
+}
+
 func ToPointer[T any](s T) *T {
 	return &s
 }
@@ -373,9 +398,16 @@ func FromPointerSlice[T any](s []*T) []T {
 	return result
 }
 
+func StringersToStrings[T fmt.Stringer](stringers []T) []string {
+	strings := make([]string, len(stringers))
+	for i, stringer := range stringers {
+		strings[i] = stringer.String()
+	}
+	return strings
+}
+
 // MustGetGinContext retrieves a gin.Context previously stored in the request context via the GinContextToContext
 // middleware, or panics if no gin.Context is found.
-// TODO: change GinContextFromContext(ctx context.Context) + usages to MustGetGinContext(ctx context.Context)
 func MustGetGinContext(ctx context.Context) *gin.Context {
 	gc := GetGinContext(ctx)
 	if gc == nil {
@@ -403,37 +435,6 @@ func GetGinContext(ctx context.Context) *gin.Context {
 	if !ok {
 		logger.For(ctx).Error("gin.Context has wrong type")
 		return nil
-	}
-
-	return gc
-}
-
-func StringersToStrings[T fmt.Stringer](stringers []T) []string {
-	strings := make([]string, len(stringers))
-	for i, stringer := range stringers {
-		strings[i] = stringer.String()
-	}
-	return strings
-}
-
-// GinContextFromContext retrieves a gin.Context previously stored in the request context via the GinContextToContext middleware,
-// or panics if no gin.Context can be retrieved (since there's nothing left for the resolver to do if it can't obtain the context).
-// TODO: change GinContextFromContext(ctx context.Context) + usages to MustGetGinContext(ctx context.Context)
-func GinContextFromContext(ctx context.Context) *gin.Context {
-	// If the current context is already a gin context, return it
-	if gc, ok := ctx.(*gin.Context); ok {
-		return gc
-	}
-
-	// Otherwise, find the gin context that was stored via middleware
-	ginContext := ctx.Value(GinContextKey)
-	if ginContext == nil {
-		panic("gin.Context not found in current context")
-	}
-
-	gc, ok := ginContext.(*gin.Context)
-	if !ok {
-		panic("gin.Context has wrong type")
 	}
 
 	return gc
@@ -575,7 +576,7 @@ func LoadEncryptedServiceKeyOrError(filePath string) ([]byte, error) {
 
 	serviceKey, err := decrypt.File(path, "json")
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting service key: %s\n", err)
+		return nil, fmt.Errorf("error decrypting service key: %s", err)
 	}
 
 	return serviceKey, nil
@@ -651,7 +652,7 @@ func TruncateWithEllipsis(s string, length int) string {
 	return s[:length] + "..."
 }
 
-func IsNullOrEmpty(s sql.NullString) bool {
+func SqlStringIsNullOrEmpty(s sql.NullString) bool {
 	return !s.Valid || s.String == ""
 }
 
@@ -662,11 +663,8 @@ func ToNullString(s string, emptyIsNull bool) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 
-func ToSQLNullString(s *string) sql.NullString {
-	if s == nil {
-		return sql.NullString{}
-	}
-	return ToNullString(*s, true)
+func ToNullStringEmptyNull(s string) sql.NullString {
+	return ToNullString(s, true)
 }
 
 func ToNullInt32(i *int) sql.NullInt32 {
@@ -692,6 +690,120 @@ func GetOptionalValue[T any](optional *T, fallback T) T {
 	return fallback
 }
 
+func FirstNonErrorWithValue[T any](ctx context.Context, autoCancel bool, returnOnError func(error) bool, runs ...func(context.Context) (T, error)) (T, error) {
+
+	if len(runs) == 0 {
+		return *new(T), nil
+	}
+
+	if returnOnError == nil {
+		returnOnError = func(error) bool { return false }
+	}
+
+	var cancel context.CancelFunc
+	if autoCancel {
+		ctx, cancel = context.WithCancel(ctx)
+		defer cancel()
+	}
+
+	wp := pool.New().WithMaxGoroutines(len(runs)).WithErrors()
+
+	result := make(chan T)
+	errChan := make(chan error)
+	for _, run := range runs {
+		run := run
+		wp.Go(func() error {
+			val, err := run(ctx)
+			if err != nil {
+				if returnOnError(err) {
+					errChan <- err
+					return err
+				}
+				return err
+			}
+			result <- val
+			return nil
+		})
+	}
+
+	go func() {
+		errChan <- wp.Wait()
+	}()
+
+	select {
+	case val := <-result:
+		return val, nil
+	case err := <-errChan:
+		return *new(T), err
+	case <-ctx.Done():
+		return *new(T), ctx.Err()
+	}
+}
+
+// FileHeaderReader is a struct that wraps an io.Reader and pre-reads the first 512 bytes of the reader
+// When the reader is read, the first 512 bytes are returned first, then the rest of the reader is read,
+// so that the first 512 bytes are not lost
+type FileHeaderReader struct {
+	*bufio.Reader
+	headers   []byte
+	subreader io.Reader
+}
+
+// NewFileHeaderReader returns a new FileHeaderReader
+func NewFileHeaderReader(reader io.Reader, bufSize int) *FileHeaderReader {
+	return &FileHeaderReader{bufio.NewReaderSize(reader, bufSize), nil, reader}
+}
+
+// Close closes the given io.Reader if it is also a closer
+func (f FileHeaderReader) Close() error {
+	if closer, ok := f.subreader.(io.Closer); ok {
+		return closer.Close()
+	}
+	return nil
+}
+
+// Headers returns the first 512 bytes of the reader
+func (f FileHeaderReader) Headers() ([]byte, error) {
+	if f.headers != nil {
+		return f.headers, nil
+	}
+
+	byt, err := f.Peek(512)
+
+	// Use what bytes were read as the header
+	if err != nil && err != io.EOF && err != bufio.ErrBufferFull {
+		return nil, err
+	}
+
+	f.headers = byt
+	return f.headers, nil
+}
+
+type LoggingReader struct {
+	r   io.Reader
+	w   io.WriterTo
+	ctx context.Context
+}
+
+func NewLoggingReader(ctx context.Context, r io.Reader, w io.WriterTo) *LoggingReader {
+	return &LoggingReader{r, w, ctx}
+}
+
+func (lr *LoggingReader) Read(p []byte) (n int, err error) {
+	n, err = lr.r.Read(p)
+	logger.For(lr.ctx).Infof("Read %d bytes", n)
+	return n, err
+}
+
+func (lr *LoggingReader) WriteTo(w io.Writer) (n int64, err error) {
+	if lr.w != nil {
+		n, err = lr.w.WriteTo(w)
+		logger.For(lr.ctx).Infof("Wrote %d bytes", n)
+		return n, err
+	}
+	return 0, fmt.Errorf("no WriterTo provided")
+}
+
 // ErrorIs returns true if the given error is of type T
 func ErrorIs[T error](e error) bool {
 	var t T
@@ -704,4 +816,12 @@ func ErrorAs[T error](e error) (T, bool) {
 	var t T
 	ok := errors.As(e, &t)
 	return t, ok
+}
+
+// ChunkBy splits a slice into chunks of a given size
+func ChunkBy[T any](items []T, chunkSize int) (chunks [][]T) {
+	for chunkSize < len(items) {
+		items, chunks = items[chunkSize:], append(chunks, items[0:chunkSize:chunkSize])
+	}
+	return append(chunks, items)
 }

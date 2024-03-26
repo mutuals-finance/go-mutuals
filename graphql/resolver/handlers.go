@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
 
 	"reflect"
 
@@ -36,6 +37,7 @@ const scrubText = "<scrubbed>"
 const scrubDirectiveName = "scrub"
 
 const gqlRequestIdContextKey = "graphql.gqlRequestId"
+
 const noCachePublicAPIContextKey = "graphql.noCachePublicAPI"
 const maxSentryDataLength = 8 * 1024
 
@@ -76,7 +78,7 @@ func MutationCachingHandler(newPublicAPI func(context.Context, bool) *publicapi.
 		}
 
 		// Get the request context so dataloaders will add their traces to the request span
-		gc := util.GinContextFromContext(ctx)
+		gc := util.MustGetGinContext(ctx)
 		requestContext := gc.Request.Context()
 
 		// Get or create a new public API with caching disabled, and push it to our context
@@ -141,15 +143,16 @@ func RemapAndReportErrors(ctx context.Context, next gqlgen.Resolver) (res interf
 	return res, err
 }
 
-func RetoolAuthDirectiveHandler() func(ctx context.Context, obj interface{}, next gqlgen.Resolver) (res interface{}, err error) {
-	return func(ctx context.Context, obj interface{}, next gqlgen.Resolver) (res interface{}, err error) {
-		if err := auth.RetoolAuthorized(ctx); err != nil {
-			return model.ErrNotAuthorized{
-				Message: err.Error(),
-				Cause:   model.ErrInvalidToken{Message: "Retool: not authorized"},
-			}, nil
+func BasicAuthDirectiveHandler() func(ctx context.Context, obj interface{}, next gqlgen.Resolver, allowed []basicauth.AuthTokenType) (res interface{}, err error) {
+	return func(ctx context.Context, obj interface{}, next gqlgen.Resolver, allowed []basicauth.AuthTokenType) (res interface{}, err error) {
+		if basicauth.AuthorizeHeaderForAllowedTypes(ctx, allowed) {
+			return next(ctx)
 		}
-		return next(ctx)
+
+		return model.ErrNotAuthorized{
+			Message: "not authorized",
+			Cause:   model.ErrInvalidToken{Message: "Basic auth: not authorized"},
+		}, nil
 	}
 }
 
@@ -161,7 +164,7 @@ func ExperimentalDirectiveHandler() func(ctx context.Context, obj interface{}, n
 
 func FrontendBuildAuthDirectiveHandler() func(ctx context.Context, obj interface{}, next gqlgen.Resolver) (res interface{}, err error) {
 	return func(ctx context.Context, obj interface{}, next gqlgen.Resolver) (res interface{}, err error) {
-		gc := util.GinContextFromContext(ctx)
+		gc := util.MustGetGinContext(ctx)
 
 		authError := model.ErrNotAuthorized{
 			Message: "Not authorized",
@@ -197,7 +200,7 @@ func FrontendBuildAuthDirectiveHandler() func(ctx context.Context, obj interface
 func AuthRequiredDirectiveHandler() func(ctx context.Context, obj interface{}, next gqlgen.Resolver) (res interface{}, err error) {
 
 	return func(ctx context.Context, obj interface{}, next gqlgen.Resolver) (res interface{}, err error) {
-		gc := util.GinContextFromContext(ctx)
+		gc := util.MustGetGinContext(ctx)
 
 		makeErrNotAuthorized := func(e string, c model.AuthorizationError) model.ErrNotAuthorized {
 			return model.ErrNotAuthorized{
@@ -207,22 +210,16 @@ func AuthRequiredDirectiveHandler() func(ctx context.Context, obj interface{}, n
 		}
 
 		if authError := auth.GetAuthErrorFromCtx(gc); authError != nil {
-			if authError != auth.ErrNoCookie {
-				// Clear the user's cookie on any auth error (except for ErrNoCookie, since there is no cookie set)
-				auth.Logout(ctx)
-			}
-
 			var gqlModel model.AuthorizationError
 			errorMsg := authError.Error()
 
 			switch authError {
 			case auth.ErrNoCookie:
-				// Don't report this error -- it just means the user isn't logged in
 				gqlModel = model.ErrNoCookie{Message: errorMsg}
 			case auth.ErrInvalidJWT:
-				// Report this error for now, since there may be value in knowing whose token expired when
 				gqlModel = model.ErrInvalidToken{Message: errorMsg}
-				sentryutil.ReportRemappedError(ctx, authError, gqlModel)
+			case auth.ErrSessionInvalidated:
+				gqlModel = model.ErrSessionInvalidated{Message: errorMsg}
 			default:
 				return nil, authError
 			}
@@ -370,7 +367,7 @@ func RequestReporter(schema *ast.Schema, log bool, trace bool) func(ctx context.
 		// Unique ID to make finding this particular log entry easy
 		locatorID := ksuid.New().String()
 
-		gc := util.GinContextFromContext(ctx)
+		gc := util.MustGetGinContext(ctx)
 		oc := gqlgen.GetOperationContext(ctx)
 		operationName := getOperationName(oc)
 		operationType := getOperationType(oc)
@@ -441,6 +438,13 @@ func RequestReporter(schema *ast.Schema, log bool, trace bool) func(ctx context.
 	}
 }
 
+func ErrorLogger(ctx context.Context, e error) *gqlerror.Error {
+	err := gqlgen.DefaultErrorPresenter(ctx, e)
+	logger.For(ctx).WithError(err).Warnf("GraphQL error: %s", err.Error())
+
+	return err
+}
+
 // Sentry will drop events if they contain too much data. It's convenient to attach our GraphQL
 // requests and responses to Sentry events, but we don't want to risk dropping events, so we limit
 // the size to something small (like 8kB). Larger payloads should still be logged and available
@@ -473,10 +477,12 @@ func scrubVariable(variableDefinition *ast.VariableDefinition, schema *ast.Schem
 	definition := schema.Types[namedType]
 	scrubFieldContents := false
 
-	for _, directive := range definition.Directives {
-		if directive.Name == scrubDirectiveName {
-			scrubFieldContents = true
-			break
+	if definition != nil {
+		for _, directive := range definition.Directives {
+			if directive.Name == scrubDirectiveName {
+				scrubFieldContents = true
+				break
+			}
 		}
 	}
 

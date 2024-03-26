@@ -64,7 +64,7 @@ func (p *pushLimiter) tryTokens(ctx context.Context, sendingUserID persist.DBID,
 	}
 
 	return errRateLimited{
-		limiterName: p.follows.Name(),
+		limiterName: p.tokens.Name(),
 		senderID:    sendingUserID,
 	}
 }
@@ -150,7 +150,7 @@ func AddTo(ctx *gin.Context, notificationHandlers *NotificationHandlers) {
 }
 
 func For(ctx context.Context) *NotificationHandlers {
-	gc := util.GinContextFromContext(ctx)
+	gc := util.MustGetGinContext(ctx)
 	return gc.Value(NotificationHandlerContextKey).(*NotificationHandlers)
 }
 
@@ -267,16 +267,10 @@ func (h tokenIDGroupedNotificationHandler) Handle(ctx context.Context, notif db.
 	var curNotif db.Notification
 
 	// Bucket notifications on the feed event if it has one
-	onlyForFeed := notif.FeedEventID != ""
-	onlyForPost := notif.PostID != ""
 	curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDTokenIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDTokenIDForActionParams{
-		OwnerID:          notif.OwnerID,
-		Action:           notif.Action,
-		TokenID:          notif.TokenID,
-		OnlyForFeedEvent: onlyForFeed,
-		FeedEventID:      notif.FeedEventID,
-		PostID:           notif.PostID,
-		OnlyForPost:      onlyForPost,
+		OwnerID: notif.OwnerID,
+		Action:  notif.Action,
+		TokenID: notif.TokenID,
 	})
 
 	if time.Since(curNotif.CreatedAt) < groupedWindow {
@@ -569,28 +563,28 @@ func NotificationToUserFacingData(ctx context.Context, queries *db.Queries, n db
 
 		return UserFacingNotificationData{}, fmt.Errorf("no viewer ids")
 
-	case persist.ActionNewTokensReceived:
-		data := UserFacingNotificationData{}
+		/*	case persist.ActionNewTokensReceived:
+			data := UserFacingNotificationData{}
 
-		td, err := queries.GetTokenDefinitionByTokenDbid(ctx, n.Data.NewTokenID)
-		if err != nil {
-			return UserFacingNotificationData{}, err
-		}
+			td, err := queries.GetTokenDefinitionByTokenDbid(ctx, n.Data.NewTokenID)
+			if err != nil {
+				return UserFacingNotificationData{}, err
+			}
 
-		name := util.TruncateWithEllipsis(td.Name.String, 40)
+			name := util.TruncateWithEllipsis(td.Name.String, 40)
 
-		amount := n.Data.NewTokenQuantity
-		i := amount.BigInt().Uint64()
-		if i > 1 {
-			data.Actor = "You"
-			data.Action = fmt.Sprintf("just collected %d new %s. Tap to share now.", i, name)
-		} else {
-			data.Actor = "You"
-			data.Action = fmt.Sprintf("just collected %s. Tap to share now.", name)
-		}
+			amount := n.Data.NewTokenQuantity
+			i := amount.BigInt().Uint64()
+			if i > 1 {
+				data.Actor = "You"
+				data.Action = fmt.Sprintf("just collected %d new %s. Tap to share now.", i, name)
+			} else {
+				data.Actor = "You"
+				data.Action = fmt.Sprintf("just collected %s. Tap to share now.", name)
+			}
 
-		return data, nil
-
+			return data, nil
+		*/
 	case persist.ActionTopActivityBadgeReceived:
 		return UserFacingNotificationData{
 			Actor:  "You",
@@ -611,8 +605,6 @@ func actionSupportsPushNotifications(action persist.Action) bool {
 	case persist.ActionUserFollowedUsers:
 		return true
 	case persist.ActionNewTokensReceived:
-		return true
-	case persist.ActionUserCreatedFirstSplit:
 		return true
 	case persist.ActionTopActivityBadgeReceived:
 		return false // TODO -activity

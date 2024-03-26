@@ -7,38 +7,37 @@ import (
 	"os"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/util"
-	"github.com/SplitFi/go-splitfi/validate"
-	"github.com/everFinance/goar"
-	sentry "github.com/getsentry/sentry-go"
-	shell "github.com/ipfs/go-ipfs-api"
-	magicclient "github.com/magiclabs/magic-admin-go/client"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/api/option"
-
 	"cloud.google.com/go/pubsub"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/storage"
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/middleware"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/media"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
 	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/SplitFi/go-splitfi/service/rpc"
+	"github.com/SplitFi/go-splitfi/service/rpc/arweave"
+	"github.com/SplitFi/go-splitfi/service/rpc/ipfs"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/service/throttle"
+	"github.com/SplitFi/go-splitfi/util"
+	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/everFinance/goar"
+	sentry "github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	shell "github.com/ipfs/go-ipfs-api"
+	magicclient "github.com/magiclabs/magic-admin-go/client"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"google.golang.org/api/option"
 )
 
 func init() {
@@ -56,15 +55,13 @@ func Init() {
 	ctx := context.Background()
 	c := ClientInit(ctx)
 	provider, _ := NewMultichainProvider(ctx, SetDefaults)
-	//recommender := recommend.NewRecommender(c.Queries)
-	//p := userpref.NewPersonalization(ctx, c.Queries, c.StorageClient)
 	router := CoreInit(ctx, c, provider)
 	http.Handle("/", router)
 }
 
 type Clients struct {
 	Repos           *postgres.Repositories
-	Queries         *coredb.Queries
+	Queries         *db.Queries
 	HTTPClient      *http.Client
 	EthClient       *ethclient.Client
 	IPFSClient      *shell.Shell
@@ -89,9 +86,9 @@ func ClientInit(ctx context.Context) *Clients {
 		Queries:         db.New(pgx),
 		HTTPClient:      &http.Client{Timeout: 0},
 		EthClient:       rpc.NewEthClient(),
-		IPFSClient:      rpc.NewIPFSShell(), //IPFSClient:      ipfs.NewShell(),
-		ArweaveClient:   rpc.NewArweaveClient(),
-		StorageClient:   media.NewStorageClient(ctx), //StorageClient:   rpc.NewStorageClient(ctx),
+		IPFSClient:      ipfs.NewShell(),
+		ArweaveClient:   arweave.NewClient(),
+		StorageClient:   rpc.NewStorageClient(ctx),
 		TaskClient:      task.NewClient(ctx),
 		SecretClient:    newSecretsClient(),
 		PubSubClient:    gcp.NewClient(ctx),
@@ -106,7 +103,6 @@ func ClientInit(ctx context.Context) *Clients {
 // CoreInit initializes core server functionality. This is abstracted
 // so the test server can also utilize it
 func CoreInit(ctx context.Context, c *Clients, provider *multichain.Provider) *gin.Engine {
-
 	logger.For(nil).Info("initializing server...")
 
 	if env.GetString("ENV") != "production" {
@@ -114,7 +110,8 @@ func CoreInit(ctx context.Context, c *Clients, provider *multichain.Provider) *g
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.LoggerWithFormatter(logger.GinFormatter()), gin.Recovery())
 	router.Use(middleware.Sentry(true), middleware.Tracing(), middleware.HandleCORS(), middleware.GinContextToContext(), middleware.ErrLogger())
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
@@ -122,18 +119,13 @@ func CoreInit(ctx context.Context, c *Clients, provider *multichain.Provider) *g
 		validate.RegisterCustomValidators(v)
 	}
 
-	// TODO remove clear cache?
-	err := redis.ClearCache(redis.SplitsDB)
-	if err != nil {
-		panic(err)
-	}
+	lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
+	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
+	socialCache := redis.NewCache(redis.SocialCache)
+	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
+	oneTimeLoginCache := redis.NewCache(redis.OneTimeLoginCache)
 
-	lock := redis.NewLockClient(redis.NotificationLockDB)                //lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
-	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQ)                  //graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
-	socialCache := redis.NewCache(redis.SocialDB)                        // socialCache := redis.NewCache(redis.SocialCache)
-	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache) // authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
-
-	return handlersInit(router, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, authRefreshCache, c.MagicLinkClient)
+	return handlersInit(router, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache, c.MagicLinkClient)
 }
 
 func newSecretsClient() *secretmanager.Client {
@@ -159,12 +151,15 @@ func newSecretsClient() *secretmanager.Client {
 func SetDefaults() {
 	viper.SetDefault("ENV", "local")
 	viper.SetDefault("ALLOWED_ORIGINS", "http://localhost:3000")
-	viper.SetDefault("JWT_SECRET", "Test-Secret")
-	viper.SetDefault("JWT_TTL", 60*60*24*14)
+	viper.SetDefault("REFRESH_JWT_SECRET", "Refresh-Test-Secret")
+	viper.SetDefault("REFRESH_JWT_TTL", 60*60*24*90)
+	viper.SetDefault("AUTH_JWT_SECRET", "Test-Secret")
+	viper.SetDefault("AUTH_JWT_TTL", 60*5)
+	viper.SetDefault("ONE_TIME_LOGIN_JWT_SECRET", "One-Time-Login-Test-Secret")
 	viper.SetDefault("PORT", 4000)
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
+	viper.SetDefault("POSTGRES_USER", "gallery_backend")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("IPFS_URL", "https://gallery.infura-ipfs.io")
@@ -173,6 +168,7 @@ func SetDefaults() {
 	viper.SetDefault("IPFS_PROJECT_ID", "")
 	viper.SetDefault("IPFS_PROJECT_SECRET", "")
 	viper.SetDefault("GCLOUD_TOKEN_CONTENT_BUCKET", "dev-token-content")
+	viper.SetDefault("GCLOUD_USER_PREF_BUCKET", "dev-user-pref")
 	viper.SetDefault("REDIS_URL", "localhost:6379")
 	viper.SetDefault("PREMIUM_CONTRACT_ADDRESS", "0xe01569ca9b39e55bc7c0dfa09f05fa15cb4c7698=[0,1,2,3,4,5,6,7,8]")
 	viper.SetDefault("RPC_URL", "https://eth-goerli.g.alchemy.com/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
@@ -181,13 +177,19 @@ func SetDefaults() {
 	viper.SetDefault("MIXPANEL_API_URL", "https://api.mixpanel.com/track")
 	viper.SetDefault("SIGNUPS_TOPIC", "user-signup")
 	viper.SetDefault("ADD_ADDRESS_TOPIC", "user-add-address")
+	viper.SetDefault("OPENSEA_API_KEY", "")
 	viper.SetDefault("GCLOUD_SERVICE_KEY", "")
 	viper.SetDefault("INDEXER_HOST", "http://localhost:6000")
 	viper.SetDefault("SNAPSHOT_BUCKET", "gallery-dev-322005.appspot.com")
 	viper.SetDefault("TASK_QUEUE_HOST", "")
 	viper.SetDefault("SENTRY_DSN", "")
-	viper.SetDefault("GCLOUD_WALLET_VALIDATE_QUEUE", "projects/gallery-dev-322005/locations/us-west2/queues/wallet-validate")
+	viper.SetDefault("GCLOUD_FEED_QUEUE", "projects/gallery-local/locations/here/queues/feed-event")
+	viper.SetDefault("GCLOUD_FEED_BUFFER_SECS", 20)
+	viper.SetDefault("FEED_SECRET", "feed-secret")
 	viper.SetDefault("TOKEN_PROCESSING_URL", "http://localhost:6500")
+	viper.SetDefault("TEZOS_API_URL", "https://api.tzkt.io")
+	viper.SetDefault("POAP_API_KEY", "")
+	viper.SetDefault("POAP_AUTH_TOKEN", "")
 	viper.SetDefault("GAE_VERSION", "")
 	viper.SetDefault("TOKEN_PROCESSING_QUEUE", "projects/gallery-local/locations/here/queues/token-processing")
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "gallery-dev-322005")
@@ -199,14 +201,36 @@ func SetDefaults() {
 	viper.SetDefault("EMAILS_HOST", "http://localhost:5500")
 	viper.SetDefault("RETOOL_AUTH_TOKEN", "TEST_TOKEN")
 	viper.SetDefault("BACKEND_SECRET", "BACKEND_SECRET")
+	viper.SetDefault("MERCH_CONTRACT_ADDRESS", "0x01f55be815fbd10b1770b008b8960931a30e7f65")
 	viper.SetDefault("ETH_PRIVATE_KEY", "")
+	viper.SetDefault("FEED_URL", "")
 	viper.SetDefault("MAGIC_LINK_SECRET_KEY", "")
 	viper.SetDefault("TWITTER_CLIENT_ID", "")
 	viper.SetDefault("TWITTER_CLIENT_SECRET", "")
 	viper.SetDefault("TWITTER_AUTH_REDIRECT_URI", "http://localhost:3000/auth/twitter")
+	viper.SetDefault("FEEDBOT_URL", "")
+	viper.SetDefault("GCLOUD_FEEDBOT_TASK_QUEUE", "projects/gallery-local/locations/here/queues/feedbot")
+	viper.SetDefault("FEEDBOT_SECRET", "")
 	viper.SetDefault("ALCHEMY_API_URL", "")
+	viper.SetDefault("ALCHEMY_OPTIMISM_API_URL", "")
+	viper.SetDefault("ALCHEMY_POLYGON_API_URL", "")
+	viper.SetDefault("ALCHEMY_NFT_API_URL", "")
 	viper.SetDefault("INFURA_API_KEY", "")
 	viper.SetDefault("INFURA_API_SECRET", "")
+	viper.SetDefault("PUSH_NOTIFICATIONS_SECRET", "push-notifications-secret")
+	viper.SetDefault("ZORA_API_KEY", "")
+	viper.SetDefault("GOLDSKY_API_KEY", "")
+	viper.SetDefault("RESERVOIR_API_KEY", "")
+	viper.SetDefault("NEYNAR_API_KEY", "")
+	viper.SetDefault("EMAILS_QUEUE", "projects/gallery-local/locations/here/queues/email")
+	viper.SetDefault("EMAILS_TASK_SECRET", "emails-task-secret")
+	viper.SetDefault("AUTOSOCIAL_URL", "http://localhost:6700")
+	viper.SetDefault("AUTOSOCIAL_QUEUE", "projects/gallery-local/locations/here/queues/autosocial")
+	viper.SetDefault("AUTOSOCIAL_POLL_QUEUE", "projects/gallery-local/locations/here/queues/autosocial-poll")
+	viper.SetDefault("ACTIVITY_QUEUE", "projects/gallery-local/locations/here/queues/activity")
+
+	viper.SetDefault("FARCASTER_MNEMONIC", "")
+	viper.SetDefault("FARCASTER_APP_ID", "")
 
 	viper.AutomaticEnv()
 
@@ -229,6 +253,10 @@ func SetDefaults() {
 		util.VarNotSetTo("ETH_PRIVATE_KEY", "")
 		util.VarNotSetTo("RETOOL_AUTH_TOKEN", "TEST_TOKEN")
 		util.VarNotSetTo("BACKEND_SECRET", "BACKEND_SECRET")
+		util.VarNotSetTo("PUSH_NOTIFICATIONS_SECRET", "push-notifications-secret")
+		util.VarNotSetTo("REFRESH_JWT_SECRET", "Refresh-Test-Secret")
+		util.VarNotSetTo("AUTH_JWT_SECRET", "Test-Secret")
+		util.VarNotSetTo("ONE_TIME_LOGIN_JWT_SECRET", "One-Time-Login-Test-Secret")
 	}
 }
 
@@ -260,5 +288,5 @@ func initSentry() {
 }
 
 func newThrottler() *throttle.Locker {
-	return throttle.NewThrottleLocker(redis.NewCache(redis.RefreshNFTsThrottleDB), time.Minute*5)
+	return throttle.NewThrottleLocker(redis.NewCache(redis.RefreshNFTsThrottleCache), time.Minute*5)
 }

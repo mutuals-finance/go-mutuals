@@ -100,6 +100,9 @@ models:
   ReportWindow:
     model:
       - github.com/SplitFi/go-splitfi/graphql/model.Window
+  BasicAuthType:
+    model:
+      - github.com/SplitFi/go-splitfi/service/auth/basicauth.AuthTokenType
 directives:
   goGqlId:
     skip_runtime: true

@@ -2,12 +2,13 @@ package graphql_test
 
 import (
 	"context"
+	"github.com/SplitFi/go-splitfi/env"
+	"github.com/SplitFi/go-splitfi/tokenprocessing"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 
-	"cloud.google.com/go/cloudtasks/apiv2/cloudtaskspb"
 	migrate "github.com/SplitFi/go-splitfi/db"
 	"github.com/SplitFi/go-splitfi/docker"
 	"github.com/SplitFi/go-splitfi/graphql/dummymetadata"
@@ -15,7 +16,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
-	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/stretchr/testify/require"
 )
 
@@ -82,21 +82,16 @@ func useRedis(t *testing.T) {
 	t.Cleanup(func() { r.Close() })
 }
 
-// useTokenQueue is a fixture that creates a dummy queue for token processing
-func useTokenQueue(t *testing.T) {
+// useCloudTasksDirectDispatch is a fixture that sends tasks directly to their targets instead of using the Cloud Tasks emulator
+func useCloudTasksDirectDispatch(t *testing.T) {
 	t.Helper()
-	useCloudTasks(t)
-	ctx := context.Background()
-	client := task.NewClient(ctx)
-	defer client.Close()
-	queue, err := client.CreateQueue(ctx, &cloudtaskspb.CreateQueueRequest{
-		Parent: "projects/splitfi-test/locations/here",
-		Queue: &cloudtaskspb.Queue{
-			Name: "projects/gallery-test/locations/here/queues/token-processing-" + persist.GenerateID().String(),
-		},
-	})
-	require.NoError(t, err)
-	t.Setenv("TOKEN_PROCESSING_QUEUE", queue.Name)
+
+	// Skip these queues -- don't dispatch their tasks at all
+	t.Setenv("CLOUD_TASKS_SKIP_QUEUES", strings.Join([]string{
+		env.GetString("AUTOSOCIAL_QUEUE"),
+	}, ","))
+
+	t.Setenv("CLOUD_TASKS_DIRECT_DISPATCH_ENABLED", "true")
 }
 
 // useNotificationTopics is a fixture that creates dummy PubSub topics for notifications
@@ -135,6 +130,21 @@ func usePubSub(t *testing.T) {
 	t.Cleanup(func() { r.Close() })
 }
 
+// useTokenProcessing starts a HTTP server for tokenprocessing
+func useTokenProcessing(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+	c := server.ClientInit(ctx)
+	p, cleanup := server.NewMultichainProvider(ctx, server.SetDefaults)
+	server := httptest.NewServer(tokenprocessing.CoreInitServer(ctx, c, p))
+	t.Setenv("TOKEN_PROCESSING_URL", server.URL)
+	t.Cleanup(func() {
+		server.Close()
+		c.Close()
+		cleanup()
+	})
+}
+
 type serverFixture struct {
 	*httptest.Server
 }
@@ -171,10 +181,10 @@ func newNonceFixture(t *testing.T) nonceFixture {
 }
 
 type userFixture struct {
-	Wallet   wallet
-	Username string
-	ID       persist.DBID
-	SplitID  persist.DBID
+	Wallet    wallet
+	Username  string
+	ID        persist.DBID
+	GalleryID persist.DBID
 }
 
 // newUserFixture generates a new user
@@ -196,5 +206,73 @@ type userWithTokensFixture struct {
 func newUserWithTokensFixture(t *testing.T) userWithTokensFixture {
 	t.Helper()
 	user := newUserFixture(t)
+	/*	ctx := context.Background()
+		providers := multichain.ProviderLookup{persist.ChainETH: defaultStubProvider(user.Wallet.Address)}
+		h := handlerWithProviders(t, submitUserTokensNoop, providers)
+		c := customHandlerClient(t, h, withJWTOpt(t, user.ID))
+		tokenIDs := syncTokens(t, ctx, c, user.ID)
+		return userWithTokensFixture{user, tokenIDs}
+	*/
 	return userWithTokensFixture{user, []persist.DBID{}}
+
 }
+
+/*type pushNotificationServiceFixture struct {
+	SentNotificationBodies []string
+	Errors                 []error
+	mu                     sync.Mutex
+}
+
+func (p *pushNotificationServiceFixture) appendNotificationBody(title string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.SentNotificationBodies = append(p.SentNotificationBodies, title)
+}
+
+func (p *pushNotificationServiceFixture) appendError(err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Errors = append(p.Errors, err)
+}
+
+// newPushNotificationServiceFixture creates a mock push notification service that records the bodies of messages that would be sent
+func newPushNotificationServiceFixture(t *testing.T) *pushNotificationServiceFixture {
+	t.Helper()
+	ctx := context.Background()
+	service := &pushNotificationServiceFixture{}
+
+	expoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var messages []expo.PushMessage
+		if err := json.NewDecoder(r.Body).Decode(&messages); err != nil {
+			service.appendError(err)
+			return
+		}
+
+		response := expo.SendMessagesResponse{}
+		for _, message := range messages {
+			service.appendNotificationBody(message.Body)
+			response.Data = append(response.Data, expo.PushTicket{
+				TicketID: persist.GenerateID().String(),
+				Status:   expo.StatusOK,
+			})
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK) // HTTP 200
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			service.appendError(err)
+			return
+		}
+	}))
+	t.Setenv("EXPO_PUSH_API_URL", expoServer.URL)
+
+	pushServer := httptest.NewServer(pushnotifications.CoreInitServer(ctx))
+	t.Setenv("PUSH_NOTIFICATIONS_URL", pushServer.URL)
+
+	t.Cleanup(func() {
+		pushServer.Close()
+		expoServer.Close()
+	})
+
+	return service
+}*/

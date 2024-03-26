@@ -105,14 +105,28 @@ const (
 	URITypeIPFSAPI URIType = "ipfs-api"
 	// URITypeIPFSGateway represents an IPFS Gateway URI
 	URITypeIPFSGateway URIType = "ipfs-gateway"
+	// URITypeArweaveGateway represents an Arweave Gateway URI
+	URITypeArweaveGateway URIType = "arweave-gateway"
 	// URITypeBase64JSON represents a base64 encoded JSON document
 	URITypeBase64JSON URIType = "base64json"
+	// URITypeBase64HTML represents a base64 encoded HTML document
+	URITypeBase64HTML URIType = "base64html"
 	// URITypeJSON represents a JSON document
 	URITypeJSON URIType = "json"
 	// URITypeBase64SVG represents a base64 encoded SVG
 	URITypeBase64SVG URIType = "base64svg"
 	//URITypeBase64BMP represents a base64 encoded BMP
 	URITypeBase64BMP URIType = "base64bmp"
+	// URITypeBase64PNG represents a base64 encoded PNG
+	URITypeBase64PNG URIType = "base64png"
+	// URITypeBase64JPEG represents a base64 encoded JPEG
+	URITypeBase64JPEG URIType = "base64jpeg"
+	// URITypeBase64GIF represents a base64 encoded GIF
+	URITypeBase64GIF URIType = "base64gif"
+	// URITypeBase64WAV represents a base64 encoded WAV
+	URITypeBase64WAV URIType = "base64wav"
+	// URITypeBase64MP3 represents a base64 encoded MP3
+	URITypeBase64MP3 URIType = "base64mp3"
 	// URITypeSVG represents an SVG
 	URITypeSVG URIType = "svg"
 	// URITypeENS represents an ENS domain
@@ -124,6 +138,9 @@ const (
 	// URITypeNone represents no URI
 	URITypeNone URIType = "none"
 )
+
+// InvalidTokenURI represents an invalid token URI
+const InvalidTokenURI TokenURI = "INVALID"
 
 // ZeroAddress is the all-zero address
 const ZeroAddress Address = "0x0000000000000000000000000000000000000000"
@@ -165,8 +182,11 @@ type Chain int
 
 type L1Chain Chain
 
-// Logo represents the URL for an ERC20 token logo
-type Logo string
+// TokenLogo represents the URL for an ERC20 token logo
+type TokenLogo string
+
+// TokenURI represents the URI for an Ethereum token
+type TokenURI string
 
 // TokenMetadata represents the JSON metadata for a token
 type TokenMetadata map[string]interface{}
@@ -255,7 +275,7 @@ type Token struct {
 	Name            NullString      `json:"name"`
 	Symbol          NullString      `json:"symbol"`
 	Decimals        NullInt32       `json:"decimals"`
-	Logo            Logo            `json:"logo"`
+	Logo            TokenLogo       `json:"logo"`
 	BlockNumber     BlockNumber     `json:"block_number"`
 	IsSpam          *bool           `json:"is_spam"`
 }
@@ -606,6 +626,40 @@ func (uri URIType) Type() URIType {
 	}
 }
 
+func (u URIType) IsRaw() bool {
+	switch u {
+	case URITypeBase64JSON, URITypeBase64HTML, URITypeBase64SVG, URITypeBase64BMP, URITypeBase64PNG, URITypeBase64JPEG, URITypeBase64GIF, URITypeBase64WAV, URITypeBase64MP3, URITypeJSON, URITypeSVG, URITypeENS:
+		return true
+	default:
+		return false
+	}
+}
+
+func (u URIType) ToMediaType() MediaType {
+	switch u {
+	case URITypeBase64JSON, URITypeJSON:
+		return MediaTypeJSON
+	case URITypeBase64SVG, URITypeSVG:
+		return MediaTypeSVG
+	case URITypeBase64BMP:
+		return MediaTypeImage
+	case URITypeBase64PNG:
+		return MediaTypeImage
+	case URITypeBase64HTML:
+		return MediaTypeHTML
+	case URITypeBase64JPEG:
+		return MediaTypeImage
+	case URITypeBase64GIF:
+		return MediaTypeGIF
+	case URITypeBase64MP3:
+		return MediaTypeAudio
+	case URITypeBase64WAV:
+		return MediaTypeAudio
+	default:
+		return MediaTypeUnknown
+	}
+}
+
 // IsRenderable returns whether a frontend could render the given URI directly
 func (uri URIType) IsRenderable() bool {
 	return uri.IsHTTP() // || uri.IsIPFS() || uri.IsArweave()
@@ -613,6 +667,90 @@ func (uri URIType) IsRenderable() bool {
 
 // IsHTTP returns whether a frontend could render the given URI directly
 func (uri URIType) IsHTTP() bool {
+	asString := uri.String()
+	asString = strings.TrimSpace(asString)
+	return strings.HasPrefix(asString, "http")
+}
+
+func (uri TokenURI) String() string { return string(uri) }
+
+// Value implements the driver.Valuer interface for token URIs
+func (uri TokenURI) Value() (driver.Value, error) {
+	result := string(uri)
+	if strings.Contains(result, "://") {
+		result = url.QueryEscape(result)
+	}
+	clean := strings.Map(cleanString, result)
+	return strings.ToValidUTF8(strings.ReplaceAll(clean, "\\u0000", ""), ""), nil
+}
+
+// Scan implements the sql.Scanner interface for token URIs
+func (uri *TokenURI) Scan(src interface{}) error {
+	if src == nil {
+		*uri = TokenURI("")
+		return nil
+	}
+	*uri = TokenURI(src.(string))
+	return nil
+}
+
+// Type returns the type of the token URI
+func (uri TokenURI) Type() URIType {
+	asString := uri.String()
+	asString = strings.TrimSpace(asString)
+	switch {
+	case strings.HasPrefix(asString, "ipfs"), strings.HasPrefix(asString, "Qm"):
+		return URITypeIPFS
+	case strings.HasPrefix(asString, "ar://"), strings.HasPrefix(asString, "arweave://"):
+		return URITypeArweave
+	case strings.HasPrefix(asString, "data:text/html;base64,"), strings.HasPrefix(asString, "data:text/html;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:text/html") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64HTML
+	case strings.HasPrefix(asString, "data:application/json;base64,"), strings.HasPrefix(asString, "data:application/json;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:application/json") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64JSON
+	case strings.HasPrefix(asString, "data:image/svg+xml;base64,"), strings.HasPrefix(asString, "data:image/svg xml;base64,"), strings.HasPrefix(asString, "data:image/svg+xml") && strings.Contains(asString, ";base64,"), strings.HasPrefix(asString, "data:image/svg xml") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64SVG
+	case strings.HasPrefix(asString, "data:image/bmp;base64,"), strings.HasPrefix(asString, "data:image/bmp;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:image/bmp") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64BMP
+	case strings.HasPrefix(asString, "data:image/png;base64,"), strings.HasPrefix(asString, "data:image/png;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:image/png") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64PNG
+	case strings.HasPrefix(asString, "data:image/jpeg;base64,"), strings.HasPrefix(asString, "data:image/jpeg;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:image/jpeg") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64JPEG
+	case strings.HasPrefix(asString, "data:image/gif;base64,"), strings.HasPrefix(asString, "data:image/gif;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:image/gif") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64GIF
+	case strings.HasPrefix(asString, "data:audio/wav;base64,"), strings.HasPrefix(asString, "data:audio/wav;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:audio/wav") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64WAV
+	case strings.HasPrefix(asString, "data:audio/mpeg;base64,"), strings.HasPrefix(asString, "data:audio/mpeg;charset=utf-8;base64,"), strings.HasPrefix(asString, "data:audio/mpeg") && strings.Contains(asString, ";base64,"):
+		return URITypeBase64MP3
+	case strings.Contains(asString, "ipfs.io/api"):
+		return URITypeIPFSAPI
+	case strings.Contains(asString, "/ipfs/"):
+		return URITypeIPFSGateway
+	case strings.HasPrefix(asString, "https://arweave.net/"):
+		return URITypeArweaveGateway
+	case strings.HasPrefix(asString, "http"), strings.HasPrefix(asString, "https"):
+		return URITypeHTTP
+	case strings.HasPrefix(asString, "{"), strings.HasPrefix(asString, "["), strings.HasPrefix(asString, "data:application/json"), strings.HasPrefix(asString, "data:text/plain,{"):
+		return URITypeJSON
+	case strings.HasPrefix(asString, "<svg"), strings.HasPrefix(asString, "data:image/svg+xml"), strings.HasPrefix(asString, "data:image/svg xml"):
+		return URITypeSVG
+	case strings.HasSuffix(asString, ".ens"):
+		return URITypeENS
+	case asString == InvalidTokenURI.String():
+		return URITypeInvalid
+	case asString == "":
+		return URITypeNone
+	default:
+		return URITypeUnknown
+	}
+}
+
+// IsRenderable returns whether a frontend could render the given URI directly
+func (uri TokenURI) IsRenderable() bool {
+	return uri.IsHTTP() // || uri.IsIPFS() || uri.IsArweave()
+}
+
+// IsHTTP returns whether a frontend could render the given URI directly
+func (uri TokenURI) IsHTTP() bool {
 	asString := uri.String()
 	asString = strings.TrimSpace(asString)
 	return strings.HasPrefix(asString, "http")

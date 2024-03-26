@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS user_token_spam;
 DROP TABLE IF EXISTS splits;
 DROP TABLE IF EXISTS recipients;
 DROP TABLE IF EXISTS tokens;

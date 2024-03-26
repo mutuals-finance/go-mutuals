@@ -35,7 +35,7 @@ func (api SplitAPI) CreateSplit(ctx context.Context, name, description, logoUrl 
 		SplitID:     persist.GenerateID(),
 		Name:        util.FromPointer(name),
 		Description: util.FromPointer(description),
-		LogoUrl:     util.ToSQLNullString(logoUrl),
+		LogoUrl:     util.ToNullString(util.FromPointer(logoUrl), false),
 	})
 	if err != nil {
 		return db.Split{}, err
@@ -53,12 +53,37 @@ func (api SplitAPI) PublishSplit(ctx context.Context, update model.PublishSplitI
 		return err
 	}
 
-	err := publishEventGroup(ctx, update.EditID, persist.ActionSplitUpdated, update.Caption)
-	if err != nil {
-		return err
-	}
+	//err := publishEventGroup(ctx, update.EditID, persist.ActionSplitUpdated, update.Caption)
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
+}
+
+func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID) (*db.Split, error) {
+
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"splitID": validate.WithTag(splitID, "required"),
+	}); err != nil {
+		return nil, err
+	}
+
+	userID, err := getAuthenticatedUserID(ctx)
+
+	if err != nil {
+		return nil, persist.ErrSplitNotFound{ID: splitID}
+	}
+
+	split, err := api.queries.GetSplitByRecipientUserID(ctx, db.GetSplitByRecipientUserIDParams{
+		UserID:  userID,
+		SplitID: splitID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &split, nil
 }
 
 func (api SplitAPI) GetSplitById(ctx context.Context, splitID persist.DBID) (*db.Split, error) {
@@ -180,7 +205,7 @@ func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, n
 		ID:             splitID,
 		Name:           nullName,
 		Description:    nullDesc,
-		LogoUrl:        util.ToSQLNullString(&nullLogoUrl),
+		LogoUrl:        util.ToNullString(nullLogoUrl, false),
 		NameSet:        nameSet,
 		DescriptionSet: descSet,
 		LogoUrlSet:     logoUrlSet,

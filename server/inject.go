@@ -40,11 +40,9 @@ func NewMultichainProvider(ctx context.Context, envFunc func()) (*multichain.Pro
 		setEnv,
 		wire.Value(&http.Client{Timeout: 0}), // HTTP client shared between providers
 		task.NewClient,
-		newCommunitiesCache,
-		newTokenMetadataCache,
 		postgres.NewRepositories,
 		dbConnSet,
-		wire.Struct(new(multichain.Provider), "*"),
+		wire.Struct(new(multichain.ChainProvider), "*"),
 		// Add additional chains here
 		newMultichainSet,
 		ethProviderSet,
@@ -262,13 +260,4 @@ func ethFallbackProvider(httpClient *http.Client, cache *tokenMetadataCache) mul
 
 func newAlchemyProvider(httpClient *http.Client, chain persist.Chain, cache *tokenMetadataCache) *alchemy.Provider {
 	return alchemy.NewProvider(chain, httpClient)
-}
-
-func newCommunitiesCache() *redis.Cache {
-	return redis.NewCache(redis.CommunitiesDB)
-}
-
-func newTokenMetadataCache() *tokenMetadataCache {
-	cache := redis.NewCache(redis.TokenProcessingThrottleDB)
-	return util.ToPointer(tokenMetadataCache(*cache))
 }

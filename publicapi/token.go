@@ -2,12 +2,14 @@ package publicapi
 
 import (
 	"context"
+	"database/sql"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/throttle"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
@@ -82,26 +84,6 @@ func (api TokenAPI) GetTokensByIDs(ctx context.Context, tokenIDs []persist.DBID)
 	return foundTokens, nil
 }
 
-/*func (api TokenAPI) SetSpamPreference(ctx context.Context, tokens []persist.DBID, isSpam bool) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"tokens": validate.WithTag(tokens, "required,unique"),
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	return api.queries.UpdateTokensAsUserMarkedSpam(ctx, db.UpdateTokensAsUserMarkedSpamParams{
-		IsUserMarkedSpam: sql.NullBool{Bool: isSpam, Valid: true},
-		OwnerUserID:      userID,
-		TokenIds:         tokens,
-	})
-}
-*/
 // RefreshToken refreshes the metadata for a given token DBID
 func (api TokenAPI) RefreshToken(ctx context.Context, tokenID persist.DBID) error {
 	// Validate
@@ -122,4 +104,24 @@ func (api TokenAPI) RefreshToken(ctx context.Context, tokenID persist.DBID) erro
 	}
 
 	return nil
+}
+
+func (api TokenAPI) SetSpamPreference(ctx context.Context, tokens []persist.DBID, isSpam bool) error {
+
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"tokens": validate.WithTag(tokens, "required,unique"),
+	}); err != nil {
+		return err
+	}
+
+	userID, err := getAuthenticatedUserID(ctx)
+	if err != nil {
+		return err
+	}
+
+	return api.queries.InsertUserTokenSpam(ctx, db.InsertUserTokenSpamParams{
+		IsMarkedSpam: sql.NullBool{Bool: isSpam, Valid: true},
+		UserID:       userID,
+		TokenIds:     util.StringersToStrings(tokens),
+	})
 }

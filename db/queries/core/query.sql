@@ -55,6 +55,22 @@ SELECT * FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false;
 -- name: GetSplitById :one
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
+-- name: GetSplitByRecipientUserID :one
+SELECT s.* FROM users u, unnest(u.wallets)
+    WITH ORDINALITY AS a(wallet_id, wallet_ord)
+    INNER JOIN wallets w on w.id = a.wallet_id
+    INNER JOIN recipients r ON r.address = w.address
+    INNER JOIN splits s ON s.id = r.split_id
+    WHERE u.id = @user_id AND s.id = @split_id AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false;
+
+-- name: GetSplitsByRecipientUserID :many
+SELECT s.* FROM users u, unnest(u.wallets)
+    WITH ORDINALITY AS a(wallet_id, wallet_ord)
+    INNER JOIN wallets w on w.id = a.wallet_id
+    INNER JOIN recipients r ON r.address = w.address
+    INNER JOIN splits s ON s.id = r.split_id
+    WHERE u.id = @user_id AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false;
+
 -- name: GetSplitByIdBatch :batchone
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
@@ -115,6 +131,30 @@ set name = @name,
 where contract_address = @contract_address
   and chain = @chain
   and deleted = false;
+
+insert into push_notification_tickets (id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, status, deleted) values
+    (
+        unnest(@ids::text[]),
+        unnest(@push_token_ids::text[]),
+        unnest(@ticket_ids::text[]),
+        now(),
+        now() + interval '15 minutes',
+        0,
+        'pending',
+        false
+    );
+
+-- name: InsertUserTokenSpam :exec
+insert into user_token_spam (id, user_id, token_id, is_marked_spam, created_at, last_updated) values
+    (
+      unnest(@ids::varchar[]),
+      @user_id,
+      unnest(@token_ids::varchar[]),
+      @is_marked_spam,
+      now(),
+      now()
+    )
+on conflict (user_id, token_id) do update set is_marked_spam = excluded.is_marked_spam, last_updated = excluded.last_updated;
 
 -- name: GetAssetByIdBatch :batchone
 select sqlc.embed(a), sqlc.embed(t)
@@ -293,16 +333,65 @@ where owner_id = $1
 order by created_at desc
 limit 1;
 
+-- name: GetMostRecentNotificationByOwnerIDTokenIDForAction :one
+select * from notifications
+where owner_id = $1
+  and token_id = $2
+  and action = $3
+  and deleted = false
+order by created_at desc
+limit 1;
+
 -- name: GetNotificationsByOwnerIDForActionAfter :many
 SELECT * FROM notifications
 WHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at > @created_after
 ORDER BY created_at DESC;
 
-/*
-TODO example for notification creation
-name: CreateViewSplitNotification :one
+-- later on, we might want to add a "global" column to notifications or even an enum column like "match" to determine how largely consumed
+-- notifications will get searched for for a given user. For example, global notifications will always return for a user and follower notifications will
+-- perform the check to see if the user follows the owner of the notification. Where this breaks is how we handle "seen" notifications. Since there is 1:1 notifications to users
+-- right now, we can't have a "seen" field on the notification itself. We would have to move seen out into a separate table.
+-- name: CreateAnnouncementNotifications :many
+WITH
+    id_with_row_number AS (
+        SELECT unnest(@ids::varchar(255)[]) AS id, row_number() OVER (ORDER BY unnest(@ids::varchar(255)[])) AS rn
+    ),
+    user_with_row_number AS (
+        SELECT id AS user_id, row_number() OVER () AS rn
+        FROM users
+        WHERE deleted = false AND universal = false
+    )
+INSERT INTO notifications (id, owner_id, action, data, event_ids)
+SELECT
+    i.id,
+    u.user_id,
+    $1,
+    $2,
+    $3
+FROM
+    id_with_row_number i
+        JOIN
+    user_with_row_number u ON i.rn = u.rn
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM notifications n
+    WHERE n.owner_id = u.user_id
+      AND n.data ->> 'internal_id' = sqlc.arg('internal')::varchar
+)
+RETURNING *;
+
+-- name: CountAllUsers :one
+SELECT count(*) FROM users WHERE deleted = false and universal = false;
+
+-- name: CreateSimpleNotification :one
+INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING *;
+
+-- name: CreateTokenNotification :one
+INSERT INTO notifications (id, owner_id, action, data, event_ids, token_id, amount) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+
+-- name: CreateViewSplitNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
-*/
+
 
 -- name: UpdateNotification :exec
 UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4;
@@ -315,26 +404,17 @@ UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURN
 
 -- for some reason this query will not allow me to use @tags for $1
 -- name: GetUsersWithEmailNotificationsOnForEmailType :many
-select * from pii.user_view
-where (email_unsubscriptions->>'all' = 'false' or email_unsubscriptions->>'all' is null)
-  and (email_unsubscriptions->>sqlc.arg(email_unsubscription)::varchar = 'false' or email_unsubscriptions->>sqlc.arg(email_unsubscription)::varchar is null)
-  and deleted = false and pii_email_address is not null and email_verified = $1
-  and (created_at, id) < (@cur_before_time, @cur_before_id)
-  and (created_at, id) > (@cur_after_time, @cur_after_id)
-order by case when @paging_forward::bool then (created_at, id) end asc,
-         case when not @paging_forward::bool then (created_at, id) end desc
-limit $2;
-
--- name: GetUsersWithEmailNotificationsOn :many
--- TODO: Does not appear to be used
-select * from pii.user_view
-where (email_unsubscriptions->>'all' = 'false' or email_unsubscriptions->>'all' is null)
-  and deleted = false and pii_email_address is not null and email_verified = $1
-  and (created_at, id) < (@cur_before_time, @cur_before_id)
-  and (created_at, id) > (@cur_after_time, @cur_after_id)
-order by case when @paging_forward::bool then (created_at, id) end asc,
-         case when not @paging_forward::bool then (created_at, id) end desc
-limit $2;
+select u.* from pii.user_view u
+                    left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false
+where (u.email_unsubscriptions->>'all' = 'false' or u.email_unsubscriptions->>'all' is null)
+  and (u.email_unsubscriptions->>sqlc.arg(email_unsubscription)::varchar = 'false' or u.email_unsubscriptions->>sqlc.arg(email_unsubscription)::varchar is null)
+  and u.deleted = false and u.pii_verified_email_address is not null
+  and (u.created_at, u.id) < (@cur_before_time, @cur_before_id)
+  and (u.created_at, u.id) > (@cur_after_time, @cur_after_id)
+  and (@email_testers_only::bool = false or r.user_id is not null)
+order by case when @paging_forward::bool then (u.created_at, u.id) end asc,
+         case when not @paging_forward::bool then (u.created_at, u.id) end desc
+limit $1;
 
 -- name: GetUsersWithRolePaginate :many
 select u.* from users u, user_roles ur where u.deleted = false and ur.deleted = false
@@ -396,21 +476,7 @@ on conflict (user_id, role) do update set deleted = false, last_updated = now();
 update user_roles set deleted = true, last_updated = now() where user_id = $1 and role = any(@roles);
 
 -- name: GetUserRolesByUserId :many
-select role from user_roles where user_id = $1 and deleted = false
-union
-select role from (
-                     select
-                         case when exists(
-                             select 1
-                             from tokens
-                             where owner_user_id = $1
-                               and token_id = any(@membership_token_ids::varchar[])
-                               -- and contract = (select id from contracts where address = @membership_address and contracts.chain = @chain and contracts.deleted = false)
-                               and exists(select 1 from users where id = $1 and email_verified = 1 and deleted = false)
-                               and deleted = false
-                         )
-                                  then @granted_membership_role end as role
-                 ) r where role is not null;
+select role from user_roles where user_id = $1 and deleted = false;
 
 -- name: CreateSplit :one
 insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values (@split_id, @chain, @address, @name, @description, @creator_address, @logo_url, @banner_url, @badge_url, @total_ownership, now(), now()) returning *;

@@ -48,7 +48,7 @@ func handlersInitServer(router *gin.Engine, loaders *dataloader.Loaders, queries
 
 	notificationsGroup := router.Group("/notifications")
 	notificationsGroup.GET("/send", middleware.CloudSchedulerMiddleware, sendNotificationEmails(queries, s, r))
-	notificationsGroup.POST("/announcement", middleware.RetoolMiddleware, useEventHandler(queries, psub, t, notifLock), sendAnnouncementNotification(queries))
+	notificationsGroup.POST("/announcement", middleware.RetoolAuthRequired, useEventHandler(queries, psub, t, notifLock), sendAnnouncementNotification(queries))
 
 	return router
 }

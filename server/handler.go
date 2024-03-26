@@ -45,28 +45,28 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
-func handlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, mcProvider *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
+func handlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, mcProvider *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
 
-	graphqlGroup := router.Group("/glry/graphql")
-	graphqlHandlersInit(graphqlGroup, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, stg, mcProvider, throttler, taskClient, pub, lock, secrets, graphqlAPQCache, socialCache, authRefreshCache, magicClient)
+	graphqlGroup := router.Group("/splitfi/graphql")
+	graphqlHandlersInit(graphqlGroup, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, stg, mcProvider, throttler, taskClient, pub, lock, secrets, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache, magicClient)
 
 	router.GET("/alive", healthCheckHandler())
 
 	return router
 }
+func graphqlHandlersInit(parent *gin.RouterGroup, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, mcProvider *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) {
+	handler := graphqlHandler(repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, mcProvider, throttler, taskClient, pub, lock, secrets, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache, magicClient)
 
-func graphqlHandlersInit(parent *gin.RouterGroup, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, mcProvider *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache *redis.Cache, magicClient *magicclient.API) {
-	handler := graphqlHandler(repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, mcProvider, throttler, taskClient, pub, lock, secrets, graphqlAPQCache, socialCache, authRefreshCache, magicClient)
-	parent.Any("/query", middleware.AddAuthToContext(), handler)
-	parent.Any("/query/:operationName", middleware.AddAuthToContext(), handler)
+	parent.Any("/query", middleware.ContinueSession(queries, authRefreshCache), handler)
+	parent.Any("/query/:operationName", middleware.ContinueSession(queries, authRefreshCache), handler)
 	parent.GET("/playground", graphqlPlaygroundHandler())
 }
 
-func graphqlHandler(repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, mp *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache *redis.Cache, magicClient *magicclient.API) gin.HandlerFunc {
+func graphqlHandler(repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, mp *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) gin.HandlerFunc {
 	config := generated.Config{Resolvers: &graphql.Resolver{}}
 	config.Directives.AuthRequired = graphql.AuthRequiredDirectiveHandler()
 	config.Directives.RestrictEnvironment = graphql.RestrictEnvironmentDirectiveHandler()
-	config.Directives.RetoolAuth = graphql.RetoolAuthDirectiveHandler()
+	config.Directives.BasicAuth = graphql.BasicAuthDirectiveHandler()
 	config.Directives.FrontendBuildAuth = graphql.FrontendBuildAuthDirectiveHandler()
 	config.Directives.Experimental = graphql.ExperimentalDirectiveHandler()
 
@@ -120,10 +120,10 @@ func graphqlHandler(repos *postgres.Repositories, queries *db.Queries, httpClien
 	h.AroundFields(graphql.RemapAndReportErrors)
 
 	newPublicAPI := func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI {
-		return publicapi.New(ctx, disableDataloaderCaching, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, mp, taskClient, throttler, secrets, apqCache, socialCache, authRefreshCache, magicClient)
+		return publicapi.New(ctx, disableDataloaderCaching, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, mp, taskClient, throttler, secrets, apqCache, socialCache, authRefreshCache, oneTimeLoginCache, magicClient)
 	}
 
-	notificationsHandler := notifications.New(queries, pub, lock)
+	notificationsHandler := notifications.New(queries, pub, taskClient, lock, true)
 
 	h.AroundFields(graphql.MutationCachingHandler(newPublicAPI))
 

@@ -209,7 +209,7 @@ func DispatchGroup(ctx context.Context, groupID string, action persist.Action, c
 }
 
 func For(ctx context.Context) *eventSender {
-	gc := util.GinContextFromContext(ctx)
+	gc := util.MustGetGinContext(ctx)
 	return gc.Value(eventSenderContextKey).(*eventSender)
 }
 
@@ -410,12 +410,12 @@ func (h notificationHandler) createNotificationDataForEvent(event db.Event) (dat
 		if event.ExternalID.String != "" {
 			data.UnauthedViewerIDs = []string{persist.NullStrToStr(event.ExternalID)}
 		}
-	case persist.ActionUserFollowedUsers:
-		if event.ActorID.String != "" {
-			data.FollowerIDs = []persist.DBID{persist.NullStrToDBID(event.ActorID)}
-		}
-		data.FollowedBack = persist.NullBool(event.Data.UserFollowedBack)
-		data.Refollowed = persist.NullBool(event.Data.UserRefollowed)
+	//case persist.ActionUserFollowedUsers:
+	//	if event.ActorID.String != "" {
+	//		data.FollowerIDs = []persist.DBID{persist.NullStrToDBID(event.ActorID)}
+	//	}
+	//	data.FollowedBack = persist.NullBool(event.Data.UserFollowedBack)
+	//	data.Refollowed = persist.NullBool(event.Data.UserRefollowed)
 	//case persist.ActionNewTokensReceived:
 	//	data.NewTokenID = event.Data.NewTokenID
 	//	data.NewTokenQuantity = event.Data.NewTokenQuantity

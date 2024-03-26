@@ -20,11 +20,6 @@ query userByIdQuery($id: DBID!) {
     ... on SplitFiUser {
       username
       dbid
-      socialAccounts {
-        twitter {
-          username
-        }
-      }
     }
   }
 }
@@ -52,11 +47,6 @@ query viewerQuery {
       user {
         username
         dbid
-        socialAccounts {
-          twitter {
-            username
-          }
-        }
       }
     }
   }
@@ -227,62 +217,6 @@ mutation createSplitMutation($input: CreateSplitInput!) {
         dbid
         name
         description
-      }
-    }
-  }
-}
-
-mutation connectSocialAccount($auth: SocialAuthMechanism!, $display: Boolean!) {
-  connectSocialAccount(input: $auth, display: $display) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on ConnectSocialAccountPayload {
-      viewer {
-        socialAccounts {
-          twitter {
-            username
-            display
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation disconnectSocialAccount($accountType: SocialAccountType!) {
-  disconnectSocialAccount(accountType: $accountType) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on DisconnectSocialAccountPayload {
-      viewer {
-        socialAccounts {
-          twitter {
-            username
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation updateSocialAccountDisplayed($input: UpdateSocialAccountDisplayedInput!) {
-  updateSocialAccountDisplayed(input: $input) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on UpdateSocialAccountDisplayedPayload {
-      viewer {
-        socialAccounts {
-          twitter {
-            username
-            display
-          }
-        }
       }
     }
   }

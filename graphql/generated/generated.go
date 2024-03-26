@@ -17,6 +17,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	"github.com/SplitFi/go-splitfi/graphql/model"
+	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -27,6 +28,7 @@ import (
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	return &executableSchema{
+		schema:     cfg.Schema,
 		resolvers:  cfg.Resolvers,
 		directives: cfg.Directives,
 		complexity: cfg.Complexity,
@@ -34,6 +36,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 }
 
 type Config struct {
+	Schema     *ast.Schema
 	Resolvers  ResolverRoot
 	Directives DirectiveRoot
 	Complexity ComplexityRoot
@@ -47,7 +50,6 @@ type ResolverRoot interface {
 	Recipient() RecipientResolver
 	SetSpamPreferencePayload() SetSpamPreferencePayloadResolver
 	SocialConnection() SocialConnectionResolver
-	SocialQueries() SocialQueriesResolver
 	Split() SplitResolver
 	SplitFiUser() SplitFiUserResolver
 	Subscription() SubscriptionResolver
@@ -59,10 +61,10 @@ type ResolverRoot interface {
 
 type DirectiveRoot struct {
 	AuthRequired        func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	BasicAuth           func(ctx context.Context, obj interface{}, next graphql.Resolver, allowed []basicauth.AuthTokenType) (res interface{}, err error)
 	Experimental        func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 	FrontendBuildAuth   func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 	RestrictEnvironment func(ctx context.Context, obj interface{}, next graphql.Resolver, allowed []string) (res interface{}, err error)
-	RetoolAuth          func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -120,10 +122,6 @@ type ComplexityRoot struct {
 		Notifications func(childComplexity int) int
 	}
 
-	ConnectSocialAccountPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
 	CreateSplitPayload struct {
 		Split func(childComplexity int) int
 	}
@@ -146,10 +144,6 @@ type ComplexityRoot struct {
 	DeletedNode struct {
 		Dbid func(childComplexity int) int
 		ID   func(childComplexity int) int
-	}
-
-	DisconnectSocialAccountPayload struct {
-		Viewer func(childComplexity int) int
 	}
 
 	EmailNotificationSettings struct {
@@ -198,6 +192,10 @@ type ComplexityRoot struct {
 
 	ErrNotAuthorized struct {
 		Cause   func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
+	ErrSessionInvalidated struct {
 		Message func(childComplexity int) int
 	}
 
@@ -304,12 +302,10 @@ type ComplexityRoot struct {
 		AddUserWallet                   func(childComplexity int, chainAddress persist.ChainAddress, authMechanism model.AuthMechanism) int
 		AddWalletToUserUnchecked        func(childComplexity int, input model.AdminAddWalletInput) int
 		ClearAllNotifications           func(childComplexity int) int
-		ConnectSocialAccount            func(childComplexity int, input model.SocialAuthMechanism, display bool) int
 		CreateSplit                     func(childComplexity int, input model.CreateSplitInput) int
 		CreateUser                      func(childComplexity int, authMechanism model.AuthMechanism, input model.CreateUserInput) int
 		DeepRefresh                     func(childComplexity int, input model.DeepRefreshInput) int
 		DeleteSplit                     func(childComplexity int, splitID persist.DBID) int
-		DisconnectSocialAccount         func(childComplexity int, accountType persist.SocialProvider) int
 		GetAuthNonce                    func(childComplexity int, chainAddress persist.ChainAddress) int
 		Login                           func(childComplexity int, authMechanism model.AuthMechanism) int
 		Logout                          func(childComplexity int) int
@@ -325,7 +321,6 @@ type ComplexityRoot struct {
 		UpdateEmailNotificationSettings func(childComplexity int, input model.UpdateEmailNotificationSettingsInput) int
 		UpdateNotificationSettings      func(childComplexity int, settings *model.NotificationSettingsInput) int
 		UpdatePrimaryWallet             func(childComplexity int, walletID persist.DBID) int
-		UpdateSocialAccountDisplayed    func(childComplexity int, input model.UpdateSocialAccountDisplayedInput) int
 		UpdateSplit                     func(childComplexity int, input model.UpdateSplitInput) int
 		UpdateSplitHidden               func(childComplexity int, input model.UpdateSplitHiddenInput) int
 		UpdateSplitInfo                 func(childComplexity int, input model.UpdateSplitInfoInput) int
@@ -334,6 +329,7 @@ type ComplexityRoot struct {
 		UpdateUserInfo                  func(childComplexity int, input model.UpdateUserInfoInput) int
 		UploadPersistedQueries          func(childComplexity int, input *model.UploadPersistedQueriesInput) int
 		VerifyEmail                     func(childComplexity int, input model.VerifyEmailInput) int
+		VerifyEmailMagicLink            func(childComplexity int, input model.VerifyEmailMagicLinkInput) int
 		ViewSplit                       func(childComplexity int, splitID persist.DBID) int
 	}
 
@@ -391,12 +387,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GeneralAllowlist   func(childComplexity int) int
 		Node               func(childComplexity int, id model.GqlID) int
 		SearchSplits       func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
 		SearchUsers        func(childComplexity int, query string, limit *int, usernameWeight *float64, bioWeight *float64) int
-		SocialConnections  func(childComplexity int, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) int
-		SocialQueries      func(childComplexity int) int
 		SplitByID          func(childComplexity int, id persist.DBID) int
 		TokenByID          func(childComplexity int, id persist.DBID) int
 		UserByAddress      func(childComplexity int, chainAddress persist.ChainAddress) int
@@ -444,10 +437,6 @@ type ComplexityRoot struct {
 		Tokens func(childComplexity int) int
 	}
 
-	SocialAccounts struct {
-		Twitter func(childComplexity int) int
-	}
-
 	SocialConnection struct {
 		CurrentlyFollowing func(childComplexity int) int
 		DisplayName        func(childComplexity int) int
@@ -467,10 +456,6 @@ type ComplexityRoot struct {
 	SocialConnectionsEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	}
-
-	SocialQueries struct {
-		SocialConnections func(childComplexity int, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) int
 	}
 
 	Split struct {
@@ -494,7 +479,6 @@ type ComplexityRoot struct {
 		IsAuthenticatedUser func(childComplexity int) int
 		PrimaryWallet       func(childComplexity int) int
 		Roles               func(childComplexity int) int
-		SocialAccounts      func(childComplexity int) int
 		Splits              func(childComplexity int) int
 		SplitsByChain       func(childComplexity int, chain persist.Chain) int
 		Traits              func(childComplexity int) int
@@ -538,15 +522,6 @@ type ComplexityRoot struct {
 		Version         func(childComplexity int) int
 	}
 
-	TwitterSocialAccount struct {
-		Display         func(childComplexity int) int
-		Name            func(childComplexity int) int
-		ProfileImageURL func(childComplexity int) int
-		SocialID        func(childComplexity int) int
-		Type            func(childComplexity int) int
-		Username        func(childComplexity int) int
-	}
-
 	UnknownMedia struct {
 		ContentRenderURL func(childComplexity int) int
 		Dimensions       func(childComplexity int) int
@@ -568,10 +543,6 @@ type ComplexityRoot struct {
 	}
 
 	UpdatePrimaryWalletPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	UpdateSocialAccountDisplayedPayload struct {
 		Viewer func(childComplexity int) int
 	}
 
@@ -628,6 +599,10 @@ type ComplexityRoot struct {
 		PageInfo func(childComplexity int) int
 	}
 
+	VerifyEmailMagicLinkPayload struct {
+		CanSend func(childComplexity int) int
+	}
+
 	VerifyEmailPayload struct {
 		Email func(childComplexity int) int
 	}
@@ -656,7 +631,6 @@ type ComplexityRoot struct {
 		ID                   func(childComplexity int) int
 		NotificationSettings func(childComplexity int) int
 		Notifications        func(childComplexity int, before *string, after *string, first *int, last *int) int
-		SocialAccounts       func(childComplexity int) int
 		User                 func(childComplexity int) int
 		ViewerSplits         func(childComplexity int) int
 	}
@@ -697,9 +671,6 @@ type MutationResolver interface {
 	UnsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailTypePayloadOrError, error)
 	Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginPayloadOrError, error)
 	Logout(ctx context.Context) (*model.LogoutPayload, error)
-	ConnectSocialAccount(ctx context.Context, input model.SocialAuthMechanism, display bool) (model.ConnectSocialAccountPayloadOrError, error)
-	DisconnectSocialAccount(ctx context.Context, accountType persist.SocialProvider) (model.DisconnectSocialAccountPayloadOrError, error)
-	UpdateSocialAccountDisplayed(ctx context.Context, input model.UpdateSocialAccountDisplayedInput) (model.UpdateSocialAccountDisplayedPayloadOrError, error)
 	ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error)
 	UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error)
 	PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error)
@@ -712,6 +683,7 @@ type MutationResolver interface {
 	UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error)
 	PreverifyEmail(ctx context.Context, input model.PreverifyEmailInput) (model.PreverifyEmailPayloadOrError, error)
 	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (model.VerifyEmailPayloadOrError, error)
+	VerifyEmailMagicLink(ctx context.Context, input model.VerifyEmailMagicLinkInput) (model.VerifyEmailMagicLinkPayloadOrError, error)
 	AddRolesToUser(ctx context.Context, username string, roles []*persist.Role) (model.AddRolesToUserPayloadOrError, error)
 	AddWalletToUserUnchecked(ctx context.Context, input model.AdminAddWalletInput) (model.AdminAddWalletPayloadOrError, error)
 	RevokeRolesFromUser(ctx context.Context, username string, roles []*persist.Role) (model.RevokeRolesFromUserPayloadOrError, error)
@@ -730,14 +702,11 @@ type QueryResolver interface {
 	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error)
 	UsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error)
 	TokenByID(ctx context.Context, id persist.DBID) (model.TokenByIDOrError, error)
-	GeneralAllowlist(ctx context.Context) ([]*persist.ChainAddress, error)
 	SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error)
 	ViewerSplitByID(ctx context.Context, id persist.DBID) (model.ViewerSplitByIDPayloadOrError, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error)
 	SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error)
 	UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error)
-	SocialConnections(ctx context.Context, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) (*model.SocialConnectionsConnection, error)
-	SocialQueries(ctx context.Context) (model.SocialQueriesOrError, error)
 }
 type RecipientResolver interface {
 	Split(ctx context.Context, obj *model.Recipient) (*model.Split, error)
@@ -748,16 +717,12 @@ type SetSpamPreferencePayloadResolver interface {
 type SocialConnectionResolver interface {
 	SplitFiUser(ctx context.Context, obj *model.SocialConnection) (*model.SplitFiUser, error)
 }
-type SocialQueriesResolver interface {
-	SocialConnections(ctx context.Context, obj *model.SocialQueries, socialAccountType persist.SocialProvider, excludeAlreadyFollowing *bool, before *string, after *string, first *int, last *int) (*model.SocialConnectionsConnection, error)
-}
 type SplitResolver interface {
 	Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error)
 	Shares(ctx context.Context, obj *model.Split, limit *int) ([]*model.Recipient, error)
 }
 type SplitFiUserResolver interface {
 	Roles(ctx context.Context, obj *model.SplitFiUser) ([]*persist.Role, error)
-	SocialAccounts(ctx context.Context, obj *model.SplitFiUser) (*model.SocialAccounts, error)
 	Wallets(ctx context.Context, obj *model.SplitFiUser) ([]*model.Wallet, error)
 	PrimaryWallet(ctx context.Context, obj *model.SplitFiUser) (*model.Wallet, error)
 	Splits(ctx context.Context, obj *model.SplitFiUser) ([]*model.Split, error)
@@ -769,7 +734,6 @@ type SubscriptionResolver interface {
 }
 type ViewerResolver interface {
 	User(ctx context.Context, obj *model.Viewer) (*model.SplitFiUser, error)
-	SocialAccounts(ctx context.Context, obj *model.Viewer) (*model.SocialAccounts, error)
 	ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error)
 	Email(ctx context.Context, obj *model.Viewer) (*model.UserEmail, error)
 	Notifications(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error)
@@ -789,17 +753,21 @@ type ChainPubKeyInputResolver interface {
 }
 
 type executableSchema struct {
+	schema     *ast.Schema
 	resolvers  ResolverRoot
 	directives DirectiveRoot
 	complexity ComplexityRoot
 }
 
 func (e *executableSchema) Schema() *ast.Schema {
+	if e.schema != nil {
+		return e.schema
+	}
 	return parsedSchema
 }
 
 func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]interface{}) (int, bool) {
-	ec := executionContext{nil, e}
+	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
 
@@ -971,13 +939,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ClearAllNotificationsPayload.Notifications(childComplexity), true
 
-	case "ConnectSocialAccountPayload.viewer":
-		if e.complexity.ConnectSocialAccountPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.ConnectSocialAccountPayload.Viewer(childComplexity), true
-
 	case "CreateSplitPayload.split":
 		if e.complexity.CreateSplitPayload.Split == nil {
 			break
@@ -1040,13 +1001,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DeletedNode.ID(childComplexity), true
-
-	case "DisconnectSocialAccountPayload.viewer":
-		if e.complexity.DisconnectSocialAccountPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.DisconnectSocialAccountPayload.Viewer(childComplexity), true
 
 	case "EmailNotificationSettings.unsubscribedFromAll":
 		if e.complexity.EmailNotificationSettings.UnsubscribedFromAll == nil {
@@ -1159,6 +1113,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ErrNotAuthorized.Message(childComplexity), true
+
+	case "ErrSessionInvalidated.message":
+		if e.complexity.ErrSessionInvalidated.Message == nil {
+			break
+		}
+
+		return e.complexity.ErrSessionInvalidated.Message(childComplexity), true
 
 	case "ErrSplitNotFound.message":
 		if e.complexity.ErrSplitNotFound.Message == nil {
@@ -1532,18 +1493,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ClearAllNotifications(childComplexity), true
 
-	case "Mutation.connectSocialAccount":
-		if e.complexity.Mutation.ConnectSocialAccount == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_connectSocialAccount_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ConnectSocialAccount(childComplexity, args["input"].(model.SocialAuthMechanism), args["display"].(bool)), true
-
 	case "Mutation.createSplit":
 		if e.complexity.Mutation.CreateSplit == nil {
 			break
@@ -1591,18 +1540,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteSplit(childComplexity, args["splitId"].(persist.DBID)), true
-
-	case "Mutation.disconnectSocialAccount":
-		if e.complexity.Mutation.DisconnectSocialAccount == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_disconnectSocialAccount_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DisconnectSocialAccount(childComplexity, args["accountType"].(persist.SocialProvider)), true
 
 	case "Mutation.getAuthNonce":
 		if e.complexity.Mutation.GetAuthNonce == nil {
@@ -1774,18 +1711,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdatePrimaryWallet(childComplexity, args["walletID"].(persist.DBID)), true
 
-	case "Mutation.updateSocialAccountDisplayed":
-		if e.complexity.Mutation.UpdateSocialAccountDisplayed == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateSocialAccountDisplayed_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateSocialAccountDisplayed(childComplexity, args["input"].(model.UpdateSocialAccountDisplayedInput)), true
-
 	case "Mutation.updateSplit":
 		if e.complexity.Mutation.UpdateSplit == nil {
 			break
@@ -1881,6 +1806,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.VerifyEmail(childComplexity, args["input"].(model.VerifyEmailInput)), true
+
+	case "Mutation.verifyEmailMagicLink":
+		if e.complexity.Mutation.VerifyEmailMagicLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_verifyEmailMagicLink_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.VerifyEmailMagicLink(childComplexity, args["input"].(model.VerifyEmailMagicLinkInput)), true
 
 	case "Mutation.viewSplit":
 		if e.complexity.Mutation.ViewSplit == nil {
@@ -2097,13 +2034,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PublishSplitPayload.Split(childComplexity), true
 
-	case "Query.generalAllowlist":
-		if e.complexity.Query.GeneralAllowlist == nil {
-			break
-		}
-
-		return e.complexity.Query.GeneralAllowlist(childComplexity), true
-
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -2139,25 +2069,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.SearchUsers(childComplexity, args["query"].(string), args["limit"].(*int), args["usernameWeight"].(*float64), args["bioWeight"].(*float64)), true
-
-	case "Query.socialConnections":
-		if e.complexity.Query.SocialConnections == nil {
-			break
-		}
-
-		args, err := ec.field_Query_socialConnections_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.SocialConnections(childComplexity, args["socialAccountType"].(persist.SocialProvider), args["excludeAlreadyFollowing"].(*bool), args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
-
-	case "Query.socialQueries":
-		if e.complexity.Query.SocialQueries == nil {
-			break
-		}
-
-		return e.complexity.Query.SocialQueries(childComplexity), true
 
 	case "Query.splitById":
 		if e.complexity.Query.SplitByID == nil {
@@ -2367,13 +2278,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SetSpamPreferencePayload.Tokens(childComplexity), true
 
-	case "SocialAccounts.twitter":
-		if e.complexity.SocialAccounts.Twitter == nil {
-			break
-		}
-
-		return e.complexity.SocialAccounts.Twitter(childComplexity), true
-
 	case "SocialConnection.currentlyFollowing":
 		if e.complexity.SocialConnection.CurrentlyFollowing == nil {
 			break
@@ -2457,18 +2361,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SocialConnectionsEdge.Node(childComplexity), true
-
-	case "SocialQueries.socialConnections":
-		if e.complexity.SocialQueries.SocialConnections == nil {
-			break
-		}
-
-		args, err := ec.field_SocialQueries_socialConnections_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.SocialQueries.SocialConnections(childComplexity, args["socialAccountType"].(persist.SocialProvider), args["excludeAlreadyFollowing"].(*bool), args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	case "Split.assets":
 		if e.complexity.Split.Assets == nil {
@@ -2598,13 +2490,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SplitFiUser.Roles(childComplexity), true
-
-	case "SplitFiUser.socialAccounts":
-		if e.complexity.SplitFiUser.SocialAccounts == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.SocialAccounts(childComplexity), true
 
 	case "SplitFiUser.splits":
 		if e.complexity.SplitFiUser.Splits == nil {
@@ -2814,48 +2699,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Token.Version(childComplexity), true
 
-	case "TwitterSocialAccount.display":
-		if e.complexity.TwitterSocialAccount.Display == nil {
-			break
-		}
-
-		return e.complexity.TwitterSocialAccount.Display(childComplexity), true
-
-	case "TwitterSocialAccount.name":
-		if e.complexity.TwitterSocialAccount.Name == nil {
-			break
-		}
-
-		return e.complexity.TwitterSocialAccount.Name(childComplexity), true
-
-	case "TwitterSocialAccount.profileImageURL":
-		if e.complexity.TwitterSocialAccount.ProfileImageURL == nil {
-			break
-		}
-
-		return e.complexity.TwitterSocialAccount.ProfileImageURL(childComplexity), true
-
-	case "TwitterSocialAccount.social_id":
-		if e.complexity.TwitterSocialAccount.SocialID == nil {
-			break
-		}
-
-		return e.complexity.TwitterSocialAccount.SocialID(childComplexity), true
-
-	case "TwitterSocialAccount.type":
-		if e.complexity.TwitterSocialAccount.Type == nil {
-			break
-		}
-
-		return e.complexity.TwitterSocialAccount.Type(childComplexity), true
-
-	case "TwitterSocialAccount.username":
-		if e.complexity.TwitterSocialAccount.Username == nil {
-			break
-		}
-
-		return e.complexity.TwitterSocialAccount.Username(childComplexity), true
-
 	case "UnknownMedia.contentRenderURL":
 		if e.complexity.UnknownMedia.ContentRenderURL == nil {
 			break
@@ -2918,13 +2761,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UpdatePrimaryWalletPayload.Viewer(childComplexity), true
-
-	case "UpdateSocialAccountDisplayedPayload.viewer":
-		if e.complexity.UpdateSocialAccountDisplayedPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.UpdateSocialAccountDisplayedPayload.Viewer(childComplexity), true
 
 	case "UpdateSplitHiddenPayload.split":
 		if e.complexity.UpdateSplitHiddenPayload.Split == nil {
@@ -3045,6 +2881,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UsersConnection.PageInfo(childComplexity), true
 
+	case "VerifyEmailMagicLinkPayload.canSend":
+		if e.complexity.VerifyEmailMagicLinkPayload.CanSend == nil {
+			break
+		}
+
+		return e.complexity.VerifyEmailMagicLinkPayload.CanSend(childComplexity), true
+
 	case "VerifyEmailPayload.email":
 		if e.complexity.VerifyEmailPayload.Email == nil {
 			break
@@ -3155,13 +2998,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Viewer.Notifications(childComplexity, args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Viewer.socialAccounts":
-		if e.complexity.Viewer.SocialAccounts == nil {
-			break
-		}
-
-		return e.complexity.Viewer.SocialAccounts(childComplexity), true
-
 	case "Viewer.user":
 		if e.complexity.Viewer.User == nil {
 			break
@@ -3238,7 +3074,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
-	ec := executionContext{rc, e}
+	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAdminAddWalletInput,
 		ec.unmarshalInputAuthMechanism,
@@ -3263,7 +3099,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
 		ec.unmarshalInputUpdateEmailInput,
 		ec.unmarshalInputUpdateEmailNotificationSettingsInput,
-		ec.unmarshalInputUpdateSocialAccountDisplayedInput,
 		ec.unmarshalInputUpdateSplitHiddenInput,
 		ec.unmarshalInputUpdateSplitInfoInput,
 		ec.unmarshalInputUpdateSplitInput,
@@ -3272,24 +3107,40 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateUserInfoInput,
 		ec.unmarshalInputUploadPersistedQueriesInput,
 		ec.unmarshalInputVerifyEmailInput,
+		ec.unmarshalInputVerifyEmailMagicLinkInput,
 	)
 	first := true
 
 	switch rc.Operation.Operation {
 	case ast.Query:
 		return func(ctx context.Context) *graphql.Response {
-			if !first {
-				return nil
+			var response graphql.Response
+			var data graphql.Marshaler
+			if first {
+				first = false
+				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+				data = ec._Query(ctx, rc.Operation.SelectionSet)
+			} else {
+				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
+					result := <-ec.deferredResults
+					atomic.AddInt32(&ec.pendingDeferred, -1)
+					data = result.Result
+					response.Path = result.Path
+					response.Label = result.Label
+					response.Errors = result.Errors
+				} else {
+					return nil
+				}
 			}
-			first = false
-			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-			data := ec._Query(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
-
-			return &graphql.Response{
-				Data: buf.Bytes(),
+			response.Data = buf.Bytes()
+			if atomic.LoadInt32(&ec.deferred) > 0 {
+				hasNext := atomic.LoadInt32(&ec.pendingDeferred) > 0
+				response.HasNext = &hasNext
 			}
+
+			return &response
 		}
 	case ast.Mutation:
 		return func(ctx context.Context) *graphql.Response {
@@ -3332,20 +3183,42 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 type executionContext struct {
 	*graphql.OperationContext
 	*executableSchema
+	deferred        int32
+	pendingDeferred int32
+	deferredResults chan graphql.DeferredResult
+}
+
+func (ec *executionContext) processDeferredGroup(dg graphql.DeferredGroup) {
+	atomic.AddInt32(&ec.pendingDeferred, 1)
+	go func() {
+		ctx := graphql.WithFreshResponseContext(dg.Context)
+		dg.FieldSet.Dispatch(ctx)
+		ds := graphql.DeferredResult{
+			Path:   dg.Path,
+			Label:  dg.Label,
+			Result: dg.FieldSet,
+			Errors: graphql.GetErrors(ctx),
+		}
+		// null fields should bubble up
+		if dg.FieldSet.Invalids > 0 {
+			ds.Result = graphql.Null
+		}
+		ec.deferredResults <- ds
+	}()
 }
 
 func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapSchema(parsedSchema), nil
+	return introspection.WrapSchema(ec.Schema()), nil
 }
 
 func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
+	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 var sources = []*ast.Source{
@@ -3369,7 +3242,10 @@ directive @goField(
 # arguments that specify the level of access required.
 directive @authRequired on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
-directive @retoolAuth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+# Add @basicAuth to any field that should be secured by a basic auth token. For example, some fields
+# should only be usable by Retool, so they'd use @basicAuth(allowed: [Retool]). Other fields might be
+# accessible by both Retool and Monitoring, so they'd use @basicAuth(allowed: [Retool, Monitoring]).
+directive @basicAuth(allowed: [BasicAuthType!]!) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 directive @frontendBuildAuth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
@@ -3405,6 +3281,11 @@ scalar PubKey
 scalar DBID
 scalar Email
 
+enum BasicAuthType {
+  Retool
+  Monitoring
+}
+
 interface Node {
   id: ID!
 }
@@ -3426,7 +3307,6 @@ type SplitFiUser implements Node @goEmbedHelper {
   traits: String
   universal: Boolean
   roles: [Role] @goField(forceResolver: true)
-  socialAccounts: SocialAccounts @goField(forceResolver: true)
 
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
@@ -3723,6 +3603,7 @@ type NotificationsConnection @goEmbedHelper {
   pageInfo: PageInfo
 }
 
+# TODO remove social
 enum SocialAccountType {
   Twitter
 }
@@ -3733,23 +3614,9 @@ interface SocialAccount {
   display: Boolean!
 }
 
-type SocialAccounts {
-  twitter: TwitterSocialAccount
-}
-
-type TwitterSocialAccount implements SocialAccount {
-  type: SocialAccountType!
-  social_id: String!
-  name: String!
-  username: String!
-  profileImageURL: String!
-  display: Boolean!
-}
-
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: SplitFiUser @goField(forceResolver: true)
-  socialAccounts: SocialAccounts @goField(forceResolver: true)
   viewerSplits: [ViewerSplit] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
@@ -3927,8 +3794,6 @@ type SearchSplitsPayload {
 
 union SearchSplitsPayloadOrError = SearchSplitsPayload | ErrInvalidInput
 
-union SocialQueriesOrError = SocialQueries | ErrNotAuthorized | ErrNeedsToReconnectSocial
-
 type Query {
   node(id: ID!): Node
   viewer: ViewerOrError @authRequired
@@ -3937,7 +3802,6 @@ type Query {
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
   usersWithTrait(trait: String!): [SplitFiUser]
   tokenById(id: DBID!): TokenByIdOrError
-  generalAllowlist: [ChainAddress!]
   splitById(id: DBID!): SplitByIdPayloadOrError
   viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
@@ -3967,29 +3831,7 @@ type Query {
 
   # Retool Specific
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
-    @retoolAuth
-
-  socialConnections(
-    socialAccountType: SocialAccountType!
-    excludeAlreadyFollowing: Boolean
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): SocialConnectionsConnection @goField(forceResolver: true) @authRequired
-
-  socialQueries: SocialQueriesOrError @authRequired
-}
-
-type SocialQueries {
-  socialConnections(
-    socialAccountType: SocialAccountType!
-    excludeAlreadyFollowing: Boolean
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): SocialConnectionsConnection @goField(forceResolver: true) @authRequired
+    @basicAuth(allowed: [Retool])
 }
 
 input SetSpamPreferenceInput {
@@ -4075,7 +3917,11 @@ type ErrCommunityNotFound implements Error {
   message: String!
 }
 
-union AuthorizationError = ErrNoCookie | ErrInvalidToken | ErrDoesNotOwnRequiredToken
+union AuthorizationError =
+  ErrNoCookie
+  | ErrInvalidToken
+  | ErrSessionInvalidated
+  | ErrDoesNotOwnRequiredToken
 
 type ErrNotAuthorized implements Error {
   message: String!
@@ -4093,6 +3939,10 @@ type ErrNoCookie implements Error {
 }
 
 type ErrInvalidToken implements Error {
+  message: String!
+}
+
+type ErrSessionInvalidated implements Error {
   message: String!
 }
 
@@ -4281,6 +4131,16 @@ type PreverifyEmailPayload {
 
 union PreverifyEmailPayloadOrError = PreverifyEmailPayload | ErrInvalidInput
 
+input VerifyEmailMagicLinkInput {
+  email: Email! @scrub
+}
+
+type VerifyEmailMagicLinkPayload {
+  canSend: Boolean!
+}
+
+union VerifyEmailMagicLinkPayloadOrError = VerifyEmailMagicLinkPayload | ErrInvalidInput
+
 input UpdateEmailInput {
   email: Email! @scrub
 }
@@ -4302,7 +4162,7 @@ type UpdateEmailNotificationSettingsPayload {
 }
 
 union UpdateEmailNotificationSettingsPayloadOrError =
-    UpdateEmailNotificationSettingsPayload
+  UpdateEmailNotificationSettingsPayload
   | ErrInvalidInput
 
 type UnsubscribeFromEmailTypePayload {
@@ -4353,7 +4213,7 @@ input UpdateSplitInfoInput {
 input CreateSplitInput {
   name: String
   description: String
-  position: String!
+  logo: String
 }
 
 type CreateSplitPayload {
@@ -4470,40 +4330,6 @@ union UpdateUserExperiencePayloadOrError =
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type ConnectSocialAccountPayload {
-  viewer: Viewer
-}
-
-union ConnectSocialAccountPayloadOrError =
-    ConnectSocialAccountPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
-input UpdateSocialAccountDisplayedInput {
-  type: SocialAccountType!
-  displayed: Boolean!
-}
-
-type UpdateSocialAccountDisplayedPayload {
-  viewer: Viewer
-}
-
-union UpdateSocialAccountDisplayedPayloadOrError =
-    UpdateSocialAccountDisplayedPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-  | ErrNeedsToReconnectSocial
-
-type DisconnectSocialAccountPayload {
-  viewer: Viewer
-}
-
-union DisconnectSocialAccountPayloadOrError =
-    DisconnectSocialAccountPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-  | ErrNeedsToReconnectSocial
-
 type Mutation {
   # User Mutations
   addUserWallet(
@@ -4533,16 +4359,6 @@ type Mutation {
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout: LogoutPayload
 
-  connectSocialAccount(
-    input: SocialAuthMechanism!
-    display: Boolean! = true
-  ): ConnectSocialAccountPayloadOrError @authRequired
-  disconnectSocialAccount(accountType: SocialAccountType!): DisconnectSocialAccountPayloadOrError
-    @authRequired
-  updateSocialAccountDisplayed(
-    input: UpdateSocialAccountDisplayedInput!
-  ): UpdateSocialAccountDisplayedPayloadOrError @authRequired
-
   viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
   updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
@@ -4562,12 +4378,13 @@ type Mutation {
 
   preverifyEmail(input: PreverifyEmailInput!): PreverifyEmailPayloadOrError
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
+  verifyEmailMagicLink(input: VerifyEmailMagicLinkInput!): VerifyEmailMagicLinkPayloadOrError
 
   # Retool Specific Mutations
-  addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @retoolAuth
-  addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @retoolAuth
+  addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @basicAuth(allowed: [Retool])
+  addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @basicAuth(allowed: [Retool])
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
-    @retoolAuth
+    @basicAuth(allowed: [Retool])
 
   # Split Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
@@ -4585,19 +4402,55 @@ type Subscription {
 }
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
-	scalar _Any
-	scalar _FieldSet
-	directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
-	directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
+	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
+	directive @composeDirective(name: String!) repeatable on SCHEMA
 	directive @extends on OBJECT | INTERFACE
-
-	directive @key(fields: _FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
-	directive @external on FIELD_DEFINITION | OBJECT
+	directive @external on OBJECT | FIELD_DEFINITION
+	directive @key(fields: FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
+	directive @inaccessible on
+	  | ARGUMENT_DEFINITION
+	  | ENUM
+	  | ENUM_VALUE
+	  | FIELD_DEFINITION
+	  | INPUT_FIELD_DEFINITION
+	  | INPUT_OBJECT
+	  | INTERFACE
+	  | OBJECT
+	  | SCALAR
+	  | UNION
+	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
-	directive @shareable on OBJECT | FIELD_DEFINITION
-	directive @tag(name: String!) repeatable on FIELD_DEFINITION | INTERFACE | OBJECT | UNION | ARGUMENT_DEFINITION | SCALAR | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
-	directive @override(from: String!) on FIELD_DEFINITION
-	directive @inaccessible on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | INTERFACE | UNION | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+	directive @override(from: String!, label: String) on FIELD_DEFINITION
+	directive @policy(policies: [[federation__Policy!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
+	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
+	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
+	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
+	directive @shareable repeatable on FIELD_DEFINITION | OBJECT
+	directive @tag(name: String!) repeatable on
+	  | ARGUMENT_DEFINITION
+	  | ENUM
+	  | ENUM_VALUE
+	  | FIELD_DEFINITION
+	  | INPUT_FIELD_DEFINITION
+	  | INPUT_OBJECT
+	  | INTERFACE
+	  | OBJECT
+	  | SCALAR
+	  | UNION
+	scalar _Any
+	scalar FieldSet
+	scalar federation__Policy
+	scalar federation__Scope
 `, BuiltIn: true},
 	{Name: "../../federation/entity.graphql", Input: `
 type _Service {
@@ -4614,6 +4467,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_basicAuth_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []basicauth.AuthTokenType
+	if tmp, ok := rawArgs["allowed"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowed"))
+		arg0, err = ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["allowed"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) dir_restrictEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -4693,30 +4561,6 @@ func (ec *executionContext) field_Mutation_addWalletToUserUnchecked_args(ctx con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_connectSocialAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.SocialAuthMechanism
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSocialAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAuthMechanism(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	var arg1 bool
-	if tmp, ok := rawArgs["display"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("display"))
-		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["display"] = arg1
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4783,21 +4627,6 @@ func (ec *executionContext) field_Mutation_deleteSplit_args(ctx context.Context,
 		}
 	}
 	args["splitId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_disconnectSocialAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.SocialProvider
-	if tmp, ok := rawArgs["accountType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountType"))
-		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["accountType"] = arg0
 	return args, nil
 }
 
@@ -5005,21 +4834,6 @@ func (ec *executionContext) field_Mutation_updatePrimaryWallet_args(ctx context.
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSocialAccountDisplayed_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateSocialAccountDisplayedInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_updateSplitHidden_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -5117,6 +4931,21 @@ func (ec *executionContext) field_Mutation_uploadPersistedQueries_args(ctx conte
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_verifyEmailMagicLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.VerifyEmailMagicLinkInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNVerifyEmailMagicLinkInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5266,66 +5095,6 @@ func (ec *executionContext) field_Query_searchUsers_args(ctx context.Context, ra
 		}
 	}
 	args["bioWeight"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_socialConnections_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.SocialProvider
-	if tmp, ok := rawArgs["socialAccountType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("socialAccountType"))
-		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["socialAccountType"] = arg0
-	var arg1 *bool
-	if tmp, ok := rawArgs["excludeAlreadyFollowing"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("excludeAlreadyFollowing"))
-		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["excludeAlreadyFollowing"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["before"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["after"] = arg3
-	var arg4 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg4, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["first"] = arg4
-	var arg5 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-		arg5, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["last"] = arg5
 	return args, nil
 }
 
@@ -5482,66 +5251,6 @@ func (ec *executionContext) field_Query_viewerSplitById_args(ctx context.Context
 		}
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_SocialQueries_socialConnections_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.SocialProvider
-	if tmp, ok := rawArgs["socialAccountType"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("socialAccountType"))
-		arg0, err = ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["socialAccountType"] = arg0
-	var arg1 *bool
-	if tmp, ok := rawArgs["excludeAlreadyFollowing"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("excludeAlreadyFollowing"))
-		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["excludeAlreadyFollowing"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["before"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["after"] = arg3
-	var arg4 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg4, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["first"] = arg4
-	var arg5 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-		arg5, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["last"] = arg5
 	return args, nil
 }
 
@@ -5710,8 +5419,6 @@ func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(ctx context
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -5777,8 +5484,6 @@ func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(ctx context.
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
 				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
 			case "wallets":
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
@@ -6824,63 +6529,6 @@ func (ec *executionContext) fieldContext_ClearAllNotificationsPayload_notificati
 	return fc, nil
 }
 
-func (ec *executionContext) _ConnectSocialAccountPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.ConnectSocialAccountPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ConnectSocialAccountPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Viewer)
-	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ConnectSocialAccountPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConnectSocialAccountPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
-			case "email":
-				return ec.fieldContext_Viewer_email(ctx, field)
-			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CreateSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.CreateSplitPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateSplitPayload_split(ctx, field)
 	if err != nil {
@@ -7068,8 +6716,6 @@ func (ec *executionContext) fieldContext_CreateUserPayload_viewer(ctx context.Co
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -7297,63 +6943,6 @@ func (ec *executionContext) fieldContext_DeletedNode_dbid(ctx context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DisconnectSocialAccountPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.DisconnectSocialAccountPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DisconnectSocialAccountPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Viewer)
-	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DisconnectSocialAccountPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DisconnectSocialAccountPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
-			case "email":
-				return ec.fieldContext_Viewer_email(ctx, field)
-			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
 		},
 	}
 	return fc, nil
@@ -8058,6 +7647,50 @@ func (ec *executionContext) fieldContext_ErrNotAuthorized_cause(ctx context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type AuthorizationError does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ErrSessionInvalidated_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrSessionInvalidated) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ErrSessionInvalidated_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ErrSessionInvalidated_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ErrSessionInvalidated",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8898,8 +8531,6 @@ func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(ctx cont
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
 				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
 			case "wallets":
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
@@ -10065,8 +9696,6 @@ func (ec *executionContext) fieldContext_LoginPayload_viewer(ctx context.Context
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -10122,8 +9751,6 @@ func (ec *executionContext) fieldContext_LogoutPayload_viewer(ctx context.Contex
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -10329,7 +9956,7 @@ func (ec *executionContext) fieldContext_Mutation_addUserWallet(ctx context.Cont
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addUserWallet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10401,7 +10028,7 @@ func (ec *executionContext) fieldContext_Mutation_removeUserWallets(ctx context.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_removeUserWallets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10473,7 +10100,7 @@ func (ec *executionContext) fieldContext_Mutation_updateUserInfo(ctx context.Con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateUserInfo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10545,7 +10172,7 @@ func (ec *executionContext) fieldContext_Mutation_setSpamPreference(ctx context.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_setSpamPreference_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10597,7 +10224,7 @@ func (ec *executionContext) fieldContext_Mutation_refreshToken(ctx context.Conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_refreshToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10669,7 +10296,7 @@ func (ec *executionContext) fieldContext_Mutation_deepRefresh(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deepRefresh_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10721,7 +10348,7 @@ func (ec *executionContext) fieldContext_Mutation_getAuthNonce(ctx context.Conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_getAuthNonce_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10773,7 +10400,7 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10845,7 +10472,7 @@ func (ec *executionContext) fieldContext_Mutation_updateEmail(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10978,7 +10605,7 @@ func (ec *executionContext) fieldContext_Mutation_updateEmailNotificationSetting
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateEmailNotificationSettings_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11030,7 +10657,7 @@ func (ec *executionContext) fieldContext_Mutation_unsubscribeFromEmailType(ctx c
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_unsubscribeFromEmailType_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11082,7 +10709,7 @@ func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, fie
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_login_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11128,222 +10755,6 @@ func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, fi
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LogoutPayload", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_connectSocialAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_connectSocialAccount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ConnectSocialAccount(rctx, fc.Args["input"].(model.SocialAuthMechanism), fc.Args["display"].(bool))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.ConnectSocialAccountPayloadOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.ConnectSocialAccountPayloadOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.ConnectSocialAccountPayloadOrError)
-	fc.Result = res
-	return ec.marshalOConnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐConnectSocialAccountPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_connectSocialAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ConnectSocialAccountPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_connectSocialAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_disconnectSocialAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_disconnectSocialAccount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DisconnectSocialAccount(rctx, fc.Args["accountType"].(persist.SocialProvider))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.DisconnectSocialAccountPayloadOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.DisconnectSocialAccountPayloadOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.DisconnectSocialAccountPayloadOrError)
-	fc.Result = res
-	return ec.marshalODisconnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDisconnectSocialAccountPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_disconnectSocialAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DisconnectSocialAccountPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_disconnectSocialAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateSocialAccountDisplayed(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSocialAccountDisplayed(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateSocialAccountDisplayed(rctx, fc.Args["input"].(model.UpdateSocialAccountDisplayedInput))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.UpdateSocialAccountDisplayedPayloadOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSocialAccountDisplayedPayloadOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.UpdateSocialAccountDisplayedPayloadOrError)
-	fc.Result = res
-	return ec.marshalOUpdateSocialAccountDisplayedPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateSocialAccountDisplayed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateSocialAccountDisplayedPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSocialAccountDisplayed_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
 	}
 	return fc, nil
 }
@@ -11395,7 +10806,7 @@ func (ec *executionContext) fieldContext_Mutation_viewSplit(ctx context.Context,
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_viewSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11467,7 +10878,7 @@ func (ec *executionContext) fieldContext_Mutation_updateSplit(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11539,7 +10950,7 @@ func (ec *executionContext) fieldContext_Mutation_publishSplit(ctx context.Conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_publishSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11611,7 +11022,7 @@ func (ec *executionContext) fieldContext_Mutation_createSplit(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11683,7 +11094,7 @@ func (ec *executionContext) fieldContext_Mutation_updateSplitHidden(ctx context.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateSplitHidden_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11755,7 +11166,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteSplit(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11827,7 +11238,7 @@ func (ec *executionContext) fieldContext_Mutation_updateSplitOrder(ctx context.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateSplitOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11899,7 +11310,7 @@ func (ec *executionContext) fieldContext_Mutation_updateSplitInfo(ctx context.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateSplitInfo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12022,7 +11433,7 @@ func (ec *executionContext) fieldContext_Mutation_updateNotificationSettings(ctx
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateNotificationSettings_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12074,7 +11485,7 @@ func (ec *executionContext) fieldContext_Mutation_preverifyEmail(ctx context.Con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_preverifyEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12126,7 +11537,59 @@ func (ec *executionContext) fieldContext_Mutation_verifyEmail(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_verifyEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_verifyEmailMagicLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_verifyEmailMagicLink(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().VerifyEmailMagicLink(rctx, fc.Args["input"].(model.VerifyEmailMagicLinkInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.VerifyEmailMagicLinkPayloadOrError)
+	fc.Result = res
+	return ec.marshalOVerifyEmailMagicLinkPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkPayloadOrError(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_verifyEmailMagicLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type VerifyEmailMagicLinkPayloadOrError does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_verifyEmailMagicLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12149,10 +11612,14 @@ func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field 
 			return ec.resolvers.Mutation().AddRolesToUser(rctx, fc.Args["username"].(string), fc.Args["roles"].([]*persist.Role))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.RetoolAuth == nil {
-				return nil, errors.New("directive retoolAuth is not implemented")
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			if err != nil {
+				return nil, err
 			}
-			return ec.directives.RetoolAuth(ctx, nil, directive0)
+			if ec.directives.BasicAuth == nil {
+				return nil, errors.New("directive basicAuth is not implemented")
+			}
+			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
 
 		tmp, err := directive1(rctx)
@@ -12198,7 +11665,7 @@ func (ec *executionContext) fieldContext_Mutation_addRolesToUser(ctx context.Con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addRolesToUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12221,10 +11688,14 @@ func (ec *executionContext) _Mutation_addWalletToUserUnchecked(ctx context.Conte
 			return ec.resolvers.Mutation().AddWalletToUserUnchecked(rctx, fc.Args["input"].(model.AdminAddWalletInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.RetoolAuth == nil {
-				return nil, errors.New("directive retoolAuth is not implemented")
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			if err != nil {
+				return nil, err
 			}
-			return ec.directives.RetoolAuth(ctx, nil, directive0)
+			if ec.directives.BasicAuth == nil {
+				return nil, errors.New("directive basicAuth is not implemented")
+			}
+			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
 
 		tmp, err := directive1(rctx)
@@ -12270,7 +11741,7 @@ func (ec *executionContext) fieldContext_Mutation_addWalletToUserUnchecked(ctx c
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addWalletToUserUnchecked_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12293,10 +11764,14 @@ func (ec *executionContext) _Mutation_revokeRolesFromUser(ctx context.Context, f
 			return ec.resolvers.Mutation().RevokeRolesFromUser(rctx, fc.Args["username"].(string), fc.Args["roles"].([]*persist.Role))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.RetoolAuth == nil {
-				return nil, errors.New("directive retoolAuth is not implemented")
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			if err != nil {
+				return nil, err
 			}
-			return ec.directives.RetoolAuth(ctx, nil, directive0)
+			if ec.directives.BasicAuth == nil {
+				return nil, errors.New("directive basicAuth is not implemented")
+			}
+			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
 
 		tmp, err := directive1(rctx)
@@ -12342,7 +11817,7 @@ func (ec *executionContext) fieldContext_Mutation_revokeRolesFromUser(ctx contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_revokeRolesFromUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12414,7 +11889,7 @@ func (ec *executionContext) fieldContext_Mutation_uploadPersistedQueries(ctx con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_uploadPersistedQueries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12486,7 +11961,7 @@ func (ec *executionContext) fieldContext_Mutation_updatePrimaryWallet(ctx contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updatePrimaryWallet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12558,7 +12033,7 @@ func (ec *executionContext) fieldContext_Mutation_updateUserExperience(ctx conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateUserExperience_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -13910,7 +13385,7 @@ func (ec *executionContext) fieldContext_Query_node(ctx context.Context, field g
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_node_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14023,7 +13498,7 @@ func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_userByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14075,7 +13550,7 @@ func (ec *executionContext) fieldContext_Query_userById(ctx context.Context, fie
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_userById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14127,7 +13602,7 @@ func (ec *executionContext) fieldContext_Query_userByAddress(ctx context.Context
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_userByAddress_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14182,8 +13657,6 @@ func (ec *executionContext) fieldContext_Query_usersWithTrait(ctx context.Contex
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
 				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
 			case "wallets":
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
@@ -14207,7 +13680,7 @@ func (ec *executionContext) fieldContext_Query_usersWithTrait(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_usersWithTrait_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14259,54 +13732,7 @@ func (ec *executionContext) fieldContext_Query_tokenById(ctx context.Context, fi
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_tokenById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_generalAllowlist(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_generalAllowlist(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GeneralAllowlist(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*persist.ChainAddress)
-	fc.Result = res
-	return ec.marshalOChainAddress2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_generalAllowlist(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "address":
-				return ec.fieldContext_ChainAddress_address(ctx, field)
-			case "chain":
-				return ec.fieldContext_ChainAddress_chain(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ChainAddress", field.Name)
-		},
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14358,7 +13784,7 @@ func (ec *executionContext) fieldContext_Query_splitById(ctx context.Context, fi
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_splitById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14410,7 +13836,7 @@ func (ec *executionContext) fieldContext_Query_viewerSplitById(ctx context.Conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_viewerSplitById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14462,7 +13888,7 @@ func (ec *executionContext) fieldContext_Query_searchUsers(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_searchUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14514,7 +13940,7 @@ func (ec *executionContext) fieldContext_Query_searchSplits(ctx context.Context,
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_searchSplits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14537,10 +13963,14 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 			return ec.resolvers.Query().UsersByRole(rctx, fc.Args["role"].(persist.Role), fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.RetoolAuth == nil {
-				return nil, errors.New("directive retoolAuth is not implemented")
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			if err != nil {
+				return nil, err
 			}
-			return ec.directives.RetoolAuth(ctx, nil, directive0)
+			if ec.directives.BasicAuth == nil {
+				return nil, errors.New("directive basicAuth is not implemented")
+			}
+			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
 
 		tmp, err := directive1(rctx)
@@ -14592,146 +14022,7 @@ func (ec *executionContext) fieldContext_Query_usersByRole(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_usersByRole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_socialConnections(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_socialConnections(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().SocialConnections(rctx, fc.Args["socialAccountType"].(persist.SocialProvider), fc.Args["excludeAlreadyFollowing"].(*bool), fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.SocialConnectionsConnection); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.SocialConnectionsConnection`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.SocialConnectionsConnection)
-	fc.Result = res
-	return ec.marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_socialConnections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_SocialConnectionsConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_SocialConnectionsConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SocialConnectionsConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_socialConnections_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_socialQueries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_socialQueries(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().SocialQueries(rctx)
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.SocialQueriesOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.SocialQueriesOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.SocialQueriesOrError)
-	fc.Result = res
-	return ec.marshalOSocialQueriesOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialQueriesOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_socialQueries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SocialQueriesOrError does not have child fields")
-		},
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14853,7 +14144,7 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query___type_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -15384,8 +14675,6 @@ func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(ctx con
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -15441,8 +14730,6 @@ func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(c
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -15621,61 +14908,6 @@ func (ec *executionContext) fieldContext_SetSpamPreferencePayload_tokens(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _SocialAccounts_twitter(ctx context.Context, field graphql.CollectedField, obj *model.SocialAccounts) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialAccounts_twitter(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Twitter, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.TwitterSocialAccount)
-	fc.Result = res
-	return ec.marshalOTwitterSocialAccount2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterSocialAccount(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialAccounts_twitter(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialAccounts",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "type":
-				return ec.fieldContext_TwitterSocialAccount_type(ctx, field)
-			case "social_id":
-				return ec.fieldContext_TwitterSocialAccount_social_id(ctx, field)
-			case "name":
-				return ec.fieldContext_TwitterSocialAccount_name(ctx, field)
-			case "username":
-				return ec.fieldContext_TwitterSocialAccount_username(ctx, field)
-			case "profileImageURL":
-				return ec.fieldContext_TwitterSocialAccount_profileImageURL(ctx, field)
-			case "display":
-				return ec.fieldContext_TwitterSocialAccount_display(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TwitterSocialAccount", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SocialConnection_id(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SocialConnection_id(ctx, field)
 	if err != nil {
@@ -15770,8 +15002,6 @@ func (ec *executionContext) fieldContext_SocialConnection_splitFiUser(ctx contex
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
 				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
 			case "wallets":
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
@@ -16240,84 +15470,6 @@ func (ec *executionContext) fieldContext_SocialConnectionsEdge_cursor(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _SocialQueries_socialConnections(ctx context.Context, field graphql.CollectedField, obj *model.SocialQueries) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialQueries_socialConnections(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.SocialQueries().SocialConnections(rctx, obj, fc.Args["socialAccountType"].(persist.SocialProvider), fc.Args["excludeAlreadyFollowing"].(*bool), fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, obj, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.SocialConnectionsConnection); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.SocialConnectionsConnection`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.SocialConnectionsConnection)
-	fc.Result = res
-	return ec.marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialQueries_socialConnections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialQueries",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_SocialConnectionsConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_SocialConnectionsConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SocialConnectionsConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_SocialQueries_socialConnections_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Split_id(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Split_id(ctx, field)
 	if err != nil {
@@ -16754,7 +15906,7 @@ func (ec *executionContext) fieldContext_Split_assets(ctx context.Context, field
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Split_assets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -16824,7 +15976,7 @@ func (ec *executionContext) fieldContext_Split_shares(ctx context.Context, field
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Split_shares_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -17122,51 +16274,6 @@ func (ec *executionContext) fieldContext_SplitFiUser_roles(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _SplitFiUser_socialAccounts(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().SocialAccounts(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.SocialAccounts)
-	fc.Result = res
-	return ec.marshalOSocialAccounts2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAccounts(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_socialAccounts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "twitter":
-				return ec.fieldContext_SocialAccounts_twitter(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SocialAccounts", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SplitFiUser_wallets(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SplitFiUser_wallets(ctx, field)
 	if err != nil {
@@ -17395,7 +16502,7 @@ func (ec *executionContext) fieldContext_SplitFiUser_splitsByChain(ctx context.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_SplitFiUser_splitsByChain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -18468,270 +17575,6 @@ func (ec *executionContext) fieldContext_Token_isSpam(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _TwitterSocialAccount_type(ctx context.Context, field graphql.CollectedField, obj *model.TwitterSocialAccount) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TwitterSocialAccount_type(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.SocialProvider)
-	fc.Result = res
-	return ec.marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TwitterSocialAccount_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TwitterSocialAccount",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SocialAccountType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TwitterSocialAccount_social_id(ctx context.Context, field graphql.CollectedField, obj *model.TwitterSocialAccount) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TwitterSocialAccount_social_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SocialID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TwitterSocialAccount_social_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TwitterSocialAccount",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TwitterSocialAccount_name(ctx context.Context, field graphql.CollectedField, obj *model.TwitterSocialAccount) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TwitterSocialAccount_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TwitterSocialAccount_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TwitterSocialAccount",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TwitterSocialAccount_username(ctx context.Context, field graphql.CollectedField, obj *model.TwitterSocialAccount) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TwitterSocialAccount_username(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Username, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TwitterSocialAccount_username(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TwitterSocialAccount",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TwitterSocialAccount_profileImageURL(ctx context.Context, field graphql.CollectedField, obj *model.TwitterSocialAccount) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TwitterSocialAccount_profileImageURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProfileImageURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TwitterSocialAccount_profileImageURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TwitterSocialAccount",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TwitterSocialAccount_display(ctx context.Context, field graphql.CollectedField, obj *model.TwitterSocialAccount) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TwitterSocialAccount_display(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Display, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TwitterSocialAccount_display(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TwitterSocialAccount",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UnknownMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.UnknownMedia) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UnknownMedia_previewURLs(ctx, field)
 	if err != nil {
@@ -19003,8 +17846,6 @@ func (ec *executionContext) fieldContext_UnsubscribeFromEmailTypePayload_viewer(
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -19060,8 +17901,6 @@ func (ec *executionContext) fieldContext_UpdateEmailNotificationSettingsPayload_
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -19117,8 +17956,6 @@ func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(ctx context.C
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -19174,65 +18011,6 @@ func (ec *executionContext) fieldContext_UpdatePrimaryWalletPayload_viewer(ctx c
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
-			case "email":
-				return ec.fieldContext_Viewer_email(ctx, field)
-			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateSocialAccountDisplayedPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSocialAccountDisplayedPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateSocialAccountDisplayedPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Viewer)
-	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateSocialAccountDisplayedPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateSocialAccountDisplayedPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -19418,8 +18196,6 @@ func (ec *executionContext) fieldContext_UpdateSplitOrderPayload_viewer(ctx cont
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -19540,8 +18316,6 @@ func (ec *executionContext) fieldContext_UpdateUserExperiencePayload_viewer(ctx 
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -19597,8 +18371,6 @@ func (ec *executionContext) fieldContext_UpdateUserInfoPayload_viewer(ctx contex
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_Viewer_socialAccounts(ctx, field)
 			case "viewerSplits":
 				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
 			case "email":
@@ -19705,8 +18477,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
 				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
 			case "wallets":
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
@@ -20032,8 +18802,6 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(ctx context.Conte
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
 				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
 			case "wallets":
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
@@ -20151,6 +18919,50 @@ func (ec *executionContext) fieldContext_UsersConnection_pageInfo(ctx context.Co
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VerifyEmailMagicLinkPayload_canSend(ctx context.Context, field graphql.CollectedField, obj *model.VerifyEmailMagicLinkPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VerifyEmailMagicLinkPayload_canSend(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CanSend, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VerifyEmailMagicLinkPayload_canSend(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VerifyEmailMagicLinkPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -20764,8 +19576,6 @@ func (ec *executionContext) fieldContext_Viewer_user(ctx context.Context, field 
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
 				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "socialAccounts":
-				return ec.fieldContext_SplitFiUser_socialAccounts(ctx, field)
 			case "wallets":
 				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
 			case "primaryWallet":
@@ -20778,51 +19588,6 @@ func (ec *executionContext) fieldContext_Viewer_user(ctx context.Context, field 
 				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Viewer_socialAccounts(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_socialAccounts(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().SocialAccounts(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.SocialAccounts)
-	fc.Result = res
-	return ec.marshalOSocialAccounts2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAccounts(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Viewer_socialAccounts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Viewer",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "twitter":
-				return ec.fieldContext_SocialAccounts_twitter(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SocialAccounts", field.Name)
 		},
 	}
 	return fc, nil
@@ -20977,7 +19742,7 @@ func (ec *executionContext) fieldContext_Viewer_notifications(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Viewer_notifications_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -22838,7 +21603,7 @@ func (ec *executionContext) fieldContext___Type_fields(ctx context.Context, fiel
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field___Type_fields_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -23026,7 +21791,7 @@ func (ec *executionContext) fieldContext___Type_enumValues(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field___Type_enumValues_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -23205,8 +21970,6 @@ func (ec *executionContext) unmarshalInputAdminAddWalletInput(ctx context.Contex
 		}
 		switch k {
 		case "username":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23214,8 +21977,6 @@ func (ec *executionContext) unmarshalInputAdminAddWalletInput(ctx context.Contex
 			}
 			it.Username = data
 		case "chainAddress":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
 			data, err := ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, v)
 			if err != nil {
@@ -23223,8 +21984,6 @@ func (ec *executionContext) unmarshalInputAdminAddWalletInput(ctx context.Contex
 			}
 			it.ChainAddress = data
 		case "walletType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletType"))
 			data, err := ec.unmarshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx, v)
 			if err != nil {
@@ -23252,8 +22011,6 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 		}
 		switch k {
 		case "eoa":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eoa"))
 			data, err := ec.unmarshalOEoaAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEoaAuth(ctx, v)
 			if err != nil {
@@ -23261,8 +22018,6 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 			}
 			it.Eoa = data
 		case "gnosisSafe":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gnosisSafe"))
 			data, err := ec.unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx, v)
 			if err != nil {
@@ -23270,8 +22025,6 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 			}
 			it.GnosisSafe = data
 		case "debug":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
 				return ec.unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugAuth(ctx, v)
@@ -23300,8 +22053,6 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "magicLink":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("magicLink"))
 			data, err := ec.unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx, v)
 			if err != nil {
@@ -23329,8 +22080,6 @@ func (ec *executionContext) unmarshalInputChainAddressInput(ctx context.Context,
 		}
 		switch k {
 		case "address":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
 			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
@@ -23340,8 +22089,6 @@ func (ec *executionContext) unmarshalInputChainAddressInput(ctx context.Context,
 				return it, err
 			}
 		case "chain":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
 			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
@@ -23371,8 +22118,6 @@ func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, 
 		}
 		switch k {
 		case "pubKey":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pubKey"))
 			data, err := ec.unmarshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx, v)
 			if err != nil {
@@ -23382,8 +22127,6 @@ func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, 
 				return it, err
 			}
 		case "chain":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
 			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
@@ -23405,7 +22148,7 @@ func (ec *executionContext) unmarshalInputCreateSplitInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "position"}
+	fieldsInOrder := [...]string{"name", "description", "logo"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -23413,8 +22156,6 @@ func (ec *executionContext) unmarshalInputCreateSplitInput(ctx context.Context, 
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -23422,23 +22163,19 @@ func (ec *executionContext) unmarshalInputCreateSplitInput(ctx context.Context, 
 			}
 			it.Name = data
 		case "description":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Description = data
-		case "position":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+		case "logo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logo"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Position = data
+			it.Logo = data
 		}
 	}
 
@@ -23460,8 +22197,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		}
 		switch k {
 		case "username":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23469,8 +22204,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			}
 			it.Username = data
 		case "bio":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bio"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -23478,8 +22211,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			}
 			it.Bio = data
 		case "email":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
@@ -23487,8 +22218,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			}
 			it.Email = data
 		case "splitName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -23496,8 +22225,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			}
 			it.SplitName = data
 		case "splitDescription":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitDescription"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -23505,8 +22232,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			}
 			it.SplitDescription = data
 		case "splitPosition":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitPosition"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -23534,8 +22259,6 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 		}
 		switch k {
 		case "asUsername":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("asUsername"))
 			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
 			directive1 := func(ctx context.Context) (interface{}, error) {
@@ -23562,8 +22285,6 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "userId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
 				return ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
@@ -23592,8 +22313,6 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "chainAddresses":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddresses"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
 				return ec.unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx, v)
@@ -23622,8 +22341,6 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "debugToolsPassword":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debugToolsPassword"))
 			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
 			directive1 := func(ctx context.Context) (interface{}, error) {
@@ -23670,8 +22387,6 @@ func (ec *executionContext) unmarshalInputDebugSocialAuth(ctx context.Context, o
 		}
 		switch k {
 		case "provider":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
 			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, v)
 			if err != nil {
@@ -23679,8 +22394,6 @@ func (ec *executionContext) unmarshalInputDebugSocialAuth(ctx context.Context, o
 			}
 			it.Provider = data
 		case "id":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23688,8 +22401,6 @@ func (ec *executionContext) unmarshalInputDebugSocialAuth(ctx context.Context, o
 			}
 			it.ID = data
 		case "username":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23717,8 +22428,6 @@ func (ec *executionContext) unmarshalInputDeepRefreshInput(ctx context.Context, 
 		}
 		switch k {
 		case "chain":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
 			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
@@ -23746,8 +22455,6 @@ func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj inter
 		}
 		switch k {
 		case "chainPubKey":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainPubKey"))
 			data, err := ec.unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainPubKey(ctx, v)
 			if err != nil {
@@ -23755,8 +22462,6 @@ func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj inter
 			}
 			it.ChainPubKey = data
 		case "nonce":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nonce"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23764,8 +22469,6 @@ func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj inter
 			}
 			it.Nonce = data
 		case "signature":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signature"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23793,8 +22496,6 @@ func (ec *executionContext) unmarshalInputGnosisSafeAuth(ctx context.Context, ob
 		}
 		switch k {
 		case "address":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
 			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
@@ -23802,8 +22503,6 @@ func (ec *executionContext) unmarshalInputGnosisSafeAuth(ctx context.Context, ob
 			}
 			it.Address = data
 		case "nonce":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nonce"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23831,8 +22530,6 @@ func (ec *executionContext) unmarshalInputMagicLinkAuth(ctx context.Context, obj
 		}
 		switch k {
 		case "token":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23860,8 +22557,6 @@ func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.
 		}
 		switch k {
 		case "someoneFollowedYou":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneFollowedYou"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -23869,8 +22564,6 @@ func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.
 			}
 			it.SomeoneFollowedYou = data
 		case "someoneViewedYourSplit":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneViewedYourSplit"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -23898,8 +22591,6 @@ func (ec *executionContext) unmarshalInputPreverifyEmailInput(ctx context.Contex
 		}
 		switch k {
 		case "email":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
@@ -23927,8 +22618,6 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 		}
 		switch k {
 		case "splitId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
@@ -23936,8 +22625,6 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 			}
 			it.SplitID = data
 		case "editId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("editId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -23945,8 +22632,6 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 			}
 			it.EditID = data
 		case "caption":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("caption"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -23974,8 +22659,6 @@ func (ec *executionContext) unmarshalInputSetSpamPreferenceInput(ctx context.Con
 		}
 		switch k {
 		case "tokens":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokens"))
 			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
@@ -23983,8 +22666,6 @@ func (ec *executionContext) unmarshalInputSetSpamPreferenceInput(ctx context.Con
 			}
 			it.Tokens = data
 		case "isSpam":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isSpam"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -24012,8 +22693,6 @@ func (ec *executionContext) unmarshalInputSocialAuthMechanism(ctx context.Contex
 		}
 		switch k {
 		case "twitter":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("twitter"))
 			data, err := ec.unmarshalOTwitterAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterAuth(ctx, v)
 			if err != nil {
@@ -24021,8 +22700,6 @@ func (ec *executionContext) unmarshalInputSocialAuthMechanism(ctx context.Contex
 			}
 			it.Twitter = data
 		case "debug":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
 			data, err := ec.unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugSocialAuth(ctx, v)
 			if err != nil {
@@ -24050,8 +22727,6 @@ func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context
 		}
 		switch k {
 		case "splitId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
@@ -24059,8 +22734,6 @@ func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context
 			}
 			it.SplitID = data
 		case "position":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -24088,8 +22761,6 @@ func (ec *executionContext) unmarshalInputSplitShareInput(ctx context.Context, o
 		}
 		switch k {
 		case "splitId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
@@ -24097,8 +22768,6 @@ func (ec *executionContext) unmarshalInputSplitShareInput(ctx context.Context, o
 			}
 			it.SplitID = data
 		case "recipientAddress":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
 			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
@@ -24106,8 +22775,6 @@ func (ec *executionContext) unmarshalInputSplitShareInput(ctx context.Context, o
 			}
 			it.RecipientAddress = data
 		case "ownership":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownership"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -24135,8 +22802,6 @@ func (ec *executionContext) unmarshalInputTwitterAuth(ctx context.Context, obj i
 		}
 		switch k {
 		case "code":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -24164,8 +22829,6 @@ func (ec *executionContext) unmarshalInputUnsubscribeFromEmailTypeInput(ctx cont
 		}
 		switch k {
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx, v)
 			if err != nil {
@@ -24173,8 +22836,6 @@ func (ec *executionContext) unmarshalInputUnsubscribeFromEmailTypeInput(ctx cont
 			}
 			it.Type = data
 		case "token":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -24202,8 +22863,6 @@ func (ec *executionContext) unmarshalInputUpdateEmailInput(ctx context.Context, 
 		}
 		switch k {
 		case "email":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
@@ -24231,8 +22890,6 @@ func (ec *executionContext) unmarshalInputUpdateEmailNotificationSettingsInput(c
 		}
 		switch k {
 		case "unsubscribedFromAll":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unsubscribedFromAll"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -24240,52 +22897,12 @@ func (ec *executionContext) unmarshalInputUpdateEmailNotificationSettingsInput(c
 			}
 			it.UnsubscribedFromAll = data
 		case "unsubscribedFromNotifications":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unsubscribedFromNotifications"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.UnsubscribedFromNotifications = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateSocialAccountDisplayedInput(ctx context.Context, obj interface{}) (model.UpdateSocialAccountDisplayedInput, error) {
-	var it model.UpdateSocialAccountDisplayedInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"type", "displayed"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "type":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Type = data
-		case "displayed":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayed"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Displayed = data
 		}
 	}
 
@@ -24307,8 +22924,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitHiddenInput(ctx context.Con
 		}
 		switch k {
 		case "id":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
@@ -24316,8 +22931,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitHiddenInput(ctx context.Con
 			}
 			it.ID = data
 		case "hidden":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hidden"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -24345,8 +22958,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Conte
 		}
 		switch k {
 		case "id":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
@@ -24354,8 +22965,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Conte
 			}
 			it.ID = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -24363,8 +22972,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Conte
 			}
 			it.Name = data
 		case "description":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -24392,8 +22999,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 		}
 		switch k {
 		case "splitId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
@@ -24401,8 +23006,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			}
 			it.SplitID = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -24410,8 +23013,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			}
 			it.Name = data
 		case "description":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -24419,8 +23020,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			}
 			it.Description = data
 		case "caption":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("caption"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -24428,8 +23027,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			}
 			it.Caption = data
 		case "deletedCollections":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedCollections"))
 			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
@@ -24437,8 +23034,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			}
 			it.DeletedCollections = data
 		case "order":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
 			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
@@ -24446,8 +23041,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			}
 			it.Order = data
 		case "editId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("editId"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -24475,8 +23068,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitOrderInput(ctx context.Cont
 		}
 		switch k {
 		case "positions":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("positions"))
 			data, err := ec.unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx, v)
 			if err != nil {
@@ -24504,8 +23095,6 @@ func (ec *executionContext) unmarshalInputUpdateUserExperienceInput(ctx context.
 		}
 		switch k {
 		case "experienceType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("experienceType"))
 			data, err := ec.unmarshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx, v)
 			if err != nil {
@@ -24513,8 +23102,6 @@ func (ec *executionContext) unmarshalInputUpdateUserExperienceInput(ctx context.
 			}
 			it.ExperienceType = data
 		case "experienced":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("experienced"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -24542,8 +23129,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInfoInput(ctx context.Contex
 		}
 		switch k {
 		case "username":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -24551,8 +23136,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInfoInput(ctx context.Contex
 			}
 			it.Username = data
 		case "bio":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bio"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -24580,8 +23163,6 @@ func (ec *executionContext) unmarshalInputUploadPersistedQueriesInput(ctx contex
 		}
 		switch k {
 		case "persistedQueries":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("persistedQueries"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -24609,14 +23190,39 @@ func (ec *executionContext) unmarshalInputVerifyEmailInput(ctx context.Context, 
 		}
 		switch k {
 		case "token":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Token = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputVerifyEmailMagicLinkInput(ctx context.Context, obj interface{}) (model.VerifyEmailMagicLinkInput, error) {
+	var it model.VerifyEmailMagicLinkInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"email"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
 		}
 	}
 
@@ -24654,13 +23260,6 @@ func (ec *executionContext) _AddUserWalletPayloadOrError(ctx context.Context, se
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.AddUserWalletPayload:
-		return ec._AddUserWalletPayload(ctx, sel, &obj)
-	case *model.AddUserWalletPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._AddUserWalletPayload(ctx, sel, obj)
 	case model.ErrAuthenticationFailed:
 		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
 	case *model.ErrAuthenticationFailed:
@@ -24689,6 +23288,13 @@ func (ec *executionContext) _AddUserWalletPayloadOrError(ctx context.Context, se
 			return graphql.Null
 		}
 		return ec._ErrAddressOwnedByUser(ctx, sel, obj)
+	case model.AddUserWalletPayload:
+		return ec._AddUserWalletPayload(ctx, sel, &obj)
+	case *model.AddUserWalletPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AddUserWalletPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24698,13 +23304,6 @@ func (ec *executionContext) _AdminAddWalletPayloadOrError(ctx context.Context, s
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.AdminAddWalletPayload:
-		return ec._AdminAddWalletPayload(ctx, sel, &obj)
-	case *model.AdminAddWalletPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._AdminAddWalletPayload(ctx, sel, obj)
 	case model.ErrUserNotFound:
 		return ec._ErrUserNotFound(ctx, sel, &obj)
 	case *model.ErrUserNotFound:
@@ -24726,6 +23325,13 @@ func (ec *executionContext) _AdminAddWalletPayloadOrError(ctx context.Context, s
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.AdminAddWalletPayload:
+		return ec._AdminAddWalletPayload(ctx, sel, &obj)
+	case *model.AdminAddWalletPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AdminAddWalletPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24749,6 +23355,13 @@ func (ec *executionContext) _AuthorizationError(ctx context.Context, sel ast.Sel
 			return graphql.Null
 		}
 		return ec._ErrInvalidToken(ctx, sel, obj)
+	case model.ErrSessionInvalidated:
+		return ec._ErrSessionInvalidated(ctx, sel, &obj)
+	case *model.ErrSessionInvalidated:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrSessionInvalidated(ctx, sel, obj)
 	case model.ErrDoesNotOwnRequiredToken:
 		return ec._ErrDoesNotOwnRequiredToken(ctx, sel, &obj)
 	case *model.ErrDoesNotOwnRequiredToken:
@@ -24761,17 +23374,10 @@ func (ec *executionContext) _AuthorizationError(ctx context.Context, sel ast.Sel
 	}
 }
 
-func (ec *executionContext) _ConnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ConnectSocialAccountPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _CreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.CreateSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ConnectSocialAccountPayload:
-		return ec._ConnectSocialAccountPayload(ctx, sel, &obj)
-	case *model.ConnectSocialAccountPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ConnectSocialAccountPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -24786,15 +23392,6 @@ func (ec *executionContext) _ConnectSocialAccountPayloadOrError(ctx context.Cont
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _CreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.CreateSplitPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
 	case model.CreateSplitPayload:
 		return ec._CreateSplitPayload(ctx, sel, &obj)
 	case *model.CreateSplitPayload:
@@ -24802,20 +23399,6 @@ func (ec *executionContext) _CreateSplitPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._CreateSplitPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24825,13 +23408,6 @@ func (ec *executionContext) _CreateUserPayloadOrError(ctx context.Context, sel a
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.CreateUserPayload:
-		return ec._CreateUserPayload(ctx, sel, &obj)
-	case *model.CreateUserPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._CreateUserPayload(ctx, sel, obj)
 	case model.ErrAuthenticationFailed:
 		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
 	case *model.ErrAuthenticationFailed:
@@ -24867,6 +23443,13 @@ func (ec *executionContext) _CreateUserPayloadOrError(ctx context.Context, sel a
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.CreateUserPayload:
+		return ec._CreateUserPayload(ctx, sel, &obj)
+	case *model.CreateUserPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._CreateUserPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24876,13 +23459,6 @@ func (ec *executionContext) _DeepRefreshPayloadOrError(ctx context.Context, sel 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.DeepRefreshPayload:
-		return ec._DeepRefreshPayload(ctx, sel, &obj)
-	case *model.DeepRefreshPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DeepRefreshPayload(ctx, sel, obj)
 	case model.ErrNotAuthorized:
 		return ec._ErrNotAuthorized(ctx, sel, &obj)
 	case *model.ErrNotAuthorized:
@@ -24890,6 +23466,13 @@ func (ec *executionContext) _DeepRefreshPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.DeepRefreshPayload:
+		return ec._DeepRefreshPayload(ctx, sel, &obj)
+	case *model.DeepRefreshPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DeepRefreshPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24899,6 +23482,20 @@ func (ec *executionContext) _DeleteSplitPayloadOrError(ctx context.Context, sel 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
 	case model.DeleteSplitPayload:
 		return ec._DeleteSplitPayload(ctx, sel, &obj)
 	case *model.DeleteSplitPayload:
@@ -24906,57 +23503,6 @@ func (ec *executionContext) _DeleteSplitPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._DeleteSplitPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _DisconnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.DisconnectSocialAccountPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.DisconnectSocialAccountPayload:
-		return ec._DisconnectSocialAccountPayload(ctx, sel, &obj)
-	case *model.DisconnectSocialAccountPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DisconnectSocialAccountPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrNeedsToReconnectSocial:
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, &obj)
-	case *model.ErrNeedsToReconnectSocial:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25057,6 +23603,13 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 			return graphql.Null
 		}
 		return ec._ErrInvalidToken(ctx, sel, obj)
+	case model.ErrSessionInvalidated:
+		return ec._ErrSessionInvalidated(ctx, sel, &obj)
+	case *model.ErrSessionInvalidated:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrSessionInvalidated(ctx, sel, obj)
 	case model.ErrNeedsToReconnectSocial:
 		return ec._ErrNeedsToReconnectSocial(ctx, sel, &obj)
 	case *model.ErrNeedsToReconnectSocial:
@@ -25087,13 +23640,6 @@ func (ec *executionContext) _GetAuthNoncePayloadOrError(ctx context.Context, sel
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.AuthNonce:
-		return ec._AuthNonce(ctx, sel, &obj)
-	case *model.AuthNonce:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._AuthNonce(ctx, sel, obj)
 	case model.ErrDoesNotOwnRequiredToken:
 		return ec._ErrDoesNotOwnRequiredToken(ctx, sel, &obj)
 	case *model.ErrDoesNotOwnRequiredToken:
@@ -25101,6 +23647,13 @@ func (ec *executionContext) _GetAuthNoncePayloadOrError(ctx context.Context, sel
 			return graphql.Null
 		}
 		return ec._ErrDoesNotOwnRequiredToken(ctx, sel, obj)
+	case model.AuthNonce:
+		return ec._AuthNonce(ctx, sel, &obj)
+	case *model.AuthNonce:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AuthNonce(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25119,13 +23672,6 @@ func (ec *executionContext) _LoginPayloadOrError(ctx context.Context, sel ast.Se
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.LoginPayload:
-		return ec._LoginPayload(ctx, sel, &obj)
-	case *model.LoginPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._LoginPayload(ctx, sel, obj)
 	case model.ErrUserNotFound:
 		return ec._ErrUserNotFound(ctx, sel, &obj)
 	case *model.ErrUserNotFound:
@@ -25147,6 +23693,13 @@ func (ec *executionContext) _LoginPayloadOrError(ctx context.Context, sel ast.Se
 			return graphql.Null
 		}
 		return ec._ErrDoesNotOwnRequiredToken(ctx, sel, obj)
+	case model.LoginPayload:
+		return ec._LoginPayload(ctx, sel, &obj)
+	case *model.LoginPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._LoginPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25328,6 +23881,11 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case model.GroupedNotification:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._GroupedNotification(ctx, sel, obj)
 	case model.DeletedNode:
 		return ec._DeletedNode(ctx, sel, &obj)
 	case *model.DeletedNode:
@@ -25396,11 +23954,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Notification(ctx, sel, obj)
-	case model.GroupedNotification:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._GroupedNotification(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25424,13 +23977,6 @@ func (ec *executionContext) _PreverifyEmailPayloadOrError(ctx context.Context, s
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.PreverifyEmailPayload:
-		return ec._PreverifyEmailPayload(ctx, sel, &obj)
-	case *model.PreverifyEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PreverifyEmailPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25438,6 +23984,13 @@ func (ec *executionContext) _PreverifyEmailPayloadOrError(ctx context.Context, s
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.PreverifyEmailPayload:
+		return ec._PreverifyEmailPayload(ctx, sel, &obj)
+	case *model.PreverifyEmailPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._PreverifyEmailPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25447,13 +24000,6 @@ func (ec *executionContext) _PublishSplitPayloadOrError(ctx context.Context, sel
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.PublishSplitPayload:
-		return ec._PublishSplitPayload(ctx, sel, &obj)
-	case *model.PublishSplitPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PublishSplitPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25468,6 +24014,13 @@ func (ec *executionContext) _PublishSplitPayloadOrError(ctx context.Context, sel
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.PublishSplitPayload:
+		return ec._PublishSplitPayload(ctx, sel, &obj)
+	case *model.PublishSplitPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._PublishSplitPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25477,13 +24030,6 @@ func (ec *executionContext) _RefreshTokenPayloadOrError(ctx context.Context, sel
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.RefreshTokenPayload:
-		return ec._RefreshTokenPayload(ctx, sel, &obj)
-	case *model.RefreshTokenPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._RefreshTokenPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25498,6 +24044,13 @@ func (ec *executionContext) _RefreshTokenPayloadOrError(ctx context.Context, sel
 			return graphql.Null
 		}
 		return ec._ErrSyncFailed(ctx, sel, obj)
+	case model.RefreshTokenPayload:
+		return ec._RefreshTokenPayload(ctx, sel, &obj)
+	case *model.RefreshTokenPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._RefreshTokenPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25507,13 +24060,6 @@ func (ec *executionContext) _RemoveUserWalletsPayloadOrError(ctx context.Context
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.RemoveUserWalletsPayload:
-		return ec._RemoveUserWalletsPayload(ctx, sel, &obj)
-	case *model.RemoveUserWalletsPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._RemoveUserWalletsPayload(ctx, sel, obj)
 	case model.ErrNotAuthorized:
 		return ec._ErrNotAuthorized(ctx, sel, &obj)
 	case *model.ErrNotAuthorized:
@@ -25528,6 +24074,13 @@ func (ec *executionContext) _RemoveUserWalletsPayloadOrError(ctx context.Context
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.RemoveUserWalletsPayload:
+		return ec._RemoveUserWalletsPayload(ctx, sel, &obj)
+	case *model.RemoveUserWalletsPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._RemoveUserWalletsPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25537,13 +24090,6 @@ func (ec *executionContext) _ResendVerificationEmailPayloadOrError(ctx context.C
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ResendVerificationEmailPayload:
-		return ec._ResendVerificationEmailPayload(ctx, sel, &obj)
-	case *model.ResendVerificationEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ResendVerificationEmailPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25551,6 +24097,13 @@ func (ec *executionContext) _ResendVerificationEmailPayloadOrError(ctx context.C
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ResendVerificationEmailPayload:
+		return ec._ResendVerificationEmailPayload(ctx, sel, &obj)
+	case *model.ResendVerificationEmailPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ResendVerificationEmailPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25583,13 +24136,6 @@ func (ec *executionContext) _SearchSplitsPayloadOrError(ctx context.Context, sel
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SearchSplitsPayload:
-		return ec._SearchSplitsPayload(ctx, sel, &obj)
-	case *model.SearchSplitsPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SearchSplitsPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25597,6 +24143,13 @@ func (ec *executionContext) _SearchSplitsPayloadOrError(ctx context.Context, sel
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.SearchSplitsPayload:
+		return ec._SearchSplitsPayload(ctx, sel, &obj)
+	case *model.SearchSplitsPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SearchSplitsPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25606,13 +24159,6 @@ func (ec *executionContext) _SearchUsersPayloadOrError(ctx context.Context, sel 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SearchUsersPayload:
-		return ec._SearchUsersPayload(ctx, sel, &obj)
-	case *model.SearchUsersPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SearchUsersPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25620,6 +24166,13 @@ func (ec *executionContext) _SearchUsersPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.SearchUsersPayload:
+		return ec._SearchUsersPayload(ctx, sel, &obj)
+	case *model.SearchUsersPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SearchUsersPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25629,13 +24182,6 @@ func (ec *executionContext) _SetSpamPreferencePayloadOrError(ctx context.Context
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SetSpamPreferencePayload:
-		return ec._SetSpamPreferencePayload(ctx, sel, &obj)
-	case *model.SetSpamPreferencePayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SetSpamPreferencePayload(ctx, sel, obj)
 	case model.ErrNotAuthorized:
 		return ec._ErrNotAuthorized(ctx, sel, &obj)
 	case *model.ErrNotAuthorized:
@@ -25643,6 +24189,13 @@ func (ec *executionContext) _SetSpamPreferencePayloadOrError(ctx context.Context
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.SetSpamPreferencePayload:
+		return ec._SetSpamPreferencePayload(ctx, sel, &obj)
+	case *model.SetSpamPreferencePayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SetSpamPreferencePayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25652,13 +24205,6 @@ func (ec *executionContext) _SocialAccount(ctx context.Context, sel ast.Selectio
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.TwitterSocialAccount:
-		return ec._TwitterSocialAccount(ctx, sel, &obj)
-	case *model.TwitterSocialAccount:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._TwitterSocialAccount(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25682,36 +24228,6 @@ func (ec *executionContext) _SocialConnectionsOrError(ctx context.Context, sel a
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _SocialQueriesOrError(ctx context.Context, sel ast.SelectionSet, obj model.SocialQueriesOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.SocialQueries:
-		return ec._SocialQueries(ctx, sel, &obj)
-	case *model.SocialQueries:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SocialQueries(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrNeedsToReconnectSocial:
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, &obj)
-	case *model.ErrNeedsToReconnectSocial:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25811,13 +24327,6 @@ func (ec *executionContext) _UnsubscribeFromEmailTypePayloadOrError(ctx context.
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UnsubscribeFromEmailTypePayload:
-		return ec._UnsubscribeFromEmailTypePayload(ctx, sel, &obj)
-	case *model.UnsubscribeFromEmailTypePayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UnsubscribeFromEmailTypePayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25825,6 +24334,13 @@ func (ec *executionContext) _UnsubscribeFromEmailTypePayloadOrError(ctx context.
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.UnsubscribeFromEmailTypePayload:
+		return ec._UnsubscribeFromEmailTypePayload(ctx, sel, &obj)
+	case *model.UnsubscribeFromEmailTypePayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UnsubscribeFromEmailTypePayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25834,13 +24350,6 @@ func (ec *executionContext) _UpdateEmailNotificationSettingsPayloadOrError(ctx c
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateEmailNotificationSettingsPayload:
-		return ec._UpdateEmailNotificationSettingsPayload(ctx, sel, &obj)
-	case *model.UpdateEmailNotificationSettingsPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateEmailNotificationSettingsPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25848,6 +24357,13 @@ func (ec *executionContext) _UpdateEmailNotificationSettingsPayloadOrError(ctx c
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.UpdateEmailNotificationSettingsPayload:
+		return ec._UpdateEmailNotificationSettingsPayload(ctx, sel, &obj)
+	case *model.UpdateEmailNotificationSettingsPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateEmailNotificationSettingsPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25857,13 +24373,6 @@ func (ec *executionContext) _UpdateEmailPayloadOrError(ctx context.Context, sel 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateEmailPayload:
-		return ec._UpdateEmailPayload(ctx, sel, &obj)
-	case *model.UpdateEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateEmailPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25871,6 +24380,13 @@ func (ec *executionContext) _UpdateEmailPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.UpdateEmailPayload:
+		return ec._UpdateEmailPayload(ctx, sel, &obj)
+	case *model.UpdateEmailPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateEmailPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25880,6 +24396,20 @@ func (ec *executionContext) _UpdatePrimaryWalletPayloadOrError(ctx context.Conte
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
 	case model.UpdatePrimaryWalletPayload:
 		return ec._UpdatePrimaryWalletPayload(ctx, sel, &obj)
 	case *model.UpdatePrimaryWalletPayload:
@@ -25887,57 +24417,6 @@ func (ec *executionContext) _UpdatePrimaryWalletPayloadOrError(ctx context.Conte
 			return graphql.Null
 		}
 		return ec._UpdatePrimaryWalletPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateSocialAccountDisplayedPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSocialAccountDisplayedPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.UpdateSocialAccountDisplayedPayload:
-		return ec._UpdateSocialAccountDisplayedPayload(ctx, sel, &obj)
-	case *model.UpdateSocialAccountDisplayedPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSocialAccountDisplayedPayload(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrNeedsToReconnectSocial:
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, &obj)
-	case *model.ErrNeedsToReconnectSocial:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25947,13 +24426,6 @@ func (ec *executionContext) _UpdateSplitHiddenPayloadOrError(ctx context.Context
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateSplitHiddenPayload:
-		return ec._UpdateSplitHiddenPayload(ctx, sel, &obj)
-	case *model.UpdateSplitHiddenPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitHiddenPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25968,6 +24440,13 @@ func (ec *executionContext) _UpdateSplitHiddenPayloadOrError(ctx context.Context
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdateSplitHiddenPayload:
+		return ec._UpdateSplitHiddenPayload(ctx, sel, &obj)
+	case *model.UpdateSplitHiddenPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitHiddenPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25977,13 +24456,6 @@ func (ec *executionContext) _UpdateSplitInfoPayloadOrError(ctx context.Context, 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateSplitInfoPayload:
-		return ec._UpdateSplitInfoPayload(ctx, sel, &obj)
-	case *model.UpdateSplitInfoPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitInfoPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -25998,6 +24470,13 @@ func (ec *executionContext) _UpdateSplitInfoPayloadOrError(ctx context.Context, 
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdateSplitInfoPayload:
+		return ec._UpdateSplitInfoPayload(ctx, sel, &obj)
+	case *model.UpdateSplitInfoPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitInfoPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26007,13 +24486,6 @@ func (ec *executionContext) _UpdateSplitOrderPayloadOrError(ctx context.Context,
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateSplitOrderPayload:
-		return ec._UpdateSplitOrderPayload(ctx, sel, &obj)
-	case *model.UpdateSplitOrderPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitOrderPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -26028,6 +24500,13 @@ func (ec *executionContext) _UpdateSplitOrderPayloadOrError(ctx context.Context,
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdateSplitOrderPayload:
+		return ec._UpdateSplitOrderPayload(ctx, sel, &obj)
+	case *model.UpdateSplitOrderPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitOrderPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26037,13 +24516,6 @@ func (ec *executionContext) _UpdateSplitPayloadOrError(ctx context.Context, sel 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateSplitPayload:
-		return ec._UpdateSplitPayload(ctx, sel, &obj)
-	case *model.UpdateSplitPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -26058,6 +24530,13 @@ func (ec *executionContext) _UpdateSplitPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdateSplitPayload:
+		return ec._UpdateSplitPayload(ctx, sel, &obj)
+	case *model.UpdateSplitPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateSplitPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26067,13 +24546,6 @@ func (ec *executionContext) _UpdateUserExperiencePayloadOrError(ctx context.Cont
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateUserExperiencePayload:
-		return ec._UpdateUserExperiencePayload(ctx, sel, &obj)
-	case *model.UpdateUserExperiencePayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateUserExperiencePayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -26088,6 +24560,13 @@ func (ec *executionContext) _UpdateUserExperiencePayloadOrError(ctx context.Cont
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdateUserExperiencePayload:
+		return ec._UpdateUserExperiencePayload(ctx, sel, &obj)
+	case *model.UpdateUserExperiencePayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateUserExperiencePayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26097,13 +24576,6 @@ func (ec *executionContext) _UpdateUserInfoPayloadOrError(ctx context.Context, s
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UpdateUserInfoPayload:
-		return ec._UpdateUserInfoPayload(ctx, sel, &obj)
-	case *model.UpdateUserInfoPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateUserInfoPayload(ctx, sel, obj)
 	case model.ErrNotAuthorized:
 		return ec._ErrNotAuthorized(ctx, sel, &obj)
 	case *model.ErrNotAuthorized:
@@ -26125,6 +24597,13 @@ func (ec *executionContext) _UpdateUserInfoPayloadOrError(ctx context.Context, s
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.UpdateUserInfoPayload:
+		return ec._UpdateUserInfoPayload(ctx, sel, &obj)
+	case *model.UpdateUserInfoPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdateUserInfoPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26134,13 +24613,6 @@ func (ec *executionContext) _UploadPersistedQueriesPayloadOrError(ctx context.Co
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.UploadPersistedQueriesPayload:
-		return ec._UploadPersistedQueriesPayload(ctx, sel, &obj)
-	case *model.UploadPersistedQueriesPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UploadPersistedQueriesPayload(ctx, sel, obj)
 	case model.ErrNotAuthorized:
 		return ec._ErrNotAuthorized(ctx, sel, &obj)
 	case *model.ErrNotAuthorized:
@@ -26148,6 +24620,13 @@ func (ec *executionContext) _UploadPersistedQueriesPayloadOrError(ctx context.Co
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UploadPersistedQueriesPayload:
+		return ec._UploadPersistedQueriesPayload(ctx, sel, &obj)
+	case *model.UploadPersistedQueriesPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UploadPersistedQueriesPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26243,17 +24722,10 @@ func (ec *executionContext) _UserByUsernameOrError(ctx context.Context, sel ast.
 	}
 }
 
-func (ec *executionContext) _VerifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.VerifyEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _VerifyEmailMagicLinkPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.VerifyEmailMagicLinkPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.VerifyEmailPayload:
-		return ec._VerifyEmailPayload(ctx, sel, &obj)
-	case *model.VerifyEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._VerifyEmailPayload(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -26261,6 +24733,36 @@ func (ec *executionContext) _VerifyEmailPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.VerifyEmailMagicLinkPayload:
+		return ec._VerifyEmailMagicLinkPayload(ctx, sel, &obj)
+	case *model.VerifyEmailMagicLinkPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._VerifyEmailMagicLinkPayload(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _VerifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.VerifyEmailPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.VerifyEmailPayload:
+		return ec._VerifyEmailPayload(ctx, sel, &obj)
+	case *model.VerifyEmailPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._VerifyEmailPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26270,13 +24772,6 @@ func (ec *executionContext) _ViewSplitPayloadOrError(ctx context.Context, sel as
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ViewSplitPayload:
-		return ec._ViewSplitPayload(ctx, sel, &obj)
-	case *model.ViewSplitPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ViewSplitPayload(ctx, sel, obj)
 	case model.ErrAuthenticationFailed:
 		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
 	case *model.ErrAuthenticationFailed:
@@ -26284,6 +24779,13 @@ func (ec *executionContext) _ViewSplitPayloadOrError(ctx context.Context, sel as
 			return graphql.Null
 		}
 		return ec._ErrAuthenticationFailed(ctx, sel, obj)
+	case model.ViewSplitPayload:
+		return ec._ViewSplitPayload(ctx, sel, &obj)
+	case *model.ViewSplitPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ViewSplitPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26316,13 +24818,6 @@ func (ec *executionContext) _ViewerSplitByIdPayloadOrError(ctx context.Context, 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ViewerSplit:
-		return ec._ViewerSplit(ctx, sel, &obj)
-	case *model.ViewerSplit:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ViewerSplit(ctx, sel, obj)
 	case model.ErrSplitNotFound:
 		return ec._ErrSplitNotFound(ctx, sel, &obj)
 	case *model.ErrSplitNotFound:
@@ -26330,6 +24825,13 @@ func (ec *executionContext) _ViewerSplitByIdPayloadOrError(ctx context.Context, 
 			return graphql.Null
 		}
 		return ec._ErrSplitNotFound(ctx, sel, obj)
+	case model.ViewerSplit:
+		return ec._ViewerSplit(ctx, sel, &obj)
+	case *model.ViewerSplit:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ViewerSplit(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26343,24 +24845,35 @@ var addUserWalletPayloadImplementors = []string{"AddUserWalletPayload", "AddUser
 
 func (ec *executionContext) _AddUserWalletPayload(ctx context.Context, sel ast.SelectionSet, obj *model.AddUserWalletPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, addUserWalletPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddUserWalletPayload")
 		case "viewer":
-
 			out.Values[i] = ec._AddUserWalletPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26368,24 +24881,35 @@ var adminAddWalletPayloadImplementors = []string{"AdminAddWalletPayload", "Admin
 
 func (ec *executionContext) _AdminAddWalletPayload(ctx context.Context, sel ast.SelectionSet, obj *model.AdminAddWalletPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, adminAddWalletPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AdminAddWalletPayload")
 		case "user":
-
 			out.Values[i] = ec._AdminAddWalletPayload_user(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26393,42 +24917,33 @@ var assetImplementors = []string{"Asset", "Node"}
 
 func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, obj *model.Asset) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, assetImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Asset")
 		case "id":
-
 			out.Values[i] = ec._Asset_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "dbid":
-
 			out.Values[i] = ec._Asset_dbid(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
-
 			out.Values[i] = ec._Asset_version(ctx, field, obj)
-
 		case "ownerAddress":
-
 			out.Values[i] = ec._Asset_ownerAddress(ctx, field, obj)
-
 		case "balance":
-
 			out.Values[i] = ec._Asset_balance(ctx, field, obj)
-
 		case "token":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -26438,18 +24953,46 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26457,40 +25000,43 @@ var audioMediaImplementors = []string{"AudioMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _AudioMedia(ctx context.Context, sel ast.SelectionSet, obj *model.AudioMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, audioMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AudioMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._AudioMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._AudioMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._AudioMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._AudioMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._AudioMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26498,28 +25044,37 @@ var authNonceImplementors = []string{"AuthNonce", "GetAuthNoncePayloadOrError"}
 
 func (ec *executionContext) _AuthNonce(ctx context.Context, sel ast.SelectionSet, obj *model.AuthNonce) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, authNonceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AuthNonce")
 		case "nonce":
-
 			out.Values[i] = ec._AuthNonce_nonce(ctx, field, obj)
-
 		case "userExists":
-
 			out.Values[i] = ec._AuthNonce_userExists(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26527,28 +25082,37 @@ var chainAddressImplementors = []string{"ChainAddress", "SplitFiUserOrAddress"}
 
 func (ec *executionContext) _ChainAddress(ctx context.Context, sel ast.SelectionSet, obj *persist.ChainAddress) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, chainAddressImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ChainAddress")
 		case "address":
-
 			out.Values[i] = ec._ChainAddress_address(ctx, field, obj)
-
 		case "chain":
-
 			out.Values[i] = ec._ChainAddress_chain(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26556,28 +25120,37 @@ var chainPubKeyImplementors = []string{"ChainPubKey"}
 
 func (ec *executionContext) _ChainPubKey(ctx context.Context, sel ast.SelectionSet, obj *persist.ChainPubKey) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, chainPubKeyImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ChainPubKey")
 		case "pubKey":
-
 			out.Values[i] = ec._ChainPubKey_pubKey(ctx, field, obj)
-
 		case "chain":
-
 			out.Values[i] = ec._ChainPubKey_chain(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26585,28 +25158,37 @@ var chainSplitsImplementors = []string{"ChainSplits"}
 
 func (ec *executionContext) _ChainSplits(ctx context.Context, sel ast.SelectionSet, obj *model.ChainSplits) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, chainSplitsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ChainSplits")
 		case "chain":
-
 			out.Values[i] = ec._ChainSplits_chain(ctx, field, obj)
-
 		case "splits":
-
 			out.Values[i] = ec._ChainSplits_splits(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26614,28 +25196,37 @@ var chainTokensImplementors = []string{"ChainTokens"}
 
 func (ec *executionContext) _ChainTokens(ctx context.Context, sel ast.SelectionSet, obj *model.ChainTokens) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, chainTokensImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ChainTokens")
 		case "chain":
-
 			out.Values[i] = ec._ChainTokens_chain(ctx, field, obj)
-
 		case "tokens":
-
 			out.Values[i] = ec._ChainTokens_tokens(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26643,49 +25234,35 @@ var clearAllNotificationsPayloadImplementors = []string{"ClearAllNotificationsPa
 
 func (ec *executionContext) _ClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ClearAllNotificationsPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, clearAllNotificationsPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ClearAllNotificationsPayload")
 		case "notifications":
-
 			out.Values[i] = ec._ClearAllNotificationsPayload_notifications(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
-	return out
-}
 
-var connectSocialAccountPayloadImplementors = []string{"ConnectSocialAccountPayload", "ConnectSocialAccountPayloadOrError"}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 
-func (ec *executionContext) _ConnectSocialAccountPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ConnectSocialAccountPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, connectSocialAccountPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ConnectSocialAccountPayload")
-		case "viewer":
-
-			out.Values[i] = ec._ConnectSocialAccountPayload_viewer(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
 	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
+
 	return out
 }
 
@@ -26693,24 +25270,35 @@ var createSplitPayloadImplementors = []string{"CreateSplitPayload", "CreateSplit
 
 func (ec *executionContext) _CreateSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreateSplitPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, createSplitPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateSplitPayload")
 		case "split":
-
 			out.Values[i] = ec._CreateSplitPayload_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26718,32 +25306,39 @@ var createUserPayloadImplementors = []string{"CreateUserPayload", "CreateUserPay
 
 func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreateUserPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, createUserPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateUserPayload")
 		case "userId":
-
 			out.Values[i] = ec._CreateUserPayload_userId(ctx, field, obj)
-
 		case "splitId":
-
 			out.Values[i] = ec._CreateUserPayload_splitId(ctx, field, obj)
-
 		case "viewer":
-
 			out.Values[i] = ec._CreateUserPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26751,28 +25346,37 @@ var deepRefreshPayloadImplementors = []string{"DeepRefreshPayload", "DeepRefresh
 
 func (ec *executionContext) _DeepRefreshPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeepRefreshPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deepRefreshPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DeepRefreshPayload")
 		case "chain":
-
 			out.Values[i] = ec._DeepRefreshPayload_chain(ctx, field, obj)
-
 		case "submitted":
-
 			out.Values[i] = ec._DeepRefreshPayload_submitted(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26780,24 +25384,35 @@ var deleteSplitPayloadImplementors = []string{"DeleteSplitPayload", "DeleteSplit
 
 func (ec *executionContext) _DeleteSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteSplitPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deleteSplitPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DeleteSplitPayload")
 		case "deletedId":
-
 			out.Values[i] = ec._DeleteSplitPayload_deletedId(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26805,59 +25420,43 @@ var deletedNodeImplementors = []string{"DeletedNode", "Node"}
 
 func (ec *executionContext) _DeletedNode(ctx context.Context, sel ast.SelectionSet, obj *model.DeletedNode) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deletedNodeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DeletedNode")
 		case "id":
-
 			out.Values[i] = ec._DeletedNode_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "dbid":
-
 			out.Values[i] = ec._DeletedNode_dbid(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
-	return out
-}
 
-var disconnectSocialAccountPayloadImplementors = []string{"DisconnectSocialAccountPayload", "DisconnectSocialAccountPayloadOrError"}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 
-func (ec *executionContext) _DisconnectSocialAccountPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DisconnectSocialAccountPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, disconnectSocialAccountPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DisconnectSocialAccountPayload")
-		case "viewer":
-
-			out.Values[i] = ec._DisconnectSocialAccountPayload_viewer(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
 	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
+
 	return out
 }
 
@@ -26865,34 +25464,43 @@ var emailNotificationSettingsImplementors = []string{"EmailNotificationSettings"
 
 func (ec *executionContext) _EmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, obj *model.EmailNotificationSettings) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, emailNotificationSettingsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EmailNotificationSettings")
 		case "unsubscribedFromAll":
-
 			out.Values[i] = ec._EmailNotificationSettings_unsubscribedFromAll(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "unsubscribedFromNotifications":
-
 			out.Values[i] = ec._EmailNotificationSettings_unsubscribedFromNotifications(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26900,27 +25508,38 @@ var errAddressOwnedByUserImplementors = []string{"ErrAddressOwnedByUser", "AddUs
 
 func (ec *executionContext) _ErrAddressOwnedByUser(ctx context.Context, sel ast.SelectionSet, obj *model.ErrAddressOwnedByUser) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errAddressOwnedByUserImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrAddressOwnedByUser")
 		case "message":
-
 			out.Values[i] = ec._ErrAddressOwnedByUser_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26928,27 +25547,38 @@ var errAuthenticationFailedImplementors = []string{"ErrAuthenticationFailed", "A
 
 func (ec *executionContext) _ErrAuthenticationFailed(ctx context.Context, sel ast.SelectionSet, obj *model.ErrAuthenticationFailed) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errAuthenticationFailedImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrAuthenticationFailed")
 		case "message":
-
 			out.Values[i] = ec._ErrAuthenticationFailed_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26956,27 +25586,38 @@ var errCollectionNotFoundImplementors = []string{"ErrCollectionNotFound", "Error
 
 func (ec *executionContext) _ErrCollectionNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrCollectionNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errCollectionNotFoundImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrCollectionNotFound")
 		case "message":
-
 			out.Values[i] = ec._ErrCollectionNotFound_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -26984,27 +25625,38 @@ var errCommunityNotFoundImplementors = []string{"ErrCommunityNotFound", "Error"}
 
 func (ec *executionContext) _ErrCommunityNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrCommunityNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errCommunityNotFoundImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrCommunityNotFound")
 		case "message":
-
 			out.Values[i] = ec._ErrCommunityNotFound_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27012,69 +25664,87 @@ var errDoesNotOwnRequiredTokenImplementors = []string{"ErrDoesNotOwnRequiredToke
 
 func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel ast.SelectionSet, obj *model.ErrDoesNotOwnRequiredToken) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errDoesNotOwnRequiredTokenImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrDoesNotOwnRequiredToken")
 		case "message":
-
 			out.Values[i] = ec._ErrDoesNotOwnRequiredToken_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SocialConnectionsOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RefreshTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "DisconnectSocialAccountPayloadOrError"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SocialConnectionsOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RefreshTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrInvalidInput")
 		case "message":
-
 			out.Values[i] = ec._ErrInvalidInput_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "parameters":
-
 			out.Values[i] = ec._ErrInvalidInput_parameters(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "reasons":
-
 			out.Values[i] = ec._ErrInvalidInput_reasons(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27082,62 +25752,82 @@ var errInvalidTokenImplementors = []string{"ErrInvalidToken", "AuthorizationErro
 
 func (ec *executionContext) _ErrInvalidToken(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidToken) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidTokenImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrInvalidToken")
 		case "message":
-
 			out.Values[i] = ec._ErrInvalidToken_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
-var errNeedsToReconnectSocialImplementors = []string{"ErrNeedsToReconnectSocial", "SocialQueriesOrError", "Error", "UpdateSocialAccountDisplayedPayloadOrError", "DisconnectSocialAccountPayloadOrError"}
+var errNeedsToReconnectSocialImplementors = []string{"ErrNeedsToReconnectSocial", "Error"}
 
 func (ec *executionContext) _ErrNeedsToReconnectSocial(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNeedsToReconnectSocial) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNeedsToReconnectSocialImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrNeedsToReconnectSocial")
 		case "socialAccountType":
-
 			out.Values[i] = ec._ErrNeedsToReconnectSocial_socialAccountType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "message":
-
 			out.Values[i] = ec._ErrNeedsToReconnectSocial_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27145,62 +25835,121 @@ var errNoCookieImplementors = []string{"ErrNoCookie", "AuthorizationError", "Err
 
 func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNoCookie) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNoCookieImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrNoCookie")
 		case "message":
-
 			out.Values[i] = ec._ErrNoCookie_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "SocialQueriesOrError", "SetSpamPreferencePayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "Error", "DeepRefreshPayloadOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError", "ConnectSocialAccountPayloadOrError", "UpdateSocialAccountDisplayedPayloadOrError", "DisconnectSocialAccountPayloadOrError"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "SetSpamPreferencePayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "Error", "DeepRefreshPayloadOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrNotAuthorized")
 		case "message":
-
 			out.Values[i] = ec._ErrNotAuthorized_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "cause":
-
 			out.Values[i] = ec._ErrNotAuthorized_cause(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var errSessionInvalidatedImplementors = []string{"ErrSessionInvalidated", "AuthorizationError", "Error"}
+
+func (ec *executionContext) _ErrSessionInvalidated(ctx context.Context, sel ast.SelectionSet, obj *model.ErrSessionInvalidated) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, errSessionInvalidatedImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ErrSessionInvalidated")
+		case "message":
+			out.Values[i] = ec._ErrSessionInvalidated_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27208,27 +25957,38 @@ var errSplitNotFoundImplementors = []string{"ErrSplitNotFound", "Error", "SplitB
 
 func (ec *executionContext) _ErrSplitNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrSplitNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errSplitNotFoundImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrSplitNotFound")
 		case "message":
-
 			out.Values[i] = ec._ErrSplitNotFound_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27236,27 +25996,38 @@ var errSyncFailedImplementors = []string{"ErrSyncFailed", "RefreshTokenPayloadOr
 
 func (ec *executionContext) _ErrSyncFailed(ctx context.Context, sel ast.SelectionSet, obj *model.ErrSyncFailed) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errSyncFailedImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrSyncFailed")
 		case "message":
-
 			out.Values[i] = ec._ErrSyncFailed_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27264,27 +26035,38 @@ var errTokenNotFoundImplementors = []string{"ErrTokenNotFound", "TokenByIdOrErro
 
 func (ec *executionContext) _ErrTokenNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrTokenNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errTokenNotFoundImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrTokenNotFound")
 		case "message":
-
 			out.Values[i] = ec._ErrTokenNotFound_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27292,27 +26074,38 @@ var errUserAlreadyExistsImplementors = []string{"ErrUserAlreadyExists", "Error",
 
 func (ec *executionContext) _ErrUserAlreadyExists(ctx context.Context, sel ast.SelectionSet, obj *model.ErrUserAlreadyExists) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errUserAlreadyExistsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrUserAlreadyExists")
 		case "message":
-
 			out.Values[i] = ec._ErrUserAlreadyExists_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27320,27 +26113,38 @@ var errUserNotFoundImplementors = []string{"ErrUserNotFound", "UserByUsernameOrE
 
 func (ec *executionContext) _ErrUserNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrUserNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errUserNotFoundImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrUserNotFound")
 		case "message":
-
 			out.Values[i] = ec._ErrUserNotFound_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27348,27 +26152,38 @@ var errUsernameNotAvailableImplementors = []string{"ErrUsernameNotAvailable", "U
 
 func (ec *executionContext) _ErrUsernameNotAvailable(ctx context.Context, sel ast.SelectionSet, obj *model.ErrUsernameNotAvailable) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errUsernameNotAvailableImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ErrUsernameNotAvailable")
 		case "message":
-
 			out.Values[i] = ec._ErrUsernameNotAvailable_message(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27376,44 +26191,45 @@ var gIFMediaImplementors = []string{"GIFMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _GIFMedia(ctx context.Context, sel ast.SelectionSet, obj *model.GIFMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, gIFMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("GIFMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._GIFMedia_previewURLs(ctx, field, obj)
-
 		case "staticPreviewURLs":
-
 			out.Values[i] = ec._GIFMedia_staticPreviewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._GIFMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._GIFMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._GIFMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._GIFMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27421,40 +26237,43 @@ var gltfMediaImplementors = []string{"GltfMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _GltfMedia(ctx context.Context, sel ast.SelectionSet, obj *model.GltfMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, gltfMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("GltfMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._GltfMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._GltfMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._GltfMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._GltfMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._GltfMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27462,28 +26281,37 @@ var groupNotificationUserEdgeImplementors = []string{"GroupNotificationUserEdge"
 
 func (ec *executionContext) _GroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, obj *model.GroupNotificationUserEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, groupNotificationUserEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("GroupNotificationUserEdge")
 		case "node":
-
 			out.Values[i] = ec._GroupNotificationUserEdge_node(ctx, field, obj)
-
 		case "cursor":
-
 			out.Values[i] = ec._GroupNotificationUserEdge_cursor(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27491,28 +26319,37 @@ var groupNotificationUsersConnectionImplementors = []string{"GroupNotificationUs
 
 func (ec *executionContext) _GroupNotificationUsersConnection(ctx context.Context, sel ast.SelectionSet, obj *model.GroupNotificationUsersConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, groupNotificationUsersConnectionImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("GroupNotificationUsersConnection")
 		case "edges":
-
 			out.Values[i] = ec._GroupNotificationUsersConnection_edges(ctx, field, obj)
-
 		case "pageInfo":
-
 			out.Values[i] = ec._GroupNotificationUsersConnection_pageInfo(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27520,40 +26357,43 @@ var htmlMediaImplementors = []string{"HtmlMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _HtmlMedia(ctx context.Context, sel ast.SelectionSet, obj *model.HTMLMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, htmlMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HtmlMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._HtmlMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._HtmlMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._HtmlMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._HtmlMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._HtmlMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27561,40 +26401,43 @@ var imageMediaImplementors = []string{"ImageMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _ImageMedia(ctx context.Context, sel ast.SelectionSet, obj *model.ImageMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, imageMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ImageMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._ImageMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._ImageMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._ImageMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._ImageMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._ImageMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27602,40 +26445,43 @@ var invalidMediaImplementors = []string{"InvalidMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _InvalidMedia(ctx context.Context, sel ast.SelectionSet, obj *model.InvalidMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, invalidMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("InvalidMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._InvalidMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._InvalidMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._InvalidMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._InvalidMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._InvalidMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27643,40 +26489,43 @@ var jsonMediaImplementors = []string{"JsonMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _JsonMedia(ctx context.Context, sel ast.SelectionSet, obj *model.JSONMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, jsonMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("JsonMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._JsonMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._JsonMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._JsonMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._JsonMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._JsonMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27684,28 +26533,37 @@ var loginPayloadImplementors = []string{"LoginPayload", "LoginPayloadOrError"}
 
 func (ec *executionContext) _LoginPayload(ctx context.Context, sel ast.SelectionSet, obj *model.LoginPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, loginPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LoginPayload")
 		case "userId":
-
 			out.Values[i] = ec._LoginPayload_userId(ctx, field, obj)
-
 		case "viewer":
-
 			out.Values[i] = ec._LoginPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27713,24 +26571,35 @@ var logoutPayloadImplementors = []string{"LogoutPayload"}
 
 func (ec *executionContext) _LogoutPayload(ctx context.Context, sel ast.SelectionSet, obj *model.LogoutPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, logoutPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LogoutPayload")
 		case "viewer":
-
 			out.Values[i] = ec._LogoutPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27738,32 +26607,39 @@ var mediaDimensionsImplementors = []string{"MediaDimensions"}
 
 func (ec *executionContext) _MediaDimensions(ctx context.Context, sel ast.SelectionSet, obj *model.MediaDimensions) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, mediaDimensionsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MediaDimensions")
 		case "width":
-
 			out.Values[i] = ec._MediaDimensions_width(ctx, field, obj)
-
 		case "height":
-
 			out.Values[i] = ec._MediaDimensions_height(ctx, field, obj)
-
 		case "aspectRatio":
-
 			out.Values[i] = ec._MediaDimensions_aspectRatio(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -27776,7 +26652,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	})
 
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -27787,223 +26663,157 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "addUserWallet":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addUserWallet(ctx, field)
 			})
-
 		case "removeUserWallets":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_removeUserWallets(ctx, field)
 			})
-
 		case "updateUserInfo":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateUserInfo(ctx, field)
 			})
-
 		case "setSpamPreference":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setSpamPreference(ctx, field)
 			})
-
 		case "refreshToken":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_refreshToken(ctx, field)
 			})
-
 		case "deepRefresh":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deepRefresh(ctx, field)
 			})
-
 		case "getAuthNonce":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_getAuthNonce(ctx, field)
 			})
-
 		case "createUser":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createUser(ctx, field)
 			})
-
 		case "updateEmail":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateEmail(ctx, field)
 			})
-
 		case "resendVerificationEmail":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_resendVerificationEmail(ctx, field)
 			})
-
 		case "updateEmailNotificationSettings":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateEmailNotificationSettings(ctx, field)
 			})
-
 		case "unsubscribeFromEmailType":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_unsubscribeFromEmailType(ctx, field)
 			})
-
 		case "login":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_login(ctx, field)
 			})
-
 		case "logout":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_logout(ctx, field)
 			})
-
-		case "connectSocialAccount":
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_connectSocialAccount(ctx, field)
-			})
-
-		case "disconnectSocialAccount":
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_disconnectSocialAccount(ctx, field)
-			})
-
-		case "updateSocialAccountDisplayed":
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSocialAccountDisplayed(ctx, field)
-			})
-
 		case "viewSplit":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_viewSplit(ctx, field)
 			})
-
 		case "updateSplit":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateSplit(ctx, field)
 			})
-
 		case "publishSplit":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_publishSplit(ctx, field)
 			})
-
 		case "createSplit":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createSplit(ctx, field)
 			})
-
 		case "updateSplitHidden":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateSplitHidden(ctx, field)
 			})
-
 		case "deleteSplit":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteSplit(ctx, field)
 			})
-
 		case "updateSplitOrder":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateSplitOrder(ctx, field)
 			})
-
 		case "updateSplitInfo":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateSplitInfo(ctx, field)
 			})
-
 		case "clearAllNotifications":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_clearAllNotifications(ctx, field)
 			})
-
 		case "updateNotificationSettings":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateNotificationSettings(ctx, field)
 			})
-
 		case "preverifyEmail":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_preverifyEmail(ctx, field)
 			})
-
 		case "verifyEmail":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_verifyEmail(ctx, field)
 			})
-
+		case "verifyEmailMagicLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_verifyEmailMagicLink(ctx, field)
+			})
 		case "addRolesToUser":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addRolesToUser(ctx, field)
 			})
-
 		case "addWalletToUserUnchecked":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addWalletToUserUnchecked(ctx, field)
 			})
-
 		case "revokeRolesFromUser":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_revokeRolesFromUser(ctx, field)
 			})
-
 		case "uploadPersistedQueries":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_uploadPersistedQueries(ctx, field)
 			})
-
 		case "updatePrimaryWallet":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updatePrimaryWallet(ctx, field)
 			})
-
 		case "updateUserExperience":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateUserExperience(ctx, field)
 			})
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28011,28 +26821,37 @@ var notificationEdgeImplementors = []string{"NotificationEdge"}
 
 func (ec *executionContext) _NotificationEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NotificationEdge")
 		case "node":
-
 			out.Values[i] = ec._NotificationEdge_node(ctx, field, obj)
-
 		case "cursor":
-
 			out.Values[i] = ec._NotificationEdge_cursor(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28040,28 +26859,37 @@ var notificationSettingsImplementors = []string{"NotificationSettings"}
 
 func (ec *executionContext) _NotificationSettings(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationSettings) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationSettingsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NotificationSettings")
 		case "someoneFollowedYou":
-
 			out.Values[i] = ec._NotificationSettings_someoneFollowedYou(ctx, field, obj)
-
 		case "someoneViewedYourSplit":
-
 			out.Values[i] = ec._NotificationSettings_someoneViewedYourSplit(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28069,32 +26897,39 @@ var notificationsConnectionImplementors = []string{"NotificationsConnection"}
 
 func (ec *executionContext) _NotificationsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationsConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationsConnectionImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NotificationsConnection")
 		case "edges":
-
 			out.Values[i] = ec._NotificationsConnection_edges(ctx, field, obj)
-
 		case "unseenCount":
-
 			out.Values[i] = ec._NotificationsConnection_unseenCount(ctx, field, obj)
-
 		case "pageInfo":
-
 			out.Values[i] = ec._NotificationsConnection_pageInfo(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28102,59 +26937,60 @@ var pageInfoImplementors = []string{"PageInfo"}
 
 func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PageInfo")
 		case "total":
-
 			out.Values[i] = ec._PageInfo_total(ctx, field, obj)
-
 		case "size":
-
 			out.Values[i] = ec._PageInfo_size(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "hasPreviousPage":
-
 			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "hasNextPage":
-
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "startCursor":
-
 			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "endCursor":
-
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28162,40 +26998,43 @@ var pdfMediaImplementors = []string{"PdfMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _PdfMedia(ctx context.Context, sel ast.SelectionSet, obj *model.PDFMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, pdfMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PdfMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._PdfMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._PdfMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._PdfMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._PdfMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._PdfMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28203,34 +27042,43 @@ var preverifyEmailPayloadImplementors = []string{"PreverifyEmailPayload", "Preve
 
 func (ec *executionContext) _PreverifyEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PreverifyEmailPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, preverifyEmailPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PreverifyEmailPayload")
 		case "email":
-
 			out.Values[i] = ec._PreverifyEmailPayload_email(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "result":
-
 			out.Values[i] = ec._PreverifyEmailPayload_result(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28238,44 +27086,31 @@ var previewURLSetImplementors = []string{"PreviewURLSet"}
 
 func (ec *executionContext) _PreviewURLSet(ctx context.Context, sel ast.SelectionSet, obj *model.PreviewURLSet) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, previewURLSetImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PreviewURLSet")
 		case "raw":
-
 			out.Values[i] = ec._PreviewURLSet_raw(ctx, field, obj)
-
 		case "thumbnail":
-
 			out.Values[i] = ec._PreviewURLSet_thumbnail(ctx, field, obj)
-
 		case "small":
-
 			out.Values[i] = ec._PreviewURLSet_small(ctx, field, obj)
-
 		case "medium":
-
 			out.Values[i] = ec._PreviewURLSet_medium(ctx, field, obj)
-
 		case "large":
-
 			out.Values[i] = ec._PreviewURLSet_large(ctx, field, obj)
-
 		case "srcSet":
-
 			out.Values[i] = ec._PreviewURLSet_srcSet(ctx, field, obj)
-
 		case "liveRender":
-
 			out.Values[i] = ec._PreviewURLSet_liveRender(ctx, field, obj)
-
 		case "blurhash":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28285,18 +27120,46 @@ func (ec *executionContext) _PreviewURLSet(ctx context.Context, sel ast.Selectio
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28304,24 +27167,35 @@ var publishSplitPayloadImplementors = []string{"PublishSplitPayload", "PublishSp
 
 func (ec *executionContext) _PublishSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PublishSplitPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, publishSplitPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PublishSplitPayload")
 		case "split":
-
 			out.Values[i] = ec._PublishSplitPayload_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28334,7 +27208,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	})
 
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -28347,7 +27221,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "node":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28358,16 +27232,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "viewer":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28378,16 +27251,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "userByUsername":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28398,16 +27270,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "userById":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28418,16 +27289,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "userByAddress":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28438,16 +27308,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "usersWithTrait":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28458,16 +27327,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "tokenById":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28478,36 +27346,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "generalAllowlist":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_generalAllowlist(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "splitById":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28518,16 +27365,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "viewerSplitById":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28538,16 +27384,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "searchUsers":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28558,16 +27403,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "searchSplits":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28578,16 +27422,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "usersByRole":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28598,56 +27441,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "socialConnections":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_socialConnections(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "socialQueries":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_socialQueries(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "_service":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28655,38 +27457,45 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query__service(ctx, field)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
 			})
-
 		case "__schema":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28694,46 +27503,35 @@ var recipientImplementors = []string{"Recipient", "Node"}
 
 func (ec *executionContext) _Recipient(ctx context.Context, sel ast.SelectionSet, obj *model.Recipient) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, recipientImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Recipient")
 		case "id":
-
 			out.Values[i] = ec._Recipient_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "dbid":
-
 			out.Values[i] = ec._Recipient_dbid(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
-
 			out.Values[i] = ec._Recipient_version(ctx, field, obj)
-
 		case "creationTime":
-
 			out.Values[i] = ec._Recipient_creationTime(ctx, field, obj)
-
 		case "lastUpdated":
-
 			out.Values[i] = ec._Recipient_lastUpdated(ctx, field, obj)
-
 		case "address":
-
 			out.Values[i] = ec._Recipient_address(ctx, field, obj)
-
 		case "split":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28743,22 +27541,48 @@ func (ec *executionContext) _Recipient(ctx context.Context, sel ast.SelectionSet
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "ownership":
-
 			out.Values[i] = ec._Recipient_ownership(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28766,24 +27590,35 @@ var refreshTokenPayloadImplementors = []string{"RefreshTokenPayload", "RefreshTo
 
 func (ec *executionContext) _RefreshTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RefreshTokenPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, refreshTokenPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RefreshTokenPayload")
 		case "token":
-
 			out.Values[i] = ec._RefreshTokenPayload_token(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28791,24 +27626,35 @@ var removeUserWalletsPayloadImplementors = []string{"RemoveUserWalletsPayload", 
 
 func (ec *executionContext) _RemoveUserWalletsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RemoveUserWalletsPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, removeUserWalletsPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RemoveUserWalletsPayload")
 		case "viewer":
-
 			out.Values[i] = ec._RemoveUserWalletsPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28816,24 +27662,35 @@ var resendVerificationEmailPayloadImplementors = []string{"ResendVerificationEma
 
 func (ec *executionContext) _ResendVerificationEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ResendVerificationEmailPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, resendVerificationEmailPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ResendVerificationEmailPayload")
 		case "viewer":
-
 			out.Values[i] = ec._ResendVerificationEmailPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28841,24 +27698,35 @@ var searchSplitsPayloadImplementors = []string{"SearchSplitsPayload", "SearchSpl
 
 func (ec *executionContext) _SearchSplitsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SearchSplitsPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, searchSplitsPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SearchSplitsPayload")
 		case "results":
-
 			out.Values[i] = ec._SearchSplitsPayload_results(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28866,24 +27734,35 @@ var searchUsersPayloadImplementors = []string{"SearchUsersPayload", "SearchUsers
 
 func (ec *executionContext) _SearchUsersPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SearchUsersPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, searchUsersPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SearchUsersPayload")
 		case "results":
-
 			out.Values[i] = ec._SearchUsersPayload_results(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -28891,8 +27770,9 @@ var setSpamPreferencePayloadImplementors = []string{"SetSpamPreferencePayload", 
 
 func (ec *executionContext) _SetSpamPreferencePayload(ctx context.Context, sel ast.SelectionSet, obj *model.SetSpamPreferencePayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, setSpamPreferencePayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -28900,7 +27780,7 @@ func (ec *executionContext) _SetSpamPreferencePayload(ctx context.Context, sel a
 		case "tokens":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28910,43 +27790,46 @@ func (ec *executionContext) _SetSpamPreferencePayload(ctx context.Context, sel a
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
-	return out
-}
 
-var socialAccountsImplementors = []string{"SocialAccounts"}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 
-func (ec *executionContext) _SocialAccounts(ctx context.Context, sel ast.SelectionSet, obj *model.SocialAccounts) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, socialAccountsImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SocialAccounts")
-		case "twitter":
-
-			out.Values[i] = ec._SocialAccounts_twitter(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
 	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
+
 	return out
 }
 
@@ -28954,23 +27837,22 @@ var socialConnectionImplementors = []string{"SocialConnection", "Node", "SocialC
 
 func (ec *executionContext) _SocialConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SocialConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, socialConnectionImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SocialConnection")
 		case "id":
-
 			out.Values[i] = ec._SocialConnection_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "splitFiUser":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -28980,60 +27862,76 @@ func (ec *executionContext) _SocialConnection(ctx context.Context, sel ast.Selec
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "currentlyFollowing":
-
 			out.Values[i] = ec._SocialConnection_currentlyFollowing(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "socialId":
-
 			out.Values[i] = ec._SocialConnection_socialId(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "socialType":
-
 			out.Values[i] = ec._SocialConnection_socialType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "displayName":
-
 			out.Values[i] = ec._SocialConnection_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "socialUsername":
-
 			out.Values[i] = ec._SocialConnection_socialUsername(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "profileImage":
-
 			out.Values[i] = ec._SocialConnection_profileImage(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29041,31 +27939,40 @@ var socialConnectionsConnectionImplementors = []string{"SocialConnectionsConnect
 
 func (ec *executionContext) _SocialConnectionsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SocialConnectionsConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, socialConnectionsConnectionImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SocialConnectionsConnection")
 		case "edges":
-
 			out.Values[i] = ec._SocialConnectionsConnection_edges(ctx, field, obj)
-
 		case "pageInfo":
-
 			out.Values[i] = ec._SocialConnectionsConnection_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29073,66 +27980,37 @@ var socialConnectionsEdgeImplementors = []string{"SocialConnectionsEdge"}
 
 func (ec *executionContext) _SocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SocialConnectionsEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, socialConnectionsEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SocialConnectionsEdge")
 		case "node":
-
 			out.Values[i] = ec._SocialConnectionsEdge_node(ctx, field, obj)
-
 		case "cursor":
-
 			out.Values[i] = ec._SocialConnectionsEdge_cursor(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
-	return out
-}
 
-var socialQueriesImplementors = []string{"SocialQueries", "SocialQueriesOrError"}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 
-func (ec *executionContext) _SocialQueries(ctx context.Context, sel ast.SelectionSet, obj *model.SocialQueries) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, socialQueriesImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SocialQueries")
-		case "socialConnections":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SocialQueries_socialConnections(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
 	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
+
 	return out
 }
 
@@ -29140,58 +28018,41 @@ var splitImplementors = []string{"Split", "Node", "SplitByIdPayloadOrError"}
 
 func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, obj *model.Split) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, splitImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Split")
 		case "id":
-
 			out.Values[i] = ec._Split_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "dbid":
-
 			out.Values[i] = ec._Split_dbid(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
-
 			out.Values[i] = ec._Split_version(ctx, field, obj)
-
 		case "name":
-
 			out.Values[i] = ec._Split_name(ctx, field, obj)
-
 		case "description":
-
 			out.Values[i] = ec._Split_description(ctx, field, obj)
-
 		case "chain":
-
 			out.Values[i] = ec._Split_chain(ctx, field, obj)
-
 		case "logoURL":
-
 			out.Values[i] = ec._Split_logoURL(ctx, field, obj)
-
 		case "bannerURL":
-
 			out.Values[i] = ec._Split_bannerURL(ctx, field, obj)
-
 		case "badgeURL":
-
 			out.Values[i] = ec._Split_badgeURL(ctx, field, obj)
-
 		case "assets":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -29201,14 +28062,30 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "shares":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -29218,18 +28095,46 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29237,46 +28142,35 @@ var splitFiUserImplementors = []string{"SplitFiUser", "Node", "SplitFiUserOrWall
 
 func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionSet, obj *model.SplitFiUser) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, splitFiUserImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SplitFiUser")
 		case "id":
-
 			out.Values[i] = ec._SplitFiUser_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "dbid":
-
 			out.Values[i] = ec._SplitFiUser_dbid(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "username":
-
 			out.Values[i] = ec._SplitFiUser_username(ctx, field, obj)
-
 		case "bio":
-
 			out.Values[i] = ec._SplitFiUser_bio(ctx, field, obj)
-
 		case "traits":
-
 			out.Values[i] = ec._SplitFiUser_traits(ctx, field, obj)
-
 		case "universal":
-
 			out.Values[i] = ec._SplitFiUser_universal(ctx, field, obj)
-
 		case "roles":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -29286,31 +28180,30 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
-		case "socialAccounts":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SplitFiUser_socialAccounts(ctx, field, obj)
-				return res
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "wallets":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -29320,14 +28213,30 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "primaryWallet":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -29337,14 +28246,30 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "splits":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -29354,14 +28279,30 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "splitsByChain":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -29371,22 +28312,48 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "isAuthenticatedUser":
-
 			out.Values[i] = ec._SplitFiUser_isAuthenticatedUser(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29394,24 +28361,35 @@ var splitSearchResultImplementors = []string{"SplitSearchResult"}
 
 func (ec *executionContext) _SplitSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.SplitSearchResult) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, splitSearchResultImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SplitSearchResult")
 		case "split":
-
 			out.Values[i] = ec._SplitSearchResult_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29441,40 +28419,43 @@ var textMediaImplementors = []string{"TextMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _TextMedia(ctx context.Context, sel ast.SelectionSet, obj *model.TextMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, textMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TextMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._TextMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._TextMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._TextMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._TextMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._TextMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29482,149 +28463,69 @@ var tokenImplementors = []string{"Token", "Node", "TokenByIdOrError"}
 
 func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, obj *model.Token) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, tokenImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Token")
 		case "id":
-
 			out.Values[i] = ec._Token_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "dbid":
-
 			out.Values[i] = ec._Token_dbid(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "version":
-
 			out.Values[i] = ec._Token_version(ctx, field, obj)
-
 		case "creationTime":
-
 			out.Values[i] = ec._Token_creationTime(ctx, field, obj)
-
 		case "lastUpdated":
-
 			out.Values[i] = ec._Token_lastUpdated(ctx, field, obj)
-
 		case "tokenType":
-
 			out.Values[i] = ec._Token_tokenType(ctx, field, obj)
-
 		case "chain":
-
 			out.Values[i] = ec._Token_chain(ctx, field, obj)
-
 		case "name":
-
 			out.Values[i] = ec._Token_name(ctx, field, obj)
-
 		case "symbol":
-
 			out.Values[i] = ec._Token_symbol(ctx, field, obj)
-
 		case "decimals":
-
 			out.Values[i] = ec._Token_decimals(ctx, field, obj)
-
 		case "logo":
-
 			out.Values[i] = ec._Token_logo(ctx, field, obj)
-
 		case "totalSupply":
-
 			out.Values[i] = ec._Token_totalSupply(ctx, field, obj)
-
 		case "contractAddress":
-
 			out.Values[i] = ec._Token_contractAddress(ctx, field, obj)
-
 		case "blockNumber":
-
 			out.Values[i] = ec._Token_blockNumber(ctx, field, obj)
-
 		case "isSpam":
-
 			out.Values[i] = ec._Token_isSpam(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
-	return out
-}
 
-var twitterSocialAccountImplementors = []string{"TwitterSocialAccount", "SocialAccount"}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 
-func (ec *executionContext) _TwitterSocialAccount(ctx context.Context, sel ast.SelectionSet, obj *model.TwitterSocialAccount) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, twitterSocialAccountImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("TwitterSocialAccount")
-		case "type":
-
-			out.Values[i] = ec._TwitterSocialAccount_type(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "social_id":
-
-			out.Values[i] = ec._TwitterSocialAccount_social_id(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "name":
-
-			out.Values[i] = ec._TwitterSocialAccount_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "username":
-
-			out.Values[i] = ec._TwitterSocialAccount_username(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "profileImageURL":
-
-			out.Values[i] = ec._TwitterSocialAccount_profileImageURL(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "display":
-
-			out.Values[i] = ec._TwitterSocialAccount_display(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
 	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
+
 	return out
 }
 
@@ -29632,40 +28533,43 @@ var unknownMediaImplementors = []string{"UnknownMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _UnknownMedia(ctx context.Context, sel ast.SelectionSet, obj *model.UnknownMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, unknownMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UnknownMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._UnknownMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._UnknownMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._UnknownMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURL":
-
 			out.Values[i] = ec._UnknownMedia_contentRenderURL(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._UnknownMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29673,24 +28577,35 @@ var unsubscribeFromEmailTypePayloadImplementors = []string{"UnsubscribeFromEmail
 
 func (ec *executionContext) _UnsubscribeFromEmailTypePayload(ctx context.Context, sel ast.SelectionSet, obj *model.UnsubscribeFromEmailTypePayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, unsubscribeFromEmailTypePayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UnsubscribeFromEmailTypePayload")
 		case "viewer":
-
 			out.Values[i] = ec._UnsubscribeFromEmailTypePayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29698,24 +28613,35 @@ var updateEmailNotificationSettingsPayloadImplementors = []string{"UpdateEmailNo
 
 func (ec *executionContext) _UpdateEmailNotificationSettingsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateEmailNotificationSettingsPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateEmailNotificationSettingsPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateEmailNotificationSettingsPayload")
 		case "viewer":
-
 			out.Values[i] = ec._UpdateEmailNotificationSettingsPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29723,24 +28649,35 @@ var updateEmailPayloadImplementors = []string{"UpdateEmailPayload", "UpdateEmail
 
 func (ec *executionContext) _UpdateEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateEmailPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateEmailPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateEmailPayload")
 		case "viewer":
-
 			out.Values[i] = ec._UpdateEmailPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29748,49 +28685,35 @@ var updatePrimaryWalletPayloadImplementors = []string{"UpdatePrimaryWalletPayloa
 
 func (ec *executionContext) _UpdatePrimaryWalletPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdatePrimaryWalletPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updatePrimaryWalletPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdatePrimaryWalletPayload")
 		case "viewer":
-
 			out.Values[i] = ec._UpdatePrimaryWalletPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
-	return out
-}
 
-var updateSocialAccountDisplayedPayloadImplementors = []string{"UpdateSocialAccountDisplayedPayload", "UpdateSocialAccountDisplayedPayloadOrError"}
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
 
-func (ec *executionContext) _UpdateSocialAccountDisplayedPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSocialAccountDisplayedPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateSocialAccountDisplayedPayloadImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateSocialAccountDisplayedPayload")
-		case "viewer":
-
-			out.Values[i] = ec._UpdateSocialAccountDisplayedPayload_viewer(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
 	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
+
 	return out
 }
 
@@ -29798,24 +28721,35 @@ var updateSplitHiddenPayloadImplementors = []string{"UpdateSplitHiddenPayload", 
 
 func (ec *executionContext) _UpdateSplitHiddenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitHiddenPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitHiddenPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateSplitHiddenPayload")
 		case "split":
-
 			out.Values[i] = ec._UpdateSplitHiddenPayload_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29823,24 +28757,35 @@ var updateSplitInfoPayloadImplementors = []string{"UpdateSplitInfoPayload", "Upd
 
 func (ec *executionContext) _UpdateSplitInfoPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitInfoPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitInfoPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateSplitInfoPayload")
 		case "split":
-
 			out.Values[i] = ec._UpdateSplitInfoPayload_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29848,24 +28793,35 @@ var updateSplitOrderPayloadImplementors = []string{"UpdateSplitOrderPayload", "U
 
 func (ec *executionContext) _UpdateSplitOrderPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitOrderPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitOrderPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateSplitOrderPayload")
 		case "viewer":
-
 			out.Values[i] = ec._UpdateSplitOrderPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29873,24 +28829,35 @@ var updateSplitPayloadImplementors = []string{"UpdateSplitPayload", "UpdateSplit
 
 func (ec *executionContext) _UpdateSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateSplitPayload")
 		case "split":
-
 			out.Values[i] = ec._UpdateSplitPayload_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29898,24 +28865,35 @@ var updateUserExperiencePayloadImplementors = []string{"UpdateUserExperiencePayl
 
 func (ec *executionContext) _UpdateUserExperiencePayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateUserExperiencePayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateUserExperiencePayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateUserExperiencePayload")
 		case "viewer":
-
 			out.Values[i] = ec._UpdateUserExperiencePayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29923,24 +28901,35 @@ var updateUserInfoPayloadImplementors = []string{"UpdateUserInfoPayload", "Updat
 
 func (ec *executionContext) _UpdateUserInfoPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateUserInfoPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, updateUserInfoPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UpdateUserInfoPayload")
 		case "viewer":
-
 			out.Values[i] = ec._UpdateUserInfoPayload_viewer(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29948,24 +28937,35 @@ var uploadPersistedQueriesPayloadImplementors = []string{"UploadPersistedQueries
 
 func (ec *executionContext) _UploadPersistedQueriesPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UploadPersistedQueriesPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, uploadPersistedQueriesPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UploadPersistedQueriesPayload")
 		case "message":
-
 			out.Values[i] = ec._UploadPersistedQueriesPayload_message(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -29973,28 +28973,37 @@ var userEdgeImplementors = []string{"UserEdge"}
 
 func (ec *executionContext) _UserEdge(ctx context.Context, sel ast.SelectionSet, obj *model.UserEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserEdge")
 		case "node":
-
 			out.Values[i] = ec._UserEdge_node(ctx, field, obj)
-
 		case "cursor":
-
 			out.Values[i] = ec._UserEdge_cursor(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30002,32 +29011,39 @@ var userEmailImplementors = []string{"UserEmail"}
 
 func (ec *executionContext) _UserEmail(ctx context.Context, sel ast.SelectionSet, obj *model.UserEmail) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userEmailImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserEmail")
 		case "email":
-
 			out.Values[i] = ec._UserEmail_email(ctx, field, obj)
-
 		case "verificationStatus":
-
 			out.Values[i] = ec._UserEmail_verificationStatus(ctx, field, obj)
-
 		case "emailNotificationSettings":
-
 			out.Values[i] = ec._UserEmail_emailNotificationSettings(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30035,34 +29051,43 @@ var userExperienceImplementors = []string{"UserExperience"}
 
 func (ec *executionContext) _UserExperience(ctx context.Context, sel ast.SelectionSet, obj *model.UserExperience) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userExperienceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserExperience")
 		case "type":
-
 			out.Values[i] = ec._UserExperience_type(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "experienced":
-
 			out.Values[i] = ec._UserExperience_experienced(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30070,24 +29095,35 @@ var userSearchResultImplementors = []string{"UserSearchResult"}
 
 func (ec *executionContext) _UserSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.UserSearchResult) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userSearchResultImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserSearchResult")
 		case "user":
-
 			out.Values[i] = ec._UserSearchResult_user(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30095,31 +29131,79 @@ var usersConnectionImplementors = []string{"UsersConnection"}
 
 func (ec *executionContext) _UsersConnection(ctx context.Context, sel ast.SelectionSet, obj *model.UsersConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, usersConnectionImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UsersConnection")
 		case "edges":
-
 			out.Values[i] = ec._UsersConnection_edges(ctx, field, obj)
-
 		case "pageInfo":
-
 			out.Values[i] = ec._UsersConnection_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var verifyEmailMagicLinkPayloadImplementors = []string{"VerifyEmailMagicLinkPayload", "VerifyEmailMagicLinkPayloadOrError"}
+
+func (ec *executionContext) _VerifyEmailMagicLinkPayload(ctx context.Context, sel ast.SelectionSet, obj *model.VerifyEmailMagicLinkPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, verifyEmailMagicLinkPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VerifyEmailMagicLinkPayload")
+		case "canSend":
+			out.Values[i] = ec._VerifyEmailMagicLinkPayload_canSend(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30127,27 +29211,38 @@ var verifyEmailPayloadImplementors = []string{"VerifyEmailPayload", "VerifyEmail
 
 func (ec *executionContext) _VerifyEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.VerifyEmailPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, verifyEmailPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("VerifyEmailPayload")
 		case "email":
-
 			out.Values[i] = ec._VerifyEmailPayload_email(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30155,40 +29250,43 @@ var videoMediaImplementors = []string{"VideoMedia", "MediaSubtype", "Media"}
 
 func (ec *executionContext) _VideoMedia(ctx context.Context, sel ast.SelectionSet, obj *model.VideoMedia) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, videoMediaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("VideoMedia")
 		case "previewURLs":
-
 			out.Values[i] = ec._VideoMedia_previewURLs(ctx, field, obj)
-
 		case "mediaURL":
-
 			out.Values[i] = ec._VideoMedia_mediaURL(ctx, field, obj)
-
 		case "mediaType":
-
 			out.Values[i] = ec._VideoMedia_mediaType(ctx, field, obj)
-
 		case "contentRenderURLs":
-
 			out.Values[i] = ec._VideoMedia_contentRenderURLs(ctx, field, obj)
-
 		case "dimensions":
-
 			out.Values[i] = ec._VideoMedia_dimensions(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30196,36 +29294,41 @@ var videoURLSetImplementors = []string{"VideoURLSet"}
 
 func (ec *executionContext) _VideoURLSet(ctx context.Context, sel ast.SelectionSet, obj *model.VideoURLSet) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, videoURLSetImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("VideoURLSet")
 		case "raw":
-
 			out.Values[i] = ec._VideoURLSet_raw(ctx, field, obj)
-
 		case "small":
-
 			out.Values[i] = ec._VideoURLSet_small(ctx, field, obj)
-
 		case "medium":
-
 			out.Values[i] = ec._VideoURLSet_medium(ctx, field, obj)
-
 		case "large":
-
 			out.Values[i] = ec._VideoURLSet_large(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30233,24 +29336,35 @@ var viewSplitPayloadImplementors = []string{"ViewSplitPayload", "ViewSplitPayloa
 
 func (ec *executionContext) _ViewSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ViewSplitPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, viewSplitPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ViewSplitPayload")
 		case "split":
-
 			out.Values[i] = ec._ViewSplitPayload_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30258,23 +29372,22 @@ var viewerImplementors = []string{"Viewer", "Node", "ViewerOrError"}
 
 func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, obj *model.Viewer) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, viewerImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Viewer")
 		case "id":
-
 			out.Values[i] = ec._Viewer_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "user":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -30284,31 +29397,30 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
-		case "socialAccounts":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Viewer_socialAccounts(ctx, field, obj)
-				return res
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "viewerSplits":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -30318,14 +29430,30 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "email":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -30335,14 +29463,30 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "notifications":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -30352,14 +29496,30 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "notificationSettings":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -30369,18 +29529,46 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30388,24 +29576,35 @@ var viewerSplitImplementors = []string{"ViewerSplit", "ViewerSplitByIdPayloadOrE
 
 func (ec *executionContext) _ViewerSplit(ctx context.Context, sel ast.SelectionSet, obj *model.ViewerSplit) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, viewerSplitImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ViewerSplit")
 		case "split":
-
 			out.Values[i] = ec._ViewerSplit_split(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30413,42 +29612,33 @@ var walletImplementors = []string{"Wallet", "Node", "SplitFiUserOrWallet"}
 
 func (ec *executionContext) _Wallet(ctx context.Context, sel ast.SelectionSet, obj *model.Wallet) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, walletImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Wallet")
 		case "id":
-
 			out.Values[i] = ec._Wallet_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "dbid":
-
 			out.Values[i] = ec._Wallet_dbid(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "chainAddress":
-
 			out.Values[i] = ec._Wallet_chainAddress(ctx, field, obj)
-
 		case "chain":
-
 			out.Values[i] = ec._Wallet_chain(ctx, field, obj)
-
 		case "walletType":
-
 			out.Values[i] = ec._Wallet_walletType(ctx, field, obj)
-
 		case "splits":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -30458,18 +29648,46 @@ func (ec *executionContext) _Wallet(ctx context.Context, sel ast.SelectionSet, o
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30477,24 +29695,35 @@ var _ServiceImplementors = []string{"_Service"}
 
 func (ec *executionContext) __Service(ctx context.Context, sel ast.SelectionSet, obj *fedruntime.Service) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, _ServiceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("_Service")
 		case "sdl":
-
 			out.Values[i] = ec.__Service_sdl(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30502,52 +29731,55 @@ var __DirectiveImplementors = []string{"__Directive"}
 
 func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionSet, obj *introspection.Directive) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __DirectiveImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Directive")
 		case "name":
-
 			out.Values[i] = ec.___Directive_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___Directive_description(ctx, field, obj)
-
 		case "locations":
-
 			out.Values[i] = ec.___Directive_locations(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "args":
-
 			out.Values[i] = ec.___Directive_args(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "isRepeatable":
-
 			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30555,42 +29787,47 @@ var __EnumValueImplementors = []string{"__EnumValue"}
 
 func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionSet, obj *introspection.EnumValue) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __EnumValueImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__EnumValue")
 		case "name":
-
 			out.Values[i] = ec.___EnumValue_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___EnumValue_description(ctx, field, obj)
-
 		case "isDeprecated":
-
 			out.Values[i] = ec.___EnumValue_isDeprecated(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "deprecationReason":
-
 			out.Values[i] = ec.___EnumValue_deprecationReason(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30598,56 +29835,57 @@ var __FieldImplementors = []string{"__Field"}
 
 func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, obj *introspection.Field) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __FieldImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Field")
 		case "name":
-
 			out.Values[i] = ec.___Field_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___Field_description(ctx, field, obj)
-
 		case "args":
-
 			out.Values[i] = ec.___Field_args(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "type":
-
 			out.Values[i] = ec.___Field_type(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "isDeprecated":
-
 			out.Values[i] = ec.___Field_isDeprecated(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "deprecationReason":
-
 			out.Values[i] = ec.___Field_deprecationReason(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30655,42 +29893,47 @@ var __InputValueImplementors = []string{"__InputValue"}
 
 func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.SelectionSet, obj *introspection.InputValue) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __InputValueImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__InputValue")
 		case "name":
-
 			out.Values[i] = ec.___InputValue_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___InputValue_description(ctx, field, obj)
-
 		case "type":
-
 			out.Values[i] = ec.___InputValue_type(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "defaultValue":
-
 			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30698,53 +29941,54 @@ var __SchemaImplementors = []string{"__Schema"}
 
 func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet, obj *introspection.Schema) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __SchemaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Schema")
 		case "description":
-
 			out.Values[i] = ec.___Schema_description(ctx, field, obj)
-
 		case "types":
-
 			out.Values[i] = ec.___Schema_types(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "queryType":
-
 			out.Values[i] = ec.___Schema_queryType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "mutationType":
-
 			out.Values[i] = ec.___Schema_mutationType(ctx, field, obj)
-
 		case "subscriptionType":
-
 			out.Values[i] = ec.___Schema_subscriptionType(ctx, field, obj)
-
 		case "directives":
-
 			out.Values[i] = ec.___Schema_directives(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30752,63 +29996,56 @@ var __TypeImplementors = []string{"__Type"}
 
 func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, obj *introspection.Type) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __TypeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Type")
 		case "kind":
-
 			out.Values[i] = ec.___Type_kind(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "name":
-
 			out.Values[i] = ec.___Type_name(ctx, field, obj)
-
 		case "description":
-
 			out.Values[i] = ec.___Type_description(ctx, field, obj)
-
 		case "fields":
-
 			out.Values[i] = ec.___Type_fields(ctx, field, obj)
-
 		case "interfaces":
-
 			out.Values[i] = ec.___Type_interfaces(ctx, field, obj)
-
 		case "possibleTypes":
-
 			out.Values[i] = ec.___Type_possibleTypes(ctx, field, obj)
-
 		case "enumValues":
-
 			out.Values[i] = ec.___Type_enumValues(ctx, field, obj)
-
 		case "inputFields":
-
 			out.Values[i] = ec.___Type_inputFields(ctx, field, obj)
-
 		case "ofType":
-
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
-
 		case "specifiedByURL":
-
 			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -30852,6 +30089,83 @@ func (ec *executionContext) marshalNAuthorizationError2githubᚗcomᚋSplitFiᚋ
 	return ec._AuthorizationError(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx context.Context, v interface{}) (basicauth.AuthTokenType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := basicauth.AuthTokenType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx context.Context, sel ast.SelectionSet, v basicauth.AuthTokenType) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx context.Context, v interface{}) ([]basicauth.AuthTokenType, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]basicauth.AuthTokenType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []basicauth.AuthTokenType) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -30875,16 +30189,6 @@ func (ec *executionContext) unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitf
 
 func (ec *executionContext) marshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) marshalNChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ChainAddress(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (persist.ChainAddress, error) {
@@ -30989,6 +30293,21 @@ func (ec *executionContext) unmarshalNEmailUnsubscriptionType2githubᚗcomᚋSpl
 
 func (ec *executionContext) marshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, sel ast.SelectionSet, v model.EmailUnsubscriptionType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNFieldSet2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFieldSet2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
@@ -31099,11 +30418,6 @@ func (ec *executionContext) marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋg
 	return res
 }
 
-func (ec *executionContext) unmarshalNSocialAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAuthMechanism(ctx context.Context, v interface{}) (model.SocialAuthMechanism, error) {
-	res, err := ec.unmarshalInputSocialAuthMechanism(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
 	var vSlice []interface{}
 	if v != nil {
@@ -31198,11 +30512,6 @@ func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githu
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSocialAccountDisplayedInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedInput(ctx context.Context, v interface{}) (model.UpdateSocialAccountDisplayedInput, error) {
-	res, err := ec.unmarshalInputUpdateSocialAccountDisplayedInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx context.Context, v interface{}) (model.UpdateSplitHiddenInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitHiddenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -31258,6 +30567,11 @@ func (ec *executionContext) unmarshalNVerifyEmailInput2githubᚗcomᚋSplitFiᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNVerifyEmailMagicLinkInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkInput(ctx context.Context, v interface{}) (model.VerifyEmailMagicLinkInput, error) {
+	res, err := ec.unmarshalInputVerifyEmailMagicLinkInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (persist.WalletType, error) {
 	var res persist.WalletType
 	err := res.UnmarshalGQL(v)
@@ -31266,21 +30580,6 @@ func (ec *executionContext) unmarshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑs
 
 func (ec *executionContext) marshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v persist.WalletType) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) unmarshalN_FieldSet2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalN_FieldSet2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) marshalN_Service2githubᚗcomᚋ99designsᚋgqlgenᚋpluginᚋfederationᚋfedruntimeᚐService(ctx context.Context, sel ast.SelectionSet, v fedruntime.Service) graphql.Marshaler {
@@ -31540,6 +30839,164 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalNfederation__Policy2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Policy2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Scope2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Scope2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Scope2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Scope2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Scope2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Scope2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddRolesToUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -31689,53 +31146,6 @@ func (ec *executionContext) marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplit
 	return v
 }
 
-func (ec *executionContext) marshalOChainAddress2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, sel ast.SelectionSet, v []*persist.ChainAddress) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -31775,13 +31185,6 @@ func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcom
 		return graphql.Null
 	}
 	return ec._ClearAllNotificationsPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOConnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐConnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ConnectSocialAccountPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ConnectSocialAccountPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOCreateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateSplitPayloadOrError) graphql.Marshaler {
@@ -31888,13 +31291,6 @@ func (ec *executionContext) marshalODeletedNode2ᚖgithubᚗcomᚋSplitFiᚋgo�
 		return graphql.Null
 	}
 	return ec._DeletedNode(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalODisconnectSocialAccountPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDisconnectSocialAccountPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DisconnectSocialAccountPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._DisconnectSocialAccountPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (*persist.Email, error) {
@@ -32407,20 +31803,6 @@ func (ec *executionContext) marshalOSetSpamPreferencePayloadOrError2githubᚗcom
 	return ec._SetSpamPreferencePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSocialAccounts2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialAccounts(ctx context.Context, sel ast.SelectionSet, v *model.SocialAccounts) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SocialAccounts(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSocialConnectionsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsConnection(ctx context.Context, sel ast.SelectionSet, v *model.SocialConnectionsConnection) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SocialConnectionsConnection(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.SocialConnectionsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -32474,13 +31856,6 @@ func (ec *executionContext) marshalOSocialConnectionsOrError2githubᚗcomᚋSpli
 		return graphql.Null
 	}
 	return ec._SocialConnectionsOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSocialQueriesOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialQueriesOrError(ctx context.Context, sel ast.SelectionSet, v model.SocialQueriesOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SocialQueriesOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
@@ -32792,13 +32167,6 @@ func (ec *executionContext) unmarshalOTwitterAuth2ᚖgithubᚗcomᚋSplitFiᚋgo
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOTwitterSocialAccount2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterSocialAccount(ctx context.Context, sel ast.SelectionSet, v *model.TwitterSocialAccount) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._TwitterSocialAccount(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnsubscribeFromEmailTypePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -32825,13 +32193,6 @@ func (ec *executionContext) marshalOUpdatePrimaryWalletPayloadOrError2githubᚗc
 		return graphql.Null
 	}
 	return ec._UpdatePrimaryWalletPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateSocialAccountDisplayedPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSocialAccountDisplayedPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSocialAccountDisplayedPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateSocialAccountDisplayedPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
@@ -33019,6 +32380,13 @@ func (ec *executionContext) marshalOUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋ
 		return graphql.Null
 	}
 	return ec._UsersConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOVerifyEmailMagicLinkPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailMagicLinkPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._VerifyEmailMagicLinkPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOVerifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailPayloadOrError) graphql.Marshaler {

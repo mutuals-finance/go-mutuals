@@ -30,14 +30,12 @@ type CacheConfig struct {
 const (
 	locks                 redisDB = 0
 	rateLimiters          redisDB = 1
-	communities           redisDB = 2
 	misc                  redisDB = 3
 	indexerServerThrottle redisDB = 6
 	refreshNFTsThrottle   redisDB = 7
 	tokenProcessing       redisDB = 8
 	emailThrottle         redisDB = 9
 	graphQLAPQ            redisDB = 12
-	feed                  redisDB = 13
 	social                redisDB = 14
 )
 
@@ -49,7 +47,6 @@ var (
 	PushNotificationRateLimitersCache = CacheConfig{database: rateLimiters, keyPrefix: "push", displayName: "pushNotificationLimiters"}
 	OneTimeLoginCache                 = CacheConfig{database: misc, keyPrefix: "otl", displayName: "oneTimeLogin"}
 	AuthTokenForceRefreshCache        = CacheConfig{database: misc, keyPrefix: "authRefresh", displayName: "authTokenForceRefresh"}
-	CommunitiesCache                  = CacheConfig{database: communities, keyPrefix: "", displayName: "communities"}
 	IndexerServerThrottleCache        = CacheConfig{database: indexerServerThrottle, keyPrefix: "", displayName: "indexerServerThrottle"}
 	RefreshNFTsThrottleCache          = CacheConfig{database: refreshNFTsThrottle, keyPrefix: "", displayName: "refreshNFTsThrottle"}
 	TokenProcessingThrottleCache      = CacheConfig{database: tokenProcessing, keyPrefix: "throttle", displayName: "tokenProcessingThrottle"}

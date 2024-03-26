@@ -35,7 +35,7 @@ type Provider struct {
 	Repos   *postgres.Repositories
 	Queries *db.Queries
 	Cache   *redis.Cache
-	Chains  map[persist.Chain][]any
+	Chains  ProviderLookup
 }
 
 // BlockchainInfo retrieves blockchain info from all chains

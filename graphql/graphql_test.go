@@ -43,8 +43,9 @@ func TestMain(t *testing.T) {
 			fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useTokenQueue, useNotificationTopics},
 		},
 		{
-			title:    "test syncing tokens",
-			run:      testTokenSyncs,
+			title: "test syncing tokens",
+			run:   testTokenSyncs,
+
 			fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useTokenQueue},
 		},
 	}
@@ -65,7 +66,7 @@ func testGraphQL(t *testing.T) {
 		{title: "should add a wallet", run: testAddWallet},
 		{title: "should remove a wallet", run: testRemoveWallet},
 		{title: "views from multiple users are rolled up", run: testViewsAreRolledUp},
-		{title: "update split and ensure name still gets set when not sent in update", run: testUpdateSplitWithNoNameChange},
+		{title: "should update split and ensure name still gets set when not sent in update", run: testUpdateSplitWithNoNameChange},
 		{title: "should update user experiences", run: testUpdateUserExperiences},
 		{title: "should create split", run: testCreateSplit},
 		{title: "should connect social account", run: testConnectSocialAccount},
@@ -188,7 +189,8 @@ func testLogin(t *testing.T) {
 
 	require.NoError(t, err)
 	payload, _ := (*response.Login).(*loginMutationLoginLoginPayload)
-	assert.NotEmpty(t, readCookie(t, c.response, auth.JWTCookieKey))
+	assert.NotEmpty(t, readCookie(t, c.response, auth.AuthCookieKey))
+	assert.NotEmpty(t, readCookie(t, c.response, auth.RefreshCookieKey))
 	assert.Equal(t, userF.Username, *payload.Viewer.User.Username)
 	assert.Equal(t, userF.ID, payload.Viewer.User.Dbid)
 }
@@ -200,7 +202,8 @@ func testLogout(t *testing.T) {
 	response, err := logoutMutation(context.Background(), c)
 
 	require.NoError(t, err)
-	assert.Empty(t, readCookie(t, c.response, auth.JWTCookieKey))
+	assert.Empty(t, readCookie(t, c.response, auth.AuthCookieKey))
+	assert.Empty(t, readCookie(t, c.response, auth.RefreshCookieKey))
 	assert.Nil(t, response.Logout.Viewer)
 }
 
@@ -438,7 +441,7 @@ func newNonce(t *testing.T, ctx context.Context, c graphql.Client, w wallet) str
 }
 
 // newUser makes a GraphQL request to generate a new user
-func newUser(t *testing.T, ctx context.Context, c graphql.Client, w wallet) (userID persist.DBID, username string, splitID persist.DBID) {
+func newUser(t *testing.T, ctx context.Context, c genql.Client, w wallet) (userID persist.DBID, username string, galleryID persist.DBID) {
 	t.Helper()
 	nonce := newNonce(t, ctx, c, w)
 	username = "user" + persist.GenerateID().String()
@@ -452,13 +455,6 @@ func newUser(t *testing.T, ctx context.Context, c graphql.Client, w wallet) (use
 	return payload.Viewer.User.Dbid, username, payload.Viewer.User.Splits[0].Dbid
 }
 
-// newJWT generates a JWT
-func newJWT(t *testing.T, ctx context.Context, userID persist.DBID) string {
-	jwt, err := auth.JWTGeneratePipeline(ctx, userID)
-	require.NoError(t, err)
-	return jwt
-}
-
 // viewSplit makes a GraphQL request to view a split
 func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID persist.DBID) {
 	t.Helper()
@@ -467,40 +463,34 @@ func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID pers
 	_ = (*resp.ViewSplit).(*viewSplitMutationViewSplitViewSplitPayload)
 }
 
-// defaultToken returns a dummy token owned by the provided address
-func defaultToken(address string) multichain.ChainAgnosticToken {
-	return multichain.ChainAgnosticToken{
-		Name:            "testToken1",
-		Quantity:        "1",
-		ContractAddress: "0x123",
-		OwnerAddress:    persist.Address(address),
-	}
-}
-
 // defaultHandler returns a backend GraphQL http.Handler
 func defaultHandler(t *testing.T) http.Handler {
-	c := server.ClientInit(context.Background())
-	p := server.NewMultichainProvider(c)
-	handler := server.CoreInit(c, p)
-	t.Cleanup(c.Close)
+	ctx := context.Background()
+	c := server.ClientInit(ctx)
+	p, cleanup := server.NewMultichainProvider(ctx, server.SetDefaults)
+	handler := server.CoreInit(ctx, c, p)
+	t.Cleanup(func() {
+		c.Close()
+		cleanup()
+	})
 	return handler
 }
 
 // handlerWithProviders returns a GraphQL http.Handler
-func handlerWithProviders(t *testing.T, sendTokens multichain.SendTokens, providers ...any) http.Handler {
+func handlerWithProviders(t *testing.T, p multichain.ProviderLookup) http.Handler {
+	ctx := context.Background()
 	c := server.ClientInit(context.Background())
-	provider := newMultichainProvider(c, sendTokens, providers)
+	provider := newMultichainProvider(c, p)
 	t.Cleanup(c.Close)
-	return server.CoreInit(c, &provider)
+	return server.CoreInit(ctx, c, &provider)
 }
 
 // newMultichainProvider a new multichain provider configured with the given providers
-func newMultichainProvider(c *server.Clients, sendToken multichain.SendTokens, providers []any) multichain.Provider {
+func newMultichainProvider(c *server.Clients, p multichain.ProviderLookup) multichain.Provider {
 	return multichain.Provider{
-		Repos:      c.Repos,
-		Queries:    c.Queries,
-		Chains:     map[persist.Chain][]any{persist.ChainETH: providers},
-		SendTokens: sendToken,
+		Repos:   c.Repos,
+		Queries: c.Queries,
+		Chains:  p,
 	}
 }
 
@@ -536,10 +526,15 @@ func customServerClient(t *testing.T, host string, opts ...func(*http.Request)) 
 
 // withJWTOpt ddds a JWT cookie to the request headers
 func withJWTOpt(t *testing.T, userID persist.DBID) func(*http.Request) {
-	jwt, err := auth.JWTGeneratePipeline(context.Background(), userID)
+	sessionID := persist.GenerateID()
+	refreshID := persist.GenerateID().String()
+	authJWT, err := auth.GenerateAuthToken(context.Background(), userID, sessionID, refreshID, []persist.Role{})
+	require.NoError(t, err)
+	refreshJWT, _, err := auth.GenerateRefreshToken(context.Background(), refreshID, "", userID, sessionID)
 	require.NoError(t, err)
 	return func(r *http.Request) {
-		r.AddCookie(&http.Cookie{Name: auth.JWTCookieKey, Value: jwt})
+		r.AddCookie(&http.Cookie{Name: auth.AuthCookieKey, Value: authJWT})
+		r.AddCookie(&http.Cookie{Name: auth.RefreshCookieKey, Value: refreshJWT})
 	}
 }
 

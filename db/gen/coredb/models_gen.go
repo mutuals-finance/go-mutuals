@@ -80,6 +80,7 @@ type Notification struct {
 	Data        persist.NotificationData `db:"data" json:"data"`
 	EventIds    persist.DBIDList         `db:"event_ids" json:"event_ids"`
 	SplitID     persist.DBID             `db:"split_id" json:"split_id"`
+	TokenID     persist.DBID             `db:"token_id" json:"token_id"`
 	Seen        bool                     `db:"seen" json:"seen"`
 	Amount      int32                    `db:"amount" json:"amount"`
 }
@@ -266,6 +267,15 @@ type UserRole struct {
 	Deleted     bool         `db:"deleted" json:"deleted"`
 	CreatedAt   time.Time    `db:"created_at" json:"created_at"`
 	LastUpdated time.Time    `db:"last_updated" json:"last_updated"`
+}
+
+type UserTokenSpam struct {
+	ID           persist.DBID `db:"id" json:"id"`
+	UserID       persist.DBID `db:"user_id" json:"user_id"`
+	TokenID      persist.DBID `db:"token_id" json:"token_id"`
+	IsMarkedSpam sql.NullBool `db:"is_marked_spam" json:"is_marked_spam"`
+	CreatedAt    time.Time    `db:"created_at" json:"created_at"`
+	LastUpdated  time.Time    `db:"last_updated" json:"last_updated"`
 }
 
 type Wallet struct {
