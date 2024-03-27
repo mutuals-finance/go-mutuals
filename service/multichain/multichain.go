@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/sirupsen/logrus"
 	"github.com/sourcegraph/conc"
@@ -34,7 +33,6 @@ var contractNameBlacklist = map[string]bool{
 type Provider struct {
 	Repos   *postgres.Repositories
 	Queries *db.Queries
-	Cache   *redis.Cache
 	Chains  ProviderLookup
 }
 

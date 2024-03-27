@@ -14,12 +14,10 @@ import (
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
-	"github.com/SplitFi/go-splitfi/service/multichain/eth"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/SplitFi/go-splitfi/service/rpc"
-	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/util"
 )
 
@@ -39,16 +37,17 @@ func NewMultichainProvider(ctx context.Context, envFunc func()) (*multichain.Pro
 	wire.Build(
 		setEnv,
 		wire.Value(&http.Client{Timeout: 0}), // HTTP client shared between providers
-		task.NewClient,
 		postgres.NewRepositories,
 		dbConnSet,
 		wire.Struct(new(multichain.ChainProvider), "*"),
 		// Add additional chains here
-		newMultichainSet,
-		ethProviderSet,
-		optimismProviderSet,
-		polygonProviderSet,
-		arbitrumProviderSet,
+		multichainProviderInjector,
+		ethInjector,
+		optimismInjector,
+		//baseInjector,
+		//baseSepoliaInjector,
+		polygonInjector,
+		arbitrumInjector,
 	)
 	return nil, nil
 }
@@ -79,7 +78,206 @@ func newQueries(p *pgxpool.Pool) *db.Queries {
 	return db.New(p)
 }
 
-// ethProviderSet is a wire injector that creates the set of Ethereum providers
+func multichainProviderInjector(context.Context, *postgres.Repositories, *db.Queries, *redis.Cache, *multichain.ChainProvider) *multichain.Provider {
+	panic(wire.Build(
+		wire.Struct(new(multichain.Provider), "*"),
+		// submitTokenBatchInjector,
+		newProviderLookup,
+	))
+}
+
+// New chains must be added here
+func newProviderLookup(p *multichain.ChainProvider) multichain.ProviderLookup {
+	return multichain.ProviderLookup{
+		persist.ChainETH:      p.Ethereum,
+		persist.ChainOptimism: p.Optimism,
+		persist.ChainArbitrum: p.Arbitrum,
+		//persist.ChainBase:        p.Base,
+		//persist.ChainBaseSepolia: p.BaseSepolia,
+		persist.ChainPolygon: p.Polygon,
+	}
+}
+
+// This is a workaround for wire because wire wouldn't know which value to inject for args of the same type
+type (
+	tokensContractFetcherA   multichain.TokensContractFetcher
+	tokensContractFetcherB   multichain.TokensContractFetcher
+	tokenMetadataFetcherA    multichain.TokenMetadataFetcher
+	tokenMetadataFetcherB    multichain.TokenMetadataFetcher
+	tokenDescriptorsFetcherA multichain.TokenDescriptorsFetcher
+	tokenDescriptorsFetcherB multichain.TokenDescriptorsFetcher
+	//tokenIdentifierOwnerFetcherA      multichain.TokenIdentifierOwnerFetcher
+	//tokenIdentifierOwnerFetcherB      multichain.TokenIdentifierOwnerFetcher
+	tokensIncrementalOwnerFetcherA multichain.TokensIncrementalOwnerFetcher
+	tokensIncrementalOwnerFetcherB multichain.TokensIncrementalOwnerFetcher
+	//tokensIncrementalContractFetcherA multichain.TokensIncrementalContractFetcher
+	//tokensIncrementalContractFetcherB multichain.TokensIncrementalContractFetcher
+	//tokensByTokenIdentifiersFetcherA  multichain.TokensByTokenIdentifiersFetcher
+	//tokensByTokenIdentifiersFetcherB  multichain.TokensByTokenIdentifiersFetcher
+)
+
+func multiContractFetcherProvider(a tokensContractFetcherA, b tokensContractFetcherB) multichain.TokensContractFetcher {
+	return wrapper.NewMultiProviderWrapper(wrapper.MultiProviderWapperOptions.WithContractFetchers(a, b))
+}
+
+func multiTokenMetadataFetcherProvider(a tokenMetadataFetcherA, b tokenMetadataFetcherB) multichain.TokenMetadataFetcher {
+	return wrapper.NewMultiProviderWrapper(wrapper.MultiProviderWapperOptions.WithTokenMetadataFetchers(a, b))
+}
+
+func multiTokenDescriptorsFetcherProvider(a tokenDescriptorsFetcherA, b tokenDescriptorsFetcherB) multichain.TokenDescriptorsFetcher {
+	return wrapper.NewMultiProviderWrapper(wrapper.MultiProviderWapperOptions.WithTokenDescriptorsFetchers(a, b))
+}
+
+func multiTokenIdentifierOwnerFetcherProvider(a tokenIdentifierOwnerFetcherA, b tokenIdentifierOwnerFetcherB) multichain.TokenIdentifierOwnerFetcher {
+	return wrapper.NewMultiProviderWrapper(wrapper.MultiProviderWapperOptions.WithTokenIdentifierOwnerFetchers(a, b))
+}
+
+func multiTokensIncrementalOwnerFetcherProvider(a tokensIncrementalOwnerFetcherA, b tokensIncrementalOwnerFetcherB) multichain.TokensIncrementalOwnerFetcher {
+	return wrapper.NewMultiProviderWrapper(wrapper.MultiProviderWapperOptions.WithTokensIncrementalOwnerFetchers(a, b))
+}
+
+func multiTokensIncrementalContractFetcherProvider(a tokensIncrementalContractFetcherA, b tokensIncrementalContractFetcherB) multichain.TokensIncrementalContractFetcher {
+	return wrapper.NewMultiProviderWrapper(wrapper.MultiProviderWapperOptions.WithTokensIncrementalContractFetchers(a, b))
+}
+
+func multiTokenByTokenIdentifiersFetcherProvider(a tokensByTokenIdentifiersFetcherA, b tokensByTokenIdentifiersFetcherB) multichain.TokensByTokenIdentifiersFetcher {
+	return wrapper.NewMultiProviderWrapper(wrapper.MultiProviderWapperOptions.WithTokenByTokenIdentifiersFetchers(a, b))
+}
+
+func customMetadataHandlersInjector(alchemyProvider *alchemy.Provider) *multichain.CustomMetadataHandlers {
+	panic(wire.Build(
+		multichain.NewCustomMetadataHandlers,
+		wire.Bind(new(multichain.TokenMetadataFetcher), util.ToPointer(alchemyProvider)),
+		rpc.NewEthClient,
+		ipfs.NewShell,
+		arweave.NewClient,
+	))
+}
+
+// -----------------------------------------
+
+func ethInjector(
+	envInit,
+	context.Context,
+	*http.Client,
+	// *openseaLimiter,
+	// *reservoirLimiter
+) (*multichain.EthereumProvider, func()) {
+	panic(wire.Build(
+		rpc.NewEthClient,
+		wire.Value(persist.ChainETH),
+		indexer.NewProvider,
+		alchemy.NewProvider,
+		//openseaProviderInjector,
+		ethProviderInjector,
+		ethSyncPipelineInjector,
+		ethTokensContractFetcherInjector,
+		ethTokenMetadataFetcherInjector,
+		ethTokenDescriptorsFetcherInjector,
+	))
+}
+
+func ethProviderInjector(
+	ctx context.Context,
+	indexerProvider *indexer.Provider,
+	syncPipeline *wrapper.SyncPipelineWrapper,
+	tokensContractFetcher multichain.TokensContractFetcher,
+	tokenDescriptorsFetcher multichain.TokenDescriptorsFetcher,
+	tokenMetadataFetcher multichain.TokenMetadataFetcher,
+) *multichain.EthereumProvider {
+	panic(wire.Build(
+		wire.Struct(new(multichain.EthereumProvider), "*"),
+		wire.Bind(new(multichain.Verifier), util.ToPointer(indexerProvider)),
+		wire.Bind(new(multichain.ContractRefresher), util.ToPointer(indexerProvider)),
+		wire.Bind(new(multichain.ContractsOwnerFetcher), util.ToPointer(indexerProvider)),
+		wire.Bind(new(multichain.TokenIdentifierOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalContractFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensByTokenIdentifiersFetcher), util.ToPointer(syncPipeline)),
+	))
+}
+
+func ethSyncPipelineInjector(
+	ctx context.Context,
+	httpClient *http.Client,
+	chain persist.Chain,
+	openseaProvider *opensea.Provider,
+	alchemyProvider *alchemy.Provider,
+	l *reservoirLimiter,
+) (*wrapper.SyncPipelineWrapper, func()) {
+	panic(wire.Build(
+		wire.Struct(new(wrapper.SyncPipelineWrapper), "*"),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(retry.Limiter), util.ToPointer(l)),
+		ethTokenIdentifierOwnerFetcherInjector,
+		ethTokensIncrementalOwnerFetcherInjector,
+		ethTokensContractFetcherInjector,
+		ethTokenByTokenIdentifiersFetcherInjector,
+		wrapper.NewFillInWrapper,
+		customMetadataHandlersInjector,
+	))
+}
+
+//func ethTokensContractFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalContractFetcher {
+//	panic(wire.Build(
+//		multiTokensIncrementalContractFetcherProvider,
+//		wire.Bind(new(tokensIncrementalContractFetcherA), util.ToPointer(alchemyProvider)),
+//		wire.Bind(new(tokensIncrementalContractFetcherB), util.ToPointer(openseaProvider)),
+//	))
+//}
+
+//func ethTokenIdentifierOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenIdentifierOwnerFetcher {
+//	panic(wire.Build(
+//		multiTokenIdentifierOwnerFetcherProvider,
+//		wire.Bind(new(tokenIdentifierOwnerFetcherA), util.ToPointer(alchemyProvider)),
+//		wire.Bind(new(tokenIdentifierOwnerFetcherB), util.ToPointer(openseaProvider)),
+//	))
+//}
+
+func ethTokensIncrementalOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalOwnerFetcher {
+	panic(wire.Build(
+		multiTokensIncrementalOwnerFetcherProvider,
+		wire.Bind(new(tokensIncrementalOwnerFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensIncrementalOwnerFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func ethTokensContractFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensContractFetcher {
+	panic(wire.Build(
+		multiContractFetcherProvider,
+		wire.Bind(new(tokensContractFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensContractFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func ethTokenMetadataFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenMetadataFetcher {
+	panic(wire.Build(
+		multiTokenMetadataFetcherProvider,
+		wire.Bind(new(tokenMetadataFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenMetadataFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func ethTokenDescriptorsFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenDescriptorsFetcher {
+	panic(wire.Build(
+		multiTokenDescriptorsFetcherProvider,
+		wire.Bind(new(tokenDescriptorsFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenDescriptorsFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+//func ethTokenByTokenIdentifiersFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensByTokenIdentifiersFetcher {
+//	panic(wire.Build(
+//		multiTokenByTokenIdentifiersFetcherProvider,
+//		wire.Bind(new(tokensByTokenIdentifiersFetcherA), util.ToPointer(alchemyProvider)),
+//		wire.Bind(new(tokensByTokenIdentifiersFetcherB), util.ToPointer(openseaProvider)),
+//	))
+//}
+
+// -----------------------------------------
+
+/*// ethProviderSet is a wire injector that creates the set of Ethereum providers
 func ethProviderSet(envInit, *task.Client, *http.Client, *tokenMetadataCache) ethProviderList {
 	wire.Build(
 		rpc.NewEthClient,
@@ -118,8 +316,114 @@ func ethRequirements(
 ) ethProviderList {
 	return ethProviderList{nr, v, tof, toc, tiof, tmf, tdf}
 }
+*/
 
-// optimismProviderSet is a wire injector that creates the set of Optimism providers
+// -----------------------------------------------
+
+func optimismInjector(
+	context.Context,
+	*http.Client,
+	// *openseaLimiter,
+	// *reservoirLimiter
+) (*multichain.OptimismProvider, func()) {
+	panic(wire.Build(
+		wire.Value(persist.ChainOptimism),
+		optimismProviderInjector,
+		//openseaProviderInjector,
+		alchemy.NewProvider,
+		optimismSyncPipelineInjector,
+		optimisimTokenDescriptorsFetcherInjector,
+		optimismTokenMetadataFetcherInjector,
+	))
+}
+
+func optimismProviderInjector(
+	syncPipeline *wrapper.SyncPipelineWrapper,
+	tokenDescriptorsFetcher multichain.TokenDescriptorsFetcher,
+	tokenMetadataFetcher multichain.TokenMetadataFetcher,
+) *multichain.OptimismProvider {
+	panic(wire.Build(
+		wire.Struct(new(multichain.OptimismProvider), "*"),
+		wire.Bind(new(multichain.TokenIdentifierOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalContractFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensByTokenIdentifiersFetcher), util.ToPointer(syncPipeline)),
+	))
+}
+
+func optimismSyncPipelineInjector(
+	ctx context.Context,
+	httpClient *http.Client,
+	chain persist.Chain,
+	//openseaProvider *opensea.Provider,
+	alchemyProvider *alchemy.Provider,
+	// l *reservoirLimiter,
+) (*wrapper.SyncPipelineWrapper, func()) {
+	panic(wire.Build(
+		wire.Struct(new(wrapper.SyncPipelineWrapper), "*"),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(retry.Limiter), util.ToPointer(l)),
+		optimismTokenIdentifierOwnerFetcherInjector,
+		optimismTokensIncrementalOwnerFetcherInjector,
+		optimismTokensContractFetcherInjector,
+		optmismTokenByTokenIdentifiersFetcherInjector,
+		wrapper.NewFillInWrapper,
+		customMetadataHandlersInjector,
+	))
+}
+
+func optimismTokensContractFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalContractFetcher {
+	panic(wire.Build(
+		multiTokensIncrementalContractFetcherProvider,
+		wire.Bind(new(tokensIncrementalContractFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensIncrementalContractFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func optimismTokenIdentifierOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenIdentifierOwnerFetcher {
+	panic(wire.Build(
+		multiTokenIdentifierOwnerFetcherProvider,
+		wire.Bind(new(tokenIdentifierOwnerFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenIdentifierOwnerFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func optimismTokensIncrementalOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalOwnerFetcher {
+	panic(wire.Build(
+		multiTokensIncrementalOwnerFetcherProvider,
+		wire.Bind(new(tokensIncrementalOwnerFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensIncrementalOwnerFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func optimismTokenMetadataFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenMetadataFetcher {
+	panic(wire.Build(
+		multiTokenMetadataFetcherProvider,
+		wire.Bind(new(tokenMetadataFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenMetadataFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func optimisimTokenDescriptorsFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenDescriptorsFetcher {
+	panic(wire.Build(
+		multiTokenDescriptorsFetcherProvider,
+		wire.Bind(new(tokenDescriptorsFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenDescriptorsFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func optmismTokenByTokenIdentifiersFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensByTokenIdentifiersFetcher {
+	panic(wire.Build(
+		multiTokenByTokenIdentifiersFetcherProvider,
+		wire.Bind(new(tokensByTokenIdentifiersFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensByTokenIdentifiersFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+// -----------------------------------------------
+
+/*// optimismProviderSet is a wire injector that creates the set of Optimism providers
 func optimismProviderSet(*http.Client, *tokenMetadataCache) optimismProviderList {
 	wire.Build(
 		optimismProvidersConfig,
@@ -151,8 +455,109 @@ func optimismRequirements(
 ) optimismProviderList {
 	return optimismProviderList{tof, toc, tiof, tmf}
 }
+*/
 
-// arbitrumProviderSet is a wire injector that creates the set of Arbitrum providers
+// ------------------------------------------------
+
+func arbitrumInjector(context.Context, *http.Client, *openseaLimiter, *reservoirLimiter) (*multichain.ArbitrumProvider, func()) {
+	panic(wire.Build(
+		arbitrumProviderInjector,
+		wire.Value(persist.ChainArbitrum),
+		openseaProviderInjector,
+		alchemy.NewProvider,
+		arbitrumSyncPipelineInjector,
+		arbitrumTokenDescriptorsFetcherInjector,
+		arbitrumTokenMetadataFetcherInjector,
+	))
+}
+
+func arbitrumProviderInjector(
+	syncPipeline *wrapper.SyncPipelineWrapper,
+	tokenDescriptorsFetcher multichain.TokenDescriptorsFetcher,
+	tokenMetadataFetcher multichain.TokenMetadataFetcher,
+) *multichain.ArbitrumProvider {
+	panic(wire.Build(
+		wire.Struct(new(multichain.ArbitrumProvider), "*"),
+		wire.Bind(new(multichain.TokenIdentifierOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalContractFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensByTokenIdentifiersFetcher), util.ToPointer(syncPipeline)),
+	))
+}
+
+func arbitrumSyncPipelineInjector(
+	ctx context.Context,
+	httpClient *http.Client,
+	chain persist.Chain,
+	openseaProvider *opensea.Provider,
+	alchemyProvider *alchemy.Provider,
+	l *reservoirLimiter,
+) (*wrapper.SyncPipelineWrapper, func()) {
+	panic(wire.Build(
+		wire.Struct(new(wrapper.SyncPipelineWrapper), "*"),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(retry.Limiter), util.ToPointer(l)),
+		arbitrumTokenIdentifierOwnerFetcherInjector,
+		arbitrumTokensIncrementalOwnerFetcherInjector,
+		arbitrumTokensContractFetcherInjector,
+		arbitrumTokenByTokenIdentifiersFetcherInjector,
+		wrapper.NewFillInWrapper,
+		customMetadataHandlersInjector,
+	))
+}
+
+func arbitrumTokenMetadataFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenMetadataFetcher {
+	panic(wire.Build(
+		multiTokenMetadataFetcherProvider,
+		wire.Bind(new(tokenMetadataFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenMetadataFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func arbitrumTokenDescriptorsFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenDescriptorsFetcher {
+	panic(wire.Build(
+		multiTokenDescriptorsFetcherProvider,
+		wire.Bind(new(tokenDescriptorsFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenDescriptorsFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func arbitrumTokensContractFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalContractFetcher {
+	panic(wire.Build(
+		multiTokensIncrementalContractFetcherProvider,
+		wire.Bind(new(tokensIncrementalContractFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensIncrementalContractFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func arbitrumTokenIdentifierOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenIdentifierOwnerFetcher {
+	panic(wire.Build(
+		multiTokenIdentifierOwnerFetcherProvider,
+		wire.Bind(new(tokenIdentifierOwnerFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenIdentifierOwnerFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func arbitrumTokensIncrementalOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalOwnerFetcher {
+	panic(wire.Build(
+		multiTokensIncrementalOwnerFetcherProvider,
+		wire.Bind(new(tokensIncrementalOwnerFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensIncrementalOwnerFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func arbitrumTokenByTokenIdentifiersFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensByTokenIdentifiersFetcher {
+	panic(wire.Build(
+		multiTokenByTokenIdentifiersFetcherProvider,
+		wire.Bind(new(tokensByTokenIdentifiersFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensByTokenIdentifiersFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+// ------------------------------------------------
+
+/*// arbitrumProviderSet is a wire injector that creates the set of Arbitrum providers
 func arbitrumProviderSet(*http.Client, *tokenMetadataCache) arbitrumProviderList {
 	wire.Build(
 		arbitrumProvidersConfig,
@@ -187,6 +592,109 @@ func arbitrumRequirements(
 	return arbitrumProviderList{tof, toc, tiof, tmf, tdf}
 }
 
+*/
+
+// -----------------------------------------------------------
+
+func polygonInjector(context.Context, *http.Client, *openseaLimiter, *reservoirLimiter) (*multichain.PolygonProvider, func()) {
+	panic(wire.Build(
+		polygonProvidersInjector,
+		wire.Value(persist.ChainPolygon),
+		openseaProviderInjector,
+		alchemy.NewProvider,
+		polygonSyncPipelineInjector,
+		polygonTokenDescriptorFetcherInjector,
+		polygonTokenMetadataFetcherInjector,
+	))
+}
+
+func polygonSyncPipelineInjector(
+	ctx context.Context,
+	httpClient *http.Client,
+	chain persist.Chain,
+	openseaProvider *opensea.Provider,
+	alchemyProvider *alchemy.Provider,
+	l *reservoirLimiter,
+) (*wrapper.SyncPipelineWrapper, func()) {
+	panic(wire.Build(
+		wire.Struct(new(wrapper.SyncPipelineWrapper), "*"),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(retry.Limiter), util.ToPointer(l)),
+		polygonTokenIdentifierOwnerFetcherInjector,
+		polygonTokensIncrementalOwnerFetcherInjector,
+		polygonTokensContractFetcherInjector,
+		polygonTokenByTokenIdentifiersFetcherInjector,
+		wrapper.NewFillInWrapper,
+		customMetadataHandlersInjector,
+	))
+}
+
+func polygonTokenMetadataFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenMetadataFetcher {
+	panic(wire.Build(
+		multiTokenMetadataFetcherProvider,
+		wire.Bind(new(tokenMetadataFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenMetadataFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func polygonTokenDescriptorFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenDescriptorsFetcher {
+	panic(wire.Build(
+		multiTokenDescriptorsFetcherProvider,
+		wire.Bind(new(tokenDescriptorsFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenDescriptorsFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func polygonTokensContractFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalContractFetcher {
+	panic(wire.Build(
+		multiTokensIncrementalContractFetcherProvider,
+		wire.Bind(new(tokensIncrementalContractFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensIncrementalContractFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func polygonTokenIdentifierOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokenIdentifierOwnerFetcher {
+	panic(wire.Build(
+		multiTokenIdentifierOwnerFetcherProvider,
+		wire.Bind(new(tokenIdentifierOwnerFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokenIdentifierOwnerFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func polygonTokensIncrementalOwnerFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensIncrementalOwnerFetcher {
+	panic(wire.Build(
+		multiTokensIncrementalOwnerFetcherProvider,
+		wire.Bind(new(tokensIncrementalOwnerFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensIncrementalOwnerFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+func polygonProvidersInjector(
+	syncPipeline *wrapper.SyncPipelineWrapper,
+	tokenDescriptorsFetcher multichain.TokenDescriptorsFetcher,
+	tokenMetadataFetcher multichain.TokenMetadataFetcher,
+) *multichain.PolygonProvider {
+	panic(wire.Build(
+		wire.Struct(new(multichain.PolygonProvider), "*"),
+		wire.Bind(new(multichain.TokenIdentifierOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalOwnerFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensIncrementalContractFetcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokenMetadataBatcher), util.ToPointer(syncPipeline)),
+		wire.Bind(new(multichain.TokensByTokenIdentifiersFetcher), util.ToPointer(syncPipeline)),
+	))
+}
+
+func polygonTokenByTokenIdentifiersFetcherInjector(openseaProvider *opensea.Provider, alchemyProvider *alchemy.Provider) multichain.TokensByTokenIdentifiersFetcher {
+	panic(wire.Build(
+		multiTokenByTokenIdentifiersFetcherProvider,
+		wire.Bind(new(tokensByTokenIdentifiersFetcherA), util.ToPointer(alchemyProvider)),
+		wire.Bind(new(tokensByTokenIdentifiersFetcherB), util.ToPointer(openseaProvider)),
+	))
+}
+
+// -----------------------------------------------------------
+
+/*
 // polygonProviderSet is a wire injector that creates the set of polygon providers
 func polygonProviderSet(*http.Client, *tokenMetadataCache) polygonProviderList {
 	wire.Build(
@@ -219,8 +727,32 @@ func polygonRequirements(
 ) polygonProviderList {
 	return polygonProviderList{tof, tiof, toc, tmf}
 }
+*/
 
-// dedupe removes duplicate providers based on provider ID
+// ----------------------------------------------
+
+//func newTokenManageCache() *redis.Cache {
+//	return redis.NewCache(redis.TokenManageCache)
+//}
+//
+//func submitTokenBatchInjector(context.Context, *redis.Cache) multichain.SubmitTokensF {
+//	panic(wire.Build(
+//		submitBatch,
+//		tokenmanage.New,
+//		task.NewClient,
+//		tickToken,
+//	))
+//}
+//
+//func tickToken() tokenmanage.TickToken { return nil }
+//
+//func submitBatch(tm *tokenmanage.Manager) multichain.SubmitTokensF {
+//	return tm.SubmitBatch
+//}
+
+// ----------------------------------------------
+
+/*// dedupe removes duplicate providers based on provider ID
 func dedupe(providers []any) []any {
 	seen := map[string]bool{}
 	deduped := []any{}
@@ -261,3 +793,4 @@ func ethFallbackProvider(httpClient *http.Client, cache *tokenMetadataCache) mul
 func newAlchemyProvider(httpClient *http.Client, chain persist.Chain, cache *tokenMetadataCache) *alchemy.Provider {
 	return alchemy.NewProvider(chain, httpClient)
 }
+*/

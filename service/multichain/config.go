@@ -9,10 +9,10 @@ type ProviderLookup map[persist.Chain][]any
 type ChainProvider struct {
 	Ethereum *EthereumProvider
 	Optimism *OptimismProvider
-	Polygon  *PolygonProvider
 	Arbitrum *ArbitrumProvider
 	//Base        *BaseProvider
 	//BaseSepolia *BaseSepoliaProvider
+	Polygon *PolygonProvider
 }
 
 type EthereumProvider struct {
