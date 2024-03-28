@@ -1,14 +1,10 @@
-package eth
+package indexer
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/SplitFi/go-splitfi/contracts"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/indexer"
@@ -16,14 +12,15 @@ import (
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/util"
-	ens "github.com/benny-conn/go-ens"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"net/http"
+	"strings"
+	"time"
 )
 
 var eip1271MagicValue = [4]byte{0x16, 0x26, 0xBA, 0x7E}
@@ -33,45 +30,46 @@ type Provider struct {
 	indexerBaseURL string
 	httpClient     *http.Client
 	ethClient      *ethclient.Client
-	taskClient     *task.Client
 }
 
 // NewProvider creates a new ethereum Provider
-func NewProvider(httpClient *http.Client, ec *ethclient.Client, tc *task.Client) *Provider {
+func NewProvider(httpClient *http.Client, ec *ethclient.Client) *Provider {
 	return &Provider{
 		indexerBaseURL: env.GetString("INDEXER_HOST"),
 		httpClient:     httpClient,
 		ethClient:      ec,
-		taskClient:     tc,
 	}
 }
 
-// GetBlockchainInfo retrieves blockchain info for ETH
-func (d *Provider) GetBlockchainInfo(ctx context.Context) (multichain.BlockchainInfo, error) {
-	return multichain.BlockchainInfo{
-		Chain:   persist.ChainETH,
-		ChainID: 0,
-	}, nil
-}
-
-func (d *Provider) GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
-	// TODO
-	metadata, err := d.GetTokenMetadataByTokenIdentifiers(ctx, ti)
+// GetContractByAddress retrieves an ethereum contract by address
+func (d *Provider) GetContractByAddress(ctx context.Context, addr persist.Address) (multichain.ChainAgnosticContract, error) {
+	logger.For(ctx).Warn("ETH")
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/contracts/get?address=%s", d.indexerBaseURL, addr), nil)
 	if err != nil {
-		return persist.TokenMetadata{}, err
+		return multichain.ChainAgnosticContract{}, err
 	}
-	name, _ := metadata["name"].(string)
-	symbol, _ := metadata["contract_symbol"].(string)
-	return persist.TokenMetadata{
-		"Name":   name,
-		"Symbol": symbol,
-	}, nil
+	res, err := d.httpClient.Do(req)
+	if err != nil {
+		return multichain.ChainAgnosticContract{}, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return multichain.ChainAgnosticContract{}, util.GetErrFromResp(res)
+	}
+	var contract indexer.GetContractOutput
+	err = json.NewDecoder(res.Body).Decode(&contract)
+	if err != nil {
+		return multichain.ChainAgnosticContract{}, err
+	}
+
+	return contractToChainAgnostic(contract.Contract), nil
+
 }
 
-// GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
-func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
-	url := fmt.Sprintf("%s%s?contract_address=%s&chain=%d", d.indexerBaseURL, indexer.GetTokenMetadataPath, ti.Address, ti.Chain)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// GetContractsByOwnerAddress retrieves ethereum contracts by their owner address
+func (d *Provider) GetContractsByOwnerAddress(ctx context.Context, addr persist.Address) ([]multichain.ChainAgnosticContract, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/contracts/get?owner=%s", d.indexerBaseURL, addr), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -84,81 +82,60 @@ func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti pe
 	if res.StatusCode != 200 {
 		return nil, util.GetErrFromResp(res)
 	}
-
-	var tokens indexer.GetTokenMetadataOutput
-	err = json.NewDecoder(res.Body).Decode(&tokens)
+	var contract indexer.GetContractsOutput
+	err = json.NewDecoder(res.Body).Decode(&contract)
 	if err != nil {
 		return nil, err
 	}
 
-	return tokens.Metadata, nil
+	out := make([]multichain.ChainAgnosticContract, len(contract.Contracts))
+	for i, c := range contract.Contracts {
+		out[i] = contractToChainAgnostic(c)
+	}
+
+	return out, nil
 }
 
-func (d *Provider) GetDisplayNameByAddress(ctx context.Context, addr persist.Address) string {
-
-	resultChan := make(chan string)
-	errChan := make(chan error)
-	go func() {
-		// no context? who do these guys think they are!? I had to add a goroutine to make sure this doesn't block forever
-		domain, err := ens.ReverseResolve(d.ethClient, addr.Address())
-		if err != nil {
-			errChan <- err
-			return
-		}
-		resultChan <- domain
-	}()
-	select {
-	case result := <-resultChan:
-		return result
-	case err := <-errChan:
-		logger.For(ctx).Errorf("error resolving ens domain: %s", err.Error())
-		return addr.String()
-	case <-ctx.Done():
-		logger.For(ctx).Errorf("error resolving ens domain: %s", ctx.Err().Error())
-		return addr.String()
+// RefreshContract refreshes the metadata for a contract
+func (d *Provider) RefreshContract(ctx context.Context, addr persist.Address) error {
+	input := indexer.UpdateContractMetadataInput{
+		Address: persist.EthereumAddress(persist.ChainETH.NormalizeAddress(addr)),
 	}
-}
 
-// WalletCreated runs whenever a new wallet is created
-func (d *Provider) WalletCreated(ctx context.Context, userID persist.DBID, wallet persist.Address, walletType persist.WalletType) error {
-	if env.GetString("ENV") == "local" {
-		return nil
+	asJSON, err := json.Marshal(input)
+	if err != nil {
+		return err
 	}
-	//input := task.ValidateNFTsMessage{OwnerAddress: wallet}
 
-	return nil // TODO  task.Client{}.(ctx, input, d.taskClient)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/contracts/refresh", d.indexerBaseURL), bytes.NewReader(asJSON))
+	if err != nil {
+		return err
+	}
+
+	res, err := d.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return util.GetErrFromResp(res)
+	}
+
+	return nil
 }
 
 // VerifySignature will verify a signature using all available methods (eth_sign and personal_sign)
 func (d *Provider) VerifySignature(pCtx context.Context,
-	pAddressStr persist.PubKey, pWalletType persist.WalletType, pNonce string, pSignatureStr string) (bool, error) {
+	pAddressStr persist.PubKey, pWalletType persist.WalletType, pMessage string, pSignatureStr string) (bool, error) {
 
-	nonce := auth.NewNoncePrepend + pNonce
 	// personal_sign
-	validBool, err := verifySignature(pSignatureStr,
-		nonce,
-		pAddressStr, pWalletType,
-		true, d.ethClient)
+	validBool, err := verifySignature(pSignatureStr, pMessage, pAddressStr, pWalletType, true, d.ethClient)
 
 	if !validBool || err != nil {
 		// eth_sign
-		validBool, err = verifySignature(pSignatureStr,
-			nonce,
-			pAddressStr, pWalletType,
-			false, d.ethClient)
-		if err != nil || !validBool {
-			nonce = auth.NoncePrepend + pNonce
-			validBool, err = verifySignature(pSignatureStr,
-				nonce,
-				pAddressStr, pWalletType,
-				true, d.ethClient)
-			if err != nil || !validBool {
-				validBool, err = verifySignature(pSignatureStr,
-					nonce,
-					pAddressStr, pWalletType,
-					false, d.ethClient)
-			}
-		}
+		validBool, err = verifySignature(pSignatureStr, pMessage, pAddressStr, pWalletType, false, d.ethClient)
 	}
 
 	if err != nil {
@@ -244,4 +221,15 @@ func verifySignature(pSignatureStr string,
 		return false, errors.New("wallet type not supported")
 	}
 
+}
+
+func contractToChainAgnostic(contract persist.Contract) multichain.ChainAgnosticContract {
+	return multichain.ChainAgnosticContract{
+		Address: persist.Address(contract.Address.String()),
+		Descriptors: multichain.ChainAgnosticContractDescriptors{
+			Name:         contract.Name.String(),
+			Symbol:       contract.Symbol.String(),
+			OwnerAddress: persist.Address(util.FirstNonEmptyString(contract.OwnerAddress.String(), contract.CreatorAddress.String())),
+		},
+	}
 }

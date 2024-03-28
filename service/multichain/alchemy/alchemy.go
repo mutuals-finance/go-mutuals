@@ -1,13 +1,16 @@
 package alchemy
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"math/big"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/SplitFi/go-splitfi/env"
@@ -15,6 +18,16 @@ import (
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/util"
+)
+
+var (
+	getNftsEndpointTemplate                = "%s/getNFTs"
+	getNftsForCollectionEndpointTemplate   = "%s/getNFTsForCollection"
+	getOwnersForCollectionEndpointTemplate = "%s/getOwnersForCollection"
+	getNftMetadataEndpointTemplate         = "%s/getNFTMetadata"
+	getContractMetadataEndpointTemplate    = "%s/getContractMetadata"
+	getOwnersForTokenEndpointTemplate      = "%s/getOwnersForToken"
+	getNftMetadataBatchEndpointTemplate    = "%s/getNFTMetadataBatch"
 )
 
 type TokenURI struct {
@@ -30,53 +43,49 @@ type Media struct {
 	Bytes     int    `json:"bytes"`
 }
 
-type Metadata struct {
-	Image           string `json:"image"`
-	AnimationURL    string `json:"animation_url"`
-	ExternalURL     string `json:"external_url"`
-	BackgroundColor string `json:"background_color"`
-	Name            string `json:"name"`
-	Description     string `json:"description"`
-}
-
-// UnmarshalJSON is a custom unmarshaler for the Metadata struct
-func (m *Metadata) UnmarshalJSON(data []byte) error {
-
-	type Alias Metadata
-	aux := Alias{}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-
-		asString := ""
-		if err := json.Unmarshal(data, &asString); err != nil {
-			fmt.Printf("failed to unmarshal Metadata as string: %s", err)
-			return nil
-		}
-
-		fmt.Println("Metadata as string:", asString)
-		return nil
-	}
-
-	*m = Metadata(aux)
-	return nil
+type OpenseaCollection struct {
+	CollectionName string `json:"collectionName"`
+	Description    string `json:"description"`
+	ImageURL       string `json:"imageUrl"`
 }
 
 type ContractMetadata struct {
-	Name             string `json:"name"`
-	Symbol           string `json:"symbol"`
-	TotalSupply      string `json:"totalSupply"`
-	TokenType        string `json:"tokenType"`
-	ContractDeployer string `json:"contractDeployer"`
+	Name              string                  `json:"name"`
+	Symbol            string                  `json:"symbol"`
+	TotalSupply       string                  `json:"totalSupply"`
+	TokenType         string                  `json:"tokenType"`
+	ContractDeployer  persist.EthereumAddress `json:"contractDeployer"`
+	OpenseaCollection OpenseaCollection       `json:"openSea"`
 }
 
 type Contract struct {
-	Address string `json:"address"`
+	Address          string                  `json:"address"`
+	Title            string                  `json:"title"`
+	ContractDeployer persist.EthereumAddress `json:"contractDeployer"`
+	Opensea          OpenseaCollection       `json:"openSea"`
 }
 
 type TokenID string
 
 func (t TokenID) String() string {
 	return string(t)
+}
+
+func (t TokenID) ToTokenID() persist.HexTokenID {
+
+	if strings.HasPrefix(t.String(), "0x") {
+		big, ok := new(big.Int).SetString(strings.TrimPrefix(t.String(), "0x"), 16)
+		if !ok {
+			return ""
+		}
+		return persist.HexTokenID(big.Text(16))
+	}
+	big, ok := new(big.Int).SetString(t.String(), 10)
+	if !ok {
+		return ""
+	}
+	return persist.HexTokenID(big.Text(16))
+
 }
 
 type TokenMetadata struct {
@@ -97,13 +106,23 @@ type Token struct {
 	ID               TokenIdentifiers `json:"id"`
 	Balance          string           `json:"balance"`
 	Title            string           `json:"title"`
-	Description      string           `json:"description"`
+	Description      any              `json:"description"` // TODO: Update to string when on alchemy V3
 	TokenURI         TokenURI         `json:"tokenUri"`
 	Media            []Media          `json:"media"`
-	Metadata         Metadata         `json:"metadata"`
+	Metadata         any              `json:"metadata"` // TODO: Update to persist.TokenMetadata when on alchemy V3
 	ContractMetadata ContractMetadata `json:"contractMetadata"`
 	TimeLastUpdated  time.Time        `json:"timeLastUpdated"`
 	SpamInfo         SpamInfo         `json:"spamInfo"`
+}
+
+type OwnerWithBalances struct {
+	OwnerAddress  persist.EthereumAddress `json:"ownerAddress"`
+	TokenBalances []TokenBalance          `json:"tokenBalances"`
+}
+
+type TokenBalance struct {
+	TokenID TokenID `json:"tokenId"`
+	Balance int     `json:"balance"`
 }
 
 type tokensPaginated interface {
@@ -147,31 +166,8 @@ func (r getNFTsForCollectionResponse) GetNextPageKey() string {
 	return r.NextToken.String()
 }
 
-type getNFTsForCollectionWithOwnerResponse struct {
-	owner     persist.Address
-	d         *Provider
-	ctx       context.Context
-	NFTs      []Token `json:"nfts"`
-	NextToken TokenID `json:"nextToken"`
-}
-
-func (r *getNFTsForCollectionWithOwnerResponse) GetTokensFromResponse(resp *http.Response) ([]Token, error) {
-	r.NFTs = nil
-	if err := json.NewDecoder(resp.Body).Decode(r); err != nil {
-		return nil, err
-	}
-
-	return util.Filter(r.NFTs, func(t Token) bool {
-		owners, err := r.d.getOwnersForToken(r.ctx, t)
-		if err != nil {
-			return false
-		}
-		return util.Contains(owners, r.owner)
-	}, true), nil
-}
-
-func (r getNFTsForCollectionWithOwnerResponse) GetNextPageKey() string {
-	return r.NextToken.String()
+type getOwnersOfCollectionResponse struct {
+	Owners []OwnerWithBalances `json:"ownerAddresses"`
 }
 
 // Provider is an the struct for retrieving data from the Ethereum blockchain
@@ -182,7 +178,8 @@ type Provider struct {
 }
 
 // NewProvider creates a new ethereum Provider
-func NewProvider(chain persist.Chain, httpClient *http.Client) *Provider {
+func NewProvider(httpClient *http.Client, chain persist.Chain) *Provider {
+	// currently using v2 endpoints, alchemy recently added v3
 	var apiURL string
 	switch chain {
 	case persist.ChainETH:
@@ -191,6 +188,12 @@ func NewProvider(chain persist.Chain, httpClient *http.Client) *Provider {
 		apiURL = env.GetString("ALCHEMY_OPTIMISM_API_URL")
 	case persist.ChainPolygon:
 		apiURL = env.GetString("ALCHEMY_POLYGON_API_URL")
+	case persist.ChainArbitrum:
+		apiURL = env.GetString("ALCHEMY_ARBITRUM_API_URL")
+	case persist.ChainBase:
+		apiURL = env.GetString("ALCHEMY_BASE_API_URL")
+	case persist.ChainBaseSepolia:
+		apiURL = env.GetString("ALCHEMY_BASE_SEPOLIA_API_URL")
 	}
 
 	if apiURL == "" {
@@ -204,50 +207,128 @@ func NewProvider(chain persist.Chain, httpClient *http.Client) *Provider {
 	}
 }
 
-// GetBlockchainInfo retrieves blockchain info for ETH
-func (d *Provider) GetBlockchainInfo() multichain.BlockchainInfo {
-	chainID := 0
-	switch d.chain {
-	case persist.ChainOptimism:
-		chainID = 10
-	case persist.ChainPolygon:
-		chainID = 137
-	}
-	return multichain.BlockchainInfo{
-		Chain:   d.chain,
-		ChainID: chainID,
-	}
-}
-
 // GetTokensByWalletAddress retrieves tokens for a wallet address on the Ethereum Blockchain
-func (d *Provider) GetTokensByWalletAddress(ctx context.Context, walletAddress persist.Address) ([]persist.Token, error) {
-	url := fmt.Sprintf("%s/getNFTs?owner=%s&withMetadata=true", d.alchemyAPIURL, walletAddress)
-	if d.chain == persist.ChainPolygon {
-		url += "&excludeFilters[]=SPAM"
-	}
-	tokens, err := getNFTsPaginate(ctx, url, 100, "pageKey", 0, 0, "", d.httpClient, &getNFTsResponse{})
+func (d *Provider) GetTokensByWalletAddress(ctx context.Context, addr persist.Address) ([]multichain.ChainAgnosticToken, []multichain.ChainAgnosticContract, error) {
+	u := mustGetNftsEndpoint(d.alchemyAPIURL)
+	setOwner(u, addr)
+	setWithMetadata(u)
+	setExcludeSpam(u, d.chain)
+	tokens, err := getNFTsPaginate(ctx, u.String(), 100, "pageKey", 0, 0, "", d.httpClient, nil, &getNFTsResponse{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	cTokens := alchemyTokensToChainAgnosticTokensForOwner(walletAddress, tokens)
-
-	return cTokens, nil
+	cTokens, cContracts := alchemyTokensToChainAgnosticTokensForOwner(persist.EthereumAddress(addr), tokens)
+	return cTokens, cContracts, nil
 }
 
-// GetAssetByTokenIdentifiersAndOwner retrieves assets by token identifiers for a wallet address
-func (d *Provider) GetAssetByTokenIdentifiersAndOwner(ctx context.Context, ti persist.TokenChainAddress, ownerAddress persist.Address) (persist.Asset, error) {
-	// TODO
-	return persist.Asset{}, nil
+// GetTokensIncrementallyByWalletAddress retrieves tokens for a wallet address on the Ethereum Blockchain
+func (d *Provider) GetTokensIncrementallyByWalletAddress(ctx context.Context, addr persist.Address) (<-chan multichain.ChainAgnosticTokensAndContracts, <-chan error) {
+	rec := make(chan multichain.ChainAgnosticTokensAndContracts)
+	errChan := make(chan error)
+	u := mustGetNftsEndpoint(d.alchemyAPIURL)
+	setOwner(u, addr)
+	setWithMetadata(u)
+	setExcludeSpam(u, d.chain)
+
+	alchemyRec := make(chan []Token)
+	subErrChan := make(chan error)
+
+	go func() {
+		defer close(alchemyRec)
+		_, err := getNFTsPaginate(ctx, u.String(), 100, "pageKey", 0, 0, "", d.httpClient, alchemyRec, &getNFTsResponse{})
+		if err != nil {
+			subErrChan <- err
+			return
+		}
+	}()
+
+	go func() {
+		defer close(rec)
+		defer close(errChan)
+	outer:
+		for {
+			select {
+			case err := <-subErrChan:
+				errChan <- err
+				return
+			case <-ctx.Done():
+				errChan <- ctx.Err()
+				return
+			case tokens, ok := <-alchemyRec:
+				if !ok {
+					break outer
+				}
+				cTokens, cContracts := alchemyTokensToChainAgnosticTokensForOwner(persist.EthereumAddress(addr), tokens)
+				rec <- multichain.ChainAgnosticTokensAndContracts{
+					Tokens:    cTokens,
+					Contracts: cContracts,
+				}
+			}
+		}
+	}()
+
+	return rec, errChan
 }
 
-// GetTokenByTokenIdentifiersAndOwner retrieves assets by token identifiers for a wallet address
-func (d *Provider) GetTokenByTokenIdentifiersAndOwner(ctx context.Context, ti persist.TokenChainAddress, ownerAddress persist.Address) (persist.Token, error) {
-	// TODO
-	return persist.Token{}, nil
+// GetTokensIncrementallyByContractAddress retrieves tokens incrementaly for a contract address on the Ethereum Blockchain
+func (d *Provider) GetTokensIncrementallyByContractAddress(ctx context.Context, addr persist.Address, limit int) (<-chan multichain.ChainAgnosticTokensAndContracts, <-chan error) {
+	rec := make(chan multichain.ChainAgnosticTokensAndContracts)
+	errChan := make(chan error)
+
+	u := mustGetNftsForCollectionEndpoint(d.alchemyAPIURL)
+	setContractAddress(u, addr)
+	setWithMetadata(u)
+	setExcludeSpam(u, d.chain)
+
+	alchemyRec := make(chan []Token)
+	subErrChan := make(chan error)
+
+	go func() {
+		defer close(alchemyRec)
+		_, err := getNFTsPaginate(ctx, u.String(), 100, "startToken", limit, 0, "", d.httpClient, alchemyRec, &getNFTsForCollectionResponse{})
+		if err != nil {
+			subErrChan <- err
+			return
+		}
+	}()
+
+	go func() {
+		defer close(rec)
+		defer close(errChan)
+		for {
+			select {
+			case err := <-subErrChan:
+				errChan <- err
+				return
+			case <-ctx.Done():
+				errChan <- ctx.Err()
+				return
+			case tokens, ok := <-alchemyRec:
+				if !ok {
+					return
+				}
+				cTokens, cContracts, err := d.alchemyContractTokensToChainAgnosticTokens(ctx, addr, tokens)
+				if err != nil {
+					errChan <- err
+					return
+				}
+				if len(cContracts) == 0 {
+					errChan <- multichain.ErrProviderContractNotFound{Contract: addr, Chain: d.chain}
+					return
+				}
+				rec <- multichain.ChainAgnosticTokensAndContracts{
+					Tokens:    cTokens,
+					Contracts: cContracts,
+				}
+			}
+		}
+	}()
+
+	return rec, errChan
 }
 
-func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, defaultLimit int, pageKeyName string, limit, offset int, pageKey string, httpClient *http.Client, result T) ([]Token, error) {
+func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, defaultLimit int, pageKeyName string, limit, offset int, pageKey string, httpClient *http.Client, rec chan<- []Token, result T) ([]Token, error) {
 
 	tokens := []Token{}
 	u := baseURL
@@ -273,13 +354,13 @@ func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, def
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get tokens from alchemy api: %w (url: %s)", err, u)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		asString, _ := ioutil.ReadAll(resp.Body)
+		asString, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("failed to get tokens from alchemy api: %s (err: %s) (url: %s)", resp.Status, asString, u)
 	}
 
@@ -306,6 +387,10 @@ func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, def
 		}
 	}
 
+	if rec != nil {
+		rec <- newTokens
+	}
+
 	tokens = append(tokens, newTokens...)
 
 	if nextPageKey != "" && nextPageKey != pageKey {
@@ -316,7 +401,7 @@ func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, def
 		if offset > 0 {
 			offset -= defaultLimit
 		}
-		newTokens, err := getNFTsPaginate(ctx, baseURL, defaultLimit, pageKeyName, limit, offset, nextPageKey, httpClient, result)
+		newTokens, err := getNFTsPaginate(ctx, baseURL, defaultLimit, pageKeyName, limit, offset, nextPageKey, httpClient, rec, result)
 		if err != nil {
 			return nil, err
 		}
@@ -326,35 +411,12 @@ func getNFTsPaginate[T tokensPaginated](ctx context.Context, baseURL string, def
 	return tokens, nil
 }
 
-// GetTokensIncrementallyByWalletAddress retrieves tokens for a wallet address on the Ethereum Blockchain
-func (d *Provider) GetTokensIncrementallyByWalletAddress(ctx context.Context, address persist.Address) (<-chan []persist.Token, <-chan error) {
-	rec := make(chan []persist.Token)
-	errChan := make(chan error)
+func (d *Provider) getOwnersForContract(ctx context.Context, contract persist.EthereumAddress) ([]OwnerWithBalances, error) {
+	u := mustGetOwnersForCollectionEndpoint(d.alchemyAPIURL)
+	setContractAddress(u, persist.Address(contract))
+	setWithTokenBalances(u)
 
-	return rec, errChan
-}
-
-// GetTokenMetadataByTokenIdentifiers retrieves a token's metadata for a given contract address and token ID
-func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
-	// 	tokens, _, err := d.getTokenWithMetadata(ctx, ti, false, 0)
-	// 	if err != nil {
-	// 		return persist.TokenMetadata{}, err
-	// 	}
-
-	// 	if len(tokens) == 0 {
-	// 		return persist.TokenMetadata{}, fmt.Errorf("no token found for contract address %s and token ID %s", ti.ContractAddress, ti.TokenID)
-	// 	}
-
-	// 	token := tokens[0]
-	return persist.TokenMetadata{}, nil
-}
-
-func (d *Provider) getTokenWithMetadata(ctx context.Context, ti persist.TokenChainAddress, forceRefresh bool, timeout time.Duration) ([]persist.Token, error) {
-	if timeout == 0 {
-		timeout = (time.Second * 20) / time.Millisecond
-	}
-	url := fmt.Sprintf("%s/getNFTMetadata?contractAddress=%s&tokenId=%s&tokenUriTimeoutInMs=%d&refreshCache=%t", d.alchemyAPIURL, ti.Address, 1, timeout, forceRefresh)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -362,235 +424,364 @@ func (d *Provider) getTokenWithMetadata(ctx context.Context, ti persist.TokenCha
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		asString, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to get tokens from alchemy api: %s (err: %s) (url: %s)", resp.Status, asString, u)
+	}
+
+	result := &getOwnersOfCollectionResponse{}
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Owners, nil
+}
+
+func (d *Provider) getTokenWithMetadata(ctx context.Context, ti multichain.ChainAgnosticIdentifiers, forceRefresh bool, timeout time.Duration) ([]multichain.ChainAgnosticToken, multichain.ChainAgnosticContract, error) {
+	if timeout == 0 {
+		timeout = (time.Second * 20) / time.Millisecond
+	}
+
+	u := mustGetNftMetadataEndpoint(d.alchemyAPIURL)
+	setContractAddress(u, ti.ContractAddress)
+	setTokenID(u, ti.TokenID)
+	setTokenUriTimeoutInMs(u, timeout)
+	setRefreshCache(u)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, multichain.ChainAgnosticContract{}, err
+	}
+
+	resp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, multichain.ChainAgnosticContract{}, fmt.Errorf("failed to get token metadata from alchemy api: %w (url: %s)", err, u.String())
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		err := util.GetErrFromResp(resp)
-		return nil, fmt.Errorf("failed to get token metadata from alchemy api: %s (%w)", resp.Status, err)
+		return nil, multichain.ChainAgnosticContract{}, fmt.Errorf("failed to get token metadata from alchemy api: %s (%w)", resp.Status, err)
 	}
 
 	// will have most of the fields empty
 	var token Token
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
-		return nil, err
+		return nil, multichain.ChainAgnosticContract{}, fmt.Errorf("failed to decode token metadata response: %w (url: %s)", err, u.String())
 	}
 
-	if token.Metadata.Image == "" && forceRefresh == false {
-		return d.getTokenWithMetadata(ctx, ti, true, timeout)
+	tokens, contracts, err := d.alchemyTokensToChainAgnosticTokens(ctx, []Token{token})
+	if err != nil {
+		return nil, multichain.ChainAgnosticContract{}, fmt.Errorf("failed to convert token to chain agnostic token: %w (url: %s)", err, u.String())
 	}
 
-	tokens, err := d.alchemyTokensToChainAgnosticTokens(ctx, []Token{token})
+	if len(contracts) == 0 {
+		return nil, multichain.ChainAgnosticContract{}, fmt.Errorf("failed to get contracts from alchemy api")
+	}
+
+	return tokens, contracts[0], nil
+}
+
+func (d *Provider) GetTokenMetadataByTokenIdentifiers(ctx context.Context, ti multichain.ChainAgnosticIdentifiers) (persist.TokenMetadata, error) {
+	tokens, _, err := d.getTokenWithMetadata(ctx, ti, true, 0)
 	if err != nil {
 		return nil, err
 	}
-
-	return tokens, nil
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+	return tokens[0].TokenMetadata, nil
 }
 
 // GetTokensByContractAddress retrieves tokens for a contract address on the Ethereum Blockchain
-func (d *Provider) GetTokensByContractAddress(ctx context.Context, contract persist.Address, limit int, offset int) ([]persist.Token, error) {
-	url := fmt.Sprintf("%s/getNFTsForCollection?contractAddress=%s&withMetadata=true&tokenUriTimeoutInMs=20000", d.alchemyAPIURL, contract)
-	tokens, err := getNFTsPaginate(ctx, url, 100, "startToken", limit, offset, "", d.httpClient, &getNFTsForCollectionResponse{})
+func (d *Provider) GetTokensByContractAddress(ctx context.Context, contractAddress persist.Address, limit, offset int) ([]multichain.ChainAgnosticToken, multichain.ChainAgnosticContract, error) {
+	u := mustGetNftsForCollectionEndpoint(d.alchemyAPIURL)
+	setContractAddress(u, contractAddress)
+	setWithMetadata(u)
+	setWithMetadata(u)
+	setTokenUriTimeoutInMs(u, time.Millisecond*20000)
+
+	tokens, err := getNFTsPaginate(ctx, u.String(), 100, "startToken", limit, offset, "", d.httpClient, nil, &getNFTsForCollectionResponse{})
 	if err != nil {
-		return nil, err
+		return nil, multichain.ChainAgnosticContract{}, err
 	}
 
-	cTokens, err := d.alchemyTokensToChainAgnosticTokens(ctx, tokens)
+	cTokens, cContracts, err := d.alchemyContractTokensToChainAgnosticTokens(ctx, contractAddress, tokens)
 	if err != nil {
-		return nil, err
+		return nil, multichain.ChainAgnosticContract{}, err
 	}
-	if len(cTokens) == 0 {
-		return nil, fmt.Errorf("no contract found for contract address %s", contract)
+
+	if len(cContracts) == 0 {
+		return nil, multichain.ChainAgnosticContract{}, multichain.ErrProviderContractNotFound{Contract: contractAddress, Chain: d.chain}
 	}
-	return cTokens, nil
+
+	return cTokens, cContracts[0], nil
 }
 
-func (d *Provider) GetTokensByContractAddressAndOwner(ctx context.Context, owner persist.Address, contract persist.Address, limit int, offset int) ([]persist.Token, error) {
-	url := fmt.Sprintf("%s/getNFTsForCollection?contractAddress=%s&withMetadata=true&tokenUriTimeoutInMs=20000", d.alchemyAPIURL, contract)
-	tokens, err := getNFTsPaginate(ctx, url, 100, "startToken", limit, offset, "", d.httpClient, &getNFTsForCollectionWithOwnerResponse{owner: owner, d: d, ctx: ctx})
+func (d *Provider) alchemyContractTokensToChainAgnosticTokens(ctx context.Context, contractAddress persist.Address, tokens []Token) ([]multichain.ChainAgnosticToken, []multichain.ChainAgnosticContract, error) {
+	owners, err := d.getOwnersForContract(ctx, persist.EthereumAddress(contractAddress))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	cTokens, err := d.alchemyTokensToChainAgnosticTokens(ctx, tokens)
+	tokenIDToOwner := make(map[TokenID][]persist.EthereumAddress)
+	for _, owner := range owners {
+		for _, tokenID := range owner.TokenBalances {
+			tokenIDToOwner[tokenID.TokenID] = append(tokenIDToOwner[tokenID.TokenID], owner.OwnerAddress)
+		}
+	}
+
+	ownersToTokens := make(map[persist.EthereumAddress][]Token)
+	for _, token := range tokens {
+		for _, owner := range tokenIDToOwner[token.ID.TokenID] {
+			ownersToTokens[owner] = append(ownersToTokens[owner], token)
+		}
+	}
+
+	cTokens, cContracts := alchemyTokensToChainAgnosticTokensWithOwners(ctx, ownersToTokens)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if len(cTokens) == 0 {
-		return nil, fmt.Errorf("no contract found for contract address %s", contract)
-	}
-	return cTokens, nil
+	return cTokens, cContracts, nil
 }
 
-func (d *Provider) GetTokensByTokenIdentifiersAndOwner(ctx context.Context, tokenIdentifiers persist.TokenChainAddress, ownerAddress persist.Address) (persist.Token, error) {
-	tokens, err := d.getTokenWithMetadata(ctx, tokenIdentifiers, false, 0)
+func (d *Provider) GetTokenByTokenIdentifiersAndOwner(ctx context.Context, tokenIdentifiers multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (multichain.ChainAgnosticToken, multichain.ChainAgnosticContract, error) {
+	tokens, contract, err := d.getTokenWithMetadata(ctx, tokenIdentifiers, true, 0)
 	if err != nil {
-		return persist.Token{}, err
+		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, err
 	}
 
 	if len(tokens) == 0 {
-		return persist.Token{}, fmt.Errorf("no token found for contract address %s", tokenIdentifiers.Address)
+		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, fmt.Errorf("no token found for contract address %s and token ID %s", tokenIdentifiers.ContractAddress, tokenIdentifiers.TokenID)
 	}
 
-	token, ok := util.FindFirst(tokens, func(t persist.Token) bool {
-		// TODO
-		// return t.OwnerAddress == ownerAddress
-		return persist.Address(t.ContractAddress) == ownerAddress
+	token, ok := util.FindFirst(tokens, func(t multichain.ChainAgnosticToken) bool {
+		return t.OwnerAddress == ownerAddress
 	})
 	if !ok {
-		return persist.Token{}, fmt.Errorf("no token found for contract address %s and owner address %s", tokenIdentifiers.Address, ownerAddress)
+		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, fmt.Errorf("no token found for contract address %s and token ID %s and owner address %s", tokenIdentifiers.ContractAddress, tokenIdentifiers.TokenID, ownerAddress)
 	}
 
-	return token, nil
+	return token, contract, nil
 }
 
-func (d *Provider) GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, ti persist.TokenChainAddress) (persist.TokenMetadata, error) {
-	return persist.TokenMetadata{}, nil
+func (d *Provider) GetTokensByTokenIdentifiers(ctx context.Context, tokenIdentifiers multichain.ChainAgnosticIdentifiers) ([]multichain.ChainAgnosticToken, multichain.ChainAgnosticContract, error) {
+	return d.getTokenWithMetadata(ctx, tokenIdentifiers, true, 0)
+}
+
+func (d *Provider) GetTokenDescriptorsByTokenIdentifiers(ctx context.Context, ti multichain.ChainAgnosticIdentifiers) (multichain.ChainAgnosticTokenDescriptors, multichain.ChainAgnosticContractDescriptors, error) {
+	tokens, contract, err := d.getTokenWithMetadata(ctx, ti, true, 0)
+	if err != nil {
+		return multichain.ChainAgnosticTokenDescriptors{}, multichain.ChainAgnosticContractDescriptors{}, err
+	}
+	if len(tokens) == 0 {
+		return multichain.ChainAgnosticTokenDescriptors{}, multichain.ChainAgnosticContractDescriptors{}, fmt.Errorf("no token found for contract address %s and token ID %s", ti.ContractAddress, ti.TokenID)
+	}
+	firstToken := tokens[0]
+	return firstToken.Descriptors, contract.Descriptors, nil
 }
 
 type GetContractMetadataResponse struct {
-	Address          persist.Address  `json:"address"`
-	ContractMetadata ContractMetadata `json:"contractMetadata"`
+	Address          persist.EthereumAddress `json:"address"`
+	ContractMetadata ContractMetadata        `json:"contractMetadata"`
 }
 
-func (d *Provider) GetCommunityOwners(ctx context.Context, contractAddress persist.Address, limit, offset int) ([]multichain.ChainAgnosticCommunityOwner, error) {
-	owners, err := d.paginateCollectionOwners(ctx, contractAddress, limit, offset, "")
+// GetContractByAddress retrieves an ethereum contract by address
+func (d *Provider) GetContractByAddress(ctx context.Context, addr persist.Address) (multichain.ChainAgnosticContract, error) {
+	u := mustGetContractMetadataEndpoint(d.alchemyAPIURL)
+	setContractAddress(u, addr)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
-		return nil, err
-	}
-	result := make([]multichain.ChainAgnosticCommunityOwner, 0, limit)
-
-	for _, owner := range owners {
-		result = append(result, multichain.ChainAgnosticCommunityOwner{
-			Address: persist.Address(owner),
-		})
-	}
-
-	return result, nil
-}
-
-type collectionOwnersResponse struct {
-	Owners  []persist.Address `json:"owners"`
-	PageKey string            `json:"pageKey"`
-}
-
-func (d *Provider) paginateCollectionOwners(ctx context.Context, contractAddress persist.Address, limit, offset int, pagekey string) ([]persist.Address, error) {
-	allOwners := make([]persist.Address, 0, limit)
-	url := fmt.Sprintf("%s/getCollectionOwners?contractAddress=%s", d.alchemyAPIURL, contractAddress)
-	if pagekey != "" {
-		url = fmt.Sprintf("%s&pageKey=%s", url, pagekey)
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
+		return multichain.ChainAgnosticContract{}, err
 	}
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return multichain.ChainAgnosticContract{}, err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get collection owners from alchemy api: %s", resp.Status)
+		return multichain.ChainAgnosticContract{}, fmt.Errorf("failed to get contract metadata from alchemy api: %s", resp.Status)
 	}
 
-	var collectionOwnersResponse collectionOwnersResponse
-	if err := json.NewDecoder(resp.Body).Decode(&collectionOwnersResponse); err != nil {
-		return nil, err
+	var contractMetadataResponse GetContractMetadataResponse
+	if err := json.NewDecoder(resp.Body).Decode(&contractMetadataResponse); err != nil {
+		return multichain.ChainAgnosticContract{}, err
 	}
 
-	if offset > 0 && offset < 50000 {
-		if len(collectionOwnersResponse.Owners) > offset {
-			collectionOwnersResponse.Owners = collectionOwnersResponse.Owners[offset:]
-		} else {
-			collectionOwnersResponse.Owners = nil
-		}
+	return multichain.ChainAgnosticContract{
+		Address: persist.Address(contractMetadataResponse.Address),
+		Descriptors: multichain.ChainAgnosticContractDescriptors{
+			Symbol:          contractMetadataResponse.ContractMetadata.Symbol,
+			Name:            contractMetadataResponse.ContractMetadata.Name,
+			OwnerAddress:    persist.Address(contractMetadataResponse.ContractMetadata.ContractDeployer),
+			Description:     contractMetadataResponse.ContractMetadata.OpenseaCollection.Description,
+			ProfileImageURL: contractMetadataResponse.ContractMetadata.OpenseaCollection.ImageURL,
+		},
+	}, nil
+
+}
+
+func (d *Provider) GetTokenMetadataByTokenIdentifiersBatch(ctx context.Context, tIDs []multichain.ChainAgnosticIdentifiers) ([]persist.TokenMetadata, error) {
+	type tokenRequest struct {
+		ContractAddress string `json:"contractAddress"`
+		TokenID         string `json:"tokenId"`
 	}
 
-	if limit > 0 && limit < 50000 {
-		if len(collectionOwnersResponse.Owners) > limit {
-			collectionOwnersResponse.Owners = collectionOwnersResponse.Owners[:limit]
-		}
+	type batchRequest struct {
+		Tokens       []tokenRequest `json:"tokens"`
+		RefreshCache bool           `json:"refreshCache"`
 	}
 
-	allOwners = append(allOwners, collectionOwnersResponse.Owners...)
+	type batchResponse []struct {
+		Metadata any `json:"metadata"`
+		Contract struct {
+			Address string `json:"address"`
+		} `json:"contract"`
+		Id struct {
+			TokenId string `json:"tokenId"`
+		} `json:"id"`
+	}
 
-	if collectionOwnersResponse.PageKey != "" {
-		if limit > 0 && limit > 50000 {
-			limit -= 50000
+	chunkSize := 100
+	chunks := util.ChunkBy(tIDs, chunkSize)
+	metadatas := make([]persist.TokenMetadata, len(tIDs))
+
+	u := mustGetNftMetadataBatchEndpoint(d.alchemyAPIURL)
+
+	// alchemy doesn't return tokens in the same order as the input
+	lookup := make(map[multichain.ChainAgnosticIdentifiers]persist.TokenMetadata)
+
+	for i, c := range chunks {
+		batchID := i + 1
+		body := batchRequest{Tokens: make([]tokenRequest, len(c)), RefreshCache: true}
+
+		for i, t := range c {
+			body.Tokens[i] = tokenRequest{
+				ContractAddress: t.ContractAddress.String(),
+				TokenID:         t.TokenID.Base10String(),
+			}
 		}
-		if offset > 0 && offset > 50000 {
-			offset -= 50000
+
+		byt, err := json.Marshal(body)
+		if err != nil {
+			return metadatas, err
 		}
-		owners, err := d.paginateCollectionOwners(ctx, contractAddress, limit, offset, collectionOwnersResponse.PageKey)
+
+		logger.For(ctx).Infof("handling metadata batch=%d of %d", batchID, len(chunks))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewReader(byt))
 		if err != nil {
 			return nil, err
 		}
-		allOwners = append(collectionOwnersResponse.Owners, owners...)
+
+		resp, err := d.httpClient.Do(req)
+		if err != nil {
+			logger.For(ctx).Errorf("failed to handle metadata batch=%d: %s", batchID, err)
+			continue
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			err := fmt.Errorf("unexpected status code: %d; err: %s", resp.StatusCode, util.BodyAsError(resp))
+			logger.For(ctx).Errorf("failed to handle metadata batch=%d: %s", batchID, err)
+			continue
+		}
+
+		var batchResp batchResponse
+
+		err = util.UnmarshallBody(&batchResp, resp.Body)
+		if err != nil {
+			logger.For(ctx).Errorf("failed to read alchemy metadata batch=%d body: %s", batchID, err)
+			return nil, err
+		}
+
+		for _, m := range batchResp {
+			tID := multichain.ChainAgnosticIdentifiers{ContractAddress: persist.Address(m.Contract.Address), TokenID: persist.MustTokenID(m.Id.TokenId)}
+			lookup[tID] = alchemyMetadataToMetadata(m.Metadata)
+		}
 	}
 
-	return allOwners, nil
-}
-
-func (d *Provider) GetOwnedTokensByContract(ctx context.Context, contractAddress persist.Address, ownerAddress persist.Address, limit, offset int) ([]persist.Token, error) {
-	url := fmt.Sprintf("%s/getNFTs?owner=%s&contractAddresses[]=%s&withMetadata=true&orderBy=transferTime", d.alchemyAPIURL, ownerAddress, contractAddress)
-	tokens, err := getNFTsPaginate(ctx, url, 100, "pageKey", limit, offset, "", d.httpClient, &getNFTsResponse{})
-	if err != nil {
-		return nil, err
+	for i, tID := range tIDs {
+		metadatas[i] = lookup[tID]
 	}
 
-	cTokens := alchemyTokensToChainAgnosticTokensForOwner(ownerAddress, tokens)
-
-	return cTokens, nil
+	logger.For(ctx).Infof("finished alchemy metadata batch of %d tokens", len(tIDs))
+	return metadatas, nil
 }
 
-func alchemyTokensToChainAgnosticTokensForOwner(owner persist.Address, tokens []Token) []persist.Token {
-	chainAgnosticTokens := make([]persist.Token, 0, len(tokens))
+func alchemyTokensToChainAgnosticTokensForOwner(owner persist.EthereumAddress, tokens []Token) ([]multichain.ChainAgnosticToken, []multichain.ChainAgnosticContract) {
+	chainAgnosticTokens := make([]multichain.ChainAgnosticToken, 0, len(tokens))
+	chainAgnosticContracts := make([]multichain.ChainAgnosticContract, 0, len(tokens))
 	seenContracts := make(map[persist.Address]bool)
 	for _, token := range tokens {
-		cToken := alchemyTokenToChainAgnosticToken(owner, token)
-		cAddress := persist.Address(cToken.ContractAddress)
-
-		if _, ok := seenContracts[cAddress]; !ok {
-			seenContracts[cAddress] = true
+		cToken, cContract := alchemyTokenToChainAgnosticToken(owner, token)
+		if _, ok := seenContracts[cContract.Address]; !ok {
+			seenContracts[cContract.Address] = true
+			chainAgnosticContracts = append(chainAgnosticContracts, cContract)
 		}
 		chainAgnosticTokens = append(chainAgnosticTokens, cToken)
 	}
-	return chainAgnosticTokens
+	return chainAgnosticTokens, chainAgnosticContracts
 }
 
-func (d *Provider) alchemyTokensToChainAgnosticTokens(ctx context.Context, tokens []Token) ([]persist.Token, error) {
-	chainAgnosticTokens := make([]persist.Token, 0, len(tokens))
-
+func (d *Provider) alchemyTokensToChainAgnosticTokens(ctx context.Context, tokens []Token) ([]multichain.ChainAgnosticToken, []multichain.ChainAgnosticContract, error) {
+	chainAgnosticTokens := make([]multichain.ChainAgnosticToken, 0, len(tokens))
+	chainAgnosticContracts := make([]multichain.ChainAgnosticContract, 0, len(tokens))
 	seenContracts := make(map[persist.Address]bool)
 	for _, token := range tokens {
 		owners, err := d.getOwnersForToken(ctx, token)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		for _, owner := range owners {
-			cToken := alchemyTokenToChainAgnosticToken(owner, token)
-			cAddress := persist.Address(cToken.ContractAddress)
-			if _, ok := seenContracts[cAddress]; !ok {
-				seenContracts[cAddress] = true
+			cToken, cContract := alchemyTokenToChainAgnosticToken(owner, token)
+			if _, ok := seenContracts[cContract.Address]; !ok {
+				seenContracts[cContract.Address] = true
+				chainAgnosticContracts = append(chainAgnosticContracts, cContract)
 			}
 			chainAgnosticTokens = append(chainAgnosticTokens, cToken)
 		}
 	}
-	return chainAgnosticTokens, nil
+	return chainAgnosticTokens, chainAgnosticContracts, nil
+}
+
+func alchemyTokensToChainAgnosticTokensWithOwners(ctx context.Context, tokens map[persist.EthereumAddress][]Token) ([]multichain.ChainAgnosticToken, []multichain.ChainAgnosticContract) {
+	chainAgnosticTokens := make([]multichain.ChainAgnosticToken, 0, len(tokens))
+	chainAgnosticContracts := make([]multichain.ChainAgnosticContract, 0, len(tokens))
+	seenContracts := make(map[persist.Address]bool)
+	for owner, ownerTokens := range tokens {
+		for _, token := range ownerTokens {
+			cToken, cContract := alchemyTokenToChainAgnosticToken(owner, token)
+			if _, ok := seenContracts[cContract.Address]; !ok {
+				seenContracts[cContract.Address] = true
+				chainAgnosticContracts = append(chainAgnosticContracts, cContract)
+			}
+			chainAgnosticTokens = append(chainAgnosticTokens, cToken)
+		}
+	}
+	return chainAgnosticTokens, chainAgnosticContracts
 }
 
 type ownersResponse struct {
-	Owners []persist.Address `json:"owners"`
+	Owners []persist.EthereumAddress `json:"owners"`
 }
 
-func (d *Provider) getOwnersForToken(ctx context.Context, token Token) ([]persist.Address, error) {
-	url := fmt.Sprintf("%s/getOwnersForToken?contractAddress=%s&tokenId=%s", d.alchemyAPIURL, token.Contract.Address, token.ID.TokenID)
-	resp, err := d.httpClient.Get(url)
+func (d *Provider) getOwnersForToken(ctx context.Context, token Token) ([]persist.EthereumAddress, error) {
+	u := mustGetOwnersForTokenEndpoint(d.alchemyAPIURL)
+	setContractAddress(u, persist.Address(token.Contract.Address))
+	setTokenID(u, token.ID.TokenID.ToTokenID())
+
+	resp, err := d.httpClient.Get(u.String())
 	if err != nil {
 		return nil, err
 	}
@@ -608,29 +799,60 @@ func (d *Provider) getOwnersForToken(ctx context.Context, token Token) ([]persis
 	return owners.Owners, nil
 }
 
-func alchemyTokenToChainAgnosticToken(owner persist.Address, token Token) persist.Token {
+func alchemyMetadataToMetadata(m any) persist.TokenMetadata {
+	var metadata persist.TokenMetadata
+	switch typ := m.(type) {
+	case map[string]any:
+		metadata = persist.TokenMetadata(typ)
+	default:
+		metadata = persist.TokenMetadata{}
+	}
+	return metadata
+}
+
+func alchemyTokenToChainAgnosticToken(owner persist.EthereumAddress, token Token) (multichain.ChainAgnosticToken, multichain.ChainAgnosticContract) {
 
 	var tokenType persist.TokenType
 	switch token.ID.TokenMetadata.TokenType {
-	case "ERC20":
-		tokenType = persist.TokenTypeERC20
+	case "ERC721":
+		tokenType = persist.TokenTypeERC721
+	case "ERC1155":
+		tokenType = persist.TokenTypeERC1155
 	}
 
-	// TODO
+	bal, ok := new(big.Int).SetString(token.Balance, 10)
+	if !ok {
+		bal = big.NewInt(1)
+	}
 
-	//bal, ok := new(big.Int).SetString(token.Balance, 10)
-	//if !ok {
-	//	bal = big.NewInt(1)
-	//}
+	// TODO: Remove this when alchemy v3 is used
+	metadata := alchemyMetadataToMetadata(token.Metadata)
+	externalURL, _ := metadata["external_url"].(string)
 
-	// TODO add asset for token
+	// TODO: Remove this when alchemy v3 is used
+	var description string
+	descriptionAsStr, descAsStr := metadata["description"].(string)
+	descriptionAsArr, descAsArr := metadata["description"].([]string)
+	switch {
+	case descAsStr:
+		description = descriptionAsStr
+	case descAsArr && len(descriptionAsArr) == 1:
+		description = descriptionAsArr[0]
+	}
 
-	t := persist.Token{
-		//Balance:         persist.HexString(bal.Text(16)),
-		Name:            persist.NullString(token.ContractMetadata.Name),
-		Symbol:          persist.NullString(token.ContractMetadata.Symbol),
+	t := multichain.ChainAgnosticToken{
+		TokenType: tokenType,
+		Descriptors: multichain.ChainAgnosticTokenDescriptors{
+			Name:        token.Title,
+			Description: description,
+		},
+		TokenURI:        persist.TokenURI(token.TokenURI.Raw),
+		TokenMetadata:   metadata,
+		TokenID:         token.ID.TokenID.ToTokenID(),
+		Quantity:        persist.HexString(bal.Text(16)),
+		OwnerAddress:    persist.Address(owner),
 		ContractAddress: persist.Address(token.Contract.Address),
-		TokenType:       tokenType,
+		ExternalURL:     externalURL,
 	}
 
 	isSpam, err := strconv.ParseBool(token.SpamInfo.IsSpam)
@@ -638,19 +860,111 @@ func alchemyTokenToChainAgnosticToken(owner persist.Address, token Token) persis
 		t.IsSpam = &isSpam
 	}
 
-	return t
+	contractSpam := contractNameIsSpam(token.ContractMetadata.Name)
+
+	return t, multichain.ChainAgnosticContract{
+		Address: persist.Address(token.Contract.Address),
+		Descriptors: multichain.ChainAgnosticContractDescriptors{
+			Symbol:       token.ContractMetadata.Symbol,
+			Name:         token.ContractMetadata.Name,
+			OwnerAddress: persist.Address(token.ContractMetadata.ContractDeployer),
+		},
+		IsSpam: &contractSpam,
+	}
 }
 
-func alchemyTokenToMetadata(token Token) persist.TokenMetadata {
-	// TODO: fill token metadata
-	metadata := persist.TokenMetadata{
-		"name":     token.Metadata.Name,
-		"symbol":   token.Metadata.Description,
-		"decimals": token.Metadata.ExternalURL,
+func checkURL(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
 	}
+	return u
+}
 
-	if token.Metadata.Image != "" {
-		metadata["logo_url"] = token.Metadata.Image
-	}
-	return metadata
+func mustGetNftsEndpoint(baseURL string) *url.URL {
+	s := fmt.Sprintf(getNftsEndpointTemplate, baseURL)
+	return checkURL(s)
+}
+
+func mustGetNftsForCollectionEndpoint(baseURL string) *url.URL {
+	s := fmt.Sprintf(getNftsForCollectionEndpointTemplate, baseURL)
+	return checkURL(s)
+}
+
+func mustGetOwnersForCollectionEndpoint(baseURL string) *url.URL {
+	s := fmt.Sprintf(getOwnersForCollectionEndpointTemplate, baseURL)
+	return checkURL(s)
+}
+
+func mustGetNftMetadataEndpoint(baseURL string) *url.URL {
+	s := fmt.Sprintf(getNftMetadataEndpointTemplate, baseURL)
+	return checkURL(s)
+}
+
+func mustGetContractMetadataEndpoint(baseURL string) *url.URL {
+	s := fmt.Sprintf(getContractMetadataEndpointTemplate, baseURL)
+	return checkURL(s)
+}
+
+func mustGetOwnersForTokenEndpoint(baseURL string) *url.URL {
+	s := fmt.Sprintf(getOwnersForTokenEndpointTemplate, baseURL)
+	return checkURL(s)
+}
+
+func mustGetNftMetadataBatchEndpoint(baseURL string) *url.URL {
+	s := fmt.Sprintf(getNftMetadataBatchEndpointTemplate, baseURL)
+	return checkURL(s)
+}
+
+func setOwner(url *url.URL, address persist.Address) {
+	query := url.Query()
+	query.Set("owner", address.String())
+	url.RawQuery = query.Encode()
+}
+
+func setWithMetadata(url *url.URL) {
+	query := url.Query()
+	query.Set("withMetadata", "true")
+	url.RawQuery = query.Encode()
+}
+
+func setExcludeSpam(url *url.URL, chain persist.Chain) {
+	query := url.Query()
+	query.Set("excludeFilters[]", "SPAM")
+	url.RawQuery = query.Encode()
+
+}
+
+func setContractAddress(url *url.URL, address persist.Address) {
+	query := url.Query()
+	query.Set("contractAddress", address.String())
+	url.RawQuery = query.Encode()
+}
+
+func setWithTokenBalances(url *url.URL) {
+	query := url.Query()
+	query.Set("withTokenBalances", "true")
+	url.RawQuery = query.Encode()
+}
+
+func setTokenID(url *url.URL, tokenID persist.HexTokenID) {
+	query := url.Query()
+	query.Set("tokenId", tokenID.Base10String())
+	url.RawQuery = query.Encode()
+}
+
+func setTokenUriTimeoutInMs(url *url.URL, timeout time.Duration) {
+	query := url.Query()
+	query.Set("tokenUriTimeoutInMs", fmt.Sprintf("%d", timeout))
+	url.RawQuery = query.Encode()
+}
+
+func setRefreshCache(url *url.URL) {
+	query := url.Query()
+	query.Set("refreshCache", "true")
+	url.RawQuery = query.Encode()
+}
+
+func contractNameIsSpam(name string) bool {
+	return strings.HasSuffix(strings.ToLower(name), ".lens-follower")
 }
