@@ -99,7 +99,7 @@ func (d *Provider) GetContractsByOwnerAddress(ctx context.Context, addr persist.
 // RefreshContract refreshes the metadata for a contract
 func (d *Provider) RefreshContract(ctx context.Context, addr persist.Address) error {
 	input := indexer.UpdateContractMetadataInput{
-		Address: persist.EthereumAddress(persist.ChainETH.NormalizeAddress(addr)),
+		Address: persist.Address(persist.ChainETH.NormalizeAddress(addr)),
 	}
 
 	asJSON, err := json.Marshal(input)
