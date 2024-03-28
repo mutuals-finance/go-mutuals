@@ -102,6 +102,22 @@ func (e errWithPriority) Error() string {
 	return fmt.Sprintf("error with priority %d: %s", e.priority, e.err)
 }
 
+type ErrProviderFailed struct{ Err error }
+
+func (e ErrProviderFailed) Unwrap() error { return e.Err }
+func (e ErrProviderFailed) Error() string { return fmt.Sprintf("calling provider failed: %s", e.Err) }
+
+type ErrProviderContractNotFound struct {
+	Contract persist.Address
+	Chain    persist.Chain
+	Err      error
+}
+
+func (e ErrProviderContractNotFound) Unwrap() error { return e.Err }
+func (e ErrProviderContractNotFound) Error() string {
+	return fmt.Sprintf("provider did not find contract: %s", e.Contract.String())
+}
+
 // Configurer maintains provider settings
 type Configurer interface {
 	GetBlockchainInfo() BlockchainInfo

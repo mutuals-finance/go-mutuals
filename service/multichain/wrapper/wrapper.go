@@ -247,7 +247,7 @@ func (m MultiProviderWrapper) GetTokenMetadataByTokenIdentifiers(ctx context.Con
 }
 
 func (m MultiProviderWrapper) GetTokensByWalletAddress(ctx context.Context, address persist.Address) (<-chan []persist.Token, <-chan error) {
-	recCh := make(chan []persist.Token)
+	recCh := make(chan []multichain.ChainAgnosticToken)
 	errCh := make(chan error, 2)
 	resultA, errA := m.TokensIncrementalOwnerFetchers[0].GetTokensIncrementallyByWalletAddress(ctx, address)
 	resultB, errB := m.TokensIncrementalOwnerFetchers[1].GetTokensIncrementallyByWalletAddress(ctx, address)
@@ -310,7 +310,7 @@ func fanIn(ctx context.Context, recCh chan<- []persist.Token, errCh chan<- error
 
 			if err, ok := util.ErrorAs[multichain.ErrProviderContractNotFound](err); ok {
 				logger.For(ctx).Warnf("secondary provider could not find contract: %s", err)
-				c := persist.NewContractIdentifiers(err.Contract, err.Chain)
+				c := persist.NewTokenChainAddress(err.Contract, err.Chain)
 				if missing[c] {
 					errCh <- err
 				} else {
@@ -348,7 +348,7 @@ func NewFillInWrapper(ctx context.Context, httpClient *http.Client, chain persis
 }
 
 // AddToToken adds missing data to a token.
-func (w *FillInWrapper) AddToToken(ctx context.Context, t persist.Token) persist.Token {
+func (w *FillInWrapper) AddToToken(ctx context.Context, t multichain.ChainAgnosticToken) multichain.ChainAgnosticToken {
 	return w.addToken(t)()
 }
 
@@ -382,13 +382,13 @@ func (w *FillInWrapper) AddToPage(ctx context.Context, recCh <-chan multichain.C
 }
 
 // LoaddAll fills in missing data for a slice of tokens.
-func (w *FillInWrapper) LoadAll(tokens []persist.Token) []persist.Token {
+func (w *FillInWrapper) LoadAll(tokens []multichain.ChainAgnosticToken) []multichain.ChainAgnosticToken {
 	thunks := make([]func() multichain.ChainAgnosticToken, len(tokens))
 	for i, t := range tokens {
 		t := t
 		thunks[i] = w.addTokenToBatch(t)
 	}
-	result := make([]persist.Token, len(tokens))
+	result := make([]multichain.ChainAgnosticToken, len(tokens))
 	for i, thunk := range thunks {
 		result[i] = thunk()
 	}
@@ -452,7 +452,7 @@ func (w *FillInWrapper) addPage(p multichain.ChainAgnosticTokensAndContracts) fu
 	}
 }
 
-func (w *FillInWrapper) addToken(t persist.Token) func() persist.Token {
+func (w *FillInWrapper) addToken(t multichain.ChainAgnosticToken) func() multichain.ChainAgnosticToken {
 	if hasMediaURLs(t.TokenMetadata, w.chain) && t.FallbackMedia.IsServable() {
 		return func() multichain.ChainAgnosticToken {
 			w.cacheTokenResult(t)
@@ -467,12 +467,12 @@ func (w *FillInWrapper) cacheTokenResult(t multichain.ChainAgnosticToken) {
 	w.resultCache.Store(tID, t)
 }
 
-func (w *FillInWrapper) addTokenToBatch(t persist.Token) func() persist.Token {
+func (w *FillInWrapper) addTokenToBatch(t multichain.ChainAgnosticToken) func() multichain.ChainAgnosticToken {
 	ti := multichain.ChainAgnosticIdentifiers{ContractAddress: t.ContractAddress, TokenID: t.TokenID}
 
 	if v, ok := w.resultCache.Load(ti); ok {
-		return func() persist.Token {
-			f := v.(persist.Token)
+		return func() multichain.ChainAgnosticToken {
+			f := v.(multichain.ChainAgnosticToken)
 			if !t.FallbackMedia.IsServable() {
 				t.FallbackMedia = f.FallbackMedia
 			}
@@ -493,7 +493,7 @@ func (w *FillInWrapper) addTokenToBatch(t persist.Token) func() persist.Token {
 
 	w.mu.Unlock()
 
-	return func() persist.Token {
+	return func() multichain.ChainAgnosticToken {
 		<-b.done
 		if b.errors[pos] != nil {
 			return t
@@ -556,13 +556,13 @@ func (b *batch) startTimer(w *FillInWrapper) {
 }
 
 func (b *batch) end(w *FillInWrapper) {
-	ctx, cancel := context.WithTimeout(w.ctx, 10*time.Second)
+	_, cancel := context.WithTimeout(w.ctx, 10*time.Second)
 	defer cancel()
-	b.results, b.errors = w.reservoirProvider.GetTokensByTokenIdentifiersBatch(ctx, b.tokens)
-	for i := range b.results {
-		if b.errors[i] == nil {
-			w.resultCache.Store(b.tokens[i], b.results[i])
-		}
-	}
+	//b.results, b.errors = w.reservoirProvider.GetTokensByTokenIdentifiersBatch(ctx, b.tokens)
+	//for i := range b.results {
+	//	if b.errors[i] == nil {
+	//		w.resultCache.Store(b.tokens[i], b.results[i])
+	//	}
+	//}
 	close(b.done)
 }
