@@ -1,19 +1,17 @@
 package persist
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
+	"github.com/jackc/pgtype"
+	"github.com/lib/pq"
 	"io"
 	"math/big"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/lib/pq"
+	"time"
 
 	"github.com/SplitFi/go-splitfi/util"
 )
@@ -34,14 +32,10 @@ const (
 	MediaTypeGIF MediaType = "gif"
 	// MediaTypeSVG represents an SVG
 	MediaTypeSVG MediaType = "svg"
-	// MediaTypeBase64BMP represents a base64 encoded bmp file
-	MediaTypeBase64BMP MediaType = "base64bmp"
 	// MediaTypeText represents plain text
 	MediaTypeText MediaType = "text"
 	// MediaTypeHTML represents html
 	MediaTypeHTML MediaType = "html"
-	// MediaTypeBase64Text represents a base64 encoded plain text
-	MediaTypeBase64Text MediaType = "base64text"
 	// MediaTypeAudio represents audio
 	MediaTypeAudio MediaType = "audio"
 	// MediaTypeJSON represents json metadata
@@ -56,9 +50,38 @@ const (
 	MediaTypeUnknown MediaType = "unknown"
 	// MediaTypeSyncing represents a syncing media
 	MediaTypeSyncing MediaType = "syncing"
+	// MediaTypeFallback represents a fallback media
+	MediaTypeFallback MediaType = "fallback"
 )
 
-var mediaTypePriorities = []MediaType{MediaTypeHTML, MediaTypeAudio, MediaTypeAnimation, MediaTypeVideo, MediaTypeBase64BMP, MediaTypeGIF, MediaTypeSVG, MediaTypeImage, MediaTypeJSON, MediaTypeBase64Text, MediaTypeText, MediaTypeSyncing, MediaTypeUnknown, MediaTypeInvalid}
+var mediaTypePriorities = []MediaType{MediaTypeHTML, MediaTypeAudio, MediaTypeAnimation, MediaTypeVideo, MediaTypeGIF, MediaTypeSVG, MediaTypeImage, MediaTypeJSON, MediaTypeText, MediaTypeSyncing, MediaTypeUnknown, MediaTypeInvalid}
+
+func (m MediaType) ToContentType() string {
+	switch m {
+	case MediaTypeVideo:
+		return "video/mp4"
+	case MediaTypeImage:
+		return "image/jpeg"
+	case MediaTypeGIF:
+		return "image/gif"
+	case MediaTypeSVG:
+		return "image/svg+xml"
+	case MediaTypeText:
+		return "text/plain"
+	case MediaTypeHTML:
+		return "text/html"
+	case MediaTypeAudio:
+		return "audio/mpeg"
+	case MediaTypeJSON:
+		return "application/json"
+	case MediaTypeAnimation:
+		return "model/gltf-binary"
+	case MediaTypePDF:
+		return "application/pdf"
+	default:
+		return ""
+	}
+}
 
 const (
 	// ChainETH represents the Ethereum blockchain
@@ -69,29 +92,57 @@ const (
 	ChainPolygon
 	// ChainOptimism represents the Optimism blockchain
 	ChainOptimism
+	// ChainBase represents the base chain
+	ChainBase
+	// ChainBaseSepolia - Base testnet
+	ChainBaseSepolia
+
 	// MaxChainValue is the highest valid chain value, and should always be updated to
 	// point to the most recently added chain type.
-	MaxChainValue = ChainOptimism
+	MaxChainValue = ChainBaseSepolia
 )
 
+func MustTokenID(s string) HexTokenID {
+	return HexTokenID(MustHexString(s))
+}
+
+func MustHexString(s string) HexString {
+	base := 10
+
+	if strings.HasPrefix(s, "0x") {
+		s = strings.TrimPrefix(s, "0x")
+		base = 16
+	}
+
+	v, ok := new(big.Int).SetString(s, base)
+	if !ok {
+		panic(fmt.Sprintf("failed to convert '%s' to a number", s))
+	}
+
+	return HexString(v.Text(16))
+}
+
 var L1Chains = map[Chain]L1Chain{
-	ChainOptimism: L1Chain(ChainETH),
-	ChainPolygon:  L1Chain(ChainETH),
-	ChainArbitrum: L1Chain(ChainETH),
-	ChainETH:      L1Chain(ChainETH),
+	ChainOptimism:    L1Chain(ChainETH),
+	ChainPolygon:     L1Chain(ChainETH),
+	ChainArbitrum:    L1Chain(ChainETH),
+	ChainBase:        L1Chain(ChainETH),
+	ChainBaseSepolia: L1Chain(ChainETH),
+	ChainETH:         L1Chain(ChainETH),
 }
 
 var L1ChainGroups = map[L1Chain][]Chain{
 	L1Chain(ChainETH): EvmChains,
 }
 
-var AllChains = []Chain{ChainETH, ChainArbitrum, ChainPolygon, ChainOptimism}
+var AllChains = []Chain{ChainETH, ChainArbitrum, ChainPolygon, ChainOptimism, ChainBase}
 var EvmChains = util.MapKeys(evmChains)
 var evmChains map[Chain]bool = map[Chain]bool{
 	ChainETH:      true,
 	ChainOptimism: true,
 	ChainPolygon:  true,
 	ChainArbitrum: true,
+	ChainBase:     true,
 }
 
 const (
@@ -139,16 +190,67 @@ const (
 	URITypeNone URIType = "none"
 )
 
+func (u URIType) IsRaw() bool {
+	switch u {
+	case URITypeBase64JSON, URITypeBase64HTML, URITypeBase64SVG, URITypeBase64BMP, URITypeBase64PNG, URITypeBase64JPEG, URITypeBase64GIF, URITypeBase64WAV, URITypeBase64MP3, URITypeJSON, URITypeSVG, URITypeENS:
+		return true
+	default:
+		return false
+	}
+}
+
+func (u URIType) ToMediaType() MediaType {
+	switch u {
+	case URITypeBase64JSON, URITypeJSON:
+		return MediaTypeJSON
+	case URITypeBase64SVG, URITypeSVG:
+		return MediaTypeSVG
+	case URITypeBase64BMP:
+		return MediaTypeImage
+	case URITypeBase64PNG:
+		return MediaTypeImage
+	case URITypeBase64HTML:
+		return MediaTypeHTML
+	case URITypeBase64JPEG:
+		return MediaTypeImage
+	case URITypeBase64GIF:
+		return MediaTypeGIF
+	case URITypeBase64MP3:
+		return MediaTypeAudio
+	case URITypeBase64WAV:
+		return MediaTypeAudio
+	default:
+		return MediaTypeUnknown
+	}
+}
+
+const (
+	// CountTypeTotal represents the total count
+	CountTypeTotal TokenCountType = "total"
+	// CountTypeNoMetadata represents the count of tokens without metadata
+	CountTypeNoMetadata TokenCountType = "no-metadata"
+	// CountTypeERC721 represents the count of ERC721 tokens
+	CountTypeERC721 TokenCountType = "erc721"
+	// CountTypeERC1155 represents the count of ERC1155 tokens
+	CountTypeERC1155 TokenCountType = "erc1155"
+)
+
+const (
+	TokenOwnershipTypeHolder  TokenOwnershipType = "holder"
+	TokenOwnershipTypeCreator TokenOwnershipType = "creator"
+)
+
 // InvalidTokenURI represents an invalid token URI
 const InvalidTokenURI TokenURI = "INVALID"
 
-// ZeroAddress is the all-zero address
-const ZeroAddress Address = "0x0000000000000000000000000000000000000000"
+// ZeroAddress is the all-zero Ethereum address
+const ZeroAddress EthereumAddress = "0x0000000000000000000000000000000000000000"
 
-var gltfFields = []string{"scene", "scenes", "nodes", "meshes", "accessors", "bufferViews", "buffers", "materials", "textures", "images", "samplers", "cameras", "skins", "animations", "extensions", "extras"}
+// EthereumAddress represents an Ethereum address
+type EthereumAddress string
 
 // AddressList is a slice of Addresses, used to implement scanner/valuer interfaces
-type AddressList []Address
+type AddressList []EthereumAddress
 
 func (l AddressList) Value() (driver.Value, error) {
 	return pq.Array(l).Value()
@@ -181,6 +283,30 @@ type TokenCountType string
 type Chain int
 
 type L1Chain Chain
+
+type DecimalTokenID string
+type DecimalTokenIDList []DecimalTokenID
+
+func (l DecimalTokenIDList) Value() (driver.Value, error) {
+	return pq.Array(l).Value()
+}
+
+func (l *DecimalTokenIDList) Scan(value interface{}) error {
+	return pq.Array(l).Scan(value)
+}
+
+// HexTokenID represents the ID of a token in hexadecimal
+type HexTokenID string
+
+type HexTokenIDList []HexTokenID
+
+func (l HexTokenIDList) Value() (driver.Value, error) {
+	return pq.Array(l).Value()
+}
+
+func (l *HexTokenIDList) Scan(value interface{}) error {
+	return pq.Array(l).Scan(value)
+}
 
 // TokenLogo represents the URL for an ERC20 token logo
 type TokenLogo string
@@ -259,25 +385,32 @@ func TokenChainAddressFromString(s string) (TokenChainAddress, error) {
 	}, nil
 }
 
-// EthereumTokenIdentifiers represents a unique identifier for a token on the Ethereum Blockchain
-type EthereumTokenIdentifiers string
+type TokenOwnershipType string
 
-// Token represents an ERC20 or native token
+func (t TokenOwnershipType) String() string {
+	return string(t)
+}
+
+// Token represents an individual ERC20 or native token
 type Token struct {
-	Version         NullInt32       `json:"version"` // schema version for this model
-	ID              DBID            `json:"id" binding:"required"`
-	CreationTime    CreationTime    `json:"created_at"`
-	Deleted         NullBool        `json:"-"`
-	LastUpdated     LastUpdatedTime `json:"last_updated"`
-	TokenType       TokenType       `json:"token_type"`
-	ContractAddress Address         `json:"contract_address"`
-	Chain           Chain           `json:"chain"`
-	Name            NullString      `json:"name"`
-	Symbol          NullString      `json:"symbol"`
-	Decimals        NullInt32       `json:"decimals"`
-	Logo            TokenLogo       `json:"logo"`
-	BlockNumber     BlockNumber     `json:"block_number"`
-	IsSpam          *bool           `json:"is_spam"`
+	Version      NullInt32 `json:"version"` // schema version for this model
+	ID           DBID      `json:"id" binding:"required"`
+	CreationTime time.Time `json:"created_at"`
+	Deleted      NullBool  `json:"-"`
+	LastUpdated  time.Time `json:"last_updated"`
+
+	TokenType TokenType `json:"token_type"`
+
+	ContractAddress Address `json:"contract_address"`
+	Chain           Chain   `json:"chain"`
+
+	Name     NullString `json:"name"`
+	Symbol   NullString `json:"symbol"`
+	Decimals NullInt32  `json:"decimals"`
+	Logo     TokenLogo  `json:"logo"`
+
+	BlockNumber BlockNumber `json:"block_number"`
+	IsSpam      *bool       `json:"is_spam"`
 }
 
 type Dimensions struct {
@@ -289,27 +422,9 @@ func (d Dimensions) Valid() bool {
 	return d.Width > 0 && d.Height > 0
 }
 
-// Media represents a splits media content with processed images from metadata
-type Media struct {
-	ThumbnailURL   NullString `json:"thumbnail_url,omitempty"`
-	LivePreviewURL NullString `json:"live_preview_url,omitempty"`
-	MediaURL       NullString `json:"media_url,omitempty"`
-	MediaType      MediaType  `json:"media_type"`
-	Dimensions     Dimensions `json:"dimensions"`
-}
-
-// IsServable returns true if the token's Media has enough information to serve it's assets.
-func (m Media) IsServable() bool {
-	return m.MediaURL != "" && m.MediaType.IsValid()
-}
-
-// TokenContract represents a smart contract's information for an ERC20 or native token
-type TokenContract struct {
-	ContractAddress     Address    `json:"address"`
-	ContractName        NullString `json:"name"`
-	ContractImage       NullString `json:"logo"`
-	ContractSymbol      NullString `json:"symbol"`
-	ContractTotalSupply NullString `json:"total_supply"`
+type FallbackMedia struct {
+	ImageURL   NullString `json:"image_url,omitempty"`
+	Dimensions Dimensions `json:"dimensions"`
 }
 
 // ContractCollectionNFT represents a contract within a collection nft
@@ -318,33 +433,31 @@ type ContractCollectionNFT struct {
 	ContractImage NullString `json:"image_url"`
 }
 
-type TokenUpdateTotalSupplyInput struct {
-	TotalSupply HexString   `json:"total_supply"`
+type TokenUpdateOwnerInput struct {
+	OwnerAddress EthereumAddress `json:"owner_address"`
+	BlockNumber  BlockNumber     `json:"block_number"`
+}
+
+type TokenUpdateBalanceInput struct {
+	Quantity    HexString   `json:"quantity"`
 	BlockNumber BlockNumber `json:"block_number"`
 }
 
-// TokenRepository represents a repository for interacting with persisted tokens
-type TokenRepository interface {
-	GetByWallet(context.Context, Address, int64, int64) ([]Token, error)
-	GetByTokenIdentifiers(context.Context, Address, int64, int64) ([]Token, error)
-	GetByIdentifiers(context.Context, Address) (Token, error)
-	TokenExistsByTokenIdentifiers(context.Context, Address) (bool, error)
-	Upsert(context.Context, Token) error
-	BulkUpsert(context.Context, []Token) error
-	UpdateByID(context.Context, DBID, interface{}) error
-	MostRecentBlock(context.Context) (BlockNumber, error)
-	DeleteByID(context.Context, DBID) error
+var errTokenNotFound ErrTokenNotFound
+
+type ErrTokenNotFound struct{}
+
+func (e ErrTokenNotFound) Unwrap() error { return notFoundError }
+func (e ErrTokenNotFound) Error() string { return "token not found" }
+
+// ErrTokenNotFoundByTokenChainAddress is an error that is returned when a token is not found by its identifiers (contract address and chain id)
+type ErrTokenNotFoundByTokenChainAddress struct {
+	Token TokenChainAddress
 }
 
-// ErrTokenNotFoundByTokenIdentifiers is an error that is returned when a token is not found by its identifiers (token ID and contract address)
-type ErrTokenNotFoundByTokenIdentifiers struct {
-	ContractAddress Address
-}
-
-// ErrTokenNotFoundByIdentifiers is an error that is returned when a token is not found by its identifiers (token ID and contract address and owner address)
-type ErrTokenNotFoundByIdentifiers struct {
-	ContractAddress Address
-	Chain           Chain
+func (e ErrTokenNotFoundByTokenChainAddress) Unwrap() error { return errTokenNotFound }
+func (e ErrTokenNotFoundByTokenChainAddress) Error() string {
+	return fmt.Sprintf("token not found by chain address: %s", e.Token.String())
 }
 
 // ErrTokenNotFoundByID is an error that is returned when a token is not found by its ID
@@ -352,111 +465,45 @@ type ErrTokenNotFoundByID struct {
 	ID DBID
 }
 
-type ErrTokensNotFoundByContract struct {
-	ContractAddress Address
-}
-
-type svgXML struct {
-	XMLName xml.Name `xml:"svg"`
-}
-
-// SniffMediaType will attempt to detect the media type for a given array of bytes
-func SniffMediaType(buf []byte) (MediaType, string) {
-
-	var asXML svgXML
-	if err := xml.Unmarshal(buf, &asXML); err == nil {
-		return MediaTypeSVG, "image/svg+xml"
-	}
-
-	contentType := http.DetectContentType(buf)
-	contentType = strings.TrimSpace(contentType)
-	whereCharset := strings.IndexByte(contentType, ';')
-	if whereCharset != -1 {
-		contentType = contentType[:whereCharset]
-	}
-	if contentType == "application/octet-stream" || contentType == "text/plain" {
-		// fallback of http.DetectContentType
-		if strings.EqualFold(string(buf[:4]), "glTF") {
-			return MediaTypeAnimation, "model/gltf+binary"
-		}
-
-		if strings.HasPrefix(strings.TrimSpace(string(buf[:20])), "{") && util.ContainsAnyString(strings.TrimSpace(string(buf)), gltfFields...) {
-			return MediaTypeAnimation, "model/gltf+json"
-		}
-	}
-	return MediaFromContentType(contentType), contentType
-}
-
-// MediaFromContentType will attempt to convert a content type to a media type
-func MediaFromContentType(contentType string) MediaType {
-	contentType = strings.TrimSpace(contentType)
-	whereCharset := strings.IndexByte(contentType, ';')
-	if whereCharset != -1 {
-		contentType = contentType[:whereCharset]
-	}
-	spl := strings.Split(contentType, "/")
-
-	switch spl[0] {
-	case "image":
-		switch spl[1] {
-		case "svg", "svg+xml":
-			return MediaTypeSVG
-		case "gif":
-			return MediaTypeGIF
-		default:
-			return MediaTypeImage
-		}
-	case "video":
-		return MediaTypeVideo
-	case "audio":
-		return MediaTypeAudio
-	case "text":
-		switch spl[1] {
-		case "html":
-			return MediaTypeHTML
-		default:
-			return MediaTypeText
-		}
-	case "application":
-		switch spl[1] {
-		case "pdf":
-			return MediaTypePDF
-		}
-		fallthrough
-	default:
-		return MediaTypeUnknown
-	}
-}
-
+func (e ErrTokenNotFoundByID) Unwrap() error { return errTokenNotFound }
 func (e ErrTokenNotFoundByID) Error() string {
 	return fmt.Sprintf("token not found by ID: %s", e.ID)
+}
+
+type ErrTokenNotFoundByUserTokenChainAddress struct {
+	UserID DBID
+	Token  TokenChainAddress
+}
+
+func (e ErrTokenNotFoundByUserTokenChainAddress) Unwrap() error { return errTokenNotFound }
+func (e ErrTokenNotFoundByUserTokenChainAddress) Error() string {
+	return fmt.Sprintf("token not found by user ID: %s and chain address: %s", e.UserID, e.Token.String())
+}
+
+type ErrTokensNotFoundByContract struct {
+	ContractAddress EthereumAddress
 }
 
 func (e ErrTokensNotFoundByContract) Error() string {
 	return fmt.Sprintf("tokens not found by contract: %s", e.ContractAddress)
 }
 
-func (e ErrTokenNotFoundByTokenIdentifiers) Error() string {
-	return fmt.Sprintf("token not found with contract address %s", e.ContractAddress)
-}
-
-func (e ErrTokenNotFoundByIdentifiers) Error() string {
-	return fmt.Sprintf("token not found with contract address %s", e.ContractAddress)
-}
-
 // NormalizeAddress normalizes an address for the given chain
 func (c Chain) NormalizeAddress(addr Address) string {
-	switch c {
-	case ChainETH:
+	if evmChains[c] {
 		return strings.ToLower(addr.String())
-	default:
-		return addr.String()
 	}
+	return addr.String()
 }
 
 // BaseKeywords are the keywords that are default for discovering media for a given chain
 func (c Chain) BaseKeywords() (image []string, anim []string) {
-	return []string{"image"}, []string{"animation", "video"}
+	defaultImageKeyWords := []string{"image_url", "image", "imageOriginal"}
+	defaultAnimKeyWords := []string{"animation_url", "animation", "video", "mediaOriginal"}
+	switch c {
+	default:
+		return defaultImageKeyWords, defaultAnimKeyWords
+	}
 }
 
 // Value implements the driver.Valuer interface for the Chain type
@@ -492,6 +539,8 @@ func (c *Chain) UnmarshalJSON(data []byte) error {
 			*c = ChainPolygon
 		case "optimism":
 			*c = ChainOptimism
+		case "base":
+			*c = ChainBase
 		}
 		return nil
 	}
@@ -503,7 +552,7 @@ func (c *Chain) UnmarshalJSON(data []byte) error {
 func (c *Chain) UnmarshalGQL(v interface{}) error {
 	n, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("Chain must be an string")
+		return fmt.Errorf("Chain must be a string")
 	}
 
 	switch strings.ToLower(n) {
@@ -515,6 +564,8 @@ func (c *Chain) UnmarshalGQL(v interface{}) error {
 		*c = ChainPolygon
 	case "optimism":
 		*c = ChainOptimism
+	case "base":
+		*c = ChainBase
 	}
 	return nil
 }
@@ -530,6 +581,8 @@ func (c Chain) MarshalGQL(w io.Writer) {
 		w.Write([]byte(`"Polygon"`))
 	case ChainOptimism:
 		w.Write([]byte(`"Optimism"`))
+	case ChainBase:
+		w.Write([]byte(`"Base"`))
 	}
 }
 
@@ -549,129 +602,6 @@ func (c Chain) L1ChainGroup() []Chain {
 	return cg
 }
 
-// URL turns a token's URI into a URL
-func (uri URIType) URL() (*url.URL, error) {
-	return url.Parse(uri.String())
-}
-
-// IsPathPrefixed returns whether the URI is prefixed with a path to be parsed by a browser or decentralized storage service
-func (uri URIType) IsPathPrefixed() bool {
-	return strings.HasPrefix(uri.String(), "http") || strings.HasPrefix(uri.String(), "ipfs://") || strings.HasPrefix(uri.String(), "arweave") || strings.HasPrefix(uri.String(), "ar://")
-}
-
-func (uri URIType) String() string {
-	asString := string(uri)
-	if strings.HasPrefix(asString, "http") || strings.HasPrefix(asString, "ipfs") || strings.HasPrefix(asString, "ar") {
-		url, err := url.QueryUnescape(string(uri))
-		if err == nil && url != string(uri) {
-			return url
-		}
-	}
-	return asString
-}
-
-// Value implements the driver.Valuer interface for token URIs
-func (uri URIType) Value() (driver.Value, error) {
-	result := string(uri)
-	if strings.Contains(result, "://") {
-		result = url.QueryEscape(result)
-	}
-	clean := strings.Map(cleanString, result)
-	return strings.ToValidUTF8(strings.ReplaceAll(clean, "\\u0000", ""), ""), nil
-}
-
-// Scan implements the sql.Scanner interface for token URIs
-func (uri *URIType) Scan(src interface{}) error {
-	if src == nil {
-		*uri = URIType("")
-		return nil
-	}
-	*uri = URIType(src.(string))
-	return nil
-}
-
-// Type returns the type of the URI
-func (uri URIType) Type() URIType {
-	asString := uri.String()
-	asString = strings.TrimSpace(asString)
-	switch {
-	case strings.HasPrefix(asString, "ipfs"), strings.HasPrefix(asString, "Qm"):
-		return URITypeIPFS
-	case strings.HasPrefix(asString, "ar://"), strings.HasPrefix(asString, "arweave://"):
-		return URITypeArweave
-	case strings.HasPrefix(asString, "data:application/json;base64,"):
-		return URITypeBase64JSON
-	case strings.HasPrefix(asString, "data:image/svg+xml;base64,"), strings.HasPrefix(asString, "data:image/svg xml;base64,"):
-		return URITypeBase64SVG
-	case strings.HasPrefix(asString, "data:image/bmp;base64,"):
-		return URITypeBase64BMP
-	case strings.Contains(asString, "ipfs.io/api"):
-		return URITypeIPFSAPI
-	case strings.Contains(asString, "/ipfs/"):
-		return URITypeIPFSGateway
-	case strings.HasPrefix(asString, "http"), strings.HasPrefix(asString, "https"):
-		return URITypeHTTP
-	case strings.HasPrefix(asString, "{"), strings.HasPrefix(asString, "["), strings.HasPrefix(asString, "data:application/json"), strings.HasPrefix(asString, "data:text/plain,{"):
-		return URITypeJSON
-	case strings.HasPrefix(asString, "<svg"), strings.HasPrefix(asString, "data:image/svg+xml;utf8,"), strings.HasPrefix(asString, "data:image/svg+xml,"), strings.HasPrefix(asString, "data:image/svg xml,"):
-		return URITypeSVG
-	case strings.HasSuffix(asString, ".ens"):
-		return URITypeENS
-	case asString == URITypeInvalid.String():
-		return URITypeInvalid
-	case asString == "":
-		return URITypeNone
-	default:
-		return URITypeUnknown
-	}
-}
-
-func (u URIType) IsRaw() bool {
-	switch u {
-	case URITypeBase64JSON, URITypeBase64HTML, URITypeBase64SVG, URITypeBase64BMP, URITypeBase64PNG, URITypeBase64JPEG, URITypeBase64GIF, URITypeBase64WAV, URITypeBase64MP3, URITypeJSON, URITypeSVG, URITypeENS:
-		return true
-	default:
-		return false
-	}
-}
-
-func (u URIType) ToMediaType() MediaType {
-	switch u {
-	case URITypeBase64JSON, URITypeJSON:
-		return MediaTypeJSON
-	case URITypeBase64SVG, URITypeSVG:
-		return MediaTypeSVG
-	case URITypeBase64BMP:
-		return MediaTypeImage
-	case URITypeBase64PNG:
-		return MediaTypeImage
-	case URITypeBase64HTML:
-		return MediaTypeHTML
-	case URITypeBase64JPEG:
-		return MediaTypeImage
-	case URITypeBase64GIF:
-		return MediaTypeGIF
-	case URITypeBase64MP3:
-		return MediaTypeAudio
-	case URITypeBase64WAV:
-		return MediaTypeAudio
-	default:
-		return MediaTypeUnknown
-	}
-}
-
-// IsRenderable returns whether a frontend could render the given URI directly
-func (uri URIType) IsRenderable() bool {
-	return uri.IsHTTP() // || uri.IsIPFS() || uri.IsArweave()
-}
-
-// IsHTTP returns whether a frontend could render the given URI directly
-func (uri URIType) IsHTTP() bool {
-	asString := uri.String()
-	asString = strings.TrimSpace(asString)
-	return strings.HasPrefix(asString, "http")
-}
-
 func (uri TokenURI) String() string { return string(uri) }
 
 // Value implements the driver.Valuer interface for token URIs
@@ -682,6 +612,11 @@ func (uri TokenURI) Value() (driver.Value, error) {
 	}
 	clean := strings.Map(cleanString, result)
 	return strings.ToValidUTF8(strings.ReplaceAll(clean, "\\u0000", ""), ""), nil
+}
+
+// ReplaceID replaces the token's ID with the given ID
+func (uri TokenURI) ReplaceID(id HexTokenID) TokenURI {
+	return TokenURI(strings.TrimSpace(strings.ReplaceAll(uri.String(), "{id}", id.ToUint256String())))
 }
 
 // Scan implements the sql.Scanner interface for token URIs
@@ -756,6 +691,238 @@ func (uri TokenURI) IsHTTP() bool {
 	return strings.HasPrefix(asString, "http")
 }
 
+func (id DecimalTokenID) String() string {
+	return util.RemoveLeftPaddedZeros(string(id))
+}
+
+// Value implements the driver.Valuer interface for token IDs
+func (id DecimalTokenID) Value() (driver.Value, error) {
+	if id == "" {
+		return nil, nil
+	}
+
+	num := pgtype.Numeric{}
+	err := num.Set(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return num, nil
+}
+
+func (id *DecimalTokenID) DecodeBinary(ci *pgtype.ConnInfo, src []byte) error {
+	// Using the db/sql Scanner interface to get Postgres "numeric" types is complicated because
+	// Postgres will output values as strings in scientific notation. Using pgx's DecodeBinary
+	// interface avoids this issue and lets us decode directly to a pgtype.Numeric without an
+	// intermediate string or the need to parse scientific notation.
+	var numeric pgtype.Numeric
+	err := numeric.DecodeBinary(ci, src)
+	if err != nil {
+		return err
+	}
+
+	// Assign pgtype.Numeric to big.Rat, because pgtype.Numeric has built-in support for this conversion
+	var rat big.Rat
+	if err := numeric.AssignTo(&rat); err != nil {
+		return fmt.Errorf("cannot assign pgtype.Numeric to big.Rat: %w", err)
+	}
+
+	// Use FloatString with 0 decimal places to convert the big.Rat to a whole number
+	*id = DecimalTokenID(rat.FloatString(0))
+
+	return nil
+}
+
+func expandNumericString(s string) (string, error) {
+	// Split the string on 'e'. If 'e' is not present, parts will contain the original string as its only element.
+	parts := strings.Split(s, "e")
+	if len(parts) == 1 {
+		// No 'e' in the string, return it as is.
+		return s, nil
+	} else if len(parts) != 2 {
+		// More than one 'e' found, or some unexpected format.
+		return "", fmt.Errorf("string does not contain a valid format: %s", s)
+	}
+
+	base := parts[0]
+	expPart := parts[1]
+
+	// Convert the exponent part to an integer.
+	exponent, err := strconv.Atoi(expPart)
+	if err != nil {
+		return "", fmt.Errorf("invalid exponent: %s", expPart)
+	}
+
+	// If the exponent is negative or zero, the original string format might not make sense for simple expansion.
+	if exponent < 0 {
+		return "", fmt.Errorf("negative exponent not handled: %d", exponent)
+	}
+
+	// Append the required number of zeros to the base.
+	for i := 0; i < exponent; i++ {
+		base += "0"
+	}
+
+	return base, nil
+}
+
+// Scan implements the sql.Scanner interface for token IDs
+func (id *DecimalTokenID) Scan(src interface{}) error {
+	if src == nil {
+		*id = ""
+		return nil
+	}
+
+	if str, ok := src.(string); ok {
+		expanded, err := expandNumericString(str)
+		if err != nil {
+			return err
+		}
+		*id = DecimalTokenID(expanded)
+		return nil
+	}
+
+	return fmt.Errorf("cannot convert %T to DecimalTokenID", src)
+}
+
+func (id DecimalTokenID) Numeric() pgtype.Numeric {
+	num := pgtype.Numeric{}
+	err := num.Set(id)
+	if err != nil {
+		panic(fmt.Sprintf("failed to convert %s to pgtype.Numeric: %s", id, err))
+	}
+	return num
+}
+
+// BigInt returns the token ID as a big.Int
+func (id DecimalTokenID) BigInt() *big.Int {
+	normalized := id.String()
+	if normalized == "" {
+		return big.NewInt(0)
+	}
+	i, ok := new(big.Int).SetString(normalized, 10)
+
+	if !ok {
+		panic(fmt.Sprintf("failed to parse token ID %s as base 10", normalized))
+	}
+
+	return i
+}
+
+// ToUint256String returns the uint256 hex string representation of the token id
+// TODO: Unsure if we need this for decimal IDs
+//func (id DecimalTokenID) ToUint256String() string {
+//	return fmt.Sprintf("%064s", id.String())
+//}
+
+// Base10String returns the token ID as a base 10 string
+func (id DecimalTokenID) ToHexTokenID() HexTokenID {
+	return HexTokenID(id.BigInt().Text(16))
+}
+
+// ToInt returns the token ID as a base 10 integer
+// TODO: We should look at places where we use this, since an int64 can't hold all possible TokenIDs
+//func (id DecimalTokenID) ToInt() int64 {
+//	return id.BigInt().Int64()
+//}
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (id *DecimalTokenID) UnmarshalGQL(v any) error {
+	val, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("failed to convert %s to an integer", v)
+	}
+
+	if i, ok := new(big.Int).SetString(val, 10); ok {
+		*id = DecimalTokenID(i.Text(10))
+		return nil
+	}
+
+	return fmt.Errorf("failed to convert %s to an integer", val)
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (id DecimalTokenID) MarshalGQL(w io.Writer) {
+	w.Write([]byte(fmt.Sprintf(`"%s"`, id.String())))
+}
+
+func (id HexTokenID) String() string {
+	return strings.ToLower(util.RemoveLeftPaddedZeros(string(id)))
+}
+
+// Value implements the driver.Valuer interface for token IDs
+func (id HexTokenID) Value() (driver.Value, error) {
+	return id.String(), nil
+}
+
+// Scan implements the sql.Scanner interface for token IDs
+func (id *HexTokenID) Scan(src interface{}) error {
+	if src == nil {
+		*id = HexTokenID("")
+		return nil
+	}
+	*id = HexTokenID(src.(string))
+	return nil
+}
+
+// BigInt returns the token ID as a big.Int
+func (id HexTokenID) BigInt() *big.Int {
+	normalized := id.String()
+	if normalized == "" {
+		return big.NewInt(0)
+	}
+	i, ok := new(big.Int).SetString(normalized, 16)
+
+	if !ok {
+		panic(fmt.Sprintf("failed to parse token ID %s as base 16", normalized))
+	}
+
+	return i
+}
+
+// ToUint256String returns the uint256 hex string representation of the token id
+func (id HexTokenID) ToUint256String() string {
+	return fmt.Sprintf("%064s", id.String())
+}
+
+// Base10String returns the token ID as a base 10 string
+func (id HexTokenID) Base10String() string {
+	return id.BigInt().String()
+}
+
+func (id HexTokenID) ToDecimalTokenID() DecimalTokenID {
+	return DecimalTokenID(id.BigInt().Text(10))
+}
+
+// ToInt returns the token ID as a base 10 integer
+func (id HexTokenID) ToInt() int64 {
+	return id.BigInt().Int64()
+}
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (id *HexTokenID) UnmarshalGQL(v any) error {
+	if val, ok := v.(string); ok {
+		// Assume its in hexadecimal
+		if strings.HasPrefix(val, "0x") {
+			*id = HexTokenID(HexTokenID(val).String())
+			return nil
+		}
+		// Assume its in decimal
+		asInt, err := strconv.Atoi(val)
+		if err != nil {
+			return fmt.Errorf("failed to convert %s; prepend with '0x' if val is in hex", val)
+		}
+		*id = HexTokenID(fmt.Sprintf("%x", asInt))
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (id HexTokenID) MarshalGQL(w io.Writer) {
+	p := "0x" + id.String()
+	w.Write([]byte(fmt.Sprintf(`"%s"`, p)))
+}
+
 func (hex HexString) String() string {
 	return strings.TrimPrefix(strings.ToLower(string(hex)), "0x")
 }
@@ -793,18 +960,23 @@ func (hex HexString) Add(new HexString) HexString {
 	return HexString(asInt.Add(asInt, new.BigInt()).Text(16))
 }
 
+// IsServable returns true if the token's Media has enough information to serve it's assets.
+func (m FallbackMedia) IsServable() bool {
+	return m.ImageURL != ""
+}
+
 // Value implements the driver.Valuer interface for media
-func (m Media) Value() (driver.Value, error) {
+func (m FallbackMedia) Value() (driver.Value, error) {
 	return json.Marshal(m)
 }
 
 // Scan implements the sql.Scanner interface for media
-func (m *Media) Scan(src interface{}) error {
+func (m *FallbackMedia) Scan(src interface{}) error {
 	if src == nil {
-		*m = Media{}
+		*m = FallbackMedia{}
 		return nil
 	}
-	return json.Unmarshal(src.([]uint8), &m)
+	return json.Unmarshal(src.([]byte), &m)
 }
 
 // Uint64 returns the ethereum block number as a uint64
@@ -891,7 +1063,7 @@ func (m MediaType) IsValid() bool {
 
 // IsImageLike returns true if the media type is a type that is expected to be like an image and not live render
 func (m MediaType) IsImageLike() bool {
-	return m == MediaTypeImage || m == MediaTypeGIF || m == MediaTypeBase64BMP || m == MediaTypeSVG
+	return m == MediaTypeImage || m == MediaTypeGIF || m == MediaTypeSVG
 }
 
 // IsAnimationLike returns true if the media type is a type that is expected to be like an animation and live render
@@ -914,7 +1086,11 @@ func (m MediaType) IsMorePriorityThan(other MediaType) bool {
 
 // Value implements the database/sql/driver Valuer interface for the MediaType type
 func (m MediaType) Value() (driver.Value, error) {
-	return string(m), nil
+	return m.String(), nil
+}
+
+func (m MediaType) String() string {
+	return string(m)
 }
 
 // Scan implements the database/sql Scanner interface for the MediaType type
@@ -944,43 +1120,6 @@ func (t *TokenType) Scan(src interface{}) error {
 	return nil
 }
 
-// NewEthereumTokenIdentifiers creates a new token identifiers
-func NewEthereumTokenIdentifiers(pContractAddress Address) EthereumTokenIdentifiers {
-	return EthereumTokenIdentifiers(fmt.Sprintf("%s", pContractAddress))
-}
-
-func (t EthereumTokenIdentifiers) String() string {
-	return string(t)
-}
-
-// GetParts returns the parts of the token identifiers
-func (t EthereumTokenIdentifiers) GetParts() (Address, error) {
-	parts := strings.Split(t.String(), "+")
-	if len(parts) != 1 {
-		return "", fmt.Errorf("invalid token identifiers: %s", t)
-	}
-	return Address(parts[0]), nil
-}
-
-// Value implements the driver.Valuer interface
-func (t EthereumTokenIdentifiers) Value() (driver.Value, error) {
-	return t.String(), nil
-}
-
-// Scan implements the database/sql Scanner interface for the TokenIdentifiers type
-func (t *EthereumTokenIdentifiers) Scan(i interface{}) error {
-	if i == nil {
-		*t = ""
-		return nil
-	}
-	res := strings.Split(i.(string), "+")
-	if len(res) != 1 {
-		return fmt.Errorf("invalid token identifiers: %v", i)
-	}
-	*t = EthereumTokenIdentifiers(fmt.Sprintf("%s", res[0]))
-	return nil
-}
-
 func normalizeAddress(address string) string {
 	withoutPrefix := strings.TrimPrefix(address, "0x")
 	if len(withoutPrefix) < 40 {
@@ -989,10 +1128,36 @@ func normalizeAddress(address string) string {
 	return "0x" + withoutPrefix[len(withoutPrefix)-40:]
 }
 
-func WalletsToAddresses(pWallets []Wallet) []Address {
-	result := make([]Address, len(pWallets))
+func WalletsToEthereumAddresses(pWallets []Wallet) []EthereumAddress {
+	result := make([]EthereumAddress, len(pWallets))
 	for i, wallet := range pWallets {
-		result[i] = wallet.Address
+		result[i] = EthereumAddress(wallet.Address)
 	}
 	return result
+}
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (t *TokenOwnershipType) UnmarshalGQL(v interface{}) error {
+	n, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("TokenOwnershipType must be a string")
+	}
+
+	switch strings.ToLower(n) {
+	case "holder":
+		*t = TokenOwnershipTypeHolder
+	case "creator":
+		*t = TokenOwnershipTypeCreator
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (t TokenOwnershipType) MarshalGQL(w io.Writer) {
+	switch t {
+	case TokenOwnershipTypeHolder:
+		w.Write([]byte(`"holder"`))
+	case TokenOwnershipTypeCreator:
+		w.Write([]byte(`"creator"`))
+	}
 }

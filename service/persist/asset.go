@@ -21,27 +21,27 @@ type AssetChainAddress struct {
 // AssetDB represents an asset in the database.
 // This struct will only be used in database operations
 type AssetDB struct {
-	ID           DBID            `json:"id" binding:"required"`
-	Version      NullInt32       `json:"version"` // schema version for this model
-	OwnerAddress Address         `json:"owner_address"`
-	TokenAddress Address         `json:"token"`
-	Chain        Chain           `json:"chain"`
-	Balance      NullInt32       `json:"balance"`
-	BlockNumber  BlockNumber     `json:"block_number"`
-	LastUpdated  LastUpdatedTime `json:"last_updated"`
-	CreationTime CreationTime    `json:"created_at"`
+	ID           DBID        `json:"id" binding:"required"`
+	Version      NullInt32   `json:"version"` // schema version for this model
+	OwnerAddress Address     `json:"owner_address"`
+	TokenAddress Address     `json:"token"`
+	Chain        Chain       `json:"chain"`
+	Balance      NullInt32   `json:"balance"`
+	BlockNumber  BlockNumber `json:"block_number"`
+	LastUpdated  time.Time   `json:"last_updated"`
+	CreationTime time.Time   `json:"created_at"`
 }
 
 // Asset represents an address that owns a balance of tokens
 type Asset struct {
-	ID           DBID            `json:"id" binding:"required"`
-	Version      NullInt32       `json:"version"` // schema version for this model
-	LastUpdated  LastUpdatedTime `json:"last_updated"`
-	CreationTime CreationTime    `json:"created_at"`
-	OwnerAddress Address         `json:"owner_address"`
-	Token        Token           `json:"token"`
-	Balance      NullInt32       `json:"balance"`
-	BlockNumber  BlockNumber     `json:"block_number"`
+	ID           DBID        `json:"id" binding:"required"`
+	Version      NullInt32   `json:"version"` // schema version for this model
+	LastUpdated  time.Time   `json:"last_updated"`
+	CreationTime time.Time   `json:"created_at"`
+	OwnerAddress Address     `json:"owner_address"`
+	Token        Token       `json:"token"`
+	Balance      NullInt32   `json:"balance"`
+	BlockNumber  BlockNumber `json:"block_number"`
 }
 
 // AssetUpdateInput represents a struct that is used to update an asset in the database

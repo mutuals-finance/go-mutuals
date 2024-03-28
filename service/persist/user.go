@@ -52,15 +52,15 @@ type User struct {
 
 // UserUpdateInfoInput represents the data to be updated when updating a user
 type UserUpdateInfoInput struct {
-	LastUpdated        LastUpdatedTime `json:"last_updated"`
-	Username           NullString      `json:"username"`
-	UsernameIdempotent NullString      `json:"username_idempotent"`
-	Bio                NullString      `json:"bio"`
+	LastUpdated        time.Time  `json:"last_updated"`
+	Username           NullString `json:"username"`
+	UsernameIdempotent NullString `json:"username_idempotent"`
+	Bio                NullString `json:"bio"`
 }
 
 // UserUpdateNotificationSettings represents the data to be updated when updating a user's notification settings
 type UserUpdateNotificationSettings struct {
-	LastUpdated          LastUpdatedTime          `json:"last_updated"`
+	LastUpdated          time.Time                `json:"last_updated"`
 	NotificationSettings UserNotificationSettings `json:"notification_settings"`
 }
 

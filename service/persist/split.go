@@ -4,15 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type Ownership = float64
 
 type Recipient struct {
-	Version      NullInt32       `json:"version"` // schema version for this model
-	ID           DBID            `json:"id" binding:"required"`
-	CreationTime CreationTime    `json:"created_at"`
-	LastUpdated  LastUpdatedTime `json:"last_updated"`
+	Version      NullInt32 `json:"version"` // schema version for this model
+	ID           DBID      `json:"id" binding:"required"`
+	CreationTime time.Time `json:"created_at"`
+	LastUpdated  time.Time `json:"last_updated"`
 
 	SplitID   DBID      `json:"split_id"`
 	Address   Address   `json:"recipient_address"`
@@ -24,21 +25,21 @@ type Recipient struct {
 // a join relationship in the database
 // This struct will only be used in database operations
 type SplitDB struct {
-	ID             DBID            `json:"id" binding:"required"`
-	Version        NullInt32       `json:"version"` // schema version for this model
-	CreationTime   CreationTime    `json:"created_at"`
-	LastUpdated    LastUpdatedTime `json:"last_updated"`
-	Deleted        NullBool        `json:"-"`
-	Chain          Chain           `json:"chain"`
-	Address        Address         `json:"address"`
-	Name           sql.NullString  `json:"name"`
-	Description    NullString      `json:"description"`
-	CreatorAddress Address         `json:"creator_address"`
-	LogoURL        NullString      `json:"logo_url"`
-	BannerURL      NullString      `json:"banner_url"`
-	BadgeURL       NullString      `json:"badge_url"`
-	Recipients     []DBID          `json:"recipients"`
-	Assets         []DBID          `json:"assets"`
+	ID             DBID           `json:"id" binding:"required"`
+	Version        NullInt32      `json:"version"` // schema version for this model
+	CreationTime   time.Time      `json:"created_at"`
+	LastUpdated    time.Time      `json:"last_updated"`
+	Deleted        NullBool       `json:"-"`
+	Chain          Chain          `json:"chain"`
+	Address        Address        `json:"address"`
+	Name           sql.NullString `json:"name"`
+	Description    NullString     `json:"description"`
+	CreatorAddress Address        `json:"creator_address"`
+	LogoURL        NullString     `json:"logo_url"`
+	BannerURL      NullString     `json:"banner_url"`
+	BadgeURL       NullString     `json:"badge_url"`
+	Recipients     []DBID         `json:"recipients"`
+	Assets         []DBID         `json:"assets"`
 }
 
 // Split represents a group of collections of NFTS in the application.
@@ -46,21 +47,21 @@ type SplitDB struct {
 // This struct will be decoded from a find database operation and used throughout
 // the application where SplitDB is not used
 type Split struct {
-	ID             DBID            `json:"id" binding:"required"`
-	Version        NullInt32       `json:"version"` // schema version for this model
-	CreationTime   CreationTime    `json:"created_at"`
-	LastUpdated    LastUpdatedTime `json:"last_updated"`
-	Deleted        NullBool        `json:"-"`
-	Chain          Chain           `json:"chain"`
-	Address        Address         `json:"address"`
-	Name           NullString      `json:"name"`
-	Description    NullString      `json:"description"`
-	CreatorAddress Address         `json:"creator_address"`
-	LogoURL        NullString      `json:"logo_url"`
-	BannerURL      NullString      `json:"banner_url"`
-	BadgeURL       NullString      `json:"badge_url"`
-	Recipients     []Recipient     `json:"recipients"`
-	Assets         []Asset         `json:"assets"`
+	ID             DBID        `json:"id" binding:"required"`
+	Version        NullInt32   `json:"version"` // schema version for this model
+	CreationTime   time.Time   `json:"created_at"`
+	LastUpdated    time.Time   `json:"last_updated"`
+	Deleted        NullBool    `json:"-"`
+	Chain          Chain       `json:"chain"`
+	Address        Address     `json:"address"`
+	Name           NullString  `json:"name"`
+	Description    NullString  `json:"description"`
+	CreatorAddress Address     `json:"creator_address"`
+	LogoURL        NullString  `json:"logo_url"`
+	BannerURL      NullString  `json:"banner_url"`
+	BadgeURL       NullString  `json:"badge_url"`
+	Recipients     []Recipient `json:"recipients"`
+	Assets         []Asset     `json:"assets"`
 }
 
 // SplitRepository represents a repository for interacting with persisted splits
@@ -74,7 +75,7 @@ type SplitRepository interface {
 
 // SplitTokenUpdateInput represents a struct that is used to update a splits list of collections in the databse
 type SplitTokenUpdateInput struct {
-	LastUpdated LastUpdatedTime `json:"last_updated"`
+	LastUpdated time.Time `json:"last_updated"`
 
 	Assets []DBID `json:"assets"`
 }

@@ -138,7 +138,8 @@ func (t *TokenRepository) GetByTokenIdentifiers(pCtx context.Context, pContractA
 	}
 
 	if len(tokens) == 0 {
-		return nil, persist.ErrTokenNotFoundByTokenIdentifiers{ContractAddress: pContractAddress}
+		// add real chain id
+		return nil, persist.ErrTokenNotFoundByTokenChainAddress{Token: persist.NewTokenChainAddress(pContractAddress, persist.ChainETH)}
 	}
 
 	return tokens, nil
@@ -150,7 +151,8 @@ func (t *TokenRepository) GetByIdentifiers(pCtx context.Context, pContractAddres
 	err := t.getByIdentifiersStmt.QueryRowContext(pCtx, pContractAddress).Scan(&token.ID, &token.TokenType, &token.Chain, &token.Name, &token.Symbol, &token.Logo, &token.ContractAddress, &token.BlockNumber, &token.Version, &token.CreationTime, &token.LastUpdated)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return token, persist.ErrTokenNotFoundByIdentifiers{ContractAddress: pContractAddress}
+			// add real chain id
+			return token, persist.ErrTokenNotFoundByTokenChainAddress{Token: persist.NewTokenChainAddress(pContractAddress, persist.ChainETH)}
 		}
 		return persist.Token{}, err
 	}

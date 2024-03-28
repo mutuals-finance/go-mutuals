@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -17,11 +18,11 @@ var errWalletValueNoID = fmt.Errorf("wallet value has no ID")
 
 // Wallet represents an address on any chain
 type Wallet struct {
-	ID           DBID            `json:"id"`
-	Version      NullInt64       `json:"version"`
-	CreationTime CreationTime    `json:"created_at"`
-	Deleted      NullBool        `json:"-"`
-	LastUpdated  LastUpdatedTime `json:"last_updated"`
+	ID           DBID      `json:"id"`
+	Version      NullInt64 `json:"version"`
+	CreationTime time.Time `json:"created_at"`
+	Deleted      NullBool  `json:"-"`
+	LastUpdated  time.Time `json:"last_updated"`
 
 	Address    Address    `json:"address"`
 	Chain      Chain      `json:"chain"`

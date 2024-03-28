@@ -4,8 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/jackc/pgtype"
@@ -38,11 +38,14 @@ func (l *DBIDList) Scan(value interface{}) error {
 	return pq.Array(l).Scan(value)
 }
 
-// CreationTime represents the time a record was created
-type CreationTime time.Time
+var notFoundError ErrNotFound
 
-// LastUpdatedTime represents the time a record was last updated
-type LastUpdatedTime time.Time
+// ErrNotFound is a general error for when some entity is not found.
+// Errors should wrap this error to provide more details on what was not found (e.g. ErrUserNotFound)
+// and how it was not found (e.g. ErrUserNotFoundByID)
+type ErrNotFound struct{}
+
+func (e ErrNotFound) Error() string { return "entity not found" }
 
 // NullString represents a string that may be null in the DB
 type NullString string
@@ -55,6 +58,22 @@ type NullInt32 int32
 
 // NullBool represents a bool that may be null in the DB
 type NullBool bool
+
+type CompleteIndex struct {
+	Index  int `json:"start"`
+	Length int `json:"end"`
+}
+
+func (c CompleteIndex) Value() (driver.Value, error) {
+	return json.Marshal(c)
+}
+
+func (c *CompleteIndex) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	return json.Unmarshal(value.([]uint8), c)
+}
 
 // GenerateID generates a application-wide unique ID
 func GenerateID() DBID {
@@ -91,94 +110,6 @@ func (d *DBID) Scan(i interface{}) error {
 // Value implements the database/sql driver Valuer interface for the DBID type
 func (d DBID) Value() (driver.Value, error) {
 	return d.String(), nil
-}
-
-// Time returns the time.Time representation of the CreationTime
-func (c CreationTime) Time() time.Time {
-	return time.Time(c)
-}
-
-// MarshalJSON returns the JSON representation of the CreationTime
-func (c CreationTime) MarshalJSON() ([]byte, error) {
-	bs, err := c.Time().MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
-// UnmarshalJSON sets the CreationTime from the JSON representation
-func (c *CreationTime) UnmarshalJSON(b []byte) error {
-	t := time.Time{}
-	err := json.Unmarshal(b, &t)
-	if err != nil {
-		return err
-	}
-
-	*c = CreationTime(t)
-	return nil
-}
-
-// Scan implements the database/sql Scanner interface for the CreationTime type
-func (c *CreationTime) Scan(i interface{}) error {
-	if i == nil {
-		*c = CreationTime{}
-		return nil
-	}
-	*c = CreationTime(i.(time.Time))
-	return nil
-}
-
-// Value implements the database/sql driver Valuer interface for the CreationTime type
-func (c CreationTime) Value() (driver.Value, error) {
-	if c.Time().IsZero() {
-		return time.Now(), nil
-	}
-	return c.Time(), nil
-}
-
-// Time returns the time.Time representation of the LastUpdatedTime
-func (l LastUpdatedTime) Time() time.Time {
-	return time.Time(l)
-}
-
-// Scan implements the database/sql Scanner interface for the LastUpdatedTime type
-func (l *LastUpdatedTime) Scan(i interface{}) error {
-	if i == nil {
-		*l = LastUpdatedTime{}
-		return nil
-	}
-	*l = LastUpdatedTime(i.(time.Time))
-	return nil
-}
-
-// Value implements the database/sql driver Valuer interface for the LastUpdatedTime type
-func (l LastUpdatedTime) Value() (driver.Value, error) {
-	if l.Time().IsZero() {
-		return time.Now(), nil
-	}
-	return l.Time(), nil
-}
-
-// MarshalJSON returns the JSON representation of the LastUpdatedTime
-func (l LastUpdatedTime) MarshalJSON() ([]byte, error) {
-	bs, err := l.Time().MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
-// UnmarshalJSON sets the LastUpdatedTime from the JSON representation
-func (l *LastUpdatedTime) UnmarshalJSON(b []byte) error {
-	t := time.Time{}
-	err := json.Unmarshal(b, &t)
-	if err != nil {
-		return err
-	}
-
-	*l = LastUpdatedTime(t)
-	return nil
 }
 
 func (n NullString) String() string {
@@ -299,9 +230,9 @@ func RemoveDuplicateDBIDs(a []DBID) []DBID {
 }
 
 // RemoveDuplicateAddresses ensures that an array of addresses has no repeat items
-func RemoveDuplicateAddresses(a []Address) []Address {
-	result := make([]Address, 0, len(a))
-	m := map[Address]bool{}
+func RemoveDuplicateAddresses(a []EthereumAddress) []EthereumAddress {
+	result := make([]EthereumAddress, 0, len(a))
+	m := map[EthereumAddress]bool{}
 
 	for _, val := range a {
 		if _, ok := m[val]; !ok {
@@ -342,4 +273,37 @@ func ToJSONB(v any) (pgtype.JSONB, error) {
 	ret := pgtype.JSONB{}
 	err = ret.Set(byt)
 	return ret, err
+}
+
+type DarkMode int
+
+const (
+	DarkModeDisabled DarkMode = iota
+	DarkModeEnabled
+)
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (d *DarkMode) UnmarshalGQL(v interface{}) error {
+	n, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("darkMode must be a string")
+	}
+
+	switch strings.ToLower(n) {
+	case "disabled":
+		*d = DarkModeDisabled
+	case "enabled":
+		*d = DarkModeEnabled
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (d DarkMode) MarshalGQL(w io.Writer) {
+	switch d {
+	case DarkModeDisabled:
+		w.Write([]byte(`"Disabled"`))
+	case DarkModeEnabled:
+		w.Write([]byte(`"Enabled"`))
+	}
 }

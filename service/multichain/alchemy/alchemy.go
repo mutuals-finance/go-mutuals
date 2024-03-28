@@ -218,7 +218,7 @@ func (d *Provider) GetTokensByWalletAddress(ctx context.Context, addr persist.Ad
 		return nil, nil, err
 	}
 
-	cTokens, cContracts := alchemyTokensToChainAgnosticTokensForOwner(persist.Address(addr), tokens)
+	cTokens, cContracts := alchemyTokensToChainAgnosticTokensForOwner(addr, tokens)
 	return cTokens, cContracts, nil
 }
 
@@ -814,10 +814,8 @@ func alchemyTokenToChainAgnosticToken(owner persist.Address, token Token) (multi
 
 	var tokenType persist.TokenType
 	switch token.ID.TokenMetadata.TokenType {
-	case "ERC721":
-		tokenType = persist.TokenTypeERC721
-	case "ERC1155":
-		tokenType = persist.TokenTypeERC1155
+	case "ERC20":
+		tokenType = persist.TokenTypeERC20
 	}
 
 	bal, ok := new(big.Int).SetString(token.Balance, 10)
