@@ -12,13 +12,19 @@ import (
 	"github.com/lib/pq"
 )
 
-type Traits map[string]interface{}
+type TraitType string
+
+const (
+	TraitTypeTopActiveUser TraitType = "top_activity"
+)
+
+type Traits map[TraitType]interface{}
 
 type Socials map[SocialProvider]SocialUserIdentifiers
 
 type SocialUserIdentifiers struct {
-	Provider SocialProvider         `json:"provider,required" binding:"required"`
-	ID       string                 `json:"id,required" binding:"required"`
+	Provider SocialProvider         `json:"provider" binding:"required"`
+	ID       string                 `json:"id" binding:"required"`
 	Display  bool                   `json:"display"`
 	Metadata map[string]interface{} `json:"metadata"`
 }
@@ -26,11 +32,15 @@ type SocialUserIdentifiers struct {
 type SocialProvider string
 
 const (
-	SocialProviderTwitter SocialProvider = "Twitter"
+	SocialProviderTwitter   SocialProvider = "Twitter"
+	SocialProviderFarcaster SocialProvider = "Farcaster"
+	SocialProviderLens      SocialProvider = "Lens"
 )
 
 var AllSocialProviders = []SocialProvider{
 	SocialProviderTwitter,
+	SocialProviderFarcaster,
+	SocialProviderLens,
 }
 
 // User represents a user with all of their addresses
@@ -47,7 +57,6 @@ type User struct {
 	Traits             Traits     `json:"traits"`
 	Universal          NullBool   `json:"universal"`
 	PrimaryWalletID    NullString `json:"primary_wallet_id"`
-	EmailVerified      NullInt64  `json:"email_verified"`
 }
 
 // UserUpdateInfoInput represents the data to be updated when updating a user
@@ -66,11 +75,15 @@ type UserUpdateNotificationSettings struct {
 
 /*
 someoneFollowedYou: Boolean
-someoneViewedYourSplit: Boolean
+someoneAdmiredYourUpdate: Boolean
+someoneCommentedOnYourUpdate: Boolean
+someoneViewedYourGallery: Boolean
 */
 type UserNotificationSettings struct {
-	SomeoneFollowedYou     *bool `json:"someone_followed_you,omitempty"`
-	SomeoneViewedYourSplit *bool `json:"someone_viewed_your_split,omitempty"`
+	SomeoneFollowedYou           *bool `json:"someone_followed_you,omitempty"`
+	SomeoneAdmiredYourUpdate     *bool `json:"someone_admired_your_update,omitempty"`
+	SomeoneCommentedOnYourUpdate *bool `json:"someone_commented_on_your_update,omitempty"`
+	SomeoneViewedYourGallery     *bool `json:"someone_viewed_your_gallery,omitempty"`
 }
 
 type CreateUserInput struct {
@@ -82,6 +95,7 @@ type CreateUserInput struct {
 	WalletType                 WalletType
 	Universal                  bool
 	EmailNotificationsSettings EmailUnsubscriptions
+	PrivyDID                   *string
 }
 
 // UserRepository represents the interface for interacting with the persisted state of users
@@ -100,7 +114,6 @@ type UserRepository interface {
 	MergeUsers(context.Context, DBID, DBID) error
 	AddFollower(pCtx context.Context, follower DBID, followee DBID) (refollowed bool, err error)
 	RemoveFollower(pCtx context.Context, follower DBID, followee DBID) error
-	UserFollowsUser(pCtx context.Context, userA DBID, userB DBID) (bool, error)
 	FillWalletDataForUser(pCtx context.Context, user *User) error
 }
 
@@ -172,7 +185,7 @@ func (s *SocialProvider) Scan(src interface{}) error {
 
 func (s SocialProvider) IsValid() bool {
 	switch s {
-	case SocialProviderTwitter:
+	case SocialProviderTwitter, SocialProviderFarcaster, SocialProviderLens:
 		return true
 	default:
 		return false
@@ -181,12 +194,12 @@ func (s SocialProvider) IsValid() bool {
 
 // ErrUserNotFound is returned when a user is not found
 type ErrUserNotFound struct {
-	UserID        DBID
-	WalletID      DBID
-	ChainAddress  ChainAddress
-	Username      string
-	Email         Email
-	Authenticator string
+	UserID         DBID
+	WalletID       DBID
+	L1ChainAddress L1ChainAddress
+	Username       string
+	Email          Email
+	Authenticator  string
 }
 
 func (e ErrUserNotFound) Error() string {
@@ -207,8 +220,8 @@ func (e ErrUserNotFound) Error() string {
 		return fmt.Sprintf(template, method, e.Authenticator)
 	}
 
-	if e.ChainAddress != (ChainAddress{}) {
-		method := fmt.Sprintf("method=%s;chainAddress=%s", "byChainAddress", e.ChainAddress)
+	if e.L1ChainAddress != (L1ChainAddress{}) {
+		method := fmt.Sprintf("method=%s;chainAddress=%s", "byChainAddress", e.L1ChainAddress)
 		return fmt.Sprintf(template, method, e.Authenticator)
 	}
 
@@ -278,8 +291,9 @@ type Role string
 
 const (
 	RoleAdmin       Role = "ADMIN"
-	RoleBetaTester       = "BETA_TESTER"
-	RoleEarlyAccess      = "EARLY_ACCESS"
+	RoleBetaTester  Role = "BETA_TESTER"
+	RoleEarlyAccess Role = "EARLY_ACCESS"
+	RoleEmailTester Role = "EMAIL_TESTER"
 )
 
 // Scan implements the database/sql Scanner interface for the DBID type
@@ -314,6 +328,8 @@ func (r *Role) UnmarshalGQL(v interface{}) error {
 		*r = RoleBetaTester
 	case "early_access":
 		*r = RoleEarlyAccess
+	case "email_tester":
+		*r = RoleEmailTester
 	}
 	return nil
 }
@@ -327,6 +343,8 @@ func (r Role) MarshalGQL(w io.Writer) {
 		w.Write([]byte(`"BETA_TESTER"`))
 	case RoleEarlyAccess:
 		w.Write([]byte(`"EARLY_ACCESS"`))
+	case RoleEmailTester:
+		w.Write([]byte(`"EMAIL_TESTER"`))
 	}
 }
 
@@ -338,4 +356,81 @@ func (l RoleList) Value() (driver.Value, error) {
 
 func (l *RoleList) Scan(value interface{}) error {
 	return pq.Array(l).Scan(value)
+}
+
+type Persona string
+
+const (
+	PersonaNone      Persona = "none"
+	PersonaCollector Persona = "collector"
+	PersonaCreator   Persona = "creator"
+	PersonaBoth      Persona = "both"
+)
+
+// Scan implements the database/sql Scanner interface for the Persona type
+func (p *Persona) Scan(i interface{}) error {
+	if i == nil {
+		return nil
+	}
+	if it, ok := i.([]uint8); ok {
+		*p = Persona(it)
+		return nil
+	}
+	*p = Persona(i.(string))
+	return nil
+}
+
+// Value implements the database/sql driver Valuer interface for the Persona type
+func (p *Persona) Value() (driver.Value, error) {
+	return p, nil
+}
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (p *Persona) UnmarshalGQL(v interface{}) error {
+	n, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("Persona must be a string")
+	}
+
+	switch strings.ToLower(n) {
+	case "none":
+		*p = PersonaNone
+	case "collector":
+		*p = PersonaCollector
+	case "creator":
+		*p = PersonaCreator
+	case "both":
+		*p = PersonaBoth
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (p Persona) MarshalGQL(w io.Writer) {
+	switch p {
+	case PersonaNone:
+		w.Write([]byte(`"none"`))
+	case PersonaCreator:
+		w.Write([]byte(`"creator"`))
+	case PersonaCollector:
+		w.Write([]byte(`"collector"`))
+	case PersonaBoth:
+		w.Write([]byte(`"both"`))
+	}
+}
+
+type ProfileImageSource string // ProfileImageSource represents the source of a profile image
+
+const (
+	ProfileImageSourceToken ProfileImageSource = "token"
+	ProfileImageSourceENS   ProfileImageSource = "ens"
+)
+
+type ErrProfileImageNotFound struct {
+	Err            error
+	ProfileImageID DBID
+}
+
+func (e ErrProfileImageNotFound) Error() string {
+	return fmt.Sprintf("profile image %s not found: %s", e.ProfileImageID, e.Err)
 }

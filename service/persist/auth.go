@@ -1,7 +1,6 @@
 package persist
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,7 @@ import (
 // ReqHeaders is a type that holds the headers for a request
 type ReqHeaders map[string][]string
 
-// UserNonce represents a short-lived nonce that holds a value to be signed
+// UserNonce represents a short lived nonce that holds a value to be signed
 // by a user cryptographically to prove they are the owner of a given address.
 type UserNonce struct {
 	Version      NullInt32  `json:"version"`
@@ -22,6 +21,8 @@ type UserNonce struct {
 	LastUpdated  time.Time  `json:"last_updated"`
 	Value        NullString `json:"value"`
 	Address      Address    `json:"address"`
+	Chain        Chain      `json:"chain"`
+	L1Chain      Chain      `json:"l1_chain"`
 }
 
 // UserLoginAttempt represents a single attempt for a user to login despite the success
@@ -51,17 +52,6 @@ type CreateLoginAttemptInput struct {
 	ReqHeaders     ReqHeaders `json:"req_headers"`
 }
 
-// NonceRepository is the interface for interacting with the auth nonce persistence layer
-type NonceRepository interface {
-	Get(context.Context, ChainAddress) (UserNonce, error)
-	Create(context.Context, string, ChainAddress) error
-}
-
-// LoginAttemptRepository is the interface for interacting with the auth login attempt persistence layer
-type LoginAttemptRepository interface {
-	Create(context.Context, CreateLoginAttemptInput) (DBID, error)
-}
-
 // Scan implements the sql.Scanner interface for the ReqHeaders type
 func (h *ReqHeaders) Scan(src interface{}) error {
 	if src == nil {
@@ -78,9 +68,9 @@ func (h ReqHeaders) Value() (driver.Value, error) {
 
 // ErrNonceNotFoundForAddress is returned when no nonce is found for a given address
 type ErrNonceNotFoundForAddress struct {
-	ChainAddress ChainAddress
+	L1ChainAddress L1ChainAddress
 }
 
 func (e ErrNonceNotFoundForAddress) Error() string {
-	return fmt.Sprintf("no nonce found for address: %v", e.ChainAddress)
+	return fmt.Sprintf("no nonce found for address: %v", e.L1ChainAddress)
 }

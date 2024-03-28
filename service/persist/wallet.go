@@ -1,20 +1,16 @@
 package persist
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"strings"
 	"time"
 
 	"github.com/lib/pq"
 )
-
-var errWalletValueNoID = fmt.Errorf("wallet value has no ID")
 
 // Wallet represents an address on any chain
 type Wallet struct {
@@ -26,6 +22,7 @@ type Wallet struct {
 
 	Address    Address    `json:"address"`
 	Chain      Chain      `json:"chain"`
+	L1Chain    L1Chain    `json:"l1_chain"`
 	WalletType WalletType `json:"wallet_type"`
 }
 
@@ -40,20 +37,18 @@ type Address string
 // PubKey represents the public key of a wallet
 type PubKey string
 
-//type ChainAddress struct {
-//	Address Address `json:"address"`
-//	Chain   Chain   `json:"chain"`
-//}
-//
-//func (c ChainAddress) String() string {
-//	return fmt.Sprintf("%d:%s", c.Chain, c.Address)
-//}
-
 type ChainAddress struct {
 	addressSet bool
 	chainSet   bool
 	address    Address
 	chain      Chain
+}
+
+type L1ChainAddress struct {
+	addressSet bool
+	chainSet   bool
+	address    Address
+	l1Chain    L1Chain
 }
 
 type ChainPubKey struct {
@@ -63,9 +58,9 @@ type ChainPubKey struct {
 	chain     Chain
 }
 
-// IsSplitFiUserOrAddress is an empty function that satisfies the gqlgen IsSplitFiUserOrAddress interface,
-// allowing ChainAddress to be used in GraphQL resolvers that return the SplitFiUserOrAddress type.
-func (c *ChainAddress) IsSplitFiUserOrAddress() {}
+// IsGalleryUserOrAddress is an empty function that satisfies the gqlgen IsGalleryUserOrAddress interface,
+// allowing ChainAddress to be used in GraphQL resolvers that return the GalleryUserOrAddress type.
+func (c *ChainAddress) IsGalleryUserOrAddress() {}
 
 func NewChainAddress(address Address, chain Chain) ChainAddress {
 	ca := ChainAddress{
@@ -88,9 +83,9 @@ func (c *ChainAddress) Chain() Chain {
 }
 
 func (c *ChainAddress) updateCasing() {
-	switch c.chain {
+	switch c.chain.L1Chain() {
 	// TODO: Add an IsCaseSensitive to the Chain type?
-	case ChainETH:
+	case L1Chain(ChainETH):
 		c.address = Address(strings.ToLower(c.address.String()))
 	}
 }
@@ -131,6 +126,105 @@ func (c *ChainAddress) GQLSetChainFromResolver(chain Chain) error {
 
 func (c ChainAddress) String() string {
 	return fmt.Sprintf("%d:%s", c.chain, c.address)
+}
+
+func (c ChainAddress) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{"address": c.address.String(), "chain": int(c.chain)})
+}
+
+func (c *ChainAddress) UnmarshalJSON(data []byte) error {
+	var v map[string]any
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return err
+	}
+
+	if v["address"] != nil {
+		c.address = Address(v["address"].(string))
+		c.addressSet = true
+	}
+
+	if v["chain"] != nil {
+		if chain, ok := v["chain"].(int); ok {
+			c.chain = Chain(chain)
+			c.chainSet = true
+		} else if chain, ok := v["chain"].(int32); ok {
+			c.chain = Chain(chain)
+			c.chainSet = true
+		}
+	}
+
+	return nil
+}
+
+func (c ChainAddress) ToL1ChainAddress() L1ChainAddress {
+	return NewL1ChainAddress(c.Address(), c.Chain())
+}
+
+func (c *L1ChainAddress) IsGalleryUserOrAddress() {}
+
+func NewL1ChainAddress(address Address, chain Chain) L1ChainAddress {
+	ca := L1ChainAddress{
+		addressSet: true,
+		chainSet:   true,
+		address:    address,
+		l1Chain:    chain.L1Chain(),
+	}
+
+	ca.updateCasing()
+	return ca
+}
+
+func (c *L1ChainAddress) Address() Address {
+	return c.address
+}
+
+func (c *L1ChainAddress) L1Chain() L1Chain {
+	return c.l1Chain
+}
+
+func (c *L1ChainAddress) updateCasing() {
+	switch c.l1Chain {
+	// TODO: Add an IsCaseSensitive to the Chain type?
+	case L1Chain(ChainETH):
+		c.address = Address(strings.ToLower(c.address.String()))
+	}
+}
+
+func (c L1ChainAddress) String() string {
+	return fmt.Sprintf("%d:%s", c.l1Chain, c.address)
+}
+
+func (c L1ChainAddress) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{"address": c.address.String(), "chain": int(c.l1Chain)})
+}
+
+func (c *L1ChainAddress) UnmarshalJSON(data []byte) error {
+	var v map[string]any
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return err
+	}
+
+	if v["address"] != nil {
+		c.address = Address(v["address"].(string))
+		c.addressSet = true
+	}
+
+	if v["chain"] != nil {
+		if chain, ok := v["chain"].(int); ok {
+			c.l1Chain = L1Chain(chain)
+			c.chainSet = true
+		} else if chain, ok := v["chain"].(int32); ok {
+			c.l1Chain = L1Chain(chain)
+			c.chainSet = true
+		} else if chain, ok := v["chain"].(Chain); ok {
+			c.l1Chain = L1Chain(chain)
+			c.chainSet = true
+		}
+	}
+
+	return nil
 }
 
 func NewChainPubKey(pubKey PubKey, chain Chain) ChainPubKey {
@@ -201,7 +295,14 @@ func (c ChainPubKey) String() string {
 
 // ToChainAddress converts a chain pub key to a chain address
 func (c ChainPubKey) ToChainAddress() ChainAddress {
-	return NewChainAddress(Address(c.pubKey), c.chain)
+	switch c.chain {
+	default:
+		return NewChainAddress(Address(c.pubKey), c.chain)
+	}
+}
+
+func (c ChainPubKey) ToL1ChainAddress() L1ChainAddress {
+	return c.ToChainAddress().ToL1ChainAddress()
 }
 
 const (
@@ -210,14 +311,6 @@ const (
 	// WalletTypeGnosis represents a smart contract gnosis safe
 	WalletTypeGnosis
 )
-
-// WalletRepository represents a repository for interacting with persisted wallets
-type WalletRepository interface {
-	GetByID(context.Context, DBID) (Wallet, error)
-	GetByChainAddress(context.Context, ChainAddress) (Wallet, error)
-	GetByUserID(context.Context, DBID) ([]Wallet, error)
-	Insert(context.Context, ChainAddress, WalletType) (DBID, error)
-}
 
 func (l WalletList) Value() (driver.Value, error) {
 	return pq.Array(l).Value()
@@ -273,42 +366,22 @@ func (wa WalletType) MarshalGQL(w io.Writer) {
 	}
 }
 
-func (a Address) String() string {
-	return string(a)
+func (n Address) String() string {
+	return string(n)
 }
 
 // Value implements the database/sql driver Valuer interface for the NullString type
-func (a Address) Value() (driver.Value, error) {
-	if a.String() == "" {
+func (n Address) Value() (driver.Value, error) {
+	if n.String() == "" {
 		return "", nil
 	}
-	return strings.ToValidUTF8(strings.ReplaceAll(a.String(), "\\u0000", ""), ""), nil
-}
-
-// Address returns the ethereum address byte array
-func (a Address) Address() common.Address {
-	return common.HexToAddress(a.String())
-}
-
-// MarshallJSON implements the json.Marshaller interface for the address type
-func (a Address) MarshalJSON() ([]byte, error) {
-	return json.Marshal(a.String())
-}
-
-// UnmarshalJSON implements the json.Unmarshaller interface for the address type
-func (a *Address) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-	*a = Address(normalizeAddress(strings.ToLower(s)))
-	return nil
+	return strings.ToValidUTF8(strings.ReplaceAll(n.String(), "\\u0000", ""), ""), nil
 }
 
 // Scan implements the database/sql Scanner interface for the NullString type
-func (a *Address) Scan(value interface{}) error {
+func (n *Address) Scan(value interface{}) error {
 	if value == nil {
-		*a = Address("")
+		*n = Address("")
 		return nil
 	}
 
@@ -321,7 +394,7 @@ func (a *Address) Scan(value interface{}) error {
 		asString = string(asUint8Array)
 	}
 
-	*a = Address(asString)
+	*n = Address(asString)
 	return nil
 }
 
@@ -330,21 +403,30 @@ func (p PubKey) String() string {
 }
 
 type ErrWalletAlreadyExists struct {
-	WalletID     DBID
-	ChainAddress ChainAddress
-	OwnerID      DBID
-}
-
-// ErrWalletNotFound is an error type for when a wallet is not found
-type ErrWalletNotFound struct {
-	WalletID     DBID
-	ChainAddress ChainAddress
+	WalletID       DBID
+	L1ChainAddress L1ChainAddress
+	OwnerID        DBID
 }
 
 func (e ErrWalletAlreadyExists) Error() string {
-	return fmt.Sprintf("wallet already exists: wallet ID: %s | chain address: %s | chain: %d | owner ID: %s", e.WalletID, e.ChainAddress.Address(), e.ChainAddress.Chain(), e.OwnerID)
+	return fmt.Sprintf("wallet already exists: wallet ID: %s | chain address: %s | chain: %d | owner ID: %s", e.WalletID, e.L1ChainAddress.Address(), e.L1ChainAddress.L1Chain(), e.OwnerID)
 }
 
-func (e ErrWalletNotFound) Error() string {
-	return fmt.Sprintf("wallet not found: walletID: %s | chain address: %s | chain: %d ", e.WalletID, e.ChainAddress.Address(), e.ChainAddress.Chain())
+var errWalletNotFound ErrWalletNotFound
+
+type ErrWalletNotFound struct{}
+
+func (e ErrWalletNotFound) Unwrap() error { return notFoundError }
+func (e ErrWalletNotFound) Error() string { return "wallet not found" }
+
+type ErrWalletNotFoundByID struct{ ID DBID }
+
+func (e ErrWalletNotFoundByID) Unwrap() error { return errWalletNotFound }
+func (e ErrWalletNotFoundByID) Error() string { return "wallet not found by id: " + e.ID.String() }
+
+type ErrWalletNotFoundByAddress struct{ Address L1ChainAddress }
+
+func (e ErrWalletNotFoundByAddress) Unwrap() error { return errWalletNotFound }
+func (e ErrWalletNotFoundByAddress) Error() string {
+	return fmt.Sprintf("wallet not found by chain=%d; address = %s", e.Address.L1Chain(), e.Address.Address())
 }

@@ -218,8 +218,8 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 	for i := range assets {
 		a := &assets[i]
 		(*a).ID = upserted[i].ID
-		(*a).CreationTime = persist.CreationTime(upserted[i].CreatedAt)
-		(*a).LastUpdated = persist.LastUpdatedTime(upserted[i].LastUpdated)
+		(*a).CreationTime = time.Time(upserted[i].CreatedAt)
+		(*a).LastUpdated = time.Time(upserted[i].LastUpdated)
 	}
 
 	return upserted[0].LastUpdated, assets, nil
@@ -246,7 +246,7 @@ func (a *AssetRepository) UpdateByID(pCtx context.Context, pID persist.DBID, pUp
 	switch pUpdate.(type) {
 	case persist.AssetUpdateInput:
 		update := pUpdate.(persist.AssetUpdateInput)
-		res, err = a.updateAssetUnsafeStmt.ExecContext(pCtx, update.Asset, update.BlockNumber, persist.LastUpdatedTime{}, pID)
+		res, err = a.updateAssetUnsafeStmt.ExecContext(pCtx, update.Asset, update.BlockNumber, time.Time{}, pID)
 	default:
 		return fmt.Errorf("unsupported update type: %T", pUpdate)
 	}
@@ -271,7 +271,7 @@ func (a *AssetRepository) UpdateByIdentifiers(pCtx context.Context, pOwnerAddres
 	switch pUpdate.(type) {
 	case persist.AssetUpdateInput:
 		update := pUpdate.(persist.AssetUpdateInput)
-		res, err = a.updateAssetByIdentifiersUnsafeStmt.ExecContext(pCtx, update.Asset, update.BlockNumber, persist.LastUpdatedTime{}, pOwnerAddress, pTokenAddress)
+		res, err = a.updateAssetByIdentifiersUnsafeStmt.ExecContext(pCtx, update.Asset, update.BlockNumber, time.Time{}, pOwnerAddress, pTokenAddress)
 	default:
 		return fmt.Errorf("unsupported update type: %T", pUpdate)
 	}
