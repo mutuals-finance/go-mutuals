@@ -13,15 +13,15 @@ import (
 )
 
 type Asset struct {
-	ID           persist.DBID    `db:"id" json:"id"`
-	Version      sql.NullInt32   `db:"version" json:"version"`
-	LastUpdated  time.Time       `db:"last_updated" json:"last_updated"`
-	CreatedAt    time.Time       `db:"created_at" json:"created_at"`
-	Chain        persist.Chain   `db:"chain" json:"chain"`
-	TokenAddress persist.Address `db:"token_address" json:"token_address"`
-	OwnerAddress persist.Address `db:"owner_address" json:"owner_address"`
-	Balance      sql.NullInt32   `db:"balance" json:"balance"`
-	BlockNumber  sql.NullInt64   `db:"block_number" json:"block_number"`
+	ID           persist.DBID      `db:"id" json:"id"`
+	Version      sql.NullInt32     `db:"version" json:"version"`
+	LastUpdated  time.Time         `db:"last_updated" json:"last_updated"`
+	CreatedAt    time.Time         `db:"created_at" json:"created_at"`
+	Chain        persist.Chain     `db:"chain" json:"chain"`
+	TokenAddress persist.Address   `db:"token_address" json:"token_address"`
+	OwnerAddress persist.Address   `db:"owner_address" json:"owner_address"`
+	Balance      persist.HexString `db:"balance" json:"balance"`
+	BlockNumber  sql.NullInt64     `db:"block_number" json:"block_number"`
 }
 
 type DevMetadataUser struct {
@@ -58,15 +58,10 @@ type LegacyView struct {
 }
 
 type Nonce struct {
-	ID          persist.DBID    `db:"id" json:"id"`
-	Deleted     bool            `db:"deleted" json:"deleted"`
-	Version     sql.NullInt32   `db:"version" json:"version"`
-	LastUpdated time.Time       `db:"last_updated" json:"last_updated"`
-	CreatedAt   time.Time       `db:"created_at" json:"created_at"`
-	UserID      persist.DBID    `db:"user_id" json:"user_id"`
-	Address     persist.Address `db:"address" json:"address"`
-	Value       sql.NullString  `db:"value" json:"value"`
-	Chain       persist.Chain   `db:"chain" json:"chain"`
+	ID        persist.DBID `db:"id" json:"id"`
+	Value     string       `db:"value" json:"value"`
+	CreatedAt time.Time    `db:"created_at" json:"created_at"`
+	Consumed  bool         `db:"consumed" json:"consumed"`
 }
 
 type Notification struct {

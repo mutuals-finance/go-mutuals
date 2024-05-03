@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"time"
-
-	"github.com/SplitFi/go-splitfi/service/logger"
 
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
@@ -14,6 +13,7 @@ import (
 // TokenRepository represents a postgres repository for tokens
 type TokenRepository struct {
 	db                                *sql.DB
+	queries                           *db.Queries
 	getByWalletStmt                   *sql.Stmt
 	getByWalletPaginateStmt           *sql.Stmt
 	getByTokenIdentifiersStmt         *sql.Stmt
@@ -27,7 +27,7 @@ type TokenRepository struct {
 }
 
 // NewTokenRepository creates a new TokenRepository
-func NewTokenRepository(db *sql.DB) *TokenRepository {
+func NewTokenRepository(db *sql.DB, queries *db.Queries) *TokenRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -65,6 +65,7 @@ func NewTokenRepository(db *sql.DB) *TokenRepository {
 
 	return &TokenRepository{
 		db:                                db,
+		queries:                           queries,
 		getByWalletStmt:                   getByWalletStmt,
 		getByWalletPaginateStmt:           getByWalletPaginateStmt,
 		getByTokenIdentifiersStmt:         getByTokenIdentifiersStmt,
@@ -169,42 +170,37 @@ func (t *TokenRepository) TokenExistsByTokenIdentifiers(pCtx context.Context, pC
 	return exists, nil
 }
 
-func (t *TokenRepository) BulkUpsert(pCtx context.Context, pTokens []persist.Token) error {
-	if len(pTokens) == 0 {
-		return nil
-	}
-	// Postgres only allows 65535 parameters at a time.
-	// TODO: Consider trying this implementation at some point instead of chunking:
-	//       https://klotzandrew.com/blog/postgres-passing-65535-parameter-limit
-	paramsPerRow := 20
-	rowsPerQuery := 65535 / paramsPerRow
-
-	if len(pTokens) > rowsPerQuery {
-		logger.For(pCtx).Debugf("Chunking %d tokens recursively into %d queries", len(pTokens), len(pTokens)/rowsPerQuery)
-		next := pTokens[rowsPerQuery:]
-		current := pTokens[:rowsPerQuery]
-		if err := t.BulkUpsert(pCtx, next); err != nil {
-			return fmt.Errorf("error with tokens upsert: %w", err)
-		}
-		pTokens = current
+// BulkUpsert bulk upserts the tokens
+func (t *TokenRepository) BulkUpsert(pCtx context.Context, tokens []db.Token) ([]db.Token, error) {
+	if len(tokens) == 0 {
+		return []db.Token{}, nil
 	}
 
-	sqlStr := `INSERT INTO tokens (ID,TOKEN_TYPE,CHAIN,NAME,SYMBOL,LOGO,CONTRACT_ADDRESS,BLOCK_NUMBER,VERSION,CREATED_AT,LAST_UPDATED,DELETED) VALUES `
-	vals := make([]interface{}, 0, len(pTokens)*paramsPerRow)
-	for i, token := range pTokens {
-		sqlStr += generateValuesPlaceholders(paramsPerRow, i*paramsPerRow, nil) + ","
-		vals = append(vals, persist.GenerateID(), token.TokenType, token.Chain, token.Name, token.Symbol, token.Logo, token.ContractAddress, token.BlockNumber, token.Version, token.CreationTime, token.LastUpdated, token.Deleted)
+	params := db.UpsertTokensParams{}
+
+	for i := range tokens {
+		t := &tokens[i]
+		params.Ids = append(params.Ids, persist.GenerateID().String())
+		params.Version = append(params.Version, t.Version.Int32)
+		params.Name = append(params.Name, t.Name.String)
+		params.Symbol = append(params.Symbol, t.Symbol.String)
+		params.Logo = append(params.Logo, t.Logo.String)
+		params.TokenType = append(params.TokenType, t.TokenType.String)
+		params.BlockNumber = append(params.BlockNumber, t.BlockNumber.Int64)
+		params.Chain = append(params.Chain, int32(t.Chain))
+		params.ContractAddress = append(params.ContractAddress, t.ContractAddress.String())
 	}
 
-	sqlStr = sqlStr[:len(sqlStr)-1]
-	sqlStr += ` ON CONFLICT (CONTRACT_ADDRESS) WHERE TOKEN_TYPE = 'ERC-20' DO UPDATE SET TOKEN_TYPE = EXCLUDED.TOKEN_TYPE,CHAIN = EXCLUDED.CHAIN,NAME = EXCLUDED.NAME,SYMBOL = EXCLUDED.SYMBOL,LOGO = EXCLUDED.LOGO,CONTRACT_ADDRESS = EXCLUDED.CONTRACT_ADDRESS,BLOCK_NUMBER = EXCLUDED.BLOCK_NUMBER,VERSION = EXCLUDED.VERSION,CREATED_AT = EXCLUDED.CREATED_AT,LAST_UPDATED = EXCLUDED.LAST_UPDATED,DELETED = EXCLUDED.DELETED WHERE EXCLUDED.BLOCK_NUMBER > tokens.BLOCK_NUMBER;`
-
-	_, err := t.db.ExecContext(pCtx, sqlStr, vals...)
+	upserted, err := t.queries.UpsertTokens(pCtx, params)
 	if err != nil {
-		logger.For(pCtx).Errorf("SQL: %s", sqlStr)
-		return fmt.Errorf("failed to upsert erc20 tokens: %w", err)
+		return nil, err
 	}
-	return nil
+
+	if len(tokens) != len(upserted) {
+		panic(fmt.Sprintf("expected %d upserted tokens, got %d", len(tokens), len(upserted)))
+	}
+
+	return upserted, nil
 }
 
 // Upsert adds a token by its token ID and contract address and if its token type is ERC-1155 it also adds using the owner address

@@ -11,38 +11,43 @@ import (
 )
 
 const upsertAssets = `-- name: UpsertAssets :many
-insert into assets
-( id
-, version
-, owner_address
-, token_address
-, balance
-, block_number
-, created_at
-, last_updated) (select id
-                      , version
-                      , owner_address
-                      , token_address
-                      , balance
-                      , block_number
-                      , created_at
-                      , last_updated
-                 from (select unnest($1::varchar[])               as id
-                            , unnest($2::int[])              as version
-                            , unnest($3::varchar[])    as owner_address
-                            , unnest($4::varchar[])    as token_address
-                            , unnest($5::varchar[])          as balance
-                            , unnest($6::bigint[])      as block_number
-                            , unnest($7::timestamptz[])   as created_at
-                            , unnest($8::timestamptz[]) as last_updated) bulk_upsert)
-on conflict (token_address, owner_address)
-    do update set version       = excluded.version
-                , owner_address = excluded.owner_address
-                , token_address = excluded.token_address
-                , balance       = excluded.balance
-                , block_number  = excluded.block_number
-                , last_updated  = excluded.last_updated
-returning id, version, last_updated, created_at, chain, token_address, owner_address, balance, block_number
+with assets_insert as (
+    insert into assets
+    ( id
+    , version
+    , owner_address
+    , token_address
+    , balance
+    , block_number
+    , created_at
+    , last_updated) (select id
+                          , version
+                          , owner_address
+                          , token_address
+                          , balance
+                          , block_number
+                          , created_at
+                          , last_updated
+                     from (select unnest($1::varchar[])               as id
+                                , unnest($2::int[])              as version
+                                , unnest($3::varchar[])    as owner_address
+                                , unnest($4::varchar[])    as token_address
+                                , unnest($5::varchar[])          as balance
+                                , unnest($6::bigint[])      as block_number
+                                , unnest($7::timestamptz[])   as created_at
+                                , unnest($8::timestamptz[]) as last_updated) bulk_upsert)
+    on conflict (token_address, owner_address)
+        do update set version       = excluded.version
+                    , owner_address = excluded.owner_address
+                    , token_address = excluded.token_address
+                    , balance       = excluded.balance
+                    , block_number  = excluded.block_number
+                    , last_updated  = excluded.last_updated
+    returning id, version, last_updated, created_at, chain, token_address, owner_address, balance, block_number
+           )
+select assets.id, assets.version, assets.last_updated, assets.created_at, assets.chain, assets.token_address, assets.owner_address, assets.balance, assets.block_number, tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.last_updated, tokens.name, tokens.symbol, tokens.logo, tokens.token_type, tokens.block_number, tokens.chain, tokens.contract_address
+from assets_insert assets
+         join tokens on assets.token_address = tokens.contract_address and not tokens.deleted
 `
 
 type UpsertAssetsParams struct {
@@ -56,7 +61,12 @@ type UpsertAssetsParams struct {
 	LastUpdated  []time.Time `db:"last_updated" json:"last_updated"`
 }
 
-func (q *Queries) UpsertAssets(ctx context.Context, arg UpsertAssetsParams) ([]Asset, error) {
+type UpsertAssetsRow struct {
+	Asset Asset `db:"asset" json:"asset"`
+	Token Token `db:"token" json:"token"`
+}
+
+func (q *Queries) UpsertAssets(ctx context.Context, arg UpsertAssetsParams) ([]UpsertAssetsRow, error) {
 	rows, err := q.db.Query(ctx, upsertAssets,
 		arg.ID,
 		arg.Version,
@@ -71,19 +81,112 @@ func (q *Queries) UpsertAssets(ctx context.Context, arg UpsertAssetsParams) ([]A
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Asset
+	var items []UpsertAssetsRow
 	for rows.Next() {
-		var i Asset
+		var i UpsertAssetsRow
+		if err := rows.Scan(
+			&i.Asset.ID,
+			&i.Asset.Version,
+			&i.Asset.LastUpdated,
+			&i.Asset.CreatedAt,
+			&i.Asset.Chain,
+			&i.Asset.TokenAddress,
+			&i.Asset.OwnerAddress,
+			&i.Asset.Balance,
+			&i.Asset.BlockNumber,
+			&i.Token.ID,
+			&i.Token.Deleted,
+			&i.Token.Version,
+			&i.Token.CreatedAt,
+			&i.Token.LastUpdated,
+			&i.Token.Name,
+			&i.Token.Symbol,
+			&i.Token.Logo,
+			&i.Token.TokenType,
+			&i.Token.BlockNumber,
+			&i.Token.Chain,
+			&i.Token.ContractAddress,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upsertTokens = `-- name: UpsertTokens :many
+insert into tokens(id, deleted, version, created_at, name, symbol, logo, token_type, block_number, chain, contract_address) (
+    select unnest($1::varchar[])
+         , false
+         , unnest($2::int[])
+         , now()
+         , unnest($3::varchar[])
+         , unnest($4::varchar[])
+         , unnest($5::varchar[])
+         , unnest($6::varchar[])
+         , unnest($7::bigint[])
+         , unnest($8::int[])
+         , unnest($9::varchar[])
+)
+on conflict (chain, contract_address)
+    do update set version = excluded.version
+                , name = coalesce(nullif(excluded.name, ''), nullif(tokens.name, ''))
+                , symbol = coalesce(nullif(excluded.symbol, ''), nullif(tokens.symbol, ''))
+                , logo = coalesce(nullif(excluded.logo, ''), nullif(tokens.logo, ''))
+                , token_type = coalesce(nullif(excluded.token_type, ''), nullif(tokens.token_type, ''))
+                , block_number = excluded.block_number
+                , deleted = excluded.deleted
+                , last_updated = now()
+returning id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address
+`
+
+type UpsertTokensParams struct {
+	Ids             []string `db:"ids" json:"ids"`
+	Version         []int32  `db:"version" json:"version"`
+	Name            []string `db:"name" json:"name"`
+	Symbol          []string `db:"symbol" json:"symbol"`
+	Logo            []string `db:"logo" json:"logo"`
+	TokenType       []string `db:"token_type" json:"token_type"`
+	BlockNumber     []int64  `db:"block_number" json:"block_number"`
+	Chain           []int32  `db:"chain" json:"chain"`
+	ContractAddress []string `db:"contract_address" json:"contract_address"`
+}
+
+func (q *Queries) UpsertTokens(ctx context.Context, arg UpsertTokensParams) ([]Token, error) {
+	rows, err := q.db.Query(ctx, upsertTokens,
+		arg.Ids,
+		arg.Version,
+		arg.Name,
+		arg.Symbol,
+		arg.Logo,
+		arg.TokenType,
+		arg.BlockNumber,
+		arg.Chain,
+		arg.ContractAddress,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Token
+	for rows.Next() {
+		var i Token
 		if err := rows.Scan(
 			&i.ID,
+			&i.Deleted,
 			&i.Version,
-			&i.LastUpdated,
 			&i.CreatedAt,
-			&i.Chain,
-			&i.TokenAddress,
-			&i.OwnerAddress,
-			&i.Balance,
+			&i.LastUpdated,
+			&i.Name,
+			&i.Symbol,
+			&i.Logo,
+			&i.TokenType,
 			&i.BlockNumber,
+			&i.Chain,
+			&i.ContractAddress,
 		); err != nil {
 			return nil, err
 		}

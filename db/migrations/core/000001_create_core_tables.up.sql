@@ -245,16 +245,13 @@ ALTER TABLE legacy_views
 
 CREATE TABLE IF NOT EXISTS nonces
 (
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    deleted      boolean                            NOT NULL DEFAULT false,
-    version      integer                                     DEFAULT 0,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    user_id      character varying(255),
-    address      character varying(255),
-    value        character varying(255),
-    chain        integer
+    id         varchar(255) primary key,
+    value      text        not null,
+    created_at timestamptz not null default now(),
+    consumed   bool        not null default false
 );
+
+CREATE UNIQUE INDEX nonces_value_idx on nonces (value);
 
 CREATE TABLE IF NOT EXISTS notifications
 (

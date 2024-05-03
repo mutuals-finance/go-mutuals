@@ -340,6 +340,10 @@ func NewTokenChainAddress(pContractAddress Address, pChain Chain) TokenChainAddr
 	}
 }
 
+func (t TokenChainAddress) FromToken(pToken Token) TokenChainAddress {
+	return NewTokenChainAddress(pToken.ContractAddress, pToken.Chain)
+}
+
 func (t TokenChainAddress) String() string {
 	return fmt.Sprintf("%s+%d", t.Chain.NormalizeAddress(t.Address), t.Chain)
 }
@@ -409,8 +413,11 @@ type Token struct {
 	Decimals NullInt32  `json:"decimals"`
 	Logo     TokenLogo  `json:"logo"`
 
-	BlockNumber BlockNumber `json:"block_number"`
-	IsSpam      *bool       `json:"is_spam"`
+	IsSpam *bool `json:"is_spam"`
+}
+
+func (t Token) ChainAddress() TokenChainAddress {
+	return NewTokenChainAddress(t.ContractAddress, t.Chain)
 }
 
 type Dimensions struct {

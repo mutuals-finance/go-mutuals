@@ -2,6 +2,11 @@ package tokenprocessing
 
 import (
 	"context"
+	"fmt"
+	"github.com/SplitFi/go-splitfi/event"
+	"github.com/SplitFi/go-splitfi/service/notifications"
+	"github.com/SplitFi/go-splitfi/service/persist"
+	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"net/http"
 	"os"
 	"time"
@@ -13,7 +18,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/redis"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/SplitFi/go-splitfi/service/throttle"
 	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/SplitFi/go-splitfi/util"
@@ -35,7 +39,7 @@ func InitServer() {
 }
 
 func CoreInitServer(ctx context.Context, clients *server.Clients, mc *multichain.Provider) *gin.Engine {
-	initSentry()
+	InitSentry()
 	logger.InitWithGCPDefaults()
 
 	http.DefaultClient = &http.Client{Transport: tracing.NewTracingTransport(http.DefaultTransport, false)}
@@ -43,6 +47,12 @@ func CoreInitServer(ctx context.Context, clients *server.Clients, mc *multichain
 	router := gin.Default()
 
 	router.Use(middleware.GinContextToContext(), middleware.Sentry(true), middleware.Tracing(), middleware.HandleCORS(), middleware.ErrLogger())
+
+	notificationsHandler := notifications.New(clients.Queries, clients.PubSubClient, clients.TaskClient, redis.NewLockClient(redis.NewCache(redis.NotificationLockCache)), false)
+
+	router.Use(func(c *gin.Context) {
+		event.AddTo(c, false, notificationsHandler, clients.Queries, clients.TaskClient)
+	})
 
 	if env.GetString("ENV") != "production" {
 		gin.SetMode(gin.DebugMode)
@@ -52,8 +62,10 @@ func CoreInitServer(ctx context.Context, clients *server.Clients, mc *multichain
 	logger.For(nil).Info("Registering handlers...")
 
 	t := newThrottler()
+	metadataFetcher := MetadataFinder{mc: mc, ctx: ctx, wait: 5 * time.Second, maxBatch: 100}
+	tp := NewTokenProcessor(clients.Queries, clients.HTTPClient, &metadataFetcher, clients.IPFSClient, clients.ArweaveClient, clients.StorageClient, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"))
 
-	return handlersInitServer(ctx, router, mc, clients.Repos, t)
+	return handlersInitServer(ctx, router, tp, mc, clients.Repos, t, clients.TaskClient)
 }
 
 func setDefaults() {
@@ -100,7 +112,7 @@ func newThrottler() *throttle.Locker {
 	return throttle.NewThrottleLocker(redis.NewCache(redis.TokenProcessingThrottleDB), time.Minute*30)
 }
 
-func initSentry() {
+func InitSentry() {
 	if env.GetString("ENV") == "local" {
 		logger.For(nil).Info("skipping sentry init")
 		return
@@ -116,8 +128,8 @@ func initSentry() {
 		AttachStacktrace: true,
 		BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 			event = auth.ScrubEventCookies(event, hint)
-			event = sentryutil.UpdateErrorFingerprints(event, hint)
-			event = sentryutil.UpdateLogErrorEvent(event, hint)
+			event = excludeTokenSpamEvents(event, hint)
+			event = excludeBadTokenEvents(event, hint)
 			return event
 		},
 	})
@@ -125,4 +137,65 @@ func initSentry() {
 	if err != nil {
 		logger.For(nil).Fatalf("failed to start sentry: %s", err)
 	}
+}
+
+// reportJobError reports an error that occurred while processing a token.
+func reportJobError(ctx context.Context, err error, job tokenProcessingJob) {
+	sentryutil.ReportError(ctx, err, func(scope *sentry.Scope) {
+		setRunTags(scope, job.id)
+		setTokenTags(scope, job.token.Chain, job.token.ContractAddress)
+		setTokenContext(scope, job.token.Chain, job.token.ContractAddress, job.isSpamJob)
+	})
+}
+
+func setTokenTags(scope *sentry.Scope, chain persist.Chain, contractAddress persist.Address) {
+	scope.SetTag("chain", fmt.Sprintf("%d", chain))
+	scope.SetTag("contractAddress", contractAddress.String())
+	assetPage := assetURL(chain, contractAddress)
+	if len(assetPage) > 200 {
+		assetPage = "assetURL too long, see token context"
+	}
+	scope.SetTag("assetURL", assetPage)
+}
+
+func assetURL(chain persist.Chain, contractAddress persist.Address) string {
+	switch chain {
+	case persist.ChainETH:
+		return fmt.Sprintf("https://opensea.io/assets/ethereum/%s/%d", contractAddress.String())
+	case persist.ChainPolygon:
+		return fmt.Sprintf("https://opensea.io/assets/matic/%s/%d", contractAddress.String())
+	default:
+		return ""
+	}
+}
+
+func setTokenContext(scope *sentry.Scope, chain persist.Chain, contractAddress persist.Address, isSpam bool) {
+	scope.SetContext(sentryTokenContextName, sentry.Context{
+		"Chain":           chain,
+		"ContractAddress": contractAddress,
+		"IsSpam":          isSpam,
+		"AssetURL":        assetURL(chain, contractAddress),
+	})
+}
+
+func setRunTags(scope *sentry.Scope, runID persist.DBID) {
+	scope.SetTag("runID", runID.String())
+	scope.SetTag("log", "go/tokenruns/"+runID.String())
+}
+
+// excludeTokenSpamEvents excludes events for tokens marked as spam.
+func excludeTokenSpamEvents(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+	isSpam, ok := event.Contexts[sentryTokenContextName]["IsSpam"].(bool)
+	if ok && isSpam {
+		return nil
+	}
+	return event
+}
+
+// excludeBadTokenEvents excludes events for bad tokens.
+func excludeBadTokenEvents(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+	if util.ErrorIs[tokenmanage.ErrBadToken](hint.OriginalException) {
+		return nil
+	}
+	return event
 }

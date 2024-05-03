@@ -11,6 +11,7 @@ import (
 	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
+	"time"
 )
 
 type SplitAPI struct {
@@ -72,7 +73,7 @@ func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID
 	userID, err := getAuthenticatedUserID(ctx)
 
 	if err != nil {
-		return nil, persist.ErrSplitNotFound{ID: splitID}
+		return nil, err
 	}
 
 	split, err := api.queries.GetSplitByRecipientUserID(ctx, db.GetSplitByRecipientUserIDParams{
@@ -84,6 +85,55 @@ func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID
 	}
 
 	return &split, nil
+}
+
+func (api SplitAPI) GetViewerSplits(ctx context.Context, before, after *string, first, last *int) ([]db.Split, PageInfo, error) {
+	userID, err := getAuthenticatedUserID(ctx)
+	if err != nil {
+		return nil, PageInfo{}, err
+	}
+
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"userID": validate.WithTag(userID, "required"),
+	}); err != nil {
+		return nil, PageInfo{}, err
+	}
+
+	if err := validatePaginationParams(api.validator, first, last); err != nil {
+		return nil, PageInfo{}, err
+	}
+
+	queryFunc := func(params timeIDPagingParams) ([]db.Split, error) {
+		return api.queries.GetSplitsByRecipientUserIDPaginate(ctx, db.GetSplitsByRecipientUserIDPaginateParams{
+			ID:            userID,
+			Limit:         params.Limit,
+			CurBeforeTime: params.CursorBeforeTime,
+			CurBeforeID:   params.CursorBeforeID,
+			CurAfterTime:  params.CursorAfterTime,
+			CurAfterID:    params.CursorAfterID,
+			PagingForward: params.PagingForward,
+		})
+	}
+
+	countFunc := func() (int, error) {
+		total, err := api.queries.CountSplitsByRecipientUserID(ctx, userID)
+		return int(total), err
+	}
+
+	cursorFunc := func(s db.Split) (time.Time, persist.DBID, error) {
+		return s.CreatedAt, s.ID, nil
+	}
+
+	paginator := timeIDPaginator[db.Split]{
+		QueryFunc:  queryFunc,
+		CursorFunc: cursorFunc,
+		CountFunc:  countFunc,
+	}
+
+	results, pageInfo, err := paginator.paginate(before, after, first, last)
+	splits := util.MapWithoutError(results, func(s db.Split) db.Split { return s })
+	return splits, pageInfo, err
 }
 
 func (api SplitAPI) GetSplitById(ctx context.Context, splitID persist.DBID) (*db.Split, error) {

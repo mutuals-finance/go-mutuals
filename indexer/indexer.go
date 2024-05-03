@@ -1,15 +1,14 @@
 package indexer
 
 import (
-	gcptasks "cloud.google.com/go/cloudtasks/apiv2"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/SplitFi/go-splitfi/contracts"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/db/gen/indexerdb"
-	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
-	"github.com/sourcegraph/conc/iter"
+	"github.com/SplitFi/go-splitfi/service/task"
 	"math/big"
 	"net/http"
 	"sort"
@@ -55,25 +54,12 @@ const (
 
 var (
 	rpcEnabled            = false // Enables external RPC calls
+	batchSize             = 500
 	erc20ABI, _           = contracts.IERC20MetaData.GetAbi()
 	defaultTransferEvents = []eventHash{
 		transferEventHash,
 	}
 )
-
-type errForTokenAtBlockAndIndex struct {
-	err error
-	boi blockchainOrderInfo
-	ti  persist.EthereumTokenIdentifiers
-}
-
-func (e errForTokenAtBlockAndIndex) TokenIdentifiers() persist.EthereumTokenIdentifiers {
-	return e.ti
-}
-
-func (e errForTokenAtBlockAndIndex) OrderInfo() blockchainOrderInfo {
-	return e.boi
-}
 
 // eventHash represents an event keccak256 hash
 type eventHash string
@@ -122,9 +108,6 @@ type indexer struct {
 	arweaveClient *goar.Client
 	storageClient *storage.Client
 	queries       *indexerdb.Queries
-	splitRepo     persist.SplitRepository
-	tokenRepo     persist.TokenRepository
-	assetRepo     persist.AssetRepository
 	dbMu          *sync.Mutex // Manages writes to the db
 	stateMu       *sync.Mutex // Manages updates to the indexer's state
 	memoryMu      *sync.Mutex // Manages large memory operations
@@ -139,20 +122,24 @@ type indexer struct {
 	lastSyncedChunk uint64  // Start block of the last chunk handled by the indexer
 	maxBlock        *uint64 // If provided, the indexer will only index up to maxBlock
 
+	contractOwnerStats *sync.Map // map[contractOwnerMethod]int - Used to track the number of times a contract owner method is used
+
 	isListening bool // Indicates if the indexer is waiting for new blocks
 
 	getLogsFunc getLogsFunc
 
-	assetDBHooks []DBHook[persist.AssetDB]
 	tokenDBHooks []DBHook[persist.Token]
+	assetDBHooks []DBHook[persist.AssetDB]
 }
 
 // newIndexer sets up an indexer for retrieving the specified events that will process tokens
-func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, iQueries *indexerdb.Queries, bQueries *coredb.Queries, taskClient *gcptasks.Client, splitRepo persist.SplitRepository, tokenRepo persist.TokenRepository, assetRepo persist.AssetRepository, pChain persist.Chain, pEvents []eventHash, getLogsFunc getLogsFunc, startingBlock, maxBlock *uint64) *indexer {
+func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, iQueries *indexerdb.Queries, bQueries *coredb.Queries, taskClient *task.Client, pChain persist.Chain, pEvents []eventHash, getLogsFunc getLogsFunc, startingBlock, maxBlock *uint64) *indexer {
 
 	if rpcEnabled && ethClient == nil {
 		panic("RPC is enabled but an ethClient wasn't provided!")
 	}
+
+	ownerStats := &sync.Map{}
 
 	i := &indexer{
 		ethClient:     ethClient,
@@ -160,9 +147,6 @@ func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient
 		arweaveClient: arweaveClient,
 		storageClient: storageClient,
 		httpClient:    httpClient,
-		splitRepo:     splitRepo,
-		tokenRepo:     tokenRepo,
-		assetRepo:     assetRepo,
 		queries:       iQueries,
 		dbMu:          &sync.Mutex{},
 		stateMu:       &sync.Mutex{},
@@ -174,11 +158,13 @@ func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient
 
 		maxBlock: maxBlock,
 
+		contractOwnerStats: ownerStats,
+
 		eventHashes: pEvents,
 
 		getLogsFunc: getLogsFunc,
 
-		tokenDBHooks: newTokenHooks(iQueries, tokenRepo, ethClient, httpClient),
+		tokenDBHooks: newTokenHooks(taskClient, bQueries),
 		assetDBHooks: newAssetHooks(taskClient, bQueries),
 
 		mostRecentBlock: 0,
@@ -190,7 +176,7 @@ func newIndexer(ethClient *ethclient.Client, httpClient *http.Client, ipfsClient
 		i.lastSyncedChunk = *startingBlock
 		i.lastSyncedChunk -= i.lastSyncedChunk % blocksPerLogsCall
 	} else {
-		recentDBBlock, err := tokenRepo.MostRecentBlock(context.Background())
+		recentDBBlock, err := iQueries.MostRecentBlock(context.Background())
 		if err != nil {
 			panic(err)
 		}
@@ -310,29 +296,28 @@ func (i *indexer) startPipeline(ctx context.Context, start persist.BlockNumber, 
 	startTime := time.Now()
 	transfers := make(chan []transfersAtBlock)
 	plugins := NewTransferPlugins(ctx)
-	enabledPlugins := []chan<- TransferPluginMsg{plugins.assets.in, plugins.tokens.in}
+	enabledPlugins := []chan<- TransferPluginMsg{plugins.tokens.in, plugins.assets.in}
 
-	statsID := persist.DBID("")
-	//statsID, err := i.queries.InsertStatistic(ctx, indexerdb.InsertStatisticParams{ID: persist.GenerateID(), BlockStart: start, BlockEnd: start + blocksPerLogsCall})
-	//if err != nil {
-	//	panic(err)
-	//}
+	statsID, err := i.queries.InsertStatistic(ctx, indexerdb.InsertStatisticParams{ID: persist.GenerateID(), BlockStart: start, BlockEnd: start + blocksPerLogsCall})
+	if err != nil {
+		panic(err)
+	}
 
 	go func() {
 		ctx := sentryutil.NewSentryHubContext(ctx)
 		span, ctx := tracing.StartSpan(ctx, "indexer.logs", "processLogs")
 		defer tracing.FinishSpan(span)
 
-		logs := i.fetchLogs(ctx, start, topics)
+		logs := i.fetchLogs(ctx, start, topics, statsID)
 		i.processLogs(ctx, transfers, logs)
 	}()
-	go i.processAllTransfers(sentryutil.NewSentryHubContext(ctx), transfers, enabledPlugins)
+	go i.processAllTransfers(sentryutil.NewSentryHubContext(ctx), transfers, enabledPlugins, statsID)
 	i.processTokens(ctx, plugins.tokens.out, plugins.assets.out, statsID)
 
-	//err = i.queries.UpdateStatisticSuccess(ctx, indexerdb.UpdateStatisticSuccessParams{ID: statsID, Success: true, ProcessingTimeSeconds: sql.NullInt64{Int64: int64(time.Since(startTime) / time.Second), Valid: true}})
-	//if err != nil {
-	//	panic(err)
-	//}
+	err = i.queries.UpdateStatisticSuccess(ctx, indexerdb.UpdateStatisticSuccessParams{ID: statsID, Success: true, ProcessingTimeSeconds: sql.NullInt64{Int64: int64(time.Since(startTime) / time.Second), Valid: true}})
+	if err != nil {
+		panic(err)
+	}
 
 	logger.For(ctx).Warnf("Finished processing %d blocks from block %d in %s", blocksPerLogsCall, start.Uint64(), time.Since(startTime))
 }
@@ -343,7 +328,7 @@ func (i *indexer) startNewBlocksPipeline(ctx context.Context, topics [][]common.
 
 	transfers := make(chan []transfersAtBlock)
 	plugins := NewTransferPlugins(ctx)
-	enabledPlugins := []chan<- TransferPluginMsg{plugins.assets.in, plugins.tokens.in}
+	enabledPlugins := []chan<- TransferPluginMsg{plugins.tokens.in, plugins.assets.in}
 
 	mostRecentBlock, err := rpc.RetryGetBlockNumber(ctx, i.ethClient)
 	if err != nil {
@@ -355,14 +340,13 @@ func (i *indexer) startNewBlocksPipeline(ctx context.Context, topics [][]common.
 		return
 	}
 
-	statsID := persist.DBID("")
-	//statsID, err := i.queries.InsertStatistic(ctx, indexerdb.InsertStatisticParams{ID: persist.GenerateID(), BlockStart: persist.BlockNumber(i.lastSyncedChunk), BlockEnd: persist.BlockNumber(mostRecentBlock - (i.mostRecentBlock % blocksPerLogsCall))})
-	//if err != nil {
-	//	panic(err)
-	//}
+	statsID, err := i.queries.InsertStatistic(ctx, indexerdb.InsertStatisticParams{ID: persist.GenerateID(), BlockStart: persist.BlockNumber(i.lastSyncedChunk), BlockEnd: persist.BlockNumber(mostRecentBlock - (i.mostRecentBlock % blocksPerLogsCall))})
+	if err != nil {
+		panic(err)
+	}
 
-	go i.pollNewLogs(sentryutil.NewSentryHubContext(ctx), transfers, topics, mostRecentBlock)
-	go i.processAllTransfers(sentryutil.NewSentryHubContext(ctx), transfers, enabledPlugins)
+	go i.pollNewLogs(sentryutil.NewSentryHubContext(ctx), transfers, topics, mostRecentBlock, statsID)
+	go i.processAllTransfers(sentryutil.NewSentryHubContext(ctx), transfers, enabledPlugins, statsID)
 	i.processTokens(ctx, plugins.tokens.out, plugins.assets.out, statsID)
 }
 
@@ -382,7 +366,7 @@ func (i *indexer) listenForNewBlocks(ctx context.Context) {
 
 // LOGS FUNCS ---------------------------------------------------------------
 
-func (i *indexer) fetchLogs(ctx context.Context, startingBlock persist.BlockNumber, topics [][]common.Hash) []types.Log {
+func (i *indexer) fetchLogs(ctx context.Context, startingBlock persist.BlockNumber, topics [][]common.Hash, statsID persist.DBID) []types.Log {
 	curBlock := startingBlock.BigInt()
 	nextBlock := new(big.Int).Add(curBlock, big.NewInt(int64(blocksPerLogsCall)))
 
@@ -393,13 +377,13 @@ func (i *indexer) fetchLogs(ctx context.Context, startingBlock persist.BlockNumb
 		panic(fmt.Sprintf("error getting logs: %s", err))
 	}
 
-	//err = i.queries.UpdateStatisticTotalLogs(ctx, indexerdb.UpdateStatisticTotalLogsParams{
-	//	ID:        statsID,
-	//	TotalLogs: sql.NullInt64{Int64: int64(len(logsTo)), Valid: true},
-	//})
-	//if err != nil {
-	//	panic(err)
-	//}
+	err = i.queries.UpdateStatisticTotalLogs(ctx, indexerdb.UpdateStatisticTotalLogsParams{
+		ID:        statsID,
+		TotalLogs: sql.NullInt64{Int64: int64(len(logsTo)), Valid: true},
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	logger.For(ctx).Infof("Found %d logs at block %d", len(logsTo), curBlock.Uint64())
 
@@ -473,13 +457,12 @@ func (i *indexer) processLogs(ctx context.Context, transfersChan chan<- []transf
 }
 
 func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
-
 	result := make([]rpc.Transfer, 0, len(pLogs)*2)
 	for _, pLog := range pLogs {
-		initial := time.Now()
+
 		switch {
 		case strings.EqualFold(pLog.Topics[0].Hex(), string(transferEventHash)):
-			if len(pLog.Topics) < 4 {
+			if len(pLog.Topics) < 3 {
 				continue
 			}
 
@@ -490,15 +473,15 @@ func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
 				panic(err)
 			}
 
-			value, ok := eventData["value"].(*big.Int)
+			amount, ok := eventData["amount"].(*big.Int)
 			if !ok {
-				panic("Failed to unpack Transfer event, value not found")
+				panic("Failed to unpack Transfer event, amount not found")
 			}
 
 			result = append(result, rpc.Transfer{
 				From:            persist.Address(pLog.Topics[1].Hex()),
 				To:              persist.Address(pLog.Topics[2].Hex()),
-				Amount:          value.Uint64(),
+				Amount:          amount.Uint64(),
 				BlockNumber:     persist.BlockNumber(pLog.BlockNumber),
 				ContractAddress: persist.Address(pLog.Address.Hex()),
 				TokenType:       persist.TokenTypeERC20,
@@ -506,7 +489,6 @@ func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
 				BlockHash:       pLog.BlockHash,
 				TxIndex:         pLog.TxIndex,
 			})
-			logger.For(ctx).Debugf("Processed transfer event in %s", time.Since(initial))
 
 		default:
 			logger.For(ctx).WithFields(logrus.Fields{
@@ -519,7 +501,7 @@ func logsToTransfers(ctx context.Context, pLogs []types.Log) []rpc.Transfer {
 	return result
 }
 
-func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transfersAtBlock, topics [][]common.Hash, mostRecentBlock uint64) {
+func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transfersAtBlock, topics [][]common.Hash, mostRecentBlock uint64, statsID persist.DBID) {
 	span, ctx := tracing.StartSpan(ctx, "indexer.logs", "pollLogs")
 	defer tracing.FinishSpan(span)
 	defer close(transfersChan)
@@ -578,24 +560,23 @@ func (i *indexer) pollNewLogs(ctx context.Context, transfersChan chan<- []transf
 
 	total := totalLogs.Load()
 
-	//err := i.queries.UpdateStatisticTotalLogs(ctx, indexerdb.UpdateStatisticTotalLogsParams{
-	//	TotalLogs: sql.NullInt64{Int64: total, Valid: true},
-	//	ID:        statsID,
-	//})
-	//if err != nil {
-	//	logger.For(ctx).WithError(err).Error("Failed to update total logs")
-	//	panic(err)
-	//}
+	err := i.queries.UpdateStatisticTotalLogs(ctx, indexerdb.UpdateStatisticTotalLogsParams{
+		TotalLogs: sql.NullInt64{Int64: total, Valid: true},
+		ID:        statsID,
+	})
+	if err != nil {
+		logger.For(ctx).WithError(err).Error("Failed to update total logs")
+		panic(err)
+	}
 
 	logger.For(ctx).Infof("Processed %d logs from %d to %d.", total, i.lastSyncedChunk, mostRecentBlock)
 
 	i.updateLastSynced(mostRecentBlock - (mostRecentBlock % blocksPerLogsCall))
-
 }
 
 // TRANSFERS FUNCS -------------------------------------------------------------
 
-func (i *indexer) processAllTransfers(ctx context.Context, incomingTransfers <-chan []transfersAtBlock, plugins []chan<- TransferPluginMsg) {
+func (i *indexer) processAllTransfers(ctx context.Context, incomingTransfers <-chan []transfersAtBlock, plugins []chan<- TransferPluginMsg, statsID persist.DBID) {
 	span, ctx := tracing.StartSpan(ctx, "indexer.transfers", "processTransfers")
 	defer tracing.FinishSpan(span)
 	defer sentryutil.RecoverAndRaise(ctx)
@@ -606,13 +587,14 @@ func (i *indexer) processAllTransfers(ctx context.Context, incomingTransfers <-c
 	wp := workerpool.New(5)
 
 	logger.For(ctx).Info("Starting to process transfers...")
-	var totatTransfers int64
+	var totalTransfers int64
+
 	for transfers := range incomingTransfers {
 		if len(transfers) == 0 {
 			continue
 		}
 
-		totatTransfers += int64(len(transfers))
+		totalTransfers += int64(len(transfers))
 
 		submit := transfers
 		wp.Submit(func() {
@@ -627,14 +609,14 @@ func (i *indexer) processAllTransfers(ctx context.Context, incomingTransfers <-c
 	logger.For(ctx).Info("Waiting for transfers to finish...")
 	wp.StopWait()
 
-	//err := i.queries.UpdateStatisticTotalTransfers(ctx, indexerdb.UpdateStatisticTotalTransfersParams{
-	//	TotalTransfers: sql.NullInt64{Int64: totatTransfers, Valid: true},
-	//	ID:             statsID,
-	//})
-	//if err != nil {
-	//	logger.For(ctx).WithError(err).Error("Failed to update total transfers")
-	//	panic(err)
-	//}
+	err := i.queries.UpdateStatisticTotalTransfers(ctx, indexerdb.UpdateStatisticTotalTransfersParams{
+		TotalTransfers: sql.NullInt64{Int64: totalTransfers, Valid: true},
+		ID:             statsID,
+	})
+	if err != nil {
+		logger.For(ctx).WithError(err).Error("Failed to update total transfers")
+		panic(err)
+	}
 
 	logger.For(ctx).Info("Closing field channels...")
 }
@@ -661,47 +643,54 @@ func (i *indexer) processTokens(ctx context.Context, tokensOut <-chan tokenAtBlo
 	wg := &sync.WaitGroup{}
 	mu := &sync.Mutex{}
 
-	assetsMap := make(map[persist.TokenChainAddress]assetAtBlock)
 	tokensMap := make(map[persist.TokenChainAddress]tokenAtBlock)
+	assetsMap := make(map[persist.TokenChainAddress]assetAtBlock)
 
-	RunTransferPluginReceiver(ctx, wg, mu, assetsPluginReceiver, assetsOut, assetsMap)
 	RunTransferPluginReceiver(ctx, wg, mu, tokensPluginReceiver, tokensOut, tokensMap)
+	RunTransferPluginReceiver(ctx, wg, mu, assetsPluginReceiver, assetsOut, assetsMap)
 
 	wg.Wait()
 
-	assets := assetsAtBlockToAssets(assetsMap)
 	tokens := tokensAtBlockToTokens(tokensMap)
+	assets := assetsAtBlockToAssets(assetsMap)
 
-	/*	i.queries.UpdateStatisticTotalTokensAndContracts(ctx, indexerdb.UpdateStatisticTotalTokensAndContractsParams{
-			TotalContracts: sql.NullInt64{Int64: int64(len(contracts)), Valid: true},
-			ID:             statsID,
-		})
-	*/
+	// TODO handle error?
+	_ = i.queries.UpdateStatisticTotalAssetsAndTokens(ctx, indexerdb.UpdateStatisticTotalAssetsAndTokensParams{
+		TotalTokens: sql.NullInt64{Int64: int64(len(tokens)), Valid: true},
+		ID:          statsID,
+	})
+
 	i.runDBHooks(ctx, assets, tokens, statsID)
 }
 
 func tokensAtBlockToTokens(tokensAtBlock map[persist.TokenChainAddress]tokenAtBlock) []persist.Token {
 	tokens := make([]persist.Token, 0, len(tokensAtBlock))
 	seen := make(map[persist.TokenChainAddress]bool)
-	for _, tokenAtBlock := range tokensAtBlock {
-		if seen[tokenAtBlock.TokenIdentifiers()] {
+	for _, t := range tokensAtBlock {
+		if seen[t.TokenIdentifiers()] {
 			continue
 		}
-		tokens = append(tokens, tokenAtBlock.token)
-		seen[tokenAtBlock.TokenIdentifiers()] = true
+		tokens = append(tokens, t.token)
+		seen[t.TokenIdentifiers()] = true
 	}
 	return tokens
 }
 
 func assetsAtBlockToAssets(assetsAtBlock map[persist.TokenChainAddress]assetAtBlock) []persist.AssetDB {
 	assets := make([]persist.AssetDB, 0, len(assetsAtBlock))
-	seen := make(map[persist.TokenChainAddress]bool)
-	for _, assetAtBlock := range assetsAtBlock {
-		if seen[assetAtBlock.TokenIdentifiers()] {
+	seen := make(map[persist.AssetChainAddress]bool)
+	for _, a := range assetsAtBlock {
+		aid := persist.AssetChainAddress{
+			Chain:        a.asset.Chain,
+			TokenAddress: a.asset.TokenAddress,
+			OwnerAddress: a.asset.OwnerAddress,
+		}
+
+		if seen[aid] {
 			continue
 		}
-		assets = append(assets, assetAtBlock.asset)
-		seen[assetAtBlock.TokenIdentifiers()] = true
+		assets = append(assets, a.asset)
+		seen[aid] = true
 	}
 	return assets
 }
@@ -740,128 +729,9 @@ func tokensPluginReceiver(cur tokenAtBlock, inc tokenAtBlock) tokenAtBlock {
 }
 
 func assetsPluginReceiver(cur assetAtBlock, inc assetAtBlock) assetAtBlock {
-	inc.asset.Balance += cur.asset.Balance
+	inc.asset.Balance = cur.asset.Balance.Add(inc.asset.Balance)
+
 	return inc
-}
-
-type AlchemyContract struct {
-	Address          persist.Address         `json:"address"`
-	ContractMetadata AlchemyContractMetadata `json:"contractMetadata"`
-}
-
-type AlchemyContractMetadata struct {
-	Address          persist.Address          `json:"address"`
-	Metadata         alchemy.ContractMetadata `json:"contractMetadata"`
-	ContractDeployer persist.Address          `json:"contractDeployer"`
-}
-
-func fillTokenFields(ctx context.Context, tokens []persist.Token, queries *indexerdb.Queries, tokenRepo persist.TokenRepository, httpClient *http.Client, ethClient *ethclient.Client, upChan chan<- []persist.Token, statsID persist.DBID) {
-
-	defer close(upChan)
-
-	//innerPipelineStats := map[persist.ContractOwnerMethod]any{}
-
-	tokensNotInDB := make(chan persist.Token)
-
-	batched := make(chan []persist.Token)
-
-	go func() {
-		defer close(tokensNotInDB)
-
-		iter.ForEach(tokens, func(t *persist.Token) {
-			_, err := tokenRepo.GetByIdentifiers(ctx, t.ContractAddress)
-			if err == nil {
-				return
-			}
-			tokensNotInDB <- *t
-		})
-	}()
-
-	go func() {
-		defer close(batched)
-		var curBatch []persist.Token
-		for token := range tokensNotInDB {
-			curBatch = append(curBatch, token)
-			if len(curBatch) == 100 {
-				logger.For(ctx).Infof("Batching %d tokens for metadata", len(curBatch))
-				batched <- curBatch
-				curBatch = []persist.Token{}
-			}
-		}
-		if len(curBatch) > 0 {
-			logger.For(ctx).Infof("Batching %d tokens for metadata", len(curBatch))
-			batched <- curBatch
-		}
-	}()
-
-	// process tokens in batches of 100
-	for batch := range batched {
-		// get token metadata
-		toUp, _ := GetTokenMetadatas(ctx, batch, httpClient, ethClient)
-
-		/*		for _, c := range toUp {
-					it, ok := contractOwnerStats.LoadOrStore(c.OwnerMethod, 1)
-					if ok {
-						total := it.(int)
-						total++
-						contractOwnerStats.Store(c.OwnerMethod, total)
-					}
-
-					it, ok = innerPipelineStats[c.OwnerMethod]
-					if ok {
-						total := it.(int)
-						total++
-						innerPipelineStats[c.OwnerMethod] = total
-					} else {
-						innerPipelineStats[c.OwnerMethod] = 1
-					}
-				}
-		*/
-		logger.For(ctx).Infof("Fetched metadata for %d tokens", len(toUp))
-		asTokens := toUp
-		/*		asTokens, _ := util.Map(toUp, func(c ContractOwnerResult) (persist.Contract, error) {
-					return c.Contract, nil
-				})
-		*/
-		upChan <- asTokens
-	}
-
-	/*	err = queries.UpdateStatisticContractStats(ctx, indexerdb.UpdateStatisticContractStatsParams{
-			ContractStats: pgtype.JSONB{Bytes: marshalled, Status: pgtype.Present},
-			ID:            statsID,
-		})
-		if err != nil {
-			logger.For(ctx).WithError(err).Error("Failed to update token stats")
-			panic(err)
-		}
-	*/
-
-	logger.For(ctx).Infof("Fetched metadata for total %d tokens", len(tokens))
-
-}
-
-func GetTokenMetadatas(ctx context.Context, batch []persist.Token, httpClient *http.Client, ethClient *ethclient.Client) ([]persist.Token, error) {
-	toUp := make([]persist.Token, 0, 100)
-
-	for _, t := range batch {
-		result := persist.Token{}
-
-		tMetadata, err := rpc.GetTokenContractMetadata(ctx, t.ContractAddress.Address(), ethClient)
-		if err != nil {
-			logger.For(ctx).WithError(err).WithFields(logrus.Fields{
-				"tokenAddress": t.ContractAddress,
-			}).Error("error getting token metadata")
-		} else {
-			result.Name = persist.NullString(tMetadata.Name)
-			result.Symbol = persist.NullString(tMetadata.Symbol)
-			result.Decimals = persist.NullInt32(tMetadata.Decimals)
-			// TODO fill Logo metadata (eg by using multichain provider for alchemy?)
-			result.Logo = ""
-		}
-
-		toUp = append(toUp, result)
-	}
-	return toUp, nil
 }
 
 // HELPER FUNCS ---------------------------------------------------------------

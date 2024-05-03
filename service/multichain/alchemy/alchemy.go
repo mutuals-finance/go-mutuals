@@ -551,7 +551,7 @@ func (d *Provider) alchemyContractTokensToChainAgnosticTokens(ctx context.Contex
 	return cTokens, cContracts, nil
 }
 
-func (d *Provider) GetTokenByTokenIdentifiersAndOwner(ctx context.Context, tokenIdentifiers multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (multichain.ChainAgnosticToken, multichain.ChainAgnosticContract, error) {
+func (d *Provider) GetTokensByTokenIdentifiers(ctx context.Context, tokenIdentifiers multichain.ChainAgnosticIdentifiers, ownerAddress persist.Address) (multichain.ChainAgnosticToken, multichain.ChainAgnosticContract, error) {
 	tokens, contract, err := d.getTokenWithMetadata(ctx, tokenIdentifiers, true, 0)
 	if err != nil {
 		return multichain.ChainAgnosticToken{}, multichain.ChainAgnosticContract{}, err

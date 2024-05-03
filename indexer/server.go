@@ -2,19 +2,19 @@ package indexer
 
 import (
 	"context"
+	"github.com/SplitFi/go-splitfi/db/gen/indexerdb"
 	"net/http"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/gin-gonic/gin"
 )
 
-func getStatus(i *indexer, tokenRepository persist.TokenRepository) gin.HandlerFunc {
+func getStatus(i *indexer, queries *indexerdb.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c, 10*time.Second)
 		defer cancel()
 
-		mostRecent, _ := tokenRepository.MostRecentBlock(ctx)
+		mostRecent, _ := queries.MostRecentBlock(ctx)
 
 		c.JSON(http.StatusOK, gin.H{
 			"most_recent_blockchain": i.mostRecentBlock,

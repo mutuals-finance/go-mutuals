@@ -1,112 +1,44 @@
 package multichain
 
-import "github.com/SplitFi/go-splitfi/service/persist"
+import (
+	"github.com/SplitFi/go-splitfi/service/multichain/common"
+	"github.com/SplitFi/go-splitfi/service/persist"
+)
 
 //type ProviderLookup map[persist.Chain][]any
 
 type ProviderLookup map[persist.Chain]any
 
 type ChainProvider struct {
-	Ethereum    *EthereumProvider
-	Tezos       *TezosProvider
-	Optimism    *OptimismProvider
-	Arbitrum    *ArbitrumProvider
-	Poap        *PoapProvider
-	Zora        *ZoraProvider
-	Base        *BaseProvider
-	BaseSepolia *BaseSepoliaProvider
-	Polygon     *PolygonProvider
+	Ethereum *EthereumProvider
+	Optimism *OptimismProvider
+	Arbitrum *ArbitrumProvider
+	Base     *BaseProvider
+	Polygon  *PolygonProvider
 }
 
 type EthereumProvider struct {
-	ContractRefresher
-	ContractFetcher
-	ContractsOwnerFetcher
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	TokenMetadataBatcher
-	TokensByTokenIdentifiersFetcher
-	Verifier
-}
-
-type TezosProvider struct {
-	ContractsOwnerFetcher
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	Verifier
+	common.AssetsIncrementalTokenFetcher
+	common.TokensByTokenIdentifiersFetcher
+	common.Verifier
 }
 
 type OptimismProvider struct {
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	TokenMetadataBatcher
-	TokensByTokenIdentifiersFetcher
+	common.AssetsIncrementalTokenFetcher
+	common.TokensByTokenIdentifiersFetcher
 }
 
 type ArbitrumProvider struct {
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	TokenMetadataBatcher
-	TokensByTokenIdentifiersFetcher
-}
-
-type PoapProvider struct {
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-}
-
-type ZoraProvider struct {
-	ContractFetcher
-	ContractsOwnerFetcher
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	TokenMetadataBatcher
-	TokensByTokenIdentifiersFetcher
+	common.AssetsIncrementalTokenFetcher
+	common.TokensByTokenIdentifiersFetcher
 }
 
 type BaseProvider struct {
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	TokenMetadataBatcher
-	TokensByTokenIdentifiersFetcher
-}
-
-type BaseSepoliaProvider struct {
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	TokenMetadataBatcher
-	TokensByTokenIdentifiersFetcher
+	common.AssetsIncrementalTokenFetcher
+	common.TokensByTokenIdentifiersFetcher
 }
 
 type PolygonProvider struct {
-	TokenDescriptorsFetcher
-	TokenMetadataFetcher
-	TokensIncrementalContractFetcher
-	TokensIncrementalOwnerFetcher
-	TokenIdentifierOwnerFetcher
-	TokenMetadataBatcher
-	TokensByTokenIdentifiersFetcher
+	common.AssetsIncrementalTokenFetcher
+	common.TokensByTokenIdentifiersFetcher
 }

@@ -11,7 +11,7 @@ import (
 //}
 
 func (*GetTokenByChainAddressBatch) getNotFoundError(key coredb.GetTokenByChainAddressBatchParams) error {
-	return persist.ErrTokenNotFoundByIdentifiers{ContractAddress: key.ContractAddress, Chain: key.Chain}
+	return persist.ErrTokenNotFoundByTokenChainAddress{Token: persist.NewTokenChainAddress(key.ContractAddress, key.Chain)}
 }
 
 //func (*GetEventByIdBatch) getNotFoundError(key persist.DBID) error {

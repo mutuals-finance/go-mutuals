@@ -2491,7 +2491,7 @@
                 "array_dims": 0
               },
               {
-                "name": "deleted",
+                "name": "value",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -2507,60 +2507,8 @@
                 "table_alias": "",
                 "type": {
                   "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "bool"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "version",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
                   "schema": "",
-                  "name": "nonces"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "int4"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "last_updated",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "nonces"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "timestamptz"
+                  "name": "text"
                 },
                 "is_sqlc_slice": false,
                 "embed_table": null,
@@ -2585,7 +2533,7 @@
                 "table_alias": "",
                 "type": {
                   "catalog": "",
-                  "schema": "pg_catalog",
+                  "schema": "",
                   "name": "timestamptz"
                 },
                 "is_sqlc_slice": false,
@@ -2595,8 +2543,8 @@
                 "array_dims": 0
               },
               {
-                "name": "user_id",
-                "not_null": false,
+                "name": "consumed",
+                "not_null": true,
                 "is_array": false,
                 "comment": "",
                 "length": -1,
@@ -2611,86 +2559,8 @@
                 "table_alias": "",
                 "type": {
                   "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "address",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
                   "schema": "",
-                  "name": "nonces"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "value",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "nonces"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "chain",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "nonces"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "int4"
+                  "name": "bool"
                 },
                 "is_sqlc_slice": false,
                 "embed_table": null,
@@ -70537,6 +70407,329 @@
   },
   "queries": [
     {
+      "text": "insert into nonces (id, value) values ($1, $2)\non conflict (value)\n    do nothing\nreturning id, value, created_at, consumed",
+      "name": "InsertNonce",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "value",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "consumed",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "nonces"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
+            "name": "value",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "nonces"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "text"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "nonce.sql",
+      "insert_into_table": {
+        "catalog": "",
+        "schema": "",
+        "name": "nonces"
+      }
+    },
+    {
+      "text": "update nonces\nset\n    consumed = true\nwhere\n        value = $1\n  and not consumed\n  and nonces.created_at \u003e (now() - interval '1 hour')\nreturning id, value, created_at, consumed",
+      "name": "ConsumeNonce",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "value",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "consumed",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "nonces"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "value",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "nonces"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "text"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "nonce.sql",
+      "insert_into_table": null
+    },
+    {
       "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
       "name": "GetUserById",
       "cmd": ":one",
@@ -76997,8 +77190,8 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM users u, unnest(u.wallets)\n    WITH ORDINALITY AS a(wallet_id, wallet_ord)\n    INNER JOIN wallets w on w.id = a.wallet_id\n    INNER JOIN recipients r ON r.address = w.address\n    INNER JOIN splits s ON s.id = r.split_id\n    WHERE u.id = $1 AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false",
-      "name": "GetSplitsByRecipientUserID",
+      "text": "select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership\n    from users u, unnest(u.wallets)\n    with ordinality as a(wallet_id, wallet_ord)\n        join wallets w on w.id = a.wallet_id\n        join recipients r on r.address = w.address\n        join splits s on s.id = r.split_id\n    where u.id = $1\n      and u.deleted = false\n      and w.deleted = false\n      and r.deleted = false\n      and s.deleted = false\n      and (s.created_at,s.id) \u003c ($3::timestamptz, $4::dbid)\n      and (s.created_at,s.id) \u003e ($5::timestamptz, $6::dbid)\n    order by case when $7::bool then (s.created_at,s.id) end asc,\n             case when not $7::bool then (s.created_at,s.id) end desc\n    limit $2",
+      "name": "GetSplitsByRecipientUserIDPaginate",
       "cmd": ":many",
       "columns": [
         {
@@ -77370,12 +77563,225 @@
         {
           "number": 1,
           "column": {
-            "name": "user_id",
+            "name": "id",
             "not_null": true,
             "is_array": false,
             "comment": "",
             "length": -1,
-            "is_named_param": true,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "users"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
+            "name": "limit",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "integer"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 3,
+          "column": {
+            "name": "cur_before_time",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "timestamptz"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 4,
+          "column": {
+            "name": "cur_before_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "dbid"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 5,
+          "column": {
+            "name": "cur_after_time",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "timestamptz"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 6,
+          "column": {
+            "name": "cur_after_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "dbid"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 7,
+          "column": {
+            "name": "paging_forward",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "bool"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "select count(distinct s.id)\n    from users u, unnest(u.wallets) with ordinality as a(wallet_id, wallet_ord)\n                      join wallets w on w.id = a.wallet_id\n                      join recipients r on r.address = w.address\n                      join splits s on s.id = r.split_id\n    where u.id = $1\n      and u.deleted = false\n      and w.deleted = false\n      and r.deleted = false\n      and s.deleted = false",
+      "name": "CountSplitsByRecipientUserID",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "count",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": true,
+          "scope": "",
+          "table": null,
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "bigint"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
             "is_func_call": false,
             "scope": "",
             "table": {
@@ -81959,6 +82365,388 @@
       "text": "select id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false",
       "name": "GetTokenByChainAddressBatch",
       "cmd": ":batchone",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "version",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "last_updated",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "symbol",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "token_type",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "block_number",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int8"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "contract_address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "contract_address",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "tokens"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
+            "name": "chain",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "tokens"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.int4"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "select id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false",
+      "name": "GetTokensByChainAddressBatch",
+      "cmd": ":batchmany",
       "columns": [
         {
           "name": "id",
@@ -106682,8 +107470,8 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into assets\n( id\n, version\n, owner_address\n, token_address\n, balance\n, block_number\n, created_at\n, last_updated) (select id\n                      , version\n                      , owner_address\n                      , token_address\n                      , balance\n                      , block_number\n                      , created_at\n                      , last_updated\n                 from (select unnest($1::varchar[])               as id\n                            , unnest($2::int[])              as version\n                            , unnest($3::varchar[])    as owner_address\n                            , unnest($4::varchar[])    as token_address\n                            , unnest($5::varchar[])          as balance\n                            , unnest($6::bigint[])      as block_number\n                            , unnest($7::timestamptz[])   as created_at\n                            , unnest($8::timestamptz[]) as last_updated) bulk_upsert)\non conflict (token_address, owner_address)\n    do update set version       = excluded.version\n                , owner_address = excluded.owner_address\n                , token_address = excluded.token_address\n                , balance       = excluded.balance\n                , block_number  = excluded.block_number\n                , last_updated  = excluded.last_updated\nreturning id, version, last_updated, created_at, chain, token_address, owner_address, balance, block_number",
-      "name": "UpsertAssets",
+      "text": "insert into tokens(id, deleted, version, created_at, name, symbol, logo, token_type, block_number, chain, contract_address) (\n    select unnest($1::varchar[])\n         , false\n         , unnest($2::int[])\n         , now()\n         , unnest($3::varchar[])\n         , unnest($4::varchar[])\n         , unnest($5::varchar[])\n         , unnest($6::varchar[])\n         , unnest($7::bigint[])\n         , unnest($8::int[])\n         , unnest($9::varchar[])\n)\non conflict (chain, contract_address)\n    do update set version = excluded.version\n                , name = coalesce(nullif(excluded.name, ''), nullif(tokens.name, ''))\n                , symbol = coalesce(nullif(excluded.symbol, ''), nullif(tokens.symbol, ''))\n                , logo = coalesce(nullif(excluded.logo, ''), nullif(tokens.logo, ''))\n                , token_type = coalesce(nullif(excluded.token_type, ''), nullif(tokens.token_type, ''))\n                , block_number = excluded.block_number\n                , deleted = excluded.deleted\n                , last_updated = now()\nreturning id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address",
+      "name": "UpsertTokens",
       "cmd": ":many",
       "columns": [
         {
@@ -106698,13 +107486,39 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "assets"
+            "name": "tokens"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
             "schema": "pg_catalog",
             "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -106724,39 +107538,13 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "assets"
+            "name": "tokens"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
             "schema": "pg_catalog",
             "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "last_updated",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "assets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -106776,7 +107564,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "assets"
+            "name": "tokens"
           },
           "table_alias": "",
           "type": {
@@ -106791,59 +107579,7 @@
           "array_dims": 0
         },
         {
-          "name": "chain",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "assets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "token_address",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "assets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "owner_address",
+          "name": "last_updated",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -106854,7 +107590,33 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "assets"
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
           },
           "table_alias": "",
           "type": {
@@ -106869,7 +107631,7 @@
           "array_dims": 0
         },
         {
-          "name": "balance",
+          "name": "symbol",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -106880,13 +107642,65 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "assets"
+            "name": "tokens"
           },
           "table_alias": "",
           "type": {
             "catalog": "",
             "schema": "pg_catalog",
-            "name": "int4"
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "token_type",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -106906,7 +107720,7 @@
           "table": {
             "catalog": "",
             "schema": "",
-            "name": "assets"
+            "name": "tokens"
           },
           "table_alias": "",
           "type": {
@@ -106916,6 +107730,351 @@
           },
           "is_sqlc_slice": false,
           "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "contract_address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "ids",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
+            "name": "version",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "int4"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 3,
+          "column": {
+            "name": "name",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 4,
+          "column": {
+            "name": "symbol",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 5,
+          "column": {
+            "name": "logo",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 6,
+          "column": {
+            "name": "token_type",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 7,
+          "column": {
+            "name": "block_number",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "int8"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 8,
+          "column": {
+            "name": "chain",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "int4"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 9,
+          "column": {
+            "name": "contract_address",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "pg_catalog",
+              "name": "varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "token_split.sql",
+      "insert_into_table": {
+        "catalog": "",
+        "schema": "",
+        "name": "tokens"
+      }
+    },
+    {
+      "text": "with assets_insert as (\n    insert into assets\n    ( id\n    , version\n    , owner_address\n    , token_address\n    , balance\n    , block_number\n    , created_at\n    , last_updated) (select id\n                          , version\n                          , owner_address\n                          , token_address\n                          , balance\n                          , block_number\n                          , created_at\n                          , last_updated\n                     from (select unnest($1::varchar[])               as id\n                                , unnest($2::int[])              as version\n                                , unnest($3::varchar[])    as owner_address\n                                , unnest($4::varchar[])    as token_address\n                                , unnest($5::varchar[])          as balance\n                                , unnest($6::bigint[])      as block_number\n                                , unnest($7::timestamptz[])   as created_at\n                                , unnest($8::timestamptz[]) as last_updated) bulk_upsert)\n    on conflict (token_address, owner_address)\n        do update set version       = excluded.version\n                    , owner_address = excluded.owner_address\n                    , token_address = excluded.token_address\n                    , balance       = excluded.balance\n                    , block_number  = excluded.block_number\n                    , last_updated  = excluded.last_updated\n    returning id, version, last_updated, created_at, chain, token_address, owner_address, balance, block_number\n           )\nselect assets.id, assets.version, assets.last_updated, assets.created_at, assets.chain, assets.token_address, assets.owner_address, assets.balance, assets.block_number, tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.last_updated, tokens.name, tokens.symbol, tokens.logo, tokens.token_type, tokens.block_number, tokens.chain, tokens.contract_address\nfrom assets_insert assets\n         join tokens on assets.token_address = tokens.contract_address and not tokens.deleted",
+      "name": "UpsertAssets",
+      "cmd": ":many",
+      "columns": [
+        {
+          "name": "assets",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": null,
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": ""
+          },
+          "is_sqlc_slice": false,
+          "embed_table": {
+            "catalog": "",
+            "schema": "",
+            "name": "assets"
+          },
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "tokens",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": null,
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": ""
+          },
+          "is_sqlc_slice": false,
+          "embed_table": {
+            "catalog": "",
+            "schema": "",
+            "name": "tokens"
+          },
           "original_name": "",
           "unsigned": false,
           "array_dims": 0
@@ -107125,11 +108284,7 @@
       ],
       "comments": [],
       "filename": "token_split.sql",
-      "insert_into_table": {
-        "catalog": "",
-        "schema": "",
-        "name": "assets"
-      }
+      "insert_into_table": null
     }
   ],
   "sqlc_version": "v1.18.0",

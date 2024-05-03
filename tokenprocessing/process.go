@@ -2,56 +2,84 @@ package tokenprocessing
 
 import (
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/event"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
-func processAssetsForOwner(mc *multichain.Provider, queries *coredb.Queries) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var input task.AssetProcessingMessage
-		if err := c.ShouldBindJSON(&input); err != nil {
-			util.ErrResponse(c, http.StatusOK, err)
+func processTokens(mc *multichain.Provider) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var input task.TokenProcessingBatchMessage
+
+		if err := ctx.ShouldBindJSON(&input); err != nil {
+			util.ErrResponse(ctx, http.StatusOK, err)
 			return
 		}
 
-		logger.For(c).WithFields(logrus.Fields{"owner_address": input.OwnerAddress, "total_assets": len(input.Assets), "asset_ids": input.Assets}).Infof("Processing: %s - Processing Assets Refresh (total: %d)", input.OwnerAddress, len(input.Assets))
-		newAssets, err := mc.SyncAssetsByOwnerAndTokenChainAddress(c, input.OwnerAddress, util.MapKeys(input.Assets))
+		// RefreshTokensByTokenIdentifiers syncs the token if it is found
+		_, err := mc.RefreshTokensByTokenIdentifiers(ctx, input.Tokens)
 		if err != nil {
-			util.ErrResponse(c, http.StatusInternalServerError, err)
+			util.ErrResponse(ctx, http.StatusInternalServerError, err)
 			return
 		}
 
-		if len(newAssets) > 0 {
+		ctx.JSON(http.StatusOK, util.SuccessResponse{Success: true})
+	}
+}
 
-			for _, asset := range newAssets {
+func processAssets(mc *multichain.Provider, queries *coredb.Queries) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var input task.AssetProcessingMessage
+		if err := ctx.ShouldBindJSON(&input); err != nil {
+			util.ErrResponse(ctx, http.StatusOK, err)
+			return
+		}
 
-				// one event per token identifier
-				_, err = event.DispatchEvent(c, coredb.Event{
-					ID:             persist.GenerateID(),
-					ActorID:        persist.DBIDToNullStr(input.UserID),
-					ResourceTypeID: persist.ResourceTypeToken,
-					SubjectID:      asset.ID,
-					UserID:         input.UserID,
-					TokenID:        asset.Token.ID,
-					Action:         persist.ActionNewTokensReceived,
-					Data: persist.EventData{
-						TokenID:         asset.Token.ID,
-						NewTokenBalance: asset.Balance,
-					},
-				}, validator, nil)
-				if err != nil {
-					logger.For(c).Errorf("error dispatching event: %s", err)
-				}
+		split, err := queries.GetSplitByAddress(ctx, input.OwnerAddress)
+		if err != nil || len(splits) <= 0 {
+			// If the split doesn't exist, remove the message from the queue
+			util.ErrResponse(ctx, http.StatusOK, err)
+			return
+		}
+
+		assets, err := mc.SyncAssetsBySplitIDAndTokenIdentifiers(ctx, input.OwnerAddress, util.MapKeys(input.Tokens))
+		if err != nil {
+			util.ErrResponse(ctx, http.StatusInternalServerError, err)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, util.SuccessResponse{Success: true})
+	}
+}
+
+func processWalletRemoval(queries *coredb.Queries) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var input task.TokenProcessingWalletRemovalMessage
+		if err := ctx.ShouldBindJSON(&input); err != nil {
+			util.ErrResponse(ctx, http.StatusOK, err)
+			return
+		}
+
+		logger.For(ctx).Infof("Processing wallet removal: UserID=%s, WalletIDs=%v", input.UserID, input.WalletIDs)
+
+		// We never actually remove multiple wallets at a time, but our API does allow it. If we do end up
+		// processing multiple wallet removals, we'll just process them in a loop here, because tuning the
+		// underlying query to handle multiple wallet removals at a time is difficult.
+		for _, walletID := range input.WalletIDs {
+			err := queries.RemoveWalletFromTokens(ctx, coredb.RemoveWalletFromTokensParams{
+				WalletID: walletID.String(),
+				UserID:   input.UserID,
+			})
+
+			if err != nil {
+				util.ErrResponse(ctx, http.StatusInternalServerError, err)
+				return
 			}
 		}
 
-		c.JSON(http.StatusOK, util.SuccessResponse{Success: true})
+		ctx.JSON(http.StatusOK, util.SuccessResponse{Success: true})
 	}
 }

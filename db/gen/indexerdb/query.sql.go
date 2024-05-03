@@ -7,37 +7,123 @@ package indexerdb
 
 import (
 	"context"
+	"database/sql"
+
+	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/jackc/pgtype"
 )
 
-const firstContract = `-- name: FirstContract :one
-SELECT id, deleted, version, created_at, last_updated, name, description, contract_address, media, owner_address, token_uri, token_type, token_id, quantity, ownership_history, token_metadata, external_url, block_number, chain, is_spam FROM tokens LIMIT 1
+const insertStatistic = `-- name: InsertStatistic :one
+insert into blockchain_statistics (id, block_start, block_end) values ($1, $2, $3) on conflict do nothing returning id
 `
 
-// sqlc needs at least one query in order to generate the models.
-func (q *Queries) FirstContract(ctx context.Context) (Token, error) {
-	row := q.db.QueryRow(ctx, firstContract)
-	var i Token
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.Version,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.Name,
-		&i.Description,
-		&i.ContractAddress,
-		&i.Media,
-		&i.OwnerAddress,
-		&i.TokenUri,
-		&i.TokenType,
-		&i.TokenID,
-		&i.Quantity,
-		&i.OwnershipHistory,
-		&i.TokenMetadata,
-		&i.ExternalUrl,
-		&i.BlockNumber,
-		&i.Chain,
-		&i.IsSpam,
-	)
-	return i, err
+type InsertStatisticParams struct {
+	ID         persist.DBID
+	BlockStart persist.BlockNumber
+	BlockEnd   persist.BlockNumber
+}
+
+func (q *Queries) InsertStatistic(ctx context.Context, arg InsertStatisticParams) (persist.DBID, error) {
+	row := q.db.QueryRow(ctx, insertStatistic, arg.ID, arg.BlockStart, arg.BlockEnd)
+	var id persist.DBID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const mostRecentBlock = `-- name: MostRecentBlock :one
+with agg as (select max(block_end) as block_end from blockchain_statistics)
+select block_end from agg
+`
+
+func (q *Queries) MostRecentBlock(ctx context.Context) (persist.BlockNumber, error) {
+	row := q.db.QueryRow(ctx, mostRecentBlock)
+	var block_end persist.BlockNumber
+	err := row.Scan(&block_end)
+	return block_end, err
+}
+
+const updateStatisticAssetStats = `-- name: UpdateStatisticAssetStats :exec
+update blockchain_statistics set asset_stats = $1 where id = $2
+`
+
+type UpdateStatisticAssetStatsParams struct {
+	AssetStats pgtype.JSONB
+	ID         persist.DBID
+}
+
+func (q *Queries) UpdateStatisticAssetStats(ctx context.Context, arg UpdateStatisticAssetStatsParams) error {
+	_, err := q.db.Exec(ctx, updateStatisticAssetStats, arg.AssetStats, arg.ID)
+	return err
+}
+
+const updateStatisticSuccess = `-- name: UpdateStatisticSuccess :exec
+update blockchain_statistics set success = $1, processing_time_seconds = $2 where id = $3
+`
+
+type UpdateStatisticSuccessParams struct {
+	Success               bool
+	ProcessingTimeSeconds sql.NullInt64
+	ID                    persist.DBID
+}
+
+func (q *Queries) UpdateStatisticSuccess(ctx context.Context, arg UpdateStatisticSuccessParams) error {
+	_, err := q.db.Exec(ctx, updateStatisticSuccess, arg.Success, arg.ProcessingTimeSeconds, arg.ID)
+	return err
+}
+
+const updateStatisticTokenStats = `-- name: UpdateStatisticTokenStats :exec
+update blockchain_statistics set token_stats = $1 where id = $2
+`
+
+type UpdateStatisticTokenStatsParams struct {
+	TokenStats pgtype.JSONB
+	ID         persist.DBID
+}
+
+func (q *Queries) UpdateStatisticTokenStats(ctx context.Context, arg UpdateStatisticTokenStatsParams) error {
+	_, err := q.db.Exec(ctx, updateStatisticTokenStats, arg.TokenStats, arg.ID)
+	return err
+}
+
+const updateStatisticTotalAssetsAndTokens = `-- name: UpdateStatisticTotalAssetsAndTokens :exec
+update blockchain_statistics set total_tokens = $1, total_assets = $2 where id = $3
+`
+
+type UpdateStatisticTotalAssetsAndTokensParams struct {
+	TotalTokens sql.NullInt64
+	TotalAssets sql.NullInt64
+	ID          persist.DBID
+}
+
+func (q *Queries) UpdateStatisticTotalAssetsAndTokens(ctx context.Context, arg UpdateStatisticTotalAssetsAndTokensParams) error {
+	_, err := q.db.Exec(ctx, updateStatisticTotalAssetsAndTokens, arg.TotalTokens, arg.TotalAssets, arg.ID)
+	return err
+}
+
+const updateStatisticTotalLogs = `-- name: UpdateStatisticTotalLogs :exec
+update blockchain_statistics set total_logs = $1 where id = $2
+`
+
+type UpdateStatisticTotalLogsParams struct {
+	TotalLogs sql.NullInt64
+	ID        persist.DBID
+}
+
+func (q *Queries) UpdateStatisticTotalLogs(ctx context.Context, arg UpdateStatisticTotalLogsParams) error {
+	_, err := q.db.Exec(ctx, updateStatisticTotalLogs, arg.TotalLogs, arg.ID)
+	return err
+}
+
+const updateStatisticTotalTransfers = `-- name: UpdateStatisticTotalTransfers :exec
+update blockchain_statistics set total_transfers = $1 where id = $2
+`
+
+type UpdateStatisticTotalTransfersParams struct {
+	TotalTransfers sql.NullInt64
+	ID             persist.DBID
+}
+
+func (q *Queries) UpdateStatisticTotalTransfers(ctx context.Context, arg UpdateStatisticTotalTransfersParams) error {
+	_, err := q.db.Exec(ctx, updateStatisticTotalTransfers, arg.TotalTransfers, arg.ID)
+	return err
 }

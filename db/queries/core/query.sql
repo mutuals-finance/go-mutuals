@@ -63,13 +63,35 @@ SELECT s.* FROM users u, unnest(u.wallets)
     INNER JOIN splits s ON s.id = r.split_id
     WHERE u.id = @user_id AND s.id = @split_id AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false;
 
--- name: GetSplitsByRecipientUserID :many
-SELECT s.* FROM users u, unnest(u.wallets)
-    WITH ORDINALITY AS a(wallet_id, wallet_ord)
-    INNER JOIN wallets w on w.id = a.wallet_id
-    INNER JOIN recipients r ON r.address = w.address
-    INNER JOIN splits s ON s.id = r.split_id
-    WHERE u.id = @user_id AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false;
+-- name: GetSplitsByRecipientUserIDPaginate :many
+select s.*
+    from users u, unnest(u.wallets)
+    with ordinality as a(wallet_id, wallet_ord)
+        join wallets w on w.id = a.wallet_id
+        join recipients r on r.address = w.address
+        join splits s on s.id = r.split_id
+    where u.id = $1
+      and u.deleted = false
+      and w.deleted = false
+      and r.deleted = false
+      and s.deleted = false
+      and (s.created_at,s.id) < (@cur_before_time::timestamptz, @cur_before_id::dbid)
+      and (s.created_at,s.id) > (@cur_after_time::timestamptz, @cur_after_id::dbid)
+    order by case when @paging_forward::bool then (s.created_at,s.id) end asc,
+             case when not @paging_forward::bool then (s.created_at,s.id) end desc
+    limit $2;
+
+-- name: CountSplitsByRecipientUserID :one
+select count(distinct s.id)
+    from users u, unnest(u.wallets) with ordinality as a(wallet_id, wallet_ord)
+                      join wallets w on w.id = a.wallet_id
+                      join recipients r on r.address = w.address
+                      join splits s on s.id = r.split_id
+    where u.id = $1
+      and u.deleted = false
+      and w.deleted = false
+      and r.deleted = false
+      and s.deleted = false;
 
 -- name: GetSplitByIdBatch :batchone
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
@@ -120,6 +142,9 @@ select k.batch_key_index, sqlc.embed(t) from keys k join tokens t on t.id = k.id
 select * FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false;
 
 -- name: GetTokenByChainAddressBatch :batchone
+select * FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false;
+
+-- name: GetTokensByChainAddressBatch :batchmany
 select * FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false;
 
 -- name: UpdateTokenMetadataFieldsByChainAddress :exec

@@ -26,7 +26,7 @@ type AssetDB struct {
 	OwnerAddress Address     `json:"owner_address"`
 	TokenAddress Address     `json:"token"`
 	Chain        Chain       `json:"chain"`
-	Balance      NullInt32   `json:"balance"`
+	Balance      HexString   `json:"balance"`
 	BlockNumber  BlockNumber `json:"block_number"`
 	LastUpdated  time.Time   `json:"last_updated"`
 	CreationTime time.Time   `json:"created_at"`

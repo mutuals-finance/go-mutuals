@@ -34,17 +34,16 @@ type AuthAPI struct {
 	authRefreshCache   *redis.Cache
 }
 
-func (api AuthAPI) NewNonceAuthenticator(chainAddress persist.ChainPubKey, nonce string, signature string, walletType persist.WalletType) auth.Authenticator {
+func (api AuthAPI) NewNonceAuthenticator(chainAddress persist.ChainPubKey, nonce string, message string, signature string, walletType persist.WalletType) auth.Authenticator {
 	authenticator := auth.NonceAuthenticator{
 		ChainPubKey:        chainAddress,
 		Nonce:              nonce,
+		Message:            message,
 		Signature:          signature,
 		WalletType:         walletType,
-		WalletRepo:         api.repos.WalletRepository,
 		MultichainProvider: api.multiChainProvider,
-		UserRepo:           api.repos.UserRepository,
-		NonceRepo:          api.repos.NonceRepository,
 		EthClient:          api.ethClient,
+		Queries:            api.queries,
 	}
 	return authenticator
 }
@@ -66,10 +65,10 @@ func (api AuthAPI) NewDebugAuthenticator(ctx context.Context, debugParams model.
 			userID = *debugParams.UserID
 		}
 
-		var user *persist.User
-		dbUser, err := api.repos.UserRepository.GetByID(ctx, userID)
+		var user *db.User
+		u, err := api.queries.GetUserById(ctx, userID)
 		if err == nil {
-			user = &dbUser
+			user = &u
 		}
 
 		return debugtools.NewDebugAuthenticator(user, chainAddressPointersToChainAddresses(debugParams.ChainAddresses), password), nil
@@ -84,7 +83,7 @@ func (api AuthAPI) NewDebugAuthenticator(ctx context.Context, debugParams model.
 		return nil, fmt.Errorf("debug auth failed: asUsername parameter cannot be empty")
 	}
 
-	user, err := api.repos.UserRepository.GetByUsername(ctx, username)
+	user, err := api.queries.GetUserByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("debug auth failed for user '%s': %w", username, err)
 	}
@@ -106,7 +105,7 @@ func (api AuthAPI) NewMagicLinkAuthenticator(token token.Token) auth.Authenticat
 	authenticator := auth.MagicLinkAuthenticator{
 		Token:       token,
 		MagicClient: api.magicLinkClient,
-		UserRepo:    api.repos.UserRepository,
+		Queries:     api.queries,
 	}
 	return authenticator
 }
@@ -114,7 +113,7 @@ func (api AuthAPI) NewMagicLinkAuthenticator(token token.Token) auth.Authenticat
 func (api AuthAPI) NewOneTimeLoginTokenAuthenticator(loginToken string) auth.Authenticator {
 	authenticator := auth.OneTimeLoginTokenAuthenticator{
 		ConsumedTokenCache: api.oneTimeLoginCache,
-		UserRepo:           api.repos.UserRepository,
+		Queries:            api.queries,
 		LoginToken:         loginToken,
 	}
 	return authenticator
@@ -132,8 +131,8 @@ func chainAddressPointersToChainAddresses(chainAddresses []*persist.ChainAddress
 	return addresses
 }
 
-func (api AuthAPI) GetAuthNonce(ctx context.Context, chainAddress persist.ChainAddress) (nonce string, userExists bool, err error) {
-	return auth.GetAuthNonce(ctx, chainAddress, api.repos.UserRepository, api.repos.NonceRepository, api.repos.WalletRepository, api.repos.EarlyAccessRepository, api.ethClient)
+func (api AuthAPI) GetAuthNonce(ctx context.Context) (nonce string, message string, err error) {
+	return auth.GenerateAuthNonce(ctx, api.queries)
 }
 
 func (api AuthAPI) Login(ctx context.Context, authenticator auth.Authenticator) (persist.DBID, error) {

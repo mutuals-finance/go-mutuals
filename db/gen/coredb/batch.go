@@ -555,6 +555,83 @@ func (b *GetTokenByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
+const getTokensByChainAddressBatch = `-- name: GetTokensByChainAddressBatch :batchmany
+select id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false
+`
+
+type GetTokensByChainAddressBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type GetTokensByChainAddressBatchParams struct {
+	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
+	Chain           persist.Chain   `db:"chain" json:"chain"`
+}
+
+func (q *Queries) GetTokensByChainAddressBatch(ctx context.Context, arg []GetTokensByChainAddressBatchParams) *GetTokensByChainAddressBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.ContractAddress,
+			a.Chain,
+		}
+		batch.Queue(getTokensByChainAddressBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetTokensByChainAddressBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetTokensByChainAddressBatchBatchResults) Query(f func(int, []Token, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Token
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Token
+				if err := rows.Scan(
+					&i.ID,
+					&i.Deleted,
+					&i.Version,
+					&i.CreatedAt,
+					&i.LastUpdated,
+					&i.Name,
+					&i.Symbol,
+					&i.Logo,
+					&i.TokenType,
+					&i.BlockNumber,
+					&i.Chain,
+					&i.ContractAddress,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetTokensByChainAddressBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
 const getUserByChainAddressBatch = `-- name: GetUserByChainAddressBatch :batchone
 select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets

@@ -162,7 +162,6 @@ func newTokensPlugin(ctx context.Context) tokenTransfersPlugin {
 					token: persist.Token{
 						TokenType:       msg.transfer.TokenType,
 						Chain:           ids.Chain,
-						BlockNumber:     msg.transfer.BlockNumber,
 						ContractAddress: ids.Address,
 					},
 				}
@@ -223,11 +222,9 @@ func newAssetsPlugin(ctx context.Context) assetTransfersPlugin {
 						txIndex:     msg.transfer.TxIndex,
 					},
 					asset: persist.AssetDB{
-						// TODO
 						OwnerAddress: msg.transfer.To,
 						TokenAddress: ids.Address,
 						Chain:        ids.Chain,
-						Balance:      0,
 						BlockNumber:  msg.transfer.BlockNumber,
 					},
 				}

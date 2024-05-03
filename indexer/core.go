@@ -4,17 +4,17 @@ import (
 	"context"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/db/gen/indexerdb"
+	"github.com/SplitFi/go-splitfi/service/rpc/arweave"
+	"github.com/SplitFi/go-splitfi/service/rpc/ipfs"
 	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/service/tracing"
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/storage"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/middleware"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/media"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/rpc"
@@ -42,7 +42,7 @@ func InitServer(quietLogs, enableRPC bool) {
 }
 
 func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engine, *indexer) {
-	initSentry()
+	InitSentry()
 	logger.InitWithGCPDefaults()
 	logger.SetLoggerOptions(func(logger *logrus.Logger) {
 		logger.AddHook(sentryutil.SentryLoggerHook)
@@ -52,23 +52,22 @@ func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engin
 		}
 	})
 
-	s := media.NewStorageClient(context.Background()) // TODO s := rpc.NewStorageClient(context.Background())
-	tokenRepo, assetRepo, splitRepo := newRepos(s)
+	s := rpc.NewStorageClient(context.Background())
 	iQueries := indexerdb.New(postgres.NewPgxClient())
 	bQueries := coredb.New(postgres.NewPgxClient(postgres.WithHost(env.GetString("BACKEND_POSTGRES_HOST")), postgres.WithUser(env.GetString("BACKEND_POSTGRES_USER")), postgres.WithPassword(env.GetString("BACKEND_POSTGRES_PASSWORD")), postgres.WithPort(env.GetInt("BACKEND_POSTGRES_PORT"))))
 	tClient := task.NewClient(context.Background())
 	ethClient := rpc.NewEthSocketClient()
-	ipfsClient := rpc.NewIPFSShell() // TODO ipfs.NewShell()
-	arweaveClient := rpc.NewArweaveClient()
+	ipfsClient := ipfs.NewShell()
+	arweaveClient := arweave.NewClient()
 
 	if env.GetString("ENV") == "production" || enableRPC {
 		rpcEnabled = true
 	}
-	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, iQueries, bQueries, tClient, splitRepo, tokenRepo, assetRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, fromBlock, toBlock)
+
+	i := newIndexer(ethClient, &http.Client{Timeout: 10 * time.Minute}, ipfsClient, arweaveClient, s, iQueries, bQueries, tClient, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, fromBlock, toBlock)
 
 	router := gin.Default()
 
-	// TODO add alchemy's secret validation middleware
 	router.Use(middleware.GinContextToContext(), middleware.Sentry(true), middleware.Tracing(), middleware.HandleCORS(), middleware.ErrLogger())
 
 	if env.GetString("ENV") != "production" {
@@ -76,12 +75,12 @@ func coreInit(fromBlock, toBlock *uint64, quietLogs, enableRPC bool) (*gin.Engin
 	}
 
 	logger.For(nil).Info("Registering handlers...")
-	return handlersInit(router, i, tokenRepo, assetRepo, ethClient, ipfsClient, arweaveClient, s), i
+	return handlersInit(router, i, iQueries, ethClient, ipfsClient, arweaveClient, s), i
 }
 
 func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
 	ctx := sentry.SetHubOnContext(context.Background(), sentry.CurrentHub())
-	initSentry()
+	InitSentry()
 	logger.InitWithGCPDefaults()
 	logger.SetLoggerOptions(func(logger *logrus.Logger) {
 		logger.SetLevel(logrus.InfoLevel)
@@ -90,14 +89,13 @@ func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
 		}
 	})
 
-	s := media.NewStorageClient(context.Background()) //s := rpc.NewStorageClient(context.Background())
-	tokenRepo, assetRepo, splitRepo := newRepos(s)
+	s := rpc.NewStorageClient(context.Background())
 	iQueries := indexerdb.New(postgres.NewPgxClient())
 	bQueries := coredb.New(postgres.NewPgxClient(postgres.WithHost(env.GetString("BACKEND_POSTGRES_HOST")), postgres.WithUser(env.GetString("BACKEND_POSTGRES_USER")), postgres.WithPassword(env.GetString("BACKEND_POSTGRES_PASSWORD")), postgres.WithPort(env.GetInt("BACKEND_POSTGRES_PORT"))))
 	tClient := task.NewClient(context.Background())
 	ethClient := rpc.NewEthSocketClient()
-	ipfsClient := rpc.NewIPFSShell() //ipfsClient := ipfs.NewShell()
-	arweaveClient := rpc.NewArweaveClient()
+	ipfsClient := ipfs.NewShell()
+	arweaveClient := arweave.NewClient()
 
 	if env.GetString("ENV") == "production" || enableRPC {
 		rpcEnabled = true
@@ -113,16 +111,16 @@ func coreInitServer(quietLogs, enableRPC bool) *gin.Engine {
 	}
 
 	logger.For(ctx).Info("Registering handlers...")
+
 	httpClient := &http.Client{Timeout: 10 * time.Minute, Transport: tracing.NewTracingTransport(http.DefaultTransport, false)}
 
-	i := newIndexer(ethClient, httpClient, ipfsClient, arweaveClient, s, iQueries, bQueries, tClient, splitRepo, tokenRepo, assetRepo, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, nil, nil)
-
-	return handlersInitServer(router, tokenRepo, assetRepo, ethClient, ipfsClient, arweaveClient, s, i)
+	i := newIndexer(ethClient, httpClient, ipfsClient, arweaveClient, s, iQueries, bQueries, tClient, persist.Chain(env.GetInt("CHAIN")), defaultTransferEvents, nil, nil, nil)
+	return handlersInitServer(router, ethClient, ipfsClient, arweaveClient, s, i)
 }
 
 func SetDefaults() {
 	viper.SetDefault("RPC_URL", "")
-	viper.SetDefault("IPFS_URL", "https://splitfi.infura-ipfs.io")
+	viper.SetDefault("IPFS_URL", "https://gallery.infura-ipfs.io")
 	viper.SetDefault("IPFS_API_URL", "https://ipfs.infura.io:5001")
 	viper.SetDefault("FALLBACK_IPFS_URL", "https://ipfs.io")
 	viper.SetDefault("IPFS_PROJECT_ID", "")
@@ -136,12 +134,21 @@ func SetDefaults() {
 	viper.SetDefault("POSTGRES_USER", "postgres")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
+	viper.SetDefault("BACKEND_POSTGRES_HOST", "0.0.0.0")
+	viper.SetDefault("BACKEND_POSTGRES_PORT", 5432)
+	viper.SetDefault("BACKEND_POSTGRES_USER", "postgres")
+	viper.SetDefault("BACKEND_POSTGRES_PASSWORD", "")
+	viper.SetDefault("BACKEND_POSTGRES_DB", "postgres")
 	viper.SetDefault("ALLOWED_ORIGINS", "http://localhost:3000")
 	viper.SetDefault("REDIS_URL", "localhost:6379")
 	viper.SetDefault("SENTRY_DSN", "")
 	viper.SetDefault("IMGIX_API_KEY", "")
 	viper.SetDefault("VERSION", "")
 	viper.SetDefault("ALCHEMY_API_URL", "")
+	viper.SetDefault("ALCHEMY_NFT_API_URL", "")
+	viper.SetDefault("TASK_QUEUE_HOST", "localhost:8123")
+	viper.SetDefault("TOKEN_PROCESSING_QUEUE", "projects/splitfi-local/locations/here/queues/token-processing")
+	viper.SetDefault("TOKEN_PROCESSING_URL", "http://localhost:6500")
 	viper.AutomaticEnv()
 }
 
@@ -160,15 +167,7 @@ func ValidateEnv() {
 	}
 }
 
-func newRepos(storageClient *storage.Client) (persist.TokenRepository, persist.AssetRepository, persist.SplitRepository) {
-	pg := postgres.MustCreateClient()
-	pgx := postgres.NewPgxClient()
-	queries := coredb.New(pgx)
-
-	return postgres.NewTokenRepository(pg), postgres.NewAssetRepository(pg, queries), postgres.NewSplitRepository(pg)
-}
-
-func initSentry() {
+func InitSentry() {
 	if env.GetString("ENV") == "local" {
 		logger.For(nil).Info("skipping sentry init")
 		return

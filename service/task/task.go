@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
 	"net/http"
-	"strconv"
 	"time"
 
 	gcptasks "cloud.google.com/go/cloudtasks/apiv2"
@@ -31,63 +30,50 @@ type Client struct {
 }
 
 type TokenProcessingBatchMessage struct {
-	BatchID            persist.DBID   `json:"batch_id" binding:"required"`
-	TokenDefinitionIDs []persist.DBID `json:"token_definition_ids" binding:"required"`
+	// TODO batch id required?
+	BatchID persist.DBID                `json:"batch_id" binding:"required"`
+	Tokens  []persist.TokenChainAddress `json:"tokens" binding:"required"`
 }
 
-type TokenProcessingContractTokensMessage struct {
-	ContractID   persist.DBID `json:"contract_id" binding:"required"`
-	ForceRefresh bool         `json:"force_refresh"`
-}
-
-type TokenProcessingTokenMessage struct {
-	TokenDefinitionID persist.DBID `json:"token_definition_id" binding:"required"`
-	Attempts          int          `json:"attempts" binding:"required"`
+type TokenProcessingAssetMessage struct {
+	OwnerAddress persist.Address         `json:"owner_address" binding:"required"`
+	Assets       TokenIdentifierBalances `json:"assets" binding:"required"`
 }
 
 type AddEmailToMailingListMessage struct {
 	UserID persist.DBID `json:"user_id" binding:"required"`
 }
 
-type PostPreflightMessage struct {
-	Token  persist.TokenChainAddress `json:"token" binding:"required"`
-	UserID persist.DBID              `json:"user_id"`
-}
+type TokenIdentifierBalances map[persist.TokenChainAddress]persist.HexString
 
-type TokenIdentifiersQuantities map[persist.TokenChainAddress]persist.NullInt32
-
-func (t TokenIdentifiersQuantities) MarshalJSON() ([]byte, error) {
-	m := make(map[string]string)
+func (t TokenIdentifierBalances) MarshalJSON() ([]byte, error) {
+	m := make(map[string]string, len(t))
 	for k, v := range t {
-		m[k.String()] = v.String()
+		m[k.AsJSONKey()] = string(v)
 	}
 	return json.Marshal(m)
 }
 
-func (t *TokenIdentifiersQuantities) UnmarshalJSON(b []byte) error {
+func (t *TokenIdentifierBalances) UnmarshalJSON(b []byte) error {
 	m := make(map[string]string)
 	if err := json.Unmarshal(b, &m); err != nil {
 		return err
 	}
-	result := make(TokenIdentifiersQuantities)
+	result := make(TokenIdentifierBalances)
 	for k, v := range m {
-		identifiers, err := persist.TokenChainAddressFromString(k)
-		if err != nil {
+		var tID persist.TokenChainAddress
+		if err := tID.FromJSONKey(k); err != nil {
 			return err
 		}
-		vint, err := strconv.Atoi(v)
-		if err != nil {
-			return err
-		}
-		result[identifiers] = persist.NullInt32(vint)
+		result[tID] = persist.HexString(v)
 	}
 	*t = result
 	return nil
 }
 
 type AssetProcessingMessage struct {
-	OwnerAddress persist.Address            `json:"owner_address" binding:"required"`
-	Assets       TokenIdentifiersQuantities `json:"assets" binding:"required"`
+	OwnerAddress persist.Address         `json:"owner_address" binding:"required"`
+	Tokens       TokenIdentifierBalances `json:"assets" binding:"required"`
 }
 
 type TokenProcessingWalletRemovalMessage struct {
@@ -96,7 +82,7 @@ type TokenProcessingWalletRemovalMessage struct {
 }
 
 type ValidateNFTsMessage struct {
-	OwnerAddress persist.Address `json:"wallet"`
+	OwnerAddress persist.EthereumAddress `json:"wallet"`
 }
 
 type PushNotificationMessage struct {
@@ -119,21 +105,20 @@ func (c *Client) CreateTaskForPushNotification(ctx context.Context, message Push
 	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span), withBasicAuth(secret))
 }
 
-func (c *Client) CreateTaskForAssetProcessing(ctx context.Context, message AssetProcessingMessage) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForUserTokenProcessing")
+func (c *Client) CreateTaskForTokenProcessing(ctx context.Context, message TokenProcessingBatchMessage) error {
+	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForTokenProcessing")
 	defer tracing.FinishSpan(span)
-	tracing.AddEventDataToSpan(span, map[string]any{"Owner Address": message.OwnerAddress})
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	url := fmt.Sprintf("%s/owner/assets", env.GetString("TOKEN_PROCESSING_URL"))
-	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
+	url := fmt.Sprintf("%s/tokens/", env.GetString("TOKEN_PROCESSING_URL"))
+	return c.submitTask(ctx, queue, url, withDeadline(time.Minute*30), withJSON(message), withTrace(span))
 }
 
-func (c *Client) CreateTaskForTokenTokenProcessing(ctx context.Context, message TokenProcessingTokenMessage, delay time.Duration) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForTokenTokenProcessing")
+func (c *Client) CreateTaskForAssetProcessing(ctx context.Context, message TokenProcessingAssetMessage) error {
+	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "CreateTaskForAssetProcessing")
 	defer tracing.FinishSpan(span)
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	url := fmt.Sprintf("%s/media/tokenmanage/process/token", env.GetString("TOKEN_PROCESSING_URL"))
-	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span), withDelay(delay))
+	url := fmt.Sprintf("%s/assets/", env.GetString("TOKEN_PROCESSING_URL"))
+	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
 }
 
 func (c *Client) CreateTaskForWalletRemoval(ctx context.Context, message TokenProcessingWalletRemovalMessage) error {
@@ -141,7 +126,7 @@ func (c *Client) CreateTaskForWalletRemoval(ctx context.Context, message TokenPr
 	defer tracing.FinishSpan(span)
 	tracing.AddEventDataToSpan(span, map[string]any{"User ID": message.UserID, "Wallet IDs": message.WalletIDs})
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	url := fmt.Sprintf("%s/owners/process/wallet-removal", env.GetString("TOKEN_PROCESSING_URL"))
+	url := fmt.Sprintf("%s/owners/wallet-removal", env.GetString("TOKEN_PROCESSING_URL"))
 	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
 }
 
@@ -236,7 +221,7 @@ func newGCPClient(ctx context.Context) *gcptasks.Client {
 	return client
 }
 
-func withDelay(delay time.Duration) func(*taskspb.Task) error {
+func WithDelay(delay time.Duration) func(*taskspb.Task) error {
 	return func(t *taskspb.Task) error {
 		scheduleOn := time.Now().Add(delay)
 		t.ScheduleTime = timestamppb.New(scheduleOn)

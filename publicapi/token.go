@@ -37,17 +37,17 @@ func (e ErrTokenRefreshFailed) Error() string {
 func (api TokenAPI) GetTokenById(ctx context.Context, tokenID persist.DBID) (*db.Token, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"tokenID": {tokenID, "required"},
+		"tokenID": validate.WithTag(tokenID, "required"),
 	}); err != nil {
 		return nil, err
 	}
 
-	token, err := api.loaders.GetTokenByIdBatch.Load(tokenID)
+	r, err := api.loaders.GetTokenByIdBatch.Load(tokenID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &token, nil
+	return &r, nil
 }
 
 func (api TokenAPI) GetTokenByChainAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.Token, error) {
@@ -98,7 +98,8 @@ func (api TokenAPI) RefreshToken(ctx context.Context, tokenID persist.DBID) erro
 		return nil
 	}
 
-	err = api.multichainProvider.RefreshToken(ctx, persist.NewTokenChainAddress(token.ContractAddress, token.Chain))
+	tids := []persist.TokenChainAddress{persist.NewTokenChainAddress(token.ContractAddress, token.Chain)}
+	_, err = api.multichainProvider.RefreshTokensByTokenIdentifiers(ctx, tids)
 	if err != nil {
 		return ErrTokenRefreshFailed{Message: err.Error()}
 	}

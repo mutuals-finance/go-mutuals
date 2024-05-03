@@ -166,6 +166,26 @@ func (q *Queries) CountSocialConnections(ctx context.Context, arg CountSocialCon
 	return count, err
 }
 
+const countSplitsByRecipientUserID = `-- name: CountSplitsByRecipientUserID :one
+select count(distinct s.id)
+    from users u, unnest(u.wallets) with ordinality as a(wallet_id, wallet_ord)
+                      join wallets w on w.id = a.wallet_id
+                      join recipients r on r.address = w.address
+                      join splits s on s.id = r.split_id
+    where u.id = $1
+      and u.deleted = false
+      and w.deleted = false
+      and r.deleted = false
+      and s.deleted = false
+`
+
+func (q *Queries) CountSplitsByRecipientUserID(ctx context.Context, id persist.DBID) (int64, error) {
+	row := q.db.QueryRow(ctx, countSplitsByRecipientUserID, id)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUserNotifications = `-- name: CountUserNotifications :one
 SELECT count(*) FROM notifications WHERE owner_id = $1 AND deleted = false
 `
@@ -1677,17 +1697,45 @@ func (q *Queries) GetSplitsByRecipientChainAddress(ctx context.Context, arg GetS
 	return items, nil
 }
 
-const getSplitsByRecipientUserID = `-- name: GetSplitsByRecipientUserID :many
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM users u, unnest(u.wallets)
-    WITH ORDINALITY AS a(wallet_id, wallet_ord)
-    INNER JOIN wallets w on w.id = a.wallet_id
-    INNER JOIN recipients r ON r.address = w.address
-    INNER JOIN splits s ON s.id = r.split_id
-    WHERE u.id = $1 AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false
+const getSplitsByRecipientUserIDPaginate = `-- name: GetSplitsByRecipientUserIDPaginate :many
+select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership
+    from users u, unnest(u.wallets)
+    with ordinality as a(wallet_id, wallet_ord)
+        join wallets w on w.id = a.wallet_id
+        join recipients r on r.address = w.address
+        join splits s on s.id = r.split_id
+    where u.id = $1
+      and u.deleted = false
+      and w.deleted = false
+      and r.deleted = false
+      and s.deleted = false
+      and (s.created_at,s.id) < ($3::timestamptz, $4::dbid)
+      and (s.created_at,s.id) > ($5::timestamptz, $6::dbid)
+    order by case when $7::bool then (s.created_at,s.id) end asc,
+             case when not $7::bool then (s.created_at,s.id) end desc
+    limit $2
 `
 
-func (q *Queries) GetSplitsByRecipientUserID(ctx context.Context, userID persist.DBID) ([]Split, error) {
-	rows, err := q.db.Query(ctx, getSplitsByRecipientUserID, userID)
+type GetSplitsByRecipientUserIDPaginateParams struct {
+	ID            persist.DBID `db:"id" json:"id"`
+	Limit         int32        `db:"limit" json:"limit"`
+	CurBeforeTime time.Time    `db:"cur_before_time" json:"cur_before_time"`
+	CurBeforeID   interface{}  `db:"cur_before_id" json:"cur_before_id"`
+	CurAfterTime  time.Time    `db:"cur_after_time" json:"cur_after_time"`
+	CurAfterID    interface{}  `db:"cur_after_id" json:"cur_after_id"`
+	PagingForward bool         `db:"paging_forward" json:"paging_forward"`
+}
+
+func (q *Queries) GetSplitsByRecipientUserIDPaginate(ctx context.Context, arg GetSplitsByRecipientUserIDPaginateParams) ([]Split, error) {
+	rows, err := q.db.Query(ctx, getSplitsByRecipientUserIDPaginate,
+		arg.ID,
+		arg.Limit,
+		arg.CurBeforeTime,
+		arg.CurBeforeID,
+		arg.CurAfterTime,
+		arg.CurAfterID,
+		arg.PagingForward,
+	)
 	if err != nil {
 		return nil, err
 	}

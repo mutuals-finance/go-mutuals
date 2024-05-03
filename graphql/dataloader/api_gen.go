@@ -22,6 +22,7 @@ type Loaders struct {
 	GetSplitsByRecipientChainAddressBatch *GetSplitsByRecipientChainAddressBatch
 	GetTokenByChainAddressBatch           *GetTokenByChainAddressBatch
 	GetTokenByIdBatch                     *GetTokenByIdBatch
+	GetTokensByChainAddressBatch          *GetTokensByChainAddressBatch
 	GetUserByChainAddressBatch            *GetUserByChainAddressBatch
 	GetUserByIdBatch                      *GetUserByIdBatch
 	GetUserByUsernameBatch                *GetUserByUsernameBatch
@@ -46,6 +47,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetSplitsByRecipientChainAddressBatch = newGetSplitsByRecipientChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitsByRecipientChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetTokenByChainAddressBatch = newGetTokenByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokenByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetTokenByIdBatch = newGetTokenByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokenByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetTokensByChainAddressBatch = newGetTokensByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokensByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByChainAddressBatch = newGetUserByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByUsernameBatch = newGetUserByUsernameBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByUsernameBatch(q), preFetchHook, postFetchHook)
@@ -82,6 +84,11 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetTokenByIdBatch.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokenByChainAddressBatch.Prime(loaders.GetTokenByChainAddressBatch.getKeyForResult(result), result)
 	})
+	loaders.GetTokensByChainAddressBatch.RegisterResultSubscriber(func(result []coredb.Token) {
+		for _, entry := range result {
+			loaders.GetTokenByChainAddressBatch.Prime(loaders.GetTokenByChainAddressBatch.getKeyForResult(entry), entry)
+		}
+	})
 	loaders.GetTokensByIDs.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokenByChainAddressBatch.Prime(loaders.GetTokenByChainAddressBatch.getKeyForResult(result), result)
 	})
@@ -90,6 +97,11 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	})
 	loaders.GetTokenByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(result), result)
+	})
+	loaders.GetTokensByChainAddressBatch.RegisterResultSubscriber(func(result []coredb.Token) {
+		for _, entry := range result {
+			loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(entry), entry)
+		}
 	})
 	loaders.GetTokensByIDs.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(result), result)
@@ -152,6 +164,11 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	})
 	loaders.GetTokenByIdBatch.RegisterResultSubscriber(func(result coredb.Token) {
 		loaders.GetTokensByIDs.Prime(loaders.GetTokensByIDs.getKeyForResult(result), result)
+	})
+	loaders.GetTokensByChainAddressBatch.RegisterResultSubscriber(func(result []coredb.Token) {
+		for _, entry := range result {
+			loaders.GetTokensByIDs.Prime(loaders.GetTokensByIDs.getKeyForResult(entry), entry)
+		}
 	})
 
 	return loaders
@@ -297,6 +314,22 @@ func loadGetTokenByIdBatch(q *coredb.Queries) func(context.Context, *GetTokenByI
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = d.getNotFoundError(params[i])
 			}
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetTokensByChainAddressBatch(q *coredb.Queries) func(context.Context, *GetTokensByChainAddressBatch, []coredb.GetTokensByChainAddressBatchParams) ([][]coredb.Token, []error) {
+	return func(ctx context.Context, d *GetTokensByChainAddressBatch, params []coredb.GetTokensByChainAddressBatchParams) ([][]coredb.Token, []error) {
+		results := make([][]coredb.Token, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetTokensByChainAddressBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []coredb.Token, err error) {
+			results[i], errors[i] = r, err
 		})
 
 		return results, errors

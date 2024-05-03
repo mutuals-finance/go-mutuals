@@ -21,8 +21,24 @@ sql:
 
           # Wildcards
           # Note: to override one of these wildcard entries, add a more specific entry (like some_table.id) above
-          - column: "*.id"
+          - column: "*.*.id"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
+          - column: "*.*.*_id"
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
+          - column: "*.*.ids"
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
+          - column: "*.*.*_ids"
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
+          - column: "*.*.chain"
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.Chain"
+          - column: "*.*.address"
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
+          - column: "*.*.*_address"
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
+          - column: '*.block_start'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.BlockNumber'
+          - column: '*.block_end'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.BlockNumber'
 
   # Backend model gen
   - schema:
@@ -132,6 +148,8 @@ sql:
             go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenIDList"
           - column: "*.*.token_hex"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenID"
+          - column: 'assets.balance'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.HexString'
           - column: "*.previews"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.NullString"
           - column: "*.*.*socials"
