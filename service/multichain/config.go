@@ -5,8 +5,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
-//type ProviderLookup map[persist.Chain][]any
-
 type ProviderLookup map[persist.Chain]any
 
 type ChainProvider struct {

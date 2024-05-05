@@ -4,13 +4,12 @@
 //go:build !wireinject
 // +build !wireinject
 
-package server
+package multichain
 
 import (
 	"context"
 	"database/sql"
 	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/multichain/alchemy"
 	"github.com/SplitFi/go-splitfi/service/multichain/eth"
 	"github.com/SplitFi/go-splitfi/service/persist"
@@ -27,7 +26,7 @@ import (
 // Injectors from inject.go:
 
 // NewMultichainProvider is a wire injector that sets up a multichain provider instance
-func NewMultichainProvider(ctx context.Context, envFunc func()) (*multichain.Provider, func()) {
+func NewMultichainProvider(ctx context.Context, envFunc func()) (*Provider, func()) {
 	serverEnvInit := setEnv(envFunc)
 	db, cleanup := newPqClient(serverEnvInit)
 	pool, cleanup2 := newPgxClient(serverEnvInit)
@@ -42,7 +41,7 @@ func NewMultichainProvider(ctx context.Context, envFunc func()) (*multichain.Pro
 	serverPolygonProviderList := polygonProviderSet(httpClient, serverTokenMetadataCache)
 	serverArbitrumProviderList := arbitrumProviderSet(httpClient, serverTokenMetadataCache)
 	v := newMultichainSet(serverEthProviderList, serverOptimismProviderList, serverPolygonProviderList, serverArbitrumProviderList)
-	provider := &multichain.Provider{
+	provider := &Provider{
 		Repos:   repositories,
 		Queries: queries,
 		Cache:   cache,
@@ -68,7 +67,7 @@ func ethProviderSet(serverEnvInit envInit, client *task.Client, httpClient *http
 }
 
 // ethProvidersConfig is a wire injector that binds multichain interfaces to their concrete Ethereum implementations
-func ethProvidersConfig(indexerProvider *eth.Provider, fallbackProvider multichain.SyncFailureFallbackProvider) ethProviderList {
+func ethProvidersConfig(indexerProvider *eth.Provider, fallbackProvider SyncFailureFallbackProvider) ethProviderList {
 	serverEthProviderList := ethRequirements(indexerProvider, indexerProvider, fallbackProvider, fallbackProvider, fallbackProvider, indexerProvider, indexerProvider)
 	return serverEthProviderList
 }
@@ -127,10 +126,10 @@ func polygonProvidersConfig(alchemyProvider *alchemy.Provider) polygonProviderLi
 	return serverPolygonProviderList
 }
 
-func ethFallbackProvider(httpClient *http.Client, cache *tokenMetadataCache) multichain.SyncFailureFallbackProvider {
+func ethFallbackProvider(httpClient *http.Client, cache *tokenMetadataCache) SyncFailureFallbackProvider {
 	chain := _wireChainValue3
 	provider := newAlchemyProvider(httpClient, chain, cache)
-	syncFailureFallbackProvider := multichain.SyncFailureFallbackProvider{
+	syncFailureFallbackProvider := SyncFailureFallbackProvider{
 		Primary: provider,
 	}
 	return syncFailureFallbackProvider
@@ -185,44 +184,44 @@ func newQueries(p *pgxpool.Pool) *coredb.Queries {
 
 // ethRequirements is the set of provider interfaces required for Ethereum
 func ethRequirements(
-	nr multichain.NameResolver,
-	v multichain.Verifier,
-	tof multichain.TokensOwnerFetcher,
-	toc multichain.TokensContractFetcher,
-	tiof multichain.TokensIncrementalOwnerFetcher,
-	tmf multichain.TokenMetadataFetcher,
-	tdf multichain.TokenDescriptorsFetcher,
+	nr NameResolver,
+	v Verifier,
+	tof TokensOwnerFetcher,
+	toc TokensContractFetcher,
+	tiof TokensIncrementalOwnerFetcher,
+	tmf TokenMetadataFetcher,
+	tdf TokenDescriptorsFetcher,
 ) ethProviderList {
 	return ethProviderList{nr, v, tof, toc, tiof, tmf, tdf}
 }
 
 // optimismRequirements is the set of provider interfaces required for Optimism
 func optimismRequirements(
-	tof multichain.TokensOwnerFetcher,
-	tiof multichain.TokensIncrementalOwnerFetcher,
-	toc multichain.TokensContractFetcher,
-	tmf multichain.TokenMetadataFetcher,
+	tof TokensOwnerFetcher,
+	tiof TokensIncrementalOwnerFetcher,
+	toc TokensContractFetcher,
+	tmf TokenMetadataFetcher,
 ) optimismProviderList {
 	return optimismProviderList{tof, toc, tiof, tmf}
 }
 
 // arbitrumRequirements is the set of provider interfaces required for Arbitrum
 func arbitrumRequirements(
-	tof multichain.TokensOwnerFetcher,
-	tiof multichain.TokensIncrementalOwnerFetcher,
-	toc multichain.TokensContractFetcher,
-	tmf multichain.TokenMetadataFetcher,
-	tdf multichain.TokenDescriptorsFetcher,
+	tof TokensOwnerFetcher,
+	tiof TokensIncrementalOwnerFetcher,
+	toc TokensContractFetcher,
+	tmf TokenMetadataFetcher,
+	tdf TokenDescriptorsFetcher,
 ) arbitrumProviderList {
 	return arbitrumProviderList{tof, toc, tiof, tmf, tdf}
 }
 
 // polygonRequirements is the set of provider interfaces required for Polygon
 func polygonRequirements(
-	tof multichain.TokensOwnerFetcher,
-	tiof multichain.TokensIncrementalOwnerFetcher,
-	toc multichain.TokensContractFetcher,
-	tmf multichain.TokenMetadataFetcher,
+	tof TokensOwnerFetcher,
+	tiof TokensIncrementalOwnerFetcher,
+	toc TokensContractFetcher,
+	tmf TokenMetadataFetcher,
 ) polygonProviderList {
 	return polygonProviderList{tof, tiof, toc, tmf}
 }
@@ -232,7 +231,7 @@ func dedupe(providers []any) []any {
 	seen := map[string]bool{}
 	deduped := []any{}
 	for _, p := range providers {
-		if id := p.(multichain.Configurer).GetBlockchainInfo().ProviderID; !seen[id] {
+		if id := p.(Configurer).GetBlockchainInfo().ProviderID; !seen[id] {
 			seen[id] = true
 			deduped = append(deduped, p)
 		}

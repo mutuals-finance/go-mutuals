@@ -54,7 +54,7 @@ func Init() {
 
 	ctx := context.Background()
 	c := ClientInit(ctx)
-	provider, _ := NewMultichainProvider(ctx, SetDefaults)
+	provider, _ := multichain.NewMultichainProvider(ctx, SetDefaults)
 	router := CoreInit(ctx, c, provider)
 	http.Handle("/", router)
 }

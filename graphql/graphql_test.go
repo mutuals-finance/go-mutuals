@@ -467,7 +467,7 @@ func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID pers
 func defaultHandler(t *testing.T) http.Handler {
 	ctx := context.Background()
 	c := server.ClientInit(ctx)
-	p, cleanup := server.NewMultichainProvider(ctx, server.SetDefaults)
+	p, cleanup := multichain.NewMultichainProvider(ctx, server.SetDefaults)
 	handler := server.CoreInit(ctx, c, p)
 	t.Cleanup(func() {
 		c.Close()
