@@ -40,15 +40,14 @@ func TestMain(t *testing.T) {
 		{
 			title:    "test GraphQL",
 			run:      testGraphQL,
-			fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useTokenQueue, useNotificationTopics},
+			fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useCloudTasksDirectDispatch, useNotificationTopics},
 		},
-		{
-			title: "test syncing tokens",
-			run:   testTokenSyncs,
-
-			fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useTokenQueue},
-		},
-	}
+		/*		{
+					title: "test syncing tokens",
+					run:   testTokenSyncs,
+					fixtures: []fixture{useDefaultEnv, usePostgres, useRedis, useCloudTasksDirectDispatch},
+				},
+		*/}
 	for _, test := range tests {
 		t.Run(test.title, testWithFixtures(test.run, test.fixtures...))
 	}
@@ -69,26 +68,30 @@ func testGraphQL(t *testing.T) {
 		{title: "should update split and ensure name still gets set when not sent in update", run: testUpdateSplitWithNoNameChange},
 		{title: "should update user experiences", run: testUpdateUserExperiences},
 		{title: "should create split", run: testCreateSplit},
-		{title: "should connect social account", run: testConnectSocialAccount},
+		//{title: "should send notifications", run: testSendNotifications, fixtures: []fixture{usePostgres, useRedis}},
 	}
 	for _, test := range tests {
 		t.Run(test.title, testWithFixtures(test.run, test.fixtures...))
 	}
 }
 
-func testTokenSyncs(t *testing.T) {
-	tests := []testCase{}
-	for _, test := range tests {
-		t.Run(test.title, testWithFixtures(test.run, test.fixtures...))
+/*
+	func testTokenSyncs(t *testing.T) {
+		tests := []testCase{
+			// TODO
+		}
+		for _, test := range tests {
+			t.Run(test.title, testWithFixtures(test.run, test.fixtures...))
+		}
 	}
-}
+*/
 
 func testCreateUser(t *testing.T) {
 	nonceF := newNonceFixture(t)
 	c := defaultHandlerClient(t)
 	username := "user" + persist.GenerateID().String()
 
-	response, err := createUserMutation(context.Background(), c, authMechanismInput(nonceF.Wallet, nonceF.Nonce),
+	response, err := createUserMutation(context.Background(), c, authMechanismInput(nonceF.Wallet, nonceF.Nonce, nonceF.Message),
 		CreateUserInput{
 			Username: username,
 		},
@@ -147,9 +150,9 @@ func testAddWallet(t *testing.T) {
 	walletToAdd := newWallet(t)
 	ctx := context.Background()
 	c := authedHandlerClient(t, userF.ID)
-	nonce := newNonce(t, ctx, c, walletToAdd)
+	nonce, message := newNonce(t, ctx, c)
 
-	response, err := addUserWalletMutation(ctx, c, chainAddressInput(walletToAdd.Address), authMechanismInput(walletToAdd, nonce))
+	response, err := addUserWalletMutation(ctx, c, chainAddressInput(walletToAdd.Address), authMechanismInput(walletToAdd, nonce, message))
 
 	require.NoError(t, err)
 	payload, _ := (*response.AddUserWallet).(*addUserWalletMutationAddUserWalletAddUserWalletPayload)
@@ -164,8 +167,8 @@ func testRemoveWallet(t *testing.T) {
 	walletToRemove := newWallet(t)
 	ctx := context.Background()
 	c := authedHandlerClient(t, userF.ID)
-	nonce := newNonce(t, ctx, c, walletToRemove)
-	addResponse, err := addUserWalletMutation(ctx, c, chainAddressInput(walletToRemove.Address), authMechanismInput(walletToRemove, nonce))
+	nonce, message := newNonce(t, ctx, c)
+	addResponse, err := addUserWalletMutation(ctx, c, chainAddressInput(walletToRemove.Address), authMechanismInput(walletToRemove, nonce, message))
 	require.NoError(t, err)
 	wallets := (*addResponse.AddUserWallet).(*addUserWalletMutationAddUserWalletAddUserWalletPayload).Viewer.User.Wallets
 	lastWallet := wallets[len(wallets)-1]
@@ -183,9 +186,9 @@ func testLogin(t *testing.T) {
 	userF := newUserFixture(t)
 	ctx := context.Background()
 	c := defaultHandlerClient(t)
-	nonce := newNonce(t, ctx, c, userF.Wallet)
+	nonce, message := newNonce(t, ctx, c)
 
-	response, err := loginMutation(ctx, c, authMechanismInput(userF.Wallet, nonce))
+	response, err := loginMutation(ctx, c, authMechanismInput(userF.Wallet, nonce, message))
 
 	require.NoError(t, err)
 	payload, _ := (*response.Login).(*loginMutationLoginLoginPayload)
@@ -259,7 +262,6 @@ func testCreateSplit(t *testing.T) {
 	response, err := createSplitMutation(context.Background(), c, CreateSplitInput{
 		Name:        util.ToPointer("newSplit"),
 		Description: util.ToPointer("this is a description"),
-		Position:    "a1",
 	})
 
 	require.NoError(t, err)
@@ -281,61 +283,13 @@ func testUpdateUserExperiences(t *testing.T) {
 	require.NoError(t, err)
 	bs, _ := json.Marshal(response)
 	require.NotNil(t, response.UpdateUserExperience, string(bs))
-	/*payload := (*response.UpdateUserExperience).(*updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload)
+	payload := (*response.UpdateUserExperience).(*updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload)
 	assert.NotEmpty(t, payload.Viewer.UserExperiences)
 	for _, experience := range payload.Viewer.UserExperiences {
 		if experience.Type == UserExperienceTypeMultisplitannouncement {
 			assert.True(t, experience.Experienced)
 		}
 	}
-	*/
-}
-
-func testConnectSocialAccount(t *testing.T) {
-	userF := newUserFixture(t)
-	c := authedHandlerClient(t, userF.ID)
-	dc := defaultHandlerClient(t)
-
-	connectResp, err := connectSocialAccount(context.Background(), c, SocialAuthMechanism{
-		Debug: &DebugSocialAuth{
-			Provider: SocialAccountTypeTwitter,
-			Id:       "123",
-			Username: "test",
-		},
-	}, true)
-	require.NoError(t, err)
-
-	payload := (*connectResp.ConnectSocialAccount).(*connectSocialAccountConnectSocialAccountConnectSocialAccountPayload)
-	assert.Equal(t, payload.Viewer.SocialAccounts.Twitter.Username, "test")
-	assert.True(t, payload.Viewer.SocialAccounts.Twitter.Display)
-
-	viewerResp, err := viewerQuery(context.Background(), c)
-	require.NoError(t, err)
-	viewerPayload := (*viewerResp.Viewer).(*viewerQueryViewer)
-	assert.Equal(t, viewerPayload.User.SocialAccounts.Twitter.Username, "test")
-
-	updateDisplayedResp, err := updateSocialAccountDisplayed(context.Background(), c, UpdateSocialAccountDisplayedInput{
-		Type:      SocialAccountTypeTwitter,
-		Displayed: false,
-	})
-
-	require.NoError(t, err)
-
-	updateDisplayedPayload := (*updateDisplayedResp.UpdateSocialAccountDisplayed).(*updateSocialAccountDisplayedUpdateSocialAccountDisplayedUpdateSocialAccountDisplayedPayload)
-	assert.Equal(t, updateDisplayedPayload.Viewer.SocialAccounts.Twitter.Username, "test")
-	assert.False(t, updateDisplayedPayload.Viewer.SocialAccounts.Twitter.Display)
-
-	userResp, err := userByIdQuery(context.Background(), dc, userF.ID)
-	require.NoError(t, err)
-	userPayload := (*userResp.UserById).(*userByIdQueryUserByIdSplitFiUser)
-	assert.Nil(t, userPayload.SocialAccounts.Twitter)
-
-	disconnectResp, err := disconnectSocialAccount(context.Background(), c, SocialAccountTypeTwitter)
-	require.NoError(t, err)
-
-	disconnectPayload := (*disconnectResp.DisconnectSocialAccount).(*disconnectSocialAccountDisconnectSocialAccountDisconnectSocialAccountPayload)
-	assert.Nil(t, disconnectPayload.Viewer.SocialAccounts.Twitter)
-
 }
 
 func testUpdateSplitWithNoNameChange(t *testing.T) {
@@ -385,11 +339,12 @@ func testViewsAreRolledUp(t *testing.T) {
 }
 
 // authMechanismInput signs a nonce with an ethereum wallet
-func authMechanismInput(w wallet, nonce string) AuthMechanism {
+func authMechanismInput(w wallet, nonce string, message string) AuthMechanism {
 	return AuthMechanism{
 		Eoa: &EoaAuth{
 			Nonce:     nonce,
-			Signature: w.Sign(nonce),
+			Message:   message,
+			Signature: w.Sign(message),
 			ChainPubKey: ChainPubKeyInput{
 				PubKey: w.Address,
 				Chain:  "Ethereum",
@@ -432,21 +387,28 @@ func newWallet(t *testing.T) wallet {
 	}
 }
 
-func newNonce(t *testing.T, ctx context.Context, c graphql.Client, w wallet) string {
+func newNonce(t *testing.T, ctx context.Context, c genql.Client) (string, string) {
 	t.Helper()
-	response, err := getAuthNonceMutation(ctx, c, chainAddressInput(w.Address))
+	response, err := getAuthNonceMutation(ctx, c)
 	require.NoError(t, err)
 	payload := (*response.GetAuthNonce).(*getAuthNonceMutationGetAuthNonce)
-	return *payload.Nonce
+	return *payload.Nonce, *payload.Message
+}
+
+// registerPushtoken makes a GraphQL request to register a push token for an authenticated user
+func registerPushToken(t *testing.T, ctx context.Context, c genql.Client) {
+	t.Helper()
+	_, err := registerPushTokenMutation(ctx, c, persist.GenerateID().String())
+	require.NoError(t, err)
 }
 
 // newUser makes a GraphQL request to generate a new user
 func newUser(t *testing.T, ctx context.Context, c genql.Client, w wallet) (userID persist.DBID, username string, galleryID persist.DBID) {
 	t.Helper()
-	nonce := newNonce(t, ctx, c, w)
+	nonce, message := newNonce(t, ctx, c)
 	username = "user" + persist.GenerateID().String()
 
-	response, err := createUserMutation(ctx, c, authMechanismInput(w, nonce),
+	response, err := createUserMutation(ctx, c, authMechanismInput(w, nonce, message),
 		CreateUserInput{Username: username},
 	)
 
@@ -467,11 +429,9 @@ func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID pers
 func defaultHandler(t *testing.T) http.Handler {
 	ctx := context.Background()
 	c := server.ClientInit(ctx)
-	p, cleanup := multichain.NewMultichainProvider(ctx, server.SetDefaults)
-	handler := server.CoreInit(ctx, c, p)
+	handler := server.CoreInit(ctx, c)
 	t.Cleanup(func() {
 		c.Close()
-		cleanup()
 	})
 	return handler
 }

@@ -84,29 +84,6 @@ func (api TokenAPI) GetTokensByIDs(ctx context.Context, tokenIDs []persist.DBID)
 	return foundTokens, nil
 }
 
-// RefreshToken refreshes the metadata for a given token DBID
-func (api TokenAPI) RefreshToken(ctx context.Context, tokenID persist.DBID) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"tokenID": {tokenID, "required"},
-	}); err != nil {
-		return nil
-	}
-
-	token, err := api.loaders.GetTokenByIdBatch.Load(tokenID)
-	if err != nil {
-		return nil
-	}
-
-	tids := []persist.TokenChainAddress{persist.NewTokenChainAddress(token.ContractAddress, token.Chain)}
-	_, err = api.multichainProvider.RefreshTokensByTokenIdentifiers(ctx, tids)
-	if err != nil {
-		return ErrTokenRefreshFailed{Message: err.Error()}
-	}
-
-	return nil
-}
-
 func (api TokenAPI) SetSpamPreference(ctx context.Context, tokens []persist.DBID, isSpam bool) error {
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{

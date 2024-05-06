@@ -252,12 +252,12 @@ func GetBlockNumber(ctx context.Context, ethClient *ethclient.Client) (uint64, e
 func RetryGetBlockNumber(ctx context.Context, ethClient *ethclient.Client) (uint64, error) {
 	var height uint64
 	var err error
-	for i := 0; i < retry.DefaultRetry.Tries; i++ {
+	for i := 0; i < retry.DefaultRetry.MaxRetries; i++ {
 		height, err = GetBlockNumber(ctx, ethClient)
 		if !isRateLimitedError(err) {
 			break
 		}
-		retry.DefaultRetry.Sleep(i)
+		// retry.DefaultRetry.Sleep(i)
 	}
 	return height, err
 }
@@ -271,12 +271,12 @@ func GetLogs(ctx context.Context, ethClient *ethclient.Client, query ethereum.Fi
 func RetryGetLogs(ctx context.Context, ethClient *ethclient.Client, query ethereum.FilterQuery) ([]types.Log, error) {
 	logs := make([]types.Log, 0)
 	var err error
-	for i := 0; i < retry.DefaultRetry.Tries; i++ {
+	for i := 0; i < retry.DefaultRetry.MaxRetries; i++ {
 		logs, err = GetLogs(ctx, ethClient, query)
 		if !isRateLimitedError(err) {
 			break
 		}
-		retry.DefaultRetry.Sleep(i)
+		//retry.DefaultRetry.Sleep(i)
 	}
 	return logs, err
 }
@@ -291,12 +291,12 @@ func RetryGetTransaction(ctx context.Context, ethClient *ethclient.Client, txHas
 	var tx *types.Transaction
 	var pending bool
 	var err error
-	for i := 0; i < retry.Tries; i++ {
+	for i := 0; i < retry.MaxRetries; i++ {
 		tx, pending, err = GetTransaction(ctx, ethClient, txHash)
 		if !isRateLimitedError(err) {
 			break
 		}
-		retry.Sleep(i)
+		//retry.Sleep(i)
 	}
 	return tx, pending, err
 }
@@ -786,12 +786,12 @@ func GetBalanceOfERC20Token(ctx context.Context, pOwnerAddress, pContractAddress
 func RetryGetBalanceOfERC20Token(ctx context.Context, pOwnerAddress, pContractAddress persist.Address, ethClient *ethclient.Client) (*big.Int, error) {
 	var balance *big.Int
 	var err error
-	for i := 0; i < retry.DefaultRetry.Tries; i++ {
+	for i := 0; i < retry.DefaultRetry.MaxRetries; i++ {
 		balance, err = GetBalanceOfERC20Token(ctx, pOwnerAddress, pContractAddress, ethClient)
 		if !isRateLimitedError(err) {
 			break
 		}
-		retry.DefaultRetry.Sleep(i)
+		//retry.DefaultRetry.Sleep(i)
 	}
 	return balance, err
 }

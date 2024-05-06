@@ -167,8 +167,9 @@ func newMetadataServerFixture(t *testing.T) serverFixture {
 }
 
 type nonceFixture struct {
-	Wallet wallet
-	Nonce  string
+	Wallet  wallet
+	Nonce   string
+	Message string
 }
 
 // newNonceFixture generates a new nonce
@@ -177,15 +178,15 @@ func newNonceFixture(t *testing.T) nonceFixture {
 	wallet := newWallet(t)
 	ctx := context.Background()
 	c := defaultHandlerClient(t)
-	nonce := newNonce(t, ctx, c, wallet)
-	return nonceFixture{wallet, nonce}
+	nonce, message := newNonce(t, ctx, c)
+	return nonceFixture{wallet, nonce, message}
 }
 
 type userFixture struct {
-	Wallet    wallet
-	Username  string
-	ID        persist.DBID
-	GalleryID persist.DBID
+	Wallet   wallet
+	Username string
+	ID       persist.DBID
+	SplitID  persist.DBID
 }
 
 // newUserFixture generates a new user
@@ -194,8 +195,8 @@ func newUserFixture(t *testing.T) userFixture {
 	wallet := newWallet(t)
 	ctx := context.Background()
 	c := defaultHandlerClient(t)
-	userID, username, galleryID := newUser(t, ctx, c, wallet)
-	return userFixture{wallet, username, userID, galleryID}
+	userID, username, splitID := newUser(t, ctx, c, wallet)
+	return userFixture{wallet, username, userID, splitID}
 }
 
 type userWithTokensFixture struct {

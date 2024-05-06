@@ -92,7 +92,7 @@ func newConnectionParamsFromEnv() connectionParams {
 		port:     env.GetInt("POSTGRES_PORT"),
 
 		// Retry connections by default
-		retry: &retry.Retry{Base: 2, Cap: 4, Tries: 3},
+		retry: &retry.Retry{MinWait: 2, MaxWait: 4, MaxRetries: 3},
 	}
 }
 
@@ -361,7 +361,7 @@ func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
 		db:                    pq,
 		pool:                  pgx,
 		UserRepository:        NewUserRepository(pq, queries, pgx),
-		TokenRepository:       NewTokenRepository(pq),
+		TokenRepository:       NewTokenRepository(pq, queries),
 		AssetRepository:       NewAssetRepository(pq, queries),
 		SplitRepository:       NewSplitRepository(pq),
 		EarlyAccessRepository: NewEarlyAccessRepository(pq, queries),

@@ -12,10 +12,12 @@ import (
 )
 
 type AuthMechanism struct {
-	Eoa        *EoaAuth        `json:"eoa"`
-	GnosisSafe *GnosisSafeAuth `json:"gnosisSafe"`
-	Debug      *DebugAuth      `json:"debug"`
-	MagicLink  *MagicLinkAuth  `json:"magicLink"`
+	Eoa               *EoaAuth               `json:"eoa"`
+	GnosisSafe        *GnosisSafeAuth        `json:"gnosisSafe"`
+	Debug             *DebugAuth             `json:"debug"`
+	MagicLink         *MagicLinkAuth         `json:"magicLink"`
+	OneTimeLoginToken *OneTimeLoginTokenAuth `json:"oneTimeLoginToken"`
+	Privy             *PrivyAuth             `json:"privy"`
 }
 
 // GetEoa returns AuthMechanism.Eoa, and is useful for accessing the field via an interface.
@@ -29,6 +31,12 @@ func (v *AuthMechanism) GetDebug() *DebugAuth { return v.Debug }
 
 // GetMagicLink returns AuthMechanism.MagicLink, and is useful for accessing the field via an interface.
 func (v *AuthMechanism) GetMagicLink() *MagicLinkAuth { return v.MagicLink }
+
+// GetOneTimeLoginToken returns AuthMechanism.OneTimeLoginToken, and is useful for accessing the field via an interface.
+func (v *AuthMechanism) GetOneTimeLoginToken() *OneTimeLoginTokenAuth { return v.OneTimeLoginToken }
+
+// GetPrivy returns AuthMechanism.Privy, and is useful for accessing the field via an interface.
+func (v *AuthMechanism) GetPrivy() *PrivyAuth { return v.Privy }
 
 type Chain string
 
@@ -125,6 +133,7 @@ func (v *DebugAuth) GetDebugToolsPassword() *string { return v.DebugToolsPasswor
 type EoaAuth struct {
 	ChainPubKey ChainPubKeyInput `json:"chainPubKey"`
 	Nonce       string           `json:"nonce"`
+	Message     string           `json:"message"`
 	Signature   string           `json:"signature"`
 }
 
@@ -134,12 +143,16 @@ func (v *EoaAuth) GetChainPubKey() ChainPubKeyInput { return v.ChainPubKey }
 // GetNonce returns EoaAuth.Nonce, and is useful for accessing the field via an interface.
 func (v *EoaAuth) GetNonce() string { return v.Nonce }
 
+// GetMessage returns EoaAuth.Message, and is useful for accessing the field via an interface.
+func (v *EoaAuth) GetMessage() string { return v.Message }
+
 // GetSignature returns EoaAuth.Signature, and is useful for accessing the field via an interface.
 func (v *EoaAuth) GetSignature() string { return v.Signature }
 
 type GnosisSafeAuth struct {
 	Address string `json:"address"`
 	Nonce   string `json:"nonce"`
+	Message string `json:"message"`
 }
 
 // GetAddress returns GnosisSafeAuth.Address, and is useful for accessing the field via an interface.
@@ -148,12 +161,29 @@ func (v *GnosisSafeAuth) GetAddress() string { return v.Address }
 // GetNonce returns GnosisSafeAuth.Nonce, and is useful for accessing the field via an interface.
 func (v *GnosisSafeAuth) GetNonce() string { return v.Nonce }
 
+// GetMessage returns GnosisSafeAuth.Message, and is useful for accessing the field via an interface.
+func (v *GnosisSafeAuth) GetMessage() string { return v.Message }
+
 type MagicLinkAuth struct {
 	Token string `json:"token"`
 }
 
 // GetToken returns MagicLinkAuth.Token, and is useful for accessing the field via an interface.
 func (v *MagicLinkAuth) GetToken() string { return v.Token }
+
+type OneTimeLoginTokenAuth struct {
+	Token string `json:"token"`
+}
+
+// GetToken returns OneTimeLoginTokenAuth.Token, and is useful for accessing the field via an interface.
+func (v *OneTimeLoginTokenAuth) GetToken() string { return v.Token }
+
+type PrivyAuth struct {
+	Token string `json:"token"`
+}
+
+// GetToken returns PrivyAuth.Token, and is useful for accessing the field via an interface.
+func (v *PrivyAuth) GetToken() string { return v.Token }
 
 type PublishSplitInput struct {
 	SplitId persist.DBID `json:"splitId"`
@@ -254,14 +284,6 @@ func (v *__createUserMutationInput) GetAuthMechanism() AuthMechanism { return v.
 // GetInput returns __createUserMutationInput.Input, and is useful for accessing the field via an interface.
 func (v *__createUserMutationInput) GetInput() CreateUserInput { return v.Input }
 
-// __getAuthNonceMutationInput is used internally by genqlient
-type __getAuthNonceMutationInput struct {
-	Input ChainAddressInput `json:"input"`
-}
-
-// GetInput returns __getAuthNonceMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__getAuthNonceMutationInput) GetInput() ChainAddressInput { return v.Input }
-
 // __loginMutationInput is used internally by genqlient
 type __loginMutationInput struct {
 	AuthMechanism AuthMechanism `json:"authMechanism"`
@@ -277,6 +299,14 @@ type __publishSplitMutationInput struct {
 
 // GetInput returns __publishSplitMutationInput.Input, and is useful for accessing the field via an interface.
 func (v *__publishSplitMutationInput) GetInput() PublishSplitInput { return v.Input }
+
+// __registerPushTokenMutationInput is used internally by genqlient
+type __registerPushTokenMutationInput struct {
+	PushToken string `json:"pushToken"`
+}
+
+// GetPushToken returns __registerPushTokenMutationInput.PushToken, and is useful for accessing the field via an interface.
+func (v *__registerPushTokenMutationInput) GetPushToken() string { return v.PushToken }
 
 // __removeUserWalletsMutationInput is used internally by genqlient
 type __removeUserWalletsMutationInput struct {
@@ -1205,9 +1235,9 @@ func (v *createUserMutationResponse) __premarshalJSON() (*__premarshalcreateUser
 
 // getAuthNonceMutationGetAuthNonce includes the requested fields of the GraphQL type AuthNonce.
 type getAuthNonceMutationGetAuthNonce struct {
-	Typename   *string `json:"__typename"`
-	Nonce      *string `json:"nonce"`
-	UserExists *bool   `json:"userExists"`
+	Typename *string `json:"__typename"`
+	Nonce    *string `json:"nonce"`
+	Message  *string `json:"message"`
 }
 
 // GetTypename returns getAuthNonceMutationGetAuthNonce.Typename, and is useful for accessing the field via an interface.
@@ -1216,30 +1246,13 @@ func (v *getAuthNonceMutationGetAuthNonce) GetTypename() *string { return v.Type
 // GetNonce returns getAuthNonceMutationGetAuthNonce.Nonce, and is useful for accessing the field via an interface.
 func (v *getAuthNonceMutationGetAuthNonce) GetNonce() *string { return v.Nonce }
 
-// GetUserExists returns getAuthNonceMutationGetAuthNonce.UserExists, and is useful for accessing the field via an interface.
-func (v *getAuthNonceMutationGetAuthNonce) GetUserExists() *bool { return v.UserExists }
-
-// getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken includes the requested fields of the GraphQL type ErrDoesNotOwnRequiredToken.
-type getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
-}
-
-// GetTypename returns getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken.Typename, and is useful for accessing the field via an interface.
-func (v *getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken) GetTypename() *string {
-	return v.Typename
-}
-
-// GetMessage returns getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken.Message, and is useful for accessing the field via an interface.
-func (v *getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken) GetMessage() string {
-	return v.Message
-}
+// GetMessage returns getAuthNonceMutationGetAuthNonce.Message, and is useful for accessing the field via an interface.
+func (v *getAuthNonceMutationGetAuthNonce) GetMessage() *string { return v.Message }
 
 // getAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError includes the requested fields of the GraphQL interface GetAuthNoncePayloadOrError.
 //
 // getAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError is implemented by the following types:
 // getAuthNonceMutationGetAuthNonce
-// getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken
 type getAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError interface {
 	implementsGraphQLInterfacegetAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -1247,8 +1260,6 @@ type getAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError interface {
 }
 
 func (v *getAuthNonceMutationGetAuthNonce) implementsGraphQLInterfacegetAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError() {
-}
-func (v *getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken) implementsGraphQLInterfacegetAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError() {
 }
 
 func __unmarshalgetAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError(b []byte, v *getAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError) error {
@@ -1267,9 +1278,6 @@ func __unmarshalgetAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError(b []b
 	switch tn.TypeName {
 	case "AuthNonce":
 		*v = new(getAuthNonceMutationGetAuthNonce)
-		return json.Unmarshal(b, *v)
-	case "ErrDoesNotOwnRequiredToken":
-		*v = new(getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -1290,14 +1298,6 @@ func __marshalgetAuthNonceMutationGetAuthNonceGetAuthNoncePayloadOrError(v *getA
 		result := struct {
 			TypeName string `json:"__typename"`
 			*getAuthNonceMutationGetAuthNonce
-		}{typename, v}
-		return json.Marshal(result)
-	case *getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken:
-		typename = "ErrDoesNotOwnRequiredToken"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getAuthNonceMutationGetAuthNonceErrDoesNotOwnRequiredToken
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -1677,6 +1677,193 @@ type logoutMutationResponse struct {
 // GetLogout returns logoutMutationResponse.Logout, and is useful for accessing the field via an interface.
 func (v *logoutMutationResponse) GetLogout() *logoutMutationLogoutLogoutPayload { return v.Logout }
 
+// notificationsForViewerQueryResponse is returned by notificationsForViewerQuery on success.
+type notificationsForViewerQueryResponse struct {
+	Viewer *notificationsForViewerQueryViewerViewerOrError `json:"-"`
+}
+
+// GetViewer returns notificationsForViewerQueryResponse.Viewer, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryResponse) GetViewer() *notificationsForViewerQueryViewerViewerOrError {
+	return v.Viewer
+}
+
+func (v *notificationsForViewerQueryResponse) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*notificationsForViewerQueryResponse
+		Viewer json.RawMessage `json:"viewer"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.notificationsForViewerQueryResponse = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.Viewer
+		src := firstPass.Viewer
+		if len(src) != 0 && string(src) != "null" {
+			*dst = new(notificationsForViewerQueryViewerViewerOrError)
+			err = __unmarshalnotificationsForViewerQueryViewerViewerOrError(
+				src, *dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal notificationsForViewerQueryResponse.Viewer: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalnotificationsForViewerQueryResponse struct {
+	Viewer json.RawMessage `json:"viewer"`
+}
+
+func (v *notificationsForViewerQueryResponse) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *notificationsForViewerQueryResponse) __premarshalJSON() (*__premarshalnotificationsForViewerQueryResponse, error) {
+	var retval __premarshalnotificationsForViewerQueryResponse
+
+	{
+
+		dst := &retval.Viewer
+		src := v.Viewer
+		if src != nil {
+			var err error
+			*dst, err = __marshalnotificationsForViewerQueryViewerViewerOrError(
+				src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal notificationsForViewerQueryResponse.Viewer: %w", err)
+			}
+		}
+	}
+	return &retval, nil
+}
+
+// notificationsForViewerQueryViewer includes the requested fields of the GraphQL type Viewer.
+type notificationsForViewerQueryViewer struct {
+	Typename *string `json:"__typename"`
+	// Returns a list of notifications in reverse chronological order.
+	// Seen notifications come after unseen notifications
+	Notifications *notificationsForViewerQueryViewerNotificationsNotificationsConnection `json:"notifications"`
+}
+
+// GetTypename returns notificationsForViewerQueryViewer.Typename, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewer) GetTypename() *string { return v.Typename }
+
+// GetNotifications returns notificationsForViewerQueryViewer.Notifications, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewer) GetNotifications() *notificationsForViewerQueryViewerNotificationsNotificationsConnection {
+	return v.Notifications
+}
+
+// notificationsForViewerQueryViewerErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type notificationsForViewerQueryViewerErrNotAuthorized struct {
+	Typename *string `json:"__typename"`
+	Message  string  `json:"message"`
+}
+
+// GetTypename returns notificationsForViewerQueryViewerErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerErrNotAuthorized) GetTypename() *string { return v.Typename }
+
+// GetMessage returns notificationsForViewerQueryViewerErrNotAuthorized.Message, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerErrNotAuthorized) GetMessage() string { return v.Message }
+
+// notificationsForViewerQueryViewerNotificationsNotificationsConnection includes the requested fields of the GraphQL type NotificationsConnection.
+type notificationsForViewerQueryViewerNotificationsNotificationsConnection struct {
+	UnseenCount *int `json:"unseenCount"`
+}
+
+// GetUnseenCount returns notificationsForViewerQueryViewerNotificationsNotificationsConnection.UnseenCount, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnection) GetUnseenCount() *int {
+	return v.UnseenCount
+}
+
+// notificationsForViewerQueryViewerViewerOrError includes the requested fields of the GraphQL interface ViewerOrError.
+//
+// notificationsForViewerQueryViewerViewerOrError is implemented by the following types:
+// notificationsForViewerQueryViewerErrNotAuthorized
+// notificationsForViewerQueryViewer
+type notificationsForViewerQueryViewerViewerOrError interface {
+	implementsGraphQLInterfacenotificationsForViewerQueryViewerViewerOrError()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() *string
+}
+
+func (v *notificationsForViewerQueryViewerErrNotAuthorized) implementsGraphQLInterfacenotificationsForViewerQueryViewerViewerOrError() {
+}
+func (v *notificationsForViewerQueryViewer) implementsGraphQLInterfacenotificationsForViewerQueryViewerViewerOrError() {
+}
+
+func __unmarshalnotificationsForViewerQueryViewerViewerOrError(b []byte, v *notificationsForViewerQueryViewerViewerOrError) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "ErrNotAuthorized":
+		*v = new(notificationsForViewerQueryViewerErrNotAuthorized)
+		return json.Unmarshal(b, *v)
+	case "Viewer":
+		*v = new(notificationsForViewerQueryViewer)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing ViewerOrError.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for notificationsForViewerQueryViewerViewerOrError: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalnotificationsForViewerQueryViewerViewerOrError(v *notificationsForViewerQueryViewerViewerOrError) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *notificationsForViewerQueryViewerErrNotAuthorized:
+		typename = "ErrNotAuthorized"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*notificationsForViewerQueryViewerErrNotAuthorized
+		}{typename, v}
+		return json.Marshal(result)
+	case *notificationsForViewerQueryViewer:
+		typename = "Viewer"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*notificationsForViewerQueryViewer
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for notificationsForViewerQueryViewerViewerOrError: "%T"`, v)
+	}
+}
+
 // publishSplitMutationPublishSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
 type publishSplitMutationPublishSplitErrInvalidInput struct {
 	Typename *string `json:"__typename"`
@@ -1884,6 +2071,241 @@ func (v *publishSplitMutationResponse) __premarshalJSON() (*__premarshalpublishS
 			if err != nil {
 				return nil, fmt.Errorf(
 					"unable to marshal publishSplitMutationResponse.PublishSplit: %w", err)
+			}
+		}
+	}
+	return &retval, nil
+}
+
+// registerPushTokenMutationRegisterUserPushTokenErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type registerPushTokenMutationRegisterUserPushTokenErrInvalidInput struct {
+	Typename *string `json:"__typename"`
+	Message  string  `json:"message"`
+}
+
+// GetTypename returns registerPushTokenMutationRegisterUserPushTokenErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationRegisterUserPushTokenErrInvalidInput) GetTypename() *string {
+	return v.Typename
+}
+
+// GetMessage returns registerPushTokenMutationRegisterUserPushTokenErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationRegisterUserPushTokenErrInvalidInput) GetMessage() string {
+	return v.Message
+}
+
+// registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized struct {
+	Typename *string `json:"__typename"`
+	Message  string  `json:"message"`
+}
+
+// GetTypename returns registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized) GetTypename() *string {
+	return v.Typename
+}
+
+// GetMessage returns registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized.Message, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized) GetMessage() string {
+	return v.Message
+}
+
+// registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser includes the requested fields of the GraphQL type ErrPushTokenBelongsToAnotherUser.
+type registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser struct {
+	Typename *string `json:"__typename"`
+	Message  string  `json:"message"`
+}
+
+// GetTypename returns registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser.Typename, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser) GetTypename() *string {
+	return v.Typename
+}
+
+// GetMessage returns registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser.Message, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser) GetMessage() string {
+	return v.Message
+}
+
+// registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload includes the requested fields of the GraphQL type RegisterUserPushTokenPayload.
+type registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload struct {
+	Typename *string `json:"__typename"`
+}
+
+// GetTypename returns registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload.Typename, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload) GetTypename() *string {
+	return v.Typename
+}
+
+// registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError includes the requested fields of the GraphQL interface RegisterUserPushTokenPayloadOrError.
+//
+// registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError is implemented by the following types:
+// registerPushTokenMutationRegisterUserPushTokenErrInvalidInput
+// registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized
+// registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser
+// registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload
+type registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError interface {
+	implementsGraphQLInterfaceregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() *string
+}
+
+func (v *registerPushTokenMutationRegisterUserPushTokenErrInvalidInput) implementsGraphQLInterfaceregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError() {
+}
+func (v *registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized) implementsGraphQLInterfaceregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError() {
+}
+func (v *registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser) implementsGraphQLInterfaceregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError() {
+}
+func (v *registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload) implementsGraphQLInterfaceregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError() {
+}
+
+func __unmarshalregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError(b []byte, v *registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "ErrInvalidInput":
+		*v = new(registerPushTokenMutationRegisterUserPushTokenErrInvalidInput)
+		return json.Unmarshal(b, *v)
+	case "ErrNotAuthorized":
+		*v = new(registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized)
+		return json.Unmarshal(b, *v)
+	case "ErrPushTokenBelongsToAnotherUser":
+		*v = new(registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser)
+		return json.Unmarshal(b, *v)
+	case "RegisterUserPushTokenPayload":
+		*v = new(registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing RegisterUserPushTokenPayloadOrError.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError(v *registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *registerPushTokenMutationRegisterUserPushTokenErrInvalidInput:
+		typename = "ErrInvalidInput"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*registerPushTokenMutationRegisterUserPushTokenErrInvalidInput
+		}{typename, v}
+		return json.Marshal(result)
+	case *registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized:
+		typename = "ErrNotAuthorized"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*registerPushTokenMutationRegisterUserPushTokenErrNotAuthorized
+		}{typename, v}
+		return json.Marshal(result)
+	case *registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser:
+		typename = "ErrPushTokenBelongsToAnotherUser"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*registerPushTokenMutationRegisterUserPushTokenErrPushTokenBelongsToAnotherUser
+		}{typename, v}
+		return json.Marshal(result)
+	case *registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload:
+		typename = "RegisterUserPushTokenPayload"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayload
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError: "%T"`, v)
+	}
+}
+
+// registerPushTokenMutationResponse is returned by registerPushTokenMutation on success.
+type registerPushTokenMutationResponse struct {
+	RegisterUserPushToken *registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError `json:"-"`
+}
+
+// GetRegisterUserPushToken returns registerPushTokenMutationResponse.RegisterUserPushToken, and is useful for accessing the field via an interface.
+func (v *registerPushTokenMutationResponse) GetRegisterUserPushToken() *registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError {
+	return v.RegisterUserPushToken
+}
+
+func (v *registerPushTokenMutationResponse) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*registerPushTokenMutationResponse
+		RegisterUserPushToken json.RawMessage `json:"registerUserPushToken"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.registerPushTokenMutationResponse = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.RegisterUserPushToken
+		src := firstPass.RegisterUserPushToken
+		if len(src) != 0 && string(src) != "null" {
+			*dst = new(registerPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError)
+			err = __unmarshalregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError(
+				src, *dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal registerPushTokenMutationResponse.RegisterUserPushToken: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalregisterPushTokenMutationResponse struct {
+	RegisterUserPushToken json.RawMessage `json:"registerUserPushToken"`
+}
+
+func (v *registerPushTokenMutationResponse) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *registerPushTokenMutationResponse) __premarshalJSON() (*__premarshalregisterPushTokenMutationResponse, error) {
+	var retval __premarshalregisterPushTokenMutationResponse
+
+	{
+
+		dst := &retval.RegisterUserPushToken
+		src := v.RegisterUserPushToken
+		if src != nil {
+			var err error
+			*dst, err = __marshalregisterPushTokenMutationRegisterUserPushTokenRegisterUserPushTokenPayloadOrError(
+				src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal registerPushTokenMutationResponse.RegisterUserPushToken: %w", err)
 			}
 		}
 	}
@@ -2474,12 +2896,18 @@ func (v *updateUserExperienceUpdateUserExperienceErrNotAuthorized) GetMessage() 
 
 // updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload includes the requested fields of the GraphQL type UpdateUserExperiencePayload.
 type updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload struct {
-	Typename *string `json:"__typename"`
+	Typename *string                                                                    `json:"__typename"`
+	Viewer   *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer `json:"viewer"`
 }
 
 // GetTypename returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload.Typename, and is useful for accessing the field via an interface.
 func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload) GetTypename() *string {
 	return v.Typename
+}
+
+// GetViewer returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload.Viewer, and is useful for accessing the field via an interface.
+func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload) GetViewer() *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer {
+	return v.Viewer
 }
 
 // updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadOrError includes the requested fields of the GraphQL interface UpdateUserExperiencePayloadOrError.
@@ -2567,6 +2995,32 @@ func __marshalupdateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloa
 		return nil, fmt.Errorf(
 			`unexpected concrete type for updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadOrError: "%T"`, v)
 	}
+}
+
+// updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer includes the requested fields of the GraphQL type Viewer.
+type updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer struct {
+	UserExperiences []updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience `json:"userExperiences"`
+}
+
+// GetUserExperiences returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer.UserExperiences, and is useful for accessing the field via an interface.
+func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewer) GetUserExperiences() []updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience {
+	return v.UserExperiences
+}
+
+// updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience includes the requested fields of the GraphQL type UserExperience.
+type updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience struct {
+	Type        UserExperienceType `json:"type"`
+	Experienced bool               `json:"experienced"`
+}
+
+// GetType returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience.Type, and is useful for accessing the field via an interface.
+func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience) GetType() UserExperienceType {
+	return v.Type
+}
+
+// GetExperienced returns updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience.Experienced, and is useful for accessing the field via an interface.
+func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadViewerUserExperiencesUserExperience) GetExperienced() bool {
+	return v.Experienced
 }
 
 // userByAddressQueryResponse is returned by userByAddressQuery on success.
@@ -3698,16 +4152,12 @@ func createUserMutation(
 
 // The query or mutation executed by getAuthNonceMutation.
 const getAuthNonceMutation_Operation = `
-mutation getAuthNonceMutation ($input: ChainAddressInput!) {
-	getAuthNonce(chainAddress: $input) {
+mutation getAuthNonceMutation {
+	getAuthNonce {
 		__typename
-		... on Error {
-			__typename
-			message
-		}
 		... on AuthNonce {
 			nonce
-			userExists
+			message
 		}
 	}
 }
@@ -3716,14 +4166,10 @@ mutation getAuthNonceMutation ($input: ChainAddressInput!) {
 func getAuthNonceMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	input ChainAddressInput,
 ) (*getAuthNonceMutationResponse, error) {
 	req_ := &graphql.Request{
 		OpName: "getAuthNonceMutation",
 		Query:  getAuthNonceMutation_Operation,
-		Variables: &__getAuthNonceMutationInput{
-			Input: input,
-		},
 	}
 	var err_ error
 
@@ -3822,6 +4268,46 @@ func logoutMutation(
 	return &data_, err_
 }
 
+// The query or mutation executed by notificationsForViewerQuery.
+const notificationsForViewerQuery_Operation = `
+query notificationsForViewerQuery {
+	viewer {
+		__typename
+		... on Error {
+			__typename
+			message
+		}
+		... on Viewer {
+			notifications(last: 1, before: null) {
+				unseenCount
+			}
+		}
+	}
+}
+`
+
+func notificationsForViewerQuery(
+	ctx_ context.Context,
+	client_ graphql.Client,
+) (*notificationsForViewerQueryResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "notificationsForViewerQuery",
+		Query:  notificationsForViewerQuery_Operation,
+	}
+	var err_ error
+
+	var data_ notificationsForViewerQueryResponse
+	resp_ := &graphql.Response{Data: &data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return &data_, err_
+}
+
 // The query or mutation executed by publishSplitMutation.
 const publishSplitMutation_Operation = `
 mutation publishSplitMutation ($input: PublishSplitInput!) {
@@ -3855,6 +4341,48 @@ func publishSplitMutation(
 	var err_ error
 
 	var data_ publishSplitMutationResponse
+	resp_ := &graphql.Response{Data: &data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return &data_, err_
+}
+
+// The query or mutation executed by registerPushTokenMutation.
+const registerPushTokenMutation_Operation = `
+mutation registerPushTokenMutation ($pushToken: String!) {
+	registerUserPushToken(pushToken: $pushToken) {
+		__typename
+		... on Error {
+			__typename
+			message
+		}
+		... on RegisterUserPushTokenPayload {
+			__typename
+		}
+	}
+}
+`
+
+func registerPushTokenMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	pushToken string,
+) (*registerPushTokenMutationResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "registerPushTokenMutation",
+		Query:  registerPushTokenMutation_Operation,
+		Variables: &__registerPushTokenMutationInput{
+			PushToken: pushToken,
+		},
+	}
+	var err_ error
+
+	var data_ registerPushTokenMutationResponse
 	resp_ := &graphql.Response{Data: &data_}
 
 	err_ = client_.MakeRequest(
@@ -3968,6 +4496,14 @@ mutation updateUserExperience ($input: UpdateUserExperienceInput!) {
 		... on Error {
 			__typename
 			message
+		}
+		... on UpdateUserExperiencePayload {
+			viewer {
+				userExperiences {
+					type
+					experienced
+				}
+			}
 		}
 	}
 }

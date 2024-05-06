@@ -348,6 +348,24 @@ func (t TokenChainAddress) String() string {
 	return fmt.Sprintf("%s+%d", t.Chain.NormalizeAddress(t.Address), t.Chain)
 }
 
+func (t TokenChainAddress) AsJSONKey() string {
+	return fmt.Sprintf("%s+%d", t.Address, t.Chain)
+}
+
+func (t *TokenChainAddress) FromJSONKey(key string) error {
+	res := strings.Split(key, "+")
+	if len(res) != 2 {
+		return fmt.Errorf("invalid token chain address: %v", key)
+	}
+	chain, err := strconv.Atoi(res[1])
+	if err != nil {
+		return err
+	}
+	t.Chain = Chain(chain)
+	t.Address = Address(res[0])
+	return nil
+}
+
 // Value implements the driver.Valuer interface
 func (t TokenChainAddress) Value() (driver.Value, error) {
 	return t.String(), nil

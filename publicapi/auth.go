@@ -110,6 +110,14 @@ func (api AuthAPI) NewMagicLinkAuthenticator(token token.Token) auth.Authenticat
 	return authenticator
 }
 
+/*
+TODO
+
+func (api AuthAPI) NewPrivyAuthenticator(authToken string) auth.Authenticator {
+	return privy.NewAuthenticator(api.repos.UserRepository, api.queries, api.privyClient, authToken)
+}
+*/
+
 func (api AuthAPI) NewOneTimeLoginTokenAuthenticator(loginToken string) auth.Authenticator {
 	authenticator := auth.OneTimeLoginTokenAuthenticator{
 		ConsumedTokenCache: api.oneTimeLoginCache,

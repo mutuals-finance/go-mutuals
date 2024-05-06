@@ -6,6 +6,7 @@ import (
 	"fmt"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/service/logger"
+	"math/big"
 	"time"
 
 	"github.com/SplitFi/go-splitfi/service/persist"
@@ -217,19 +218,19 @@ func (a *AssetRepository) BulkUpsert(pCtx context.Context, pAssets []persist.Ass
 	// Update tokens with the existing data if the token already exists.
 	for i := range assets {
 		a := &assets[i]
-		(*a).ID = upserted[i].ID
-		(*a).CreationTime = time.Time(upserted[i].CreatedAt)
-		(*a).LastUpdated = time.Time(upserted[i].LastUpdated)
+		(*a).ID = upserted[i].Asset.ID
+		(*a).CreationTime = time.Time(upserted[i].Asset.CreatedAt)
+		(*a).LastUpdated = time.Time(upserted[i].Asset.LastUpdated)
 	}
 
-	return upserted[0].LastUpdated, assets, nil
+	return upserted[0].Asset.LastUpdated, assets, nil
 
 }
 
 func (a *AssetRepository) excludeZeroBalanceAssets(pCtx context.Context, pAssets []persist.AssetDB) ([]persist.AssetDB, error) {
 	newAssets := make([]persist.AssetDB, 0, len(pAssets))
 	for _, asset := range pAssets {
-		if asset.Balance <= 0 {
+		if asset.Balance.BigInt().Cmp(new(big.Int)) <= 0 {
 			logger.For(pCtx).Warnf("Asset %s from %s has zero balance", asset.TokenAddress, asset.OwnerAddress)
 			continue
 		}

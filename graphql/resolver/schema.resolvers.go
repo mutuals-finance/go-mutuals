@@ -74,6 +74,16 @@ func (r *mutationResolver) UpdateUserInfo(ctx context.Context, input model.Updat
 	return output, nil
 }
 
+// RegisterUserPushToken is the resolver for the registerUserPushToken field.
+func (r *mutationResolver) RegisterUserPushToken(ctx context.Context, pushToken string) (model.RegisterUserPushTokenPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: RegisterUserPushToken - registerUserPushToken"))
+}
+
+// UnregisterUserPushToken is the resolver for the unregisterUserPushToken field.
+func (r *mutationResolver) UnregisterUserPushToken(ctx context.Context, pushToken string) (model.UnregisterUserPushTokenPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: UnregisterUserPushToken - unregisterUserPushToken"))
+}
+
 // SetSpamPreference is the resolver for the setSpamPreference field.
 func (r *mutationResolver) SetSpamPreference(ctx context.Context, input model.SetSpamPreferenceInput) (model.SetSpamPreferencePayloadOrError, error) {
 	err := publicapi.For(ctx).Token.SetSpamPreference(ctx, input.Tokens, input.IsSpam)
@@ -100,18 +110,15 @@ func (r *mutationResolver) DeepRefresh(ctx context.Context, input model.DeepRefr
 }
 
 // GetAuthNonce is the resolver for the getAuthNonce field.
-func (r *mutationResolver) GetAuthNonce(ctx context.Context, chainAddress persist.ChainAddress) (model.GetAuthNoncePayloadOrError, error) {
-	nonce, userExists, err := publicapi.For(ctx).Auth.GetAuthNonce(ctx, chainAddress)
-	if err != nil {
-		return nil, err
-	}
+func (r *mutationResolver) GetAuthNonce(ctx context.Context) (model.GetAuthNoncePayloadOrError, error) {
+	nonce, message, err := publicapi.For(ctx).Auth.GetAuthNonce(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &model.AuthNonce{
-		Nonce:      &nonce,
-		UserExists: &userExists,
+		Nonce:   &nonce,
+		Message: &message,
 	}
 
 	return output, nil
@@ -296,10 +303,8 @@ func (r *mutationResolver) ClearAllNotifications(ctx context.Context) (*model.Cl
 
 // UpdateNotificationSettings is the resolver for the updateNotificationSettings field.
 func (r *mutationResolver) UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error) {
-	err := publicapi.For(ctx).User.UpdateUserNotificationSettings(ctx, persist.UserNotificationSettings{
-		SomeoneFollowedYou:     settings.SomeoneFollowedYou,
-		SomeoneViewedYourSplit: settings.SomeoneViewedYourSplit,
-	})
+	//TODO
+	err := publicapi.For(ctx).User.UpdateUserNotificationSettings(ctx, persist.UserNotificationSettings{})
 	if err != nil {
 		return nil, err
 	}
@@ -617,6 +622,11 @@ func (r *viewerResolver) Notifications(ctx context.Context, obj *model.Viewer, b
 // NotificationSettings is the resolver for the notificationSettings field.
 func (r *viewerResolver) NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error) {
 	return resolveViewerNotificationSettings(ctx)
+}
+
+// UserExperiences is the resolver for the userExperiences field.
+func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer) ([]*model.UserExperience, error) {
+	panic(fmt.Errorf("not implemented: UserExperiences - userExperiences"))
 }
 
 // Splits is the resolver for the splits field.

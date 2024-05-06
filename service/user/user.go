@@ -140,7 +140,7 @@ func AddWalletToUser(pCtx context.Context, pUserID persist.DBID, pChainAddress p
 		return err
 	}
 
-	if authResult.User != nil && !authResult.User.Universal.Bool() {
+	if authResult.User != nil && !authResult.User.Universal {
 		return persist.ErrAddressOwnedByUser{ChainAddress: pChainAddress, OwnerID: authResult.User.ID}
 	}
 

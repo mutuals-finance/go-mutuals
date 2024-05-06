@@ -10,11 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/graphql/model"
 	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/mediamapper"
 	"github.com/SplitFi/go-splitfi/service/notifications"
 	"github.com/SplitFi/go-splitfi/service/twitter"
 	"github.com/SplitFi/go-splitfi/validate"
@@ -27,7 +25,6 @@ import (
 	"github.com/SplitFi/go-splitfi/publicapi"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/util"
 )
 
 var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
@@ -99,18 +96,18 @@ func (r *Resolver) authMechanismToAuthenticator(ctx context.Context, m model.Aut
 	authApi := publicapi.For(ctx).Auth
 
 	if debugtools.Enabled {
-		if env.GetString("ENV") == "local" && m.Debug != nil {
+		if debugtools.IsDebugEnv() && m.Debug != nil {
 			return authApi.NewDebugAuthenticator(ctx, *m.Debug)
 		}
 	}
 
 	if m.Eoa != nil && m.Eoa.ChainPubKey != nil {
-		return authApi.NewNonceAuthenticator(*m.Eoa.ChainPubKey, m.Eoa.Nonce, m.Eoa.Signature, persist.WalletTypeEOA), nil
+		return authApi.NewNonceAuthenticator(*m.Eoa.ChainPubKey, m.Eoa.Nonce, m.Eoa.Message, m.Eoa.Signature, persist.WalletTypeEOA), nil
 	}
 
 	if m.GnosisSafe != nil {
 		// GnosisSafe passes an empty signature
-		return authApi.NewNonceAuthenticator(persist.NewChainPubKey(persist.PubKey(m.GnosisSafe.Address), persist.ChainETH), m.GnosisSafe.Nonce, "0x", persist.WalletTypeGnosis), nil
+		return authApi.NewNonceAuthenticator(persist.NewChainPubKey(persist.PubKey(m.GnosisSafe.Address), persist.ChainETH), m.GnosisSafe.Nonce, m.GnosisSafe.Message, "0x", persist.WalletTypeGnosis), nil
 	}
 
 	if m.MagicLink != nil && m.MagicLink.Token != "" {
@@ -121,6 +118,16 @@ func (r *Resolver) authMechanismToAuthenticator(ctx context.Context, m model.Aut
 		return authApi.NewMagicLinkAuthenticator(*t), nil
 	}
 
+	if m.OneTimeLoginToken != nil && m.OneTimeLoginToken.Token != "" {
+		return authApi.NewOneTimeLoginTokenAuthenticator(m.OneTimeLoginToken.Token), nil
+	}
+
+	/*
+	   TODO
+	   if m.Privy != nil && m.Privy.Token != "" {
+	   		return authApi.NewPrivyAuthenticator(m.Privy.Token), nil
+	   	}
+	*/
 	return nil, errNoAuthMechanismFound
 }
 
@@ -386,11 +393,9 @@ func resolveViewerNotificationSettings(ctx context.Context) (*model.Notification
 }
 
 func notificationSettingsToModel(ctx context.Context, user *db.User) *model.NotificationSettings {
-	settings := user.NotificationSettings
-	return &model.NotificationSettings{
-		SomeoneFollowedYou:     settings.SomeoneFollowedYou,
-		SomeoneViewedYourSplit: settings.SomeoneViewedYourSplit,
-	}
+	// TODO notifications
+	// settings := user.NotificationSettings
+	return &model.NotificationSettings{}
 }
 
 func resolveNewNotificationSubscription(ctx context.Context) <-chan model.Notification {
@@ -730,171 +735,5 @@ func pageInfoToModel(ctx context.Context, pageInfo publicapi.PageInfo) *model.Pa
 		HasNextPage:     pageInfo.HasNextPage,
 		StartCursor:     pageInfo.StartCursor,
 		EndCursor:       pageInfo.EndCursor,
-	}
-}
-
-func getPreviewUrls(ctx context.Context, media persist.Media, options ...mediamapper.Option) *model.PreviewURLSet {
-	url := media.ThumbnailURL.String()
-	if (media.MediaType == persist.MediaTypeImage || media.MediaType == persist.MediaTypeSVG || media.MediaType == persist.MediaTypeGIF) && url == "" {
-		url = media.MediaURL.String()
-	}
-	preview := remapLargeImageUrls(url)
-	mm := mediamapper.For(ctx)
-
-	live := media.LivePreviewURL.String()
-	if media.LivePreviewURL == "" {
-		live = media.MediaURL.String()
-	}
-
-	return &model.PreviewURLSet{
-		Raw:        &preview,
-		Thumbnail:  util.ToPointer(mm.GetThumbnailImageUrl(preview, options...)),
-		Small:      util.ToPointer(mm.GetSmallImageUrl(preview, options...)),
-		Medium:     util.ToPointer(mm.GetMediumImageUrl(preview, options...)),
-		Large:      util.ToPointer(mm.GetLargeImageUrl(preview, options...)),
-		SrcSet:     util.ToPointer(mm.GetSrcSet(preview, options...)),
-		LiveRender: &live,
-	}
-}
-
-func getImageMedia(ctx context.Context, media persist.Media) model.ImageMedia {
-	url := remapLargeImageUrls(media.MediaURL.String())
-
-	return model.ImageMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: &url,
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getGIFMedia(ctx context.Context, media persist.Media) model.GIFMedia {
-	url := remapLargeImageUrls(media.MediaURL.String())
-
-	return model.GIFMedia{
-		PreviewURLs:       getPreviewUrls(ctx, media),
-		StaticPreviewURLs: getPreviewUrls(ctx, media, mediamapper.WithStaticImage()),
-		MediaURL:          util.ToPointer(media.MediaURL.String()),
-		MediaType:         (*string)(&media.MediaType),
-		ContentRenderURL:  &url,
-		Dimensions:        mediaToDimensions(media),
-	}
-}
-
-// Temporary method for handling the large "dead ringers" NFT image. This remapping
-// step should actually happen as part of generating resized images with imgix.
-func remapLargeImageUrls(url string) string {
-	return url
-}
-
-func getVideoMedia(ctx context.Context, media persist.Media) model.VideoMedia {
-	asString := media.MediaURL.String()
-	videoUrls := model.VideoURLSet{
-		Raw:    &asString,
-		Small:  &asString,
-		Medium: &asString,
-		Large:  &asString,
-	}
-
-	return model.VideoMedia{
-		PreviewURLs:       getPreviewUrls(ctx, media),
-		MediaURL:          util.ToPointer(media.MediaURL.String()),
-		MediaType:         (*string)(&media.MediaType),
-		ContentRenderURLs: &videoUrls,
-		Dimensions:        mediaToDimensions(media),
-	}
-}
-
-func getAudioMedia(ctx context.Context, media persist.Media) model.AudioMedia {
-	return model.AudioMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getTextMedia(ctx context.Context, media persist.Media) model.TextMedia {
-	return model.TextMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getPdfMedia(ctx context.Context, media persist.Media) model.PDFMedia {
-	return model.PDFMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getHtmlMedia(ctx context.Context, media persist.Media) model.HTMLMedia {
-	return model.HTMLMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getJsonMedia(ctx context.Context, media persist.Media) model.JSONMedia {
-	return model.JSONMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getGltfMedia(ctx context.Context, media persist.Media) model.GltfMedia {
-	return model.GltfMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getUnknownMedia(ctx context.Context, media persist.Media) model.UnknownMedia {
-	return model.UnknownMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func getInvalidMedia(ctx context.Context, media persist.Media) model.InvalidMedia {
-	return model.InvalidMedia{
-		PreviewURLs:      getPreviewUrls(ctx, media),
-		MediaURL:         util.ToPointer(media.MediaURL.String()),
-		MediaType:        (*string)(&media.MediaType),
-		ContentRenderURL: (*string)(&media.MediaURL),
-		Dimensions:       mediaToDimensions(media),
-	}
-}
-
-func mediaToDimensions(media persist.Media) *model.MediaDimensions {
-	var aspect float64
-	if media.Dimensions.Height > 0 && media.Dimensions.Width > 0 {
-		aspect = float64(media.Dimensions.Width) / float64(media.Dimensions.Height)
-	}
-
-	return &model.MediaDimensions{
-		Width:       &media.Dimensions.Height,
-		Height:      &media.Dimensions.Width,
-		AspectRatio: &aspect,
 	}
 }

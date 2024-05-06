@@ -93,6 +93,11 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
+	"RegisterUserPushTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(RegisterUserPushTokenPayloadOrError)
+		return obj, ok
+	},
+
 	"RemoveUserWalletsPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(RemoveUserWalletsPayloadOrError)
 		return obj, ok
@@ -145,6 +150,11 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"TokenByIdOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(TokenByIDOrError)
+		return obj, ok
+	},
+
+	"UnregisterUserPushTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UnregisterUserPushTokenPayloadOrError)
 		return obj, ok
 	},
 

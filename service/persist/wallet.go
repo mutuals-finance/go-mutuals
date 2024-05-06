@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"strings"
 	"time"
@@ -58,9 +59,9 @@ type ChainPubKey struct {
 	chain     Chain
 }
 
-// IsGalleryUserOrAddress is an empty function that satisfies the gqlgen IsGalleryUserOrAddress interface,
+// IsSplitFiUserOrAddress is an empty function that satisfies the gqlgen IsSplitFiUserOrAddress interface,
 // allowing ChainAddress to be used in GraphQL resolvers that return the GalleryUserOrAddress type.
-func (c *ChainAddress) IsGalleryUserOrAddress() {}
+func (c *ChainAddress) IsSplitFiUserOrAddress() {}
 
 func NewChainAddress(address Address, chain Chain) ChainAddress {
 	ca := ChainAddress{
@@ -398,6 +399,10 @@ func (n *Address) Scan(value interface{}) error {
 	return nil
 }
 
+func (n Address) Address() common.Address {
+	return common.HexToAddress(n.String())
+}
+
 func (p PubKey) String() string {
 	return string(p)
 }
@@ -424,9 +429,9 @@ type ErrWalletNotFoundByID struct{ ID DBID }
 func (e ErrWalletNotFoundByID) Unwrap() error { return errWalletNotFound }
 func (e ErrWalletNotFoundByID) Error() string { return "wallet not found by id: " + e.ID.String() }
 
-type ErrWalletNotFoundByAddress struct{ Address L1ChainAddress }
+type ErrWalletNotFoundByAddress struct{ Address ChainAddress }
 
 func (e ErrWalletNotFoundByAddress) Unwrap() error { return errWalletNotFound }
 func (e ErrWalletNotFoundByAddress) Error() string {
-	return fmt.Sprintf("wallet not found by chain=%d; address = %s", e.Address.L1Chain(), e.Address.Address())
+	return fmt.Sprintf("wallet not found by chain=%d; address = %s", e.Address.Chain(), e.Address.Address())
 }

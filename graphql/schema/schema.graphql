@@ -405,7 +405,7 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 
   notificationSettings: NotificationSettings @goField(forceResolver: true)
 
-#  TODO userExperiences: [UserExperience!] @goField(forceResolver: true)
+  userExperiences: [UserExperience!] @goField(forceResolver: true)
 }
 
 type NotificationSettings {
@@ -656,6 +656,26 @@ type UpdateUserInfoPayload {
   viewer: Viewer
 }
 
+union RegisterUserPushTokenPayloadOrError =
+  RegisterUserPushTokenPayload
+  | ErrNotAuthorized
+  | ErrInvalidInput
+  | ErrPushTokenBelongsToAnotherUser
+
+type RegisterUserPushTokenPayload {
+  viewer: Viewer
+}
+
+union UnregisterUserPushTokenPayloadOrError =
+  UnregisterUserPushTokenPayload
+  | ErrNotAuthorized
+  | ErrInvalidInput
+  | ErrPushTokenBelongsToAnotherUser
+
+type UnregisterUserPushTokenPayload {
+  viewer: Viewer
+}
+
 union RefreshTokenPayloadOrError = RefreshTokenPayload | ErrInvalidInput | ErrSyncFailed
 
 type RefreshTokenPayload {
@@ -664,10 +684,10 @@ type RefreshTokenPayload {
 
 type AuthNonce {
   nonce: String
-  userExists: Boolean
+  message: String
 }
 
-union GetAuthNoncePayloadOrError = AuthNonce | ErrDoesNotOwnRequiredToken
+union GetAuthNoncePayloadOrError = AuthNonce
 
 type ErrAuthenticationFailed implements Error {
   message: String!
@@ -735,16 +755,23 @@ type ErrSyncFailed implements Error {
   message: String!
 }
 
+type ErrPushTokenBelongsToAnotherUser implements Error {
+  message: String!
+}
+
 input AuthMechanism {
   eoa: EoaAuth
   gnosisSafe: GnosisSafeAuth
   debug: DebugAuth
   magicLink: MagicLinkAuth
+  oneTimeLoginToken: OneTimeLoginTokenAuth
+  privy: PrivyAuth
 }
 
 input EoaAuth {
   chainPubKey: ChainPubKeyInput!
   nonce: String!
+  message: String!
   signature: String! @scrub
 }
 
@@ -773,9 +800,18 @@ input DebugAuth @restrictEnvironment(allowed: ["local", "development", "sandbox"
 input GnosisSafeAuth {
   address: Address!
   nonce: String!
+  message: String!
 }
 
 input MagicLinkAuth {
+  token: String!
+}
+
+input PrivyAuth {
+  token: String!
+}
+
+input OneTimeLoginTokenAuth {
   token: String!
 }
 
@@ -1114,6 +1150,8 @@ type Mutation {
   ): AddUserWalletPayloadOrError @authRequired
   removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsPayloadOrError @authRequired
   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
+  registerUserPushToken(pushToken: String!): RegisterUserPushTokenPayloadOrError @authRequired
+  unregisterUserPushToken(pushToken: String!): UnregisterUserPushTokenPayloadOrError @authRequired
 
   # Token Mutations
   setSpamPreference(input: SetSpamPreferenceInput!): SetSpamPreferencePayloadOrError @authRequired
@@ -1121,7 +1159,7 @@ type Mutation {
   refreshToken(tokenId: DBID!): RefreshTokenPayloadOrError
   deepRefresh(input: DeepRefreshInput!): DeepRefreshPayloadOrError @authRequired
 
-  getAuthNonce(chainAddress: ChainAddressInput!): GetAuthNoncePayloadOrError
+  getAuthNonce: GetAuthNoncePayloadOrError
 
   createUser(authMechanism: AuthMechanism!, input: CreateUserInput!): CreateUserPayloadOrError
   updateEmail(input: UpdateEmailInput!): UpdateEmailPayloadOrError @authRequired

@@ -3,6 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/validate"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"time"
@@ -12,10 +17,8 @@ import (
 	"cloud.google.com/go/storage"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/middleware"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
 	"github.com/SplitFi/go-splitfi/service/redis"
@@ -26,16 +29,12 @@ import (
 	"github.com/SplitFi/go-splitfi/service/task"
 	"github.com/SplitFi/go-splitfi/service/throttle"
 	"github.com/SplitFi/go-splitfi/util"
-	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/everFinance/goar"
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 	shell "github.com/ipfs/go-ipfs-api"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/api/option"
 )
@@ -54,8 +53,7 @@ func Init() {
 
 	ctx := context.Background()
 	c := ClientInit(ctx)
-	provider, _ := multichain.NewMultichainProvider(ctx, SetDefaults)
-	router := CoreInit(ctx, c, provider)
+	router := CoreInit(ctx, c)
 	http.Handle("/", router)
 }
 
@@ -100,9 +98,19 @@ func ClientInit(ctx context.Context) *Clients {
 	}
 }
 
-// CoreInit initializes core server functionality. This is abstracted
-// so the test server can also utilize it
-func CoreInit(ctx context.Context, c *Clients, provider *multichain.Provider) *gin.Engine {
+func CoreInit(ctx context.Context, c *Clients) *gin.Engine {
+	lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
+	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
+	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
+	oneTimeLoginCache := redis.NewCache(redis.OneTimeLoginCache)
+	return CoreInitHandlerF(ctx, func(r *gin.Engine) {
+		HandlersInit(r, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, authRefreshCache, oneTimeLoginCache, c.MagicLinkClient)
+	})
+}
+
+// CoreInitHandlerF initializes core server functionality.
+// This is abstracted so the test server can also utilize it
+func CoreInitHandlerF(ctx context.Context, handlerInitF func(*gin.Engine)) *gin.Engine {
 	logger.For(nil).Info("initializing server...")
 
 	if env.GetString("ENV") != "production" {
@@ -119,13 +127,9 @@ func CoreInit(ctx context.Context, c *Clients, provider *multichain.Provider) *g
 		validate.RegisterCustomValidators(v)
 	}
 
-	lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
-	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
-	socialCache := redis.NewCache(redis.SocialCache)
-	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
-	oneTimeLoginCache := redis.NewCache(redis.OneTimeLoginCache)
+	handlerInitF(router)
 
-	return handlersInit(router, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, provider, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache, c.MagicLinkClient)
+	return router
 }
 
 func newSecretsClient() *secretmanager.Client {
@@ -159,7 +163,7 @@ func SetDefaults() {
 	viper.SetDefault("PORT", 4000)
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "gallery_backend")
+	viper.SetDefault("POSTGRES_USER", "postgres")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("IPFS_URL", "https://gallery.infura-ipfs.io")

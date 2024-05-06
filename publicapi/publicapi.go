@@ -54,13 +54,16 @@ type PublicAPI struct {
 	Search        *SearchAPI
 }
 
-func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell,
-	arweaveClient *goar.Client, storageClient *storage.Client, multichainProvider *multichain.Provider, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
+func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
+	multichainProvider := multichain.NewMultichainProvider(ctx, repos, queries, ethClient, taskClient)
+	return NewWithMultichainProvider(ctx, disableDataloaderCaching, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apq, authRefreshCache, oneTimeLoginCache, magicClient, multichainProvider)
+}
 
+func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API, multichainProvider *multichain.Provider) *PublicAPI {
 	loaders := dataloader.NewLoaders(ctx, queries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
 	validator := validate.WithCustomValidators()
-	// privyClient := privy.NewPrivyClient(httpClient)
-	// highlightProvider := highlight.NewProvider(httpClient)
+
+	//privyClient := privy.NewPrivyClient(httpClient)
 
 	return &PublicAPI{
 		repos:         repos,

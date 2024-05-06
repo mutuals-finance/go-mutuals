@@ -16,27 +16,17 @@ type ChainProvider struct {
 }
 
 type EthereumProvider struct {
-	common.AssetsIncrementalTokenFetcher
-	common.TokensByTokenIdentifiersFetcher
 	common.Verifier
 }
 
 type OptimismProvider struct {
-	common.AssetsIncrementalTokenFetcher
-	common.TokensByTokenIdentifiersFetcher
 }
 
 type ArbitrumProvider struct {
-	common.AssetsIncrementalTokenFetcher
-	common.TokensByTokenIdentifiersFetcher
 }
 
 type BaseProvider struct {
-	common.AssetsIncrementalTokenFetcher
-	common.TokensByTokenIdentifiersFetcher
 }
 
 type PolygonProvider struct {
-	common.AssetsIncrementalTokenFetcher
-	common.TokensByTokenIdentifiersFetcher
 }

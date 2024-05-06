@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	viper.SetDefault("POSTGRES_USER", "splitfi_migrator")
+	viper.SetDefault("POSTGRES_USER", "postgres")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("POSTGRES_HOST", "localhost")

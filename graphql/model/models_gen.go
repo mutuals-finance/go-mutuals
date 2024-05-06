@@ -90,6 +90,10 @@ type RefreshTokenPayloadOrError interface {
 	IsRefreshTokenPayloadOrError()
 }
 
+type RegisterUserPushTokenPayloadOrError interface {
+	IsRegisterUserPushTokenPayloadOrError()
+}
+
 type RemoveUserWalletsPayloadOrError interface {
 	IsRemoveUserWalletsPayloadOrError()
 }
@@ -136,6 +140,10 @@ type SplitFiUserOrWallet interface {
 
 type TokenByIDOrError interface {
 	IsTokenByIDOrError()
+}
+
+type UnregisterUserPushTokenPayloadOrError interface {
+	IsUnregisterUserPushTokenPayloadOrError()
 }
 
 type UnsubscribeFromEmailTypePayloadOrError interface {
@@ -254,15 +262,17 @@ func (AudioMedia) IsMediaSubtype() {}
 func (AudioMedia) IsMedia()        {}
 
 type AuthMechanism struct {
-	Eoa        *EoaAuth        `json:"eoa"`
-	GnosisSafe *GnosisSafeAuth `json:"gnosisSafe"`
-	Debug      *DebugAuth      `json:"debug"`
-	MagicLink  *MagicLinkAuth  `json:"magicLink"`
+	Eoa               *EoaAuth               `json:"eoa"`
+	GnosisSafe        *GnosisSafeAuth        `json:"gnosisSafe"`
+	Debug             *DebugAuth             `json:"debug"`
+	MagicLink         *MagicLinkAuth         `json:"magicLink"`
+	OneTimeLoginToken *OneTimeLoginTokenAuth `json:"oneTimeLoginToken"`
+	Privy             *PrivyAuth             `json:"privy"`
 }
 
 type AuthNonce struct {
-	Nonce      *string `json:"nonce"`
-	UserExists *bool   `json:"userExists"`
+	Nonce   *string `json:"nonce"`
+	Message *string `json:"message"`
 }
 
 func (AuthNonce) IsGetAuthNoncePayloadOrError() {}
@@ -354,6 +364,7 @@ type EmailNotificationSettings struct {
 type EoaAuth struct {
 	ChainPubKey *persist.ChainPubKey `json:"chainPubKey"`
 	Nonce       string               `json:"nonce"`
+	Message     string               `json:"message"`
 	Signature   string               `json:"signature"`
 }
 
@@ -391,11 +402,10 @@ type ErrDoesNotOwnRequiredToken struct {
 	Message string `json:"message"`
 }
 
-func (ErrDoesNotOwnRequiredToken) IsGetAuthNoncePayloadOrError() {}
-func (ErrDoesNotOwnRequiredToken) IsAuthorizationError()         {}
-func (ErrDoesNotOwnRequiredToken) IsError()                      {}
-func (ErrDoesNotOwnRequiredToken) IsLoginPayloadOrError()        {}
-func (ErrDoesNotOwnRequiredToken) IsCreateUserPayloadOrError()   {}
+func (ErrDoesNotOwnRequiredToken) IsAuthorizationError()       {}
+func (ErrDoesNotOwnRequiredToken) IsError()                    {}
+func (ErrDoesNotOwnRequiredToken) IsLoginPayloadOrError()      {}
+func (ErrDoesNotOwnRequiredToken) IsCreateUserPayloadOrError() {}
 
 type ErrInvalidInput struct {
 	Message    string   `json:"message"`
@@ -412,6 +422,8 @@ func (ErrInvalidInput) IsSearchSplitsPayloadOrError()                    {}
 func (ErrInvalidInput) IsAddUserWalletPayloadOrError()                   {}
 func (ErrInvalidInput) IsRemoveUserWalletsPayloadOrError()               {}
 func (ErrInvalidInput) IsUpdateUserInfoPayloadOrError()                  {}
+func (ErrInvalidInput) IsRegisterUserPushTokenPayloadOrError()           {}
+func (ErrInvalidInput) IsUnregisterUserPushTokenPayloadOrError()         {}
 func (ErrInvalidInput) IsRefreshTokenPayloadOrError()                    {}
 func (ErrInvalidInput) IsError()                                         {}
 func (ErrInvalidInput) IsCreateUserPayloadOrError()                      {}
@@ -458,26 +470,36 @@ type ErrNotAuthorized struct {
 	Cause   AuthorizationError `json:"cause"`
 }
 
-func (ErrNotAuthorized) IsViewerOrError()                        {}
-func (ErrNotAuthorized) IsSetSpamPreferencePayloadOrError()      {}
-func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()          {}
-func (ErrNotAuthorized) IsRemoveUserWalletsPayloadOrError()      {}
-func (ErrNotAuthorized) IsUpdateUserInfoPayloadOrError()         {}
-func (ErrNotAuthorized) IsError()                                {}
-func (ErrNotAuthorized) IsDeepRefreshPayloadOrError()            {}
-func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()         {}
-func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()    {}
-func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError() {}
-func (ErrNotAuthorized) IsCreateSplitPayloadOrError()            {}
-func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()        {}
-func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()      {}
-func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()            {}
-func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()       {}
-func (ErrNotAuthorized) IsUpdateSplitPayloadOrError()            {}
-func (ErrNotAuthorized) IsPublishSplitPayloadOrError()           {}
-func (ErrNotAuthorized) IsUpdatePrimaryWalletPayloadOrError()    {}
-func (ErrNotAuthorized) IsAdminAddWalletPayloadOrError()         {}
-func (ErrNotAuthorized) IsUpdateUserExperiencePayloadOrError()   {}
+func (ErrNotAuthorized) IsViewerOrError()                         {}
+func (ErrNotAuthorized) IsSetSpamPreferencePayloadOrError()       {}
+func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()           {}
+func (ErrNotAuthorized) IsRemoveUserWalletsPayloadOrError()       {}
+func (ErrNotAuthorized) IsUpdateUserInfoPayloadOrError()          {}
+func (ErrNotAuthorized) IsRegisterUserPushTokenPayloadOrError()   {}
+func (ErrNotAuthorized) IsUnregisterUserPushTokenPayloadOrError() {}
+func (ErrNotAuthorized) IsError()                                 {}
+func (ErrNotAuthorized) IsDeepRefreshPayloadOrError()             {}
+func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()          {}
+func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()     {}
+func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError()  {}
+func (ErrNotAuthorized) IsCreateSplitPayloadOrError()             {}
+func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()         {}
+func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()       {}
+func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()             {}
+func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()        {}
+func (ErrNotAuthorized) IsUpdateSplitPayloadOrError()             {}
+func (ErrNotAuthorized) IsPublishSplitPayloadOrError()            {}
+func (ErrNotAuthorized) IsUpdatePrimaryWalletPayloadOrError()     {}
+func (ErrNotAuthorized) IsAdminAddWalletPayloadOrError()          {}
+func (ErrNotAuthorized) IsUpdateUserExperiencePayloadOrError()    {}
+
+type ErrPushTokenBelongsToAnotherUser struct {
+	Message string `json:"message"`
+}
+
+func (ErrPushTokenBelongsToAnotherUser) IsRegisterUserPushTokenPayloadOrError()   {}
+func (ErrPushTokenBelongsToAnotherUser) IsUnregisterUserPushTokenPayloadOrError() {}
+func (ErrPushTokenBelongsToAnotherUser) IsError()                                 {}
 
 type ErrSessionInvalidated struct {
 	Message string `json:"message"`
@@ -560,6 +582,7 @@ func (GltfMedia) IsMedia()        {}
 type GnosisSafeAuth struct {
 	Address persist.Address `json:"address"`
 	Nonce   string          `json:"nonce"`
+	Message string          `json:"message"`
 }
 
 type GroupNotificationUserEdge struct {
@@ -660,6 +683,10 @@ type NotificationsConnection struct {
 	PageInfo    *PageInfo           `json:"pageInfo"`
 }
 
+type OneTimeLoginTokenAuth struct {
+	Token string `json:"token"`
+}
+
 type PageInfo struct {
 	Total           *int   `json:"total"`
 	Size            int    `json:"size"`
@@ -702,6 +729,10 @@ type PreviewURLSet struct {
 	Blurhash   *string `json:"blurhash"`
 }
 
+type PrivyAuth struct {
+	Token string `json:"token"`
+}
+
 type PublishSplitInput struct {
 	SplitID persist.DBID `json:"splitId"`
 	EditID  string       `json:"editId"`
@@ -731,6 +762,12 @@ type RefreshTokenPayload struct {
 }
 
 func (RefreshTokenPayload) IsRefreshTokenPayloadOrError() {}
+
+type RegisterUserPushTokenPayload struct {
+	Viewer *Viewer `json:"viewer"`
+}
+
+func (RegisterUserPushTokenPayload) IsRegisterUserPushTokenPayloadOrError() {}
 
 type RemoveUserWalletsPayload struct {
 	Viewer *Viewer `json:"viewer"`
@@ -896,6 +933,12 @@ type UnknownMedia struct {
 
 func (UnknownMedia) IsMediaSubtype() {}
 func (UnknownMedia) IsMedia()        {}
+
+type UnregisterUserPushTokenPayload struct {
+	Viewer *Viewer `json:"viewer"`
+}
+
+func (UnregisterUserPushTokenPayload) IsUnregisterUserPushTokenPayloadOrError() {}
 
 type UnsubscribeFromEmailTypeInput struct {
 	Type  EmailUnsubscriptionType `json:"type"`
@@ -1094,6 +1137,7 @@ type Viewer struct {
 	// Seen notifications come after unseen notifications
 	Notifications        *NotificationsConnection `json:"notifications"`
 	NotificationSettings *NotificationSettings    `json:"notificationSettings"`
+	UserExperiences      []*UserExperience        `json:"userExperiences"`
 }
 
 func (Viewer) IsNode()          {}

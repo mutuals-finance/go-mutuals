@@ -33,7 +33,6 @@ import (
 	"github.com/SplitFi/go-splitfi/middleware"
 	"github.com/SplitFi/go-splitfi/publicapi"
 	"github.com/SplitFi/go-splitfi/service/mediamapper"
-	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/notifications"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
 	"github.com/SplitFi/go-splitfi/service/throttle"
@@ -45,24 +44,26 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
-func handlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, stg *storage.Client, mcProvider *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
-
-	graphqlGroup := router.Group("/splitfi/graphql")
-	graphqlHandlersInit(graphqlGroup, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, stg, mcProvider, throttler, taskClient, pub, lock, secrets, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache, magicClient)
-
-	router.GET("/alive", healthCheckHandler())
-
+func HandlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
+	router.GET("/alive", util.HealthCheckHandler())
+	apqCache := &apq.APQCache{Cache: graphqlAPQCache}
+	publicapiF := func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI {
+		api := publicapi.New(ctx, disableDataloaderCaching, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apqCache, authRefreshCache, oneTimeLoginCache, magicClient)
+		return api
+	}
+	GraphqlHandlersInit(router, queries, taskClient, pub, lock, apqCache, authRefreshCache, publicapiF)
 	return router
 }
-func graphqlHandlersInit(parent *gin.RouterGroup, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, mcProvider *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) {
-	handler := graphqlHandler(repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, mcProvider, throttler, taskClient, pub, lock, secrets, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache, magicClient)
 
-	parent.Any("/query", middleware.ContinueSession(queries, authRefreshCache), handler)
-	parent.Any("/query/:operationName", middleware.ContinueSession(queries, authRefreshCache), handler)
-	parent.GET("/playground", graphqlPlaygroundHandler())
+func GraphqlHandlersInit(router *gin.Engine, queries *db.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, authRefreshCache *redis.Cache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) {
+	graphqlGroup := router.Group("/splt/graphql")
+	graphqlHandler := GraphQLHandler(queries, taskClient, pub, lock, apqCache, publicapiF)
+	graphqlGroup.Any("/query", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
+	graphqlGroup.Any("/query/:operationName", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
+	graphqlGroup.GET("/playground", graphqlPlaygroundHandler())
 }
 
-func graphqlHandler(repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, mp *multichain.Provider, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, socialCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) gin.HandlerFunc {
+func GraphQLHandler(queries *db.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) gin.HandlerFunc {
 	config := generated.Config{Resolvers: &graphql.Resolver{}}
 	config.Directives.AuthRequired = graphql.AuthRequiredDirectiveHandler()
 	config.Directives.RestrictEnvironment = graphql.RestrictEnvironmentDirectiveHandler()
@@ -80,8 +81,6 @@ func graphqlHandler(repos *postgres.Repositories, queries *db.Queries, httpClien
 	h.AddTransport(transport.GET{})
 	h.AddTransport(transport.POST{})
 	h.AddTransport(transport.MultipartForm{})
-
-	apqCache := &apq.APQCache{Cache: graphqlAPQCache}
 
 	h.SetQueryCache(lru.New(1000))
 
@@ -115,17 +114,14 @@ func graphqlHandler(repos *postgres.Repositories, queries *db.Queries, httpClien
 	h.AroundOperations(graphql.RequestReporter(schema.Schema(), enableLogging, true))
 	h.AroundResponses(graphql.ResponseReporter(enableLogging, true))
 	h.AroundFields(graphql.FieldReporter(true))
+	h.SetErrorPresenter(graphql.ErrorLogger)
 
 	// Should happen after FieldReporter, so Sentry trace context is set up prior to error reporting
 	h.AroundFields(graphql.RemapAndReportErrors)
 
-	newPublicAPI := func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI {
-		return publicapi.New(ctx, disableDataloaderCaching, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, mp, taskClient, throttler, secrets, apqCache, socialCache, authRefreshCache, oneTimeLoginCache, magicClient)
-	}
-
 	notificationsHandler := notifications.New(queries, pub, taskClient, lock, true)
 
-	h.AroundFields(graphql.MutationCachingHandler(newPublicAPI))
+	h.AroundFields(graphql.MutationCachingHandler(publicapiF))
 
 	h.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
 		if hub := sentryutil.SentryHubFromContext(ctx); hub != nil {
@@ -156,7 +152,7 @@ func graphqlHandler(repos *postgres.Repositories, queries *db.Queries, httpClien
 		notifications.AddTo(c, notificationsHandler)
 
 		// Use the request context so dataloaders will add their traces to the request span
-		publicapi.AddTo(c, newPublicAPI(c.Request.Context(), disableDataloaderCaching))
+		publicapi.AddTo(c, publicapiF(c.Request.Context(), disableDataloaderCaching))
 
 		h.ServeHTTP(c.Writer, c.Request)
 	}
