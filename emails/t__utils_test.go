@@ -66,10 +66,7 @@ func newRepos(pq *sql.DB, pgx *pgxpool.Pool) *postgres.Repositories {
 		UserRepository:        postgres.NewUserRepository(pq, queries),
 		NonceRepository:       postgres.NewNonceRepository(pq, queries),
 		TokenRepository:       postgres.NewTokenSplitRepository(pq, queries),
-		CollectionRepository:  postgres.NewCollectionTokenRepository(pq, queries),
 		SplitRepository:       postgres.NewSplitRepository(queries),
-		ContractRepository:    postgres.NewContractSplitRepository(pq, queries),
-		MembershipRepository:  postgres.NewMembershipRepository(pq, queries),
 		EarlyAccessRepository: postgres.NewEarlyAccessRepository(pq, queries),
 		WalletRepository:      postgres.NewWalletRepository(pq, queries),
 	}

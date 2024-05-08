@@ -344,28 +344,26 @@ func checkNoErr(err error) {
 
 // Repositories is the set of all available persistence repositories
 type Repositories struct {
-	db                    *sql.DB
-	pool                  *pgxpool.Pool
-	UserRepository        *UserRepository
-	SplitRepository       *SplitRepository
-	TokenRepository       *TokenRepository
-	AssetRepository       *AssetRepository
-	EarlyAccessRepository *EarlyAccessRepository
-	WalletRepository      *WalletRepository
+	db               *sql.DB
+	pool             *pgxpool.Pool
+	UserRepository   *UserRepository
+	SplitRepository  *SplitRepository
+	TokenRepository  *TokenRepository
+	AssetRepository  *AssetRepository
+	WalletRepository *WalletRepository
 }
 
 func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
 	queries := coredb.New(pgx)
 
 	return &Repositories{
-		db:                    pq,
-		pool:                  pgx,
-		UserRepository:        NewUserRepository(pq, queries, pgx),
-		TokenRepository:       NewTokenRepository(pq, queries),
-		AssetRepository:       NewAssetRepository(pq, queries),
-		SplitRepository:       NewSplitRepository(pq),
-		EarlyAccessRepository: NewEarlyAccessRepository(pq, queries),
-		WalletRepository:      NewWalletRepository(pq, queries),
+		db:               pq,
+		pool:             pgx,
+		UserRepository:   NewUserRepository(pq, queries, pgx),
+		TokenRepository:  NewTokenRepository(pq, queries),
+		AssetRepository:  NewAssetRepository(pq, queries),
+		SplitRepository:  NewSplitRepository(queries),
+		WalletRepository: NewWalletRepository(pq, queries),
 	}
 }
 

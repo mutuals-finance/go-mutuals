@@ -11,7 +11,7 @@ ARG PGPORT=5432
 ARG PGUSER=postgres
 ARG PGPASSWORD=""
 ARG PGDATABASE=postgres
-ARG PGTESTUSER=benny
+ARG PGTESTUSER=fapiper
 ARG PGDATABASE=postgres
 COPY 01_init.sql /docker-entrypoint-initdb.d/01_init.sql
 COPY postgres.conf /etc/postgresql/postgresql.conf

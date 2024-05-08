@@ -23,7 +23,6 @@ type Wallet struct {
 
 	Address    Address    `json:"address"`
 	Chain      Chain      `json:"chain"`
-	L1Chain    L1Chain    `json:"l1_chain"`
 	WalletType WalletType `json:"wallet_type"`
 }
 

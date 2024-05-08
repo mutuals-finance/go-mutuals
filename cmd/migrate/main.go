@@ -8,12 +8,12 @@ import (
 	migrate "github.com/SplitFi/go-splitfi/db"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func init() {
 	viper.SetDefault("POSTGRES_USER", "postgres")
-	viper.SetDefault("POSTGRES_PASSWORD", "")
+	viper.SetDefault("POSTGRES_PASSWORD", "postgres")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("POSTGRES_HOST", "localhost")
 	viper.SetDefault("POSTGRES_PORT", "")
@@ -21,9 +21,9 @@ func init() {
 }
 
 func main() {
-	coreMigrations := "./db/migrations/core"
+	migrations := "./db/migrations/core"
 
-	superRequired, err := migrate.SuperUserRequired(coreMigrations)
+	superRequired, err := migrate.SuperUserRequired(migrations)
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +36,7 @@ func main() {
 		fmt.Scanln(&user)
 
 		fmt.Printf("Password for %s: ", user)
-		pw, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+		pw, err := term.ReadPassword(int(os.Stdin.Fd()))
 		if err != nil {
 			panic(err)
 		}
@@ -49,7 +49,7 @@ func main() {
 		)
 	}
 
-	if err := migrate.RunMigrations(superClient, coreMigrations); err != nil {
+	if err := migrate.RunMigrations(superClient, migrations); err != nil {
 		fmt.Fprint(os.Stderr, err)
 	}
 }

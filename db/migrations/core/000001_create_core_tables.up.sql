@@ -6,36 +6,35 @@ CREATE SCHEMA IF NOT EXISTS scrubbed_pii;
 CREATE TABLE IF NOT EXISTS users
 (
     id                    character varying(255) PRIMARY KEY NOT NULL,
-    deleted               boolean                            NOT NULL DEFAULT false,
+    deleted               boolean                            NOT NULL DEFAULT FALSE,
     version               integer                                     DEFAULT 0,
-    last_updated          timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at            timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated          timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     username              character varying(255),
     username_idempotent   character varying(255) UNIQUE,
     wallets               character varying(255)[],
     bio                   character varying,
     traits                jsonb,
-    universal             boolean                            NOT NULL DEFAULT false,
+    universal             boolean                            NOT NULL DEFAULT FALSE,
     notification_settings jsonb,
-    email_verified        integer                            NOT NULL DEFAULT 0,
     email_unsubscriptions jsonb                              NOT NULL DEFAULT '{
       "all": false
     }'::jsonb,
     featured_split        character varying,
     primary_wallet_id     character varying(255)             NOT NULL,
     user_experiences      jsonb                              NOT NULL DEFAULT '{}'::jsonb,
-    fts_username          tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, ((username)::text ||
+    fts_username          tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, ((username)::text ||
                                                                                           CASE
-                                                                                              WHEN (universal = false)
+                                                                                              WHEN (universal = FALSE)
                                                                                                   THEN (' '::text ||
-                                                                                                        regexp_replace(
+                                                                                                        REGEXP_REPLACE(
                                                                                                                 (username)::text,
                                                                                                                 '(^0[xX]|\d+|\D+)'::text,
                                                                                                                 '\1 '::text,
                                                                                                                 'g'::text))
                                                                                               ELSE ''::text
                                                                                               END))) STORED,
-    fts_bio_english       tsvector GENERATED ALWAYS AS (to_tsvector('english'::regconfig,
+    fts_bio_english       tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig,
                                                                     (COALESCE(bio, ''::character varying))::text)) STORED
 );
 
@@ -43,15 +42,15 @@ CREATE INDEX users_fts_bio_english_idx ON users USING gin (fts_bio_english);
 
 CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
-CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = false);
+CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = FALSE);
 
 CREATE TABLE IF NOT EXISTS splits
 (
     id                      character varying(255) PRIMARY KEY,
     version                 integer                           DEFAULT 0,
-    last_updated            timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at              timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted                 boolean                  NOT NULL DEFAULT false,
+    last_updated            timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted                 boolean                  NOT NULL DEFAULT FALSE,
     chain                   integer,
     address                 character varying(255),
     name                    character varying        NOT NULL DEFAULT ''::character varying,
@@ -61,8 +60,8 @@ CREATE TABLE IF NOT EXISTS splits
     banner_url              character varying,
     badge_url               character varying,
     total_ownership         integer                  NOT NULL,
-    fts_name                tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED,
-    fts_description_english tsvector GENERATED ALWAYS AS (to_tsvector('english'::regconfig, (description)::text)) STORED
+    fts_name                tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
+    fts_description_english tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig, (description)::text)) STORED
 --     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
 );
 
@@ -70,9 +69,9 @@ CREATE TABLE IF NOT EXISTS recipients
 (
     id           character varying(255) PRIMARY KEY,
     version      integer                           DEFAULT 0,
-    last_updated timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                  NOT NULL DEFAULT false,
+    last_updated timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at   timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted      boolean                  NOT NULL DEFAULT FALSE,
     split_id     character varying(255)   NOT NULL REFERENCES splits ON DELETE CASCADE,
     address      character varying(255),
     ownership    integer                  NOT NULL
@@ -89,10 +88,10 @@ CREATE UNIQUE INDEX split_address_chain_idx ON splits USING btree (address, chai
 CREATE TABLE IF NOT EXISTS tokens
 (
     id               character varying(255) PRIMARY KEY NOT NULL,
-    deleted          boolean                            NOT NULL DEFAULT false,
+    deleted          boolean                            NOT NULL DEFAULT FALSE,
     version          integer                                     DEFAULT 0,
-    created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     name             character varying,
     symbol           character varying,
     logo             character varying,
@@ -147,8 +146,8 @@ CREATE TABLE IF NOT EXISTS assets
 (
     id            character varying(255) PRIMARY KEY,
     version       integer                           DEFAULT 0,
-    last_updated  timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at    timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated  timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at    timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     chain         integer,
     token_address character varying(255),
     owner_address character varying(255)   NOT NULL,
@@ -161,23 +160,17 @@ CREATE TABLE IF NOT EXISTS user_token_spam
     id             character varying(255) PRIMARY KEY NOT NULL,
     user_id        character varying(255)             NOT NULL,
     token_id       character varying(255)             NOT NULL,
-    is_marked_spam boolean                                     DEFAULT true,
-    created_at     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP
+    is_marked_spam boolean                                     DEFAULT TRUE,
+    created_at     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE UNIQUE INDEX asset_owner_address_token_id_idx ON assets USING btree (owner_address, token_id);
 
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (
-    user_id           character varying(255) PRIMARY KEY NOT NULL,
-    has_email_address boolean,
-    deleted           boolean                            NOT NULL DEFAULT false
+    user_id           varchar(255) PRIMARY KEY REFERENCES users (id),
+    has_email_address bool,
+    deleted           bool NOT NULL DEFAULT FALSE
 );
-
-ALTER TABLE dev_metadata_users
-    ADD CONSTRAINT dev_metadata_users_user_id_fkey
-        FOREIGN KEY (user_id) REFERENCES users (id);
 
 CREATE TABLE IF NOT EXISTS events
 (
@@ -190,9 +183,9 @@ CREATE TABLE IF NOT EXISTS events
     token_id         character varying(255),
     action           character varying(255)             NOT NULL,
     data             jsonb,
-    deleted          boolean                            NOT NULL DEFAULT false,
-    last_updated     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted          boolean                            NOT NULL DEFAULT FALSE,
+    last_updated     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     split_id         character varying(255),
     external_id      character varying(255),
     caption          character varying,
@@ -219,7 +212,7 @@ ALTER TABLE events
         FOREIGN KEY (token_id) REFERENCES tokens (id);
 
 ALTER TABLE user_token_spam
-    ADD CONSTRAINT token_spam_user_id_fkey
+    ADD CONSTRAINT token_spam_token_id_fkey
         FOREIGN KEY (token_id) REFERENCES tokens (id);
 
 ALTER TABLE user_token_spam
@@ -234,9 +227,9 @@ CREATE TABLE IF NOT EXISTS legacy_views
 (
     user_id      character varying(255),
     view_count   integer,
-    last_updated timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                           DEFAULT false
+    last_updated timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at   timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted      boolean                           DEFAULT FALSE
 );
 
 ALTER TABLE legacy_views
@@ -245,28 +238,28 @@ ALTER TABLE legacy_views
 
 CREATE TABLE IF NOT EXISTS nonces
 (
-    id         varchar(255) primary key,
-    value      text        not null,
-    created_at timestamptz not null default now(),
-    consumed   bool        not null default false
+    id         varchar(255) PRIMARY KEY,
+    value      text        NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    consumed   bool        NOT NULL DEFAULT FALSE
 );
 
-CREATE UNIQUE INDEX nonces_value_idx on nonces (value);
+CREATE UNIQUE INDEX nonces_value_idx ON nonces (value);
 
 CREATE TABLE IF NOT EXISTS notifications
 (
     id           character varying(255) PRIMARY KEY NOT NULL,
-    deleted      boolean                            NOT NULL DEFAULT false,
+    deleted      boolean                            NOT NULL DEFAULT FALSE,
     owner_id     character varying(255),
     version      integer                                     DEFAULT 0,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     action       character varying(255)             NOT NULL,
     data         jsonb,
     event_ids    character varying(255)[],
     split_id     character varying(255),
-    token_id     varchar(255) references tokens (id),
-    seen         boolean                            NOT NULL DEFAULT false,
+    token_id     varchar(255) REFERENCES tokens (id),
+    seen         boolean                            NOT NULL DEFAULT FALSE,
     amount       integer                            NOT NULL DEFAULT 1
 );
 
@@ -278,10 +271,6 @@ ALTER TABLE notifications
     ADD CONSTRAINT notifications_split_id_fkey
         FOREIGN KEY (split_id) REFERENCES splits (id);
 
-ALTER TABLE notifications
-    ADD CONSTRAINT notifications_token_id_fkey
-        FOREIGN KEY (token_id) REFERENCES tokens (id);
-
 -- Spam scores for newly-created users. Contains all newly created users,
 -- but users with score 0 can typically be ignored since they're not likely to
 -- be spam.
@@ -290,9 +279,9 @@ CREATE TABLE IF NOT EXISTS spam_user_scores
     user_id         character varying(255) PRIMARY KEY NOT NULL,
     score           integer                            NOT NULL,
     decided_is_spam boolean,
-    decided_at      timestamp with time zone,
+    decided_at      timestamp WITH TIME ZONE,
     deleted         boolean                            NOT NULL,
-    created_at      timestamp with time zone           NOT NULL
+    created_at      timestamp WITH TIME ZONE           NOT NULL
 );
 
 CREATE INDEX spam_user_scores_created_at_idx ON spam_user_scores USING btree (created_at);
@@ -334,12 +323,12 @@ CREATE TABLE IF NOT EXISTS user_roles
     user_id      character varying(255)             NOT NULL,
     role         character varying(64)              NOT NULL,
     version      integer                            NOT NULL DEFAULT 0,
-    deleted      boolean                            NOT NULL DEFAULT false,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP
+    deleted      boolean                            NOT NULL DEFAULT FALSE,
+    created_at   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX user_roles_role_idx ON user_roles USING btree (role) WHERE (deleted = false);
+CREATE INDEX user_roles_role_idx ON user_roles USING btree (role) WHERE (deleted = FALSE);
 
 ALTER TABLE user_roles
     ADD CONSTRAINT user_roles_user_id_role_key
@@ -352,14 +341,14 @@ ALTER TABLE user_roles
 CREATE TABLE IF NOT EXISTS wallets
 (
     id           character varying(255) PRIMARY KEY NOT NULL,
-    created_at   timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                            NOT NULL DEFAULT false,
+    created_at   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted      boolean                            NOT NULL DEFAULT FALSE,
     version      integer                                     DEFAULT 0,
     address      character varying(255),
     wallet_type  integer,
     chain        integer,
-    fts_address  tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (address)::text)) STORED
+    fts_address  tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (address)::text)) STORED
 );
 
 CREATE UNIQUE INDEX wallet_address_chain_idx ON wallets USING btree (address, chain) WHERE (NOT deleted);
@@ -371,84 +360,83 @@ ALTER TABLE users
         FOREIGN KEY (primary_wallet_id) REFERENCES wallets (id);
 
 
--- sqlc type will be "PiiForUser"
 CREATE TABLE IF NOT EXISTS pii.for_users
 (
-    user_id           character varying(255) PRIMARY KEY REFERENCES users,
-    pii_email_address character varying,
-    deleted           boolean NOT NULL DEFAULT false,
-    pii_socials       jsonb   NOT NULL DEFAULT '{}'
+    user_id                      character varying(255) PRIMARY KEY REFERENCES users,
+    pii_unverified_email_address character varying,
+    pii_verified_email_address   character varying,
+    deleted                      boolean NOT NULL DEFAULT FALSE
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS pii_for_users_pii_email_address_idx ON pii.for_users (pii_email_address) WHERE deleted = false;
+CREATE UNIQUE INDEX IF NOT EXISTS pii_for_users_pii_verified_email_address_idx ON pii.for_users (pii_verified_email_address) WHERE deleted = FALSE;
 
 CREATE VIEW pii.user_view AS
-SELECT users.*, for_users.pii_email_address, for_users.pii_socials
+SELECT users.id,
+       users.deleted,
+       users.version,
+       users.last_updated,
+       users.created_at,
+       users.username,
+       users.username_idempotent,
+       users.wallets,
+       users.bio,
+       users.traits,
+       users.universal,
+       users.notification_settings,
+       users.email_unsubscriptions,
+       users.featured_split,
+       users.primary_wallet_id,
+       users.user_experiences,
+       for_users.pii_unverified_email_address,
+       for_users.pii_verified_email_address
 FROM users
-         LEFT JOIN pii.for_users ON users.id = for_users.user_id AND for_users.deleted = false;
+         LEFT JOIN pii.for_users
+                   ON users.id = for_users.user_id
+                       AND for_users.deleted = FALSE;
 
 CREATE TABLE IF NOT EXISTS pii.socials_auth
 (
     id            character varying(255) PRIMARY KEY,
-    deleted       boolean                  DEFAULT false             NOT NULL,
+    deleted       boolean                  DEFAULT FALSE             NOT NULL,
     version       integer                  DEFAULT 0,
-    created_at    timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    last_updated  timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at    timestamp WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    last_updated  timestamp WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     user_id       character varying(255)                             NOT NULL REFERENCES users,
     provider      character varying                                  NOT NULL,
     access_token  character varying,
     refresh_token character varying
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS social_auth_user_id_provider_idx ON pii.socials_auth (user_id, provider) WHERE deleted = false;
+CREATE UNIQUE INDEX IF NOT EXISTS social_auth_user_id_provider_idx ON pii.socials_auth (user_id, provider) WHERE deleted = FALSE;
 
-CREATE VIEW scrubbed_pii.for_users as
+CREATE VIEW scrubbed_pii.for_users AS
 (
-with socials_kvp as (
-    -- Redundant jsonb_each because sqlc throws an error if we select "(jsonb_each(pii_socials)).*"
-    select user_id, (jsonb_each(pii_socials)).key as key, (jsonb_each(pii_socials)).value as value from pii.for_users),
+WITH scrubbed_unverified_email_address AS (SELECT u.id    AS user_id,
+                                                  CASE
+                                                      WHEN p.pii_unverified_email_address IS NOT NULL
+                                                          THEN u.username_idempotent || '-unverified@dummy-email.gallery.so'
+                                                      END AS scrubbed_address
+                                           FROM users u,
+                                                pii.for_users p
+                                           WHERE u.id = p.user_id),
 
-     socials_scrubbed AS (select user_id,
-                                 socials_kvp.key as k,
-                                 case
-                                     when (socials_kvp.value -> 'display')::bool then socials_kvp.value
-                                     else '{
-                                       "display": false,
-                                       "metadata": {}
-                                     }'::jsonb ||
-                                          jsonb_build_object('provider', socials_kvp.value -> 'provider') ||
-                                          jsonb_build_object('id', users.username_idempotent || '-dummy-id')
-                                     end         as v
-                          from socials_kvp
-                                   join users on socials_kvp.user_id = users.id),
-
-     socials_aggregated AS (select user_id, jsonb_object_agg(k, v) as socials
-                            from socials_scrubbed
-                            group by user_id),
-
-     -- includes social data when display = true, otherwise makes a dummy id and omits metadata
-     scrubbed_socials AS (select for_users.user_id,
-                                 coalesce(socials_aggregated.socials, '{}'::jsonb) as scrubbed_socials
-                          FROM pii.for_users
-                                   LEFT JOIN socials_aggregated on socials_aggregated.user_id = for_users.user_id),
-
-     -- <username>@dummy-email.gallery.so for users who have email addresses, null otherwise
-     scrubbed_email_address as (select u.id    as user_id,
-                                       case
-                                           when p.pii_email_address is not null
-                                               then u.username_idempotent || '@dummy-email.gallery.so'
-                                           end as scrubbed_address
-                                from users u,
-                                     pii.for_users p
-                                where u.id = p.user_id)
+     -- <username>@dummy-email.splitfi.com for users who have verified email addresses, null otherwise
+     scrubbed_verified_email_address AS (SELECT u.id    AS user_id,
+                                                CASE
+                                                    WHEN p.pii_verified_email_address IS NOT NULL
+                                                        THEN u.username_idempotent || '@dummy-email.splitfi.com'
+                                                    END AS scrubbed_address
+                                         FROM users u,
+                                              pii.for_users p
+                                         WHERE u.id = p.user_id)
 
      -- Doing this limit 0 union ensures we have appropriate column types for our view
-        (select * from pii.for_users limit 0)
+        (SELECT * FROM pii.for_users LIMIT 0)
 UNION ALL
-select p.user_id, e.scrubbed_address, p.deleted, s.scrubbed_socials
-from pii.for_users p
-         join scrubbed_email_address e on e.user_id = p.user_id
-         join scrubbed_socials s on s.user_id = p.user_id
+SELECT p.user_id, unverified_email.scrubbed_address, verified_email.scrubbed_address, p.deleted
+FROM pii.for_users p
+         JOIN scrubbed_unverified_email_address unverified_email ON unverified_email.user_id = p.user_id
+         JOIN scrubbed_verified_email_address verified_email ON verified_email.user_id = p.user_id
     );
 
 
@@ -456,7 +444,7 @@ CREATE TABLE IF NOT EXISTS pii.account_creation_info
 (
     user_id    character varying(255) PRIMARY KEY REFERENCES users,
     ip_address text        NOT NULL,
-    created_at timestamptz not null
+    created_at timestamptz NOT NULL
 );
 
 /*
@@ -469,62 +457,62 @@ select cron.schedule('purge-account-creation-info', '@weekly', 'delete from pii.
 set role to access_rw;
 */
 
-create table if not exists user_blocklist
+CREATE TABLE IF NOT EXISTS user_blocklist
 (
-    id              character varying(255) primary key,
-    created_at      timestamp with time zone not null default current_timestamp,
-    last_updated    timestamp with time zone not null default current_timestamp,
-    deleted         boolean                  not null default false,
-    user_id         character varying(255) references users (id),
-    blocked_user_id character varying(255) references users (id),
-    active          bool                              default true
+    id              character varying(255) PRIMARY KEY,
+    created_at      timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated    timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted         boolean                  NOT NULL DEFAULT FALSE,
+    user_id         character varying(255) REFERENCES users (id),
+    blocked_user_id character varying(255) REFERENCES users (id),
+    active          bool                              DEFAULT TRUE
 );
-create unique index user_blocklist_user_id_blocked_user_id_idx on user_blocklist (user_id, blocked_user_id) where not deleted;
+CREATE UNIQUE INDEX user_blocklist_user_id_blocked_user_id_idx ON user_blocklist (user_id, blocked_user_id) WHERE NOT deleted;
 
-create table if not exists sessions
+CREATE TABLE IF NOT EXISTS sessions
 (
-    id                      varchar(255) primary key,
-    user_id                 varchar(255) not null references users (id),
-    created_at              timestamptz  not null,
-    created_with_user_agent text         not null,
-    created_with_platform   text         not null,
-    created_with_os         text         not null,
-    last_refreshed          timestamptz  not null,
-    last_user_agent         text         not null,
-    last_platform           text         not null,
-    last_os                 text         not null,
-    current_refresh_id      varchar(255) not null,
-    active_until            timestamptz  not null,
-    invalidated             bool         not null,
-    last_updated            timestamptz  not null,
-    deleted                 bool         not null
-);
-
-create index if not exists sessions_user_id_idx on sessions (user_id) where deleted = false;
-create unique index if not exists sessions_id_idx on sessions (id) where deleted = false;
-
-create table if not exists push_notification_tokens
-(
-    id         varchar(255) primary key,
-    user_id    varchar(255) not null references users (id),
-    push_token varchar(255) not null,
-    created_at timestamptz  not null,
-    deleted    bool         not null
+    id                      varchar(255) PRIMARY KEY,
+    user_id                 varchar(255) NOT NULL REFERENCES users (id),
+    created_at              timestamptz  NOT NULL,
+    created_with_user_agent text         NOT NULL,
+    created_with_platform   text         NOT NULL,
+    created_with_os         text         NOT NULL,
+    last_refreshed          timestamptz  NOT NULL,
+    last_user_agent         text         NOT NULL,
+    last_platform           text         NOT NULL,
+    last_os                 text         NOT NULL,
+    current_refresh_id      varchar(255) NOT NULL,
+    active_until            timestamptz  NOT NULL,
+    invalidated             bool         NOT NULL,
+    last_updated            timestamptz  NOT NULL,
+    deleted                 bool         NOT NULL
 );
 
-create index if not exists push_notification_tokens_user_id_idx on push_notification_tokens (user_id) where deleted = false;
-create unique index if not exists push_notification_tokens_push_token_idx on push_notification_tokens (push_token) where deleted = false;
+CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions (user_id) WHERE deleted = FALSE;
+CREATE UNIQUE INDEX IF NOT EXISTS sessions_id_idx ON sessions (id) WHERE deleted = FALSE;
 
-create table if not exists push_notification_tickets
+CREATE TABLE IF NOT EXISTS push_notification_tokens
 (
-    id                 varchar(255) primary key,
-    push_token_id      varchar(255) not null references push_notification_tokens (id),
-    ticket_id          varchar(255) not null,
-    created_at         timestamptz  not null,
-    check_after        timestamptz  not null,
-    num_check_attempts int          not null,
-    deleted            bool         not null
+    id         varchar(255) PRIMARY KEY,
+    user_id    varchar(255) NOT NULL REFERENCES users (id),
+    push_token varchar(255) NOT NULL,
+    created_at timestamptz  NOT NULL,
+    deleted    bool         NOT NULL
 );
 
-create index if not exists push_notification_tickets_created_at_idx on push_notification_tickets (created_at) where deleted = false;
-create index if not exists push_notification_tickets_check_after_idx on push_notification_tickets (check_after) where deleted = false;
+CREATE INDEX IF NOT EXISTS push_notification_tokens_user_id_idx ON push_notification_tokens (user_id) WHERE deleted = FALSE;
+CREATE UNIQUE INDEX IF NOT EXISTS push_notification_tokens_push_token_idx ON push_notification_tokens (push_token) WHERE deleted = FALSE;
+
+CREATE TABLE IF NOT EXISTS push_notification_tickets
+(
+    id                 varchar(255) PRIMARY KEY,
+    push_token_id      varchar(255) NOT NULL REFERENCES push_notification_tokens (id),
+    ticket_id          varchar(255) NOT NULL,
+    created_at         timestamptz  NOT NULL,
+    check_after        timestamptz  NOT NULL,
+    num_check_attempts int          NOT NULL,
+    deleted            bool         NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS push_notification_tickets_created_at_idx ON push_notification_tickets (created_at) WHERE deleted = FALSE;
+CREATE INDEX IF NOT EXISTS push_notification_tickets_check_after_idx ON push_notification_tickets (check_after) WHERE deleted = FALSE;

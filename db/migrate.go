@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -31,7 +30,7 @@ func strToVersion(s string) (uint, error) {
 func superMigrations(dir string) (map[uint]bool, uint, error) {
 	versions := make(map[uint]bool, 0)
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -68,7 +67,7 @@ func superMigrations(dir string) (map[uint]bool, uint, error) {
 
 func currentVersion(m *migrate.Migrate) (uint, error) {
 	curVer, _, err := m.Version()
-	if err != nil && err == migrate.ErrNilVersion {
+	if err != nil && errors.Is(err, migrate.ErrNilVersion) {
 		return 0, nil
 	}
 	return curVer, err
@@ -118,13 +117,13 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 	}
 
 	var superMigrate *migrate.Migrate
-	var splitMigrate *migrate.Migrate
+	var splitfiMigrate *migrate.Migrate
 
 	loadMigrate := func() error {
-		if splitMigrate != nil {
+		if splitfiMigrate != nil {
 			return nil
 		}
-		splitClient, err := postgres.NewClient(postgres.WithUser("postgres"))
+		splitfiClient, err := postgres.NewClient(postgres.WithUser("postgres"))
 		var errNoRole postgres.ErrRoleDoesNotExist
 		if errors.As(err, &errNoRole) {
 			return nil
@@ -132,7 +131,7 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		if err != nil {
 			return err
 		}
-		splitMigrate, err = newMigrateInstance(splitClient, dir)
+		splitfiMigrate, err = newMigrateInstance(splitfiClient, dir)
 		return err
 	}
 
@@ -146,24 +145,24 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		if err := loadMigrate(); err != nil {
 			return err
 		}
-		if splitMigrate != nil {
-			defer splitMigrate.Close()
+		if splitfiMigrate != nil {
+			defer splitfiMigrate.Close()
 		}
 	} else {
 		// Apply an up migration since a superuser isn't needed
-		splitClient := postgres.MustCreateClient(postgres.WithUser("split_migrator"))
-		splitMigrate, err = newMigrateInstance(splitClient, dir)
+		splitfiClient := postgres.MustCreateClient(postgres.WithUser("postgres"))
+		splitfiMigrate, err = newMigrateInstance(splitfiClient, dir)
 		if err != nil {
 			return err
 		}
-		defer splitMigrate.Close()
-		return splitMigrate.Up()
+		defer splitfiMigrate.Close()
+		return splitfiMigrate.Up()
 	}
 
 	var curVer uint
 
-	if splitMigrate != nil {
-		curVer, err = currentVersion(splitMigrate)
+	if splitfiMigrate != nil {
+		curVer, err = currentVersion(splitfiMigrate)
 		if err != nil {
 			return err
 		}
@@ -182,12 +181,13 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 
 	superStreak := false
 	ver := curVer + 1
+
 	for ; ver <= lastSuperVer; ver++ {
 		if !superStreak && superVersions[ver] {
 			superStreak = true
 			// Skip running the migration if its the current version already applied
 			if ver-1 != curVer {
-				if err := splitMigrate.Migrate(ver - 1); err != nil {
+				if err := splitfiMigrate.Migrate(ver - 1); err != nil {
 					return err
 				}
 			}
@@ -208,12 +208,13 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		}
 	}
 
-	if splitMigrate == nil {
-		panic("split_migrator client never initted!")
+	if splitfiMigrate == nil {
+		panic("splitfi_migrator client never initted!")
 	}
 
-	err = splitMigrate.Up()
-	if err == migrate.ErrNoChange {
+	err = splitfiMigrate.Up()
+
+	if errors.Is(err, migrate.ErrNoChange) {
 		return nil
 	}
 

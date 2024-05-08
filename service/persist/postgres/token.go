@@ -21,7 +21,6 @@ type TokenRepository struct {
 	getByIdentifiersStmt              *sql.Stmt
 	getExistsByTokenIdentifiersStmt   *sql.Stmt
 	mostRecentBlockStmt               *sql.Stmt
-	upsertStmt                        *sql.Stmt
 	deleteStmt                        *sql.Stmt
 	deleteByIDStmt                    *sql.Stmt
 }
@@ -42,7 +41,7 @@ func NewTokenRepository(db *sql.DB, queries *db.Queries) *TokenRepository {
 	getByTokenIdentifiersStmt, err := db.PrepareContext(ctx, `SELECT ID,TOKEN_TYPE,CHAIN,NAME,SYMBOL,LOGO,CONTRACT_ADDRESS,VERSION,CREATED_AT,LAST_UPDATED FROM tokens WHERE CONTRACT_ADDRESS = $1 ORDER BY BLOCK_NUMBER DESC;`)
 	checkNoErr(err)
 
-	getByTokenIdentifiersPaginateStmt, err := db.PrepareContext(ctx, `SELECT ID,TOKEN_TYPE,CHAIN,NAME,SYMBOL,LOGO,CONTRACT_ADDRESS,VERSION,CREATED_AT,LAST_UPDATED FROM tokens WHERE CONTRACT_ADDRESS = $1 ORDER BY BLOCK_NUMBER DESC LIMIT $3 OFFSET $4;`)
+	getByTokenIdentifiersPaginateStmt, err := db.PrepareContext(ctx, `SELECT ID,TOKEN_TYPE,CHAIN,NAME,SYMBOL,LOGO,CONTRACT_ADDRESS,VERSION,CREATED_AT,LAST_UPDATED FROM tokens WHERE CONTRACT_ADDRESS = $1 ORDER BY BLOCK_NUMBER DESC LIMIT $2 OFFSET $3;`)
 	checkNoErr(err)
 
 	getByIdentifiersStmt, err := db.PrepareContext(ctx, `SELECT ID,TOKEN_TYPE,CHAIN,NAME,SYMBOL,LOGO,CONTRACT_ADDRESS,VERSION,CREATED_AT,LAST_UPDATED FROM tokens WHERE CONTRACT_ADDRESS = $1;`)
@@ -52,9 +51,6 @@ func NewTokenRepository(db *sql.DB, queries *db.Queries) *TokenRepository {
 	checkNoErr(err)
 
 	mostRecentBlockStmt, err := db.PrepareContext(ctx, `SELECT MAX(BLOCK_NUMBER) FROM tokens;`)
-	checkNoErr(err)
-
-	upsertStmt, err := db.PrepareContext(ctx, `INSERT INTO tokens (ID,TOKEN_TYPE,CHAIN,NAME,SYMBOL,LOGO,CONTRACT_ADDRESS,VERSION,CREATED_AT,LAST_UPDATED) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (CONTRACT_ADDRESS) DO UPDATE SET TOKEN_TYPE = EXCLUDED.TOKEN_TYPE,CHAIN = EXCLUDED.CHAIN,NAME = EXCLUDED.NAME,SYMBOL = EXCLUDED.SYMBOL,LOGO = EXCLUDED.LOGO,CONTRACT_ADDRESS = EXCLUDED.CONTRACT_ADDRESS = EXCLUDED.BLOCK_NUMBER,VERSION = EXCLUDED.VERSION,CREATED_AT = EXCLUDED.CREATED_AT,LAST_UPDATED = EXCLUDED.LAST_UPDATED;`)
 	checkNoErr(err)
 
 	deleteStmt, err := db.PrepareContext(ctx, `DELETE FROM tokens WHERE CONTRACT_ADDRESS = $1;`)
@@ -73,7 +69,6 @@ func NewTokenRepository(db *sql.DB, queries *db.Queries) *TokenRepository {
 		getByIdentifiersStmt:              getByIdentifiersStmt,
 		getExistsByTokenIdentifiersStmt:   getExistsByTokenIdentifiersStmt,
 		mostRecentBlockStmt:               mostRecentBlockStmt,
-		upsertStmt:                        upsertStmt,
 		deleteStmt:                        deleteStmt,
 		deleteByIDStmt:                    deleteByIDStmt,
 	}
@@ -201,13 +196,6 @@ func (t *TokenRepository) BulkUpsert(pCtx context.Context, tokens []db.Token) ([
 	}
 
 	return upserted, nil
-}
-
-// Upsert adds a token by its token ID and contract address and if its token type is ERC-1155 it also adds using the owner address
-func (t *TokenRepository) Upsert(pCtx context.Context, pToken persist.Token) error {
-	var err error
-	_, err = t.upsertStmt.ExecContext(pCtx, persist.GenerateID(), pToken.TokenType, pToken.Chain, pToken.Name, pToken.Symbol, pToken.Logo, pToken.ContractAddress, pToken.Version, pToken.CreationTime, pToken.LastUpdated)
-	return err
 }
 
 // UpdateByID updates a token by its ID
