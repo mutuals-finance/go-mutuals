@@ -4,16 +4,6 @@ insert into splits (id, chain, address, name, description, creator_address, logo
 -- name: SplitRepoUpdate :execrows
 update splits set last_updated = now() where splits.id = @split_id;
 
--- name: SplitRepoCountAllAssets :one
-select count(*) from assets a join tokens t on a.token_id = t.id where a.owner_address = $1 and t.deleted = false;
-
--- name: SplitRepoGetSplitAssets :many
-SELECT a.id FROM splits s
-    LEFT JOIN assets a ON a.owner_address = s.address
-    LEFT JOIN tokens t ON t.id = a.token_id
-    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false AND t.deleted = false
-    ORDER BY a.balance;
-
 /*
 TODO delete either by quorum or by controller
 name: SplitRepoDelete :exec

@@ -28,43 +28,6 @@ type notFoundErrorProvider[TKey any] interface {
 type PreFetchHook func(context.Context, string) context.Context
 type PostFetchHook func(context.Context, string)
 
-// GetAssetByIdBatch batches and caches requests
-type GetAssetByIdBatch struct {
-	generator.Dataloader[persist.DBID, coredb.GetAssetByIdBatchRow]
-}
-
-// newGetAssetByIdBatch creates a new GetAssetByIdBatch with the given settings, functions, and options
-func newGetAssetByIdBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetAssetByIdBatch, []persist.DBID) ([]coredb.GetAssetByIdBatchRow, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetAssetByIdBatch {
-	d := &GetAssetByIdBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.GetAssetByIdBatchRow, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetAssetByIdBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetAssetByIdBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
 // GetNotificationByIDBatch batches and caches requests
 type GetNotificationByIDBatch struct {
 	generator.Dataloader[persist.DBID, coredb.Notification]
@@ -249,121 +212,6 @@ func newGetSplitsByRecipientChainAddressBatch(
 
 		if postFetchHook != nil {
 			postFetchHook(ctx, "GetSplitsByRecipientChainAddressBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-// GetTokenByChainAddressBatch batches and caches requests
-type GetTokenByChainAddressBatch struct {
-	generator.Dataloader[coredb.GetTokenByChainAddressBatchParams, coredb.Token]
-}
-
-// newGetTokenByChainAddressBatch creates a new GetTokenByChainAddressBatch with the given settings, functions, and options
-func newGetTokenByChainAddressBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetTokenByChainAddressBatch, []coredb.GetTokenByChainAddressBatchParams) ([]coredb.Token, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetTokenByChainAddressBatch {
-	d := &GetTokenByChainAddressBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []coredb.GetTokenByChainAddressBatchParams) ([]coredb.Token, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetTokenByChainAddressBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetTokenByChainAddressBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-// GetTokenByIdBatch batches and caches requests
-type GetTokenByIdBatch struct {
-	generator.Dataloader[persist.DBID, coredb.Token]
-}
-
-// newGetTokenByIdBatch creates a new GetTokenByIdBatch with the given settings, functions, and options
-func newGetTokenByIdBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetTokenByIdBatch, []persist.DBID) ([]coredb.Token, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetTokenByIdBatch {
-	d := &GetTokenByIdBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Token, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetTokenByIdBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetTokenByIdBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-func (*GetTokenByIdBatch) getKeyForResult(result coredb.Token) persist.DBID {
-	return result.ID
-}
-
-// GetTokensByChainAddressBatch batches and caches requests
-type GetTokensByChainAddressBatch struct {
-	generator.Dataloader[coredb.GetTokensByChainAddressBatchParams, []coredb.Token]
-}
-
-// newGetTokensByChainAddressBatch creates a new GetTokensByChainAddressBatch with the given settings, functions, and options
-func newGetTokensByChainAddressBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetTokensByChainAddressBatch, []coredb.GetTokensByChainAddressBatchParams) ([][]coredb.Token, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetTokensByChainAddressBatch {
-	d := &GetTokensByChainAddressBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []coredb.GetTokensByChainAddressBatchParams) ([][]coredb.Token, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetTokensByChainAddressBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetTokensByChainAddressBatch")
 		}
 
 		return results, errors
@@ -742,43 +590,6 @@ func newGetWalletsByUserIDBatch(
 
 		if postFetchHook != nil {
 			postFetchHook(ctx, "GetWalletsByUserIDBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-// GetTokensByIDs batches and caches requests
-type GetTokensByIDs struct {
-	generator.Dataloader[string, coredb.Token]
-}
-
-// newGetTokensByIDs creates a new GetTokensByIDs with the given settings, functions, and options
-func newGetTokensByIDs(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetTokensByIDs, []string) ([]coredb.Token, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetTokensByIDs {
-	d := &GetTokensByIDs{}
-
-	fetchWithHooks := func(ctx context.Context, keys []string) ([]coredb.Token, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetTokensByIDs")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetTokensByIDs")
 		}
 
 		return results, errors

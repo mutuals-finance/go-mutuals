@@ -66,7 +66,7 @@ func (q *Queries) BlockUser(ctx context.Context, arg BlockUserParams) (persist.D
 }
 
 const clearNotificationsForUser = `-- name: ClearNotificationsForUser :many
-UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount
+UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount
 `
 
 func (q *Queries) ClearNotificationsForUser(ctx context.Context, ownerID persist.DBID) ([]Notification, error) {
@@ -89,7 +89,6 @@ func (q *Queries) ClearNotificationsForUser(ctx context.Context, ownerID persist
 			&i.Data,
 			&i.EventIds,
 			&i.SplitID,
-			&i.TokenID,
 			&i.Seen,
 			&i.Amount,
 		); err != nil {
@@ -109,24 +108,6 @@ SELECT count(*) FROM users WHERE deleted = false and universal = false
 
 func (q *Queries) CountAllUsers(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, countAllUsers)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countAssetsByOwnerChainAddress = `-- name: CountAssetsByOwnerChainAddress :one
-select count(*)
-from assets a join tokens t ON a.token_address = t.contract_address and a.chain = t.chain
-where a.owner_address = $1 and a.chain = $2 and t.deleted = false
-`
-
-type CountAssetsByOwnerChainAddressParams struct {
-	OwnerAddress persist.Address `db:"owner_address" json:"owner_address"`
-	Chain        persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) CountAssetsByOwnerChainAddress(ctx context.Context, arg CountAssetsByOwnerChainAddressParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countAssetsByOwnerChainAddress, arg.OwnerAddress, arg.Chain)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -201,7 +182,7 @@ WHERE NOT EXISTS (
     WHERE n.owner_id = u.user_id
       AND n.data ->> 'internal_id' = $4::varchar
 )
-RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount
+RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount
 `
 
 type CreateAnnouncementNotificationsParams struct {
@@ -242,7 +223,6 @@ func (q *Queries) CreateAnnouncementNotifications(ctx context.Context, arg Creat
 			&i.Data,
 			&i.EventIds,
 			&i.SplitID,
-			&i.TokenID,
 			&i.Seen,
 			&i.Amount,
 		); err != nil {
@@ -305,7 +285,7 @@ func (q *Queries) CreatePushTokenForUser(ctx context.Context, arg CreatePushToke
 }
 
 const createSimpleNotification = `-- name: CreateSimpleNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount
+INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount
 `
 
 type CreateSimpleNotificationParams struct {
@@ -336,7 +316,6 @@ func (q *Queries) CreateSimpleNotification(ctx context.Context, arg CreateSimple
 		&i.Data,
 		&i.EventIds,
 		&i.SplitID,
-		&i.TokenID,
 		&i.Seen,
 		&i.Amount,
 	)
@@ -394,7 +373,7 @@ func (q *Queries) CreateSplit(ctx context.Context, arg CreateSplitParams) (Split
 }
 
 const createSplitEvent = `-- name: CreateSplitEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, split_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id
+INSERT INTO events (id, actor_id, action, resource_type_id, split_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id
 `
 
 type CreateSplitEventParams struct {
@@ -429,7 +408,6 @@ func (q *Queries) CreateSplitEvent(ctx context.Context, arg CreateSplitEventPara
 		&i.ResourceTypeID,
 		&i.SubjectID,
 		&i.UserID,
-		&i.TokenID,
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
@@ -439,105 +417,12 @@ func (q *Queries) CreateSplitEvent(ctx context.Context, arg CreateSplitEventPara
 		&i.ExternalID,
 		&i.Caption,
 		&i.GroupID,
-	)
-	return i, err
-}
-
-const createTokenEvent = `-- name: CreateTokenEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, token_id, subject_id, data, group_id, caption, split_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id
-`
-
-type CreateTokenEventParams struct {
-	ID             persist.DBID         `db:"id" json:"id"`
-	ActorID        sql.NullString       `db:"actor_id" json:"actor_id"`
-	Action         persist.Action       `db:"action" json:"action"`
-	ResourceTypeID persist.ResourceType `db:"resource_type_id" json:"resource_type_id"`
-	TokenID        persist.DBID         `db:"token_id" json:"token_id"`
-	Data           persist.EventData    `db:"data" json:"data"`
-	GroupID        sql.NullString       `db:"group_id" json:"group_id"`
-	Caption        sql.NullString       `db:"caption" json:"caption"`
-	SplitID        persist.DBID         `db:"split_id" json:"split_id"`
-}
-
-func (q *Queries) CreateTokenEvent(ctx context.Context, arg CreateTokenEventParams) (Event, error) {
-	row := q.db.QueryRow(ctx, createTokenEvent,
-		arg.ID,
-		arg.ActorID,
-		arg.Action,
-		arg.ResourceTypeID,
-		arg.TokenID,
-		arg.Data,
-		arg.GroupID,
-		arg.Caption,
-		arg.SplitID,
-	)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.Version,
-		&i.ActorID,
-		&i.ResourceTypeID,
-		&i.SubjectID,
-		&i.UserID,
-		&i.TokenID,
-		&i.Action,
-		&i.Data,
-		&i.Deleted,
-		&i.LastUpdated,
-		&i.CreatedAt,
-		&i.SplitID,
-		&i.ExternalID,
-		&i.Caption,
-		&i.GroupID,
-	)
-	return i, err
-}
-
-const createTokenNotification = `-- name: CreateTokenNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, token_id, amount) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount
-`
-
-type CreateTokenNotificationParams struct {
-	ID       persist.DBID             `db:"id" json:"id"`
-	OwnerID  persist.DBID             `db:"owner_id" json:"owner_id"`
-	Action   persist.Action           `db:"action" json:"action"`
-	Data     persist.NotificationData `db:"data" json:"data"`
-	EventIds persist.DBIDList         `db:"event_ids" json:"event_ids"`
-	TokenID  persist.DBID             `db:"token_id" json:"token_id"`
-	Amount   int32                    `db:"amount" json:"amount"`
-}
-
-func (q *Queries) CreateTokenNotification(ctx context.Context, arg CreateTokenNotificationParams) (Notification, error) {
-	row := q.db.QueryRow(ctx, createTokenNotification,
-		arg.ID,
-		arg.OwnerID,
-		arg.Action,
-		arg.Data,
-		arg.EventIds,
-		arg.TokenID,
-		arg.Amount,
-	)
-	var i Notification
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.OwnerID,
-		&i.Version,
-		&i.LastUpdated,
-		&i.CreatedAt,
-		&i.Action,
-		&i.Data,
-		&i.EventIds,
-		&i.SplitID,
-		&i.TokenID,
-		&i.Seen,
-		&i.Amount,
 	)
 	return i, err
 }
 
 const createUserEvent = `-- name: CreateUserEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id
+INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id
 `
 
 type CreateUserEventParams struct {
@@ -570,7 +455,6 @@ func (q *Queries) CreateUserEvent(ctx context.Context, arg CreateUserEventParams
 		&i.ResourceTypeID,
 		&i.SubjectID,
 		&i.UserID,
-		&i.TokenID,
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
@@ -585,7 +469,7 @@ func (q *Queries) CreateUserEvent(ctx context.Context, arg CreateUserEventParams
 }
 
 const createViewSplitNotification = `-- name: CreateViewSplitNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount
+INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount
 `
 
 type CreateViewSplitNotificationParams struct {
@@ -618,7 +502,6 @@ func (q *Queries) CreateViewSplitNotification(ctx context.Context, arg CreateVie
 		&i.Data,
 		&i.EventIds,
 		&i.SplitID,
-		&i.TokenID,
 		&i.Seen,
 		&i.Amount,
 	)
@@ -677,85 +560,6 @@ func (q *Queries) GetActorForGroup(ctx context.Context, groupID sql.NullString) 
 	return actor_id, err
 }
 
-const getAssetsByOwnerChainAddressPaginate = `-- name: GetAssetsByOwnerChainAddressPaginate :many
-select a.id, a.version, a.last_updated, a.created_at, a.chain, a.token_address, a.owner_address, a.balance, a.block_number, t.id, t.deleted, t.version, t.created_at, t.last_updated, t.name, t.symbol, t.logo, t.token_type, t.block_number, t.chain, t.contract_address
-    from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-    where a.owner_address = $1 and a.chain = $2 and t.deleted = false
-    and (a.created_at,a.id) < ($4::timestamptz, $5)
-    and (a.created_at,a.id) > ($6::timestamptz, $7)
-    order by case when $8::bool then (a.created_at,a.id) end asc,
-             case when not $8::bool then (a.created_at,a.id) end desc
-    limit $3
-`
-
-type GetAssetsByOwnerChainAddressPaginateParams struct {
-	OwnerAddress  persist.Address `db:"owner_address" json:"owner_address"`
-	Chain         persist.Chain   `db:"chain" json:"chain"`
-	Limit         int32           `db:"limit" json:"limit"`
-	CurBeforeTime time.Time       `db:"cur_before_time" json:"cur_before_time"`
-	CurBeforeID   persist.DBID    `db:"cur_before_id" json:"cur_before_id"`
-	CurAfterTime  time.Time       `db:"cur_after_time" json:"cur_after_time"`
-	CurAfterID    persist.DBID    `db:"cur_after_id" json:"cur_after_id"`
-	PagingForward bool            `db:"paging_forward" json:"paging_forward"`
-}
-
-type GetAssetsByOwnerChainAddressPaginateRow struct {
-	Asset Asset `db:"asset" json:"asset"`
-	Token Token `db:"token" json:"token"`
-}
-
-// TODO order by asset balance instead of creation data
-func (q *Queries) GetAssetsByOwnerChainAddressPaginate(ctx context.Context, arg GetAssetsByOwnerChainAddressPaginateParams) ([]GetAssetsByOwnerChainAddressPaginateRow, error) {
-	rows, err := q.db.Query(ctx, getAssetsByOwnerChainAddressPaginate,
-		arg.OwnerAddress,
-		arg.Chain,
-		arg.Limit,
-		arg.CurBeforeTime,
-		arg.CurBeforeID,
-		arg.CurAfterTime,
-		arg.CurAfterID,
-		arg.PagingForward,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetAssetsByOwnerChainAddressPaginateRow
-	for rows.Next() {
-		var i GetAssetsByOwnerChainAddressPaginateRow
-		if err := rows.Scan(
-			&i.Asset.ID,
-			&i.Asset.Version,
-			&i.Asset.LastUpdated,
-			&i.Asset.CreatedAt,
-			&i.Asset.Chain,
-			&i.Asset.TokenAddress,
-			&i.Asset.OwnerAddress,
-			&i.Asset.Balance,
-			&i.Asset.BlockNumber,
-			&i.Token.ID,
-			&i.Token.Deleted,
-			&i.Token.Version,
-			&i.Token.CreatedAt,
-			&i.Token.LastUpdated,
-			&i.Token.Name,
-			&i.Token.Symbol,
-			&i.Token.Logo,
-			&i.Token.TokenType,
-			&i.Token.BlockNumber,
-			&i.Token.Chain,
-			&i.Token.ContractAddress,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getCheckablePushTickets = `-- name: GetCheckablePushTickets :many
 select id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, deleted from push_notification_tickets where check_after <= now() and deleted = false limit $1
 `
@@ -800,7 +604,7 @@ func (q *Queries) GetCurrentTime(ctx context.Context) (time.Time, error) {
 }
 
 const getEvent = `-- name: GetEvent :one
-SELECT id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false
+SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) {
@@ -813,7 +617,6 @@ func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) 
 		&i.ResourceTypeID,
 		&i.SubjectID,
 		&i.UserID,
-		&i.TokenID,
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
@@ -828,7 +631,7 @@ func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) 
 }
 
 const getEventsInGroup = `-- name: GetEventsInGroup :many
-select id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where group_id = $1 and deleted = false order by(created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where group_id = $1 and deleted = false order by(created_at, id) asc
 `
 
 func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) ([]Event, error) {
@@ -847,7 +650,6 @@ func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) 
 			&i.ResourceTypeID,
 			&i.SubjectID,
 			&i.UserID,
-			&i.TokenID,
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
@@ -870,9 +672,9 @@ func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) 
 
 const getEventsInWindow = `-- name: GetEventsInWindow :many
 with recursive activity as (
-    select id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
+    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
     union
-    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.token_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.split_id, e.external_id, e.caption, e.group_id from events e, activity a
+    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.split_id, e.external_id, e.caption, e.group_id from events e, activity a
     where e.actor_id = a.actor_id
       and e.action = any($3)
       and e.created_at < a.created_at
@@ -881,7 +683,7 @@ with recursive activity as (
       and e.caption is null
       and (not $4::bool or e.subject_id = a.subject_id)
 )
-select id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
 `
 
 type GetEventsInWindowParams struct {
@@ -912,7 +714,6 @@ func (q *Queries) GetEventsInWindow(ctx context.Context, arg GetEventsInWindowPa
 			&i.ResourceTypeID,
 			&i.SubjectID,
 			&i.UserID,
-			&i.TokenID,
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
@@ -934,7 +735,7 @@ func (q *Queries) GetEventsInWindow(ctx context.Context, arg GetEventsInWindowPa
 }
 
 const getMostRecentNotificationByOwnerIDForAction = `-- name: GetMostRecentNotificationByOwnerIDForAction :one
-select id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount from notifications
+select id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount from notifications
 where owner_id = $1
   and action = $2
   and deleted = false
@@ -961,44 +762,6 @@ func (q *Queries) GetMostRecentNotificationByOwnerIDForAction(ctx context.Contex
 		&i.Data,
 		&i.EventIds,
 		&i.SplitID,
-		&i.TokenID,
-		&i.Seen,
-		&i.Amount,
-	)
-	return i, err
-}
-
-const getMostRecentNotificationByOwnerIDTokenIDForAction = `-- name: GetMostRecentNotificationByOwnerIDTokenIDForAction :one
-select id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount from notifications
-where owner_id = $1
-  and token_id = $2
-  and action = $3
-  and deleted = false
-order by created_at desc
-limit 1
-`
-
-type GetMostRecentNotificationByOwnerIDTokenIDForActionParams struct {
-	OwnerID persist.DBID   `db:"owner_id" json:"owner_id"`
-	TokenID persist.DBID   `db:"token_id" json:"token_id"`
-	Action  persist.Action `db:"action" json:"action"`
-}
-
-func (q *Queries) GetMostRecentNotificationByOwnerIDTokenIDForAction(ctx context.Context, arg GetMostRecentNotificationByOwnerIDTokenIDForActionParams) (Notification, error) {
-	row := q.db.QueryRow(ctx, getMostRecentNotificationByOwnerIDTokenIDForAction, arg.OwnerID, arg.TokenID, arg.Action)
-	var i Notification
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.OwnerID,
-		&i.Version,
-		&i.LastUpdated,
-		&i.CreatedAt,
-		&i.Action,
-		&i.Data,
-		&i.EventIds,
-		&i.SplitID,
-		&i.TokenID,
 		&i.Seen,
 		&i.Amount,
 	)
@@ -1006,7 +769,7 @@ func (q *Queries) GetMostRecentNotificationByOwnerIDTokenIDForAction(ctx context
 }
 
 const getNotificationByID = `-- name: GetNotificationByID :one
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Notification, error) {
@@ -1023,7 +786,6 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Not
 		&i.Data,
 		&i.EventIds,
 		&i.SplitID,
-		&i.TokenID,
 		&i.Seen,
 		&i.Amount,
 	)
@@ -1031,7 +793,7 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Not
 }
 
 const getNotificationsByOwnerIDForActionAfter = `-- name: GetNotificationsByOwnerIDForActionAfter :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount FROM notifications
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications
 WHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at > $3
 ORDER BY created_at DESC
 `
@@ -1062,7 +824,6 @@ func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, a
 			&i.Data,
 			&i.EventIds,
 			&i.SplitID,
-			&i.TokenID,
 			&i.Seen,
 			&i.Amount,
 		); err != nil {
@@ -1159,7 +920,7 @@ func (q *Queries) GetPushTokensByUserID(ctx context.Context, userID persist.DBID
 }
 
 const getRecentUnseenNotifications = `-- name: GetRecentUnseenNotifications :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at > $2 order by created_at desc limit $3
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at > $2 order by created_at desc limit $3
 `
 
 type GetRecentUnseenNotificationsParams struct {
@@ -1188,7 +949,6 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 			&i.Data,
 			&i.EventIds,
 			&i.SplitID,
-			&i.TokenID,
 			&i.Seen,
 			&i.Amount,
 		); err != nil {
@@ -1297,9 +1057,9 @@ func (q *Queries) GetSplitByRecipientUserID(ctx context.Context, arg GetSplitByR
 
 const getSplitEventsInWindow = `-- name: GetSplitEventsInWindow :many
 with recursive activity as (
-    select id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
+    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
     union
-    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.token_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.split_id, e.external_id, e.caption, e.group_id from events e, activity a
+    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.split_id, e.external_id, e.caption, e.group_id from events e, activity a
     where e.actor_id = a.actor_id
       and e.action = any($3)
       and e.split_id = $4
@@ -1309,7 +1069,7 @@ with recursive activity as (
       and e.caption is null
       and (not $5::bool or e.subject_id = a.subject_id)
 )
-select id, version, actor_id, resource_type_id, subject_id, user_id, token_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
 `
 
 type GetSplitEventsInWindowParams struct {
@@ -1342,7 +1102,6 @@ func (q *Queries) GetSplitEventsInWindow(ctx context.Context, arg GetSplitEvents
 			&i.ResourceTypeID,
 			&i.SubjectID,
 			&i.UserID,
-			&i.TokenID,
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
@@ -1566,106 +1325,6 @@ func (q *Queries) GetSplitsByRecipientUserIDPaginate(ctx context.Context, arg Ge
 	return items, nil
 }
 
-const getTokenByChainAddress = `-- name: GetTokenByChainAddress :one
-select id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false
-`
-
-type GetTokenByChainAddressParams struct {
-	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
-	Chain           persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetTokenByChainAddress(ctx context.Context, arg GetTokenByChainAddressParams) (Token, error) {
-	row := q.db.QueryRow(ctx, getTokenByChainAddress, arg.ContractAddress, arg.Chain)
-	var i Token
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.Version,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.Name,
-		&i.Symbol,
-		&i.Logo,
-		&i.TokenType,
-		&i.BlockNumber,
-		&i.Chain,
-		&i.ContractAddress,
-	)
-	return i, err
-}
-
-const getTokenByID = `-- name: GetTokenByID :one
-select id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE id = $1 AND deleted = false
-`
-
-func (q *Queries) GetTokenByID(ctx context.Context, id persist.DBID) (Token, error) {
-	row := q.db.QueryRow(ctx, getTokenByID, id)
-	var i Token
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.Version,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.Name,
-		&i.Symbol,
-		&i.Logo,
-		&i.TokenType,
-		&i.BlockNumber,
-		&i.Chain,
-		&i.ContractAddress,
-	)
-	return i, err
-}
-
-const getTokensByIDs = `-- name: GetTokensByIDs :many
-with keys as (
-    select unnest ($1::varchar[]) as id
-         , generate_subscripts($1::varchar[], 1) as batch_key_index
-)
-select k.batch_key_index, t.id, t.deleted, t.version, t.created_at, t.last_updated, t.name, t.symbol, t.logo, t.token_type, t.block_number, t.chain, t.contract_address from keys k join tokens t on t.id = k.id where not t.deleted
-`
-
-type GetTokensByIDsRow struct {
-	BatchKeyIndex int32 `db:"batch_key_index" json:"batch_key_index"`
-	Token         Token `db:"token" json:"token"`
-}
-
-func (q *Queries) GetTokensByIDs(ctx context.Context, tokenIds []string) ([]GetTokensByIDsRow, error) {
-	rows, err := q.db.Query(ctx, getTokensByIDs, tokenIds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetTokensByIDsRow
-	for rows.Next() {
-		var i GetTokensByIDsRow
-		if err := rows.Scan(
-			&i.BatchKeyIndex,
-			&i.Token.ID,
-			&i.Token.Deleted,
-			&i.Token.Version,
-			&i.Token.CreatedAt,
-			&i.Token.LastUpdated,
-			&i.Token.Name,
-			&i.Token.Symbol,
-			&i.Token.Logo,
-			&i.Token.TokenType,
-			&i.Token.BlockNumber,
-			&i.Token.Chain,
-			&i.Token.ContractAddress,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getUserByChainAddress = `-- name: GetUserByChainAddress :one
 select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
@@ -1763,8 +1422,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 
 const getUserByVerifiedEmailAddress = `-- name: GetUserByVerifiedEmailAddress :one
 select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
-where p.pii_email_address = lower($1)
-  and u.email_verified != 0
+where p.pii_verified_email_address = lower($1)
   and p.deleted = false
   and u.deleted = false
 `
@@ -1833,7 +1491,7 @@ func (q *Queries) GetUserExperiencesByUserID(ctx context.Context, id persist.DBI
 }
 
 const getUserNotifications = `-- name: GetUserNotifications :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
                               AND (created_at, id) < ($3, $4)
                               AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1879,7 +1537,6 @@ func (q *Queries) GetUserNotifications(ctx context.Context, arg GetUserNotificat
 			&i.Data,
 			&i.EventIds,
 			&i.SplitID,
-			&i.TokenID,
 			&i.Seen,
 			&i.Amount,
 		); err != nil {
@@ -1918,7 +1575,7 @@ func (q *Queries) GetUserRolesByUserId(ctx context.Context, userID persist.DBID)
 }
 
 const getUserUnseenNotifications = `-- name: GetUserUnseenNotifications :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false
                               AND (created_at, id) < ($3, $4)
                               AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1964,7 +1621,6 @@ func (q *Queries) GetUserUnseenNotifications(ctx context.Context, arg GetUserUns
 			&i.Data,
 			&i.EventIds,
 			&i.SplitID,
-			&i.TokenID,
 			&i.Seen,
 			&i.Amount,
 		); err != nil {
@@ -2145,8 +1801,8 @@ select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.u
 where (u.email_unsubscriptions->>'all' = 'false' or u.email_unsubscriptions->>'all' is null)
   and (u.email_unsubscriptions->>$2::varchar = 'false' or u.email_unsubscriptions->>$2::varchar is null)
   and u.deleted = false and u.pii_verified_email_address is not null
-  and (u.created_at, u.id) < ($3, $4)
-  and (u.created_at, u.id) > ($5, $6)
+  and (u.created_at, u.id) < ($3, $4::dbid)
+  and (u.created_at, u.id) > ($5, $6::dbid)
   and ($7::bool = false or r.user_id is not null)
 order by case when $8::bool then (u.created_at, u.id) end asc,
          case when not $8::bool then (u.created_at, u.id) end desc
@@ -2154,14 +1810,14 @@ limit $1
 `
 
 type GetUsersWithEmailNotificationsOnForEmailTypeParams struct {
-	Limit               int32        `db:"limit" json:"limit"`
-	EmailUnsubscription string       `db:"email_unsubscription" json:"email_unsubscription"`
-	CurBeforeTime       time.Time    `db:"cur_before_time" json:"cur_before_time"`
-	CurBeforeID         persist.DBID `db:"cur_before_id" json:"cur_before_id"`
-	CurAfterTime        time.Time    `db:"cur_after_time" json:"cur_after_time"`
-	CurAfterID          persist.DBID `db:"cur_after_id" json:"cur_after_id"`
-	EmailTestersOnly    bool         `db:"email_testers_only" json:"email_testers_only"`
-	PagingForward       bool         `db:"paging_forward" json:"paging_forward"`
+	Limit               int32       `db:"limit" json:"limit"`
+	EmailUnsubscription string      `db:"email_unsubscription" json:"email_unsubscription"`
+	CurBeforeTime       time.Time   `db:"cur_before_time" json:"cur_before_time"`
+	CurBeforeID         interface{} `db:"cur_before_id" json:"cur_before_id"`
+	CurAfterTime        time.Time   `db:"cur_after_time" json:"cur_after_time"`
+	CurAfterID          interface{} `db:"cur_after_id" json:"cur_after_id"`
+	EmailTestersOnly    bool        `db:"email_testers_only" json:"email_testers_only"`
+	PagingForward       bool        `db:"paging_forward" json:"paging_forward"`
 }
 
 // for some reason this query will not allow me to use @tags for $1
@@ -2216,8 +1872,8 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 const getUsersWithRolePaginate = `-- name: GetUsersWithRolePaginate :many
 select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false
                                          and u.id = ur.user_id and ur.role = $2
-                                         and (u.username_idempotent, u.id) < ($3::varchar, $4)
-                                         and (u.username_idempotent, u.id) > ($5::varchar, $6)
+                                         and (u.username_idempotent, u.id) < ($3::varchar, $4::dbid)
+                                         and (u.username_idempotent, u.id) > ($5::varchar, $6::dbid)
 order by case when $7::bool then (u.username_idempotent, u.id) end asc,
          case when not $7::bool then (u.username_idempotent, u.id) end desc
 limit $1
@@ -2227,9 +1883,9 @@ type GetUsersWithRolePaginateParams struct {
 	Limit         int32        `db:"limit" json:"limit"`
 	Role          persist.Role `db:"role" json:"role"`
 	CurBeforeKey  string       `db:"cur_before_key" json:"cur_before_key"`
-	CurBeforeID   persist.DBID `db:"cur_before_id" json:"cur_before_id"`
+	CurBeforeID   interface{}  `db:"cur_before_id" json:"cur_before_id"`
 	CurAfterKey   string       `db:"cur_after_key" json:"cur_after_key"`
-	CurAfterID    persist.DBID `db:"cur_after_id" json:"cur_after_id"`
+	CurAfterID    interface{}  `db:"cur_after_id" json:"cur_after_id"`
 	PagingForward bool         `db:"paging_forward" json:"paging_forward"`
 }
 
@@ -2442,36 +2098,6 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (persist
 	var id persist.DBID
 	err := row.Scan(&id)
 	return id, err
-}
-
-const insertUserTokenSpam = `-- name: InsertUserTokenSpam :exec
-insert into user_token_spam (id, user_id, token_id, is_marked_spam, created_at, last_updated) values
-    (
-      unnest($1::varchar[]),
-      $2,
-      unnest($3::varchar[]),
-      $4,
-      now(),
-      now()
-    )
-on conflict (user_id, token_id) do update set is_marked_spam = excluded.is_marked_spam, last_updated = excluded.last_updated
-`
-
-type InsertUserTokenSpamParams struct {
-	Ids          []string     `db:"ids" json:"ids"`
-	UserID       persist.DBID `db:"user_id" json:"user_id"`
-	TokenIds     []string     `db:"token_ids" json:"token_ids"`
-	IsMarkedSpam sql.NullBool `db:"is_marked_spam" json:"is_marked_spam"`
-}
-
-func (q *Queries) InsertUserTokenSpam(ctx context.Context, arg InsertUserTokenSpamParams) error {
-	_, err := q.db.Exec(ctx, insertUserTokenSpam,
-		arg.Ids,
-		arg.UserID,
-		arg.TokenIds,
-		arg.IsMarkedSpam,
-	)
-	return err
 }
 
 const insertWallet = `-- name: InsertWallet :exec
@@ -2762,36 +2388,6 @@ type UpdateSplitSharesParams struct {
 
 func (q *Queries) UpdateSplitShares(ctx context.Context, arg UpdateSplitSharesParams) error {
 	_, err := q.db.Exec(ctx, updateSplitShares, arg.SplitIds, arg.RecipientAddresses, arg.Ownerships)
-	return err
-}
-
-const updateTokenMetadataFieldsByChainAddress = `-- name: UpdateTokenMetadataFieldsByChainAddress :exec
-update tokens
-set name = $1,
-    symbol = $2,
-    logo = $3,
-    last_updated = now()
-where contract_address = $4
-  and chain = $5
-  and deleted = false
-`
-
-type UpdateTokenMetadataFieldsByChainAddressParams struct {
-	Name            sql.NullString  `db:"name" json:"name"`
-	Symbol          sql.NullString  `db:"symbol" json:"symbol"`
-	Logo            sql.NullString  `db:"logo" json:"logo"`
-	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
-	Chain           persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) UpdateTokenMetadataFieldsByChainAddress(ctx context.Context, arg UpdateTokenMetadataFieldsByChainAddressParams) error {
-	_, err := q.db.Exec(ctx, updateTokenMetadataFieldsByChainAddress,
-		arg.Name,
-		arg.Symbol,
-		arg.Logo,
-		arg.ContractAddress,
-		arg.Chain,
-	)
 	return err
 }
 

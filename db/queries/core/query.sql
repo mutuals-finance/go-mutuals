@@ -23,8 +23,7 @@ SELECT * FROM users WHERE username_idempotent = lower($1) AND deleted = false;
 
 -- name: GetUserByVerifiedEmailAddress :one
 select u.* from users u join pii.for_users p on u.id = p.user_id
-where p.pii_email_address = lower($1)
-  and u.email_verified != 0
+where p.pii_verified_email_address = lower($1)
   and p.deleted = false
   and u.deleted = false;
 
@@ -125,83 +124,6 @@ SELECT s.* FROM recipients r
                     JOIN splits s ON s.id = r.split_id
 WHERE r.address = $1 AND s.chain = $2 AND s.deleted = false;
 
--- name: GetTokenByID :one
-select * FROM tokens WHERE id = $1 AND deleted = false;
-
--- name: GetTokenByIdBatch :batchone
-SELECT * FROM tokens WHERE id = $1 AND deleted = false;
-
--- name: GetTokensByIDs :many
-with keys as (
-    select unnest (@token_ids::varchar[]) as id
-         , generate_subscripts(@token_ids::varchar[], 1) as batch_key_index
-)
-select k.batch_key_index, sqlc.embed(t) from keys k join tokens t on t.id = k.id where not t.deleted;
-
--- name: GetTokenByChainAddress :one
-select * FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false;
-
--- name: GetTokenByChainAddressBatch :batchone
-select * FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false;
-
--- name: GetTokensByChainAddressBatch :batchmany
-select * FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false;
-
--- name: UpdateTokenMetadataFieldsByChainAddress :exec
-update tokens
-set name = @name,
-    symbol = @symbol,
-    logo = @logo,
-    last_updated = now()
-where contract_address = @contract_address
-  and chain = @chain
-  and deleted = false;
-
-insert into push_notification_tickets (id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, status, deleted) values
-    (
-        unnest(@ids::text[]),
-        unnest(@push_token_ids::text[]),
-        unnest(@ticket_ids::text[]),
-        now(),
-        now() + interval '15 minutes',
-        0,
-        'pending',
-        false
-    );
-
--- name: InsertUserTokenSpam :exec
-insert into user_token_spam (id, user_id, token_id, is_marked_spam, created_at, last_updated) values
-    (
-      unnest(@ids::varchar[]),
-      @user_id,
-      unnest(@token_ids::varchar[]),
-      @is_marked_spam,
-      now(),
-      now()
-    )
-on conflict (user_id, token_id) do update set is_marked_spam = excluded.is_marked_spam, last_updated = excluded.last_updated;
-
--- name: GetAssetByIdBatch :batchone
-select sqlc.embed(a), sqlc.embed(t)
-from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-where a.id = $1 and t.deleted = false;
-
-/* TODO order by asset balance instead of creation data */
--- name: GetAssetsByOwnerChainAddressPaginate :many
-select sqlc.embed(a), sqlc.embed(t)
-    from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-    where a.owner_address = $1 and a.chain = $2 and t.deleted = false
-    and (a.created_at,a.id) < (@cur_before_time::timestamptz, @cur_before_id)
-    and (a.created_at,a.id) > (@cur_after_time::timestamptz, @cur_after_id)
-    order by case when @paging_forward::bool then (a.created_at,a.id) end asc,
-             case when not @paging_forward::bool then (a.created_at,a.id) end desc
-    limit $3;
-
--- name: CountAssetsByOwnerChainAddress :one
-select count(*)
-from assets a join tokens t ON a.token_address = t.contract_address and a.chain = t.chain
-where a.owner_address = @owner_address and a.chain = @chain and t.deleted = false;
-
 -- name: GetWalletByID :one
 SELECT * FROM wallets WHERE id = $1 AND deleted = false;
 
@@ -220,12 +142,8 @@ SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, walle
 -- name: GetWalletsByUserIDBatch :batchmany
 SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
 
-
 -- name: CreateUserEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING *;
-
--- name: CreateTokenEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, token_id, subject_id, data, group_id, caption, split_id) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
 
 -- name: CreateSplitEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, split_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
@@ -358,15 +276,6 @@ where owner_id = $1
 order by created_at desc
 limit 1;
 
--- name: GetMostRecentNotificationByOwnerIDTokenIDForAction :one
-select * from notifications
-where owner_id = $1
-  and token_id = $2
-  and action = $3
-  and deleted = false
-order by created_at desc
-limit 1;
-
 -- name: GetNotificationsByOwnerIDForActionAfter :many
 SELECT * FROM notifications
 WHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at > @created_after
@@ -411,12 +320,8 @@ SELECT count(*) FROM users WHERE deleted = false and universal = false;
 -- name: CreateSimpleNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
--- name: CreateTokenNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, token_id, amount) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
-
 -- name: CreateViewSplitNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
-
 
 -- name: UpdateNotification :exec
 UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4;
@@ -434,8 +339,8 @@ select u.* from pii.user_view u
 where (u.email_unsubscriptions->>'all' = 'false' or u.email_unsubscriptions->>'all' is null)
   and (u.email_unsubscriptions->>sqlc.arg(email_unsubscription)::varchar = 'false' or u.email_unsubscriptions->>sqlc.arg(email_unsubscription)::varchar is null)
   and u.deleted = false and u.pii_verified_email_address is not null
-  and (u.created_at, u.id) < (@cur_before_time, @cur_before_id)
-  and (u.created_at, u.id) > (@cur_after_time, @cur_after_id)
+  and (u.created_at, u.id) < (@cur_before_time, @cur_before_id::dbid)
+  and (u.created_at, u.id) > (@cur_after_time, @cur_after_id::dbid)
   and (@email_testers_only::bool = false or r.user_id is not null)
 order by case when @paging_forward::bool then (u.created_at, u.id) end asc,
          case when not @paging_forward::bool then (u.created_at, u.id) end desc
@@ -444,8 +349,8 @@ limit $1;
 -- name: GetUsersWithRolePaginate :many
 select u.* from users u, user_roles ur where u.deleted = false and ur.deleted = false
                                          and u.id = ur.user_id and ur.role = @role
-                                         and (u.username_idempotent, u.id) < (@cur_before_key::varchar, @cur_before_id)
-                                         and (u.username_idempotent, u.id) > (@cur_after_key::varchar, @cur_after_id)
+                                         and (u.username_idempotent, u.id) < (@cur_before_key::varchar, @cur_before_id::dbid)
+                                         and (u.username_idempotent, u.id) > (@cur_after_key::varchar, @cur_after_id::dbid)
 order by case when @paging_forward::bool then (u.username_idempotent, u.id) end asc,
          case when not @paging_forward::bool then (u.username_idempotent, u.id) end desc
 limit $1;

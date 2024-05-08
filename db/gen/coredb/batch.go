@@ -18,82 +18,8 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const getAssetByIdBatch = `-- name: GetAssetByIdBatch :batchone
-select a.id, a.version, a.last_updated, a.created_at, a.chain, a.token_address, a.owner_address, a.balance, a.block_number, t.id, t.deleted, t.version, t.created_at, t.last_updated, t.name, t.symbol, t.logo, t.token_type, t.block_number, t.chain, t.contract_address
-from assets a join tokens t on a.token_address = t.contract_address and a.chain = t.chain
-where a.id = $1 and t.deleted = false
-`
-
-type GetAssetByIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetAssetByIdBatchRow struct {
-	Asset Asset `db:"asset" json:"asset"`
-	Token Token `db:"token" json:"token"`
-}
-
-func (q *Queries) GetAssetByIdBatch(ctx context.Context, id []persist.DBID) *GetAssetByIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getAssetByIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetAssetByIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetAssetByIdBatchBatchResults) QueryRow(f func(int, GetAssetByIdBatchRow, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i GetAssetByIdBatchRow
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.Asset.ID,
-			&i.Asset.Version,
-			&i.Asset.LastUpdated,
-			&i.Asset.CreatedAt,
-			&i.Asset.Chain,
-			&i.Asset.TokenAddress,
-			&i.Asset.OwnerAddress,
-			&i.Asset.Balance,
-			&i.Asset.BlockNumber,
-			&i.Token.ID,
-			&i.Token.Deleted,
-			&i.Token.Version,
-			&i.Token.CreatedAt,
-			&i.Token.LastUpdated,
-			&i.Token.Name,
-			&i.Token.Symbol,
-			&i.Token.Logo,
-			&i.Token.TokenType,
-			&i.Token.BlockNumber,
-			&i.Token.Chain,
-			&i.Token.ContractAddress,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetAssetByIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
 const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
 `
 
 type GetNotificationByIDBatchBatchResults struct {
@@ -136,7 +62,6 @@ func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification
 			&i.Data,
 			&i.EventIds,
 			&i.SplitID,
-			&i.TokenID,
 			&i.Seen,
 			&i.Amount,
 		)
@@ -433,205 +358,6 @@ func (b *GetSplitsByRecipientChainAddressBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getTokenByChainAddressBatch = `-- name: GetTokenByChainAddressBatch :batchone
-select id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false
-`
-
-type GetTokenByChainAddressBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetTokenByChainAddressBatchParams struct {
-	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
-	Chain           persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetTokenByChainAddressBatch(ctx context.Context, arg []GetTokenByChainAddressBatchParams) *GetTokenByChainAddressBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.ContractAddress,
-			a.Chain,
-		}
-		batch.Queue(getTokenByChainAddressBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokenByChainAddressBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetTokenByChainAddressBatchBatchResults) QueryRow(f func(int, Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Token
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.CreatedAt,
-			&i.LastUpdated,
-			&i.Name,
-			&i.Symbol,
-			&i.Logo,
-			&i.TokenType,
-			&i.BlockNumber,
-			&i.Chain,
-			&i.ContractAddress,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetTokenByChainAddressBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokenByIdBatch = `-- name: GetTokenByIdBatch :batchone
-SELECT id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE id = $1 AND deleted = false
-`
-
-type GetTokenByIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetTokenByIdBatch(ctx context.Context, id []persist.DBID) *GetTokenByIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getTokenByIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokenByIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetTokenByIdBatchBatchResults) QueryRow(f func(int, Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Token
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.CreatedAt,
-			&i.LastUpdated,
-			&i.Name,
-			&i.Symbol,
-			&i.Logo,
-			&i.TokenType,
-			&i.BlockNumber,
-			&i.Chain,
-			&i.ContractAddress,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetTokenByIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getTokensByChainAddressBatch = `-- name: GetTokensByChainAddressBatch :batchmany
-select id, deleted, version, created_at, last_updated, name, symbol, logo, token_type, block_number, chain, contract_address FROM tokens WHERE contract_address = $1 AND chain = $2 AND deleted = false
-`
-
-type GetTokensByChainAddressBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetTokensByChainAddressBatchParams struct {
-	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
-	Chain           persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetTokensByChainAddressBatch(ctx context.Context, arg []GetTokensByChainAddressBatchParams) *GetTokensByChainAddressBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.ContractAddress,
-			a.Chain,
-		}
-		batch.Queue(getTokensByChainAddressBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetTokensByChainAddressBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetTokensByChainAddressBatchBatchResults) Query(f func(int, []Token, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Token
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Token
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.CreatedAt,
-					&i.LastUpdated,
-					&i.Name,
-					&i.Symbol,
-					&i.Logo,
-					&i.TokenType,
-					&i.BlockNumber,
-					&i.Chain,
-					&i.ContractAddress,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetTokensByChainAddressBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
 const getUserByChainAddressBatch = `-- name: GetUserByChainAddressBatch :batchone
 select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
@@ -831,7 +557,7 @@ func (b *GetUserByUsernameBatchBatchResults) Close() error {
 }
 
 const getUserNotificationsBatch = `-- name: GetUserNotificationsBatch :batchmany
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, token_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
                               AND (created_at, id) < ($2, $3)
                               AND (created_at, id) > ($4, $5)
 ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
@@ -902,7 +628,6 @@ func (b *GetUserNotificationsBatchBatchResults) Query(f func(int, []Notification
 					&i.Data,
 					&i.EventIds,
 					&i.SplitID,
-					&i.TokenID,
 					&i.Seen,
 					&i.Amount,
 				); err != nil {

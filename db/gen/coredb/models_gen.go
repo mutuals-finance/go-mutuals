@@ -12,18 +12,6 @@ import (
 	"github.com/jackc/pgtype"
 )
 
-type Asset struct {
-	ID           persist.DBID      `db:"id" json:"id"`
-	Version      sql.NullInt32     `db:"version" json:"version"`
-	LastUpdated  time.Time         `db:"last_updated" json:"last_updated"`
-	CreatedAt    time.Time         `db:"created_at" json:"created_at"`
-	Chain        persist.Chain     `db:"chain" json:"chain"`
-	TokenAddress persist.Address   `db:"token_address" json:"token_address"`
-	OwnerAddress persist.Address   `db:"owner_address" json:"owner_address"`
-	Balance      persist.HexString `db:"balance" json:"balance"`
-	BlockNumber  sql.NullInt64     `db:"block_number" json:"block_number"`
-}
-
 type DevMetadataUser struct {
 	UserID          persist.DBID  `db:"user_id" json:"user_id"`
 	HasEmailAddress persist.Email `db:"has_email_address" json:"has_email_address"`
@@ -37,7 +25,6 @@ type Event struct {
 	ResourceTypeID persist.ResourceType `db:"resource_type_id" json:"resource_type_id"`
 	SubjectID      persist.DBID         `db:"subject_id" json:"subject_id"`
 	UserID         persist.DBID         `db:"user_id" json:"user_id"`
-	TokenID        persist.DBID         `db:"token_id" json:"token_id"`
 	Action         persist.Action       `db:"action" json:"action"`
 	Data           persist.EventData    `db:"data" json:"data"`
 	Deleted        bool                 `db:"deleted" json:"deleted"`
@@ -75,7 +62,6 @@ type Notification struct {
 	Data        persist.NotificationData `db:"data" json:"data"`
 	EventIds    persist.DBIDList         `db:"event_ids" json:"event_ids"`
 	SplitID     persist.DBID             `db:"split_id" json:"split_id"`
-	TokenID     persist.DBID             `db:"token_id" json:"token_id"`
 	Seen        bool                     `db:"seen" json:"seen"`
 	Amount      int32                    `db:"amount" json:"amount"`
 }
@@ -194,21 +180,6 @@ type Split struct {
 	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
 }
 
-type Token struct {
-	ID              persist.DBID    `db:"id" json:"id"`
-	Deleted         bool            `db:"deleted" json:"deleted"`
-	Version         sql.NullInt32   `db:"version" json:"version"`
-	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
-	LastUpdated     time.Time       `db:"last_updated" json:"last_updated"`
-	Name            sql.NullString  `db:"name" json:"name"`
-	Symbol          sql.NullString  `db:"symbol" json:"symbol"`
-	Logo            sql.NullString  `db:"logo" json:"logo"`
-	TokenType       sql.NullString  `db:"token_type" json:"token_type"`
-	BlockNumber     sql.NullInt64   `db:"block_number" json:"block_number"`
-	Chain           persist.Chain   `db:"chain" json:"chain"`
-	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
-}
-
 type User struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
 	Deleted              bool                             `db:"deleted" json:"deleted"`
@@ -246,15 +217,6 @@ type UserRole struct {
 	Deleted     bool         `db:"deleted" json:"deleted"`
 	CreatedAt   time.Time    `db:"created_at" json:"created_at"`
 	LastUpdated time.Time    `db:"last_updated" json:"last_updated"`
-}
-
-type UserTokenSpam struct {
-	ID           persist.DBID `db:"id" json:"id"`
-	UserID       persist.DBID `db:"user_id" json:"user_id"`
-	TokenID      persist.DBID `db:"token_id" json:"token_id"`
-	IsMarkedSpam sql.NullBool `db:"is_marked_spam" json:"is_marked_spam"`
-	CreatedAt    time.Time    `db:"created_at" json:"created_at"`
-	LastUpdated  time.Time    `db:"last_updated" json:"last_updated"`
 }
 
 type Wallet struct {

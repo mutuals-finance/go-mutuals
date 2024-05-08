@@ -12,17 +12,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
-const splitRepoCountAllAssets = `-- name: SplitRepoCountAllAssets :one
-select count(*) from assets a join tokens t on a.token_id = t.id where a.owner_address = $1 and t.deleted = false
-`
-
-func (q *Queries) SplitRepoCountAllAssets(ctx context.Context, ownerAddress persist.Address) (int64, error) {
-	row := q.db.QueryRow(ctx, splitRepoCountAllAssets, ownerAddress)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const splitRepoCreate = `-- name: SplitRepoCreate :one
 insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
 `
@@ -71,39 +60,6 @@ func (q *Queries) SplitRepoCreate(ctx context.Context, arg SplitRepoCreateParams
 		&i.TotalOwnership,
 	)
 	return i, err
-}
-
-const splitRepoGetSplitAssets = `-- name: SplitRepoGetSplitAssets :many
-SELECT a.id FROM splits s
-    LEFT JOIN assets a ON a.owner_address = s.address
-    LEFT JOIN tokens t ON t.id = a.token_id
-    WHERE s.address = $1 AND s.chain = $2 AND s.deleted = false AND t.deleted = false
-    ORDER BY a.balance
-`
-
-type SplitRepoGetSplitAssetsParams struct {
-	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) SplitRepoGetSplitAssets(ctx context.Context, arg SplitRepoGetSplitAssetsParams) ([]persist.DBID, error) {
-	rows, err := q.db.Query(ctx, splitRepoGetSplitAssets, arg.Address, arg.Chain)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []persist.DBID
-	for rows.Next() {
-		var id persist.DBID
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const splitRepoUpdate = `-- name: SplitRepoUpdate :execrows

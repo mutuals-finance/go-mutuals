@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS dev_metadata_users;
-DROP TABLE IF EXISTS user_token_spam;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS legacy_views;
 DROP TABLE IF EXISTS spam_user_scores;
@@ -14,7 +13,5 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS recipients;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS splits;
-DROP TABLE IF EXISTS tokens;
-DROP TABLE IF EXISTS assets;
 DROP TABLE IF EXISTS nonces;
 DROP TABLE IF EXISTS wallets;

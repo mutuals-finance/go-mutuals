@@ -85,86 +85,6 @@ CREATE INDEX splits_fts_name_idx ON splits USING gin (fts_name);
 
 CREATE UNIQUE INDEX split_address_chain_idx ON splits USING btree (address, chain);
 
-CREATE TABLE IF NOT EXISTS tokens
-(
-    id               character varying(255) PRIMARY KEY NOT NULL,
-    deleted          boolean                            NOT NULL DEFAULT FALSE,
-    version          integer                                     DEFAULT 0,
-    created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    name             character varying,
-    symbol           character varying,
-    logo             character varying,
-    token_type       character varying,
-    block_number     bigint,
-    chain            integer,
-    contract_address character varying(255)
-);
-
--- TODO add relation token -> split?
-
-CREATE INDEX block_number_idx ON tokens USING btree (block_number);
-
-CREATE INDEX contract_address_chain_idx ON tokens USING btree (contract_address, chain);
-
-/*
-TODO create relevance for split ie according to volume
-CREATE MATERIALIZED VIEW contract_relevance AS
-WITH users_per_contract AS (SELECT con.id
-                            FROM contracts con,
-                                 collections col,
-                                 (LATERAL unnest(col.nfts) col_token_id(col_token_id)
-                                     JOIN tokens t
-                                  ON ((((t.id)::text = (col_token_id.col_token_id)::text) AND (t.deleted = false))))
-                            WHERE (((t.contract)::text = (con.id)::text) AND
-                                   ((col.owner_user_id)::text = (t.owner_user_id)::text) AND (col.deleted = false) AND
-                                   (con.deleted = false))
-                            GROUP BY con.id, t.owner_user_id),
-     min_count AS (SELECT 0 AS count),
-     max_count AS (SELECT count(users_per_contract.id) AS count
-                   FROM users_per_contract
-                   GROUP BY users_per_contract.id
-                   ORDER BY (count(users_per_contract.id)) DESC
-                   LIMIT 1)
-SELECT users_per_contract.id,
-       (((min_count.count + count(users_per_contract.id)))::numeric /
-        ((min_count.count + max_count.count))::numeric) AS score
-FROM users_per_contract,
-     min_count,
-     max_count
-GROUP BY users_per_contract.id, min_count.count, max_count.count
-UNION
-SELECT NULL::character varying                                                       AS id,
-       ((min_count.count)::numeric / ((min_count.count + max_count.count))::numeric) AS score
-FROM min_count,
-     max_count;
-
-CREATE UNIQUE INDEX contract_relevance_id_idx ON contract_relevance USING btree (id);
-*/
-
-CREATE TABLE IF NOT EXISTS assets
-(
-    id            character varying(255) PRIMARY KEY,
-    version       integer                           DEFAULT 0,
-    last_updated  timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at    timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    chain         integer,
-    token_address character varying(255),
-    owner_address character varying(255)   NOT NULL,
-    balance       integer                           DEFAULT 0,
-    block_number  bigint
-);
-
-CREATE TABLE IF NOT EXISTS user_token_spam
-(
-    id             character varying(255) PRIMARY KEY NOT NULL,
-    user_id        character varying(255)             NOT NULL,
-    token_id       character varying(255)             NOT NULL,
-    is_marked_spam boolean                                     DEFAULT TRUE,
-    created_at     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (
     user_id           varchar(255) PRIMARY KEY REFERENCES users (id),
@@ -180,7 +100,6 @@ CREATE TABLE IF NOT EXISTS events
     resource_type_id integer                            NOT NULL,
     subject_id       character varying(255)             NOT NULL,
     user_id          character varying(255),
-    token_id         character varying(255),
     action           character varying(255)             NOT NULL,
     data             jsonb,
     deleted          boolean                            NOT NULL DEFAULT FALSE,
@@ -195,7 +114,7 @@ CREATE TABLE IF NOT EXISTS events
 CREATE INDEX events_actor_id_action_created_at_idx ON events USING btree (actor_id, action, created_at);
 
 CREATE INDEX events_split_edit_idx ON events USING btree (created_at, actor_id) WHERE ((action)::text = ANY
-                                                                                       ((ARRAY ['SplitCreated'::character varying, 'TokensAddedToSplit'::character varying, 'SplitInfoUpdated'::character varying])::text[]));
+                                                                                       ((ARRAY ['SplitCreated'::character varying, 'SplitInfoUpdated'::character varying])::text[]));
 
 CREATE INDEX group_id_idx ON events USING btree (group_id);
 
@@ -206,18 +125,6 @@ ALTER TABLE events
 ALTER TABLE events
     ADD CONSTRAINT events_split_id_fkey
         FOREIGN KEY (split_id) REFERENCES splits (id);
-
-ALTER TABLE events
-    ADD CONSTRAINT events_token_id_fkey
-        FOREIGN KEY (token_id) REFERENCES tokens (id);
-
-ALTER TABLE user_token_spam
-    ADD CONSTRAINT token_spam_token_id_fkey
-        FOREIGN KEY (token_id) REFERENCES tokens (id);
-
-ALTER TABLE user_token_spam
-    ADD CONSTRAINT token_spam_user_id_fkey
-        FOREIGN KEY (user_id) REFERENCES users (id);
 
 ALTER TABLE events
     ADD CONSTRAINT events_user_id_fkey
@@ -258,7 +165,6 @@ CREATE TABLE IF NOT EXISTS notifications
     data         jsonb,
     event_ids    character varying(255)[],
     split_id     character varying(255),
-    token_id     varchar(255) REFERENCES tokens (id),
     seen         boolean                            NOT NULL DEFAULT FALSE,
     amount       integer                            NOT NULL DEFAULT 1
 );
@@ -289,33 +195,6 @@ CREATE INDEX spam_user_scores_created_at_idx ON spam_user_scores USING btree (cr
 ALTER TABLE spam_user_scores
     ADD CONSTRAINT spam_user_scores_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
-
-/*
-TODO see above -> split_relevance depending on volume better?
-CREATE MATERIALIZED VIEW split_relevance AS
-WITH views_per_split AS (SELECT events.split_id,
-                                count(events.split_id) AS count
-                         FROM events
-                         WHERE (((events.action)::text = 'ViewedSplit'::text) AND (events.deleted = false))
-                         GROUP BY events.split_id),
-     max_count AS (SELECT views_per_split.count
-                   FROM views_per_split
-                   ORDER BY views_per_split.count DESC
-                   LIMIT 1),
-     min_count AS (SELECT 1 AS count)
-SELECT views_per_split.split_id                                                                                AS id,
-       (((min_count.count + views_per_split.count))::numeric / ((min_count.count + max_count.count))::numeric) AS score
-FROM views_per_split,
-     min_count,
-     max_count
-UNION
-SELECT NULL::character varying                                                       AS id,
-       ((min_count.count)::numeric / ((min_count.count + max_count.count))::numeric) AS score
-FROM min_count,
-     max_count;
-
-CREATE UNIQUE INDEX split_relevance_id_idx ON split_relevance USING btree (id);
-*/
 
 CREATE TABLE IF NOT EXISTS user_roles
 (
