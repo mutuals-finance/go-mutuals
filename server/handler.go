@@ -160,15 +160,9 @@ func GraphQLHandler(queries *db.Queries, taskClient *task.Client, pub *pubsub.Cl
 
 // GraphQL playground GUI for experimenting and debugging
 func graphqlPlaygroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL", "/glry/graphql/query")
+	h := playground.Handler("GraphQL", "/splt/graphql/query")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
-	}
-}
-
-func healthCheckHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, util.SuccessResponse{Success: true})
 	}
 }
