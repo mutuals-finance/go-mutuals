@@ -3,8 +3,6 @@ package graphql_test
 import (
 	"context"
 	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/tokenprocessing"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -129,21 +127,6 @@ func usePubSub(t *testing.T) {
 	require.NoError(t, err)
 	t.Setenv("PUBSUB_EMULATOR_HOST", r.GetHostPort("8085/tcp"))
 	t.Cleanup(func() { r.Close() })
-}
-
-// useTokenProcessing starts a HTTP server for tokenprocessing
-func useTokenProcessing(t *testing.T) {
-	t.Helper()
-	ctx := context.Background()
-	c := server.ClientInit(ctx)
-	p, cleanup := multichain.NewMultichainProvider(ctx, server.SetDefaults)
-	server := httptest.NewServer(tokenprocessing.CoreInitServer(ctx, c, p))
-	t.Setenv("TOKEN_PROCESSING_URL", server.URL)
-	t.Cleanup(func() {
-		server.Close()
-		c.Close()
-		cleanup()
-	})
 }
 
 type serverFixture struct {

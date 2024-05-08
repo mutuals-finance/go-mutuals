@@ -22,10 +22,6 @@ func (r *Recipient) ID() GqlID {
 	return GqlID(fmt.Sprintf("Recipient:%s", r.Dbid))
 }
 
-func (r *SocialConnection) ID() GqlID {
-	return GqlID(fmt.Sprintf("SocialConnection:%s:%s", r.SocialID, r.SocialType))
-}
-
 func (r *Split) ID() GqlID {
 	return GqlID(fmt.Sprintf("Split:%s", r.Dbid))
 }
@@ -56,15 +52,14 @@ func (r *Wallet) ID() GqlID {
 }
 
 type NodeFetcher struct {
-	OnAsset            func(ctx context.Context, dbid persist.DBID) (*Asset, error)
-	OnDeletedNode      func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
-	OnRecipient        func(ctx context.Context, dbid persist.DBID) (*Recipient, error)
-	OnSocialConnection func(ctx context.Context, socialId string, socialType persist.SocialProvider) (*SocialConnection, error)
-	OnSplit            func(ctx context.Context, dbid persist.DBID) (*Split, error)
-	OnSplitFiUser      func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
-	OnToken            func(ctx context.Context, dbid persist.DBID) (*Token, error)
-	OnViewer           func(ctx context.Context, userId string) (*Viewer, error)
-	OnWallet           func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
+	OnAsset       func(ctx context.Context, dbid persist.DBID) (*Asset, error)
+	OnDeletedNode func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
+	OnRecipient   func(ctx context.Context, dbid persist.DBID) (*Recipient, error)
+	OnSplit       func(ctx context.Context, dbid persist.DBID) (*Split, error)
+	OnSplitFiUser func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
+	OnToken       func(ctx context.Context, dbid persist.DBID) (*Token, error)
+	OnViewer      func(ctx context.Context, userId string) (*Viewer, error)
+	OnWallet      func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
@@ -92,11 +87,6 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Recipient' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnRecipient(ctx, persist.DBID(ids[0]))
-	case "SocialConnection":
-		if len(ids) != 2 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SocialConnection' type requires 2 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnSocialConnection(ctx, string(ids[0]), persist.SocialProvider(ids[1]))
 	case "Split":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Split' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -135,8 +125,6 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
 	case n.OnRecipient == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnRecipient")
-	case n.OnSocialConnection == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSocialConnection")
 	case n.OnSplit == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplit")
 	case n.OnSplitFiUser == nil:

@@ -78,6 +78,14 @@ type Notification interface {
 	IsNotification()
 }
 
+type OptInForRolesPayloadOrError interface {
+	IsOptInForRolesPayloadOrError()
+}
+
+type OptOutForRolesPayloadOrError interface {
+	IsOptOutForRolesPayloadOrError()
+}
+
 type PreverifyEmailPayloadOrError interface {
 	IsPreverifyEmailPayloadOrError()
 }
@@ -116,14 +124,6 @@ type SearchUsersPayloadOrError interface {
 
 type SetSpamPreferencePayloadOrError interface {
 	IsSetSpamPreferencePayloadOrError()
-}
-
-type SocialAccount interface {
-	IsSocialAccount()
-}
-
-type SocialConnectionsOrError interface {
-	IsSocialConnectionsOrError()
 }
 
 type SplitByIDPayloadOrError interface {
@@ -327,12 +327,6 @@ type DebugAuth struct {
 	DebugToolsPassword *string                 `json:"debugToolsPassword"`
 }
 
-type DebugSocialAuth struct {
-	Provider persist.SocialProvider `json:"provider"`
-	ID       string                 `json:"id"`
-	Username string                 `json:"username"`
-}
-
 type DeepRefreshInput struct {
 	Chain persist.Chain `json:"chain"`
 }
@@ -416,7 +410,6 @@ type ErrInvalidInput struct {
 func (ErrInvalidInput) IsUserByUsernameOrError()                         {}
 func (ErrInvalidInput) IsUserByIDOrError()                               {}
 func (ErrInvalidInput) IsUserByAddressOrError()                          {}
-func (ErrInvalidInput) IsSocialConnectionsOrError()                      {}
 func (ErrInvalidInput) IsSearchUsersPayloadOrError()                     {}
 func (ErrInvalidInput) IsSearchSplitsPayloadOrError()                    {}
 func (ErrInvalidInput) IsAddUserWalletPayloadOrError()                   {}
@@ -434,6 +427,8 @@ func (ErrInvalidInput) IsUpdateEmailPayloadOrError()                     {}
 func (ErrInvalidInput) IsResendVerificationEmailPayloadOrError()         {}
 func (ErrInvalidInput) IsUpdateEmailNotificationSettingsPayloadOrError() {}
 func (ErrInvalidInput) IsUnsubscribeFromEmailTypePayloadOrError()        {}
+func (ErrInvalidInput) IsOptInForRolesPayloadOrError()                   {}
+func (ErrInvalidInput) IsOptOutForRolesPayloadOrError()                  {}
 func (ErrInvalidInput) IsCreateSplitPayloadOrError()                     {}
 func (ErrInvalidInput) IsUpdateSplitInfoPayloadOrError()                 {}
 func (ErrInvalidInput) IsUpdateSplitHiddenPayloadOrError()               {}
@@ -450,13 +445,6 @@ type ErrInvalidToken struct {
 
 func (ErrInvalidToken) IsAuthorizationError() {}
 func (ErrInvalidToken) IsError()              {}
-
-type ErrNeedsToReconnectSocial struct {
-	SocialAccountType persist.SocialProvider `json:"socialAccountType"`
-	Message           string                 `json:"message"`
-}
-
-func (ErrNeedsToReconnectSocial) IsError() {}
 
 type ErrNoCookie struct {
 	Message string `json:"message"`
@@ -481,6 +469,8 @@ func (ErrNotAuthorized) IsError()                                 {}
 func (ErrNotAuthorized) IsDeepRefreshPayloadOrError()             {}
 func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()          {}
 func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()     {}
+func (ErrNotAuthorized) IsOptInForRolesPayloadOrError()           {}
+func (ErrNotAuthorized) IsOptOutForRolesPayloadOrError()          {}
 func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError()  {}
 func (ErrNotAuthorized) IsCreateSplitPayloadOrError()             {}
 func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()         {}
@@ -687,6 +677,18 @@ type OneTimeLoginTokenAuth struct {
 	Token string `json:"token"`
 }
 
+type OptInForRolesPayload struct {
+	User *SplitFiUser `json:"user"`
+}
+
+func (OptInForRolesPayload) IsOptInForRolesPayloadOrError() {}
+
+type OptOutForRolesPayload struct {
+	User *SplitFiUser `json:"user"`
+}
+
+func (OptOutForRolesPayload) IsOptOutForRolesPayloadOrError() {}
+
 type PageInfo struct {
 	Total           *int   `json:"total"`
 	Size            int    `json:"size"`
@@ -804,35 +806,6 @@ type SetSpamPreferencePayload struct {
 
 func (SetSpamPreferencePayload) IsSetSpamPreferencePayloadOrError() {}
 
-type SocialAuthMechanism struct {
-	Twitter *TwitterAuth     `json:"twitter"`
-	Debug   *DebugSocialAuth `json:"debug"`
-}
-
-type SocialConnection struct {
-	HelperSocialConnectionData
-	SplitFiUser        *SplitFiUser           `json:"splitFiUser"`
-	CurrentlyFollowing bool                   `json:"currentlyFollowing"`
-	SocialID           string                 `json:"socialId"`
-	SocialType         persist.SocialProvider `json:"socialType"`
-	DisplayName        string                 `json:"displayName"`
-	SocialUsername     string                 `json:"socialUsername"`
-	ProfileImage       string                 `json:"profileImage"`
-}
-
-func (SocialConnection) IsNode()                     {}
-func (SocialConnection) IsSocialConnectionsOrError() {}
-
-type SocialConnectionsConnection struct {
-	Edges    []*SocialConnectionsEdge `json:"edges"`
-	PageInfo *PageInfo                `json:"pageInfo"`
-}
-
-type SocialConnectionsEdge struct {
-	Node   SocialConnectionsOrError `json:"node"`
-	Cursor *string                  `json:"cursor"`
-}
-
 type Split struct {
 	Dbid        persist.DBID   `json:"dbid"`
 	Version     *int           `json:"version"`
@@ -919,10 +892,6 @@ type Token struct {
 func (Token) IsNode()             {}
 func (Token) IsTokenByIDOrError() {}
 
-type TwitterAuth struct {
-	Code string `json:"code"`
-}
-
 type UnknownMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
 	MediaURL         *string          `json:"mediaURL"`
@@ -953,6 +922,9 @@ func (UnsubscribeFromEmailTypePayload) IsUnsubscribeFromEmailTypePayloadOrError(
 
 type UpdateEmailInput struct {
 	Email persist.Email `json:"email"`
+	// authMechanism is an optional parameter that can verify a user's email address in lieu of sending
+	// a verification email to the user. If not provided, a verification email will be sent.
+	AuthMechanism *AuthMechanism `json:"authMechanism"`
 }
 
 type UpdateEmailNotificationSettingsInput struct {
@@ -1290,7 +1262,6 @@ func (e TokenType) MarshalGQL(w io.Writer) {
 type UserExperienceType string
 
 const (
-	UserExperienceTypeMultiSplitAnnouncement            UserExperienceType = "MultiSplitAnnouncement"
 	UserExperienceTypeEmailUpsell                       UserExperienceType = "EmailUpsell"
 	UserExperienceTypeMaintenanceFeb2023                UserExperienceType = "MaintenanceFeb2023"
 	UserExperienceTypeTwitterConnectionOnboardingUpsell UserExperienceType = "TwitterConnectionOnboardingUpsell"
@@ -1298,7 +1269,6 @@ const (
 )
 
 var AllUserExperienceType = []UserExperienceType{
-	UserExperienceTypeMultiSplitAnnouncement,
 	UserExperienceTypeEmailUpsell,
 	UserExperienceTypeMaintenanceFeb2023,
 	UserExperienceTypeTwitterConnectionOnboardingUpsell,
@@ -1307,7 +1277,7 @@ var AllUserExperienceType = []UserExperienceType{
 
 func (e UserExperienceType) IsValid() bool {
 	switch e {
-	case UserExperienceTypeMultiSplitAnnouncement, UserExperienceTypeEmailUpsell, UserExperienceTypeMaintenanceFeb2023, UserExperienceTypeTwitterConnectionOnboardingUpsell, UserExperienceTypeUpsellMintMemento4:
+	case UserExperienceTypeEmailUpsell, UserExperienceTypeMaintenanceFeb2023, UserExperienceTypeTwitterConnectionOnboardingUpsell, UserExperienceTypeUpsellMintMemento4:
 		return true
 	}
 	return false

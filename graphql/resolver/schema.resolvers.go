@@ -11,6 +11,7 @@ import (
 	"github.com/SplitFi/go-splitfi/graphql/generated"
 	"github.com/SplitFi/go-splitfi/graphql/model"
 	"github.com/SplitFi/go-splitfi/publicapi"
+	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/mediamapper"
 	"github.com/SplitFi/go-splitfi/service/persist"
@@ -170,7 +171,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, authMechanism model.A
 
 // UpdateEmail is the resolver for the updateEmail field.
 func (r *mutationResolver) UpdateEmail(ctx context.Context, input model.UpdateEmailInput) (model.UpdateEmailPayloadOrError, error) {
-	return updateUserEmail(ctx, input.Email)
+	var authenticator *auth.Authenticator
+
+	if input.AuthMechanism != nil {
+		a, err := r.authMechanismToAuthenticator(ctx, *input.AuthMechanism)
+		if err != nil {
+			return nil, err
+		}
+		authenticator = &a
+	}
+
+	return updateUserEmail(ctx, input.Email, authenticator)
 }
 
 // ResendVerificationEmail is the resolver for the resendVerificationEmail field.
@@ -208,7 +219,7 @@ func (r *mutationResolver) Login(ctx context.Context, authMechanism model.AuthMe
 }
 
 // Logout is the resolver for the logout field.
-func (r *mutationResolver) Logout(ctx context.Context) (*model.LogoutPayload, error) {
+func (r *mutationResolver) Logout(ctx context.Context, pushTokenToUnregister *string) (*model.LogoutPayload, error) {
 	publicapi.For(ctx).Auth.Logout(ctx)
 
 	output := &model.LogoutPayload{
@@ -346,6 +357,16 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input model.VerifyEm
 // VerifyEmailMagicLink is the resolver for the verifyEmailMagicLink field.
 func (r *mutationResolver) VerifyEmailMagicLink(ctx context.Context, input model.VerifyEmailMagicLinkInput) (model.VerifyEmailMagicLinkPayloadOrError, error) {
 	panic(fmt.Errorf("not implemented: VerifyEmailMagicLink - verifyEmailMagicLink"))
+}
+
+// OptInForRoles is the resolver for the optInForRoles field.
+func (r *mutationResolver) OptInForRoles(ctx context.Context, roles []persist.Role) (model.OptInForRolesPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: OptInForRoles - optInForRoles"))
+}
+
+// OptOutForRoles is the resolver for the optOutForRoles field.
+func (r *mutationResolver) OptOutForRoles(ctx context.Context, roles []persist.Role) (model.OptOutForRolesPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: OptOutForRoles - optOutForRoles"))
 }
 
 // AddRolesToUser is the resolver for the addRolesToUser field.
@@ -519,11 +540,6 @@ func (r *setSpamPreferencePayloadResolver) Tokens(ctx context.Context, obj *mode
 	return tokensToModel(ctx, tokens), nil
 }
 
-// SplitFiUser is the resolver for the splitFiUser field.
-func (r *socialConnectionResolver) SplitFiUser(ctx context.Context, obj *model.SocialConnection) (*model.SplitFiUser, error) {
-	panic(fmt.Errorf("not implemented: SplitFiUser - splitFiUser"))
-}
-
 // Assets is the resolver for the assets field.
 func (r *splitResolver) Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error) {
 	panic(fmt.Errorf("not implemented: Assets - assets"))
@@ -578,6 +594,11 @@ func (r *subscriptionResolver) NewNotification(ctx context.Context) (<-chan mode
 // NotificationUpdated is the resolver for the notificationUpdated field.
 func (r *subscriptionResolver) NotificationUpdated(ctx context.Context) (<-chan model.Notification, error) {
 	return resolveUpdatedNotificationSubscription(ctx), nil
+}
+
+// EmailNotificationSettings is the resolver for the emailNotificationSettings field.
+func (r *userEmailResolver) EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error) {
+	panic(fmt.Errorf("not implemented: EmailNotificationSettings - emailNotificationSettings"))
 }
 
 // User is the resolver for the user field.
@@ -674,11 +695,6 @@ func (r *Resolver) SetSpamPreferencePayload() generated.SetSpamPreferencePayload
 	return &setSpamPreferencePayloadResolver{r}
 }
 
-// SocialConnection returns generated.SocialConnectionResolver implementation.
-func (r *Resolver) SocialConnection() generated.SocialConnectionResolver {
-	return &socialConnectionResolver{r}
-}
-
 // Split returns generated.SplitResolver implementation.
 func (r *Resolver) Split() generated.SplitResolver { return &splitResolver{r} }
 
@@ -687,6 +703,9 @@ func (r *Resolver) SplitFiUser() generated.SplitFiUserResolver { return &splitFi
 
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
+// UserEmail returns generated.UserEmailResolver implementation.
+func (r *Resolver) UserEmail() generated.UserEmailResolver { return &userEmailResolver{r} }
 
 // Viewer returns generated.ViewerResolver implementation.
 func (r *Resolver) Viewer() generated.ViewerResolver { return &viewerResolver{r} }
@@ -710,10 +729,10 @@ type previewURLSetResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type recipientResolver struct{ *Resolver }
 type setSpamPreferencePayloadResolver struct{ *Resolver }
-type socialConnectionResolver struct{ *Resolver }
 type splitResolver struct{ *Resolver }
 type splitFiUserResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+type userEmailResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
 type walletResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }

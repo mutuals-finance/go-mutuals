@@ -51,13 +51,13 @@ const (
 const cookieMaxAge int = 60 * 60 * 24 * 365 * 10
 
 // NoncePrepend is prepended to a nonce to make our default signing message
-const NoncePrepend = "Gallery uses this cryptographic signature in place of a password: "
+const NoncePrepend = "SplitFi uses this cryptographic signature in place of a password: "
 
 // AuthCookieKey is the key used to store the auth token in the cookie
-const AuthCookieKey = "GLRY_JWT"
+const AuthCookieKey = "SPLITFI_JWT"
 
 // RefreshCookieKey is the key used to store the refresh token in the cookie
-const RefreshCookieKey = "GLRY_REFRESH_JWT"
+const RefreshCookieKey = "SPLITFI_REFRESH_JWT"
 
 // ErrNonceMismatch is returned when the nonce does not match the expected nonce
 var ErrNonceMismatch = errors.New("incorrect nonce input")
@@ -78,6 +78,7 @@ var ErrSignatureInvalid = errors.New("signature invalid")
 
 var ErrInvalidMagicLink = errors.New("invalid magic link")
 
+// ErrEmailUnverified
 // TODO: Figure out a better scheme for handling user-facing errors
 var ErrEmailUnverified = errors.New("The email address you provided is unverified. Login with QR code instead, or verify your email at gallery.so/settings.")
 

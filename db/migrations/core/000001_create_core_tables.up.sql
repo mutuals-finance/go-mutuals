@@ -394,20 +394,6 @@ FROM users
                    ON users.id = for_users.user_id
                        AND for_users.deleted = FALSE;
 
-CREATE TABLE IF NOT EXISTS pii.socials_auth
-(
-    id            character varying(255) PRIMARY KEY,
-    deleted       boolean                  DEFAULT FALSE             NOT NULL,
-    version       integer                  DEFAULT 0,
-    created_at    timestamp WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    last_updated  timestamp WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    user_id       character varying(255)                             NOT NULL REFERENCES users,
-    provider      character varying                                  NOT NULL,
-    access_token  character varying,
-    refresh_token character varying
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS social_auth_user_id_provider_idx ON pii.socials_auth (user_id, provider) WHERE deleted = FALSE;
 
 CREATE VIEW scrubbed_pii.for_users AS
 (

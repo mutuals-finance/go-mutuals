@@ -245,7 +245,6 @@ func (v *UpdateUserExperienceInput) GetExperienced() bool { return v.Experienced
 type UserExperienceType string
 
 const (
-	UserExperienceTypeMultisplitannouncement            UserExperienceType = "MultiSplitAnnouncement"
 	UserExperienceTypeEmailupsell                       UserExperienceType = "EmailUpsell"
 	UserExperienceTypeMaintenancefeb2023                UserExperienceType = "MaintenanceFeb2023"
 	UserExperienceTypeTwitterconnectiononboardingupsell UserExperienceType = "TwitterConnectionOnboardingUpsell"

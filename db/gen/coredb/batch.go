@@ -633,7 +633,7 @@ func (b *GetTokensByChainAddressBatchBatchResults) Close() error {
 }
 
 const getUserByChainAddressBatch = `-- name: GetUserByChainAddressBatch :batchone
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
   and array[wallets.id] <@ users.wallets
@@ -690,7 +690,6 @@ func (b *GetUserByChainAddressBatchBatchResults) QueryRow(f func(int, User, erro
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
@@ -708,7 +707,7 @@ func (b *GetUserByChainAddressBatchBatchResults) Close() error {
 }
 
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
 type GetUserByIdBatchBatchResults struct {
@@ -753,7 +752,6 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
@@ -771,7 +769,7 @@ func (b *GetUserByIdBatchBatchResults) Close() error {
 }
 
 const getUserByUsernameBatch = `-- name: GetUserByUsernameBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 type GetUserByUsernameBatchBatchResults struct {
@@ -816,7 +814,6 @@ func (b *GetUserByUsernameBatchBatchResults) QueryRow(f func(int, User, error)) 
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
@@ -927,7 +924,7 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal and t.pos > $2::int and t.pos < $3::int
@@ -991,7 +988,6 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Query(f func(int, []User, 
 					&i.Traits,
 					&i.Universal,
 					&i.NotificationSettings,
-					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
 					&i.FeaturedSplit,
 					&i.PrimaryWalletID,
@@ -1015,7 +1011,7 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal
@@ -1072,7 +1068,6 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 					&i.Traits,
 					&i.Universal,
 					&i.NotificationSettings,
-					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
 					&i.FeaturedSplit,
 					&i.PrimaryWalletID,
@@ -1096,7 +1091,7 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Close() error {
 }
 
 const getUsersWithTraitBatch = `-- name: GetUsersWithTraitBatch :batchmany
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false
 `
 
 type GetUsersWithTraitBatchBatchResults struct {
@@ -1148,7 +1143,6 @@ func (b *GetUsersWithTraitBatchBatchResults) Query(f func(int, []User, error)) {
 					&i.Traits,
 					&i.Universal,
 					&i.NotificationSettings,
-					&i.EmailVerified,
 					&i.EmailUnsubscriptions,
 					&i.FeaturedSplit,
 					&i.PrimaryWalletID,

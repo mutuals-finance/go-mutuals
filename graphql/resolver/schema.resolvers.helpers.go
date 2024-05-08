@@ -14,7 +14,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/notifications"
-	"github.com/SplitFi/go-splitfi/service/twitter"
 	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/gammazero/workerpool"
 	"github.com/magiclabs/magic-admin-go/token"
@@ -30,15 +29,14 @@ import (
 var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 
 var nodeFetcher = model.NodeFetcher{
-	OnAsset:            resolveAssetByAssetID,
-	OnSplit:            resolveSplitBySplitID,
-	OnSplitFiUser:      resolveSplitFiUserByUserID,
-	OnRecipient:        resolveRecipientByID,
-	OnToken:            resolveTokenByTokenID,
-	OnWallet:           resolveWalletByAddress,
-	OnViewer:           resolveViewerByID,
-	OnDeletedNode:      resolveDeletedNodeByID,
-	OnSocialConnection: resolveSocialConnectionByIdentifiers,
+	OnAsset:       resolveAssetByAssetID,
+	OnSplit:       resolveSplitBySplitID,
+	OnSplitFiUser: resolveSplitFiUserByUserID,
+	OnRecipient:   resolveRecipientByID,
+	OnToken:       resolveTokenByTokenID,
+	OnWallet:      resolveWalletByAddress,
+	OnViewer:      resolveViewerByID,
+	OnDeletedNode: resolveDeletedNodeByID,
 }
 
 func init() {
@@ -77,8 +75,6 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 	//	mappedErr = model.ErrUnknownAction{Message: message}
 	case persist.ErrSplitNotFound:
 		mappedErr = model.ErrSplitNotFound{Message: message}
-	case twitter.ErrInvalidRefreshToken:
-		mappedErr = model.ErrNeedsToReconnectSocial{SocialAccountType: persist.SocialProviderTwitter, Message: message}
 	}
 	// TODO add missing errors
 	if mappedErr != nil {
@@ -288,10 +284,20 @@ func resolveViewerEmail(ctx context.Context) *model.UserEmail {
 }
 
 func userWithPIIToEmailModel(user *db.PiiUserView) *model.UserEmail {
+	var verificationStatus persist.EmailVerificationStatus
+	var email persist.Email
+
+	if user.PiiVerifiedEmailAddress.String() != "" {
+		email = user.PiiVerifiedEmailAddress
+		verificationStatus = persist.EmailVerificationStatusVerified
+	} else {
+		email = user.PiiUnverifiedEmailAddress
+		verificationStatus = persist.EmailVerificationStatusUnverified
+	}
 
 	return &model.UserEmail{
-		Email:              &user.PiiEmailAddress,
-		VerificationStatus: &user.EmailVerified,
+		Email:              &email,
+		VerificationStatus: &verificationStatus,
 		EmailNotificationSettings: &model.EmailNotificationSettings{
 			UnsubscribedFromAll:           user.EmailUnsubscriptions.All.Bool(),
 			UnsubscribedFromNotifications: user.EmailUnsubscriptions.Notifications.Bool(),
@@ -526,13 +532,6 @@ func resolveDeletedNodeByID(ctx context.Context, id persist.DBID) (*model.Delete
 	}, nil
 }
 
-func resolveSocialConnectionByIdentifiers(ctx context.Context, socialId string, socialType persist.SocialProvider) (*model.SocialConnection, error) {
-	return &model.SocialConnection{
-		SocialID:   socialId,
-		SocialType: socialType,
-	}, nil
-}
-
 func verifyEmail(ctx context.Context, token string) (*model.VerifyEmailPayload, error) {
 	output, err := emails.VerifyEmail(ctx, token)
 	if err != nil {
@@ -545,8 +544,15 @@ func verifyEmail(ctx context.Context, token string) (*model.VerifyEmailPayload, 
 
 }
 
-func updateUserEmail(ctx context.Context, email persist.Email) (*model.UpdateEmailPayload, error) {
-	err := publicapi.For(ctx).User.UpdateUserEmail(ctx, email)
+func updateUserEmail(ctx context.Context, email persist.Email, authenticator *auth.Authenticator) (*model.UpdateEmailPayload, error) {
+	var err error
+
+	if authenticator != nil {
+		err = publicapi.For(ctx).User.UpdateUserEmailWithAuthenticator(ctx, email, *authenticator)
+	} else {
+		err = publicapi.For(ctx).User.UpdateUserEmailWithManualVerification(ctx, email)
+	}
+
 	if err != nil {
 		return nil, err
 	}

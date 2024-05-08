@@ -56,7 +56,7 @@ func HandlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.
 }
 
 func GraphqlHandlersInit(router *gin.Engine, queries *db.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, authRefreshCache *redis.Cache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) {
-	graphqlGroup := router.Group("/splt/graphql")
+	graphqlGroup := router.Group("/splitfi/graphql")
 	graphqlHandler := GraphQLHandler(queries, taskClient, pub, lock, apqCache, publicapiF)
 	graphqlGroup.Any("/query", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
 	graphqlGroup.Any("/query/:operationName", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
@@ -160,7 +160,7 @@ func GraphQLHandler(queries *db.Queries, taskClient *task.Client, pub *pubsub.Cl
 
 // GraphQL playground GUI for experimenting and debugging
 func graphqlPlaygroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL", "/splt/graphql/query")
+	h := playground.Handler("GraphQL", "/splitfi/graphql/query")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)

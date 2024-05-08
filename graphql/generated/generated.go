@@ -49,10 +49,10 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	Recipient() RecipientResolver
 	SetSpamPreferencePayload() SetSpamPreferencePayloadResolver
-	SocialConnection() SocialConnectionResolver
 	Split() SplitResolver
 	SplitFiUser() SplitFiUserResolver
 	Subscription() SubscriptionResolver
+	UserEmail() UserEmailResolver
 	Viewer() ViewerResolver
 	Wallet() WalletResolver
 	ChainAddressInput() ChainAddressInputResolver
@@ -181,11 +181,6 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	ErrNeedsToReconnectSocial struct {
-		Message           func(childComplexity int) int
-		SocialAccountType func(childComplexity int) int
-	}
-
 	ErrNoCookie struct {
 		Message func(childComplexity int) int
 	}
@@ -312,7 +307,9 @@ type ComplexityRoot struct {
 		DeleteSplit                     func(childComplexity int, splitID persist.DBID) int
 		GetAuthNonce                    func(childComplexity int) int
 		Login                           func(childComplexity int, authMechanism model.AuthMechanism) int
-		Logout                          func(childComplexity int) int
+		Logout                          func(childComplexity int, pushTokenToUnregister *string) int
+		OptInForRoles                   func(childComplexity int, roles []persist.Role) int
+		OptOutForRoles                  func(childComplexity int, roles []persist.Role) int
 		PreverifyEmail                  func(childComplexity int, input model.PreverifyEmailInput) int
 		PublishSplit                    func(childComplexity int, input model.PublishSplitInput) int
 		RefreshToken                    func(childComplexity int, tokenID persist.DBID) int
@@ -353,6 +350,14 @@ type ComplexityRoot struct {
 		Edges       func(childComplexity int) int
 		PageInfo    func(childComplexity int) int
 		UnseenCount func(childComplexity int) int
+	}
+
+	OptInForRolesPayload struct {
+		User func(childComplexity int) int
+	}
+
+	OptOutForRolesPayload struct {
+		User func(childComplexity int) int
 	}
 
 	PageInfo struct {
@@ -445,27 +450,6 @@ type ComplexityRoot struct {
 
 	SetSpamPreferencePayload struct {
 		Tokens func(childComplexity int) int
-	}
-
-	SocialConnection struct {
-		CurrentlyFollowing func(childComplexity int) int
-		DisplayName        func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		ProfileImage       func(childComplexity int) int
-		SocialID           func(childComplexity int) int
-		SocialType         func(childComplexity int) int
-		SocialUsername     func(childComplexity int) int
-		SplitFiUser        func(childComplexity int) int
-	}
-
-	SocialConnectionsConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
-	}
-
-	SocialConnectionsEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
 	}
 
 	Split struct {
@@ -687,7 +671,7 @@ type MutationResolver interface {
 	UpdateEmailNotificationSettings(ctx context.Context, input model.UpdateEmailNotificationSettingsInput) (model.UpdateEmailNotificationSettingsPayloadOrError, error)
 	UnsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailTypePayloadOrError, error)
 	Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginPayloadOrError, error)
-	Logout(ctx context.Context) (*model.LogoutPayload, error)
+	Logout(ctx context.Context, pushTokenToUnregister *string) (*model.LogoutPayload, error)
 	ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error)
 	UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error)
 	PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error)
@@ -701,6 +685,8 @@ type MutationResolver interface {
 	PreverifyEmail(ctx context.Context, input model.PreverifyEmailInput) (model.PreverifyEmailPayloadOrError, error)
 	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (model.VerifyEmailPayloadOrError, error)
 	VerifyEmailMagicLink(ctx context.Context, input model.VerifyEmailMagicLinkInput) (model.VerifyEmailMagicLinkPayloadOrError, error)
+	OptInForRoles(ctx context.Context, roles []persist.Role) (model.OptInForRolesPayloadOrError, error)
+	OptOutForRoles(ctx context.Context, roles []persist.Role) (model.OptOutForRolesPayloadOrError, error)
 	AddRolesToUser(ctx context.Context, username string, roles []*persist.Role) (model.AddRolesToUserPayloadOrError, error)
 	AddWalletToUserUnchecked(ctx context.Context, input model.AdminAddWalletInput) (model.AdminAddWalletPayloadOrError, error)
 	RevokeRolesFromUser(ctx context.Context, username string, roles []*persist.Role) (model.RevokeRolesFromUserPayloadOrError, error)
@@ -731,9 +717,6 @@ type RecipientResolver interface {
 type SetSpamPreferencePayloadResolver interface {
 	Tokens(ctx context.Context, obj *model.SetSpamPreferencePayload) ([]*model.Token, error)
 }
-type SocialConnectionResolver interface {
-	SplitFiUser(ctx context.Context, obj *model.SocialConnection) (*model.SplitFiUser, error)
-}
 type SplitResolver interface {
 	Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error)
 	Shares(ctx context.Context, obj *model.Split, limit *int) ([]*model.Recipient, error)
@@ -748,6 +731,9 @@ type SplitFiUserResolver interface {
 type SubscriptionResolver interface {
 	NewNotification(ctx context.Context) (<-chan model.Notification, error)
 	NotificationUpdated(ctx context.Context) (<-chan model.Notification, error)
+}
+type UserEmailResolver interface {
+	EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error)
 }
 type ViewerResolver interface {
 	User(ctx context.Context, obj *model.Viewer) (*model.SplitFiUser, error)
@@ -1096,20 +1082,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ErrInvalidToken.Message(childComplexity), true
-
-	case "ErrNeedsToReconnectSocial.message":
-		if e.complexity.ErrNeedsToReconnectSocial.Message == nil {
-			break
-		}
-
-		return e.complexity.ErrNeedsToReconnectSocial.Message(childComplexity), true
-
-	case "ErrNeedsToReconnectSocial.socialAccountType":
-		if e.complexity.ErrNeedsToReconnectSocial.SocialAccountType == nil {
-			break
-		}
-
-		return e.complexity.ErrNeedsToReconnectSocial.SocialAccountType(childComplexity), true
 
 	case "ErrNoCookie.message":
 		if e.complexity.ErrNoCookie.Message == nil {
@@ -1590,7 +1562,36 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Mutation.Logout(childComplexity), true
+		args, err := ec.field_Mutation_logout_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Logout(childComplexity, args["pushTokenToUnregister"].(*string)), true
+
+	case "Mutation.optInForRoles":
+		if e.complexity.Mutation.OptInForRoles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_optInForRoles_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.OptInForRoles(childComplexity, args["roles"].([]persist.Role)), true
+
+	case "Mutation.optOutForRoles":
+		if e.complexity.Mutation.OptOutForRoles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_optOutForRoles_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.OptOutForRoles(childComplexity, args["roles"].([]persist.Role)), true
 
 	case "Mutation.preverifyEmail":
 		if e.complexity.Mutation.PreverifyEmail == nil {
@@ -1923,6 +1924,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.NotificationsConnection.UnseenCount(childComplexity), true
+
+	case "OptInForRolesPayload.user":
+		if e.complexity.OptInForRolesPayload.User == nil {
+			break
+		}
+
+		return e.complexity.OptInForRolesPayload.User(childComplexity), true
+
+	case "OptOutForRolesPayload.user":
+		if e.complexity.OptOutForRolesPayload.User == nil {
+			break
+		}
+
+		return e.complexity.OptOutForRolesPayload.User(childComplexity), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -2328,90 +2343,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SetSpamPreferencePayload.Tokens(childComplexity), true
-
-	case "SocialConnection.currentlyFollowing":
-		if e.complexity.SocialConnection.CurrentlyFollowing == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.CurrentlyFollowing(childComplexity), true
-
-	case "SocialConnection.displayName":
-		if e.complexity.SocialConnection.DisplayName == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.DisplayName(childComplexity), true
-
-	case "SocialConnection.id":
-		if e.complexity.SocialConnection.ID == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.ID(childComplexity), true
-
-	case "SocialConnection.profileImage":
-		if e.complexity.SocialConnection.ProfileImage == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.ProfileImage(childComplexity), true
-
-	case "SocialConnection.socialId":
-		if e.complexity.SocialConnection.SocialID == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.SocialID(childComplexity), true
-
-	case "SocialConnection.socialType":
-		if e.complexity.SocialConnection.SocialType == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.SocialType(childComplexity), true
-
-	case "SocialConnection.socialUsername":
-		if e.complexity.SocialConnection.SocialUsername == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.SocialUsername(childComplexity), true
-
-	case "SocialConnection.splitFiUser":
-		if e.complexity.SocialConnection.SplitFiUser == nil {
-			break
-		}
-
-		return e.complexity.SocialConnection.SplitFiUser(childComplexity), true
-
-	case "SocialConnectionsConnection.edges":
-		if e.complexity.SocialConnectionsConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.SocialConnectionsConnection.Edges(childComplexity), true
-
-	case "SocialConnectionsConnection.pageInfo":
-		if e.complexity.SocialConnectionsConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.SocialConnectionsConnection.PageInfo(childComplexity), true
-
-	case "SocialConnectionsEdge.cursor":
-		if e.complexity.SocialConnectionsEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.SocialConnectionsEdge.Cursor(childComplexity), true
-
-	case "SocialConnectionsEdge.node":
-		if e.complexity.SocialConnectionsEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.SocialConnectionsEdge.Node(childComplexity), true
 
 	case "Split.assets":
 		if e.complexity.Split.Assets == nil {
@@ -3148,7 +3079,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateSplitInput,
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputDebugAuth,
-		ec.unmarshalInputDebugSocialAuth,
 		ec.unmarshalInputDeepRefreshInput,
 		ec.unmarshalInputEoaAuth,
 		ec.unmarshalInputGnosisSafeAuth,
@@ -3159,10 +3089,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPrivyAuth,
 		ec.unmarshalInputPublishSplitInput,
 		ec.unmarshalInputSetSpamPreferenceInput,
-		ec.unmarshalInputSocialAuthMechanism,
 		ec.unmarshalInputSplitPositionInput,
 		ec.unmarshalInputSplitShareInput,
-		ec.unmarshalInputTwitterAuth,
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
 		ec.unmarshalInputUpdateEmailInput,
 		ec.unmarshalInputUpdateEmailNotificationSettingsInput,
@@ -3670,17 +3598,6 @@ type NotificationsConnection @goEmbedHelper {
   pageInfo: PageInfo
 }
 
-# TODO remove social
-enum SocialAccountType {
-  Twitter
-}
-
-interface SocialAccount {
-  type: SocialAccountType!
-  social_id: String!
-  display: Boolean!
-}
-
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: SplitFiUser @goField(forceResolver: true)
@@ -3724,7 +3641,7 @@ enum EmailUnsubscriptionType {
 type UserEmail {
   email: Email
   verificationStatus: EmailVerificationStatus
-  emailNotificationSettings: EmailNotificationSettings
+  emailNotificationSettings: EmailNotificationSettings @goField(forceResolver: true)
 }
 
 type EmailNotificationSettings {
@@ -3743,7 +3660,6 @@ input UnsubscribeFromEmailTypeInput {
 }
 
 enum UserExperienceType {
-  MultiSplitAnnouncement
   EmailUpsell
   MaintenanceFeb2023
   TwitterConnectionOnboardingUpsell
@@ -3785,31 +3701,6 @@ type PageInfo {
   hasNextPage: Boolean!
   startCursor: String!
   endCursor: String!
-}
-
-type SocialConnection implements Node @goGqlId(fields: ["socialId", "socialType"]) @goEmbedHelper {
-  id: ID!
-
-  splitFiUser: SplitFiUser @goField(forceResolver: true)
-
-  currentlyFollowing: Boolean!
-  socialId: String!
-  socialType: SocialAccountType!
-  displayName: String!
-  socialUsername: String!
-  profileImage: String!
-}
-
-union SocialConnectionsOrError = SocialConnection | ErrInvalidInput
-
-type SocialConnectionsEdge {
-  node: SocialConnectionsOrError
-  cursor: String
-}
-
-type SocialConnectionsConnection {
-  edges: [SocialConnectionsEdge]
-  pageInfo: PageInfo!
 }
 
 type UserEdge {
@@ -4033,11 +3924,6 @@ type ErrSessionInvalidated implements Error {
   message: String!
 }
 
-type ErrNeedsToReconnectSocial implements Error {
-  socialAccountType: SocialAccountType!
-  message: String!
-}
-
 type ErrDoesNotOwnRequiredToken implements Error {
   message: String!
 }
@@ -4104,21 +3990,6 @@ input PrivyAuth {
 
 input OneTimeLoginTokenAuth {
   token: String!
-}
-
-input SocialAuthMechanism {
-  twitter: TwitterAuth
-  debug: DebugSocialAuth
-}
-
-input TwitterAuth {
-  code: String!
-}
-
-input DebugSocialAuth {
-  provider: SocialAccountType!
-  id: String!
-  username: String!
 }
 
 input DeepRefreshInput {
@@ -4246,6 +4117,11 @@ union VerifyEmailMagicLinkPayloadOrError = VerifyEmailMagicLinkPayload | ErrInva
 
 input UpdateEmailInput {
   email: Email! @scrub
+  """
+  authMechanism is an optional parameter that can verify a user's email address in lieu of sending
+  a verification email to the user. If not provided, a verification email will be sent.
+  """
+  authMechanism: AuthMechanism
 }
 
 type UpdateEmailPayload {
@@ -4276,6 +4152,17 @@ union UnsubscribeFromEmailTypePayloadOrError = UnsubscribeFromEmailTypePayload |
 
 union AddRolesToUserPayloadOrError = SplitFiUser | ErrNotAuthorized
 union RevokeRolesFromUserPayloadOrError = SplitFiUser | ErrNotAuthorized
+
+type OptInForRolesPayload {
+  user: SplitFiUser
+}
+
+type OptOutForRolesPayload {
+  user: SplitFiUser
+}
+
+union OptInForRolesPayloadOrError = OptInForRolesPayload | ErrNotAuthorized | ErrInvalidInput
+union OptOutForRolesPayloadOrError = OptOutForRolesPayload | ErrNotAuthorized | ErrInvalidInput
 
 input UploadPersistedQueriesInput {
   persistedQueries: String
@@ -4462,7 +4349,7 @@ type Mutation {
     input: UnsubscribeFromEmailTypeInput!
   ): UnsubscribeFromEmailTypePayloadOrError
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
-  logout: LogoutPayload
+  logout(pushTokenToUnregister: String): LogoutPayload
 
   viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
@@ -4485,13 +4372,16 @@ type Mutation {
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
   verifyEmailMagicLink(input: VerifyEmailMagicLinkInput!): VerifyEmailMagicLinkPayloadOrError
 
+  optInForRoles(roles: [Role!]!): OptInForRolesPayloadOrError @authRequired
+  optOutForRoles(roles: [Role!]!): OptOutForRolesPayloadOrError @authRequired
+
   # Retool Specific Mutations
   addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @basicAuth(allowed: [Retool])
   addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @basicAuth(allowed: [Retool])
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
     @basicAuth(allowed: [Retool])
 
-  # Split Frontend Deploy Persisted Queries
+  # SplitFi Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
     @frontendBuildAuth
 
@@ -4747,6 +4637,51 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 		}
 	}
 	args["authMechanism"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_logout_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["pushTokenToUnregister"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pushTokenToUnregister"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pushTokenToUnregister"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_optInForRoles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []persist.Role
+	if tmp, ok := rawArgs["roles"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+		arg0, err = ec.unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roles"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_optOutForRoles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []persist.Role
+	if tmp, ok := rawArgs["roles"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+		arg0, err = ec.unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roles"] = arg0
 	return args, nil
 }
 
@@ -7546,94 +7481,6 @@ func (ec *executionContext) _ErrInvalidToken_message(ctx context.Context, field 
 func (ec *executionContext) fieldContext_ErrInvalidToken_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrInvalidToken",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ErrNeedsToReconnectSocial_socialAccountType(ctx context.Context, field graphql.CollectedField, obj *model.ErrNeedsToReconnectSocial) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ErrNeedsToReconnectSocial_socialAccountType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SocialAccountType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.SocialProvider)
-	fc.Result = res
-	return ec.marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ErrNeedsToReconnectSocial_socialAccountType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ErrNeedsToReconnectSocial",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SocialAccountType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ErrNeedsToReconnectSocial_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrNeedsToReconnectSocial) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ErrNeedsToReconnectSocial_message(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Message, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ErrNeedsToReconnectSocial_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ErrNeedsToReconnectSocial",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11033,7 +10880,7 @@ func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Logout(rctx)
+		return ec.resolvers.Mutation().Logout(rctx, fc.Args["pushTokenToUnregister"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11060,6 +10907,17 @@ func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, fi
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LogoutPayload", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_logout_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11899,6 +11757,150 @@ func (ec *executionContext) fieldContext_Mutation_verifyEmailMagicLink(ctx conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_optInForRoles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_optInForRoles(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().OptInForRoles(rctx, fc.Args["roles"].([]persist.Role))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.AuthRequired == nil {
+				return nil, errors.New("directive authRequired is not implemented")
+			}
+			return ec.directives.AuthRequired(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(model.OptInForRolesPayloadOrError); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.OptInForRolesPayloadOrError`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.OptInForRolesPayloadOrError)
+	fc.Result = res
+	return ec.marshalOOptInForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptInForRolesPayloadOrError(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_optInForRoles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OptInForRolesPayloadOrError does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_optInForRoles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_optOutForRoles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_optOutForRoles(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().OptOutForRoles(rctx, fc.Args["roles"].([]persist.Role))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.AuthRequired == nil {
+				return nil, errors.New("directive authRequired is not implemented")
+			}
+			return ec.directives.AuthRequired(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(model.OptOutForRolesPayloadOrError); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.OptOutForRolesPayloadOrError`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.OptOutForRolesPayloadOrError)
+	fc.Result = res
+	return ec.marshalOOptOutForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptOutForRolesPayloadOrError(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_optOutForRoles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OptOutForRolesPayloadOrError does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_optOutForRoles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_addRolesToUser(ctx, field)
 	if err != nil {
@@ -12645,6 +12647,140 @@ func (ec *executionContext) fieldContext_NotificationsConnection_pageInfo(ctx co
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OptInForRolesPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.OptInForRolesPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OptInForRolesPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.SplitFiUser)
+	fc.Result = res
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OptInForRolesPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OptInForRolesPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SplitFiUser_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+			case "username":
+				return ec.fieldContext_SplitFiUser_username(ctx, field)
+			case "bio":
+				return ec.fieldContext_SplitFiUser_bio(ctx, field)
+			case "traits":
+				return ec.fieldContext_SplitFiUser_traits(ctx, field)
+			case "universal":
+				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+			case "roles":
+				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+			case "wallets":
+				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+			case "primaryWallet":
+				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+			case "splitsByChain":
+				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+			case "isAuthenticatedUser":
+				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OptOutForRolesPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.OptOutForRolesPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OptOutForRolesPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.SplitFiUser)
+	fc.Result = res
+	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OptOutForRolesPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OptOutForRolesPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SplitFiUser_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+			case "username":
+				return ec.fieldContext_SplitFiUser_username(ctx, field)
+			case "bio":
+				return ec.fieldContext_SplitFiUser_bio(ctx, field)
+			case "traits":
+				return ec.fieldContext_SplitFiUser_traits(ctx, field)
+			case "universal":
+				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+			case "roles":
+				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+			case "wallets":
+				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+			case "primaryWallet":
+				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+			case "splits":
+				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+			case "splitsByChain":
+				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+			case "isAuthenticatedUser":
+				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -15269,568 +15405,6 @@ func (ec *executionContext) fieldContext_SetSpamPreferencePayload_tokens(ctx con
 				return ec.fieldContext_Token_isSpam(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_id(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_splitFiUser(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_splitFiUser(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SocialConnection().SplitFiUser(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.SplitFiUser)
-	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_splitFiUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
-			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
-			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
-			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
-			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
-			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_currentlyFollowing(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_currentlyFollowing(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CurrentlyFollowing, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_currentlyFollowing(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_socialId(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_socialId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SocialID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_socialId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_socialType(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_socialType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SocialType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.SocialProvider)
-	fc.Result = res
-	return ec.marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_socialType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SocialAccountType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_displayName(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_displayName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DisplayName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_socialUsername(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_socialUsername(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SocialUsername, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_socialUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnection_profileImage(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnection_profileImage(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProfileImage, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnection_profileImage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnectionsConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnectionsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnectionsConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.SocialConnectionsEdge)
-	fc.Result = res
-	return ec.marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnectionsConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnectionsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_SocialConnectionsEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_SocialConnectionsEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SocialConnectionsEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnectionsConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnectionsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnectionsConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnectionsConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnectionsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "total":
-				return ec.fieldContext_PageInfo_total(ctx, field)
-			case "size":
-				return ec.fieldContext_PageInfo_size(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnectionsEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnectionsEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnectionsEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.SocialConnectionsOrError)
-	fc.Result = res
-	return ec.marshalOSocialConnectionsOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnectionsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnectionsEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SocialConnectionsOrError does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SocialConnectionsEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.SocialConnectionsEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SocialConnectionsEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SocialConnectionsEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SocialConnectionsEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19068,7 +18642,7 @@ func (ec *executionContext) _UserEmail_emailNotificationSettings(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.EmailNotificationSettings, nil
+		return ec.resolvers.UserEmail().EmailNotificationSettings(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19086,8 +18660,8 @@ func (ec *executionContext) fieldContext_UserEmail_emailNotificationSettings(ctx
 	fc = &graphql.FieldContext{
 		Object:     "UserEmail",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "unsubscribedFromAll":
@@ -22870,47 +22444,6 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDebugSocialAuth(ctx context.Context, obj interface{}) (model.DebugSocialAuth, error) {
-	var it model.DebugSocialAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"provider", "id", "username"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "provider":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			data, err := ec.unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Provider = data
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "username":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Username = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputDeepRefreshInput(ctx context.Context, obj interface{}) (model.DeepRefreshInput, error) {
 	var it model.DeepRefreshInput
 	asMap := map[string]interface{}{}
@@ -23244,40 +22777,6 @@ func (ec *executionContext) unmarshalInputSetSpamPreferenceInput(ctx context.Con
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputSocialAuthMechanism(ctx context.Context, obj interface{}) (model.SocialAuthMechanism, error) {
-	var it model.SocialAuthMechanism
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"twitter", "debug"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "twitter":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("twitter"))
-			data, err := ec.unmarshalOTwitterAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterAuth(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Twitter = data
-		case "debug":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
-			data, err := ec.unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugSocialAuth(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Debug = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context, obj interface{}) (model.SplitPositionInput, error) {
 	var it model.SplitPositionInput
 	asMap := map[string]interface{}{}
@@ -23353,33 +22852,6 @@ func (ec *executionContext) unmarshalInputSplitShareInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputTwitterAuth(ctx context.Context, obj interface{}) (model.TwitterAuth, error) {
-	var it model.TwitterAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"code"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "code":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Code = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputUnsubscribeFromEmailTypeInput(ctx context.Context, obj interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
 	var it model.UnsubscribeFromEmailTypeInput
 	asMap := map[string]interface{}{}
@@ -23421,7 +22893,7 @@ func (ec *executionContext) unmarshalInputUpdateEmailInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email"}
+	fieldsInOrder := [...]string{"email", "authMechanism"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -23435,6 +22907,13 @@ func (ec *executionContext) unmarshalInputUpdateEmailInput(ctx context.Context, 
 				return it, err
 			}
 			it.Email = data
+		case "authMechanism":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
+			data, err := ec.unmarshalOAuthMechanism2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AuthMechanism = data
 		}
 	}
 
@@ -24176,13 +23655,6 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 			return graphql.Null
 		}
 		return ec._ErrSessionInvalidated(ctx, sel, obj)
-	case model.ErrNeedsToReconnectSocial:
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, &obj)
-	case *model.ErrNeedsToReconnectSocial:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNeedsToReconnectSocial(ctx, sel, obj)
 	case model.ErrDoesNotOwnRequiredToken:
 		return ec._ErrDoesNotOwnRequiredToken(ctx, sel, &obj)
 	case *model.ErrDoesNotOwnRequiredToken:
@@ -24508,13 +23980,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Viewer(ctx, sel, obj)
-	case model.SocialConnection:
-		return ec._SocialConnection(ctx, sel, &obj)
-	case *model.SocialConnection:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SocialConnection(ctx, sel, obj)
 	case model.Notification:
 		if obj == nil {
 			return graphql.Null
@@ -24534,6 +23999,66 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 			return graphql.Null
 		}
 		return ec._GroupedNotification(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _OptInForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.OptInForRolesPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.OptInForRolesPayload:
+		return ec._OptInForRolesPayload(ctx, sel, &obj)
+	case *model.OptInForRolesPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._OptInForRolesPayload(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _OptOutForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.OptOutForRolesPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.OptOutForRolesPayload:
+		return ec._OptOutForRolesPayload(ctx, sel, &obj)
+	case *model.OptOutForRolesPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._OptOutForRolesPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24799,38 +24324,6 @@ func (ec *executionContext) _SetSpamPreferencePayloadOrError(ctx context.Context
 			return graphql.Null
 		}
 		return ec._SetSpamPreferencePayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _SocialAccount(ctx context.Context, sel ast.SelectionSet, obj model.SocialAccount) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _SocialConnectionsOrError(ctx context.Context, sel ast.SelectionSet, obj model.SocialConnectionsOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.SocialConnection:
-		return ec._SocialConnection(ctx, sel, &obj)
-	case *model.SocialConnection:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SocialConnection(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26339,7 +25832,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SocialConnectionsOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "RefreshTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "RefreshTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -26427,50 +25920,6 @@ func (ec *executionContext) _ErrInvalidToken(ctx context.Context, sel ast.Select
 	return out
 }
 
-var errNeedsToReconnectSocialImplementors = []string{"ErrNeedsToReconnectSocial", "Error"}
-
-func (ec *executionContext) _ErrNeedsToReconnectSocial(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNeedsToReconnectSocial) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, errNeedsToReconnectSocialImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ErrNeedsToReconnectSocial")
-		case "socialAccountType":
-			out.Values[i] = ec._ErrNeedsToReconnectSocial_socialAccountType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "message":
-			out.Values[i] = ec._ErrNeedsToReconnectSocial_message(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var errNoCookieImplementors = []string{"ErrNoCookie", "AuthorizationError", "Error"}
 
 func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNoCookie) graphql.Marshaler {
@@ -26510,7 +25959,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "SetSpamPreferencePayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "DeepRefreshPayloadOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "SetSpamPreferencePayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "DeepRefreshPayloadOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -27457,6 +26906,14 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_verifyEmailMagicLink(ctx, field)
 			})
+		case "optInForRoles":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_optInForRoles(ctx, field)
+			})
+		case "optOutForRoles":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_optOutForRoles(ctx, field)
+			})
 		case "addRolesToUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addRolesToUser(ctx, field)
@@ -27597,6 +27054,78 @@ func (ec *executionContext) _NotificationsConnection(ctx context.Context, sel as
 			out.Values[i] = ec._NotificationsConnection_unseenCount(ctx, field, obj)
 		case "pageInfo":
 			out.Values[i] = ec._NotificationsConnection_pageInfo(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var optInForRolesPayloadImplementors = []string{"OptInForRolesPayload", "OptInForRolesPayloadOrError"}
+
+func (ec *executionContext) _OptInForRolesPayload(ctx context.Context, sel ast.SelectionSet, obj *model.OptInForRolesPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, optInForRolesPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OptInForRolesPayload")
+		case "user":
+			out.Values[i] = ec._OptInForRolesPayload_user(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var optOutForRolesPayloadImplementors = []string{"OptOutForRolesPayload", "OptOutForRolesPayloadOrError"}
+
+func (ec *executionContext) _OptOutForRolesPayload(ctx context.Context, sel ast.SelectionSet, obj *model.OptOutForRolesPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, optOutForRolesPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OptOutForRolesPayload")
+		case "user":
+			out.Values[i] = ec._OptOutForRolesPayload_user(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -28533,187 +28062,6 @@ func (ec *executionContext) _SetSpamPreferencePayload(ctx context.Context, sel a
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var socialConnectionImplementors = []string{"SocialConnection", "Node", "SocialConnectionsOrError"}
-
-func (ec *executionContext) _SocialConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SocialConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, socialConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SocialConnection")
-		case "id":
-			out.Values[i] = ec._SocialConnection_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "splitFiUser":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SocialConnection_splitFiUser(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "currentlyFollowing":
-			out.Values[i] = ec._SocialConnection_currentlyFollowing(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "socialId":
-			out.Values[i] = ec._SocialConnection_socialId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "socialType":
-			out.Values[i] = ec._SocialConnection_socialType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "displayName":
-			out.Values[i] = ec._SocialConnection_displayName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "socialUsername":
-			out.Values[i] = ec._SocialConnection_socialUsername(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "profileImage":
-			out.Values[i] = ec._SocialConnection_profileImage(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var socialConnectionsConnectionImplementors = []string{"SocialConnectionsConnection"}
-
-func (ec *executionContext) _SocialConnectionsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SocialConnectionsConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, socialConnectionsConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SocialConnectionsConnection")
-		case "edges":
-			out.Values[i] = ec._SocialConnectionsConnection_edges(ctx, field, obj)
-		case "pageInfo":
-			out.Values[i] = ec._SocialConnectionsConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var socialConnectionsEdgeImplementors = []string{"SocialConnectionsEdge"}
-
-func (ec *executionContext) _SocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SocialConnectionsEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, socialConnectionsEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SocialConnectionsEdge")
-		case "node":
-			out.Values[i] = ec._SocialConnectionsEdge_node(ctx, field, obj)
-		case "cursor":
-			out.Values[i] = ec._SocialConnectionsEdge_cursor(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -29782,7 +29130,38 @@ func (ec *executionContext) _UserEmail(ctx context.Context, sel ast.SelectionSet
 		case "verificationStatus":
 			out.Values[i] = ec._UserEmail_verificationStatus(ctx, field, obj)
 		case "emailNotificationSettings":
-			out.Values[i] = ec._UserEmail_emailNotificationSettings(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserEmail_emailNotificationSettings(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -31189,25 +30568,70 @@ func (ec *executionContext) marshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfi�
 	return v
 }
 
+func (ec *executionContext) unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, v interface{}) ([]persist.Role, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]persist.Role, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Role) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNSetSpamPreferenceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferenceInput(ctx context.Context, v interface{}) (model.SetSpamPreferenceInput, error) {
 	res, err := ec.unmarshalInputSetSpamPreferenceInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx context.Context, v interface{}) (persist.SocialProvider, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.SocialProvider(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSocialAccountType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐSocialProvider(ctx context.Context, sel ast.SelectionSet, v persist.SocialProvider) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
@@ -31896,6 +31320,14 @@ func (ec *executionContext) marshalOAsset2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplit
 	return ec._Asset(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOAuthMechanism2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (*model.AuthMechanism, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAuthMechanism(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -32063,14 +31495,6 @@ func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgo�
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputDebugAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalODebugSocialAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugSocialAuth(ctx context.Context, v interface{}) (*model.DebugSocialAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputDebugSocialAuth(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -32400,6 +31824,20 @@ func (ec *executionContext) unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋSp
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOOptInForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptInForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.OptInForRolesPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OptInForRolesPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOOptOutForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptOutForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.OptOutForRolesPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OptOutForRolesPayloadOrError(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -32626,61 +32064,6 @@ func (ec *executionContext) marshalOSetSpamPreferencePayloadOrError2githubᚗcom
 		return graphql.Null
 	}
 	return ec._SetSpamPreferencePayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSocialConnectionsEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.SocialConnectionsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOSocialConnectionsEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOSocialConnectionsEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v *model.SocialConnectionsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SocialConnectionsEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSocialConnectionsOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSocialConnectionsOrError(ctx context.Context, sel ast.SelectionSet, v model.SocialConnectionsOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SocialConnectionsOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
@@ -32982,14 +32365,6 @@ func (ec *executionContext) marshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑs
 		return graphql.Null
 	}
 	return v
-}
-
-func (ec *executionContext) unmarshalOTwitterAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTwitterAuth(ctx context.Context, v interface{}) (*model.TwitterAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputTwitterAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOUnregisterUserPushTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnregisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnregisterUserPushTokenPayloadOrError) graphql.Marshaler {

@@ -15,7 +15,6 @@ import (
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/socialauth"
 )
 
 const Enabled bool = true
@@ -57,22 +56,5 @@ func (d DebugAuthenticator) Authenticate(ctx context.Context) (*auth.AuthResult,
 		Addresses: wallets,
 	}
 
-	return &authResult, nil
-}
-
-func (d DebugSocialAuthenticator) Authenticate(ctx context.Context) (*socialauth.SocialAuthResult, error) {
-	if !IsDebugEnv() {
-		return nil, errors.New("DebugSocialAuthenticator may only be used in a local and development environments")
-	}
-
-	if !isValidPassword(d.DebugToolsPassword) {
-		return nil, errors.New("invalid debug tools password")
-	}
-
-	authResult := socialauth.SocialAuthResult{
-		Provider: d.Provider,
-		ID:       d.ID,
-		Metadata: d.Metadata,
-	}
 	return &authResult, nil
 }

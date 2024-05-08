@@ -4,42 +4,6 @@ plugins:
     process:
       cmd: db/bin/sqlc-gen-json
 sql:
-  # Indexer model gen
-  - schema: "db/migrations/indexer"
-    queries: "db/queries/indexer"
-    engine: "postgresql"
-    gen:
-      go:
-        package: "indexerdb"
-        out: "db/gen/indexerdb"
-        sql_package: "pgx/v4"
-        output_db_file_name: "db_gen.go"
-        output_models_file_name: "models_gen.go"
-        overrides:
-          # Overrides are prioritized from top to bottom, so if we need to override one of the * entries (like *.id),
-          # the override should come _before_ the * entry
-
-          # Wildcards
-          # Note: to override one of these wildcard entries, add a more specific entry (like some_table.id) above
-          - column: "*.*.id"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
-          - column: "*.*.*_id"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
-          - column: "*.*.ids"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
-          - column: "*.*.*_ids"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
-          - column: "*.*.chain"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Chain"
-          - column: "*.*.address"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
-          - column: "*.*.*_address"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
-          - column: '*.block_start'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.BlockNumber'
-          - column: '*.block_end'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.BlockNumber'
-
   # Backend model gen
   - schema:
     - "db/migrations/core"

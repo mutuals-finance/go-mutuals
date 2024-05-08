@@ -379,17 +379,6 @@ type NotificationsConnection @goEmbedHelper {
   pageInfo: PageInfo
 }
 
-# TODO remove social
-enum SocialAccountType {
-  Twitter
-}
-
-interface SocialAccount {
-  type: SocialAccountType!
-  social_id: String!
-  display: Boolean!
-}
-
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: SplitFiUser @goField(forceResolver: true)
@@ -433,7 +422,7 @@ enum EmailUnsubscriptionType {
 type UserEmail {
   email: Email
   verificationStatus: EmailVerificationStatus
-  emailNotificationSettings: EmailNotificationSettings
+  emailNotificationSettings: EmailNotificationSettings @goField(forceResolver: true)
 }
 
 type EmailNotificationSettings {
@@ -452,7 +441,6 @@ input UnsubscribeFromEmailTypeInput {
 }
 
 enum UserExperienceType {
-  MultiSplitAnnouncement
   EmailUpsell
   MaintenanceFeb2023
   TwitterConnectionOnboardingUpsell
@@ -494,31 +482,6 @@ type PageInfo {
   hasNextPage: Boolean!
   startCursor: String!
   endCursor: String!
-}
-
-type SocialConnection implements Node @goGqlId(fields: ["socialId", "socialType"]) @goEmbedHelper {
-  id: ID!
-
-  splitFiUser: SplitFiUser @goField(forceResolver: true)
-
-  currentlyFollowing: Boolean!
-  socialId: String!
-  socialType: SocialAccountType!
-  displayName: String!
-  socialUsername: String!
-  profileImage: String!
-}
-
-union SocialConnectionsOrError = SocialConnection | ErrInvalidInput
-
-type SocialConnectionsEdge {
-  node: SocialConnectionsOrError
-  cursor: String
-}
-
-type SocialConnectionsConnection {
-  edges: [SocialConnectionsEdge]
-  pageInfo: PageInfo!
 }
 
 type UserEdge {
@@ -742,11 +705,6 @@ type ErrSessionInvalidated implements Error {
   message: String!
 }
 
-type ErrNeedsToReconnectSocial implements Error {
-  socialAccountType: SocialAccountType!
-  message: String!
-}
-
 type ErrDoesNotOwnRequiredToken implements Error {
   message: String!
 }
@@ -813,21 +771,6 @@ input PrivyAuth {
 
 input OneTimeLoginTokenAuth {
   token: String!
-}
-
-input SocialAuthMechanism {
-  twitter: TwitterAuth
-  debug: DebugSocialAuth
-}
-
-input TwitterAuth {
-  code: String!
-}
-
-input DebugSocialAuth {
-  provider: SocialAccountType!
-  id: String!
-  username: String!
 }
 
 input DeepRefreshInput {
@@ -955,6 +898,11 @@ union VerifyEmailMagicLinkPayloadOrError = VerifyEmailMagicLinkPayload | ErrInva
 
 input UpdateEmailInput {
   email: Email! @scrub
+  """
+  authMechanism is an optional parameter that can verify a user's email address in lieu of sending
+  a verification email to the user. If not provided, a verification email will be sent.
+  """
+  authMechanism: AuthMechanism
 }
 
 type UpdateEmailPayload {
@@ -985,6 +933,17 @@ union UnsubscribeFromEmailTypePayloadOrError = UnsubscribeFromEmailTypePayload |
 
 union AddRolesToUserPayloadOrError = SplitFiUser | ErrNotAuthorized
 union RevokeRolesFromUserPayloadOrError = SplitFiUser | ErrNotAuthorized
+
+type OptInForRolesPayload {
+  user: SplitFiUser
+}
+
+type OptOutForRolesPayload {
+  user: SplitFiUser
+}
+
+union OptInForRolesPayloadOrError = OptInForRolesPayload | ErrNotAuthorized | ErrInvalidInput
+union OptOutForRolesPayloadOrError = OptOutForRolesPayload | ErrNotAuthorized | ErrInvalidInput
 
 input UploadPersistedQueriesInput {
   persistedQueries: String
@@ -1171,7 +1130,7 @@ type Mutation {
     input: UnsubscribeFromEmailTypeInput!
   ): UnsubscribeFromEmailTypePayloadOrError
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
-  logout: LogoutPayload
+  logout(pushTokenToUnregister: String): LogoutPayload
 
   viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
@@ -1194,13 +1153,16 @@ type Mutation {
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
   verifyEmailMagicLink(input: VerifyEmailMagicLinkInput!): VerifyEmailMagicLinkPayloadOrError
 
+  optInForRoles(roles: [Role!]!): OptInForRolesPayloadOrError @authRequired
+  optOutForRoles(roles: [Role!]!): OptOutForRolesPayloadOrError @authRequired
+
   # Retool Specific Mutations
   addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @basicAuth(allowed: [Retool])
   addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @basicAuth(allowed: [Retool])
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
     @basicAuth(allowed: [Retool])
 
-  # Split Frontend Deploy Persisted Queries
+  # SplitFi Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
     @frontendBuildAuth
 

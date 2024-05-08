@@ -465,21 +465,17 @@ where not u.deleted and not u.universal
 order by t.pos
 limit 100;
 
--- name: UpdateUserVerificationStatus :exec
-UPDATE users SET email_verified = $2 WHERE id = $1;
+-- name: UpdateUserVerifiedEmail :exec
+insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values (@user_id, null, @email_address)
+on conflict (user_id) do update
+    set pii_verified_email_address = excluded.pii_verified_email_address,
+        pii_unverified_email_address = excluded.pii_unverified_email_address;
 
--- name: UpdateUserEmail :exec
-with upsert_pii as (
-    insert into pii.for_users (user_id, pii_email_address) values (@user_id, @email_address)
-        on conflict (user_id) do update set pii_email_address = excluded.pii_email_address
-),
-
-     upsert_metadata as (
-         insert into dev_metadata_users (user_id, has_email_address) values (@user_id, (@email_address is not null))
-             on conflict (user_id) do update set has_email_address = excluded.has_email_address
-     )
-
-update users set email_verified = @email_verification_status where users.id = @user_id;
+-- name: UpdateUserUnverifiedEmail :exec
+insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values (@user_id, @email_address, null)
+on conflict (user_id) do update
+    set pii_unverified_email_address = excluded.pii_unverified_email_address,
+        pii_verified_email_address = excluded.pii_verified_email_address;
 
 -- name: UpdateUserEmailUnsubscriptions :exec
 UPDATE users SET email_unsubscriptions = $2 WHERE id = $1;
@@ -520,24 +516,6 @@ with updates as (
 )
 update recipients r set ownership = updates.ownership, last_updated = now() from updates where r.split_id = updates.split_id and r.address = updates.recipient_address;
 
--- name: GetSocialAuthByUserID :one
-select * from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false;
-
--- name: UpsertSocialOAuth :exec
-insert into pii.socials_auth (id, user_id, provider, access_token, refresh_token) values (@id, @user_id, @provider, @access_token, @refresh_token) on conflict (user_id, provider) where deleted = false do update set access_token = @access_token, refresh_token = @refresh_token, last_updated = now();
-
--- name: AddSocialToUser :exec
-insert into pii.for_users (user_id, pii_socials) values (@user_id, @socials) on conflict (user_id) where deleted = false do update set pii_socials = for_users.pii_socials || @socials;
-
--- name: RemoveSocialFromUser :exec
-update pii.for_users set pii_socials = pii_socials - @social::varchar where user_id = @user_id;
-
--- name: GetSocialsByUserID :one
-select pii_socials from pii.user_view where id = $1;
-
--- name: UpdateUserSocials :exec
-update pii.for_users set pii_socials = @socials where user_id = @user_id;
-
 -- name: UpdateUserExperience :exec
 update users set user_experiences = user_experiences || @experience where id = @user_id;
 
@@ -546,32 +524,6 @@ select user_experiences from users where id = $1;
 
 -- name: UpdateEventCaptionByGroup :exec
 update events set caption = @caption where group_id = @group_id and deleted = false;
-
--- this query will take in enough info to create a sort of fake table of social accounts matching them up to users in split with twitter connected.
--- it will also go and search for whether the specified user follows any of the users returned
--- name: GetSocialConnectionsPaginate :many
-select s.*, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following
-from (select unnest(@social_ids::varchar[]) as social_id, unnest(@social_usernames::varchar[]) as social_username, unnest(@social_displaynames::varchar[]) as social_displayname, unnest(@social_profile_images::varchar[]) as social_profile_image) as s
-         inner join pii.user_view on user_view.pii_socials->sqlc.arg('social')::text->>'id'::varchar = s.social_id and user_view.deleted = false
-where case when @only_unfollowing::bool then true end
-order by case when @paging_forward::bool then (true,user_view.created_at,user_view.id) end asc,
-         case when not @paging_forward::bool then (true,user_view.created_at,user_view.id) end desc
-limit $1;
-
--- name: GetSocialConnections :many
-select s.*, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following
-from (select unnest(@social_ids::varchar[]) as social_id, unnest(@social_usernames::varchar[]) as social_username, unnest(@social_displaynames::varchar[]) as social_displayname, unnest(@social_profile_images::varchar[]) as social_profile_image) as s
-         inner join pii.user_view on user_view.pii_socials->sqlc.arg('social')::text->>'id'::varchar = s.social_id and user_view.deleted = false
-where case when @only_unfollowing::bool then true end
-order by (true,user_view.created_at,user_view.id);
-
-
--- name: CountSocialConnections :one
-select count(*)
-from (select unnest(@social_ids::varchar[]) as social_id) as s
-         inner join pii.user_view on user_view.pii_socials->sqlc.arg('social')::text->>'id'::varchar = s.social_id and user_view.deleted = false
-where case when @only_unfollowing::bool then true end;
-
 
 -- name: AddPiiAccountCreationInfo :exec
 insert into pii.account_creation_info (user_id, ip_address, created_at) values (@user_id, @ip_address, now())

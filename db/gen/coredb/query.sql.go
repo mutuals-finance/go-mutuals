@@ -29,20 +29,6 @@ func (q *Queries) AddPiiAccountCreationInfo(ctx context.Context, arg AddPiiAccou
 	return err
 }
 
-const addSocialToUser = `-- name: AddSocialToUser :exec
-insert into pii.for_users (user_id, pii_socials) values ($1, $2) on conflict (user_id) where deleted = false do update set pii_socials = for_users.pii_socials || $2
-`
-
-type AddSocialToUserParams struct {
-	UserID  persist.DBID    `db:"user_id" json:"user_id"`
-	Socials persist.Socials `db:"socials" json:"socials"`
-}
-
-func (q *Queries) AddSocialToUser(ctx context.Context, arg AddSocialToUserParams) error {
-	_, err := q.db.Exec(ctx, addSocialToUser, arg.UserID, arg.Socials)
-	return err
-}
-
 const addUserRoles = `-- name: AddUserRoles :exec
 insert into user_roles (id, user_id, role, created_at, last_updated)
 select unnest($2::varchar[]), $1, unnest($3::varchar[]), now(), now()
@@ -141,26 +127,6 @@ type CountAssetsByOwnerChainAddressParams struct {
 
 func (q *Queries) CountAssetsByOwnerChainAddress(ctx context.Context, arg CountAssetsByOwnerChainAddressParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countAssetsByOwnerChainAddress, arg.OwnerAddress, arg.Chain)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countSocialConnections = `-- name: CountSocialConnections :one
-select count(*)
-from (select unnest($1::varchar[]) as social_id) as s
-         inner join pii.user_view on user_view.pii_socials->$2::text->>'id'::varchar = s.social_id and user_view.deleted = false
-where case when $3::bool then true end
-`
-
-type CountSocialConnectionsParams struct {
-	SocialIds       []string `db:"social_ids" json:"social_ids"`
-	Social          string   `db:"social" json:"social"`
-	OnlyUnfollowing bool     `db:"only_unfollowing" json:"only_unfollowing"`
-}
-
-func (q *Queries) CountSocialConnections(ctx context.Context, arg CountSocialConnectionsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countSocialConnections, arg.SocialIds, arg.Social, arg.OnlyUnfollowing)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -1236,175 +1202,6 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 	return items, nil
 }
 
-const getSocialAuthByUserID = `-- name: GetSocialAuthByUserID :one
-select id, deleted, version, created_at, last_updated, user_id, provider, access_token, refresh_token from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false
-`
-
-type GetSocialAuthByUserIDParams struct {
-	UserID   persist.DBID           `db:"user_id" json:"user_id"`
-	Provider persist.SocialProvider `db:"provider" json:"provider"`
-}
-
-func (q *Queries) GetSocialAuthByUserID(ctx context.Context, arg GetSocialAuthByUserIDParams) (PiiSocialsAuth, error) {
-	row := q.db.QueryRow(ctx, getSocialAuthByUserID, arg.UserID, arg.Provider)
-	var i PiiSocialsAuth
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.Version,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.UserID,
-		&i.Provider,
-		&i.AccessToken,
-		&i.RefreshToken,
-	)
-	return i, err
-}
-
-const getSocialConnections = `-- name: GetSocialConnections :many
-select s.social_id, s.social_username, s.social_displayname, s.social_profile_image, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following
-from (select unnest($1::varchar[]) as social_id, unnest($2::varchar[]) as social_username, unnest($3::varchar[]) as social_displayname, unnest($4::varchar[]) as social_profile_image) as s
-         inner join pii.user_view on user_view.pii_socials->$5::text->>'id'::varchar = s.social_id and user_view.deleted = false
-where case when $6::bool then true end
-order by (true,user_view.created_at,user_view.id)
-`
-
-type GetSocialConnectionsParams struct {
-	SocialIds           []string `db:"social_ids" json:"social_ids"`
-	SocialUsernames     []string `db:"social_usernames" json:"social_usernames"`
-	SocialDisplaynames  []string `db:"social_displaynames" json:"social_displaynames"`
-	SocialProfileImages []string `db:"social_profile_images" json:"social_profile_images"`
-	Social              string   `db:"social" json:"social"`
-	OnlyUnfollowing     bool     `db:"only_unfollowing" json:"only_unfollowing"`
-}
-
-type GetSocialConnectionsRow struct {
-	SocialID           interface{}  `db:"social_id" json:"social_id"`
-	SocialUsername     interface{}  `db:"social_username" json:"social_username"`
-	SocialDisplayname  interface{}  `db:"social_displayname" json:"social_displayname"`
-	SocialProfileImage interface{}  `db:"social_profile_image" json:"social_profile_image"`
-	UserID             persist.DBID `db:"user_id" json:"user_id"`
-	UserCreatedAt      time.Time    `db:"user_created_at" json:"user_created_at"`
-	AlreadyFollowing   bool         `db:"already_following" json:"already_following"`
-}
-
-func (q *Queries) GetSocialConnections(ctx context.Context, arg GetSocialConnectionsParams) ([]GetSocialConnectionsRow, error) {
-	rows, err := q.db.Query(ctx, getSocialConnections,
-		arg.SocialIds,
-		arg.SocialUsernames,
-		arg.SocialDisplaynames,
-		arg.SocialProfileImages,
-		arg.Social,
-		arg.OnlyUnfollowing,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetSocialConnectionsRow
-	for rows.Next() {
-		var i GetSocialConnectionsRow
-		if err := rows.Scan(
-			&i.SocialID,
-			&i.SocialUsername,
-			&i.SocialDisplayname,
-			&i.SocialProfileImage,
-			&i.UserID,
-			&i.UserCreatedAt,
-			&i.AlreadyFollowing,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getSocialConnectionsPaginate = `-- name: GetSocialConnectionsPaginate :many
-select s.social_id, s.social_username, s.social_displayname, s.social_profile_image, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following
-from (select unnest($2::varchar[]) as social_id, unnest($3::varchar[]) as social_username, unnest($4::varchar[]) as social_displayname, unnest($5::varchar[]) as social_profile_image) as s
-         inner join pii.user_view on user_view.pii_socials->$6::text->>'id'::varchar = s.social_id and user_view.deleted = false
-where case when $7::bool then true end
-order by case when $8::bool then (true,user_view.created_at,user_view.id) end asc,
-         case when not $8::bool then (true,user_view.created_at,user_view.id) end desc
-limit $1
-`
-
-type GetSocialConnectionsPaginateParams struct {
-	Limit               int32    `db:"limit" json:"limit"`
-	SocialIds           []string `db:"social_ids" json:"social_ids"`
-	SocialUsernames     []string `db:"social_usernames" json:"social_usernames"`
-	SocialDisplaynames  []string `db:"social_displaynames" json:"social_displaynames"`
-	SocialProfileImages []string `db:"social_profile_images" json:"social_profile_images"`
-	Social              string   `db:"social" json:"social"`
-	OnlyUnfollowing     bool     `db:"only_unfollowing" json:"only_unfollowing"`
-	PagingForward       bool     `db:"paging_forward" json:"paging_forward"`
-}
-
-type GetSocialConnectionsPaginateRow struct {
-	SocialID           interface{}  `db:"social_id" json:"social_id"`
-	SocialUsername     interface{}  `db:"social_username" json:"social_username"`
-	SocialDisplayname  interface{}  `db:"social_displayname" json:"social_displayname"`
-	SocialProfileImage interface{}  `db:"social_profile_image" json:"social_profile_image"`
-	UserID             persist.DBID `db:"user_id" json:"user_id"`
-	UserCreatedAt      time.Time    `db:"user_created_at" json:"user_created_at"`
-	AlreadyFollowing   bool         `db:"already_following" json:"already_following"`
-}
-
-// this query will take in enough info to create a sort of fake table of social accounts matching them up to users in split with twitter connected.
-// it will also go and search for whether the specified user follows any of the users returned
-func (q *Queries) GetSocialConnectionsPaginate(ctx context.Context, arg GetSocialConnectionsPaginateParams) ([]GetSocialConnectionsPaginateRow, error) {
-	rows, err := q.db.Query(ctx, getSocialConnectionsPaginate,
-		arg.Limit,
-		arg.SocialIds,
-		arg.SocialUsernames,
-		arg.SocialDisplaynames,
-		arg.SocialProfileImages,
-		arg.Social,
-		arg.OnlyUnfollowing,
-		arg.PagingForward,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetSocialConnectionsPaginateRow
-	for rows.Next() {
-		var i GetSocialConnectionsPaginateRow
-		if err := rows.Scan(
-			&i.SocialID,
-			&i.SocialUsername,
-			&i.SocialDisplayname,
-			&i.SocialProfileImage,
-			&i.UserID,
-			&i.UserCreatedAt,
-			&i.AlreadyFollowing,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getSocialsByUserID = `-- name: GetSocialsByUserID :one
-select pii_socials from pii.user_view where id = $1
-`
-
-func (q *Queries) GetSocialsByUserID(ctx context.Context, id persist.DBID) (persist.Socials, error) {
-	row := q.db.QueryRow(ctx, getSocialsByUserID, id)
-	var pii_socials persist.Socials
-	err := row.Scan(&pii_socials)
-	return pii_socials, err
-}
-
 const getSplitByChainAddress = `-- name: GetSplitByChainAddress :one
 SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
 `
@@ -1870,7 +1667,7 @@ func (q *Queries) GetTokensByIDs(ctx context.Context, tokenIds []string) ([]GetT
 }
 
 const getUserByChainAddress = `-- name: GetUserByChainAddress :one
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
   and wallets.chain = $2
@@ -1900,7 +1697,6 @@ func (q *Queries) GetUserByChainAddress(ctx context.Context, arg GetUserByChainA
 		&i.Traits,
 		&i.Universal,
 		&i.NotificationSettings,
-		&i.EmailVerified,
 		&i.EmailUnsubscriptions,
 		&i.FeaturedSplit,
 		&i.PrimaryWalletID,
@@ -1910,7 +1706,7 @@ func (q *Queries) GetUserByChainAddress(ctx context.Context, arg GetUserByChainA
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error) {
@@ -1929,7 +1725,6 @@ func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error
 		&i.Traits,
 		&i.Universal,
 		&i.NotificationSettings,
-		&i.EmailVerified,
 		&i.EmailUnsubscriptions,
 		&i.FeaturedSplit,
 		&i.PrimaryWalletID,
@@ -1939,7 +1734,7 @@ func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -1958,7 +1753,6 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Traits,
 		&i.Universal,
 		&i.NotificationSettings,
-		&i.EmailVerified,
 		&i.EmailUnsubscriptions,
 		&i.FeaturedSplit,
 		&i.PrimaryWalletID,
@@ -1968,7 +1762,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 }
 
 const getUserByVerifiedEmailAddress = `-- name: GetUserByVerifiedEmailAddress :one
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
 where p.pii_email_address = lower($1)
   and u.email_verified != 0
   and p.deleted = false
@@ -1991,7 +1785,6 @@ func (q *Queries) GetUserByVerifiedEmailAddress(ctx context.Context, lower strin
 		&i.Traits,
 		&i.Universal,
 		&i.NotificationSettings,
-		&i.EmailVerified,
 		&i.EmailUnsubscriptions,
 		&i.FeaturedSplit,
 		&i.PrimaryWalletID,
@@ -2001,7 +1794,7 @@ func (q *Queries) GetUserByVerifiedEmailAddress(ctx context.Context, lower strin
 }
 
 const getUserByWalletID = `-- name: GetUserByWalletID :one
-select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] <@ wallets and deleted = false
+select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] <@ wallets and deleted = false
 `
 
 func (q *Queries) GetUserByWalletID(ctx context.Context, wallet string) (User, error) {
@@ -2020,7 +1813,6 @@ func (q *Queries) GetUserByWalletID(ctx context.Context, wallet string) (User, e
 		&i.Traits,
 		&i.Universal,
 		&i.NotificationSettings,
-		&i.EmailVerified,
 		&i.EmailUnsubscriptions,
 		&i.FeaturedSplit,
 		&i.PrimaryWalletID,
@@ -2187,7 +1979,7 @@ func (q *Queries) GetUserUnseenNotifications(ctx context.Context, arg GetUserUns
 }
 
 const getUserWithPIIByID = `-- name: GetUserWithPIIByID :one
-select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences, fts_username, fts_bio_english, pii_email_address, pii_socials from pii.user_view where id = $1 and deleted = false
+select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false
 `
 
 func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (PiiUserView, error) {
@@ -2206,21 +1998,18 @@ func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (
 		&i.Traits,
 		&i.Universal,
 		&i.NotificationSettings,
-		&i.EmailVerified,
 		&i.EmailUnsubscriptions,
 		&i.FeaturedSplit,
 		&i.PrimaryWalletID,
 		&i.UserExperiences,
-		&i.FtsUsername,
-		&i.FtsBioEnglish,
-		&i.PiiEmailAddress,
-		&i.PiiSocials,
+		&i.PiiUnverifiedEmailAddress,
+		&i.PiiVerifiedEmailAddress,
 	)
 	return i, err
 }
 
 const getUsersByChainAddresses = `-- name: GetUsersByChainAddresses :many
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.chain = $2::int AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.chain = $2::int AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false
 `
 
 type GetUsersByChainAddressesParams struct {
@@ -2241,7 +2030,6 @@ type GetUsersByChainAddressesRow struct {
 	Traits               pgtype.JSONB                     `db:"traits" json:"traits"`
 	Universal            bool                             `db:"universal" json:"universal"`
 	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
-	EmailVerified        persist.EmailVerificationStatus  `db:"email_verified" json:"email_verified"`
 	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
 	FeaturedSplit        *persist.DBID                    `db:"featured_split" json:"featured_split"`
 	PrimaryWalletID      persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
@@ -2271,7 +2059,6 @@ func (q *Queries) GetUsersByChainAddresses(ctx context.Context, arg GetUsersByCh
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
@@ -2289,7 +2076,7 @@ func (q *Queries) GetUsersByChainAddresses(ctx context.Context, arg GetUsersByCh
 }
 
 const getUsersByIDs = `-- name: GetUsersByIDs :many
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false
                       AND (created_at, id) < ($3, $4)
                       AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -2337,7 +2124,6 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
@@ -2354,7 +2140,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 }
 
 const getUsersWithEmailNotificationsOnForEmailType = `-- name: GetUsersWithEmailNotificationsOnForEmailType :many
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences, u.fts_username, u.fts_bio_english, u.pii_email_address, u.pii_socials from pii.user_view u
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u
                     left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false
 where (u.email_unsubscriptions->>'all' = 'false' or u.email_unsubscriptions->>'all' is null)
   and (u.email_unsubscriptions->>$2::varchar = 'false' or u.email_unsubscriptions->>$2::varchar is null)
@@ -2410,15 +2196,12 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
 			&i.UserExperiences,
-			&i.FtsUsername,
-			&i.FtsBioEnglish,
-			&i.PiiEmailAddress,
-			&i.PiiSocials,
+			&i.PiiUnverifiedEmailAddress,
+			&i.PiiVerifiedEmailAddress,
 		); err != nil {
 			return nil, err
 		}
@@ -2431,7 +2214,7 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 }
 
 const getUsersWithRolePaginate = `-- name: GetUsersWithRolePaginate :many
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false
                                          and u.id = ur.user_id and ur.role = $2
                                          and (u.username_idempotent, u.id) < ($3::varchar, $4)
                                          and (u.username_idempotent, u.id) > ($5::varchar, $6)
@@ -2480,7 +2263,6 @@ func (q *Queries) GetUsersWithRolePaginate(ctx context.Context, arg GetUsersWith
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
@@ -2497,7 +2279,7 @@ func (q *Queries) GetUsersWithRolePaginate(ctx context.Context, arg GetUsersWith
 }
 
 const getUsersWithTrait = `-- name: GetUsersWithTrait :many
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false
 `
 
 func (q *Queries) GetUsersWithTrait(ctx context.Context, dollar_1 string) ([]User, error) {
@@ -2522,7 +2304,6 @@ func (q *Queries) GetUsersWithTrait(ctx context.Context, dollar_1 string) ([]Use
 			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
-			&i.EmailVerified,
 			&i.EmailUnsubscriptions,
 			&i.FeaturedSplit,
 			&i.PrimaryWalletID,
@@ -2845,20 +2626,6 @@ func (q *Queries) IsActorSubjectActive(ctx context.Context, arg IsActorSubjectAc
 	return exists, err
 }
 
-const removeSocialFromUser = `-- name: RemoveSocialFromUser :exec
-update pii.for_users set pii_socials = pii_socials - $1::varchar where user_id = $2
-`
-
-type RemoveSocialFromUserParams struct {
-	Social string       `db:"social" json:"social"`
-	UserID persist.DBID `db:"user_id" json:"user_id"`
-}
-
-func (q *Queries) RemoveSocialFromUser(ctx context.Context, arg RemoveSocialFromUserParams) error {
-	_, err := q.db.Exec(ctx, removeSocialFromUser, arg.Social, arg.UserID)
-	return err
-}
-
 const unblockUser = `-- name: UnblockUser :exec
 update user_blocklist set active = false, last_updated = now() where user_id = $1 and blocked_user_id = $2 and not deleted
 `
@@ -3028,31 +2795,6 @@ func (q *Queries) UpdateTokenMetadataFieldsByChainAddress(ctx context.Context, a
 	return err
 }
 
-const updateUserEmail = `-- name: UpdateUserEmail :exec
-with upsert_pii as (
-    insert into pii.for_users (user_id, pii_email_address) values ($2, $3)
-        on conflict (user_id) do update set pii_email_address = excluded.pii_email_address
-),
-
-     upsert_metadata as (
-         insert into dev_metadata_users (user_id, has_email_address) values ($2, ($3 is not null))
-             on conflict (user_id) do update set has_email_address = excluded.has_email_address
-     )
-
-update users set email_verified = $1 where users.id = $2
-`
-
-type UpdateUserEmailParams struct {
-	EmailVerificationStatus int32         `db:"email_verification_status" json:"email_verification_status"`
-	UserID                  persist.DBID  `db:"user_id" json:"user_id"`
-	EmailAddress            persist.Email `db:"email_address" json:"email_address"`
-}
-
-func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
-	_, err := q.db.Exec(ctx, updateUserEmail, arg.EmailVerificationStatus, arg.UserID, arg.EmailAddress)
-	return err
-}
-
 const updateUserEmailUnsubscriptions = `-- name: UpdateUserEmailUnsubscriptions :exec
 UPDATE users SET email_unsubscriptions = $2 WHERE id = $1
 `
@@ -3097,31 +2839,37 @@ func (q *Queries) UpdateUserPrimaryWallet(ctx context.Context, arg UpdateUserPri
 	return err
 }
 
-const updateUserSocials = `-- name: UpdateUserSocials :exec
-update pii.for_users set pii_socials = $1 where user_id = $2
+const updateUserUnverifiedEmail = `-- name: UpdateUserUnverifiedEmail :exec
+insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values ($1, $2, null)
+on conflict (user_id) do update
+    set pii_unverified_email_address = excluded.pii_unverified_email_address,
+        pii_verified_email_address = excluded.pii_verified_email_address
 `
 
-type UpdateUserSocialsParams struct {
-	Socials persist.Socials `db:"socials" json:"socials"`
-	UserID  persist.DBID    `db:"user_id" json:"user_id"`
+type UpdateUserUnverifiedEmailParams struct {
+	UserID       persist.DBID  `db:"user_id" json:"user_id"`
+	EmailAddress persist.Email `db:"email_address" json:"email_address"`
 }
 
-func (q *Queries) UpdateUserSocials(ctx context.Context, arg UpdateUserSocialsParams) error {
-	_, err := q.db.Exec(ctx, updateUserSocials, arg.Socials, arg.UserID)
+func (q *Queries) UpdateUserUnverifiedEmail(ctx context.Context, arg UpdateUserUnverifiedEmailParams) error {
+	_, err := q.db.Exec(ctx, updateUserUnverifiedEmail, arg.UserID, arg.EmailAddress)
 	return err
 }
 
-const updateUserVerificationStatus = `-- name: UpdateUserVerificationStatus :exec
-UPDATE users SET email_verified = $2 WHERE id = $1
+const updateUserVerifiedEmail = `-- name: UpdateUserVerifiedEmail :exec
+insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values ($1, null, $2)
+on conflict (user_id) do update
+    set pii_verified_email_address = excluded.pii_verified_email_address,
+        pii_unverified_email_address = excluded.pii_unverified_email_address
 `
 
-type UpdateUserVerificationStatusParams struct {
-	ID            persist.DBID                    `db:"id" json:"id"`
-	EmailVerified persist.EmailVerificationStatus `db:"email_verified" json:"email_verified"`
+type UpdateUserVerifiedEmailParams struct {
+	UserID       persist.DBID  `db:"user_id" json:"user_id"`
+	EmailAddress persist.Email `db:"email_address" json:"email_address"`
 }
 
-func (q *Queries) UpdateUserVerificationStatus(ctx context.Context, arg UpdateUserVerificationStatusParams) error {
-	_, err := q.db.Exec(ctx, updateUserVerificationStatus, arg.ID, arg.EmailVerified)
+func (q *Queries) UpdateUserVerifiedEmail(ctx context.Context, arg UpdateUserVerifiedEmailParams) error {
+	_, err := q.db.Exec(ctx, updateUserVerifiedEmail, arg.UserID, arg.EmailAddress)
 	return err
 }
 
@@ -3180,27 +2928,4 @@ func (q *Queries) UpsertSession(ctx context.Context, arg UpsertSessionParams) (S
 		&i.Deleted,
 	)
 	return i, err
-}
-
-const upsertSocialOAuth = `-- name: UpsertSocialOAuth :exec
-insert into pii.socials_auth (id, user_id, provider, access_token, refresh_token) values ($1, $2, $3, $4, $5) on conflict (user_id, provider) where deleted = false do update set access_token = $4, refresh_token = $5, last_updated = now()
-`
-
-type UpsertSocialOAuthParams struct {
-	ID           persist.DBID           `db:"id" json:"id"`
-	UserID       persist.DBID           `db:"user_id" json:"user_id"`
-	Provider     persist.SocialProvider `db:"provider" json:"provider"`
-	AccessToken  sql.NullString         `db:"access_token" json:"access_token"`
-	RefreshToken sql.NullString         `db:"refresh_token" json:"refresh_token"`
-}
-
-func (q *Queries) UpsertSocialOAuth(ctx context.Context, arg UpsertSocialOAuthParams) error {
-	_, err := q.db.Exec(ctx, upsertSocialOAuth,
-		arg.ID,
-		arg.UserID,
-		arg.Provider,
-		arg.AccessToken,
-		arg.RefreshToken,
-	)
-	return err
 }

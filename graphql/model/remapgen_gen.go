@@ -78,6 +78,16 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
+	"OptInForRolesPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(OptInForRolesPayloadOrError)
+		return obj, ok
+	},
+
+	"OptOutForRolesPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(OptOutForRolesPayloadOrError)
+		return obj, ok
+	},
+
 	"PreverifyEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(PreverifyEmailPayloadOrError)
 		return obj, ok
@@ -125,11 +135,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"SetSpamPreferencePayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(SetSpamPreferencePayloadOrError)
-		return obj, ok
-	},
-
-	"SocialConnectionsOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SocialConnectionsOrError)
 		return obj, ok
 	},
 

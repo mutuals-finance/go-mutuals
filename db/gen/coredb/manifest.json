@@ -347,32 +347,6 @@
                 "array_dims": 0
               },
               {
-                "name": "email_verified",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "users"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "int4"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
                 "name": "email_unsubscriptions",
                 "not_null": true,
                 "is_array": false,
@@ -1853,7 +1827,7 @@
                 "table_alias": "",
                 "type": {
                   "catalog": "",
-                  "schema": "pg_catalog",
+                  "schema": "",
                   "name": "bool"
                 },
                 "is_sqlc_slice": false,
@@ -1879,7 +1853,7 @@
                 "table_alias": "",
                 "type": {
                   "catalog": "",
-                  "schema": "pg_catalog",
+                  "schema": "",
                   "name": "bool"
                 },
                 "is_sqlc_slice": false,
@@ -69309,7 +69283,33 @@
                 "array_dims": 0
               },
               {
-                "name": "pii_email_address",
+                "name": "pii_unverified_email_address",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "pii",
+                  "name": "for_users"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "pii_verified_email_address",
                 "not_null": false,
                 "is_array": false,
                 "comment": "",
@@ -69353,32 +69353,6 @@
                   "catalog": "",
                   "schema": "pg_catalog",
                   "name": "bool"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "pii_socials",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "for_users"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "jsonb"
                 },
                 "is_sqlc_slice": false,
                 "embed_table": null,
@@ -69709,32 +69683,6 @@
                 "array_dims": 0
               },
               {
-                "name": "email_verified",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "user_view"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "pg_catalog.int4"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
                 "name": "email_unsubscriptions",
                 "not_null": true,
                 "is_array": false,
@@ -69839,59 +69787,7 @@
                 "array_dims": 0
               },
               {
-                "name": "fts_username",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "user_view"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "tsvector"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "fts_bio_english",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "user_view"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "tsvector"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "pii_email_address",
+                "name": "pii_unverified_email_address",
                 "not_null": false,
                 "is_array": false,
                 "comment": "",
@@ -69917,7 +69813,7 @@
                 "array_dims": 0
               },
               {
-                "name": "pii_socials",
+                "name": "pii_verified_email_address",
                 "not_null": false,
                 "is_array": false,
                 "comment": "",
@@ -69934,251 +69830,7 @@
                 "type": {
                   "catalog": "",
                   "schema": "",
-                  "name": "jsonb"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              }
-            ],
-            "comment": ""
-          },
-          {
-            "rel": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "columns": [
-              {
-                "name": "id",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "deleted",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "bool"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "version",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "int4"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "created_at",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "timestamptz"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "last_updated",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "timestamptz"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "user_id",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "provider",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "access_token",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "refresh_token",
-                "not_null": false,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "socials_auth"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
+                  "name": "pg_catalog.varchar"
                 },
                 "is_sqlc_slice": false,
                 "embed_table": null,
@@ -70319,7 +69971,33 @@
                 "array_dims": 0
               },
               {
-                "name": "pii_email_address",
+                "name": "pii_unverified_email_address",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "scrubbed_pii",
+                  "name": "for_users"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "pg_catalog.varchar"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "pii_verified_email_address",
                 "not_null": false,
                 "is_array": false,
                 "comment": "",
@@ -70363,32 +70041,6 @@
                   "catalog": "",
                   "schema": "",
                   "name": "pg_catalog.bool"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
-                "name": "pii_socials",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "scrubbed_pii",
-                  "name": "for_users"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "jsonb"
                 },
                 "is_sqlc_slice": false,
                 "embed_table": null,
@@ -70730,7 +70382,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
       "name": "GetUserById",
       "cmd": ":one",
       "columns": [
@@ -71047,32 +70699,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -71213,7 +70839,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences, fts_username, fts_bio_english, pii_email_address, pii_socials from pii.user_view where id = $1 and deleted = false",
+      "text": "select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false",
       "name": "GetUserWithPIIByID",
       "cmd": ":one",
       "columns": [
@@ -71530,32 +71156,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -71660,59 +71260,7 @@
           "array_dims": 0
         },
         {
-          "name": "fts_username",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "tsvector"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "fts_bio_english",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "tsvector"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "pii_email_address",
+          "name": "pii_unverified_email_address",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -71738,7 +71286,7 @@
           "array_dims": 0
         },
         {
-          "name": "pii_socials",
+          "name": "pii_verified_email_address",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -71755,7 +71303,7 @@
           "type": {
             "catalog": "",
             "schema": "",
-            "name": "jsonb"
+            "name": "pg_catalog.varchar"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -71800,7 +71348,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
       "name": "GetUserByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -72117,32 +71665,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -72283,7 +71805,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false\n                      AND (created_at, id) \u003c ($3, $4)\n                      AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
+      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false\n                      AND (created_at, id) \u003c ($3, $4)\n                      AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
       "name": "GetUsersByIDs",
       "cmd": ":many",
       "columns": [
@@ -72600,32 +72122,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -72932,7 +72428,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
+      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
       "name": "GetUserByUsername",
       "cmd": ":one",
       "columns": [
@@ -73249,32 +72745,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -73411,7 +72881,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
+      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
       "name": "GetUserByUsernameBatch",
       "cmd": ":batchone",
       "columns": [
@@ -73728,32 +73198,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -73890,7 +73334,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id\nwhere p.pii_email_address = lower($1)\n  and u.email_verified != 0\n  and p.deleted = false\n  and u.deleted = false",
+      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id\nwhere p.pii_email_address = lower($1)\n  and u.email_verified != 0\n  and p.deleted = false\n  and u.deleted = false",
       "name": "GetUserByVerifiedEmailAddress",
       "cmd": ":one",
       "columns": [
@@ -74207,32 +73651,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -74369,7 +73787,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
+      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
       "name": "GetUserByChainAddress",
       "cmd": ":one",
       "columns": [
@@ -74686,32 +74104,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -74881,7 +74273,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.chain = $2\n  and wallets.deleted = false\n  and users.deleted = false",
+      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.chain = $2\n  and wallets.deleted = false\n  and users.deleted = false",
       "name": "GetUserByChainAddressBatch",
       "cmd": ":batchone",
       "columns": [
@@ -75198,32 +74590,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -75393,7 +74759,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits-\u003e$1::string) IS NOT NULL AND deleted = false",
+      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits-\u003e$1::string) IS NOT NULL AND deleted = false",
       "name": "GetUsersWithTrait",
       "cmd": ":many",
       "columns": [
@@ -75710,32 +75076,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -75872,7 +75212,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits-\u003e$1::string) IS NOT NULL AND deleted = false",
+      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits-\u003e$1::string) IS NOT NULL AND deleted = false",
       "name": "GetUsersWithTraitBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -76181,32 +75521,6 @@
             "catalog": "",
             "schema": "",
             "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -97289,7 +96603,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences, u.fts_username, u.fts_bio_english, u.pii_email_address, u.pii_socials from pii.user_view u\n                    left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false\nwhere (u.email_unsubscriptions-\u003e\u003e'all' = 'false' or u.email_unsubscriptions-\u003e\u003e'all' is null)\n  and (u.email_unsubscriptions-\u003e\u003e$2::varchar = 'false' or u.email_unsubscriptions-\u003e\u003e$2::varchar is null)\n  and u.deleted = false and u.pii_verified_email_address is not null\n  and (u.created_at, u.id) \u003c ($3, $4)\n  and (u.created_at, u.id) \u003e ($5, $6)\n  and ($7::bool = false or r.user_id is not null)\norder by case when $8::bool then (u.created_at, u.id) end asc,\n         case when not $8::bool then (u.created_at, u.id) end desc\nlimit $1",
+      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u\n                    left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false\nwhere (u.email_unsubscriptions-\u003e\u003e'all' = 'false' or u.email_unsubscriptions-\u003e\u003e'all' is null)\n  and (u.email_unsubscriptions-\u003e\u003e$2::varchar = 'false' or u.email_unsubscriptions-\u003e\u003e$2::varchar is null)\n  and u.deleted = false and u.pii_verified_email_address is not null\n  and (u.created_at, u.id) \u003c ($3, $4)\n  and (u.created_at, u.id) \u003e ($5, $6)\n  and ($7::bool = false or r.user_id is not null)\norder by case when $8::bool then (u.created_at, u.id) end asc,\n         case when not $8::bool then (u.created_at, u.id) end desc\nlimit $1",
       "name": "GetUsersWithEmailNotificationsOnForEmailType",
       "cmd": ":many",
       "columns": [
@@ -97606,32 +96920,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -97736,59 +97024,7 @@
           "array_dims": 0
         },
         {
-          "name": "fts_username",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "tsvector"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "fts_bio_english",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "tsvector"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "pii_email_address",
+          "name": "pii_unverified_email_address",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -97814,7 +97050,7 @@
           "array_dims": 0
         },
         {
-          "name": "pii_socials",
+          "name": "pii_verified_email_address",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -97831,7 +97067,7 @@
           "type": {
             "catalog": "",
             "schema": "",
-            "name": "jsonb"
+            "name": "pg_catalog.varchar"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -98065,7 +97301,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false\n                                         and u.id = ur.user_id and ur.role = $2\n                                         and (u.username_idempotent, u.id) \u003c ($3::varchar, $4)\n                                         and (u.username_idempotent, u.id) \u003e ($5::varchar, $6)\norder by case when $7::bool then (u.username_idempotent, u.id) end asc,\n         case when not $7::bool then (u.username_idempotent, u.id) end desc\nlimit $1",
+      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false\n                                         and u.id = ur.user_id and ur.role = $2\n                                         and (u.username_idempotent, u.id) \u003c ($3::varchar, $4)\n                                         and (u.username_idempotent, u.id) \u003e ($5::varchar, $6)\norder by case when $7::bool then (u.username_idempotent, u.id) end asc,\n         case when not $7::bool then (u.username_idempotent, u.id) end desc\nlimit $1",
       "name": "GetUsersWithRolePaginate",
       "cmd": ":many",
       "columns": [
@@ -98382,32 +97618,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -98706,7 +97916,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal and t.pos \u003e $2::int and t.pos \u003c $3::int\norder by t.pos asc",
+      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal and t.pos \u003e $2::int and t.pos \u003c $3::int\norder by t.pos asc",
       "name": "GetUsersByPositionPaginateBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -99023,32 +98233,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -99235,7 +98419,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_verified, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal\norder by t.pos\nlimit 100",
+      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal\norder by t.pos\nlimit 100",
       "name": "GetUsersByPositionPersonalizedBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -99552,32 +98736,6 @@
           "array_dims": 0
         },
         {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
           "name": "email_unsubscriptions",
           "not_null": true,
           "is_array": false,
@@ -99714,111 +98872,13 @@
       "insert_into_table": null
     },
     {
-      "text": "UPDATE users SET email_verified = $2 WHERE id = $1",
-      "name": "UpdateUserVerificationStatus",
+      "text": "insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values ($1, null, $2)\non conflict (user_id) do update\n    set pii_verified_email_address = excluded.pii_verified_email_address,\n        pii_unverified_email_address = excluded.pii_unverified_email_address",
+      "name": "UpdateUserVerifiedEmail",
       "cmd": ":exec",
       "columns": [],
       "params": [
         {
           "number": 1,
-          "column": {
-            "name": "id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "",
-              "name": "users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "email_verified",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "public",
-              "name": "users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.int4"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "with upsert_pii as (\n    insert into pii.for_users (user_id, pii_email_address) values ($2, $3)\n        on conflict (user_id) do update set pii_email_address = excluded.pii_email_address\n),\n\n     upsert_metadata as (\n         insert into dev_metadata_users (user_id, has_email_address) values ($2, ($3 is not null))\n             on conflict (user_id) do update set has_email_address = excluded.has_email_address\n     )\n\nupdate users set email_verified = $1 where users.id = $2",
-      "name": "UpdateUserEmail",
-      "cmd": ":exec",
-      "columns": [],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "email_verification_status",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "public",
-              "name": "users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.int4"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
           "column": {
             "name": "user_id",
             "not_null": true,
@@ -99830,8 +98890,8 @@
             "scope": "",
             "table": {
               "catalog": "",
-              "schema": "",
-              "name": "users"
+              "schema": "pii",
+              "name": "for_users"
             },
             "table_alias": "",
             "type": {
@@ -99847,7 +98907,7 @@
           }
         },
         {
-          "number": 3,
+          "number": 2,
           "column": {
             "name": "email_address",
             "not_null": false,
@@ -99878,7 +98938,84 @@
       ],
       "comments": [],
       "filename": "query.sql",
-      "insert_into_table": null
+      "insert_into_table": {
+        "catalog": "",
+        "schema": "pii",
+        "name": "for_users"
+      }
+    },
+    {
+      "text": "insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values ($1, $2, null)\non conflict (user_id) do update\n    set pii_unverified_email_address = excluded.pii_unverified_email_address,\n        pii_verified_email_address = excluded.pii_verified_email_address",
+      "name": "UpdateUserUnverifiedEmail",
+      "cmd": ":exec",
+      "columns": [],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "user_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "pii",
+              "name": "for_users"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
+            "name": "email_address",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "pii",
+              "name": "for_users"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": {
+        "catalog": "",
+        "schema": "pii",
+        "name": "for_users"
+      }
     },
     {
       "text": "UPDATE users SET email_unsubscriptions = $2 WHERE id = $1",
@@ -100019,7 +99156,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_verified, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.chain = $2::int AND ARRAY[wallets.id] \u003c@ users.wallets AND users.deleted = false AND wallets.deleted = false",
+      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.chain = $2::int AND ARRAY[wallets.id] \u003c@ users.wallets AND users.deleted = false AND wallets.deleted = false",
       "name": "GetUsersByChainAddresses",
       "cmd": ":many",
       "columns": [
@@ -100328,32 +99465,6 @@
             "catalog": "",
             "schema": "",
             "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
           },
           "is_sqlc_slice": false,
           "embed_table": null,
@@ -101737,744 +100848,6 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, deleted, version, created_at, last_updated, user_id, provider, access_token, refresh_token from pii.socials_auth where user_id = $1 and provider = $2 and deleted = false",
-      "name": "GetSocialAuthByUserID",
-      "cmd": ":one",
-      "columns": [
-        {
-          "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "deleted",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "bool"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "version",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "created_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "last_updated",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "user_id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "provider",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "access_token",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "refresh_token",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "socials_auth"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "user_id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "provider",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "insert into pii.socials_auth (id, user_id, provider, access_token, refresh_token) values ($1, $2, $3, $4, $5) on conflict (user_id, provider) where deleted = false do update set access_token = $4, refresh_token = $5, last_updated = now()",
-      "name": "UpsertSocialOAuth",
-      "cmd": ":exec",
-      "columns": [],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "user_id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 3,
-          "column": {
-            "name": "provider",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 4,
-          "column": {
-            "name": "access_token",
-            "not_null": false,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 5,
-          "column": {
-            "name": "refresh_token",
-            "not_null": false,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "socials_auth"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": {
-        "catalog": "",
-        "schema": "pii",
-        "name": "socials_auth"
-      }
-    },
-    {
-      "text": "insert into pii.for_users (user_id, pii_socials) values ($1, $2) on conflict (user_id) where deleted = false do update set pii_socials = for_users.pii_socials || $2",
-      "name": "AddSocialToUser",
-      "cmd": ":exec",
-      "columns": [],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "user_id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "for_users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "socials",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "for_users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "jsonb"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": {
-        "catalog": "",
-        "schema": "pii",
-        "name": "for_users"
-      }
-    },
-    {
-      "text": "update pii.for_users set pii_socials = pii_socials - $1::varchar where user_id = $2",
-      "name": "RemoveSocialFromUser",
-      "cmd": ":exec",
-      "columns": [],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "social",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "user_id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "for_users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "select pii_socials from pii.user_view where id = $1",
-      "name": "GetSocialsByUserID",
-      "cmd": ":one",
-      "columns": [
-        {
-          "name": "pii_socials",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "user_view"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "update pii.for_users set pii_socials = $1 where user_id = $2",
-      "name": "UpdateUserSocials",
-      "cmd": ":exec",
-      "columns": [],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "socials",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "for_users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "jsonb"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "user_id",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "pii",
-              "name": "for_users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
       "text": "update users set user_experiences = user_experiences || $1 where id = $2",
       "name": "UpdateUserExperience",
       "cmd": ":exec",
@@ -102680,816 +101053,6 @@
       "insert_into_table": null
     },
     {
-      "text": "select s.social_id, s.social_username, s.social_displayname, s.social_profile_image, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following\nfrom (select unnest($2::varchar[]) as social_id, unnest($3::varchar[]) as social_username, unnest($4::varchar[]) as social_displayname, unnest($5::varchar[]) as social_profile_image) as s\n         inner join pii.user_view on user_view.pii_socials-\u003e$6::text-\u003e\u003e'id'::varchar = s.social_id and user_view.deleted = false\nwhere case when $7::bool then true end\norder by case when $8::bool then (true,user_view.created_at,user_view.id) end asc,\n         case when not $8::bool then (true,user_view.created_at,user_view.id) end desc\nlimit $1",
-      "name": "GetSocialConnectionsPaginate",
-      "cmd": ":many",
-      "columns": [
-        {
-          "name": "social_id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "social_username",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "social_displayname",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "social_profile_image",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "user_id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "user_created_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "already_following",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "bool"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "limit",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "integer"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "social_ids",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 3,
-          "column": {
-            "name": "social_usernames",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 4,
-          "column": {
-            "name": "social_displaynames",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 5,
-          "column": {
-            "name": "social_profile_images",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 6,
-          "column": {
-            "name": "social",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "text"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 7,
-          "column": {
-            "name": "only_unfollowing",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "bool"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 8,
-          "column": {
-            "name": "paging_forward",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "bool"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [
-        " this query will take in enough info to create a sort of fake table of social accounts matching them up to users in split with twitter connected.",
-        " it will also go and search for whether the specified user follows any of the users returned"
-      ],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "select s.social_id, s.social_username, s.social_displayname, s.social_profile_image, user_view.id as user_id, user_view.created_at as user_created_at, (f.id is not null)::bool as already_following\nfrom (select unnest($1::varchar[]) as social_id, unnest($2::varchar[]) as social_username, unnest($3::varchar[]) as social_displayname, unnest($4::varchar[]) as social_profile_image) as s\n         inner join pii.user_view on user_view.pii_socials-\u003e$5::text-\u003e\u003e'id'::varchar = s.social_id and user_view.deleted = false\nwhere case when $6::bool then true end\norder by (true,user_view.created_at,user_view.id)",
-      "name": "GetSocialConnections",
-      "cmd": ":many",
-      "columns": [
-        {
-          "name": "social_id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "social_username",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "social_displayname",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "social_profile_image",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "anyelement"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "user_id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "user_created_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "already_following",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "bool"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "social_ids",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "social_usernames",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 3,
-          "column": {
-            "name": "social_displaynames",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 4,
-          "column": {
-            "name": "social_profile_images",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 5,
-          "column": {
-            "name": "social",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "text"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 6,
-          "column": {
-            "name": "only_unfollowing",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "bool"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "select count(*)\nfrom (select unnest($1::varchar[]) as social_id) as s\n         inner join pii.user_view on user_view.pii_socials-\u003e$2::text-\u003e\u003e'id'::varchar = s.social_id and user_view.deleted = false\nwhere case when $3::bool then true end",
-      "name": "CountSocialConnections",
-      "cmd": ":one",
-      "columns": [
-        {
-          "name": "count",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": true,
-          "scope": "",
-          "table": null,
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "bigint"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "social_ids",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 2,
-          "column": {
-            "name": "social",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "text"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 3,
-          "column": {
-            "name": "only_unfollowing",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "bool"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
       "text": "insert into pii.account_creation_info (user_id, ip_address, created_at) values ($1, $2, now())\non conflict do nothing",
       "name": "AddPiiAccountCreationInfo",
       "cmd": ":exec",
@@ -103563,7 +101126,7 @@
       }
     },
     {
-      "text": "select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_verified, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] \u003c@ wallets and deleted = false",
+      "text": "select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] \u003c@ wallets and deleted = false",
       "name": "GetUserByWalletID",
       "cmd": ":one",
       "columns": [
@@ -103872,32 +101435,6 @@
             "catalog": "",
             "schema": "",
             "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "email_verified",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
           },
           "is_sqlc_slice": false,
           "embed_table": null,

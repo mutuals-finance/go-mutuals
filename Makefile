@@ -66,18 +66,12 @@ $(PROMOTE)-$(PROD)-%              : REQUIRED_SOPS_SECRETS  := $(SOPS_PROD_SECRET
 
 # Service files, add a line for each service and environment you want to deploy.
 $(DEPLOY)-$(DEV)-backend          : SERVICE_FILE := backend-env.yaml
-$(DEPLOY)-$(DEV)-indexer          : SERVICE_FILE := app-dev-indexer.yaml
-$(DEPLOY)-$(DEV)-indexer-server   : SERVICE_FILE := indexer-server-env.yaml
 $(DEPLOY)-$(DEV)-admin            : SERVICE_FILE := app-dev-admin.yaml
-$(DEPLOY)-$(DEV)-tokenprocessing  : SERVICE_FILE := tokenprocessing-env.yaml
 $(DEPLOY)-$(DEV)-emails           : SERVICE_FILE := emails-server-env.yaml
 $(DEPLOY)-$(DEV)-routing-rules    : SERVICE_FILE := dispatch.yaml
 $(DEPLOY)-$(SANDBOX)-backend      : SERVICE_FILE := backend-sandbox-env.yaml
 $(DEPLOY)-$(PROD)-backend         : SERVICE_FILE := backend-env.yaml
-$(DEPLOY)-$(PROD)-indexer         : SERVICE_FILE := app-prod-indexer.yaml
-$(DEPLOY)-$(PROD)-indexer-server  : SERVICE_FILE := indexer-server-env.yaml
 $(DEPLOY)-$(PROD)-admin           : SERVICE_FILE := app-prod-admin.yaml
-$(DEPLOY)-$(PROD)-tokenprocessing : SERVICE_FILE := tokenprocessing-env.yaml
 $(DEPLOY)-$(PROD)-dummymetadata   : SERVICE_FILE := dummymetadata-env.yaml
 $(DEPLOY)-$(PROD)-emails          : SERVICE_FILE := emails-server-env.yaml
 $(DEPLOY)-$(PROD)-routing-rules   : SERVICE_FILE := dispatch.yaml
@@ -86,22 +80,10 @@ $(DEPLOY)-$(PROD)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
 
 # Service to Sentry project mapping
 $(DEPLOY)-%-backend               : SENTRY_PROJECT := splitfi-backend
-$(DEPLOY)-%-indexer               : SENTRY_PROJECT := indexer
-$(DEPLOY)-%-indexer-server        : SENTRY_PROJECT := indexer-api
-$(DEPLOY)-%-tokenprocessing       : SENTRY_PROJECT := tokenprocessing
 $(DEPLOY)-%-dummymetadata         : SENTRY_PROJECT := dummymetadata
 $(DEPLOY)-%-emails                : SENTRY_PROJECT := emails
 
 # Docker builds
-$(DEPLOY)-%-tokenprocessing            : REPO           := tokenprocessing
-$(DEPLOY)-%-tokenprocessing            : DOCKER_FILE    := $(DOCKER_DIR)/tokenprocessing/Dockerfile
-$(DEPLOY)-%-tokenprocessing            : PORT           := 6500
-$(DEPLOY)-%-tokenprocessing            : TIMEOUT        := $(TOKENPROCESSING_TIMEOUT)
-$(DEPLOY)-%-tokenprocessing            : CPU            := $(TOKENPROCESSING_CPU)
-$(DEPLOY)-%-tokenprocessing            : MEMORY         := $(TOKENPROCESSING_MEMORY)
-$(DEPLOY)-%-tokenprocessing            : CONCURRENCY    := $(TOKENPROCESSING_CONCURRENCY)
-$(DEPLOY)-$(DEV)-tokenprocessing       : SERVICE        := tokenprocessing-dev
-$(DEPLOY)-$(PROD)-tokenprocessing      : SERVICE        := tokenprocessing-v2
 $(DEPLOY)-%-dummymetadata              : REPO           := dummymetadata
 $(DEPLOY)-%-dummymetadata              : DOCKER_FILE    := $(DOCKER_DIR)/dummymetadata/Dockerfile
 $(DEPLOY)-%-dummymetadata              : PORT           := 8500
@@ -110,15 +92,6 @@ $(DEPLOY)-%-dummymetadata              : CPU            := $(DUMMYMETADATA_CPU)
 $(DEPLOY)-%-dummymetadata              : MEMORY         := $(DUMMYMETADATA_MEMORY)
 $(DEPLOY)-%-dummymetadata              : CONCURRENCY    := $(DUMMYMETADATA_CONCURRENCY)
 $(DEPLOY)-%-dummymetadata              : SERVICE        := dummymetadata
-$(DEPLOY)-%-indexer-server             : REPO           := indexer-api
-$(DEPLOY)-%-indexer-server             : DOCKER_FILE    := $(DOCKER_DIR)/indexer_api/Dockerfile
-$(DEPLOY)-%-indexer-server             : PORT           := 6000
-$(DEPLOY)-%-indexer-server             : TIMEOUT        := $(INDEXER_SERVER_TIMEOUT)
-$(DEPLOY)-%-indexer-server             : CPU            := $(INDEXER_SERVER_CPU)
-$(DEPLOY)-%-indexer-server             : MEMORY         := $(INDEXER_SERVER_MEMORY)
-$(DEPLOY)-%-indexer-server             : CONCURRENCY    := $(INDEXER_SERVER_CONCURRENCY)
-$(DEPLOY)-$(DEV)-indexer-server        : SERVICE        := indexer-api-dev
-$(DEPLOY)-$(PROD)-indexer-server       : SERVICE        := indexer-api
 $(DEPLOY)-%-emails                     : REPO           := emails
 $(DEPLOY)-%-emails                     : DOCKER_FILE    := $(DOCKER_DIR)/emails/Dockerfile
 $(DEPLOY)-%-emails                     : PORT           := 5500
@@ -153,10 +126,7 @@ $(DEPLOY)-$(PROD)-graphql-gateway              : SERVICE        := graphql-gatew
 
 # Service name mappings
 $(PROMOTE)-%-backend                   : SERVICE := default
-$(PROMOTE)-%-indexer                   : SERVICE := indexer
-$(PROMOTE)-%-indexer-server            : SERVICE := indexer-api
 $(PROMOTE)-%-emails                    : SERVICE := emails
-$(PROMOTE)-%-tokenprocessing           : SERVICE := tokenprocessing
 $(PROMOTE)-%-dummymetadata             : SERVICE := dummymetadata
 $(PROMOTE)-%-admin                     : SERVICE := admin
 
@@ -269,9 +239,6 @@ _$(RELEASE)-%:
 
 # DEV deployments
 $(DEPLOY)-$(DEV)-backend          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
-$(DEPLOY)-$(DEV)-indexer          : _set-project-$(ENV) _$(DEPLOY)-indexer _$(RELEASE)-indexer
-$(DEPLOY)-$(DEV)-indexer-server   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-indexer-server _$(RELEASE)-indexer-server
-$(DEPLOY)-$(DEV)-tokenprocessing  : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-tokenprocessing _$(RELEASE)-tokenprocessing
 $(DEPLOY)-$(DEV)-emails           : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
 $(DEPLOY)-$(DEV)-admin            : _set-project-$(ENV) _$(DEPLOY)-admin
 $(DEPLOY)-$(DEV)-routing-rules    : _set-project-$(ENV) _$(DEPLOY)-routing-rules
@@ -282,9 +249,6 @@ $(DEPLOY)-$(SANDBOX)-backend      : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-bac
 
 # PROD deployments
 $(DEPLOY)-$(PROD)-backend         : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
-$(DEPLOY)-$(PROD)-indexer         : _set-project-$(ENV) _$(DEPLOY)-indexer _$(RELEASE)-indexer
-$(DEPLOY)-$(PROD)-indexer-server  : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-indexer-server _$(RELEASE)-indexer-server
-$(DEPLOY)-$(PROD)-tokenprocessing : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-tokenprocessing _$(RELEASE)-tokenprocessing
 $(DEPLOY)-$(PROD)-dummymetadata   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-dummymetadata _$(RELEASE)-dummymetadata
 $(DEPLOY)-$(PROD)-emails          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
 $(DEPLOY)-$(PROD)-admin           : _set-project-$(ENV) _$(DEPLOY)-admin
@@ -297,9 +261,6 @@ $(DEPLOY)-$(PROD)-graphql-gateway : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-gra
 # $ make promote-prod-backend version=myVersion
 #
 $(PROMOTE)-$(PROD)-backend          : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-backend
-$(PROMOTE)-$(PROD)-indexer          : _set-project-$(ENV) _$(PROMOTE)-indexer _$(STOP)-indexer
-$(PROMOTE)-$(PROD)-indexer-server   : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-indexer-server
-$(PROMOTE)-$(PROD)-tokenprocessing  : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-tokenprocessing
 $(PROMOTE)-$(PROD)-dummymetadata    : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-dummymetadata
 $(PROMOTE)-$(PROD)-emails           : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-emails
 $(PROMOTE)-$(PROD)-admin            : _set-project-$(ENV) _$(PROMOTE)-admin
@@ -388,10 +349,6 @@ start-prod-sql-proxy:
 
 stop-sql-proxy:
 	docker-compose -f docker/cloud_sql_proxy/docker-compose.yml down
-
-# Migrations
-migrate-local-indexerdb:
-	migrate -path ./db/migrations/indexer -database "postgresql://postgres@localhost:5433/postgres?sslmode=disable" up
 
 migrate-local-coredb:
 	go run cmd/migrate/main.go
