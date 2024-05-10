@@ -48,7 +48,6 @@ type ResolverRoot interface {
 	PreviewURLSet() PreviewURLSetResolver
 	Query() QueryResolver
 	Recipient() RecipientResolver
-	SetSpamPreferencePayload() SetSpamPreferencePayloadResolver
 	Split() SplitResolver
 	SplitFiUser() SplitFiUserResolver
 	Subscription() SubscriptionResolver
@@ -130,11 +129,6 @@ type ComplexityRoot struct {
 		SplitID func(childComplexity int) int
 		UserID  func(childComplexity int) int
 		Viewer  func(childComplexity int) int
-	}
-
-	DeepRefreshPayload struct {
-		Chain     func(childComplexity int) int
-		Submitted func(childComplexity int) int
 	}
 
 	DeleteSplitPayload struct {
@@ -303,7 +297,6 @@ type ComplexityRoot struct {
 		ClearAllNotifications           func(childComplexity int) int
 		CreateSplit                     func(childComplexity int, input model.CreateSplitInput) int
 		CreateUser                      func(childComplexity int, authMechanism model.AuthMechanism, input model.CreateUserInput) int
-		DeepRefresh                     func(childComplexity int, input model.DeepRefreshInput) int
 		DeleteSplit                     func(childComplexity int, splitID persist.DBID) int
 		GetAuthNonce                    func(childComplexity int) int
 		Login                           func(childComplexity int, authMechanism model.AuthMechanism) int
@@ -312,12 +305,10 @@ type ComplexityRoot struct {
 		OptOutForRoles                  func(childComplexity int, roles []persist.Role) int
 		PreverifyEmail                  func(childComplexity int, input model.PreverifyEmailInput) int
 		PublishSplit                    func(childComplexity int, input model.PublishSplitInput) int
-		RefreshToken                    func(childComplexity int, tokenID persist.DBID) int
 		RegisterUserPushToken           func(childComplexity int, pushToken string) int
 		RemoveUserWallets               func(childComplexity int, walletIds []persist.DBID) int
 		ResendVerificationEmail         func(childComplexity int) int
 		RevokeRolesFromUser             func(childComplexity int, username string, roles []*persist.Role) int
-		SetSpamPreference               func(childComplexity int, input model.SetSpamPreferenceInput) int
 		UnregisterUserPushToken         func(childComplexity int, pushToken string) int
 		UnsubscribeFromEmailType        func(childComplexity int, input model.UnsubscribeFromEmailTypeInput) int
 		UpdateEmail                     func(childComplexity int, input model.UpdateEmailInput) int
@@ -402,7 +393,6 @@ type ComplexityRoot struct {
 		SearchSplits       func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
 		SearchUsers        func(childComplexity int, query string, limit *int, usernameWeight *float64, bioWeight *float64) int
 		SplitByID          func(childComplexity int, id persist.DBID) int
-		TokenByID          func(childComplexity int, id persist.DBID) int
 		UserByAddress      func(childComplexity int, chainAddress persist.ChainAddress) int
 		UserByID           func(childComplexity int, id persist.DBID) int
 		UserByUsername     func(childComplexity int, username string) int
@@ -424,10 +414,6 @@ type ComplexityRoot struct {
 		Version      func(childComplexity int) int
 	}
 
-	RefreshTokenPayload struct {
-		Token func(childComplexity int) int
-	}
-
 	RegisterUserPushTokenPayload struct {
 		Viewer func(childComplexity int) int
 	}
@@ -446,10 +432,6 @@ type ComplexityRoot struct {
 
 	SearchUsersPayload struct {
 		Results func(childComplexity int) int
-	}
-
-	SetSpamPreferencePayload struct {
-		Tokens func(childComplexity int) int
 	}
 
 	Split struct {
@@ -661,9 +643,6 @@ type MutationResolver interface {
 	UpdateUserInfo(ctx context.Context, input model.UpdateUserInfoInput) (model.UpdateUserInfoPayloadOrError, error)
 	RegisterUserPushToken(ctx context.Context, pushToken string) (model.RegisterUserPushTokenPayloadOrError, error)
 	UnregisterUserPushToken(ctx context.Context, pushToken string) (model.UnregisterUserPushTokenPayloadOrError, error)
-	SetSpamPreference(ctx context.Context, input model.SetSpamPreferenceInput) (model.SetSpamPreferencePayloadOrError, error)
-	RefreshToken(ctx context.Context, tokenID persist.DBID) (model.RefreshTokenPayloadOrError, error)
-	DeepRefresh(ctx context.Context, input model.DeepRefreshInput) (model.DeepRefreshPayloadOrError, error)
 	GetAuthNonce(ctx context.Context) (model.GetAuthNoncePayloadOrError, error)
 	CreateUser(ctx context.Context, authMechanism model.AuthMechanism, input model.CreateUserInput) (model.CreateUserPayloadOrError, error)
 	UpdateEmail(ctx context.Context, input model.UpdateEmailInput) (model.UpdateEmailPayloadOrError, error)
@@ -704,7 +683,6 @@ type QueryResolver interface {
 	UserByID(ctx context.Context, id persist.DBID) (model.UserByIDOrError, error)
 	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error)
 	UsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error)
-	TokenByID(ctx context.Context, id persist.DBID) (model.TokenByIDOrError, error)
 	SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error)
 	ViewerSplitByID(ctx context.Context, id persist.DBID) (model.ViewerSplitByIDPayloadOrError, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error)
@@ -713,9 +691,6 @@ type QueryResolver interface {
 }
 type RecipientResolver interface {
 	Split(ctx context.Context, obj *model.Recipient) (*model.Split, error)
-}
-type SetSpamPreferencePayloadResolver interface {
-	Tokens(ctx context.Context, obj *model.SetSpamPreferencePayload) ([]*model.Token, error)
 }
 type SplitResolver interface {
 	Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error)
@@ -970,20 +945,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateUserPayload.Viewer(childComplexity), true
-
-	case "DeepRefreshPayload.chain":
-		if e.complexity.DeepRefreshPayload.Chain == nil {
-			break
-		}
-
-		return e.complexity.DeepRefreshPayload.Chain(childComplexity), true
-
-	case "DeepRefreshPayload.submitted":
-		if e.complexity.DeepRefreshPayload.Submitted == nil {
-			break
-		}
-
-		return e.complexity.DeepRefreshPayload.Submitted(childComplexity), true
 
 	case "DeleteSplitPayload.deletedId":
 		if e.complexity.DeleteSplitPayload.DeletedID == nil {
@@ -1514,18 +1475,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["authMechanism"].(model.AuthMechanism), args["input"].(model.CreateUserInput)), true
 
-	case "Mutation.deepRefresh":
-		if e.complexity.Mutation.DeepRefresh == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deepRefresh_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeepRefresh(childComplexity, args["input"].(model.DeepRefreshInput)), true
-
 	case "Mutation.deleteSplit":
 		if e.complexity.Mutation.DeleteSplit == nil {
 			break
@@ -1617,18 +1566,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.PublishSplit(childComplexity, args["input"].(model.PublishSplitInput)), true
 
-	case "Mutation.refreshToken":
-		if e.complexity.Mutation.RefreshToken == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_refreshToken_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RefreshToken(childComplexity, args["tokenId"].(persist.DBID)), true
-
 	case "Mutation.registerUserPushToken":
 		if e.complexity.Mutation.RegisterUserPushToken == nil {
 			break
@@ -1671,18 +1608,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RevokeRolesFromUser(childComplexity, args["username"].(string), args["roles"].([]*persist.Role)), true
-
-	case "Mutation.setSpamPreference":
-		if e.complexity.Mutation.SetSpamPreference == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_setSpamPreference_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.SetSpamPreference(childComplexity, args["input"].(model.SetSpamPreferenceInput)), true
 
 	case "Mutation.unregisterUserPushToken":
 		if e.complexity.Mutation.UnregisterUserPushToken == nil {
@@ -2141,18 +2066,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SplitByID(childComplexity, args["id"].(persist.DBID)), true
 
-	case "Query.tokenById":
-		if e.complexity.Query.TokenByID == nil {
-			break
-		}
-
-		args, err := ec.field_Query_tokenById_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.TokenByID(childComplexity, args["id"].(persist.DBID)), true
-
 	case "Query.userByAddress":
 		if e.complexity.Query.UserByAddress == nil {
 			break
@@ -2295,13 +2208,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Recipient.Version(childComplexity), true
 
-	case "RefreshTokenPayload.token":
-		if e.complexity.RefreshTokenPayload.Token == nil {
-			break
-		}
-
-		return e.complexity.RefreshTokenPayload.Token(childComplexity), true
-
 	case "RegisterUserPushTokenPayload.viewer":
 		if e.complexity.RegisterUserPushTokenPayload.Viewer == nil {
 			break
@@ -2336,13 +2242,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SearchUsersPayload.Results(childComplexity), true
-
-	case "SetSpamPreferencePayload.tokens":
-		if e.complexity.SetSpamPreferencePayload.Tokens == nil {
-			break
-		}
-
-		return e.complexity.SetSpamPreferencePayload.Tokens(childComplexity), true
 
 	case "Split.assets":
 		if e.complexity.Split.Assets == nil {
@@ -3079,7 +2978,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateSplitInput,
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputDebugAuth,
-		ec.unmarshalInputDeepRefreshInput,
 		ec.unmarshalInputEoaAuth,
 		ec.unmarshalInputGnosisSafeAuth,
 		ec.unmarshalInputMagicLinkAuth,
@@ -3088,7 +2986,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPreverifyEmailInput,
 		ec.unmarshalInputPrivyAuth,
 		ec.unmarshalInputPublishSplitInput,
-		ec.unmarshalInputSetSpamPreferenceInput,
 		ec.unmarshalInputSplitPositionInput,
 		ec.unmarshalInputSplitShareInput,
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
@@ -3759,7 +3656,6 @@ type Query {
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
   usersWithTrait(trait: String!): [SplitFiUser]
-  tokenById(id: DBID!): TokenByIdOrError
   splitById(id: DBID!): SplitByIdPayloadOrError
   viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
@@ -3791,17 +3687,6 @@ type Query {
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
     @basicAuth(allowed: [Retool])
 }
-
-input SetSpamPreferenceInput {
-  tokens: [DBID!]!
-  isSpam: Boolean!
-}
-
-type SetSpamPreferencePayload {
-  tokens: [Token] @goField(forceResolver: true)
-}
-
-union SetSpamPreferencePayloadOrError = SetSpamPreferencePayload | ErrNotAuthorized
 
 union AddUserWalletPayloadOrError =
     AddUserWalletPayload
@@ -3856,12 +3741,6 @@ union UnregisterUserPushTokenPayloadOrError =
 
 type UnregisterUserPushTokenPayload {
   viewer: Viewer
-}
-
-union RefreshTokenPayloadOrError = RefreshTokenPayload | ErrInvalidInput | ErrSyncFailed
-
-type RefreshTokenPayload {
-  token: Token
 }
 
 type AuthNonce {
@@ -3991,17 +3870,6 @@ input PrivyAuth {
 input OneTimeLoginTokenAuth {
   token: String!
 }
-
-input DeepRefreshInput {
-  chain: Chain!
-}
-
-type DeepRefreshPayload {
-  chain: Chain
-  submitted: Boolean
-}
-
-union DeepRefreshPayloadOrError = DeepRefreshPayload | ErrNotAuthorized
 
 union LoginPayloadOrError =
     LoginPayload
@@ -4331,12 +4199,6 @@ type Mutation {
   registerUserPushToken(pushToken: String!): RegisterUserPushTokenPayloadOrError @authRequired
   unregisterUserPushToken(pushToken: String!): UnregisterUserPushTokenPayloadOrError @authRequired
 
-  # Token Mutations
-  setSpamPreference(input: SetSpamPreferenceInput!): SetSpamPreferencePayloadOrError @authRequired
-
-  refreshToken(tokenId: DBID!): RefreshTokenPayloadOrError
-  deepRefresh(input: DeepRefreshInput!): DeepRefreshPayloadOrError @authRequired
-
   getAuthNonce: GetAuthNoncePayloadOrError
 
   createUser(authMechanism: AuthMechanism!, input: CreateUserInput!): CreateUserPayloadOrError
@@ -4595,21 +4457,6 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deepRefresh_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.DeepRefreshInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNDeepRefreshInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_deleteSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4715,21 +4562,6 @@ func (ec *executionContext) field_Mutation_publishSplit_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["tokenId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["tokenId"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_registerUserPushToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4781,21 +4613,6 @@ func (ec *executionContext) field_Mutation_revokeRolesFromUser_args(ctx context.
 		}
 	}
 	args["roles"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_setSpamPreference_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.SetSpamPreferenceInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSetSpamPreferenceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferenceInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -5154,21 +4971,6 @@ func (ec *executionContext) field_Query_searchUsers_args(ctx context.Context, ra
 }
 
 func (ec *executionContext) field_Query_splitById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_tokenById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 persist.DBID
@@ -6785,88 +6587,6 @@ func (ec *executionContext) fieldContext_CreateUserPayload_viewer(ctx context.Co
 				return ec.fieldContext_Viewer_userExperiences(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeepRefreshPayload_chain(ctx context.Context, field graphql.CollectedField, obj *model.DeepRefreshPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeepRefreshPayload_chain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Chain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Chain)
-	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeepRefreshPayload_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeepRefreshPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Chain does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeepRefreshPayload_submitted(ctx context.Context, field graphql.CollectedField, obj *model.DeepRefreshPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeepRefreshPayload_submitted(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Submitted, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeepRefreshPayload_submitted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeepRefreshPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10262,202 +9982,6 @@ func (ec *executionContext) fieldContext_Mutation_unregisterUserPushToken(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_unregisterUserPushToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_setSpamPreference(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_setSpamPreference(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().SetSpamPreference(rctx, fc.Args["input"].(model.SetSpamPreferenceInput))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.SetSpamPreferencePayloadOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.SetSpamPreferencePayloadOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.SetSpamPreferencePayloadOrError)
-	fc.Result = res
-	return ec.marshalOSetSpamPreferencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferencePayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_setSpamPreference(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SetSpamPreferencePayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_setSpamPreference_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_refreshToken(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RefreshToken(rctx, fc.Args["tokenId"].(persist.DBID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.RefreshTokenPayloadOrError)
-	fc.Result = res
-	return ec.marshalORefreshTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshTokenPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_refreshToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type RefreshTokenPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_refreshToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deepRefresh(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deepRefresh(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeepRefresh(rctx, fc.Args["input"].(model.DeepRefreshInput))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.DeepRefreshPayloadOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.DeepRefreshPayloadOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.DeepRefreshPayloadOrError)
-	fc.Result = res
-	return ec.marshalODeepRefreshPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deepRefresh(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DeepRefreshPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deepRefresh_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14126,58 +13650,6 @@ func (ec *executionContext) fieldContext_Query_usersWithTrait(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_tokenById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_tokenById(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().TokenByID(rctx, fc.Args["id"].(persist.DBID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.TokenByIDOrError)
-	fc.Result = res
-	return ec.marshalOTokenByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenByIDOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_tokenById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type TokenByIdOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_tokenById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_splitById(ctx, field)
 	if err != nil {
@@ -15003,79 +14475,6 @@ func (ec *executionContext) fieldContext_Recipient_ownership(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _RefreshTokenPayload_token(ctx context.Context, field graphql.CollectedField, obj *model.RefreshTokenPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_RefreshTokenPayload_token(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Token, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Token)
-	fc.Result = res
-	return ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_RefreshTokenPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "RefreshTokenPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Token_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Token_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Token_version(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_Token_creationTime(ctx, field)
-			case "lastUpdated":
-				return ec.fieldContext_Token_lastUpdated(ctx, field)
-			case "tokenType":
-				return ec.fieldContext_Token_tokenType(ctx, field)
-			case "chain":
-				return ec.fieldContext_Token_chain(ctx, field)
-			case "name":
-				return ec.fieldContext_Token_name(ctx, field)
-			case "symbol":
-				return ec.fieldContext_Token_symbol(ctx, field)
-			case "decimals":
-				return ec.fieldContext_Token_decimals(ctx, field)
-			case "logo":
-				return ec.fieldContext_Token_logo(ctx, field)
-			case "totalSupply":
-				return ec.fieldContext_Token_totalSupply(ctx, field)
-			case "contractAddress":
-				return ec.fieldContext_Token_contractAddress(ctx, field)
-			case "blockNumber":
-				return ec.fieldContext_Token_blockNumber(ctx, field)
-			case "isSpam":
-				return ec.fieldContext_Token_isSpam(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _RegisterUserPushTokenPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.RegisterUserPushTokenPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_RegisterUserPushTokenPayload_viewer(ctx, field)
 	if err != nil {
@@ -15332,79 +14731,6 @@ func (ec *executionContext) fieldContext_SearchUsersPayload_results(ctx context.
 				return ec.fieldContext_UserSearchResult_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type UserSearchResult", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SetSpamPreferencePayload_tokens(ctx context.Context, field graphql.CollectedField, obj *model.SetSpamPreferencePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetSpamPreferencePayload_tokens(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetSpamPreferencePayload().Tokens(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Token)
-	fc.Result = res
-	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SetSpamPreferencePayload_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SetSpamPreferencePayload",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Token_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Token_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Token_version(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_Token_creationTime(ctx, field)
-			case "lastUpdated":
-				return ec.fieldContext_Token_lastUpdated(ctx, field)
-			case "tokenType":
-				return ec.fieldContext_Token_tokenType(ctx, field)
-			case "chain":
-				return ec.fieldContext_Token_chain(ctx, field)
-			case "name":
-				return ec.fieldContext_Token_name(ctx, field)
-			case "symbol":
-				return ec.fieldContext_Token_symbol(ctx, field)
-			case "decimals":
-				return ec.fieldContext_Token_decimals(ctx, field)
-			case "logo":
-				return ec.fieldContext_Token_logo(ctx, field)
-			case "totalSupply":
-				return ec.fieldContext_Token_totalSupply(ctx, field)
-			case "contractAddress":
-				return ec.fieldContext_Token_contractAddress(ctx, field)
-			case "blockNumber":
-				return ec.fieldContext_Token_blockNumber(ctx, field)
-			case "isSpam":
-				return ec.fieldContext_Token_isSpam(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
 		},
 	}
 	return fc, nil
@@ -22444,33 +21770,6 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeepRefreshInput(ctx context.Context, obj interface{}) (model.DeepRefreshInput, error) {
-	var it model.DeepRefreshInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"chain"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "chain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Chain = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj interface{}) (model.EoaAuth, error) {
 	var it model.EoaAuth
 	asMap := map[string]interface{}{}
@@ -22737,40 +22036,6 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 				return it, err
 			}
 			it.Caption = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputSetSpamPreferenceInput(ctx context.Context, obj interface{}) (model.SetSpamPreferenceInput, error) {
-	var it model.SetSpamPreferenceInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"tokens", "isSpam"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "tokens":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokens"))
-			data, err := ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Tokens = data
-		case "isSpam":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isSpam"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IsSpam = data
 		}
 	}
 
@@ -23500,29 +22765,6 @@ func (ec *executionContext) _CreateUserPayloadOrError(ctx context.Context, sel a
 	}
 }
 
-func (ec *executionContext) _DeepRefreshPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.DeepRefreshPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.DeepRefreshPayload:
-		return ec._DeepRefreshPayload(ctx, sel, &obj)
-	case *model.DeepRefreshPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DeepRefreshPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _DeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.DeleteSplitPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -24117,36 +23359,6 @@ func (ec *executionContext) _PublishSplitPayloadOrError(ctx context.Context, sel
 	}
 }
 
-func (ec *executionContext) _RefreshTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.RefreshTokenPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrSyncFailed:
-		return ec._ErrSyncFailed(ctx, sel, &obj)
-	case *model.ErrSyncFailed:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrSyncFailed(ctx, sel, obj)
-	case model.RefreshTokenPayload:
-		return ec._RefreshTokenPayload(ctx, sel, &obj)
-	case *model.RefreshTokenPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._RefreshTokenPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _RegisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.RegisterUserPushTokenPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -24301,29 +23513,6 @@ func (ec *executionContext) _SearchUsersPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._SearchUsersPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _SetSpamPreferencePayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.SetSpamPreferencePayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.SetSpamPreferencePayload:
-		return ec._SetSpamPreferencePayload(ctx, sel, &obj)
-	case *model.SetSpamPreferencePayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SetSpamPreferencePayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -25475,44 +24664,6 @@ func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var deepRefreshPayloadImplementors = []string{"DeepRefreshPayload", "DeepRefreshPayloadOrError"}
-
-func (ec *executionContext) _DeepRefreshPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeepRefreshPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deepRefreshPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeepRefreshPayload")
-		case "chain":
-			out.Values[i] = ec._DeepRefreshPayload_chain(ctx, field, obj)
-		case "submitted":
-			out.Values[i] = ec._DeepRefreshPayload_submitted(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var deleteSplitPayloadImplementors = []string{"DeleteSplitPayload", "DeleteSplitPayloadOrError"}
 
 func (ec *executionContext) _DeleteSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteSplitPayload) graphql.Marshaler {
@@ -25832,7 +24983,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "RefreshTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -25959,7 +25110,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "SetSpamPreferencePayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "DeepRefreshPayloadOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -26120,7 +25271,7 @@ func (ec *executionContext) _ErrSplitNotFound(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var errSyncFailedImplementors = []string{"ErrSyncFailed", "RefreshTokenPayloadOrError", "Error"}
+var errSyncFailedImplementors = []string{"ErrSyncFailed", "Error"}
 
 func (ec *executionContext) _ErrSyncFailed(ctx context.Context, sel ast.SelectionSet, obj *model.ErrSyncFailed) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errSyncFailedImplementors)
@@ -26809,18 +25960,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "unregisterUserPushToken":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_unregisterUserPushToken(ctx, field)
-			})
-		case "setSpamPreference":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setSpamPreference(ctx, field)
-			})
-		case "refreshToken":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_refreshToken(ctx, field)
-			})
-		case "deepRefresh":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deepRefresh(ctx, field)
 			})
 		case "getAuthNonce":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -27548,25 +26687,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "tokenById":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_tokenById(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "splitById":
 			field := field
 
@@ -27802,42 +26922,6 @@ func (ec *executionContext) _Recipient(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
-var refreshTokenPayloadImplementors = []string{"RefreshTokenPayload", "RefreshTokenPayloadOrError"}
-
-func (ec *executionContext) _RefreshTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RefreshTokenPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, refreshTokenPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("RefreshTokenPayload")
-		case "token":
-			out.Values[i] = ec._RefreshTokenPayload_token(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var registerUserPushTokenPayloadImplementors = []string{"RegisterUserPushTokenPayload", "RegisterUserPushTokenPayloadOrError"}
 
 func (ec *executionContext) _RegisterUserPushTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RegisterUserPushTokenPayload) graphql.Marshaler {
@@ -27995,73 +27079,6 @@ func (ec *executionContext) _SearchUsersPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("SearchUsersPayload")
 		case "results":
 			out.Values[i] = ec._SearchUsersPayload_results(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var setSpamPreferencePayloadImplementors = []string{"SetSpamPreferencePayload", "SetSpamPreferencePayloadOrError"}
-
-func (ec *executionContext) _SetSpamPreferencePayload(ctx context.Context, sel ast.SelectionSet, obj *model.SetSpamPreferencePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, setSpamPreferencePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SetSpamPreferencePayload")
-		case "tokens":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SetSpamPreferencePayload_tokens(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -30435,11 +29452,6 @@ func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 	return ret
 }
 
-func (ec *executionContext) unmarshalNDeepRefreshInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshInput(ctx context.Context, v interface{}) (model.DeepRefreshInput, error) {
-	res, err := ec.unmarshalInputDeepRefreshInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (persist.Email, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Email(tmp)
@@ -30627,11 +29639,6 @@ func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 	}
 
 	return ret
-}
-
-func (ec *executionContext) unmarshalNSetSpamPreferenceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferenceInput(ctx context.Context, v interface{}) (model.SetSpamPreferenceInput, error) {
-	res, err := ec.unmarshalInputSetSpamPreferenceInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
@@ -31498,13 +30505,6 @@ func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODeepRefreshPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeepRefreshPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeepRefreshPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._DeepRefreshPayloadOrError(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalODeleteSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -31933,13 +30933,6 @@ func (ec *executionContext) marshalORecipient2ᚖgithubᚗcomᚋSplitFiᚋgoᚑs
 	return ec._Recipient(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORefreshTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRefreshTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RefreshTokenPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._RefreshTokenPayloadOrError(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalORegisterUserPushTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRegisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RegisterUserPushTokenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -32057,13 +31050,6 @@ func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋSpl
 		return graphql.Null
 	}
 	return ec._SearchUsersPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSetSpamPreferencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSetSpamPreferencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SetSpamPreferencePayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SetSpamPreferencePayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
@@ -32342,13 +31328,6 @@ func (ec *executionContext) marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplit
 		return graphql.Null
 	}
 	return ec._Token(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOTokenByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.TokenByIDOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._TokenByIdOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, v interface{}) (*model.TokenType, error) {

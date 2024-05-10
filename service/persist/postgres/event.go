@@ -20,8 +20,9 @@ func (r *EventRepository) Add(ctx context.Context, event db.Event) (*db.Event, e
 	switch event.ResourceTypeID {
 	case persist.ResourceTypeUser:
 		return r.AddUserEvent(ctx, event)
-	case persist.ResourceTypeToken:
-		return r.AddTokenEvent(ctx, event)
+		/*	case persist.ResourceTypeToken:
+			return r.AddTokenEvent(ctx, event)
+		*/
 	case persist.ResourceTypeSplit:
 		return r.AddSplitEvent(ctx, event)
 	default:
@@ -43,21 +44,22 @@ func (r *EventRepository) AddUserEvent(ctx context.Context, event db.Event) (*db
 	return &event, err
 }
 
-func (r *EventRepository) AddTokenEvent(ctx context.Context, event db.Event) (*db.Event, error) {
-	event, err := r.Queries.CreateTokenEvent(ctx, db.CreateTokenEventParams{
-		ID:             persist.GenerateID(),
-		ActorID:        event.ActorID,
-		Action:         event.Action,
-		ResourceTypeID: event.ResourceTypeID,
-		TokenID:        event.SubjectID,
-		Data:           event.Data,
-		GroupID:        event.GroupID,
-		Caption:        event.Caption,
-		SplitID:        event.SplitID,
-	})
-	return &event, err
-}
-
+/*
+	func (r *EventRepository) AddTokenEvent(ctx context.Context, event db.Event) (*db.Event, error) {
+		event, err := r.Queries.CreateTokenEvent(ctx, db.CreateTokenEventParams{
+			ID:             persist.GenerateID(),
+			ActorID:        event.ActorID,
+			Action:         event.Action,
+			ResourceTypeID: event.ResourceTypeID,
+			TokenID:        event.SubjectID,
+			Data:           event.Data,
+			GroupID:        event.GroupID,
+			Caption:        event.Caption,
+			SplitID:        event.SplitID,
+		})
+		return &event, err
+	}
+*/
 func (r *EventRepository) AddSplitEvent(ctx context.Context, event db.Event) (*db.Event, error) {
 	event, err := r.Queries.CreateSplitEvent(ctx, db.CreateSplitEventParams{
 		ID:             persist.GenerateID(),

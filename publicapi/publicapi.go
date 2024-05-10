@@ -46,7 +46,6 @@ type PublicAPI struct {
 	Auth          *AuthAPI
 	Split         *SplitAPI
 	User          *UserAPI
-	Token         *TokenAPI
 	Asset         *AssetAPI
 	Wallet        *WalletAPI
 	Notifications *NotificationsAPI
@@ -74,7 +73,6 @@ func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching boo
 		Auth:          &AuthAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multiChainProvider: multichainProvider, magicLinkClient: magicClient, oneTimeLoginCache: oneTimeLoginCache, authRefreshCache: authRefreshCache}, // privyClient: privyClient
 		Split:         &SplitAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient},
 		User:          &UserAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
-		Token:         &TokenAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
 		Asset:         &AssetAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
 		Wallet:        &WalletAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
 		Notifications: &NotificationsAPI{queries: queries, loaders: loaders, validator: validator},

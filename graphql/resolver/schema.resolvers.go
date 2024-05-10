@@ -85,31 +85,6 @@ func (r *mutationResolver) UnregisterUserPushToken(ctx context.Context, pushToke
 	panic(fmt.Errorf("not implemented: UnregisterUserPushToken - unregisterUserPushToken"))
 }
 
-// SetSpamPreference is the resolver for the setSpamPreference field.
-func (r *mutationResolver) SetSpamPreference(ctx context.Context, input model.SetSpamPreferenceInput) (model.SetSpamPreferencePayloadOrError, error) {
-	err := publicapi.For(ctx).Token.SetSpamPreference(ctx, input.Tokens, input.IsSpam)
-	if err != nil {
-		return nil, err
-	}
-
-	tokens := make([]*model.Token, len(input.Tokens))
-	for i, tokenID := range input.Tokens {
-		tokens[i] = &model.Token{Dbid: tokenID} // Remaining fields handled by dedicated resolver
-	}
-
-	return model.SetSpamPreferencePayload{Tokens: tokens}, nil
-}
-
-// RefreshToken is the resolver for the refreshToken field.
-func (r *mutationResolver) RefreshToken(ctx context.Context, tokenID persist.DBID) (model.RefreshTokenPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
-}
-
-// DeepRefresh is the resolver for the deepRefresh field.
-func (r *mutationResolver) DeepRefresh(ctx context.Context, input model.DeepRefreshInput) (model.DeepRefreshPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: DeepRefresh - deepRefresh"))
-}
-
 // GetAuthNonce is the resolver for the getAuthNonce field.
 func (r *mutationResolver) GetAuthNonce(ctx context.Context) (model.GetAuthNoncePayloadOrError, error) {
 	nonce, message, err := publicapi.For(ctx).Auth.GetAuthNonce(ctx)
@@ -470,11 +445,6 @@ func (r *queryResolver) UsersWithTrait(ctx context.Context, trait string) ([]*mo
 	panic(fmt.Errorf("not implemented: UsersWithTrait - usersWithTrait"))
 }
 
-// TokenByID is the resolver for the tokenById field.
-func (r *queryResolver) TokenByID(ctx context.Context, id persist.DBID) (model.TokenByIDOrError, error) {
-	return resolveTokenByTokenID(ctx, id)
-}
-
 // SplitByID is the resolver for the splitById field.
 func (r *queryResolver) SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error) {
 	split, err := resolveSplitBySplitID(ctx, id)
@@ -523,21 +493,6 @@ func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, befo
 // Split is the resolver for the split field.
 func (r *recipientResolver) Split(ctx context.Context, obj *model.Recipient) (*model.Split, error) {
 	panic(fmt.Errorf("not implemented: Split - split"))
-}
-
-// Tokens is the resolver for the tokens field.
-func (r *setSpamPreferencePayloadResolver) Tokens(ctx context.Context, obj *model.SetSpamPreferencePayload) ([]*model.Token, error) {
-	tokenIDs := make([]persist.DBID, len(obj.Tokens))
-	for i, token := range obj.Tokens {
-		tokenIDs[i] = token.Dbid
-	}
-
-	tokens, err := publicapi.For(ctx).Token.GetTokensByIDs(ctx, tokenIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokensToModel(ctx, tokens), nil
 }
 
 // Assets is the resolver for the assets field.
@@ -690,11 +645,6 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // Recipient returns generated.RecipientResolver implementation.
 func (r *Resolver) Recipient() generated.RecipientResolver { return &recipientResolver{r} }
 
-// SetSpamPreferencePayload returns generated.SetSpamPreferencePayloadResolver implementation.
-func (r *Resolver) SetSpamPreferencePayload() generated.SetSpamPreferencePayloadResolver {
-	return &setSpamPreferencePayloadResolver{r}
-}
-
 // Split returns generated.SplitResolver implementation.
 func (r *Resolver) Split() generated.SplitResolver { return &splitResolver{r} }
 
@@ -728,7 +678,6 @@ type mutationResolver struct{ *Resolver }
 type previewURLSetResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type recipientResolver struct{ *Resolver }
-type setSpamPreferencePayloadResolver struct{ *Resolver }
 type splitResolver struct{ *Resolver }
 type splitFiUserResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
@@ -737,3 +686,11 @@ type viewerResolver struct{ *Resolver }
 type walletResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+type setSpamPreferencePayloadResolver struct{ *Resolver }

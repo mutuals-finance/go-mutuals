@@ -540,7 +540,6 @@ type Query {
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
   usersWithTrait(trait: String!): [SplitFiUser]
-  tokenById(id: DBID!): TokenByIdOrError
   splitById(id: DBID!): SplitByIdPayloadOrError
   viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
@@ -572,17 +571,6 @@ type Query {
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
     @basicAuth(allowed: [Retool])
 }
-
-input SetSpamPreferenceInput {
-  tokens: [DBID!]!
-  isSpam: Boolean!
-}
-
-type SetSpamPreferencePayload {
-  tokens: [Token] @goField(forceResolver: true)
-}
-
-union SetSpamPreferencePayloadOrError = SetSpamPreferencePayload | ErrNotAuthorized
 
 union AddUserWalletPayloadOrError =
     AddUserWalletPayload
@@ -637,12 +625,6 @@ union UnregisterUserPushTokenPayloadOrError =
 
 type UnregisterUserPushTokenPayload {
   viewer: Viewer
-}
-
-union RefreshTokenPayloadOrError = RefreshTokenPayload | ErrInvalidInput | ErrSyncFailed
-
-type RefreshTokenPayload {
-  token: Token
 }
 
 type AuthNonce {
@@ -772,17 +754,6 @@ input PrivyAuth {
 input OneTimeLoginTokenAuth {
   token: String!
 }
-
-input DeepRefreshInput {
-  chain: Chain!
-}
-
-type DeepRefreshPayload {
-  chain: Chain
-  submitted: Boolean
-}
-
-union DeepRefreshPayloadOrError = DeepRefreshPayload | ErrNotAuthorized
 
 union LoginPayloadOrError =
     LoginPayload
@@ -1111,12 +1082,6 @@ type Mutation {
   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
   registerUserPushToken(pushToken: String!): RegisterUserPushTokenPayloadOrError @authRequired
   unregisterUserPushToken(pushToken: String!): UnregisterUserPushTokenPayloadOrError @authRequired
-
-  # Token Mutations
-  setSpamPreference(input: SetSpamPreferenceInput!): SetSpamPreferencePayloadOrError @authRequired
-
-  refreshToken(tokenId: DBID!): RefreshTokenPayloadOrError
-  deepRefresh(input: DeepRefreshInput!): DeepRefreshPayloadOrError @authRequired
 
   getAuthNonce: GetAuthNoncePayloadOrError
 

@@ -33,11 +33,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"DeepRefreshPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(DeepRefreshPayloadOrError)
-		return obj, ok
-	},
-
 	"DeleteSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(DeleteSplitPayloadOrError)
 		return obj, ok
@@ -98,11 +93,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"RefreshTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RefreshTokenPayloadOrError)
-		return obj, ok
-	},
-
 	"RegisterUserPushTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(RegisterUserPushTokenPayloadOrError)
 		return obj, ok
@@ -130,11 +120,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"SearchUsersPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(SearchUsersPayloadOrError)
-		return obj, ok
-	},
-
-	"SetSpamPreferencePayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SetSpamPreferencePayloadOrError)
 		return obj, ok
 	},
 

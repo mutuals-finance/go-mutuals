@@ -348,8 +348,6 @@ type Repositories struct {
 	pool             *pgxpool.Pool
 	UserRepository   *UserRepository
 	SplitRepository  *SplitRepository
-	TokenRepository  *TokenRepository
-	AssetRepository  *AssetRepository
 	WalletRepository *WalletRepository
 }
 
@@ -360,8 +358,6 @@ func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
 		db:               pq,
 		pool:             pgx,
 		UserRepository:   NewUserRepository(pq, queries, pgx),
-		TokenRepository:  NewTokenRepository(pq, queries),
-		AssetRepository:  NewAssetRepository(pq, queries),
 		SplitRepository:  NewSplitRepository(queries),
 		WalletRepository: NewWalletRepository(pq, queries),
 	}

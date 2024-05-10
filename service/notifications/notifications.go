@@ -98,7 +98,7 @@ func New(queries *db.Queries, pub *pubsub.Client, taskClient *task.Client, lock 
 
 	//singleHandler := singleNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
 	//ownerGroupedHandler := ownerGroupedNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
-	tokenGroupedHandler := tokenIDGroupedNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
+	//tokenGroupedHandler := tokenIDGroupedNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
 	viewHandler := viewedNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
 	//topActivityHandler := topActivityHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
 	announcementHandler := announcementNotificationHandler{queries: queries, pubSub: pub, taskClient: taskClient, limiter: limiter}
@@ -121,8 +121,8 @@ func New(queries *db.Queries, pub *pubsub.Client, taskClient *task.Client, lock 
 	//notifDispatcher.AddHandler(persist.ActionTopActivityBadgeReceived, topActivityHandler)
 
 	// notification actions that are grouped by token id
-	notifDispatcher.AddHandler(persist.ActionNewTokensReceived, tokenGroupedHandler)
-	notifDispatcher.AddHandler(persist.ActionAdmiredToken, tokenGroupedHandler)
+	// notifDispatcher.AddHandler(persist.ActionNewTokensReceived, tokenGroupedHandler)
+	// notifDispatcher.AddHandler(persist.ActionAdmiredToken, tokenGroupedHandler)
 
 	// viewed notifications are handled separately
 	notifDispatcher.AddHandler(persist.ActionViewedSplit, viewHandler)
@@ -256,32 +256,6 @@ func (h ownerGroupedNotificationHandler) Handle(ctx context.Context, notif db.No
 	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
 }
 
-type tokenIDGroupedNotificationHandler struct {
-	queries    *db.Queries
-	pubSub     *pubsub.Client
-	taskClient *task.Client
-	limiter    *pushLimiter
-}
-
-func (h tokenIDGroupedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
-	var curNotif db.Notification
-
-	// Bucket notifications on the feed event if it has one
-	curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDTokenIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDTokenIDForActionParams{
-		OwnerID: notif.OwnerID,
-		Action:  notif.Action,
-		TokenID: notif.TokenID,
-	})
-
-	if time.Since(curNotif.CreatedAt) < groupedWindow {
-		logger.For(ctx).Infof("grouping notification %s: %s-%s", curNotif.ID, notif.Action, notif.OwnerID)
-		return updateAndPublishNotif(ctx, notif, curNotif, h.queries, h.pubSub, h.taskClient, h.limiter)
-	}
-	logger.For(ctx).Infof("not grouping notification: %s-%s", notif.Action, notif.OwnerID)
-	return insertAndPublishNotif(ctx, notif, h.queries, h.pubSub, h.taskClient, h.limiter)
-
-}
-
 type viewedNotificationHandler struct {
 	queries    *db.Queries
 	pubSub     *pubsub.Client
@@ -304,7 +278,7 @@ func beginningOfWeek(t time.Time) time.Time {
 	return time.Date(y, m, newD, 0, 0, 0, 0, pst)
 }
 
-// this handler will still group notifications in the usual window, but it will also ensure that each viewer does
+// Handle will still group notifications in the usual window, but it will also ensure that each viewer does
 // does not show up mutliple times in a week
 func (h viewedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
 	// all of this user's view notifications in the current week
@@ -781,17 +755,18 @@ func addNotification(ctx context.Context, notif db.Notification, queries *db.Que
 			EventIds: notif.EventIds,
 			SplitID:  notif.SplitID,
 		})
-	case persist.ActionNewTokensReceived:
-		amount := notif.Data.NewTokenQuantity.BigInt().Int64()
-		return queries.CreateTokenNotification(ctx, db.CreateTokenNotificationParams{
-			ID:       id,
-			OwnerID:  notif.OwnerID,
-			Action:   notif.Action,
-			Data:     notif.Data,
-			EventIds: notif.EventIds,
-			TokenID:  notif.TokenID,
-			Amount:   int32(amount),
-		})
+		/*	case persist.ActionNewTokensReceived:
+			amount := notif.Data.NewTokenQuantity.BigInt().Int64()
+			return queries.CreateTokenNotification(ctx, db.CreateTokenNotificationParams{
+				ID:       id,
+				OwnerID:  notif.OwnerID,
+				Action:   notif.Action,
+				Data:     notif.Data,
+				EventIds: notif.EventIds,
+				TokenID:  notif.TokenID,
+				Amount:   int32(amount),
+			})
+		*/
 	default:
 		return db.Notification{}, fmt.Errorf("unknown notification action: %s", notif.Action)
 	}

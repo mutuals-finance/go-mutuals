@@ -7,9 +7,6 @@ package graphql
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"strings"
-
 	"github.com/SplitFi/go-splitfi/graphql/model"
 	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/logger"
@@ -33,7 +30,6 @@ var nodeFetcher = model.NodeFetcher{
 	OnSplit:       resolveSplitBySplitID,
 	OnSplitFiUser: resolveSplitFiUserByUserID,
 	OnRecipient:   resolveRecipientByID,
-	OnToken:       resolveTokenByTokenID,
 	OnWallet:      resolveWalletByAddress,
 	OnViewer:      resolveViewerByID,
 	OnDeletedNode: resolveDeletedNodeByID,
@@ -66,8 +62,6 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 		mappedErr = model.ErrTokenNotFound{Message: message}
 	case persist.ErrAddressOwnedByUser:
 		mappedErr = model.ErrAddressOwnedByUser{Message: message}
-	case publicapi.ErrTokenRefreshFailed:
-		mappedErr = model.ErrSyncFailed{Message: message}
 	case validate.ErrInvalidInput:
 		validationErr, _ := err.(validate.ErrInvalidInput)
 		mappedErr = model.ErrInvalidInput{Message: message, Parameters: validationErr.Parameters, Reasons: validationErr.Reasons}
@@ -234,16 +228,6 @@ func resolveAssetByAssetID(ctx context.Context, assetID persist.DBID) (*model.As
 			return assetToModel(ctx, *asset), nil
 	*/
 	return &model.Asset{}, nil
-}
-
-func resolveTokenByTokenID(ctx context.Context, tokenID persist.DBID) (*model.Token, error) {
-	token, err := publicapi.For(ctx).Token.GetTokenById(ctx, tokenID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return tokenToModel(ctx, *token), nil
 }
 
 func resolveWalletByAddress(ctx context.Context, address persist.DBID) (*model.Wallet, error) {
@@ -691,46 +675,6 @@ func walletToModelSqlc(ctx context.Context, wallet db.Wallet) *model.Wallet {
 		ChainAddress: &chainAddress,
 		Chain:        &wallet.Chain,
 	}
-}
-
-func tokenToModel(ctx context.Context, token db.Token) *model.Token {
-	chain := token.Chain
-	// _, _ = token.TokenMetadata.MarshalJSON()
-	blockNumber := fmt.Sprint(token.BlockNumber.Int64)
-	tokenType := model.TokenType(token.TokenType.String)
-
-	//var isSpamByUser *bool
-	//if token.IsUserMarkedSpam.Valid {
-	//	isSpamByUser = &token.IsUserMarkedSpam.Bool
-	//}
-	//
-	//var isSpamByProvider *bool
-	//if token.IsProviderMarkedSpam.Valid {
-	//	isSpamByProvider = &token.IsProviderMarkedSpam.Bool
-	//}
-
-	return &model.Token{
-		Dbid:         token.ID,
-		CreationTime: &token.CreatedAt,
-		LastUpdated:  &token.LastUpdated,
-		TokenType:    &tokenType,
-		Chain:        &chain,
-		Name:         &token.Name.String,
-		BlockNumber:  &blockNumber, // TODO: later
-		//TODO return full token data
-	}
-}
-
-func tokensToModel(ctx context.Context, token []db.Token) []*model.Token {
-	res := make([]*model.Token, len(token))
-	for i, token := range token {
-		res[i] = tokenToModel(ctx, token)
-	}
-	return res
-}
-
-func getUrlExtension(url string) string {
-	return strings.ToLower(strings.TrimPrefix(filepath.Ext(url), "."))
 }
 
 func pageInfoToModel(ctx context.Context, pageInfo publicapi.PageInfo) *model.PageInfo {

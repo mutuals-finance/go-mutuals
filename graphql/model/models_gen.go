@@ -35,10 +35,6 @@ type CreateUserPayloadOrError interface {
 	IsCreateUserPayloadOrError()
 }
 
-type DeepRefreshPayloadOrError interface {
-	IsDeepRefreshPayloadOrError()
-}
-
 type DeleteSplitPayloadOrError interface {
 	IsDeleteSplitPayloadOrError()
 }
@@ -94,10 +90,6 @@ type PublishSplitPayloadOrError interface {
 	IsPublishSplitPayloadOrError()
 }
 
-type RefreshTokenPayloadOrError interface {
-	IsRefreshTokenPayloadOrError()
-}
-
 type RegisterUserPushTokenPayloadOrError interface {
 	IsRegisterUserPushTokenPayloadOrError()
 }
@@ -120,10 +112,6 @@ type SearchSplitsPayloadOrError interface {
 
 type SearchUsersPayloadOrError interface {
 	IsSearchUsersPayloadOrError()
-}
-
-type SetSpamPreferencePayloadOrError interface {
-	IsSetSpamPreferencePayloadOrError()
 }
 
 type SplitByIDPayloadOrError interface {
@@ -327,17 +315,6 @@ type DebugAuth struct {
 	DebugToolsPassword *string                 `json:"debugToolsPassword"`
 }
 
-type DeepRefreshInput struct {
-	Chain persist.Chain `json:"chain"`
-}
-
-type DeepRefreshPayload struct {
-	Chain     *persist.Chain `json:"chain"`
-	Submitted *bool          `json:"submitted"`
-}
-
-func (DeepRefreshPayload) IsDeepRefreshPayloadOrError() {}
-
 type DeleteSplitPayload struct {
 	DeletedID *DeletedNode `json:"deletedId"`
 }
@@ -417,7 +394,6 @@ func (ErrInvalidInput) IsRemoveUserWalletsPayloadOrError()               {}
 func (ErrInvalidInput) IsUpdateUserInfoPayloadOrError()                  {}
 func (ErrInvalidInput) IsRegisterUserPushTokenPayloadOrError()           {}
 func (ErrInvalidInput) IsUnregisterUserPushTokenPayloadOrError()         {}
-func (ErrInvalidInput) IsRefreshTokenPayloadOrError()                    {}
 func (ErrInvalidInput) IsError()                                         {}
 func (ErrInvalidInput) IsCreateUserPayloadOrError()                      {}
 func (ErrInvalidInput) IsVerifyEmailPayloadOrError()                     {}
@@ -459,14 +435,12 @@ type ErrNotAuthorized struct {
 }
 
 func (ErrNotAuthorized) IsViewerOrError()                         {}
-func (ErrNotAuthorized) IsSetSpamPreferencePayloadOrError()       {}
 func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()           {}
 func (ErrNotAuthorized) IsRemoveUserWalletsPayloadOrError()       {}
 func (ErrNotAuthorized) IsUpdateUserInfoPayloadOrError()          {}
 func (ErrNotAuthorized) IsRegisterUserPushTokenPayloadOrError()   {}
 func (ErrNotAuthorized) IsUnregisterUserPushTokenPayloadOrError() {}
 func (ErrNotAuthorized) IsError()                                 {}
-func (ErrNotAuthorized) IsDeepRefreshPayloadOrError()             {}
 func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()          {}
 func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()     {}
 func (ErrNotAuthorized) IsOptInForRolesPayloadOrError()           {}
@@ -510,8 +484,7 @@ type ErrSyncFailed struct {
 	Message string `json:"message"`
 }
 
-func (ErrSyncFailed) IsRefreshTokenPayloadOrError() {}
-func (ErrSyncFailed) IsError()                      {}
+func (ErrSyncFailed) IsError() {}
 
 type ErrTokenNotFound struct {
 	Message string `json:"message"`
@@ -759,12 +732,6 @@ type Recipient struct {
 
 func (Recipient) IsNode() {}
 
-type RefreshTokenPayload struct {
-	Token *Token `json:"token"`
-}
-
-func (RefreshTokenPayload) IsRefreshTokenPayloadOrError() {}
-
 type RegisterUserPushTokenPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
@@ -794,17 +761,6 @@ type SearchUsersPayload struct {
 }
 
 func (SearchUsersPayload) IsSearchUsersPayloadOrError() {}
-
-type SetSpamPreferenceInput struct {
-	Tokens []persist.DBID `json:"tokens"`
-	IsSpam bool           `json:"isSpam"`
-}
-
-type SetSpamPreferencePayload struct {
-	Tokens []*Token `json:"tokens"`
-}
-
-func (SetSpamPreferencePayload) IsSetSpamPreferencePayloadOrError() {}
 
 type Split struct {
 	Dbid        persist.DBID   `json:"dbid"`
