@@ -27,9 +27,10 @@ var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 
 var nodeFetcher = model.NodeFetcher{
 	OnAsset:       resolveAssetByAssetID,
+	OnToken:       resolveTokenByTokenID,
 	OnSplit:       resolveSplitBySplitID,
+	OnRecipient:   resolveRecipientByRecipientID,
 	OnSplitFiUser: resolveSplitFiUserByUserID,
-	OnRecipient:   resolveRecipientByID,
 	OnWallet:      resolveWalletByAddress,
 	OnViewer:      resolveViewerByID,
 	OnDeletedNode: resolveDeletedNodeByID,
@@ -131,6 +132,20 @@ func resolveSplitFiUserByUserID(ctx context.Context, userID persist.DBID) (*mode
 	return userToModel(ctx, *user), nil
 }
 
+func resolveRecipientByRecipientID(ctx context.Context, recipientID persist.DBID) (*model.Recipient, error) {
+	recipient, err := publicapi.For(ctx).Split.GetRecipientByRecipientID(ctx, recipientID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	//return userToModel(ctx, *user), nil
+
+	return &model.Recipient{
+		Address: &recipient.Address,
+	}, nil
+}
+
 func resolveSplitFiUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.SplitFiUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserByAddress(ctx, chainAddress)
 
@@ -150,23 +165,6 @@ func resolveSplitFiUserByUsername(ctx context.Context, username string) (*model.
 
 	return userToModel(ctx, *user), nil
 }
-
-/*
-TODO
-func resolveSplitsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Split, error) {
-	splits, err := publicapi.For(ctx).Split.GetSplitsByUserId(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var output = make([]*model.Split, len(splits))
-	for i, split := range splits {
-		output[i] = splitToModel(ctx, split)
-	}
-
-	return output, nil
-}*/
 
 func resolveSplitBySplitID(ctx context.Context, splitID persist.DBID) (*model.Split, error) {
 	dbSplit, err := publicapi.For(ctx).Split.GetSplitById(ctx, splitID)
@@ -195,26 +193,33 @@ func resolveViewerSplitBySplitID(ctx context.Context, splitID persist.DBID) (*mo
 	}, nil
 }
 
-func resolveRecipientByID(ctx context.Context, recipientID persist.DBID) (*model.Recipient, error) {
+func resolveSplitsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Split, error) {
+	splits, err := publicapi.For(ctx).Split.GetSplitsByUserID(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return splitsToModels(ctx, splits), nil
+}
+
+func resolveViewerExperiencesByUserID(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {
+	return publicapi.For(ctx).User.GetUserExperiences(ctx, userID)
+}
+
+func resolveTokenByTokenID(ctx context.Context, tokenID persist.DBID) (*model.Token, error) {
 	/*
 		TODO
-		recipient, err := publicapi.For(ctx).Split.GetRecipientById(ctx, recipientID)
+		asset, err := publicapi.For(ctx).Asset.GetAssetById(ctx, assetID)
 
 			if err != nil {
 				return nil, err
 			}
 
-			return recipientToModel(ctx, *recipient), nil
+			return assetToModel(ctx, *asset), nil
 	*/
-	return &model.Recipient{}, nil
+	return nil, nil
 }
-
-/*
-TODO
-func resolveViewerExperiencesByUserID(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {
-	return publicapi.For(ctx).User.GetUserExperiences(ctx, userID)
-}
-*/
 
 func resolveAssetByAssetID(ctx context.Context, assetID persist.DBID) (*model.Asset, error) {
 	/*
@@ -592,7 +597,12 @@ func splitToModel(ctx context.Context, split db.Split) *model.Split {
 		Dbid:        split.ID,
 		Name:        &split.Name,
 		Description: &split.Description,
-		//TODO return full split data
+		Chain:       &split.Chain,
+		LogoURL:     &split.LogoUrl.String,
+		BannerURL:   &split.BannerUrl.String,
+		BadgeURL:    &split.BadgeUrl.String,
+		Assets:      nil, // handled by dedicated resolver
+		Shares:      nil, // handled by dedicated resolver
 	}
 }
 

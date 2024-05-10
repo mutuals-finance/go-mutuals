@@ -126,10 +126,6 @@ type SplitFiUserOrWallet interface {
 	IsSplitFiUserOrWallet()
 }
 
-type TokenByIDOrError interface {
-	IsTokenByIDOrError()
-}
-
 type UnregisterUserPushTokenPayloadOrError interface {
 	IsUnregisterUserPushTokenPayloadOrError()
 }
@@ -357,12 +353,6 @@ func (ErrAuthenticationFailed) IsLoginPayloadOrError()         {}
 func (ErrAuthenticationFailed) IsCreateUserPayloadOrError()    {}
 func (ErrAuthenticationFailed) IsViewSplitPayloadOrError()     {}
 
-type ErrCollectionNotFound struct {
-	Message string `json:"message"`
-}
-
-func (ErrCollectionNotFound) IsError() {}
-
 type ErrCommunityNotFound struct {
 	Message string `json:"message"`
 }
@@ -490,8 +480,7 @@ type ErrTokenNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrTokenNotFound) IsTokenByIDOrError() {}
-func (ErrTokenNotFound) IsError()            {}
+func (ErrTokenNotFound) IsError() {}
 
 type ErrUserAlreadyExists struct {
 	Message string `json:"message"`
@@ -845,8 +834,7 @@ type Token struct {
 	IsSpam          *bool          `json:"isSpam"`
 }
 
-func (Token) IsNode()             {}
-func (Token) IsTokenByIDOrError() {}
+func (Token) IsNode() {}
 
 type UnknownMedia struct {
 	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`

@@ -202,31 +202,39 @@ func (b *GetSplitByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getSplitsByRecipientAddressBatch = `-- name: GetSplitsByRecipientAddressBatch :batchmany
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
-                    JOIN splits s ON s.id = r.split_id
-WHERE r.address = $1 AND s.deleted = false
+const getSplitsByUserIDBatch = `-- name: GetSplitsByUserIDBatch :batchmany
+select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership
+    from users u, unnest(u.wallets)
+    with ordinality as a(wallet_id, wallet_ord)
+        join wallets w on w.id = a.wallet_id
+        join recipients r on r.address = w.address
+        join splits s on s.id = r.split_id
+    where u.id = $1
+      and u.deleted = false
+      and w.deleted = false
+      and r.deleted = false
+      and s.deleted = false
 `
 
-type GetSplitsByRecipientAddressBatchBatchResults struct {
+type GetSplitsByUserIDBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetSplitsByRecipientAddressBatch(ctx context.Context, address []persist.Address) *GetSplitsByRecipientAddressBatchBatchResults {
+func (q *Queries) GetSplitsByUserIDBatch(ctx context.Context, id []persist.DBID) *GetSplitsByUserIDBatchBatchResults {
 	batch := &pgx.Batch{}
-	for _, a := range address {
+	for _, a := range id {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getSplitsByRecipientAddressBatch, vals...)
+		batch.Queue(getSplitsByUserIDBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetSplitsByRecipientAddressBatchBatchResults{br, len(address), false}
+	return &GetSplitsByUserIDBatchBatchResults{br, len(id), false}
 }
 
-func (b *GetSplitsByRecipientAddressBatchBatchResults) Query(f func(int, []Split, error)) {
+func (b *GetSplitsByUserIDBatchBatchResults) Query(f func(int, []Split, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var items []Split
@@ -272,88 +280,7 @@ func (b *GetSplitsByRecipientAddressBatchBatchResults) Query(f func(int, []Split
 	}
 }
 
-func (b *GetSplitsByRecipientAddressBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getSplitsByRecipientChainAddressBatch = `-- name: GetSplitsByRecipientChainAddressBatch :batchmany
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
-                    JOIN splits s ON s.id = r.split_id
-WHERE r.address = $1 AND s.chain = $2 AND s.deleted = false
-`
-
-type GetSplitsByRecipientChainAddressBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetSplitsByRecipientChainAddressBatchParams struct {
-	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetSplitsByRecipientChainAddressBatch(ctx context.Context, arg []GetSplitsByRecipientChainAddressBatchParams) *GetSplitsByRecipientChainAddressBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.Address,
-			a.Chain,
-		}
-		batch.Queue(getSplitsByRecipientChainAddressBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetSplitsByRecipientChainAddressBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetSplitsByRecipientChainAddressBatchBatchResults) Query(f func(int, []Split, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Split
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Split
-				if err := rows.Scan(
-					&i.ID,
-					&i.Version,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Deleted,
-					&i.Chain,
-					&i.Address,
-					&i.Name,
-					&i.Description,
-					&i.CreatorAddress,
-					&i.LogoUrl,
-					&i.BannerUrl,
-					&i.BadgeUrl,
-					&i.TotalOwnership,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetSplitsByRecipientChainAddressBatchBatchResults) Close() error {
+func (b *GetSplitsByUserIDBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

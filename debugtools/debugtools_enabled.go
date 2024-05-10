@@ -10,6 +10,7 @@ package debugtools
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 
 	"github.com/SplitFi/go-splitfi/env"

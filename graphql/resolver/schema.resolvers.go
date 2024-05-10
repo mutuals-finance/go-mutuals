@@ -564,25 +564,22 @@ func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.Sp
 
 // ViewerSplits is the resolver for the viewerSplits field.
 func (r *viewerResolver) ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error) {
-	panic(fmt.Errorf("not implemented: ViewerSplits -- viewerSplits"))
-	/*
-		TODO
-			userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-			splits, err := resolveSplitsByUserID(ctx, userID)
+	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 
-			if err != nil {
-				return nil, err
-			}
+	splits, err := resolveSplitsByUserID(ctx, userID)
 
-			output := make([]*model.ViewerSplit, len(splits))
-			for i, split := range splits {
-				output[i] = &model.ViewerSplit{
-					Split: split,
-				}
-			}
+	if err != nil {
+		return nil, err
+	}
 
-			return output, nil
-	*/
+	output := make([]*model.ViewerSplit, len(splits))
+	for i, split := range splits {
+		output[i] = &model.ViewerSplit{
+			Split: split,
+		}
+	}
+
+	return output, nil
 }
 
 // Email is the resolver for the email field.
@@ -602,7 +599,7 @@ func (r *viewerResolver) NotificationSettings(ctx context.Context, obj *model.Vi
 
 // UserExperiences is the resolver for the userExperiences field.
 func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer) ([]*model.UserExperience, error) {
-	panic(fmt.Errorf("not implemented: UserExperiences - userExperiences"))
+	return resolveViewerExperiencesByUserID(ctx, obj.UserId)
 }
 
 // Splits is the resolver for the splits field.

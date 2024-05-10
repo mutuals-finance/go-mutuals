@@ -8,9 +8,9 @@ exec:
   package: generated
 
 federation:
- filename: graphql/generated/federation.go
- package: generated
- version: 2
+  filename: graphql/generated/federation.go
+  package: generated
+  version: 2
 
 # Where should any generated models go?
 model:
@@ -76,9 +76,9 @@ models:
   WalletType:
     model:
       - github.com/SplitFi/go-splitfi/service/persist.WalletType
-  SocialAccountType:
+  InteractionType:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.SocialProvider
+      - github.com/SplitFi/go-splitfi/service/persist.InteractionType
   ID:
     model:
       - github.com/SplitFi/go-splitfi/graphql/model.GqlID
@@ -100,6 +100,12 @@ models:
   ReportWindow:
     model:
       - github.com/SplitFi/go-splitfi/graphql/model.Window
+  ReportReason:
+    model:
+      - github.com/SplitFi/go-splitfi/service/persist.ReportReason
+  DarkMode:
+    model:
+      - github.com/SplitFi/go-splitfi/service/persist.DarkMode
   BasicAuthType:
     model:
       - github.com/SplitFi/go-splitfi/service/auth/basicauth.AuthTokenType

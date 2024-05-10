@@ -14,11 +14,6 @@ func (v *Viewer) GetGqlIDField_UserID() string {
 	return string(v.UserId)
 }
 
-type HelperTokenHolderData struct {
-	UserId    persist.DBID
-	WalletIds []persist.DBID
-}
-
 type HelperViewerData struct {
 	UserId persist.DBID
 }
@@ -42,11 +37,6 @@ type HelperNotificationsConnectionData struct {
 
 type HelperUserEmailData struct {
 	UserId persist.DBID
-}
-
-type HelperSocialConnectionData struct {
-	UserID        persist.DBID
-	UserCreatedAt time.Time
 }
 
 type ErrInvalidIDFormat struct {

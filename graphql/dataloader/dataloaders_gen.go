@@ -147,71 +147,34 @@ func (*GetSplitByIdBatch) getKeyForResult(result coredb.Split) persist.DBID {
 	return result.ID
 }
 
-// GetSplitsByRecipientAddressBatch batches and caches requests
-type GetSplitsByRecipientAddressBatch struct {
-	generator.Dataloader[persist.Address, []coredb.Split]
+// GetSplitsByUserIDBatch batches and caches requests
+type GetSplitsByUserIDBatch struct {
+	generator.Dataloader[persist.DBID, []coredb.Split]
 }
 
-// newGetSplitsByRecipientAddressBatch creates a new GetSplitsByRecipientAddressBatch with the given settings, functions, and options
-func newGetSplitsByRecipientAddressBatch(
+// newGetSplitsByUserIDBatch creates a new GetSplitsByUserIDBatch with the given settings, functions, and options
+func newGetSplitsByUserIDBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetSplitsByRecipientAddressBatch, []persist.Address) ([][]coredb.Split, []error),
+	fetch func(context.Context, *GetSplitsByUserIDBatch, []persist.DBID) ([][]coredb.Split, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetSplitsByRecipientAddressBatch {
-	d := &GetSplitsByRecipientAddressBatch{}
+) *GetSplitsByUserIDBatch {
+	d := &GetSplitsByUserIDBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []persist.Address) ([][]coredb.Split, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]coredb.Split, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetSplitsByRecipientAddressBatch")
+			ctx = preFetchHook(ctx, "GetSplitsByUserIDBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetSplitsByRecipientAddressBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-// GetSplitsByRecipientChainAddressBatch batches and caches requests
-type GetSplitsByRecipientChainAddressBatch struct {
-	generator.Dataloader[coredb.GetSplitsByRecipientChainAddressBatchParams, []coredb.Split]
-}
-
-// newGetSplitsByRecipientChainAddressBatch creates a new GetSplitsByRecipientChainAddressBatch with the given settings, functions, and options
-func newGetSplitsByRecipientChainAddressBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetSplitsByRecipientChainAddressBatch, []coredb.GetSplitsByRecipientChainAddressBatchParams) ([][]coredb.Split, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetSplitsByRecipientChainAddressBatch {
-	d := &GetSplitsByRecipientChainAddressBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []coredb.GetSplitsByRecipientChainAddressBatchParams) ([][]coredb.Split, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetSplitsByRecipientChainAddressBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetSplitsByRecipientChainAddressBatch")
+			postFetchHook(ctx, "GetSplitsByUserIDBatch")
 		}
 
 		return results, errors

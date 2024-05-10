@@ -11,7 +11,6 @@ import (
 	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
-	"time"
 )
 
 type SplitAPI struct {
@@ -76,7 +75,7 @@ func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID
 		return nil, err
 	}
 
-	split, err := api.queries.GetSplitByRecipientUserID(ctx, db.GetSplitByRecipientUserIDParams{
+	split, err := api.queries.GetSplitByUserID(ctx, db.GetSplitByUserIDParams{
 		UserID:  userID,
 		SplitID: splitID,
 	})
@@ -87,53 +86,20 @@ func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID
 	return &split, nil
 }
 
-func (api SplitAPI) GetViewerSplits(ctx context.Context, before, after *string, first, last *int) ([]db.Split, PageInfo, error) {
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return nil, PageInfo{}, err
-	}
-
+func (api SplitAPI) GetSplitsByUserID(ctx context.Context, userID persist.DBID) ([]db.Split, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),
 	}); err != nil {
-		return nil, PageInfo{}, err
+		return nil, err
 	}
 
-	if err := validatePaginationParams(api.validator, first, last); err != nil {
-		return nil, PageInfo{}, err
+	splits, err := api.loaders.GetSplitsByUserIDBatch.Load(userID)
+	if err != nil {
+		return nil, err
 	}
 
-	queryFunc := func(params timeIDPagingParams) ([]db.Split, error) {
-		return api.queries.GetSplitsByRecipientUserIDPaginate(ctx, db.GetSplitsByRecipientUserIDPaginateParams{
-			ID:            userID,
-			Limit:         params.Limit,
-			CurBeforeTime: params.CursorBeforeTime,
-			CurBeforeID:   params.CursorBeforeID,
-			CurAfterTime:  params.CursorAfterTime,
-			CurAfterID:    params.CursorAfterID,
-			PagingForward: params.PagingForward,
-		})
-	}
-
-	countFunc := func() (int, error) {
-		total, err := api.queries.CountSplitsByRecipientUserID(ctx, userID)
-		return int(total), err
-	}
-
-	cursorFunc := func(s db.Split) (time.Time, persist.DBID, error) {
-		return s.CreatedAt, s.ID, nil
-	}
-
-	paginator := timeIDPaginator[db.Split]{
-		QueryFunc:  queryFunc,
-		CursorFunc: cursorFunc,
-		CountFunc:  countFunc,
-	}
-
-	results, pageInfo, err := paginator.paginate(before, after, first, last)
-	splits := util.MapWithoutError(results, func(s db.Split) db.Split { return s })
-	return splits, pageInfo, err
+	return splits, nil
 }
 
 func (api SplitAPI) GetSplitById(ctx context.Context, splitID persist.DBID) (*db.Split, error) {
@@ -208,20 +174,20 @@ func (api SplitAPI) GetSplitByChainAddress(ctx context.Context, chainAddress per
 	return &split, nil
 }
 
-func (api SplitAPI) GetSplitsByRecipientAddressBatch(ctx context.Context, recipientAddress persist.Address) ([]db.Split, error) {
+func (api SplitAPI) GetRecipientByRecipientID(ctx context.Context, recipientID persist.DBID) (*db.Recipient, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"recipientAddress": validate.WithTag(recipientAddress, "required"),
+		"recipientID": validate.WithTag(recipientID, "required"),
 	}); err != nil {
 		return nil, err
 	}
 
-	splits, err := api.loaders.GetSplitsByRecipientAddressBatch.Load(recipientAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	return splits, nil
+	/*	recipient, err := api.loaders.GetRecipientByRecipienID.Load(recipientID)
+		if err != nil {
+			return nil, err
+		}
+	*/
+	return nil, nil
 }
 
 func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, name, description, logoUrl *string) error {

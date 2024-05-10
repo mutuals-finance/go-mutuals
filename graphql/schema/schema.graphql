@@ -460,12 +460,6 @@ union UserByAddressOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
 
 union ViewerOrError = Viewer | ErrNotAuthorized
 
-type ErrCollectionNotFound implements Error {
-  message: String!
-}
-
-union TokenByIdOrError = Token | ErrTokenNotFound
-
 type ErrTokenNotFound implements Error {
   message: String!
 }

@@ -64,7 +64,7 @@ func usePostgres(t *testing.T) {
 	t.Setenv("POSTGRES_HOST", hostAndPort[0])
 	t.Setenv("POSTGRES_PORT", hostAndPort[1])
 
-	err = migrate.RunMigrations(postgres.MustCreateClient(postgres.WithUser("postgres")), "./db/migrations/core")
+	err = migrate.RunMigrations(postgres.MustCreateClient(postgres.WithUser("postgres"), postgres.WithPassword("postgres")), "./db/migrations/core")
 	require.NoError(t, err)
 
 	t.Cleanup(func() { r.Close() })

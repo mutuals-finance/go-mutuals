@@ -14,21 +14,20 @@ import (
 )
 
 type Loaders struct {
-	GetNotificationByIDBatch              *GetNotificationByIDBatch
-	GetSplitByChainAddressBatch           *GetSplitByChainAddressBatch
-	GetSplitByIdBatch                     *GetSplitByIdBatch
-	GetSplitsByRecipientAddressBatch      *GetSplitsByRecipientAddressBatch
-	GetSplitsByRecipientChainAddressBatch *GetSplitsByRecipientChainAddressBatch
-	GetUserByChainAddressBatch            *GetUserByChainAddressBatch
-	GetUserByIdBatch                      *GetUserByIdBatch
-	GetUserByUsernameBatch                *GetUserByUsernameBatch
-	GetUserNotificationsBatch             *GetUserNotificationsBatch
-	GetUsersByPositionPaginateBatch       *GetUsersByPositionPaginateBatch
-	GetUsersByPositionPersonalizedBatch   *GetUsersByPositionPersonalizedBatch
-	GetUsersWithTraitBatch                *GetUsersWithTraitBatch
-	GetWalletByChainAddressBatch          *GetWalletByChainAddressBatch
-	GetWalletByIDBatch                    *GetWalletByIDBatch
-	GetWalletsByUserIDBatch               *GetWalletsByUserIDBatch
+	GetNotificationByIDBatch            *GetNotificationByIDBatch
+	GetSplitByChainAddressBatch         *GetSplitByChainAddressBatch
+	GetSplitByIdBatch                   *GetSplitByIdBatch
+	GetSplitsByUserIDBatch              *GetSplitsByUserIDBatch
+	GetUserByChainAddressBatch          *GetUserByChainAddressBatch
+	GetUserByIdBatch                    *GetUserByIdBatch
+	GetUserByUsernameBatch              *GetUserByUsernameBatch
+	GetUserNotificationsBatch           *GetUserNotificationsBatch
+	GetUsersByPositionPaginateBatch     *GetUsersByPositionPaginateBatch
+	GetUsersByPositionPersonalizedBatch *GetUsersByPositionPersonalizedBatch
+	GetUsersWithTraitBatch              *GetUsersWithTraitBatch
+	GetWalletByChainAddressBatch        *GetWalletByChainAddressBatch
+	GetWalletByIDBatch                  *GetWalletByIDBatch
+	GetWalletsByUserIDBatch             *GetWalletsByUserIDBatch
 }
 
 func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
@@ -37,8 +36,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitByChainAddressBatch = newGetSplitByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitByIdBatch = newGetSplitByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetSplitsByRecipientAddressBatch = newGetSplitsByRecipientAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitsByRecipientAddressBatch(q), preFetchHook, postFetchHook)
-	loaders.GetSplitsByRecipientChainAddressBatch = newGetSplitsByRecipientChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitsByRecipientChainAddressBatch(q), preFetchHook, postFetchHook)
+	loaders.GetSplitsByUserIDBatch = newGetSplitsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitsByUserIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByChainAddressBatch = newGetUserByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByUsernameBatch = newGetUserByUsernameBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByUsernameBatch(q), preFetchHook, postFetchHook)
@@ -58,12 +56,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetSplitByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Split) {
 		loaders.GetSplitByIdBatch.Prime(loaders.GetSplitByIdBatch.getKeyForResult(result), result)
 	})
-	loaders.GetSplitsByRecipientAddressBatch.RegisterResultSubscriber(func(result []coredb.Split) {
-		for _, entry := range result {
-			loaders.GetSplitByIdBatch.Prime(loaders.GetSplitByIdBatch.getKeyForResult(entry), entry)
-		}
-	})
-	loaders.GetSplitsByRecipientChainAddressBatch.RegisterResultSubscriber(func(result []coredb.Split) {
+	loaders.GetSplitsByUserIDBatch.RegisterResultSubscriber(func(result []coredb.Split) {
 		for _, entry := range result {
 			loaders.GetSplitByIdBatch.Prime(loaders.GetSplitByIdBatch.getKeyForResult(entry), entry)
 		}
@@ -179,28 +172,12 @@ func loadGetSplitByIdBatch(q *coredb.Queries) func(context.Context, *GetSplitByI
 	}
 }
 
-func loadGetSplitsByRecipientAddressBatch(q *coredb.Queries) func(context.Context, *GetSplitsByRecipientAddressBatch, []persist.Address) ([][]coredb.Split, []error) {
-	return func(ctx context.Context, d *GetSplitsByRecipientAddressBatch, params []persist.Address) ([][]coredb.Split, []error) {
+func loadGetSplitsByUserIDBatch(q *coredb.Queries) func(context.Context, *GetSplitsByUserIDBatch, []persist.DBID) ([][]coredb.Split, []error) {
+	return func(ctx context.Context, d *GetSplitsByUserIDBatch, params []persist.DBID) ([][]coredb.Split, []error) {
 		results := make([][]coredb.Split, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetSplitsByRecipientAddressBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, r []coredb.Split, err error) {
-			results[i], errors[i] = r, err
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetSplitsByRecipientChainAddressBatch(q *coredb.Queries) func(context.Context, *GetSplitsByRecipientChainAddressBatch, []coredb.GetSplitsByRecipientChainAddressBatchParams) ([][]coredb.Split, []error) {
-	return func(ctx context.Context, d *GetSplitsByRecipientChainAddressBatch, params []coredb.GetSplitsByRecipientChainAddressBatchParams) ([][]coredb.Split, []error) {
-		results := make([][]coredb.Split, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetSplitsByRecipientChainAddressBatch(ctx, params)
+		b := q.GetSplitsByUserIDBatch(ctx, params)
 		defer b.Close()
 
 		b.Query(func(i int, r []coredb.Split, err error) {

@@ -54,7 +54,7 @@ SELECT * FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false;
 -- name: GetSplitById :one
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
--- name: GetSplitByRecipientUserID :one
+-- name: GetSplitByUserID :one
 SELECT s.* FROM users u, unnest(u.wallets)
     WITH ORDINALITY AS a(wallet_id, wallet_ord)
     INNER JOIN wallets w on w.id = a.wallet_id
@@ -62,30 +62,13 @@ SELECT s.* FROM users u, unnest(u.wallets)
     INNER JOIN splits s ON s.id = r.split_id
     WHERE u.id = @user_id AND s.id = @split_id AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false;
 
--- name: GetSplitsByRecipientUserIDPaginate :many
+-- name: GetSplitsByUserIDBatch :batchmany
 select s.*
     from users u, unnest(u.wallets)
     with ordinality as a(wallet_id, wallet_ord)
         join wallets w on w.id = a.wallet_id
         join recipients r on r.address = w.address
         join splits s on s.id = r.split_id
-    where u.id = $1
-      and u.deleted = false
-      and w.deleted = false
-      and r.deleted = false
-      and s.deleted = false
-      and (s.created_at,s.id) < (@cur_before_time::timestamptz, @cur_before_id::dbid)
-      and (s.created_at,s.id) > (@cur_after_time::timestamptz, @cur_after_id::dbid)
-    order by case when @paging_forward::bool then (s.created_at,s.id) end asc,
-             case when not @paging_forward::bool then (s.created_at,s.id) end desc
-    limit $2;
-
--- name: CountSplitsByRecipientUserID :one
-select count(distinct s.id)
-    from users u, unnest(u.wallets) with ordinality as a(wallet_id, wallet_ord)
-                      join wallets w on w.id = a.wallet_id
-                      join recipients r on r.address = w.address
-                      join splits s on s.id = r.split_id
     where u.id = $1
       and u.deleted = false
       and w.deleted = false
@@ -108,21 +91,6 @@ SELECT * FROM splits WHERE chain = any(@chains::int[]) OR contract_address = any
 SELECT s.* FROM recipients r
                     JOIN splits s ON s.id = r.split_id
 WHERE r.address = $1 AND s.deleted = false;
-
--- name: GetSplitsByRecipientAddressBatch :batchmany
-SELECT s.* FROM recipients r
-                    JOIN splits s ON s.id = r.split_id
-WHERE r.address = $1 AND s.deleted = false;
-
--- name: GetSplitsByRecipientChainAddress :many
-SELECT s.* FROM recipients r
-                    JOIN splits s ON s.id = r.split_id
-WHERE r.address = $1 AND s.chain = $2 AND s.deleted = false;
-
--- name: GetSplitsByRecipientChainAddressBatch :batchmany
-SELECT s.* FROM recipients r
-                    JOIN splits s ON s.id = r.split_id
-WHERE r.address = $1 AND s.chain = $2 AND s.deleted = false;
 
 -- name: GetWalletByID :one
 SELECT * FROM wallets WHERE id = $1 AND deleted = false;

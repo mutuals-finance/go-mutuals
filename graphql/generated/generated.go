@@ -153,10 +153,6 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	ErrCollectionNotFound struct {
-		Message func(childComplexity int) int
-	}
-
 	ErrCommunityNotFound struct {
 		Message func(childComplexity int) int
 	}
@@ -994,13 +990,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ErrAuthenticationFailed.Message(childComplexity), true
-
-	case "ErrCollectionNotFound.message":
-		if e.complexity.ErrCollectionNotFound.Message == nil {
-			break
-		}
-
-		return e.complexity.ErrCollectionNotFound.Message(childComplexity), true
 
 	case "ErrCommunityNotFound.message":
 		if e.complexity.ErrCommunityNotFound.Message == nil {
@@ -3575,12 +3564,6 @@ union UserByIdOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
 union UserByAddressOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
 
 union ViewerOrError = Viewer | ErrNotAuthorized
-
-type ErrCollectionNotFound implements Error {
-  message: String!
-}
-
-union TokenByIdOrError = Token | ErrTokenNotFound
 
 type ErrTokenNotFound implements Error {
   message: String!
@@ -6893,50 +6876,6 @@ func (ec *executionContext) _ErrAuthenticationFailed_message(ctx context.Context
 func (ec *executionContext) fieldContext_ErrAuthenticationFailed_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrAuthenticationFailed",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ErrCollectionNotFound_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrCollectionNotFound) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ErrCollectionNotFound_message(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Message, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ErrCollectionNotFound_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ErrCollectionNotFound",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -22799,13 +22738,6 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ErrCollectionNotFound:
-		return ec._ErrCollectionNotFound(ctx, sel, &obj)
-	case *model.ErrCollectionNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrCollectionNotFound(ctx, sel, obj)
 	case model.ErrTokenNotFound:
 		return ec._ErrTokenNotFound(ctx, sel, &obj)
 	case *model.ErrTokenNotFound:
@@ -23580,29 +23512,6 @@ func (ec *executionContext) _SplitFiUserOrWallet(ctx context.Context, sel ast.Se
 			return graphql.Null
 		}
 		return ec._Wallet(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _TokenByIdOrError(ctx context.Context, sel ast.SelectionSet, obj model.TokenByIDOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.Token:
-		return ec._Token(ctx, sel, &obj)
-	case *model.Token:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Token(ctx, sel, obj)
-	case model.ErrTokenNotFound:
-		return ec._ErrTokenNotFound(ctx, sel, &obj)
-	case *model.ErrTokenNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrTokenNotFound(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24866,45 +24775,6 @@ func (ec *executionContext) _ErrAuthenticationFailed(ctx context.Context, sel as
 	return out
 }
 
-var errCollectionNotFoundImplementors = []string{"ErrCollectionNotFound", "Error"}
-
-func (ec *executionContext) _ErrCollectionNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrCollectionNotFound) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, errCollectionNotFoundImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ErrCollectionNotFound")
-		case "message":
-			out.Values[i] = ec._ErrCollectionNotFound_message(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var errCommunityNotFoundImplementors = []string{"ErrCommunityNotFound", "Error"}
 
 func (ec *executionContext) _ErrCommunityNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrCommunityNotFound) graphql.Marshaler {
@@ -25310,7 +25180,7 @@ func (ec *executionContext) _ErrSyncFailed(ctx context.Context, sel ast.Selectio
 	return out
 }
 
-var errTokenNotFoundImplementors = []string{"ErrTokenNotFound", "TokenByIdOrError", "Error"}
+var errTokenNotFoundImplementors = []string{"ErrTokenNotFound", "Error"}
 
 func (ec *executionContext) _ErrTokenNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrTokenNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errTokenNotFoundImplementors)
@@ -27547,7 +27417,7 @@ func (ec *executionContext) _TextMedia(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
-var tokenImplementors = []string{"Token", "Node", "TokenByIdOrError"}
+var tokenImplementors = []string{"Token", "Node"}
 
 func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, obj *model.Token) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, tokenImplementors)
