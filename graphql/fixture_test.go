@@ -10,7 +10,6 @@ import (
 
 	migrate "github.com/SplitFi/go-splitfi/db"
 	"github.com/SplitFi/go-splitfi/docker"
-	"github.com/SplitFi/go-splitfi/graphql/dummymetadata"
 	"github.com/SplitFi/go-splitfi/server"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/persist/postgres"
@@ -137,14 +136,6 @@ type serverFixture struct {
 func newServerFixture(t *testing.T) serverFixture {
 	t.Helper()
 	server := httptest.NewServer(defaultHandler(t))
-	t.Cleanup(func() { server.Close() })
-	return serverFixture{server}
-}
-
-// newMetadataServerFixture starts a HTTP server for fetching static metadata
-func newMetadataServerFixture(t *testing.T) serverFixture {
-	t.Helper()
-	server := httptest.NewServer(dummymetadata.CoreInitServer())
 	t.Cleanup(func() { server.Close() })
 	return serverFixture{server}
 }

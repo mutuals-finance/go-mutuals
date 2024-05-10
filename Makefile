@@ -72,7 +72,6 @@ $(DEPLOY)-$(DEV)-routing-rules    : SERVICE_FILE := dispatch.yaml
 $(DEPLOY)-$(SANDBOX)-backend      : SERVICE_FILE := backend-sandbox-env.yaml
 $(DEPLOY)-$(PROD)-backend         : SERVICE_FILE := backend-env.yaml
 $(DEPLOY)-$(PROD)-admin           : SERVICE_FILE := app-prod-admin.yaml
-$(DEPLOY)-$(PROD)-dummymetadata   : SERVICE_FILE := dummymetadata-env.yaml
 $(DEPLOY)-$(PROD)-emails          : SERVICE_FILE := emails-server-env.yaml
 $(DEPLOY)-$(PROD)-routing-rules   : SERVICE_FILE := dispatch.yaml
 $(DEPLOY)-$(DEV)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
@@ -80,18 +79,9 @@ $(DEPLOY)-$(PROD)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
 
 # Service to Sentry project mapping
 $(DEPLOY)-%-backend               : SENTRY_PROJECT := splitfi-backend
-$(DEPLOY)-%-dummymetadata         : SENTRY_PROJECT := dummymetadata
 $(DEPLOY)-%-emails                : SENTRY_PROJECT := emails
 
 # Docker builds
-$(DEPLOY)-%-dummymetadata              : REPO           := dummymetadata
-$(DEPLOY)-%-dummymetadata              : DOCKER_FILE    := $(DOCKER_DIR)/dummymetadata/Dockerfile
-$(DEPLOY)-%-dummymetadata              : PORT           := 8500
-$(DEPLOY)-%-dummymetadata              : TIMEOUT        := $(DUMMYMETADATA_TIMEOUT)
-$(DEPLOY)-%-dummymetadata              : CPU            := $(DUMMYMETADATA_CPU)
-$(DEPLOY)-%-dummymetadata              : MEMORY         := $(DUMMYMETADATA_MEMORY)
-$(DEPLOY)-%-dummymetadata              : CONCURRENCY    := $(DUMMYMETADATA_CONCURRENCY)
-$(DEPLOY)-%-dummymetadata              : SERVICE        := dummymetadata
 $(DEPLOY)-%-emails                     : REPO           := emails
 $(DEPLOY)-%-emails                     : DOCKER_FILE    := $(DOCKER_DIR)/emails/Dockerfile
 $(DEPLOY)-%-emails                     : PORT           := 5500
@@ -127,7 +117,6 @@ $(DEPLOY)-$(PROD)-graphql-gateway              : SERVICE        := graphql-gatew
 # Service name mappings
 $(PROMOTE)-%-backend                   : SERVICE := default
 $(PROMOTE)-%-emails                    : SERVICE := emails
-$(PROMOTE)-%-dummymetadata             : SERVICE := dummymetadata
 $(PROMOTE)-%-admin                     : SERVICE := admin
 
 #----------------------------------------------------------------
@@ -249,7 +238,6 @@ $(DEPLOY)-$(SANDBOX)-backend      : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-bac
 
 # PROD deployments
 $(DEPLOY)-$(PROD)-backend         : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
-$(DEPLOY)-$(PROD)-dummymetadata   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-dummymetadata _$(RELEASE)-dummymetadata
 $(DEPLOY)-$(PROD)-emails          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
 $(DEPLOY)-$(PROD)-admin           : _set-project-$(ENV) _$(DEPLOY)-admin
 $(DEPLOY)-$(PROD)-routing-rules   : _set-project-$(ENV) _$(DEPLOY)-routing-rules
@@ -261,7 +249,6 @@ $(DEPLOY)-$(PROD)-graphql-gateway : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-gra
 # $ make promote-prod-backend version=myVersion
 #
 $(PROMOTE)-$(PROD)-backend          : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-backend
-$(PROMOTE)-$(PROD)-dummymetadata    : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-dummymetadata
 $(PROMOTE)-$(PROD)-emails           : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-emails
 $(PROMOTE)-$(PROD)-admin            : _set-project-$(ENV) _$(PROMOTE)-admin
 

@@ -9,6 +9,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/publicapi"
+	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -276,7 +279,7 @@ func testUpdateUserExperiences(t *testing.T) {
 	c := authedHandlerClient(t, userF.ID)
 
 	response, err := updateUserExperience(context.Background(), c, UpdateUserExperienceInput{
-		ExperienceType: UserExperienceTypeMultisplitannouncement,
+		ExperienceType: UserExperienceTypeEmailupsell,
 		Experienced:    true,
 	})
 
@@ -286,7 +289,7 @@ func testUpdateUserExperiences(t *testing.T) {
 	payload := (*response.UpdateUserExperience).(*updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayload)
 	assert.NotEmpty(t, payload.Viewer.UserExperiences)
 	for _, experience := range payload.Viewer.UserExperiences {
-		if experience.Type == UserExperienceTypeMultisplitannouncement {
+		if experience.Type == UserExperienceTypeEmailupsell {
 			assert.True(t, experience.Experienced)
 		}
 	}
@@ -442,7 +445,47 @@ func handlerWithProviders(t *testing.T, p multichain.ProviderLookup) http.Handle
 	c := server.ClientInit(context.Background())
 	provider := newMultichainProvider(c, p)
 	t.Cleanup(c.Close)
-	return server.CoreInit(ctx, c, &provider)
+
+	lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
+	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
+	oneTimeLoginCache := redis.NewCache(redis.OneTimeLoginCache)
+
+	publicapiF := func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI {
+		return publicapi.NewWithMultichainProvider(
+			ctx,
+			false,
+			c.Repos,
+			c.Queries,
+			c.HTTPClient,
+			c.EthClient,
+			c.IPFSClient,
+			c.ArweaveClient,
+			c.StorageClient,
+			c.TaskClient,
+			nil, // throttler
+			c.SecretClient,
+			nil, // apqCache
+			authRefreshCache,
+			oneTimeLoginCache, // oneTimeLoginCache
+			c.MagicLinkClient,
+			&provider,
+		)
+	}
+
+	handlerInitF := func(r *gin.Engine) {
+		server.GraphqlHandlersInit(
+			r,
+			c.Queries,
+			c.TaskClient,
+			c.PubSubClient,
+			lock,             // redislock
+			nil,              // apqCache
+			authRefreshCache, // authRefreshCache
+			publicapiF,
+		)
+	}
+
+	return server.CoreInitHandlerF(ctx, handlerInitF)
 }
 
 // newMultichainProvider a new multichain provider configured with the given providers
