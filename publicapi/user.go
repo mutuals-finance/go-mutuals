@@ -424,30 +424,30 @@ func (api UserAPI) RemoveWalletsFromUser(ctx context.Context, walletIDs []persis
 	return removalErr
 }
 
-func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio, splitName, splitDesc, splitPos string) (userID persist.DBID, splitID persist.DBID, err error) {
+func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio string) (userID persist.DBID, err error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": validate.WithTag(username, "required,username"),
+		"username": validate.WithTag(username, "username"),
 		"bio":      validate.WithTag(bio, "bio"),
 	}); err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	createUserParams, err := createNewUserParamsWithAuth(ctx, authenticator, username, bio, email)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	tx, err := api.repos.BeginTx(ctx)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	queries := api.queries.WithTx(tx)
 	defer tx.Rollback(ctx)
 
 	userID, err = user.CreateUser(ctx, createUserParams, api.repos.UserRepository, queries)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	gc := util.MustGetGinContext(ctx)
@@ -461,7 +461,7 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	if createUserParams.EmailStatus == persist.EmailVerificationStatusUnverified && email != nil {
@@ -492,11 +492,7 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 		logger.For(ctx).Errorf("failed to dispatch event: %s", err)
 	}
 
-	if err != nil {
-		logger.For(ctx).Errorf("failed to create task for autosocial process users: %s", err)
-	}
-
-	return userID, splitID, nil
+	return userID, nil
 }
 
 func (api UserAPI) UpdateUserInfo(ctx context.Context, username string, bio string) error {

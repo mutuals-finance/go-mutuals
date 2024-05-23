@@ -765,12 +765,9 @@ type LogoutPayload {
   viewer: Viewer
 }
 input CreateUserInput {
-  username: String!
+  username: String
   bio: String
   email: Email
-  splitName: String
-  splitDescription: String
-  splitPosition: String
 }
 
 union CreateUserPayloadOrError =
@@ -783,8 +780,7 @@ union CreateUserPayloadOrError =
 
 type CreateUserPayload {
   userId: DBID
-  splitId: DBID
-  # TODO: Remove userId and splitId in favor of viewer
+  # TODO: Remove userId in favor of viewer
   viewer: Viewer
 }
 

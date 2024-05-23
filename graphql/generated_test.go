@@ -85,31 +85,19 @@ func (v *CreateSplitInput) GetDescription() *string { return v.Description }
 func (v *CreateSplitInput) GetLogo() *string { return v.Logo }
 
 type CreateUserInput struct {
-	Username         string  `json:"username"`
-	Bio              *string `json:"bio"`
-	Email            *string `json:"email"`
-	SplitName        *string `json:"splitName"`
-	SplitDescription *string `json:"splitDescription"`
-	SplitPosition    *string `json:"splitPosition"`
+	Username *string `json:"username"`
+	Bio      *string `json:"bio"`
+	Email    *string `json:"email"`
 }
 
 // GetUsername returns CreateUserInput.Username, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetUsername() string { return v.Username }
+func (v *CreateUserInput) GetUsername() *string { return v.Username }
 
 // GetBio returns CreateUserInput.Bio, and is useful for accessing the field via an interface.
 func (v *CreateUserInput) GetBio() *string { return v.Bio }
 
 // GetEmail returns CreateUserInput.Email, and is useful for accessing the field via an interface.
 func (v *CreateUserInput) GetEmail() *string { return v.Email }
-
-// GetSplitName returns CreateUserInput.SplitName, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetSplitName() *string { return v.SplitName }
-
-// GetSplitDescription returns CreateUserInput.SplitDescription, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetSplitDescription() *string { return v.SplitDescription }
-
-// GetSplitPosition returns CreateUserInput.SplitPosition, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetSplitPosition() *string { return v.SplitPosition }
 
 type DebugAuth struct {
 	AsUsername         *string             `json:"asUsername"`

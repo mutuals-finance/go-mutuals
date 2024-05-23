@@ -126,9 +126,8 @@ type ComplexityRoot struct {
 	}
 
 	CreateUserPayload struct {
-		SplitID func(childComplexity int) int
-		UserID  func(childComplexity int) int
-		Viewer  func(childComplexity int) int
+		UserID func(childComplexity int) int
+		Viewer func(childComplexity int) int
 	}
 
 	DeleteSplitPayload struct {
@@ -920,13 +919,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateSplitPayload.Split(childComplexity), true
-
-	case "CreateUserPayload.splitId":
-		if e.complexity.CreateUserPayload.SplitID == nil {
-			break
-		}
-
-		return e.complexity.CreateUserPayload.SplitID(childComplexity), true
 
 	case "CreateUserPayload.userId":
 		if e.complexity.CreateUserPayload.UserID == nil {
@@ -3870,12 +3862,9 @@ type LogoutPayload {
   viewer: Viewer
 }
 input CreateUserInput {
-  username: String!
+  username: String
   bio: String
   email: Email
-  splitName: String
-  splitDescription: String
-  splitPosition: String
 }
 
 union CreateUserPayloadOrError =
@@ -3888,8 +3877,7 @@ union CreateUserPayloadOrError =
 
 type CreateUserPayload {
   userId: DBID
-  splitId: DBID
-  # TODO: Remove userId and splitId in favor of viewer
+  # TODO: Remove userId in favor of viewer
   viewer: Viewer
 }
 
@@ -6465,47 +6453,6 @@ func (ec *executionContext) _CreateUserPayload_userId(ctx context.Context, field
 }
 
 func (ec *executionContext) fieldContext_CreateUserPayload_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateUserPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateUserPayload_splitId(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateUserPayload_splitId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SplitID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.DBID)
-	fc.Result = res
-	return ec.marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CreateUserPayload_splitId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateUserPayload",
 		Field:      field,
@@ -21526,7 +21473,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "bio", "email", "splitName", "splitDescription", "splitPosition"}
+	fieldsInOrder := [...]string{"username", "bio", "email"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21535,7 +21482,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		switch k {
 		case "username":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -21554,27 +21501,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Email = data
-		case "splitName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SplitName = data
-		case "splitDescription":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitDescription"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SplitDescription = data
-		case "splitPosition":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitPosition"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SplitPosition = data
 		}
 	}
 
@@ -24546,8 +24472,6 @@ func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("CreateUserPayload")
 		case "userId":
 			out.Values[i] = ec._CreateUserPayload_userId(ctx, field, obj)
-		case "splitId":
-			out.Values[i] = ec._CreateUserPayload_splitId(ctx, field, obj)
 		case "viewer":
 			out.Values[i] = ec._CreateUserPayload_viewer(ctx, field, obj)
 		default:

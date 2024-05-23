@@ -288,18 +288,14 @@ type CreateSplitPayload struct {
 func (CreateSplitPayload) IsCreateSplitPayloadOrError() {}
 
 type CreateUserInput struct {
-	Username         string         `json:"username"`
-	Bio              *string        `json:"bio"`
-	Email            *persist.Email `json:"email"`
-	SplitName        *string        `json:"splitName"`
-	SplitDescription *string        `json:"splitDescription"`
-	SplitPosition    *string        `json:"splitPosition"`
+	Username *string        `json:"username"`
+	Bio      *string        `json:"bio"`
+	Email    *persist.Email `json:"email"`
 }
 
 type CreateUserPayload struct {
-	UserID  *persist.DBID `json:"userId"`
-	SplitID *persist.DBID `json:"splitId"`
-	Viewer  *Viewer       `json:"viewer"`
+	UserID *persist.DBID `json:"userId"`
+	Viewer *Viewer       `json:"viewer"`
 }
 
 func (CreateUserPayload) IsCreateUserPayloadOrError() {}

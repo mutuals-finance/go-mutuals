@@ -150,13 +150,6 @@ func (u *UserRepository) createWalletWithTx(ctx context.Context, queries *db.Que
 		queries = u.queries
 	}
 
-	/*	// TODO L1Chain
-		wallet, err := queries.GetWalletByAddressAndL1Chain(ctx, db.GetWalletByAddressAndL1ChainParams{
-			Address: chainAddress.Address(),
-			L1Chain: chainAddress.Chain().L1Chain(),
-		})
-	*/
-
 	wallet, err := queries.GetWalletByChainAddress(ctx, db.GetWalletByChainAddressParams{
 		Address: chainAddress.Address(),
 		Chain:   chainAddress.Chain(),
@@ -236,13 +229,14 @@ func (u *UserRepository) Create(pCtx context.Context, pUser persist.CreateUserIn
 		}()
 	}
 
-	user, err := queries.GetUserByUsername(pCtx, strings.ToLower(pUser.Username))
-	if err == nil && user.ID != "" {
-		return "", persist.ErrUsernameNotAvailable{Username: pUser.Username}
-	}
-
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return "", err
+	if pUser.Username != "" {
+		user, err := queries.GetUserByUsername(pCtx, strings.ToLower(pUser.Username))
+		if err == nil && user.ID != "" {
+			return "", persist.ErrUsernameNotAvailable{Username: pUser.Username}
+		}
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return "", err
+		}
 	}
 
 	userID, err := queries.InsertUser(pCtx, db.InsertUserParams{
@@ -253,6 +247,7 @@ func (u *UserRepository) Create(pCtx context.Context, pUser persist.CreateUserIn
 		Universal:            pUser.Universal,
 		EmailUnsubscriptions: pUser.EmailNotificationsSettings,
 	})
+
 	if err != nil {
 		return "", err
 	}
@@ -277,29 +272,26 @@ func (u *UserRepository) Create(pCtx context.Context, pUser persist.CreateUserIn
 		}
 	}
 
-	/*
-	   TODO email
-	   if pUser.Email != nil {
-	   		if pUser.EmailStatus == persist.EmailVerificationStatusVerified {
-	   			err := queries.UpdateUserVerifiedEmail(pCtx, db.UpdateUserVerifiedEmailParams{
-	   				UserID:       userID,
-	   				EmailAddress: *pUser.Email,
-	   			})
-	   			if err != nil {
-	   				logger.For(pCtx).Errorf("failed to insert verified email address when creating new user with userID=%s\n", userID)
-	   			}
-	   		} else if pUser.EmailStatus == persist.EmailVerificationStatusUnverified {
-	   			err := queries.UpdateUserUnverifiedEmail(pCtx, db.UpdateUserUnverifiedEmailParams{
-	   				UserID:       userID,
-	   				EmailAddress: *pUser.Email,
-	   			})
-	   			if err != nil {
-	   				logger.For(pCtx).Errorf("failed to insert unverified email address when creating new user with userID=%s\n", userID)
-	   			}
-	   		}
+	if pUser.Email != nil {
+		if pUser.EmailStatus == persist.EmailVerificationStatusVerified {
+			err := queries.UpdateUserVerifiedEmail(pCtx, db.UpdateUserVerifiedEmailParams{
+				UserID:       userID,
+				EmailAddress: *pUser.Email,
+			})
+			if err != nil {
+				logger.For(pCtx).Errorf("failed to insert verified email address when creating new user with userID=%s\n", userID)
+			}
+		} else if pUser.EmailStatus == persist.EmailVerificationStatusUnverified {
+			err := queries.UpdateUserUnverifiedEmail(pCtx, db.UpdateUserUnverifiedEmailParams{
+				UserID:       userID,
+				EmailAddress: *pUser.Email,
+			})
+			if err != nil {
+				logger.For(pCtx).Errorf("failed to insert unverified email address when creating new user with userID=%s\n", userID)
+			}
+		}
 
-	   	}
-	*/
+	}
 	return userID, nil
 }
 

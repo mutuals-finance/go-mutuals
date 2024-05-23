@@ -107,21 +107,14 @@ func (r *mutationResolver) CreateUser(ctx context.Context, authMechanism model.A
 		return nil, err
 	}
 
+	userName := ""
+	if input.Username != nil {
+		userName = *input.Username
+	}
+
 	bioStr := ""
-	nameStr := ""
-	descStr := ""
-	positionStr := ""
 	if input.Bio != nil {
 		bioStr = *input.Bio
-	}
-	if input.SplitName != nil {
-		nameStr = *input.SplitName
-	}
-	if input.SplitDescription != nil {
-		descStr = *input.SplitDescription
-	}
-	if input.SplitPosition != nil {
-		positionStr = *input.SplitPosition
 	}
 
 	var email *persist.Email
@@ -130,15 +123,14 @@ func (r *mutationResolver) CreateUser(ctx context.Context, authMechanism model.A
 		email = &it
 	}
 
-	userID, splitID, err := publicapi.For(ctx).User.CreateUser(ctx, authenticator, input.Username, email, bioStr, nameStr, descStr, positionStr)
+	userID, err := publicapi.For(ctx).User.CreateUser(ctx, authenticator, userName, email, bioStr)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &model.CreateUserPayload{
-		UserID:  &userID,
-		SplitID: &splitID,
-		Viewer:  resolveViewer(ctx),
+		UserID: &userID,
+		Viewer: resolveViewer(ctx),
 	}
 
 	return output, nil

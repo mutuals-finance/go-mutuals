@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users
     last_updated          timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     username              character varying(255),
-    username_idempotent   character varying(255) UNIQUE,
+    username_idempotent   character varying(255),
     wallets               character varying(255)[],
     bio                   character varying,
     traits                jsonb,
