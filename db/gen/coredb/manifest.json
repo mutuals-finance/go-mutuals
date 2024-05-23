@@ -400,7 +400,7 @@
               },
               {
                 "name": "primary_wallet_id",
-                "not_null": true,
+                "not_null": false,
                 "is_array": false,
                 "comment": "",
                 "length": -1,
@@ -69004,7 +69004,7 @@
               },
               {
                 "name": "primary_wallet_id",
-                "not_null": true,
+                "not_null": false,
                 "is_array": false,
                 "comment": "",
                 "length": -1,
@@ -70020,7 +70020,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -70477,7 +70477,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -70986,7 +70986,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -71443,7 +71443,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -72066,7 +72066,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -72519,7 +72519,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -72972,7 +72972,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -73425,7 +73425,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -73911,7 +73911,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -74397,7 +74397,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -74850,7 +74850,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -89883,7 +89883,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -90573,7 +90573,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -91180,7 +91180,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -91683,7 +91683,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -91990,7 +91990,7 @@
           "number": 1,
           "column": {
             "name": "wallet_id",
-            "not_null": true,
+            "not_null": false,
             "is_array": false,
             "comment": "",
             "length": -1,
@@ -92420,7 +92420,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,
@@ -94420,7 +94420,7 @@
         },
         {
           "name": "primary_wallet_id",
-          "not_null": true,
+          "not_null": false,
           "is_array": false,
           "comment": "",
           "length": -1,

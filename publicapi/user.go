@@ -49,11 +49,16 @@ type UserAPI struct {
 
 func (api UserAPI) GetLoggedInUserId(ctx context.Context) persist.DBID {
 	gc := util.MustGetGinContext(ctx)
+
 	return auth.GetUserIDFromCtx(gc)
 }
 
 func (api UserAPI) IsUserLoggedIn(ctx context.Context) bool {
 	gc := util.MustGetGinContext(ctx)
+
+	logger.For(ctx).Infof("%v", gc.Request.Header)
+	logger.For(ctx).Infof("%v", gc.Request.Host)
+
 	return auth.GetUserAuthedFromCtx(gc)
 }
 

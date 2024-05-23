@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users
       "all": false
     }'::jsonb,
     featured_split        character varying,
-    primary_wallet_id     character varying(255)             NOT NULL,
+    primary_wallet_id     character varying(255)             ,
     user_experiences      jsonb                              NOT NULL DEFAULT '{}'::jsonb,
     fts_username          tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, ((username)::text ||
                                                                                           CASE
