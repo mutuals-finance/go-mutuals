@@ -211,9 +211,10 @@ func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.Ch
 		return nil, err
 	}
 
-	user, err := api.loaders.GetUserByChainAddressBatch.Load(db.GetUserByChainAddressBatchParams{
-		Address: chainAddress.Address(),
-		Chain:   chainAddress.Chain(),
+	chain := chainAddress.Chain()
+	user, err := api.loaders.GetUserByAddressAndL1Batch.Load(db.GetUserByAddressAndL1BatchParams{
+		L1Chain: chain.L1Chain(),
+		Address: persist.Address(chain.NormalizeAddress(chainAddress.Address())),
 	})
 	if err != nil {
 		return nil, err

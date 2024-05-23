@@ -179,6 +179,7 @@ func (e NonceAuthenticator) GetDescription() string {
 
 func (e NonceAuthenticator) Authenticate(ctx context.Context) (*AuthResult, error) {
 	asChainAddress := e.ChainPubKey.ToChainAddress()
+	asL1 := asChainAddress.ToL1ChainAddress()
 
 	// The message can be arbitrary, but it must contain the nonce
 	if !strings.Contains(e.Message, e.Nonce) {
@@ -200,9 +201,9 @@ func (e NonceAuthenticator) Authenticate(ctx context.Context) (*AuthResult, erro
 	}
 
 	var user *db.User
-	u, err := e.Queries.GetUserByChainAddress(ctx, db.GetUserByChainAddressParams{
-		Address: asChainAddress.Address(),
-		Chain:   asChainAddress.Chain(),
+	u, err := e.Queries.GetUserByAddressAndL1(ctx, db.GetUserByAddressAndL1Params{
+		Address: asL1.Address(),
+		L1Chain: asL1.L1Chain(),
 	})
 
 	if err != nil {

@@ -27,21 +27,21 @@ where p.pii_verified_email_address = lower($1)
   and p.deleted = false
   and u.deleted = false;
 
--- name: GetUserByChainAddress :one
+-- name: GetUserByAddressAndL1 :one
 select users.*
 from users, wallets
 where wallets.address = sqlc.arg('address')
-  and wallets.chain = sqlc.arg('chain')
+  and wallets.l1_chain = sqlc.arg('l1_chain')
   and array[wallets.id] <@ users.wallets
   and wallets.deleted = false
   and users.deleted = false;
 
--- name: GetUserByChainAddressBatch :batchone
+-- name: GetUserByAddressAndL1Batch :batchone
 select users.*
 from users, wallets
 where wallets.address = sqlc.arg('address')
+  and wallets.l1_chain = sqlc.arg('l1_chain')
   and array[wallets.id] <@ users.wallets
-  and wallets.chain = sqlc.arg('chain')
   and wallets.deleted = false
   and users.deleted = false;
 
@@ -98,11 +98,8 @@ SELECT * FROM wallets WHERE id = $1 AND deleted = false;
 -- name: GetWalletByIDBatch :batchone
 SELECT * FROM wallets WHERE id = $1 AND deleted = false;
 
--- name: GetWalletByChainAddress :one
-SELECT wallets.* FROM wallets WHERE address = $1 AND chain = $2 AND deleted = false;
-
--- name: GetWalletByChainAddressBatch :batchone
-SELECT wallets.* FROM wallets WHERE address = $1 AND chain = $2 AND deleted = false;
+-- name: GetWalletByAddressAndL1Chain :one
+SELECT wallets.* FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false;
 
 -- name: GetWalletsByUserID :many
 SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
@@ -359,7 +356,7 @@ where users.id = @user_id and wallets.id = @wallet_id
   and wallets.id = any(users.wallets) and wallets.deleted = false;
 
 -- name: GetUsersByChainAddresses :many
-select users.*,wallets.address from users, wallets where wallets.address = ANY(@addresses::varchar[]) AND wallets.chain = @chain::int AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false;
+select users.*,wallets.address from users, wallets where wallets.address = ANY(@addresses::varchar[]) AND wallets.l1_chain = @l1_chain AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false;
 
 -- name: AddUserRoles :exec
 insert into user_roles (id, user_id, role, created_at, last_updated)
@@ -409,7 +406,7 @@ select * from users where array[@wallet::varchar]::varchar[] <@ wallets and dele
 update users set deleted = true where id = $1;
 
 -- name: InsertWallet :exec
-with new_wallet as (insert into wallets(id, address, chain, wallet_type) values ($1, $2, $3, $4) returning id)
+with new_wallet as (insert into wallets(id, address, chain, l1_chain, wallet_type) values ($1, $2, $3, $4, $5) returning id)
 update users set
                  primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),
                  wallets = array_append(users.wallets, new_wallet.id)

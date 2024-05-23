@@ -150,9 +150,9 @@ func (u *UserRepository) createWalletWithTx(ctx context.Context, queries *db.Que
 		queries = u.queries
 	}
 
-	wallet, err := queries.GetWalletByChainAddress(ctx, db.GetWalletByChainAddressParams{
+	wallet, err := queries.GetWalletByAddressAndL1Chain(ctx, db.GetWalletByAddressAndL1ChainParams{
 		Address: chainAddress.Address(),
-		Chain:   chainAddress.Chain(),
+		L1Chain: chainAddress.Chain().L1Chain(),
 	})
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", err
@@ -355,10 +355,10 @@ func (u *UserRepository) GetByIDs(pCtx context.Context, pIDs []persist.DBID) ([]
 }
 
 // GetByChainAddress gets the user who owns the wallet with the specified ChainAddress (if any)
-func (u *UserRepository) GetByChainAddress(pCtx context.Context, pChainAddress persist.ChainAddress) (persist.User, error) {
+func (u *UserRepository) GetByChainAddress(pCtx context.Context, pChainAddress persist.L1ChainAddress) (persist.User, error) {
 	var walletID persist.DBID
 
-	err := u.getWalletIDStmt.QueryRowContext(pCtx, pChainAddress.Address(), pChainAddress).Scan(&walletID)
+	err := u.getWalletIDStmt.QueryRowContext(pCtx, pChainAddress.Address(), pChainAddress.L1Chain()).Scan(&walletID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return persist.User{}, persist.ErrWalletNotFoundByAddress{Address: pChainAddress}

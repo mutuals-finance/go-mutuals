@@ -90,14 +90,20 @@ sql:
             go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
           - column: "*.*.*_address"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
+          - column: '*.*.l1_chain'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.L1Chain'
+          - column: '*.*.*_l1_chain'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.L1Chain'
+          - column: '*.*.chain'
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.Chain"
+          - column: '*.*.*_chain'
+            go_type: "github.com/SplitFi/go-splitfi/service/persist.Chain"
           - column: "*.*.action"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.Action"
           - column: "*.*.thumbnail_url"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.NullString"
           - column: "*.*.media_url"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.NullString"
-          - column: "*.*.chain"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Chain"
           - column: "*.*.email_type"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.EmailType"
           - column: "*.*.actions"

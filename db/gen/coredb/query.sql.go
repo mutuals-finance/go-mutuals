@@ -303,7 +303,7 @@ func (q *Queries) CreateSimpleNotification(ctx context.Context, arg CreateSimple
 }
 
 const createSplit = `-- name: CreateSplit :one
-insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
+insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
 `
 
 type CreateSplitParams struct {
@@ -340,6 +340,7 @@ func (q *Queries) CreateSplit(ctx context.Context, arg CreateSplitParams) (Split
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Chain,
+		&i.L1Chain,
 		&i.Address,
 		&i.Name,
 		&i.Description,
@@ -943,7 +944,7 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 }
 
 const getSplitByChainAddress = `-- name: GetSplitByChainAddress :one
-SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
 `
 
 type GetSplitByChainAddressParams struct {
@@ -961,6 +962,7 @@ func (q *Queries) GetSplitByChainAddress(ctx context.Context, arg GetSplitByChai
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Chain,
+		&i.L1Chain,
 		&i.Address,
 		&i.Name,
 		&i.Description,
@@ -974,7 +976,7 @@ func (q *Queries) GetSplitByChainAddress(ctx context.Context, arg GetSplitByChai
 }
 
 const getSplitById = `-- name: GetSplitById :one
-SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetSplitById(ctx context.Context, id persist.DBID) (Split, error) {
@@ -987,6 +989,7 @@ func (q *Queries) GetSplitById(ctx context.Context, id persist.DBID) (Split, err
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Chain,
+		&i.L1Chain,
 		&i.Address,
 		&i.Name,
 		&i.Description,
@@ -1000,7 +1003,7 @@ func (q *Queries) GetSplitById(ctx context.Context, id persist.DBID) (Split, err
 }
 
 const getSplitByUserID = `-- name: GetSplitByUserID :one
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM users u, unnest(u.wallets)
+SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM users u, unnest(u.wallets)
     WITH ORDINALITY AS a(wallet_id, wallet_ord)
     INNER JOIN wallets w on w.id = a.wallet_id
     INNER JOIN recipients r ON r.address = w.address
@@ -1023,6 +1026,7 @@ func (q *Queries) GetSplitByUserID(ctx context.Context, arg GetSplitByUserIDPara
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Chain,
+		&i.L1Chain,
 		&i.Address,
 		&i.Name,
 		&i.Description,
@@ -1103,7 +1107,7 @@ func (q *Queries) GetSplitEventsInWindow(ctx context.Context, arg GetSplitEvents
 }
 
 const getSplitsByChainsAndAddresses = `-- name: GetSplitsByChainsAndAddresses :many
-SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
 `
 
 type GetSplitsByChainsAndAddressesParams struct {
@@ -1127,6 +1131,7 @@ func (q *Queries) GetSplitsByChainsAndAddresses(ctx context.Context, arg GetSpli
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Chain,
+			&i.L1Chain,
 			&i.Address,
 			&i.Name,
 			&i.Description,
@@ -1147,7 +1152,7 @@ func (q *Queries) GetSplitsByChainsAndAddresses(ctx context.Context, arg GetSpli
 }
 
 const getSplitsByRecipientAddress = `-- name: GetSplitsByRecipientAddress :many
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
+SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
                     JOIN splits s ON s.id = r.split_id
 WHERE r.address = $1 AND s.deleted = false
 `
@@ -1168,6 +1173,7 @@ func (q *Queries) GetSplitsByRecipientAddress(ctx context.Context, address persi
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Chain,
+			&i.L1Chain,
 			&i.Address,
 			&i.Name,
 			&i.Description,
@@ -1187,23 +1193,23 @@ func (q *Queries) GetSplitsByRecipientAddress(ctx context.Context, address persi
 	return items, nil
 }
 
-const getUserByChainAddress = `-- name: GetUserByChainAddress :one
+const getUserByAddressAndL1 = `-- name: GetUserByAddressAndL1 :one
 select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
-  and wallets.chain = $2
+  and wallets.l1_chain = $2
   and array[wallets.id] <@ users.wallets
   and wallets.deleted = false
   and users.deleted = false
 `
 
-type GetUserByChainAddressParams struct {
+type GetUserByAddressAndL1Params struct {
 	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
+	L1Chain persist.L1Chain `db:"l1_chain" json:"l1_chain"`
 }
 
-func (q *Queries) GetUserByChainAddress(ctx context.Context, arg GetUserByChainAddressParams) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByChainAddress, arg.Address, arg.Chain)
+func (q *Queries) GetUserByAddressAndL1(ctx context.Context, arg GetUserByAddressAndL1Params) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByAddressAndL1, arg.Address, arg.L1Chain)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -1527,12 +1533,12 @@ func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (
 }
 
 const getUsersByChainAddresses = `-- name: GetUsersByChainAddresses :many
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.chain = $2::int AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.l1_chain = $2 AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false
 `
 
 type GetUsersByChainAddressesParams struct {
-	Addresses []string `db:"addresses" json:"addresses"`
-	Chain     int32    `db:"chain" json:"chain"`
+	Addresses []string        `db:"addresses" json:"addresses"`
+	L1Chain   persist.L1Chain `db:"l1_chain" json:"l1_chain"`
 }
 
 type GetUsersByChainAddressesRow struct {
@@ -1556,7 +1562,7 @@ type GetUsersByChainAddressesRow struct {
 }
 
 func (q *Queries) GetUsersByChainAddresses(ctx context.Context, arg GetUsersByChainAddressesParams) ([]GetUsersByChainAddressesRow, error) {
-	rows, err := q.db.Query(ctx, getUsersByChainAddresses, arg.Addresses, arg.Chain)
+	rows, err := q.db.Query(ctx, getUsersByChainAddresses, arg.Addresses, arg.L1Chain)
 	if err != nil {
 		return nil, err
 	}
@@ -1837,17 +1843,17 @@ func (q *Queries) GetUsersWithTrait(ctx context.Context, dollar_1 string) ([]Use
 	return items, nil
 }
 
-const getWalletByChainAddress = `-- name: GetWalletByChainAddress :one
-SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain FROM wallets WHERE address = $1 AND chain = $2 AND deleted = false
+const getWalletByAddressAndL1Chain = `-- name: GetWalletByAddressAndL1Chain :one
+SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain, wallets.l1_chain FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false
 `
 
-type GetWalletByChainAddressParams struct {
+type GetWalletByAddressAndL1ChainParams struct {
 	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
+	L1Chain persist.L1Chain `db:"l1_chain" json:"l1_chain"`
 }
 
-func (q *Queries) GetWalletByChainAddress(ctx context.Context, arg GetWalletByChainAddressParams) (Wallet, error) {
-	row := q.db.QueryRow(ctx, getWalletByChainAddress, arg.Address, arg.Chain)
+func (q *Queries) GetWalletByAddressAndL1Chain(ctx context.Context, arg GetWalletByAddressAndL1ChainParams) (Wallet, error) {
+	row := q.db.QueryRow(ctx, getWalletByAddressAndL1Chain, arg.Address, arg.L1Chain)
 	var i Wallet
 	err := row.Scan(
 		&i.ID,
@@ -1858,12 +1864,13 @@ func (q *Queries) GetWalletByChainAddress(ctx context.Context, arg GetWalletByCh
 		&i.Address,
 		&i.WalletType,
 		&i.Chain,
+		&i.L1Chain,
 	)
 	return i, err
 }
 
 const getWalletByID = `-- name: GetWalletByID :one
-SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain FROM wallets WHERE id = $1 AND deleted = false
+SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetWalletByID(ctx context.Context, id persist.DBID) (Wallet, error) {
@@ -1878,12 +1885,13 @@ func (q *Queries) GetWalletByID(ctx context.Context, id persist.DBID) (Wallet, e
 		&i.Address,
 		&i.WalletType,
 		&i.Chain,
+		&i.L1Chain,
 	)
 	return i, err
 }
 
 const getWalletsByUserID = `-- name: GetWalletsByUserID :many
-SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
+SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
 `
 
 func (q *Queries) GetWalletsByUserID(ctx context.Context, id persist.DBID) ([]Wallet, error) {
@@ -1904,6 +1912,7 @@ func (q *Queries) GetWalletsByUserID(ctx context.Context, id persist.DBID) ([]Wa
 			&i.Address,
 			&i.WalletType,
 			&i.Chain,
+			&i.L1Chain,
 		); err != nil {
 			return nil, err
 		}
@@ -1963,18 +1972,19 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (persist
 }
 
 const insertWallet = `-- name: InsertWallet :exec
-with new_wallet as (insert into wallets(id, address, chain, wallet_type) values ($1, $2, $3, $4) returning id)
+with new_wallet as (insert into wallets(id, address, chain, l1_chain, wallet_type) values ($1, $2, $3, $4, $5) returning id)
 update users set
                  primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),
                  wallets = array_append(users.wallets, new_wallet.id)
 from new_wallet
-where users.id = $5 and not users.deleted
+where users.id = $6 and not users.deleted
 `
 
 type InsertWalletParams struct {
 	ID         persist.DBID       `db:"id" json:"id"`
 	Address    persist.Address    `db:"address" json:"address"`
 	Chain      persist.Chain      `db:"chain" json:"chain"`
+	L1Chain    persist.L1Chain    `db:"l1_chain" json:"l1_chain"`
 	WalletType persist.WalletType `db:"wallet_type" json:"wallet_type"`
 	UserID     persist.DBID       `db:"user_id" json:"user_id"`
 }
@@ -1984,6 +1994,7 @@ func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) erro
 		arg.ID,
 		arg.Address,
 		arg.Chain,
+		arg.L1Chain,
 		arg.WalletType,
 		arg.UserID,
 	)

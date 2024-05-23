@@ -617,6 +617,32 @@
                 "array_dims": 0
               },
               {
+                "name": "l1_chain",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "splits"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "int4"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
                 "name": "address",
                 "not_null": false,
                 "is_array": false,
@@ -2658,6 +2684,32 @@
               },
               {
                 "name": "chain",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "wallets"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "pg_catalog",
+                  "name": "int4"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
+                "name": "l1_chain",
                 "not_null": false,
                 "is_array": false,
                 "comment": "",
@@ -73003,8 +73055,8 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
-      "name": "GetUserByChainAddress",
+      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.l1_chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
+      "name": "GetUserByAddressAndL1",
       "cmd": ":one",
       "columns": [
         {
@@ -73457,7 +73509,7 @@
         {
           "number": 2,
           "column": {
-            "name": "chain",
+            "name": "l1_chain",
             "not_null": false,
             "is_array": false,
             "comment": "",
@@ -73489,8 +73541,8 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.chain = $2\n  and wallets.deleted = false\n  and users.deleted = false",
-      "name": "GetUserByChainAddressBatch",
+      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.l1_chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
+      "name": "GetUserByAddressAndL1Batch",
       "cmd": ":batchone",
       "columns": [
         {
@@ -73943,7 +73995,7 @@
         {
           "number": 2,
           "column": {
-            "name": "chain",
+            "name": "l1_chain",
             "not_null": false,
             "is_array": false,
             "comment": "",
@@ -74881,7 +74933,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false",
       "name": "GetSplitById",
       "cmd": ":one",
       "columns": [
@@ -75017,6 +75069,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -75286,7 +75364,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM users u, unnest(u.wallets)\n    WITH ORDINALITY AS a(wallet_id, wallet_ord)\n    INNER JOIN wallets w on w.id = a.wallet_id\n    INNER JOIN recipients r ON r.address = w.address\n    INNER JOIN splits s ON s.id = r.split_id\n    WHERE u.id = $1 AND s.id = $2 AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false",
+      "text": "SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM users u, unnest(u.wallets)\n    WITH ORDINALITY AS a(wallet_id, wallet_ord)\n    INNER JOIN wallets w on w.id = a.wallet_id\n    INNER JOIN recipients r ON r.address = w.address\n    INNER JOIN splits s ON s.id = r.split_id\n    WHERE u.id = $1 AND s.id = $2 AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false",
       "name": "GetSplitByUserID",
       "cmd": ":one",
       "columns": [
@@ -75422,6 +75500,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -75720,7 +75824,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership\n    from users u, unnest(u.wallets)\n    with ordinality as a(wallet_id, wallet_ord)\n        join wallets w on w.id = a.wallet_id\n        join recipients r on r.address = w.address\n        join splits s on s.id = r.split_id\n    where u.id = $1\n      and u.deleted = false\n      and w.deleted = false\n      and r.deleted = false\n      and s.deleted = false",
+      "text": "select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership\n    from users u, unnest(u.wallets)\n    with ordinality as a(wallet_id, wallet_ord)\n        join wallets w on w.id = a.wallet_id\n        join recipients r on r.address = w.address\n        join splits s on s.id = r.split_id\n    where u.id = $1\n      and u.deleted = false\n      and w.deleted = false\n      and r.deleted = false\n      and s.deleted = false",
       "name": "GetSplitsByUserIDBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -75856,6 +75960,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -76125,7 +76255,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false",
       "name": "GetSplitByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -76261,6 +76391,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -76530,7 +76686,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false",
+      "text": "SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false",
       "name": "GetSplitByChainAddress",
       "cmd": ":one",
       "columns": [
@@ -76691,6 +76847,32 @@
           "array_dims": 0
         },
         {
+          "name": "l1_chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "address",
           "not_null": false,
           "is_array": false,
@@ -76964,7 +77146,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false",
+      "text": "SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false",
       "name": "GetSplitByChainAddressBatch",
       "cmd": ":batchone",
       "columns": [
@@ -77125,6 +77307,32 @@
           "array_dims": 0
         },
         {
+          "name": "l1_chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "address",
           "not_null": false,
           "is_array": false,
@@ -77398,7 +77606,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false",
+      "text": "SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false",
       "name": "GetSplitsByChainsAndAddresses",
       "cmd": ":many",
       "columns": [
@@ -77534,6 +77742,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -77824,7 +78058,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r\n                    JOIN splits s ON s.id = r.split_id\nWHERE r.address = $1 AND s.deleted = false",
+      "text": "SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r\n                    JOIN splits s ON s.id = r.split_id\nWHERE r.address = $1 AND s.deleted = false",
       "name": "GetSplitsByRecipientAddress",
       "cmd": ":many",
       "columns": [
@@ -77960,6 +78194,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -78229,7 +78489,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain FROM wallets WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false",
       "name": "GetWalletByID",
       "cmd": ":one",
       "columns": [
@@ -78440,6 +78700,32 @@
           "original_name": "",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "wallets"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
         }
       ],
       "params": [
@@ -78478,7 +78764,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain FROM wallets WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false",
       "name": "GetWalletByIDBatch",
       "cmd": ":batchone",
       "columns": [
@@ -78689,6 +78975,32 @@
           "original_name": "",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "wallets"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
         }
       ],
       "params": [
@@ -78727,8 +79039,8 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain FROM wallets WHERE address = $1 AND chain = $2 AND deleted = false",
-      "name": "GetWalletByChainAddress",
+      "text": "SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain, wallets.l1_chain FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false",
+      "name": "GetWalletByAddressAndL1Chain",
       "cmd": ":one",
       "columns": [
         {
@@ -78938,261 +79250,9 @@
           "original_name": "",
           "unsigned": false,
           "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "address",
-            "not_null": false,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "",
-              "name": "wallets"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
         },
         {
-          "number": 2,
-          "column": {
-            "name": "chain",
-            "not_null": false,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "",
-              "name": "wallets"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.int4"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "query.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain FROM wallets WHERE address = $1 AND chain = $2 AND deleted = false",
-      "name": "GetWalletByChainAddressBatch",
-      "cmd": ":batchone",
-      "columns": [
-        {
-          "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "wallets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "created_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "wallets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "last_updated",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "wallets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "deleted",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "wallets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "bool"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "version",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "wallets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "address",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "wallets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "wallet_type",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "wallets"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "chain",
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -79251,7 +79311,7 @@
         {
           "number": 2,
           "column": {
-            "name": "chain",
+            "name": "l1_chain",
             "not_null": false,
             "is_array": false,
             "comment": "",
@@ -79283,7 +79343,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
+      "text": "SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
       "name": "GetWalletsByUserID",
       "cmd": ":many",
       "columns": [
@@ -79494,6 +79554,32 @@
           "original_name": "",
           "unsigned": false,
           "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "wallets"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
         }
       ],
       "params": [
@@ -79532,7 +79618,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
+      "text": "SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
       "name": "GetWalletsByUserIDBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -79720,6 +79806,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "wallets"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -91938,7 +92050,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.chain = $2::int AND ARRAY[wallets.id] \u003c@ users.wallets AND users.deleted = false AND wallets.deleted = false",
+      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.l1_chain = $2 AND ARRAY[wallets.id] \u003c@ users.wallets AND users.deleted = false AND wallets.deleted = false",
       "name": "GetUsersByChainAddresses",
       "cmd": ":many",
       "columns": [
@@ -92414,20 +92526,24 @@
         {
           "number": 2,
           "column": {
-            "name": "chain",
-            "not_null": true,
+            "name": "l1_chain",
+            "not_null": false,
             "is_array": false,
             "comment": "",
             "length": -1,
-            "is_named_param": false,
+            "is_named_param": true,
             "is_func_call": false,
             "scope": "",
-            "table": null,
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "wallets"
+            },
             "table_alias": "",
             "type": {
               "catalog": "",
-              "schema": "pg_catalog",
-              "name": "int4"
+              "schema": "",
+              "name": "pg_catalog.int4"
             },
             "is_sqlc_slice": false,
             "embed_table": null,
@@ -92672,7 +92788,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership",
+      "text": "insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership",
       "name": "CreateSplit",
       "cmd": ":one",
       "columns": [
@@ -92808,6 +92924,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -94401,7 +94543,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with new_wallet as (insert into wallets(id, address, chain, wallet_type) values ($1, $2, $3, $4) returning id)\nupdate users set\n                 primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),\n                 wallets = array_append(users.wallets, new_wallet.id)\nfrom new_wallet\nwhere users.id = $5 and not users.deleted",
+      "text": "with new_wallet as (insert into wallets(id, address, chain, l1_chain, wallet_type) values ($1, $2, $3, $4, $5) returning id)\nupdate users set\n                 primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),\n                 wallets = array_append(users.wallets, new_wallet.id)\nfrom new_wallet\nwhere users.id = $6 and not users.deleted",
       "name": "InsertWallet",
       "cmd": ":exec",
       "columns": [],
@@ -94496,7 +94638,7 @@
         {
           "number": 4,
           "column": {
-            "name": "wallet_type",
+            "name": "l1_chain",
             "not_null": false,
             "is_array": false,
             "comment": "",
@@ -94524,6 +94666,35 @@
         },
         {
           "number": 5,
+          "column": {
+            "name": "wallet_type",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "wallets"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.int4"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 6,
           "column": {
             "name": "user_id",
             "not_null": true,
@@ -96920,7 +97091,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership",
+      "text": "insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership",
       "name": "SplitRepoCreate",
       "cmd": ":one",
       "columns": [
@@ -97056,6 +97227,32 @@
         },
         {
           "name": "chain",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "splits"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "l1_chain",
           "not_null": false,
           "is_array": false,
           "comment": "",

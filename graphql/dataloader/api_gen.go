@@ -18,14 +18,13 @@ type Loaders struct {
 	GetSplitByChainAddressBatch         *GetSplitByChainAddressBatch
 	GetSplitByIdBatch                   *GetSplitByIdBatch
 	GetSplitsByUserIDBatch              *GetSplitsByUserIDBatch
-	GetUserByChainAddressBatch          *GetUserByChainAddressBatch
+	GetUserByAddressAndL1Batch          *GetUserByAddressAndL1Batch
 	GetUserByIdBatch                    *GetUserByIdBatch
 	GetUserByUsernameBatch              *GetUserByUsernameBatch
 	GetUserNotificationsBatch           *GetUserNotificationsBatch
 	GetUsersByPositionPaginateBatch     *GetUsersByPositionPaginateBatch
 	GetUsersByPositionPersonalizedBatch *GetUsersByPositionPersonalizedBatch
 	GetUsersWithTraitBatch              *GetUsersWithTraitBatch
-	GetWalletByChainAddressBatch        *GetWalletByChainAddressBatch
 	GetWalletByIDBatch                  *GetWalletByIDBatch
 	GetWalletsByUserIDBatch             *GetWalletsByUserIDBatch
 }
@@ -37,14 +36,13 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetSplitByChainAddressBatch = newGetSplitByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitByIdBatch = newGetSplitByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitsByUserIDBatch = newGetSplitsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitsByUserIDBatch(q), preFetchHook, postFetchHook)
-	loaders.GetUserByChainAddressBatch = newGetUserByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByChainAddressBatch(q), preFetchHook, postFetchHook)
+	loaders.GetUserByAddressAndL1Batch = newGetUserByAddressAndL1Batch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByAddressAndL1Batch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByUsernameBatch = newGetUserByUsernameBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByUsernameBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserNotificationsBatch = newGetUserNotificationsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserNotificationsBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersByPositionPaginateBatch = newGetUsersByPositionPaginateBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPaginateBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersByPositionPersonalizedBatch = newGetUsersByPositionPersonalizedBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPersonalizedBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersWithTraitBatch = newGetUsersWithTraitBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersWithTraitBatch(q), preFetchHook, postFetchHook)
-	loaders.GetWalletByChainAddressBatch = newGetWalletByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetWalletByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetWalletByIDBatch = newGetWalletByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetWalletByIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetWalletsByUserIDBatch = newGetWalletsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetWalletsByUserIDBatch(q), preFetchHook, postFetchHook)
 
@@ -61,7 +59,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 			loaders.GetSplitByIdBatch.Prime(loaders.GetSplitByIdBatch.getKeyForResult(entry), entry)
 		}
 	})
-	loaders.GetUserByChainAddressBatch.RegisterResultSubscriber(func(result coredb.User) {
+	loaders.GetUserByAddressAndL1Batch.RegisterResultSubscriber(func(result coredb.User) {
 		loaders.GetUserByIdBatch.Prime(loaders.GetUserByIdBatch.getKeyForResult(result), result)
 	})
 	loaders.GetUserByUsernameBatch.RegisterResultSubscriber(func(result coredb.User) {
@@ -82,7 +80,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 			loaders.GetUserByIdBatch.Prime(loaders.GetUserByIdBatch.getKeyForResult(entry), entry)
 		}
 	})
-	loaders.GetUserByChainAddressBatch.RegisterResultSubscriber(func(result coredb.User) {
+	loaders.GetUserByAddressAndL1Batch.RegisterResultSubscriber(func(result coredb.User) {
 		loaders.GetUserByUsernameBatch.Prime(loaders.GetUserByUsernameBatch.getKeyForResult(result), result)
 	})
 	loaders.GetUserByIdBatch.RegisterResultSubscriber(func(result coredb.User) {
@@ -102,9 +100,6 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 		for _, entry := range result {
 			loaders.GetUserByUsernameBatch.Prime(loaders.GetUserByUsernameBatch.getKeyForResult(entry), entry)
 		}
-	})
-	loaders.GetWalletByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Wallet) {
-		loaders.GetWalletByIDBatch.Prime(loaders.GetWalletByIDBatch.getKeyForResult(result), result)
 	})
 	loaders.GetWalletsByUserIDBatch.RegisterResultSubscriber(func(result []coredb.Wallet) {
 		for _, entry := range result {
@@ -188,12 +183,12 @@ func loadGetSplitsByUserIDBatch(q *coredb.Queries) func(context.Context, *GetSpl
 	}
 }
 
-func loadGetUserByChainAddressBatch(q *coredb.Queries) func(context.Context, *GetUserByChainAddressBatch, []coredb.GetUserByChainAddressBatchParams) ([]coredb.User, []error) {
-	return func(ctx context.Context, d *GetUserByChainAddressBatch, params []coredb.GetUserByChainAddressBatchParams) ([]coredb.User, []error) {
+func loadGetUserByAddressAndL1Batch(q *coredb.Queries) func(context.Context, *GetUserByAddressAndL1Batch, []coredb.GetUserByAddressAndL1BatchParams) ([]coredb.User, []error) {
+	return func(ctx context.Context, d *GetUserByAddressAndL1Batch, params []coredb.GetUserByAddressAndL1BatchParams) ([]coredb.User, []error) {
 		results := make([]coredb.User, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetUserByChainAddressBatch(ctx, params)
+		b := q.GetUserByAddressAndL1Batch(ctx, params)
 		defer b.Close()
 
 		b.QueryRow(func(i int, r coredb.User, err error) {
@@ -303,25 +298,6 @@ func loadGetUsersWithTraitBatch(q *coredb.Queries) func(context.Context, *GetUse
 
 		b.Query(func(i int, r []coredb.User, err error) {
 			results[i], errors[i] = r, err
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetWalletByChainAddressBatch(q *coredb.Queries) func(context.Context, *GetWalletByChainAddressBatch, []coredb.GetWalletByChainAddressBatchParams) ([]coredb.Wallet, []error) {
-	return func(ctx context.Context, d *GetWalletByChainAddressBatch, params []coredb.GetWalletByChainAddressBatchParams) ([]coredb.Wallet, []error) {
-		results := make([]coredb.Wallet, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetWalletByChainAddressBatch(ctx, params)
-		defer b.Close()
-
-		b.QueryRow(func(i int, r coredb.Wallet, err error) {
-			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
 		})
 
 		return results, errors

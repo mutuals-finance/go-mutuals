@@ -77,7 +77,7 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 }
 
 const getSplitByChainAddressBatch = `-- name: GetSplitByChainAddressBatch :batchone
-SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
 `
 
 type GetSplitByChainAddressBatchBatchResults struct {
@@ -122,6 +122,7 @@ func (b *GetSplitByChainAddressBatchBatchResults) QueryRow(f func(int, Split, er
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Chain,
+			&i.L1Chain,
 			&i.Address,
 			&i.Name,
 			&i.Description,
@@ -143,7 +144,7 @@ func (b *GetSplitByChainAddressBatchBatchResults) Close() error {
 }
 
 const getSplitByIdBatch = `-- name: GetSplitByIdBatch :batchone
-SELECT id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false
 `
 
 type GetSplitByIdBatchBatchResults struct {
@@ -182,6 +183,7 @@ func (b *GetSplitByIdBatchBatchResults) QueryRow(f func(int, Split, error)) {
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Chain,
+			&i.L1Chain,
 			&i.Address,
 			&i.Name,
 			&i.Description,
@@ -203,7 +205,7 @@ func (b *GetSplitByIdBatchBatchResults) Close() error {
 }
 
 const getSplitsByUserIDBatch = `-- name: GetSplitsByUserIDBatch :batchmany
-select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership
+select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership
     from users u, unnest(u.wallets)
     with ordinality as a(wallet_id, wallet_ord)
         join wallets w on w.id = a.wallet_id
@@ -259,6 +261,7 @@ func (b *GetSplitsByUserIDBatchBatchResults) Query(f func(int, []Split, error)) 
 					&i.CreatedAt,
 					&i.Deleted,
 					&i.Chain,
+					&i.L1Chain,
 					&i.Address,
 					&i.Name,
 					&i.Description,
@@ -285,41 +288,41 @@ func (b *GetSplitsByUserIDBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getUserByChainAddressBatch = `-- name: GetUserByChainAddressBatch :batchone
+const getUserByAddressAndL1Batch = `-- name: GetUserByAddressAndL1Batch :batchone
 select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
+  and wallets.l1_chain = $2
   and array[wallets.id] <@ users.wallets
-  and wallets.chain = $2
   and wallets.deleted = false
   and users.deleted = false
 `
 
-type GetUserByChainAddressBatchBatchResults struct {
+type GetUserByAddressAndL1BatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-type GetUserByChainAddressBatchParams struct {
+type GetUserByAddressAndL1BatchParams struct {
 	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
+	L1Chain persist.L1Chain `db:"l1_chain" json:"l1_chain"`
 }
 
-func (q *Queries) GetUserByChainAddressBatch(ctx context.Context, arg []GetUserByChainAddressBatchParams) *GetUserByChainAddressBatchBatchResults {
+func (q *Queries) GetUserByAddressAndL1Batch(ctx context.Context, arg []GetUserByAddressAndL1BatchParams) *GetUserByAddressAndL1BatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range arg {
 		vals := []interface{}{
 			a.Address,
-			a.Chain,
+			a.L1Chain,
 		}
-		batch.Queue(getUserByChainAddressBatch, vals...)
+		batch.Queue(getUserByAddressAndL1Batch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetUserByChainAddressBatchBatchResults{br, len(arg), false}
+	return &GetUserByAddressAndL1BatchBatchResults{br, len(arg), false}
 }
 
-func (b *GetUserByChainAddressBatchBatchResults) QueryRow(f func(int, User, error)) {
+func (b *GetUserByAddressAndL1BatchBatchResults) QueryRow(f func(int, User, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var i User
@@ -354,7 +357,7 @@ func (b *GetUserByChainAddressBatchBatchResults) QueryRow(f func(int, User, erro
 	}
 }
 
-func (b *GetUserByChainAddressBatchBatchResults) Close() error {
+func (b *GetUserByAddressAndL1BatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -817,68 +820,8 @@ func (b *GetUsersWithTraitBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getWalletByChainAddressBatch = `-- name: GetWalletByChainAddressBatch :batchone
-SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain FROM wallets WHERE address = $1 AND chain = $2 AND deleted = false
-`
-
-type GetWalletByChainAddressBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetWalletByChainAddressBatchParams struct {
-	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetWalletByChainAddressBatch(ctx context.Context, arg []GetWalletByChainAddressBatchParams) *GetWalletByChainAddressBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.Address,
-			a.Chain,
-		}
-		batch.Queue(getWalletByChainAddressBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetWalletByChainAddressBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetWalletByChainAddressBatchBatchResults) QueryRow(f func(int, Wallet, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Wallet
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.LastUpdated,
-			&i.Deleted,
-			&i.Version,
-			&i.Address,
-			&i.WalletType,
-			&i.Chain,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetWalletByChainAddressBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
 const getWalletByIDBatch = `-- name: GetWalletByIDBatch :batchone
-SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain FROM wallets WHERE id = $1 AND deleted = false
+SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
 `
 
 type GetWalletByIDBatchBatchResults struct {
@@ -919,6 +862,7 @@ func (b *GetWalletByIDBatchBatchResults) QueryRow(f func(int, Wallet, error)) {
 			&i.Address,
 			&i.WalletType,
 			&i.Chain,
+			&i.L1Chain,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -932,7 +876,7 @@ func (b *GetWalletByIDBatchBatchResults) Close() error {
 }
 
 const getWalletsByUserIDBatch = `-- name: GetWalletsByUserIDBatch :batchmany
-SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
+SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
 `
 
 type GetWalletsByUserIDBatchBatchResults struct {
@@ -980,6 +924,7 @@ func (b *GetWalletsByUserIDBatchBatchResults) Query(f func(int, []Wallet, error)
 					&i.Address,
 					&i.WalletType,
 					&i.Chain,
+					&i.L1Chain,
 				); err != nil {
 					return err
 				}

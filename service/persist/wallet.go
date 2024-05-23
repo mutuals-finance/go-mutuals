@@ -23,6 +23,7 @@ type Wallet struct {
 
 	Address    Address    `json:"address"`
 	Chain      Chain      `json:"chain"`
+	L1Chain    L1Chain    `json:"l1_chain"`
 	WalletType WalletType `json:"wallet_type"`
 }
 
@@ -428,9 +429,9 @@ type ErrWalletNotFoundByID struct{ ID DBID }
 func (e ErrWalletNotFoundByID) Unwrap() error { return errWalletNotFound }
 func (e ErrWalletNotFoundByID) Error() string { return "wallet not found by id: " + e.ID.String() }
 
-type ErrWalletNotFoundByAddress struct{ Address ChainAddress }
+type ErrWalletNotFoundByAddress struct{ Address L1ChainAddress }
 
 func (e ErrWalletNotFoundByAddress) Unwrap() error { return errWalletNotFound }
 func (e ErrWalletNotFoundByAddress) Error() string {
-	return fmt.Sprintf("wallet not found by chain=%d; address = %s", e.Address.Chain(), e.Address.Address())
+	return fmt.Sprintf("wallet not found by chain=%s; address = %s", e.Address.L1Chain(), e.Address.Address())
 }

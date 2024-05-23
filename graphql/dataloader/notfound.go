@@ -26,14 +26,10 @@ func (*GetUserByUsernameBatch) getNotFoundError(key string) error {
 	return persist.ErrUserNotFound{Username: key}
 }
 
-func (*GetUserByChainAddressBatch) getNotFoundError(key coredb.GetUserByChainAddressBatchParams) error {
-	return persist.ErrAddressNotOwnedByUser{ChainAddress: persist.NewChainAddress(key.Address, persist.Chain(key.Chain))}
+func (*GetUserByAddressAndL1Batch) getNotFoundError(key coredb.GetUserByAddressAndL1BatchParams) error {
+	return persist.ErrUserNotFound{L1ChainAddress: persist.NewL1ChainAddress(key.Address, persist.Chain(key.L1Chain))}
 }
 
 func (*GetWalletByIDBatch) getNotFoundError(key persist.DBID) error {
-	return pgx.ErrNoRows
-}
-
-func (*GetWalletByChainAddressBatch) getNotFoundError(key coredb.GetWalletByChainAddressBatchParams) error {
 	return pgx.ErrNoRows
 }

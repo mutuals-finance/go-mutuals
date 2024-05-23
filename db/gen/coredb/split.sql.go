@@ -13,7 +13,7 @@ import (
 )
 
 const splitRepoCreate = `-- name: SplitRepoCreate :one
-insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id, version, last_updated, created_at, deleted, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
+insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
 `
 
 type SplitRepoCreateParams struct {
@@ -50,6 +50,7 @@ func (q *Queries) SplitRepoCreate(ctx context.Context, arg SplitRepoCreateParams
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Chain,
+		&i.L1Chain,
 		&i.Address,
 		&i.Name,
 		&i.Description,

@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS splits
     created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted                 boolean                  NOT NULL DEFAULT FALSE,
     chain                   integer,
+    l1_chain                integer,
     address                 character varying(255),
     name                    character varying        NOT NULL DEFAULT ''::character varying,
     description             character varying        NOT NULL DEFAULT ''::character varying,
@@ -84,6 +85,9 @@ CREATE INDEX splits_fts_name_idx ON splits USING gin (fts_name);
 -- CREATE INDEX splits_fts_address_idx ON splits USING gin (fts_address);
 
 CREATE UNIQUE INDEX split_address_chain_idx ON splits USING btree (address, chain);
+
+CREATE INDEX splits_l1_chain_idx ON splits (address,chain,l1_chain) WHERE deleted = false;
+CREATE UNIQUE INDEX splits_l1_chain_unique_idx ON splits (l1_chain,chain,address);
 
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (
@@ -227,10 +231,12 @@ CREATE TABLE IF NOT EXISTS wallets
     address      character varying(255),
     wallet_type  integer,
     chain        integer,
+    l1_chain     integer,
     fts_address  tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (address)::text)) STORED
 );
-
 CREATE UNIQUE INDEX wallet_address_chain_idx ON wallets USING btree (address, chain) WHERE (NOT deleted);
+CREATE INDEX wallets_l1_chain_idx ON wallets (address,chain,l1_chain) WHERE deleted = false;
+CREATE UNIQUE INDEX wallets_l1_chain_unique_idx ON wallets (address,l1_chain) WHERE deleted = false;
 
 CREATE INDEX wallets_fts_address_idx ON wallets USING gin (fts_address);
 

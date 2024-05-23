@@ -170,6 +170,7 @@ type Split struct {
 	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
 	Deleted        bool            `db:"deleted" json:"deleted"`
 	Chain          persist.Chain   `db:"chain" json:"chain"`
+	L1Chain        persist.L1Chain `db:"l1_chain" json:"l1_chain"`
 	Address        persist.Address `db:"address" json:"address"`
 	Name           string          `db:"name" json:"name"`
 	Description    string          `db:"description" json:"description"`
@@ -228,4 +229,5 @@ type Wallet struct {
 	Address     persist.Address    `db:"address" json:"address"`
 	WalletType  persist.WalletType `db:"wallet_type" json:"wallet_type"`
 	Chain       persist.Chain      `db:"chain" json:"chain"`
+	L1Chain     persist.L1Chain    `db:"l1_chain" json:"l1_chain"`
 }
