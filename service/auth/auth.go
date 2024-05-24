@@ -46,9 +46,9 @@ const (
 	userRolesContextKey  = "auth.roles"
 )
 
-// We don't want our cookies to expire, so their max age is arbitrarily set to 10 years.
-// Note that browsers can still cap this expiration time (e.g. Brave limits cookies to 6 months).
-const cookieMaxAge int = 60 * 60 * 24 * 365 * 10
+// We do want our cookies to expire after 120 seconds, so they are only persisted during one browser session.
+// This is required to conform to the characteristics of wallet-based auth
+const cookieExpires = 120 * time.Second
 
 // NoncePrepend is prepended to a nonce to make our default signing message
 const NoncePrepend = "SplitFi uses this cryptographic signature in place of a password: "
@@ -681,7 +681,7 @@ func getCookie(c *gin.Context, cookieName string) (string, error) {
 
 func setCookie(c *gin.Context, cookieName string, value string) {
 	mode := http.SameSiteStrictMode
-	domain := ".gallery.so"
+	domain := ".splitfi.com"
 	httpOnly := true
 	secure := true
 
@@ -701,7 +701,7 @@ func setCookie(c *gin.Context, cookieName string, value string) {
 		// cookies for local environments when receiving requests from these platforms.
 
 		// Mobile app
-		if strings.Contains(userAgent, "GalleryLabs") && strings.Contains(userAgent, "Darwin") {
+		if strings.Contains(userAgent, "SplitFiLabs") && strings.Contains(userAgent, "Darwin") {
 			secure = false
 			logger.For(c).Info("Request is from mobile app, setting local auth cookie with secure=false")
 		}
@@ -716,7 +716,7 @@ func setCookie(c *gin.Context, cookieName string, value string) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     cookieName,
 		Value:    value,
-		MaxAge:   cookieMaxAge,
+		Expires:  time.Now().Add(cookieExpires),
 		Path:     "/",
 		Secure:   secure,
 		HttpOnly: httpOnly,
