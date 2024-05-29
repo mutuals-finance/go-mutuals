@@ -46,9 +46,7 @@ const (
 	userRolesContextKey  = "auth.roles"
 )
 
-// We do want our cookies to expire after 120 seconds, so they are only persisted during one browser session.
-// This is required to conform to the characteristics of wallet-based auth
-const cookieExpires = 120 * time.Second
+const cookieExpires = 1 * time.Hour
 
 // NoncePrepend is prepended to a nonce to make our default signing message
 const NoncePrepend = "SplitFi uses this cryptographic signature in place of a password: "
