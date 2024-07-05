@@ -42,10 +42,12 @@ SANDBOX := sandbox
 
 # sops secrets
 # These should be used to set REQUIRED_SOPS_SECRETS, which can take one or more
-# space-separated secrets files
 SOPS_SECRETS_FILENAME := makevars.yaml
 SOPS_SECRETS_DIR      := secrets
-SOPS_LOCAL_SECRETS    := $(SOPS_SECRETS_DIR)/$(LOCAL)/$(SOPS_SECRETS_FILENAME)
+# space-separated secrets files
+# Please note that the execution environment in LOCAL is always local.
+# Therefore, the secrets file is located in the NESTED local directory under local/local
+SOPS_LOCAL_SECRETS    := $(SOPS_SECRETS_DIR)/$(LOCAL)/$(LOCAL)/$(SOPS_SECRETS_FILENAME)
 SOPS_DEV_SECRETS      := $(SOPS_SECRETS_DIR)/$(DEV)/$(SOPS_SECRETS_FILENAME)
 SOPS_PROD_SECRETS     := $(SOPS_SECRETS_DIR)/$(PROD)/$(SOPS_SECRETS_FILENAME)
 

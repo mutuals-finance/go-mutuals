@@ -24,7 +24,7 @@ yarn.lock
 _deploy*
 _local*
 *.age
-*.dec.*
+*_unencrypted.*
 refresh.json
 
 bin/*
