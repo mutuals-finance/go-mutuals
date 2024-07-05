@@ -1,11 +1,11 @@
-package tokenprocessing
+package main
 
 import (
 	"cloud.google.com/go/profiler"
 	"fmt"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/streamer"
+	"github.com/SplitFi/go-splitfi/tokenprocessing"
 	"google.golang.org/appengine"
 	"net/http"
 	"os"
@@ -25,7 +25,7 @@ func main() {
 		logger.For(nil).Warnf("failed to start cloud profiler due to error: %s\n", err)
 	}
 
-	streamer.InitServer()
+	tokenprocessing.InitServer()
 	if appengine.IsAppEngine() {
 		appengine.Main()
 	} else {

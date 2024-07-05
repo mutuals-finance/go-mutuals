@@ -3,7 +3,6 @@ package tokenprocessing
 import (
 	"cloud.google.com/go/storage"
 	"context"
-	"fmt"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 	"github.com/everFinance/goar"
 	shell "github.com/ipfs/go-ipfs-api"
@@ -24,7 +23,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/multichain"
 	"github.com/SplitFi/go-splitfi/service/notifications"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/SplitFi/go-splitfi/service/throttle"
 	"github.com/SplitFi/go-splitfi/service/tracing"
@@ -111,12 +109,13 @@ func setDefaults() {
 	viper.SetDefault("IPFS_PROJECT_SECRET", "")
 	viper.SetDefault("CHAIN", 0)
 	viper.SetDefault("ENV", "local")
+	viper.SetDefault("RPC_URL", "https://eth-goerli.g.alchemy.com/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
 	viper.SetDefault("GCLOUD_TOKEN_LOGS_BUCKET", "dev-eth-token-logs")
 	viper.SetDefault("GCLOUD_TOKEN_CONTENT_BUCKET", "dev-token-content")
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "gallery_backend")
-	viper.SetDefault("POSTGRES_PASSWORD", "")
+	viper.SetDefault("POSTGRES_USER", "postgres")
+	viper.SetDefault("POSTGRES_PASSWORD", "postgres")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("ALLOWED_ORIGINS", "http://localhost:3000")
 	viper.SetDefault("REDIS_URL", "localhost:6379")
@@ -193,17 +192,6 @@ func InitSentry() {
 
 	if err != nil {
 		logger.For(nil).Fatalf("failed to start sentry: %s", err)
-	}
-}
-
-func assetURL(chain persist.Chain, contractAddress persist.Address, tokenID persist.HexTokenID) string {
-	switch chain {
-	case persist.ChainETH:
-		return fmt.Sprintf("https://opensea.io/assets/ethereum/%s/%d", contractAddress.String(), tokenID.ToInt())
-	case persist.ChainPolygon:
-		return fmt.Sprintf("https://opensea.io/assets/matic/%s/%d", contractAddress.String(), tokenID.ToInt())
-	default:
-		return ""
 	}
 }
 
