@@ -1,4 +1,4 @@
-package streamer
+package main
 
 import (
 	"cloud.google.com/go/profiler"
@@ -29,10 +29,14 @@ func main() {
 	if appengine.IsAppEngine() {
 		appengine.Main()
 	} else {
-		port := "6000"
+		port := "4500"
 		if it := os.Getenv("PORT"); it != "" {
 			port = it
 		}
-		http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
+		err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
+		if err != nil {
+			logger.For(nil).Warnf("failed to start server due to error: %s\n", err)
+			return
+		}
 	}
 }

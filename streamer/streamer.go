@@ -100,12 +100,13 @@ func setDefaults() {
 	viper.SetDefault("IPFS_PROJECT_SECRET", "")
 	viper.SetDefault("CHAIN", 0)
 	viper.SetDefault("ENV", "local")
+	viper.SetDefault("RPC_URL", "https://eth-goerli.g.alchemy.com/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
 	viper.SetDefault("GCLOUD_TOKEN_LOGS_BUCKET", "dev-eth-token-logs")
 	viper.SetDefault("GCLOUD_TOKEN_CONTENT_BUCKET", "dev-token-content")
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
-	viper.SetDefault("POSTGRES_PASSWORD", "")
+	viper.SetDefault("POSTGRES_USER", "postgres")
+	viper.SetDefault("POSTGRES_PASSWORD", "postgres")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("ALLOWED_ORIGINS", "http://localhost:3000")
 	viper.SetDefault("REDIS_URL", "localhost:6379")
@@ -119,6 +120,8 @@ func setDefaults() {
 	viper.SetDefault("POAP_API_KEY", "")
 	viper.SetDefault("POAP_AUTH_TOKEN", "")
 	viper.SetDefault("TOKEN_PROCESSING_URL", "http://localhost:6500")
+	viper.SetDefault("NGROK_ENDPOINT", "")
+	viper.SetDefault("STREAMER_URL", "http://localhost:6000")
 	viper.SetDefault("TOKEN_PROCESSING_QUEUE", "projects/gallery-local/locations/here/queues/token-processing")
 	viper.SetDefault("TASK_QUEUE_HOST", "")
 	viper.SetDefault("GOOGLE_CLOUD_PROJECT", "gallery-dev-322005")
@@ -140,7 +143,7 @@ func setDefaults() {
 		if len(os.Args) > 1 {
 			fi = os.Args[1]
 		}
-		envFile := util.ResolveEnvFile("tokenprocessing", fi)
+		envFile := util.ResolveEnvFile("streamer", fi)
 		util.LoadEncryptedEnvFile(envFile)
 	}
 
@@ -151,7 +154,7 @@ func setDefaults() {
 }
 
 func newThrottler() *throttle.Locker {
-	return throttle.NewThrottleLocker(redis.NewCache(redis.TokenProcessingThrottleCache), time.Minute*30)
+	return throttle.NewThrottleLocker(redis.NewCache(redis.StreamerThrottleCache), time.Minute*30)
 }
 
 func InitSentry() {

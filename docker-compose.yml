@@ -28,35 +28,14 @@ services:
       image: "ngrok/ngrok:latest"
       restart: unless-stopped
       command:
-        - "start"
-        - "--all"
-        - "--config"
-        - "/etc/ngrok.yaml"
-      environment:
-        - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-      volumes:
-        - ${PWD}/ngrok.yaml:/etc/ngrok.yaml
-     # volumes:
-     #   - "${PWD}/ngrok.yaml:/etc/ngrok.yaml"
-     #   - "${PWD}/secrets/local:/etc/secrets"
-     #   - "${SOPS_AGE_KEY_FILE}:/.config/sops/age/keys.txt"
-     # environment:
-     #   - SOPS_AGE_KEY_FILE=/.config/sops/age/keys.txt
+        - "http"
+        - "http://host.docker.internal:4500"
+        - "--domain"
+        - "asp-cuddly-ant.ngrok-free.app"
+        - "--authtoken"
+        - "${NGROK_AUTHTOKEN}"
       ports:
         - "4040:4040"
-#  streamer:
-#    build:
-#      context: "."
-#      dockerfile: "docker/streamer/Dockerfile"
-#    ports:
-#      - "6000:6000"
-#    volumes:
-#      - ${PWD}/local:/app/local
-#      - ${PWD}/deploy:/app/deploy
-#    depends_on:
-#      - postgres
-#      - ngrok
-#      - redis
   task-emulator:
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
     ports:
@@ -81,7 +60,16 @@ services:
       "-c",
       "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=splitfi-local"
     ]
-
+#  streamer:
+#    build:
+#      context: "."
+#      dockerfile: "docker/streamer/Dockerfile"
+#    ports:
+#      - "6000:6000"
+#    depends_on:
+#      - postgres
+#      - ngrok
+#      - redis
   # Uncomment if you want to run tokenprocessing locally as a container
   # tokenprocessing:
   #   build:

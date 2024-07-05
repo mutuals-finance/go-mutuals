@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/SplitFi/go-splitfi/env"
 	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 
@@ -14,6 +15,8 @@ import (
 )
 
 func handlersInitServer(ctx context.Context, router *gin.Engine, s *streamer, mc *multichain.Provider, repos *postgres.Repositories, throttler *throttle.Locker, taskClient *task.Client) *gin.Engine {
+
+	router.GET("/alive", util.HealthCheckHandler())
 
 	authOpts := middleware.BasicAuthOptionBuilder{}
 	router.Use(middleware.BasicHeaderAuthRequired(env.GetString("ALCHEMY_WEBHOOK_SECRET"), authOpts.WithFailureStatus(http.StatusOK)))

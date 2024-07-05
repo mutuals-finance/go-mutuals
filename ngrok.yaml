@@ -1,6 +1,0 @@
-version: "2"
-
-tunnels:
-  streamer:
-    proto: http
-    addr: http://host.docker.internal:80

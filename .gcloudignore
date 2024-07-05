@@ -28,11 +28,11 @@ stats.json
 node_modules/
 yarn.lock
 
-# SECRITS
+# SECRETS
 _deploy*
 _local*
 *.age
-*.dec.*
+*_unencrypted.*
 refresh.json
 
 *.mp4

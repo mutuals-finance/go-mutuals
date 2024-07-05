@@ -8,7 +8,8 @@ COPY go.mod go.sum /app/
 RUN go mod download
 
 COPY . /app
-RUN go build -o ./bin/streamer ./cmd/streamer/main.go
+
+RUN go build -o ./bin/streamer ./streamer
 
 ENV GAE_VERSION=$VERSION
 
