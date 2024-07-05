@@ -13,8 +13,6 @@ CREATE TABLE IF NOT EXISTS users
     username              character varying(255),
     username_idempotent   character varying(255),
     wallets               character varying(255)[],
-    bio                   character varying,
-    traits                jsonb,
     universal             boolean                            NOT NULL DEFAULT FALSE,
     notification_settings jsonb,
     email_unsubscriptions jsonb                              NOT NULL DEFAULT '{
@@ -33,16 +31,46 @@ CREATE TABLE IF NOT EXISTS users
                                                                                                                 '\1 '::text,
                                                                                                                 'g'::text))
                                                                                               ELSE ''::text
-                                                                                              END))) STORED,
-    fts_bio_english       tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig,
-                                                                    (COALESCE(bio, ''::character varying))::text)) STORED
+                                                                                              END))) STORED
 );
-
-CREATE INDEX users_fts_bio_english_idx ON users USING gin (fts_bio_english);
 
 CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
 CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = FALSE);
+
+CREATE TABLE IF NOT EXISTS token_metadatas
+(
+    id               character varying(255) PRIMARY KEY NOT NULL,
+    deleted          boolean                            NOT NULL DEFAULT false,
+    created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    symbol           character varying,
+    name             character varying,
+    logo             character varying,
+    thumbnail        character varying,
+    chain            integer,
+    contract_address character varying(255),
+    foreign key(chain, contract_address) references tokens(chain, token_address) on update cascade
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS token_metadatas_chain_contract_address_idx on token_metadatas(chain, contract_address) where not deleted;
+
+CREATE TABLE IF NOT EXISTS tokens
+(
+    id            character varying(255) PRIMARY KEY,
+    deleted       boolean                            NOT NULL DEFAULT false,
+    version       integer                           DEFAULT 0,
+    created_at    timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated  timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    chain         integer,
+    token_address character varying(255),
+    owner_address character varying(255)   NOT NULL,
+    balance       integer                           DEFAULT 0
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS tokens_chain_token_address_owner_address_idx ON tokens (chain, token_address, owner_address);
+CREATE INDEX IF NOT EXISTS tokens_owner_address_idx ON tokens (owner_address);
+CREATE INDEX IF NOT EXISTS tokens_token_address_idx ON tokens (token_address);
 
 CREATE TABLE IF NOT EXISTS splits
 (
@@ -264,8 +292,6 @@ SELECT users.id,
        users.username,
        users.username_idempotent,
        users.wallets,
-       users.bio,
-       users.traits,
        users.universal,
        users.notification_settings,
        users.email_unsubscriptions,

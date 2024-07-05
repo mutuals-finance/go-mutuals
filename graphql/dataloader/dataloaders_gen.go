@@ -410,43 +410,6 @@ func newGetUsersByPositionPersonalizedBatch(
 	return d
 }
 
-// GetUsersWithTraitBatch batches and caches requests
-type GetUsersWithTraitBatch struct {
-	generator.Dataloader[string, []coredb.User]
-}
-
-// newGetUsersWithTraitBatch creates a new GetUsersWithTraitBatch with the given settings, functions, and options
-func newGetUsersWithTraitBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetUsersWithTraitBatch, []string) ([][]coredb.User, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetUsersWithTraitBatch {
-	d := &GetUsersWithTraitBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []string) ([][]coredb.User, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetUsersWithTraitBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetUsersWithTraitBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
 // GetWalletByIDBatch batches and caches requests
 type GetWalletByIDBatch struct {
 	generator.Dataloader[persist.DBID, coredb.Wallet]

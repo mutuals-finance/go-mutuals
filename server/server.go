@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/SplitFi/go-splitfi/middleware"
+	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -59,6 +61,7 @@ func Init() {
 
 type Clients struct {
 	Repos           *postgres.Repositories
+	Loaders         *dataloader.Loaders
 	Queries         *db.Queries
 	HTTPClient      *http.Client
 	EthClient       *ethclient.Client
@@ -79,8 +82,12 @@ func (c *Clients) Close() {
 func ClientInit(ctx context.Context) *Clients {
 	pq := postgres.MustCreateClient()
 	pgx := postgres.NewPgxClient()
+	queries := db.New(pgx)
+	loaders := dataloader.NewLoaders(context.Background(), queries, false, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
+
 	return &Clients{
 		Repos:           postgres.NewRepositories(pq, pgx),
+		Loaders:         loaders,
 		Queries:         db.New(pgx),
 		HTTPClient:      &http.Client{Timeout: 0},
 		EthClient:       rpc.NewEthClient(),

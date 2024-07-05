@@ -88,8 +88,6 @@ type PiiUserView struct {
 	Username                  sql.NullString                   `db:"username" json:"username"`
 	UsernameIdempotent        sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
 	Wallets                   persist.WalletList               `db:"wallets" json:"wallets"`
-	Bio                       sql.NullString                   `db:"bio" json:"bio"`
-	Traits                    pgtype.JSONB                     `db:"traits" json:"traits"`
 	Universal                 bool                             `db:"universal" json:"universal"`
 	NotificationSettings      persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions      persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
@@ -181,6 +179,31 @@ type Split struct {
 	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
 }
 
+type Token struct {
+	ID           persist.DBID      `db:"id" json:"id"`
+	Deleted      bool              `db:"deleted" json:"deleted"`
+	Version      sql.NullInt32     `db:"version" json:"version"`
+	CreatedAt    time.Time         `db:"created_at" json:"created_at"`
+	LastUpdated  time.Time         `db:"last_updated" json:"last_updated"`
+	Chain        persist.Chain     `db:"chain" json:"chain"`
+	TokenAddress persist.Address   `db:"token_address" json:"token_address"`
+	OwnerAddress persist.Address   `db:"owner_address" json:"owner_address"`
+	Balance      persist.HexString `db:"balance" json:"balance"`
+}
+
+type TokenMetadata struct {
+	ID              persist.DBID    `db:"id" json:"id"`
+	Deleted         bool            `db:"deleted" json:"deleted"`
+	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
+	LastUpdated     time.Time       `db:"last_updated" json:"last_updated"`
+	Symbol          sql.NullString  `db:"symbol" json:"symbol"`
+	Name            sql.NullString  `db:"name" json:"name"`
+	Logo            sql.NullString  `db:"logo" json:"logo"`
+	Thumbnail       sql.NullString  `db:"thumbnail" json:"thumbnail"`
+	Chain           persist.Chain   `db:"chain" json:"chain"`
+	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
+}
+
 type User struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
 	Deleted              bool                             `db:"deleted" json:"deleted"`
@@ -190,8 +213,6 @@ type User struct {
 	Username             sql.NullString                   `db:"username" json:"username"`
 	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
 	Wallets              persist.WalletList               `db:"wallets" json:"wallets"`
-	Bio                  sql.NullString                   `db:"bio" json:"bio"`
-	Traits               pgtype.JSONB                     `db:"traits" json:"traits"`
 	Universal            bool                             `db:"universal" json:"universal"`
 	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`

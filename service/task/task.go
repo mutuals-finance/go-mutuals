@@ -29,51 +29,19 @@ type Client struct {
 	sendFunc   func(ctx context.Context, queue string, task *taskspb.Task) error
 }
 
-type TokenProcessingBatchMessage struct {
-	// TODO batch id required?
-	BatchID persist.DBID                `json:"batch_id" binding:"required"`
-	Tokens  []persist.TokenChainAddress `json:"tokens" binding:"required"`
-}
-
-type TokenProcessingAssetMessage struct {
-	OwnerAddress persist.Address         `json:"owner_address" binding:"required"`
-	Assets       TokenIdentifierBalances `json:"assets" binding:"required"`
+type TokenTransferProcessingMessage struct {
+	Transfers []TokenTransfer `json:"transfers" binding:"required"`
 }
 
 type AddEmailToMailingListMessage struct {
 	UserID persist.DBID `json:"user_id" binding:"required"`
 }
 
-type TokenIdentifierBalances map[persist.TokenChainAddress]persist.HexString
-
-func (t TokenIdentifierBalances) MarshalJSON() ([]byte, error) {
-	m := make(map[string]string, len(t))
-	for k, v := range t {
-		m[k.AsJSONKey()] = string(v)
-	}
-	return json.Marshal(m)
-}
-
-func (t *TokenIdentifierBalances) UnmarshalJSON(b []byte) error {
-	m := make(map[string]string)
-	if err := json.Unmarshal(b, &m); err != nil {
-		return err
-	}
-	result := make(TokenIdentifierBalances)
-	for k, v := range m {
-		var tID persist.TokenChainAddress
-		if err := tID.FromJSONKey(k); err != nil {
-			return err
-		}
-		result[tID] = persist.HexString(v)
-	}
-	*t = result
-	return nil
-}
-
-type AssetProcessingMessage struct {
-	OwnerAddress persist.Address         `json:"owner_address" binding:"required"`
-	Tokens       TokenIdentifierBalances `json:"assets" binding:"required"`
+type TokenTransfer struct {
+	FromAddress persist.Address           `json:"from_address"`
+	ToAddress   persist.Address           `json:"to_address"`
+	Token       persist.TokenChainAddress `json:"token"`
+	Amount      persist.HexString         `json:"amount"`
 }
 
 type TokenProcessingWalletRemovalMessage struct {
@@ -105,19 +73,11 @@ func (c *Client) CreateTaskForPushNotification(ctx context.Context, message Push
 	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span), withBasicAuth(secret))
 }
 
-func (c *Client) CreateTaskForTokenProcessing(ctx context.Context, message TokenProcessingBatchMessage) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForTokenProcessing")
+func (c *Client) CreateTaskForTokenTransferProcessing(ctx context.Context, message TokenTransferProcessingMessage) error {
+	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "CreateTaskForTokenTransferProcessing")
 	defer tracing.FinishSpan(span)
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	url := fmt.Sprintf("%s/tokens/", env.GetString("TOKEN_PROCESSING_URL"))
-	return c.submitTask(ctx, queue, url, withDeadline(time.Minute*30), withJSON(message), withTrace(span))
-}
-
-func (c *Client) CreateTaskForAssetProcessing(ctx context.Context, message TokenProcessingAssetMessage) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "CreateTaskForAssetProcessing")
-	defer tracing.FinishSpan(span)
-	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	url := fmt.Sprintf("%s/assets/", env.GetString("TOKEN_PROCESSING_URL"))
+	url := fmt.Sprintf("%s/token/transfer", env.GetString("TOKEN_PROCESSING_URL"))
 	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
 }
 
@@ -126,7 +86,7 @@ func (c *Client) CreateTaskForWalletRemoval(ctx context.Context, message TokenPr
 	defer tracing.FinishSpan(span)
 	tracing.AddEventDataToSpan(span, map[string]any{"User ID": message.UserID, "Wallet IDs": message.WalletIDs})
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	url := fmt.Sprintf("%s/owners/wallet-removal", env.GetString("TOKEN_PROCESSING_URL"))
+	url := fmt.Sprintf("%s/owner/wallet-removal", env.GetString("TOKEN_PROCESSING_URL"))
 	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
 }
 

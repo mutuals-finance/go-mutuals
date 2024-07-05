@@ -63,7 +63,6 @@ mutation createUserMutation($authMechanism: AuthMechanism!, $input: CreateUserIn
         user {
           username
           dbid
-          bio
           splits {
             dbid
           }
@@ -149,20 +148,6 @@ mutation removeUserWalletsMutation($walletIds: [DBID!]!) {
             }
           }
         }
-      }
-    }
-  }
-}
-
-mutation viewSplitMutation($splitId: DBID!) {
-  viewSplit(splitId: $splitId) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on ViewSplitPayload {
-      split {
-        dbid
       }
     }
   }

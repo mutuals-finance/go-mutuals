@@ -24,23 +24,39 @@ services:
     volumes:
       - "${PWD}/docker/postgres/postgres.conf:/etc/postgresql/postgresql.conf"
     command: ["-c", "config-file=/etc/postgresql/postgresql.conf"]
-  postgres_indexer:
-    build:
-      context: "."
-      dockerfile: "docker/postgres_indexer/DOCKERFILE"
-      args:
-        - PGHOST=${PGHOST}
-        - PGPORT=${PGPORT}
-        - PGUSER=${PGUSER}
-        - PGPASSWORD=${PGPASSWORD}
-        - PGDATABASE=${PGDATABASE}
-        - PGTESTUSER=${PGTESTUSER}
-    ports:
-      - "5433:5432"
-    environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres
+  ngrok:
+      image: "ngrok/ngrok:latest"
+      restart: unless-stopped
+      command:
+        - "start"
+        - "--all"
+        - "--config"
+        - "/etc/ngrok.yaml"
+      environment:
+        - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+      volumes:
+        - ${PWD}/ngrok.yaml:/etc/ngrok.yaml
+     # volumes:
+     #   - "${PWD}/ngrok.yaml:/etc/ngrok.yaml"
+     #   - "${PWD}/secrets/local:/etc/secrets"
+     #   - "${SOPS_AGE_KEY_FILE}:/.config/sops/age/keys.txt"
+     # environment:
+     #   - SOPS_AGE_KEY_FILE=/.config/sops/age/keys.txt
+      ports:
+        - "4040:4040"
+#  streamer:
+#    build:
+#      context: "."
+#      dockerfile: "docker/streamer/Dockerfile"
+#    ports:
+#      - "6000:6000"
+#    volumes:
+#      - ${PWD}/local:/app/local
+#      - ${PWD}/deploy:/app/deploy
+#    depends_on:
+#      - postgres
+#      - ngrok
+#      - redis
   task-emulator:
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
     ports:
@@ -78,18 +94,4 @@ services:
   #     - ${PWD}/_deploy:/app/_deploy
   #   depends_on:
   #     - postgres
-  #     - redis
-  # Uncomment if you want to run indexer-api locally as a container
-  # indexer-api:
-  #   build:
-  #     context: "."
-  #     dockerfile: "docker/indexer_api/Dockerfile"
-  #   ports:
-  #     - "6000:6000"
-  #   volumes:
-  #     - ${PWD}/_local:/app/_local
-  #     - ${PWD}/_deploy:/app/_deploy
-  #   depends_on:
-  #     - postgres
-  #     - postgres_indexer
   #     - redis

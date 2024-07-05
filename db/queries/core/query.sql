@@ -45,12 +45,6 @@ where wallets.address = sqlc.arg('address')
   and wallets.deleted = false
   and users.deleted = false;
 
--- name: GetUsersWithTrait :many
-SELECT * FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false;
-
--- name: GetUsersWithTraitBatch :batchmany
-SELECT * FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false;
-
 -- name: GetSplitById :one
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
 
@@ -105,7 +99,25 @@ SELECT wallets.* FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted =
 SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
 
 -- name: GetWalletsByUserIDBatch :batchmany
-SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
+SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
+
+-- name: GetPoolTokensByTokenIdentifiers :many
+with params as (
+    select unnest(@pool_addresses::address[]) as pool_address, unnest(@token_addresses::address[]) as token_address, unnest(@chains::chain[]) as chain
+)
+SELECT t.*
+from splits s
+         left join tokens t on s.address = t.owner_address
+         join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain
+where s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false;
+
+-- name: GetTokenMetadatasByTokenIdentifiers :many
+with params as (
+    select unnest(@contract_address::address[]) as contract_address, unnest(@chain::chain[]) as chain
+)
+select m.* from params p
+         join token_metadatas m on p.contract_address = m.contract_address and p.chain = m.chain
+         where m.deleted = false;
 
 -- name: CreateUserEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING *;
@@ -417,7 +429,7 @@ where users.id = @user_id and not users.deleted;
 update wallets set deleted = true, last_updated = now() where id = $1;
 
 -- name: InsertUser :one
-insert into users (id, username, username_idempotent, bio, universal, email_unsubscriptions) values ($1, $2, $3, $4, $5, $6) returning id;
+insert into users (id, username, username_idempotent, universal, email_unsubscriptions) values ($1, $2, $3, $4, $5) returning id;
 
 -- name: UpsertSession :one
 insert into sessions (id, user_id,

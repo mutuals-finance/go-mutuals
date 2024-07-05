@@ -57,14 +57,6 @@ type LoginPayloadOrError interface {
 	IsLoginPayloadOrError()
 }
 
-type Media interface {
-	IsMedia()
-}
-
-type MediaSubtype interface {
-	IsMediaSubtype()
-}
-
 type Node interface {
 	IsNode()
 }
@@ -194,10 +186,6 @@ type VerifyEmailPayloadOrError interface {
 	IsVerifyEmailPayloadOrError()
 }
 
-type ViewSplitPayloadOrError interface {
-	IsViewSplitPayloadOrError()
-}
-
 type ViewerOrError interface {
 	IsViewerOrError()
 }
@@ -234,17 +222,6 @@ type Asset struct {
 
 func (Asset) IsNode() {}
 
-type AudioMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (AudioMedia) IsMediaSubtype() {}
-func (AudioMedia) IsMedia()        {}
-
 type AuthMechanism struct {
 	Eoa               *EoaAuth               `json:"eoa"`
 	GnosisSafe        *GnosisSafeAuth        `json:"gnosisSafe"`
@@ -266,11 +243,6 @@ type ChainSplits struct {
 	Splits []*Split       `json:"splits"`
 }
 
-type ChainTokens struct {
-	Chain  *persist.Chain `json:"chain"`
-	Tokens []*Token       `json:"tokens"`
-}
-
 type ClearAllNotificationsPayload struct {
 	Notifications []Notification `json:"notifications"`
 }
@@ -289,13 +261,11 @@ func (CreateSplitPayload) IsCreateSplitPayloadOrError() {}
 
 type CreateUserInput struct {
 	Username *string        `json:"username"`
-	Bio      *string        `json:"bio"`
 	Email    *persist.Email `json:"email"`
 }
 
 type CreateUserPayload struct {
-	UserID *persist.DBID `json:"userId"`
-	Viewer *Viewer       `json:"viewer"`
+	Viewer *Viewer `json:"viewer"`
 }
 
 func (CreateUserPayload) IsCreateUserPayloadOrError() {}
@@ -347,7 +317,6 @@ func (ErrAuthenticationFailed) IsAddUserWalletPayloadOrError() {}
 func (ErrAuthenticationFailed) IsError()                       {}
 func (ErrAuthenticationFailed) IsLoginPayloadOrError()         {}
 func (ErrAuthenticationFailed) IsCreateUserPayloadOrError()    {}
-func (ErrAuthenticationFailed) IsViewSplitPayloadOrError()     {}
 
 type ErrCommunityNotFound struct {
 	Message string `json:"message"`
@@ -504,29 +473,6 @@ func (ErrUsernameNotAvailable) IsUpdateUserInfoPayloadOrError() {}
 func (ErrUsernameNotAvailable) IsError()                        {}
 func (ErrUsernameNotAvailable) IsCreateUserPayloadOrError()     {}
 
-type GIFMedia struct {
-	PreviewURLs       *PreviewURLSet   `json:"previewURLs"`
-	StaticPreviewURLs *PreviewURLSet   `json:"staticPreviewURLs"`
-	MediaURL          *string          `json:"mediaURL"`
-	MediaType         *string          `json:"mediaType"`
-	ContentRenderURL  *string          `json:"contentRenderURL"`
-	Dimensions        *MediaDimensions `json:"dimensions"`
-}
-
-func (GIFMedia) IsMediaSubtype() {}
-func (GIFMedia) IsMedia()        {}
-
-type GltfMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (GltfMedia) IsMediaSubtype() {}
-func (GltfMedia) IsMedia()        {}
-
 type GnosisSafeAuth struct {
 	Address persist.Address `json:"address"`
 	Nonce   string          `json:"nonce"`
@@ -544,53 +490,8 @@ type GroupNotificationUsersConnection struct {
 	PageInfo *PageInfo                    `json:"pageInfo"`
 }
 
-type HTMLMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (HTMLMedia) IsMediaSubtype() {}
-func (HTMLMedia) IsMedia()        {}
-
-type ImageMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (ImageMedia) IsMediaSubtype() {}
-func (ImageMedia) IsMedia()        {}
-
-type InvalidMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (InvalidMedia) IsMediaSubtype() {}
-func (InvalidMedia) IsMedia()        {}
-
-type JSONMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (JSONMedia) IsMediaSubtype() {}
-func (JSONMedia) IsMedia()        {}
-
 type LoginPayload struct {
-	UserID *persist.DBID `json:"userId"`
-	Viewer *Viewer       `json:"viewer"`
+	Viewer *Viewer `json:"viewer"`
 }
 
 func (LoginPayload) IsLoginPayloadOrError() {}
@@ -603,24 +504,16 @@ type MagicLinkAuth struct {
 	Token string `json:"token"`
 }
 
-type MediaDimensions struct {
-	Width       *int     `json:"width"`
-	Height      *int     `json:"height"`
-	AspectRatio *float64 `json:"aspectRatio"`
-}
-
 type NotificationEdge struct {
 	Node   Notification `json:"node"`
 	Cursor *string      `json:"cursor"`
 }
 
 type NotificationSettings struct {
-	SomeoneFollowedYou     *bool `json:"someoneFollowedYou"`
 	SomeoneViewedYourSplit *bool `json:"someoneViewedYourSplit"`
 }
 
 type NotificationSettingsInput struct {
-	SomeoneFollowedYou     *bool `json:"someoneFollowedYou"`
 	SomeoneViewedYourSplit *bool `json:"someoneViewedYourSplit"`
 }
 
@@ -656,17 +549,6 @@ type PageInfo struct {
 	EndCursor       string `json:"endCursor"`
 }
 
-type PDFMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (PDFMedia) IsMediaSubtype() {}
-func (PDFMedia) IsMedia()        {}
-
 type PreverifyEmailInput struct {
 	Email persist.Email `json:"email"`
 }
@@ -677,17 +559,6 @@ type PreverifyEmailPayload struct {
 }
 
 func (PreverifyEmailPayload) IsPreverifyEmailPayloadOrError() {}
-
-type PreviewURLSet struct {
-	Raw        *string `json:"raw"`
-	Thumbnail  *string `json:"thumbnail"`
-	Small      *string `json:"small"`
-	Medium     *string `json:"medium"`
-	Large      *string `json:"large"`
-	SrcSet     *string `json:"srcSet"`
-	LiveRender *string `json:"liveRender"`
-	Blurhash   *string `json:"blurhash"`
-}
 
 type PrivyAuth struct {
 	Token string `json:"token"`
@@ -767,8 +638,6 @@ type SplitFiUser struct {
 	HelperSplitFiUserData
 	Dbid                persist.DBID    `json:"dbid"`
 	Username            *string         `json:"username"`
-	Bio                 *string         `json:"bio"`
-	Traits              *string         `json:"traits"`
 	Universal           *bool           `json:"universal"`
 	Roles               []*persist.Role `json:"roles"`
 	Wallets             []*Wallet       `json:"wallets"`
@@ -802,17 +671,6 @@ type SplitShareInput struct {
 	Ownership        int             `json:"ownership"`
 }
 
-type TextMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (TextMedia) IsMediaSubtype() {}
-func (TextMedia) IsMedia()        {}
-
 type Token struct {
 	Dbid            persist.DBID   `json:"dbid"`
 	Version         *int           `json:"version"`
@@ -831,17 +689,6 @@ type Token struct {
 }
 
 func (Token) IsNode() {}
-
-type UnknownMedia struct {
-	PreviewURLs      *PreviewURLSet   `json:"previewURLs"`
-	MediaURL         *string          `json:"mediaURL"`
-	MediaType        *string          `json:"mediaType"`
-	ContentRenderURL *string          `json:"contentRenderURL"`
-	Dimensions       *MediaDimensions `json:"dimensions"`
-}
-
-func (UnknownMedia) IsMediaSubtype() {}
-func (UnknownMedia) IsMedia()        {}
 
 type UnregisterUserPushTokenPayload struct {
 	Viewer *Viewer `json:"viewer"`
@@ -914,13 +761,11 @@ type UpdateSplitInfoPayload struct {
 func (UpdateSplitInfoPayload) IsUpdateSplitInfoPayloadOrError() {}
 
 type UpdateSplitInput struct {
-	SplitID            persist.DBID   `json:"splitId"`
-	Name               *string        `json:"name"`
-	Description        *string        `json:"description"`
-	Caption            *string        `json:"caption"`
-	DeletedCollections []persist.DBID `json:"deletedCollections"`
-	Order              []persist.DBID `json:"order"`
-	EditID             *string        `json:"editId"`
+	SplitID     persist.DBID   `json:"splitId"`
+	Name        *string        `json:"name"`
+	Description *string        `json:"description"`
+	Order       []persist.DBID `json:"order"`
+	EditID      string         `json:"editId"`
 }
 
 type UpdateSplitOrderInput struct {
@@ -952,7 +797,6 @@ func (UpdateUserExperiencePayload) IsUpdateUserExperiencePayloadOrError() {}
 
 type UpdateUserInfoInput struct {
 	Username string `json:"username"`
-	Bio      string `json:"bio"`
 }
 
 type UpdateUserInfoPayload struct {
@@ -1015,30 +859,6 @@ type VerifyEmailPayload struct {
 }
 
 func (VerifyEmailPayload) IsVerifyEmailPayloadOrError() {}
-
-type VideoMedia struct {
-	PreviewURLs       *PreviewURLSet   `json:"previewURLs"`
-	MediaURL          *string          `json:"mediaURL"`
-	MediaType         *string          `json:"mediaType"`
-	ContentRenderURLs *VideoURLSet     `json:"contentRenderURLs"`
-	Dimensions        *MediaDimensions `json:"dimensions"`
-}
-
-func (VideoMedia) IsMediaSubtype() {}
-func (VideoMedia) IsMedia()        {}
-
-type VideoURLSet struct {
-	Raw    *string `json:"raw"`
-	Small  *string `json:"small"`
-	Medium *string `json:"medium"`
-	Large  *string `json:"large"`
-}
-
-type ViewSplitPayload struct {
-	Split *Split `json:"split"`
-}
-
-func (ViewSplitPayload) IsViewSplitPayloadOrError() {}
 
 type Viewer struct {
 	HelperViewerData
@@ -1159,20 +979,16 @@ func (e PreverifyEmailResult) MarshalGQL(w io.Writer) {
 type TokenType string
 
 const (
-	TokenTypeErc721  TokenType = "ERC721"
-	TokenTypeErc1155 TokenType = "ERC1155"
-	TokenTypeErc20   TokenType = "ERC20"
+	TokenTypeErc20 TokenType = "ERC20"
 )
 
 var AllTokenType = []TokenType{
-	TokenTypeErc721,
-	TokenTypeErc1155,
 	TokenTypeErc20,
 }
 
 func (e TokenType) IsValid() bool {
 	switch e {
-	case TokenTypeErc721, TokenTypeErc1155, TokenTypeErc20:
+	case TokenTypeErc20:
 		return true
 	}
 	return false

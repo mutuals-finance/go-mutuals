@@ -20,9 +20,11 @@ var bannedUsernames = map[string]bool{
 	"artist":        true,
 	"artists":       true,
 	"auth":          true,
+	"blog":          true,
 	"bookmarks":     true,
 	"careers":       true,
 	"chain":         true,
+	"changelog":     true,
 	"collection":    true,
 	"collections":   true,
 	"community":     true,
@@ -62,10 +64,12 @@ var bannedUsernames = map[string]bool{
 	"unsubscribe":   true,
 	"verify":        true,
 	"welcome":       true,
+	"zora":          true,
 	"404":           true,
 }
 
-var alphanumericUnderscoresPeriodsRegex = regexp.MustCompile("^[\\w.]*$")
+var alphanumericUnderscoresPeriodsRegex = regexp.MustCompile(`^[\w.]*$`)
+var DefaultValidator = WithCustomValidators()
 
 // SanitizationPolicy is a policy for sanitizing user input
 var SanitizationPolicy = bluemonday.UGCPolicy()
@@ -86,6 +90,9 @@ func WithTag(v any, t string) ValWithTags {
 }
 
 type ValidationMap map[string]ValWithTags
+
+// Validate validates input fields with the default validator
+func Validate(fields ValidationMap) error { return ValidateFields(DefaultValidator, fields) }
 
 // ValidateFields validates input fields based on a set of predefined validation tags
 func ValidateFields(validator *validator.Validate, fields ValidationMap) error {
@@ -135,19 +142,38 @@ func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("sorted_asc", SortedAscValidator)
 	v.RegisterValidation("chain", ChainValidator)
 	v.RegisterValidation("role", IsValidRole)
+	v.RegisterValidation("opt_in_role", IsOptInRole)
+	v.RegisterValidation("persona", IsValidPersona)
 	v.RegisterValidation("http", HTTPValidator)
 	v.RegisterAlias("split_name", "max=200")
-	v.RegisterAlias("bio", "max=600")
-	v.RegisterAlias("caption", "max=600")
+	v.RegisterAlias("split_description", "max=1200")
+	v.RegisterAlias("token_note", "max=1200")
+	v.RegisterAlias("bio", "max=1200")
+	v.RegisterAlias("caption", "max=1200")
 
 	v.RegisterStructValidation(ChainAddressValidator, persist.ChainAddress{})
 	v.RegisterStructValidation(ConnectionPaginationParamsValidator, ConnectionPaginationParams{})
+	v.RegisterStructValidation(CollectionTokenSettingsParamsValidator, CollectionTokenSettingsParams{})
 	v.RegisterStructValidation(EventValidator, coredb.Event{})
 }
 
 var IsValidRole validator.Func = func(fl validator.FieldLevel) bool {
 	role := persist.Role(fl.Field().String())
 	return role == persist.RoleAdmin || role == persist.RoleBetaTester
+}
+
+// IsOptInRole designates roles that users can opt themselves into
+var IsOptInRole validator.Func = func(fl validator.FieldLevel) bool {
+	role := persist.Role(fl.Field().String())
+	return role == persist.RoleBetaTester
+}
+
+var IsValidPersona validator.Func = func(fl validator.FieldLevel) bool {
+	persona := persist.Persona(fl.Field().String())
+	return persona == persist.PersonaNone ||
+		persona == persist.PersonaCollector ||
+		persona == persist.PersonaCreator ||
+		persona == persist.PersonaBoth
 }
 
 func ChainAddressValidator(sl validator.StructLevel) {
@@ -196,33 +222,34 @@ func ConnectionPaginationParamsValidator(sl validator.StructLevel) {
 	}
 }
 
-/*
-// SplitTokenSettingsParams are args passed to split create and update functions that are meant to be validated together
-type SplitTokenSettingsParams struct {
-	Tokens        []persist.DBID                              `json:"tokens"`
-	TokenSettings map[persist.DBID]persist.SplitTokenSettings `json:"token_settings"`
+// CollectionTokenSettingsParams are args passed to collection create and update functions that are meant to be validated together
+type CollectionTokenSettingsParams struct {
+	Tokens []persist.DBID `json:"tokens"`
+	// TokenSettings map[persist.DBID]persist.CollectionTokenSettings `json:"token_settings"`
 }
 
-// SplitTokenSettingsParamsValidator checks that the input CollectionTokenSettingsParams struct is valid
-func SplitTokenSettingsParamsValidator(sl validator.StructLevel) {
-	settings := sl.Current().Interface().(SplitTokenSettingsParams)
+// CollectionTokenSettingsParamsValidator checks that the input CollectionTokenSettingsParams struct is valid
+func CollectionTokenSettingsParamsValidator(sl validator.StructLevel) {
 
-	for settingTokenID := range settings.TokenSettings {
-		var exists bool
+	/*
+		settings := sl.Current().Interface().(CollectionTokenSettingsParams)
 
-		for _, tokenID := range settings.Tokens {
-			if settingTokenID == tokenID {
-				exists = true
-				break
+		for settingTokenID := range settings.TokenSettings {
+			var exists bool
+
+			for _, tokenID := range settings.Tokens {
+				if settingTokenID == tokenID {
+					exists = true
+					break
+				}
+			}
+
+			if !exists {
+				sl.ReportError(settingTokenID, fmt.Sprintf("TokenSettings[%s]", settingTokenID), "token_settings", "exclude", "")
 			}
 		}
-
-		if !exists {
-			sl.ReportError(settingTokenID, fmt.Sprintf("TokenSettings[%s]", settingTokenID), "token_settings", "exclude", "")
-		}
-	}
+	*/
 }
-*/
 
 // EthValidator validates ethereum addresses
 var EthValidator validator.Func = func(fl validator.FieldLevel) bool {

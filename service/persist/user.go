@@ -88,7 +88,6 @@ type UserNotificationSettings struct {
 
 type CreateUserInput struct {
 	Username                   string
-	Bio                        string
 	Email                      *Email
 	EmailStatus                EmailVerificationStatus
 	ChainAddress               ChainAddress

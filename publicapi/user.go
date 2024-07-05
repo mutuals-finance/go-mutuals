@@ -101,6 +101,29 @@ func (api UserAPI) GetUserByVerifiedEmailAddress(ctx context.Context, emailAddre
 	return &user, nil
 }
 
+func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress persist.Email) (bool, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"emailAddress": validate.WithTag(emailAddress, "required"),
+	}); err != nil {
+		return false, err
+	}
+
+	// Intentionally using queries here instead of a dataloader. Caching a user by email address is tricky
+	// because the key (email address) isn't part of the user object, and this method isn't currently invoked
+	// in a way that would benefit from dataloaders or caching anyway.
+	_, err := api.queries.GetUserByVerifiedEmailAddress(ctx, emailAddress.String())
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
 // GetUserWithPII returns the current user and their associated personally identifiable information
 func (api UserAPI) GetUserWithPII(ctx context.Context) (*db.PiiUserView, error) {
 	// Nothing to validate
@@ -430,16 +453,15 @@ func (api UserAPI) RemoveWalletsFromUser(ctx context.Context, walletIDs []persis
 	return removalErr
 }
 
-func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email, bio string) (userID persist.DBID, err error) {
+func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email) (userID persist.DBID, err error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"username": validate.WithTag(username, "username"),
-		"bio":      validate.WithTag(bio, "bio"),
 	}); err != nil {
 		return "", err
 	}
 
-	createUserParams, err := createNewUserParamsWithAuth(ctx, authenticator, username, bio, email)
+	createUserParams, err := createNewUserParamsWithAuth(ctx, authenticator, username, email)
 	if err != nil {
 		return "", err
 	}
@@ -492,7 +514,7 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 		ResourceTypeID: persist.ResourceTypeUser,
 		UserID:         userID,
 		SubjectID:      userID,
-		Data:           persist.EventData{UserBio: bio},
+		Data:           persist.EventData{},
 	})
 	if err != nil {
 		logger.For(ctx).Errorf("failed to dispatch event: %s", err)
@@ -501,24 +523,20 @@ func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authentica
 	return userID, nil
 }
 
-func (api UserAPI) UpdateUserInfo(ctx context.Context, username string, bio string) error {
+func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"username": validate.WithTag(username, "required,username"),
-		"bio":      validate.WithTag(bio, "bio"),
 	}); err != nil {
 		return err
 	}
-
-	// Sanitize
-	bio = validate.SanitizationPolicy.Sanitize(bio)
 
 	userID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = user.UpdateUserInfo(ctx, userID, username, bio, api.repos.UserRepository, api.ethClient)
+	err = user.UpdateUserInfo(ctx, userID, username, api.repos.UserRepository, api.ethClient)
 	if err != nil {
 		return err
 	}
@@ -854,7 +872,7 @@ func (api UserAPI) UnblockUser(ctx context.Context, userID persist.DBID) error {
 	return api.queries.UnblockUser(ctx, db.UnblockUserParams{UserID: viewerID, BlockedUserID: userID})
 }
 
-func createNewUserParamsWithAuth(ctx context.Context, authenticator auth.Authenticator, username string, bio string, email *persist.Email) (persist.CreateUserInput, error) {
+func createNewUserParamsWithAuth(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email) (persist.CreateUserInput, error) {
 	authResult, err := authenticator.Authenticate(ctx)
 	if err != nil && !util.ErrorIs[persist.ErrUserNotFound](err) {
 		return persist.CreateUserInput{}, auth.ErrAuthenticationFailed{WrappedErr: err}
@@ -882,7 +900,6 @@ func createNewUserParamsWithAuth(ctx context.Context, authenticator auth.Authent
 
 	params := persist.CreateUserInput{
 		Username:     username,
-		Bio:          bio,
 		Email:        email,
 		EmailStatus:  persist.EmailVerificationStatusUnverified,
 		ChainAddress: wallet.ChainAddress,

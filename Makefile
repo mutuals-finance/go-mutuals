@@ -14,20 +14,28 @@ PROMOTE              := promote
 STOP                 := stop
 RELEASE              := release
 DOCKER               := docker
+CRON                 := cron
+JOB                  := job
 DEPLOY_VERSION       := $(CURRENT_BRANCH)-$(CURRENT_COMMIT_HASH)
 SET_GCP_PROJECT      = gcloud config set project $(GCP_PROJECT)
-APP_ENGINE_DEPLOY    = sops exec-file --no-fifo $(CONFIG_DIR)/$(SERVICE_FILE) 'gcloud beta app deploy --version $(DEPLOY_VERSION) --quiet $(APP_PROMOTE_FLAGS) --appyaml {}'
-CLOUD_RUN_DEPLOY     = sops exec-file $(CONFIG_DIR)/$(SERVICE_FILE) 'gcloud run deploy $(CLOUD_RUN_FLAGS) $(SERVICE) --env-vars-file {} --quiet'
-CLOUD_RUN_FLAGS      = --image $(IMAGE_TAG) $(RUN_PROMOTE_FLAGS) --concurrency $(CONCURRENCY) --cpu $(CPU) --memory $(MEMORY) --port $(PORT) --timeout $(TIMEOUT) --platform managed --cpu-throttling --revision-suffix $(CURRENT_COMMIT_HASH) --vpc-connector $(VPC_CONNECTOR) --vpc-egress private-ranges-only --set-cloudsql-instances $(SQL_INSTANCES) --region $(REGION) --allow-unauthenticated
+CLOUD_RUN_DEPLOY     = sops exec-file $(CONFIG_DIR)/$(SERVICE_FILE) 'gcloud run deploy $(DEPLOY_FLAGS) $(SERVICE) --env-vars-file {} --quiet'
+CLOUD_JOB_DEPLOY     = sops exec-file $(CONFIG_DIR)/$(SERVICE_FILE) 'gcloud run jobs update $(JOB_NAME) --image $(IMAGE_TAG) --set-cloudsql-instances $(SQL_INSTANCES) --region $(REGION) $(JOB_OPTIONS) --env-vars-file {} --quiet'
+SCHEDULER_DEPLOY     = gcloud scheduler jobs create http $(CRON_NAME) --location $(CRON_LOCATION) --schedule $(CRON_SCHEDULE) --uri $(CRON_URI) --http-method $(CRON_METHOD)
+CRON_NAME            = $(CRON_PREFIX)-$(DEPLOY_VERSION)
+BASE_DEPLOY_FLAGS    = --image $(IMAGE_TAG) $(RUN_PROMOTE_FLAGS) --concurrency $(CONCURRENCY) --cpu $(CPU) --memory $(MEMORY) --port $(PORT) --timeout $(TIMEOUT) --platform managed --revision-suffix $(CURRENT_COMMIT_HASH) --vpc-connector $(VPC_CONNECTOR) --vpc-egress private-ranges-only --set-cloudsql-instances $(SQL_INSTANCES) --region $(REGION) --allow-unauthenticated
+DEPLOY_FLAGS         = $(BASE_DEPLOY_FLAGS) --cpu-throttling
+DEPLOY_REGION        = us-east1
 SENTRY_RELEASE       = sentry-cli releases -o $(SENTRY_ORG) -p $(SENTRY_PROJECT)
 IMAGE_TAG            = $(DOCKER_REGISTRY)/$(GCP_PROJECT)/$(REPO)/$(CURRENT_BRANCH):$(CURRENT_COMMIT_HASH)
-DOCKER_BUILD         = docker build --file $(DOCKER_FILE) --platform linux/amd64 -t $(IMAGE_TAG) --build-arg VERSION=$(DEPLOY_VERSION) $(DOCKER_CONTEXT)
+DOCKER_BUILD         = docker build --file $(DOCKER_FILE) --platform linux/amd64 -t $(IMAGE_TAG) --build-arg VERSION=$(DEPLOY_VERSION) --build-arg FFMPEG_VERSION=$(FFMPEG_VERSION) $(DOCKER_CONTEXT)
 DOCKER_PUSH          = docker push $(IMAGE_TAG)
 DOCKER_DIR           := ./docker
 DOCKER_CONTEXT       := .
 DOCKER_REGISTRY      := us-east1-docker.pkg.dev
+FFMPEG_VERSION       = 7:4.3.6-0+deb11u1
 
 # Environments
+LOCAL   := local
 DEV     := dev
 PROD    := prod
 SANDBOX := sandbox
@@ -37,25 +45,28 @@ SANDBOX := sandbox
 # space-separated secrets files
 SOPS_SECRETS_FILENAME := makevars.yaml
 SOPS_SECRETS_DIR      := secrets
+SOPS_LOCAL_SECRETS    := $(SOPS_SECRETS_DIR)/$(LOCAL)/$(SOPS_SECRETS_FILENAME)
 SOPS_DEV_SECRETS      := $(SOPS_SECRETS_DIR)/$(DEV)/$(SOPS_SECRETS_FILENAME)
 SOPS_PROD_SECRETS     := $(SOPS_SECRETS_DIR)/$(PROD)/$(SOPS_SECRETS_FILENAME)
 
 # Per-target secrets
-start-dev-sql-proxy  : REQUIRED_SOPS_SECRETS := $(SOPS_DEV_SECRETS)
-start-prod-sql-proxy : REQUIRED_SOPS_SECRETS := $(SOPS_PROD_SECRETS)
-migrate-dev-coredb   : REQUIRED_SOPS_SECRETS := $(SOPS_DEV_SECRETS)
-migrate-prod-coredb  : REQUIRED_SOPS_SECRETS := $(SOPS_PROD_SECRETS)
+start-local-docker    :  REQUIRED_SOPS_SECRETS := $(SOPS_LOCAL_SECRETS)
+build-local-docker    :  REQUIRED_SOPS_SECRETS := $(SOPS_LOCAL_SECRETS)
+stop-local-docker     :  REQUIRED_SOPS_SECRETS := $(SOPS_LOCAL_SECRETS)
+start-dev-sql-proxy    : REQUIRED_SOPS_SECRETS := $(SOPS_DEV_SECRETS)
+start-prod-sql-proxy   : REQUIRED_SOPS_SECRETS := $(SOPS_PROD_SECRETS)
+migrate-dev-coredb     : REQUIRED_SOPS_SECRETS := $(SOPS_DEV_SECRETS)
+migrate-prod-coredb    : REQUIRED_SOPS_SECRETS := $(SOPS_PROD_SECRETS)
+# migrate-prod-mirrordb  : REQUIRED_SOPS_SECRETS := $(SOPS_PROD_SECRETS)
 
 # Environment-specific settings
 $(DEPLOY)-$(DEV)-%                : ENV                    := $(DEV)
 $(DEPLOY)-$(SANDBOX)-%            : ENV                    := $(SANDBOX)
 $(DEPLOY)-$(PROD)-%               : ENV                    := $(PROD)
+$(DEPLOY)-$(LOCAL)-%              : REQUIRED_SOPS_SECRETS  := $(SOPS_LOCAL_SECRETS)
 $(DEPLOY)-$(DEV)-%                : REQUIRED_SOPS_SECRETS  := $(SOPS_DEV_SECRETS)
 $(DEPLOY)-$(SANDBOX)-%            : REQUIRED_SOPS_SECRETS  := $(SOPS_DEV_SECRETS)
 $(DEPLOY)-$(PROD)-%               : REQUIRED_SOPS_SECRETS  := $(SOPS_PROD_SECRETS)
-$(DEPLOY)-$(DEV)-%                : APP_PROMOTE_FLAGS      := --promote --stop-previous-version
-$(DEPLOY)-$(SANDBOX)-%            : APP_PROMOTE_FLAGS      := --promote --stop-previous-version
-$(DEPLOY)-$(PROD)-%               : APP_PROMOTE_FLAGS      := --no-promote --no-stop-previous-version
 $(DEPLOY)-$(DEV)-%                : RUN_PROMOTE_FLAGS      :=
 $(DEPLOY)-$(PROD)-%               : RUN_PROMOTE_FLAGS      := --no-traffic
 $(DEPLOY)-$(DEV)-%                : CONFIG_DIR             := ./$(SOPS_SECRETS_DIR)/$(DEV)
@@ -65,23 +76,38 @@ $(PROMOTE)-$(PROD)-%              : ENV                    := $(PROD)
 $(PROMOTE)-$(PROD)-%              : REQUIRED_SOPS_SECRETS  := $(SOPS_PROD_SECRETS)
 
 # Service files, add a line for each service and environment you want to deploy.
-$(DEPLOY)-$(DEV)-backend          : SERVICE_FILE := backend-env.yaml
-$(DEPLOY)-$(DEV)-admin            : SERVICE_FILE := app-dev-admin.yaml
-$(DEPLOY)-$(DEV)-emails           : SERVICE_FILE := emails-server-env.yaml
-$(DEPLOY)-$(DEV)-routing-rules    : SERVICE_FILE := dispatch.yaml
-$(DEPLOY)-$(SANDBOX)-backend      : SERVICE_FILE := backend-sandbox-env.yaml
-$(DEPLOY)-$(PROD)-backend         : SERVICE_FILE := backend-env.yaml
-$(DEPLOY)-$(PROD)-admin           : SERVICE_FILE := app-prod-admin.yaml
-$(DEPLOY)-$(PROD)-emails          : SERVICE_FILE := emails-server-env.yaml
-$(DEPLOY)-$(PROD)-routing-rules   : SERVICE_FILE := dispatch.yaml
-$(DEPLOY)-$(DEV)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
+$(DEPLOY)-$(DEV)-backend            : SERVICE_FILE := backend-env.yaml
+$(DEPLOY)-$(DEV)-admin              : SERVICE_FILE := app-dev-admin.yaml
+$(DEPLOY)-$(DEV)-pushnotifications  : SERVICE_FILE := pushnotifications-env.yaml
+$(DEPLOY)-$(DEV)-emails             : SERVICE_FILE := emails-server-env.yaml
+$(DEPLOY)-$(DEV)-routing-rules      : SERVICE_FILE := dispatch.yaml
+$(DEPLOY)-$(DEV)-graphql-gateway    : SERVICE_FILE := graphql-gateway.yml
+$(DEPLOY)-$(SANDBOX)-backend        : SERVICE_FILE := backend-sandbox-env.yaml
+$(DEPLOY)-$(PROD)-backend           : SERVICE_FILE := backend-env.yaml
+$(DEPLOY)-$(PROD)-admin             : SERVICE_FILE := app-prod-admin.yaml
+$(DEPLOY)-$(PROD)-pushnotifications : SERVICE_FILE := pushnotifications-env.yaml
+# $(DEPLOY)-$(PROD)-kafka-streamer    : SERVICE_FILE := kafka-streamer-env.yaml
+$(DEPLOY)-$(PROD)-emails            : SERVICE_FILE := emails-server-env.yaml
+$(DEPLOY)-$(PROD)-routing-rules     : SERVICE_FILE := dispatch.yaml
 $(DEPLOY)-$(PROD)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
 
 # Service to Sentry project mapping
 $(DEPLOY)-%-backend               : SENTRY_PROJECT := splitfi-backend
+$(DEPLOY)-%-pushnotifications     : SENTRY_PROJECT := pushnotifications
 $(DEPLOY)-%-emails                : SENTRY_PROJECT := emails
+# $(DEPLOY)-%-kafka-streamer        : SENTRY_PROJECT := kafka-streamer
 
 # Docker builds
+$(DEPLOY)-%-pushnotifications          : REPO           := pushnotifications
+$(DEPLOY)-%-pushnotifications          : REPO           := pushnotifications
+$(DEPLOY)-%-pushnotifications          : DOCKER_FILE    := $(DOCKER_DIR)/pushnotifications/Dockerfile
+$(DEPLOY)-%-pushnotifications          : PORT           := 6600
+$(DEPLOY)-%-pushnotifications          : TIMEOUT        := $(PUSH_NOTIFICATIONS_TIMEOUT)
+$(DEPLOY)-%-pushnotifications          : CPU            := $(PUSH_NOTIFICATIONS_CPU)
+$(DEPLOY)-%-pushnotifications          : MEMORY         := $(PUSH_NOTIFICATIONS_MEMORY)
+$(DEPLOY)-%-pushnotifications          : CONCURRENCY    := $(PUSH_NOTIFICATIONS_CONCURRENCY)
+$(DEPLOY)-$(DEV)-pushnotifications     : SERVICE        := pushnotifications-dev
+$(DEPLOY)-$(PROD)-pushnotifications    : SERVICE        := pushnotifications
 $(DEPLOY)-%-emails                     : REPO           := emails
 $(DEPLOY)-%-emails                     : DOCKER_FILE    := $(DOCKER_DIR)/emails/Dockerfile
 $(DEPLOY)-%-emails                     : PORT           := 5500
@@ -103,20 +129,63 @@ $(DEPLOY)-%-backend                    : CONCURRENCY    := $(BACKEND_CONCURRENCY
 $(DEPLOY)-$(DEV)-backend               : SERVICE        := backend-dev
 $(DEPLOY)-$(SANDBOX)-backend           : SERVICE        := backend-sandbox
 $(DEPLOY)-$(PROD)-backend              : SERVICE        := backend
-$(DEPLOY)-%-graphql-gateway                    : REPO           := graphql-gateway
-$(DEPLOY)-$(DEV)-graphql-gateway               : DOCKER_FILE    := $(DOCKER_DIR)/graphql-gateway/$(DEV)/Dockerfile
-$(DEPLOY)-$(PROD)-graphql-gateway              : DOCKER_FILE    := $(DOCKER_DIR)/graphql-gateway/$(PROD)/Dockerfile
-$(DEPLOY)-%-graphql-gateway                    : PORT           := 8000
-$(DEPLOY)-%-graphql-gateway                    : TIMEOUT        := $(GRAPHQL_GATEWAY_TIMEOUT)
-$(DEPLOY)-%-graphql-gateway                    : CPU            := $(GRAPHQL_GATEWAY_CPU)
-$(DEPLOY)-%-graphql-gateway                    : MEMORY         := $(GRAPHQL_GATEWAY_MEMORY)
-$(DEPLOY)-%-graphql-gateway                    : CONCURRENCY    := $(GRAPHQL_GATEWAY_CONCURRENCY)
-$(DEPLOY)-$(DEV)-graphql-gateway               : SERVICE        := graphql-gateway-dev
-$(DEPLOY)-$(PROD)-graphql-gateway              : SERVICE        := graphql-gateway
+$(DEPLOY)-%-graphql-gateway            : REPO           := graphql-gateway
+$(DEPLOY)-$(DEV)-graphql-gateway       : DOCKER_FILE    := $(DOCKER_DIR)/graphql-gateway/$(DEV)/Dockerfile
+$(DEPLOY)-$(PROD)-graphql-gateway      : DOCKER_FILE    := $(DOCKER_DIR)/graphql-gateway/$(PROD)/Dockerfile
+$(DEPLOY)-%-graphql-gateway            : PORT           := 8000
+$(DEPLOY)-%-graphql-gateway            : TIMEOUT        := $(GRAPHQL_GATEWAY_TIMEOUT)
+$(DEPLOY)-%-graphql-gateway            : CPU            := $(GRAPHQL_GATEWAY_CPU)
+$(DEPLOY)-%-graphql-gateway            : MEMORY         := $(GRAPHQL_GATEWAY_MEMORY)
+$(DEPLOY)-%-graphql-gateway            : CONCURRENCY    := $(GRAPHQL_GATEWAY_CONCURRENCY)
+$(DEPLOY)-$(DEV)-graphql-gateway       : SERVICE        := graphql-gateway-dev
+$(DEPLOY)-$(PROD)-graphql-gateway      : SERVICE        := graphql-gateway
+#$(DEPLOY)-%-kafka-streamer             : REPO           := kafka-streamer
+#$(DEPLOY)-%-kafka-streamer             : DOCKER_FILE    := $(DOCKER_DIR)/kafka-streamer/Dockerfile
+#$(DEPLOY)-%-kafka-streamer             : PORT           := 3000
+#$(DEPLOY)-%-kafka-streamer             : TIMEOUT        := $(KAFKA_STREAMER_TIMEOUT)
+#$(DEPLOY)-%-kafka-streamer             : CPU            := $(KAFKA_STREAMER_CPU)
+#$(DEPLOY)-%-kafka-streamer             : MEMORY         := $(KAFKA_STREAMER_MEMORY)
+#$(DEPLOY)-%-kafka-streamer             : CONCURRENCY    := $(KAFKA_STREAMER_CONCURRENCY)
+#$(DEPLOY)-%-kafka-streamer             : DEPLOY_FLAGS   = $(BASE_DEPLOY_FLAGS) --no-cpu-throttling
+# $(DEPLOY)-$(PROD)-kafka-streamer       : SERVICE        := kafka-streamer
+
+# Cloud Scheduler Jobs
+#$(DEPLOY)-%-alchemy-spam                     : CRON_PREFIX    := alchemy-spam
+#$(DEPLOY)-%-alchemy-spam                     : CRON_LOCATION  := $(DEPLOY_REGION)
+#$(DEPLOY)-%-alchemy-spam                     : CRON_SCHEDULE  := '0 0 * * *'
+#$(DEPLOY)-%-alchemy-spam                     : CRON_URI       = $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')/contracts/detect-spam
+#$(DEPLOY)-%-alchemy-spam                     : CRON_METHOD    := POST
+#$(DEPLOY)-$(DEV)-alchemy-spam                : URI_NAME       := tokenprocessing-dev
+#$(DEPLOY)-$(PROD)-alchemy-spam               : URI_NAME       := tokenprocessing-v3
+$(DEPLOY)-%-check-push-tickets               : CRON_PREFIX    := check-push-tickets
+$(DEPLOY)-%-check-push-tickets               : CRON_LOCATION  := $(DEPLOY_REGION)
+$(DEPLOY)-%-check-push-tickets               : CRON_SCHEDULE  := '*/5 * * * *'
+$(DEPLOY)-%-check-push-tickets               : CRON_URI       = $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')/jobs/check-push-tickets
+$(DEPLOY)-%-check-push-tickets               : CRON_METHOD    := POST
+$(DEPLOY)-%-check-push-tickets               : CRON_FLAGS     = --headers='Authorization=Basic $(shell printf ":$(PUSH_NOTIFICATIONS_SECRET)" | base64)' --attempt-deadline=10m
+$(DEPLOY)-$(DEV)-check-push-tickets          : URI_NAME       := pushnotifications-dev
+$(DEPLOY)-$(PROD)-check-push-tickets         : URI_NAME       := pushnotifications
+$(DEPLOY)-%-emails-notifications             : CRON_PREFIX    := emails_notifications
+$(DEPLOY)-%-emails-notifications             : CRON_LOCATION  := $(DEPLOY_REGION)
+$(DEPLOY)-%-emails-notifications             : CRON_SCHEDULE  := '0 14 * * 5'
+$(DEPLOY)-%-emails-notifications             : CRON_URI       = $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')/notifications/send
+$(DEPLOY)-%-emails-notifications             : CRON_FLAGS     = --oidc-service-account-email $(GCP_PROJECT_NUMBER)-compute@developer.gserviceaccount.com --oidc-token-audience $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')
+$(DEPLOY)-%-emails-notifications             : CRON_METHOD    := POST
+$(DEPLOY)-$(DEV)-emails-notifications        : URI_NAME       := emails-dev
+$(DEPLOY)-$(PROD)-emails-notifications       : URI_NAME       := emails-v2
+#$(DEPLOY)-%-emails-digest                    : CRON_PREFIX    := emails_digest
+#$(DEPLOY)-%-emails-digest                    : CRON_LOCATION  := $(DEPLOY_REGION)
+#$(DEPLOY)-%-emails-digest                    : CRON_SCHEDULE  := '0 16 * * 1'
+#$(DEPLOY)-%-emails-digest                    : CRON_URI       = $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')/digest/send
+#$(DEPLOY)-%-emails-digest                    : CRON_FLAGS     = --oidc-service-account-email $(GCP_PROJECT_NUMBER)-compute@developer.gserviceaccount.com --oidc-token-audience $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')
+#$(DEPLOY)-%-emails-digest                    : CRON_METHOD    := POST
+#$(DEPLOY)-$(DEV)-emails-digest               : URI_NAME       := emails-dev
+#$(DEPLOY)-$(PROD)-emails-digest              : URI_NAME       := emails-v2
 
 # Service name mappings
 $(PROMOTE)-%-backend                   : SERVICE := default
-$(PROMOTE)-%-emails                    : SERVICE := emails
+$(PROMOTE)-%-emails                    : SERVICE := emails-v2
+$(PROMOTE)-%-pushnotifications         : SERVICE := pushnotifications
 $(PROMOTE)-%-admin                     : SERVICE := admin
 
 #----------------------------------------------------------------
@@ -184,16 +253,30 @@ _set-project-$(ENV):
 	@echo "\n========== DEPLOYING TO '$(ENV)' ENVIRONMENT ==========\n"
 	$(SET_GCP_PROJECT)
 
-# Deploys the project
-_$(DEPLOY)-%:
-	@$(APP_ENGINE_DEPLOY)
-	@if [ $$? -eq 0 ] && echo $(APP_PROMOTE_FLAGS) | grep -e "--no-promote" > /dev/null; then echo "\n\tVERSION: '$(DEPLOY_VERSION)' was deployed but is not currently receiving traffic.\n\tRun 'make promote-$(ENV)-$* version=$(DEPLOY_VERSION)' to promote it!\n"; else echo "\n\tVERSION: '$(DEPLOY_VERSION)' was deployed!\n"; fi
-
 _$(DOCKER)-$(DEPLOY)-%:
 	@$(DOCKER_BUILD)
 	@$(DOCKER_PUSH)
 	@$(CLOUD_RUN_DEPLOY)
 	@if [ $$? -eq 0 ] && echo $(DEPLOY_FLAGS) | grep -e "--no-traffic" > /dev/null; then echo "\n\tVERSION: '$(CURRENT_COMMIT_HASH)' was deployed but is not currently receiving traffic.\n\tRun 'make promote-$(ENV)-$* version=$(CURRENT_COMMIT_HASH)' to promote it!\n"; else echo "\n\tVERSION: '$(CURRENT_COMMIT_HASH)' was deployed!\n"; fi
+
+_$(CRON)-$(DEPLOY)-%:
+	@$(SCHEDULER_DEPLOY) $(CRON_FLAGS)
+	@echo Deployed job $(CRON_NAME) to $(ENV)
+
+# Pauses jobs besides the version being deployed
+_$(CRON)-$(PAUSE)-%:
+	@echo Pausing jobs besides $(CRON_NAME)...
+	@gcloud scheduler jobs list \
+		--location $(DEPLOY_REGION) \
+		--filter 'ID:$(CRON_PREFIX) AND NOT ID:$(CRON_NAME) AND STATE:enabled' \
+		--format 'value(ID)' \
+		| xargs -I {} gcloud scheduler jobs pause --location $(DEPLOY_REGION) --quiet {}
+
+_$(JOB)-$(DEPLOY)-%:
+	@echo Deploying job $(JOB_NAME)
+	@$(DOCKER_BUILD)
+	@$(DOCKER_PUSH)
+	@$(CLOUD_JOB_DEPLOY)
 
 # Immediately migrates traffic to the input version
 _$(PROMOTE)-%:
@@ -205,12 +288,6 @@ _$(DOCKER)-$(PROMOTE)-%:
 	@version='$(version)'; \
 	if [ -z "$$version" ]; then echo "Please add 'version=...' to the command!" ; exit 1; fi; \
 	gcloud run services update-traffic $(SERVICE) --to-revisions=$(SERVICE)-$$version=100
-
-# Stops all versions of a services EXCEPT the input version
-_$(STOP)-%:
-	@version='$(version)'; \
-	if [ -z "$$version" ]; then echo "Please add 'version=...' to the command!" ; exit 1; fi; \
-	gcloud beta app versions stop -s $(SERVICE) $$(gcloud beta app versions list -s "$(SERVICE)" | awk 'NR>1' | awk '{print $$2}' | grep -v $$version);
 
 # Creates a new release in Sentry. Requires sentry-cli, install it by running:
 #
@@ -227,30 +304,42 @@ _$(RELEASE)-%:
 	@$(SENTRY_RELEASE) deploys $(DEPLOY_VERSION) new -n $(DEPLOY_VERSION) -e $(ENV)
 
 # DEV deployments
-$(DEPLOY)-$(DEV)-backend          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
-$(DEPLOY)-$(DEV)-emails           : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
-$(DEPLOY)-$(DEV)-admin            : _set-project-$(ENV) _$(DEPLOY)-admin
+$(DEPLOY)-$(DEV)-backend            : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
+$(DEPLOY)-$(DEV)-pushnotifications  : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-pushnotifications _$(RELEASE)-pushnotifications
+$(DEPLOY)-$(DEV)-emails             : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
+$(DEPLOY)-$(DEV)-admin              : _set-project-$(ENV) _$(DEPLOY)-admin
 $(DEPLOY)-$(DEV)-routing-rules    : _set-project-$(ENV) _$(DEPLOY)-routing-rules
-$(DEPLOY)-$(DEV)-graphql-gateway   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
+$(DEPLOY)-$(DEV)-graphql-gateway    : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
+# $(DEPLOY)-$(DEV)-alchemy-spam       : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-alchemy-spam _$(CRON)-$(PAUSE)-alchemy-spam
+$(DEPLOY)-$(DEV)-check-push-tickets : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-check-push-tickets _$(CRON)-$(PAUSE)-check-push-tickets
+$(DEPLOY)-$(DEV)-emails-notifications : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-notifications _$(CRON)-$(PAUSE)-emails-notifications
+# $(DEPLOY)-$(DEV)-emails-digest : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-digest _$(CRON)-$(PAUSE)-emails-digest
 
 # SANDBOX deployments
 $(DEPLOY)-$(SANDBOX)-backend      : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend # go server that uses dev upstream services
 
 # PROD deployments
-$(DEPLOY)-$(PROD)-backend         : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
-$(DEPLOY)-$(PROD)-emails          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
-$(DEPLOY)-$(PROD)-admin           : _set-project-$(ENV) _$(DEPLOY)-admin
-$(DEPLOY)-$(PROD)-routing-rules   : _set-project-$(ENV) _$(DEPLOY)-routing-rules
-$(DEPLOY)-$(PROD)-graphql-gateway : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
+$(DEPLOY)-$(PROD)-backend                  : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
+$(DEPLOY)-$(PROD)-pushnotifications        : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-pushnotifications _$(RELEASE)-pushnotifications
+$(DEPLOY)-$(PROD)-emails                   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
+# $(DEPLOY)-$(PROD)-kafka-streamer           : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-kafka-streamer _$(RELEASE)-kafka-streamer
+$(DEPLOY)-$(PROD)-admin                    : _set-project-$(ENV) _$(DEPLOY)-admin
+$(DEPLOY)-$(PROD)-routing-rules            : _set-project-$(ENV) _$(DEPLOY)-routing-rules
+$(DEPLOY)-$(PROD)-graphql-gateway          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
+# $(DEPLOY)-$(PROD)-alchemy-spam             : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-alchemy-spam _$(CRON)-$(PAUSE)-alchemy-spam
+$(DEPLOY)-$(PROD)-check-push-tickets       : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-check-push-tickets _$(CRON)-$(PAUSE)-check-push-tickets
+$(DEPLOY)-$(PROD)-emails-notifications     : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-notifications _$(CRON)-$(PAUSE)-emails-notifications
+# $(DEPLOY)-$(PROD)-emails-digest            : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-digest _$(CRON)-$(PAUSE)-emails-digest
 
 # PROD promotions. Running these targets will migrate traffic to the specified version.
 # Example usage:
 #
 # $ make promote-prod-backend version=myVersion
 #
-$(PROMOTE)-$(PROD)-backend          : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-backend
-$(PROMOTE)-$(PROD)-emails           : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-emails
-$(PROMOTE)-$(PROD)-admin            : _set-project-$(ENV) _$(PROMOTE)-admin
+$(PROMOTE)-$(PROD)-backend            : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-backend
+$(PROMOTE)-$(PROD)-pushnotifications  : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-pushnotifications
+$(PROMOTE)-$(PROD)-emails             : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-emails
+$(PROMOTE)-$(PROD)-admin              : _set-project-$(ENV) _$(PROMOTE)-admin
 
 # Contracts
 contracts: solc abi-gen
@@ -296,16 +385,29 @@ abi-gen:
 	abigen --abi=./contracts/abi/PremiumCards.abi --pkg=contracts --type=PremiumCards > ./contracts/PremiumCards.go
 
 # Miscellaneous stuff
-docker-start-clean:	docker-build
-	docker-compose up -d
+# Listing targets as dependencies doesn't pull in target-specific secrets, so we need to
+# invoke $(MAKE) here to read appropriate secrets for each target.
+docker-start-clean:
+	$(MAKE) build-local-docker
+	$(MAKE) start-local-docker
 
-docker-build: docker-stop
-	docker-compose build
+docker-build:
+	$(MAKE) build-local-docker
 
-docker-start: docker-stop
-	docker-compose up -d
+docker-start:
+	$(MAKE) stop-local-docker
+	$(MAKE) start-local-docker
 
 docker-stop:
+	$(MAKE) stop-local-docker
+
+build-local-docker:
+	docker-compose build
+
+start-local-docker:
+	docker-compose up -d
+
+stop-local-docker:
 	docker-compose down
 
 format-graphql:
@@ -314,13 +416,13 @@ format-graphql:
 	yarn prettier --write graphql/testdata/operations.graphql;
 
 start-local-graphql-gateway:
-	docker-compose -f docker/graphql-gateway/docker-compose.yml up -d graphql-gateway-local
+	docker-compose -f docker/graphql-gateway/docker-compose.yml up --build -d graphql-gateway-local
 
 start-dev-graphql-gateway:
-	docker-compose -f docker/graphql-gateway/docker-compose.yml up -d graphql-gateway-dev
+	docker-compose -f docker/graphql-gateway/docker-compose.yml up --build -d graphql-gateway-dev
 
 start-prod-graphql-gateway:
-	docker-compose -f docker/graphql-gateway/docker-compose.yml up -d graphql-gateway-prod
+	docker-compose -f docker/graphql-gateway/docker-compose.yml up --build -d graphql-gateway-prod
 
 # Listing targets as dependencies doesn't pull in target-specific secrets, so we need to
 # invoke $(MAKE) here to read appropriate secrets for each target.
@@ -359,6 +461,12 @@ migrate-prod-coredb: start-prod-sql-proxy confirm-prod-migrate
 	POSTGRES_PASSWORD=$(POSTGRES_MIGRATION_PASSWORD) \
 	POSTGRES_PORT=6543 \
 	go run cmd/migrate/main.go
+
+#migrate-prod-mirrordb: start-prod-sql-proxy confirm-prod-migrate
+#	@POSTGRES_USER=$(POSTGRES_MIGRATION_USER) \
+#	POSTGRES_PASSWORD=$(POSTGRES_MIGRATION_PASSWORD) \
+#	POSTGRES_PORT=6544 \
+#	go run cmd/migrate/main.go mirror
 
 fix-sops-macs:
 	@cd secrets; ../scripts/fix-sops-macs.sh

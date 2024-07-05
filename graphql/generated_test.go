@@ -86,15 +86,11 @@ func (v *CreateSplitInput) GetLogo() *string { return v.Logo }
 
 type CreateUserInput struct {
 	Username *string `json:"username"`
-	Bio      *string `json:"bio"`
 	Email    *string `json:"email"`
 }
 
 // GetUsername returns CreateUserInput.Username, and is useful for accessing the field via an interface.
 func (v *CreateUserInput) GetUsername() *string { return v.Username }
-
-// GetBio returns CreateUserInput.Bio, and is useful for accessing the field via an interface.
-func (v *CreateUserInput) GetBio() *string { return v.Bio }
 
 // GetEmail returns CreateUserInput.Email, and is useful for accessing the field via an interface.
 func (v *CreateUserInput) GetEmail() *string { return v.Email }
@@ -189,13 +185,11 @@ func (v *PublishSplitInput) GetEditId() string { return v.EditId }
 func (v *PublishSplitInput) GetCaption() *string { return v.Caption }
 
 type UpdateSplitInput struct {
-	SplitId            persist.DBID   `json:"splitId"`
-	Name               *string        `json:"name"`
-	Description        *string        `json:"description"`
-	Caption            *string        `json:"caption"`
-	DeletedCollections []persist.DBID `json:"deletedCollections"`
-	Order              []persist.DBID `json:"order"`
-	EditId             *string        `json:"editId"`
+	SplitId     persist.DBID   `json:"splitId"`
+	Name        *string        `json:"name"`
+	Description *string        `json:"description"`
+	Order       []persist.DBID `json:"order"`
+	EditId      string         `json:"editId"`
 }
 
 // GetSplitId returns UpdateSplitInput.SplitId, and is useful for accessing the field via an interface.
@@ -207,17 +201,11 @@ func (v *UpdateSplitInput) GetName() *string { return v.Name }
 // GetDescription returns UpdateSplitInput.Description, and is useful for accessing the field via an interface.
 func (v *UpdateSplitInput) GetDescription() *string { return v.Description }
 
-// GetCaption returns UpdateSplitInput.Caption, and is useful for accessing the field via an interface.
-func (v *UpdateSplitInput) GetCaption() *string { return v.Caption }
-
-// GetDeletedCollections returns UpdateSplitInput.DeletedCollections, and is useful for accessing the field via an interface.
-func (v *UpdateSplitInput) GetDeletedCollections() []persist.DBID { return v.DeletedCollections }
-
 // GetOrder returns UpdateSplitInput.Order, and is useful for accessing the field via an interface.
 func (v *UpdateSplitInput) GetOrder() []persist.DBID { return v.Order }
 
 // GetEditId returns UpdateSplitInput.EditId, and is useful for accessing the field via an interface.
-func (v *UpdateSplitInput) GetEditId() *string { return v.EditId }
+func (v *UpdateSplitInput) GetEditId() string { return v.EditId }
 
 type UpdateUserExperienceInput struct {
 	ExperienceType UserExperienceType `json:"experienceType"`
@@ -342,14 +330,6 @@ type __userByUsernameQueryInput struct {
 
 // GetUser returns __userByUsernameQueryInput.User, and is useful for accessing the field via an interface.
 func (v *__userByUsernameQueryInput) GetUser() string { return v.User }
-
-// __viewSplitMutationInput is used internally by genqlient
-type __viewSplitMutationInput struct {
-	SplitId persist.DBID `json:"splitId"`
-}
-
-// GetSplitId returns __viewSplitMutationInput.SplitId, and is useful for accessing the field via an interface.
-func (v *__viewSplitMutationInput) GetSplitId() persist.DBID { return v.SplitId }
 
 // addUserWalletMutationAddUserWalletAddUserWalletPayload includes the requested fields of the GraphQL type AddUserWalletPayload.
 type addUserWalletMutationAddUserWalletAddUserWalletPayload struct {
@@ -1042,7 +1022,6 @@ func (v *createUserMutationCreateUserCreateUserPayloadViewer) GetUser() *createU
 type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser struct {
 	Username *string                                                                          `json:"username"`
 	Dbid     persist.DBID                                                                     `json:"dbid"`
-	Bio      *string                                                                          `json:"bio"`
 	Splits   []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit `json:"splits"`
 }
 
@@ -1054,11 +1033,6 @@ func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) Get
 // GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
 func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetDbid() persist.DBID {
 	return v.Dbid
-}
-
-// GetBio returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Bio, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetBio() *string {
-	return v.Bio
 }
 
 // GetSplits returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Splits, and is useful for accessing the field via an interface.
@@ -3619,189 +3593,6 @@ func __marshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(v *userByUs
 	}
 }
 
-// viewSplitMutationResponse is returned by viewSplitMutation on success.
-type viewSplitMutationResponse struct {
-	ViewSplit *viewSplitMutationViewSplitViewSplitPayloadOrError `json:"-"`
-}
-
-// GetViewSplit returns viewSplitMutationResponse.ViewSplit, and is useful for accessing the field via an interface.
-func (v *viewSplitMutationResponse) GetViewSplit() *viewSplitMutationViewSplitViewSplitPayloadOrError {
-	return v.ViewSplit
-}
-
-func (v *viewSplitMutationResponse) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*viewSplitMutationResponse
-		ViewSplit json.RawMessage `json:"viewSplit"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.viewSplitMutationResponse = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.ViewSplit
-		src := firstPass.ViewSplit
-		if len(src) != 0 && string(src) != "null" {
-			*dst = new(viewSplitMutationViewSplitViewSplitPayloadOrError)
-			err = __unmarshalviewSplitMutationViewSplitViewSplitPayloadOrError(
-				src, *dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal viewSplitMutationResponse.ViewSplit: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshalviewSplitMutationResponse struct {
-	ViewSplit json.RawMessage `json:"viewSplit"`
-}
-
-func (v *viewSplitMutationResponse) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *viewSplitMutationResponse) __premarshalJSON() (*__premarshalviewSplitMutationResponse, error) {
-	var retval __premarshalviewSplitMutationResponse
-
-	{
-
-		dst := &retval.ViewSplit
-		src := v.ViewSplit
-		if src != nil {
-			var err error
-			*dst, err = __marshalviewSplitMutationViewSplitViewSplitPayloadOrError(
-				src)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"unable to marshal viewSplitMutationResponse.ViewSplit: %w", err)
-			}
-		}
-	}
-	return &retval, nil
-}
-
-// viewSplitMutationViewSplitErrAuthenticationFailed includes the requested fields of the GraphQL type ErrAuthenticationFailed.
-type viewSplitMutationViewSplitErrAuthenticationFailed struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
-}
-
-// GetTypename returns viewSplitMutationViewSplitErrAuthenticationFailed.Typename, and is useful for accessing the field via an interface.
-func (v *viewSplitMutationViewSplitErrAuthenticationFailed) GetTypename() *string { return v.Typename }
-
-// GetMessage returns viewSplitMutationViewSplitErrAuthenticationFailed.Message, and is useful for accessing the field via an interface.
-func (v *viewSplitMutationViewSplitErrAuthenticationFailed) GetMessage() string { return v.Message }
-
-// viewSplitMutationViewSplitViewSplitPayload includes the requested fields of the GraphQL type ViewSplitPayload.
-type viewSplitMutationViewSplitViewSplitPayload struct {
-	Typename *string                                          `json:"__typename"`
-	Split    *viewSplitMutationViewSplitViewSplitPayloadSplit `json:"split"`
-}
-
-// GetTypename returns viewSplitMutationViewSplitViewSplitPayload.Typename, and is useful for accessing the field via an interface.
-func (v *viewSplitMutationViewSplitViewSplitPayload) GetTypename() *string { return v.Typename }
-
-// GetSplit returns viewSplitMutationViewSplitViewSplitPayload.Split, and is useful for accessing the field via an interface.
-func (v *viewSplitMutationViewSplitViewSplitPayload) GetSplit() *viewSplitMutationViewSplitViewSplitPayloadSplit {
-	return v.Split
-}
-
-// viewSplitMutationViewSplitViewSplitPayloadOrError includes the requested fields of the GraphQL interface ViewSplitPayloadOrError.
-//
-// viewSplitMutationViewSplitViewSplitPayloadOrError is implemented by the following types:
-// viewSplitMutationViewSplitErrAuthenticationFailed
-// viewSplitMutationViewSplitViewSplitPayload
-type viewSplitMutationViewSplitViewSplitPayloadOrError interface {
-	implementsGraphQLInterfaceviewSplitMutationViewSplitViewSplitPayloadOrError()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() *string
-}
-
-func (v *viewSplitMutationViewSplitErrAuthenticationFailed) implementsGraphQLInterfaceviewSplitMutationViewSplitViewSplitPayloadOrError() {
-}
-func (v *viewSplitMutationViewSplitViewSplitPayload) implementsGraphQLInterfaceviewSplitMutationViewSplitViewSplitPayloadOrError() {
-}
-
-func __unmarshalviewSplitMutationViewSplitViewSplitPayloadOrError(b []byte, v *viewSplitMutationViewSplitViewSplitPayloadOrError) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "ErrAuthenticationFailed":
-		*v = new(viewSplitMutationViewSplitErrAuthenticationFailed)
-		return json.Unmarshal(b, *v)
-	case "ViewSplitPayload":
-		*v = new(viewSplitMutationViewSplitViewSplitPayload)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing ViewSplitPayloadOrError.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for viewSplitMutationViewSplitViewSplitPayloadOrError: "%v"`, tn.TypeName)
-	}
-}
-
-func __marshalviewSplitMutationViewSplitViewSplitPayloadOrError(v *viewSplitMutationViewSplitViewSplitPayloadOrError) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *viewSplitMutationViewSplitErrAuthenticationFailed:
-		typename = "ErrAuthenticationFailed"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*viewSplitMutationViewSplitErrAuthenticationFailed
-		}{typename, v}
-		return json.Marshal(result)
-	case *viewSplitMutationViewSplitViewSplitPayload:
-		typename = "ViewSplitPayload"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*viewSplitMutationViewSplitViewSplitPayload
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for viewSplitMutationViewSplitViewSplitPayloadOrError: "%T"`, v)
-	}
-}
-
-// viewSplitMutationViewSplitViewSplitPayloadSplit includes the requested fields of the GraphQL type Split.
-type viewSplitMutationViewSplitViewSplitPayloadSplit struct {
-	Dbid persist.DBID `json:"dbid"`
-}
-
-// GetDbid returns viewSplitMutationViewSplitViewSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
-func (v *viewSplitMutationViewSplitViewSplitPayloadSplit) GetDbid() persist.DBID { return v.Dbid }
-
 // viewerQueryResponse is returned by viewerQuery on success.
 type viewerQueryResponse struct {
 	Viewer *viewerQueryViewerViewerOrError `json:"-"`
@@ -4098,7 +3889,6 @@ mutation createUserMutation ($authMechanism: AuthMechanism!, $input: CreateUserI
 				user {
 					username
 					dbid
-					bio
 					splits {
 						dbid
 					}
@@ -4640,50 +4430,6 @@ func userByUsernameQuery(
 	var err_ error
 
 	var data_ userByUsernameQueryResponse
-	resp_ := &graphql.Response{Data: &data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return &data_, err_
-}
-
-// The query or mutation executed by viewSplitMutation.
-const viewSplitMutation_Operation = `
-mutation viewSplitMutation ($splitId: DBID!) {
-	viewSplit(splitId: $splitId) {
-		__typename
-		... on Error {
-			__typename
-			message
-		}
-		... on ViewSplitPayload {
-			split {
-				dbid
-			}
-		}
-	}
-}
-`
-
-func viewSplitMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	splitId persist.DBID,
-) (*viewSplitMutationResponse, error) {
-	req_ := &graphql.Request{
-		OpName: "viewSplitMutation",
-		Query:  viewSplitMutation_Operation,
-		Variables: &__viewSplitMutationInput{
-			SplitId: splitId,
-		},
-	}
-	var err_ error
-
-	var data_ viewSplitMutationResponse
 	resp_ := &graphql.Response{Data: &data_}
 
 	err_ = client_.MakeRequest(

@@ -13,7 +13,7 @@ import (
 	"github.com/SplitFi/go-splitfi/publicapi"
 	"github.com/SplitFi/go-splitfi/service/auth"
 	"github.com/SplitFi/go-splitfi/service/emails"
-	"github.com/SplitFi/go-splitfi/service/mediamapper"
+	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
@@ -63,7 +63,7 @@ func (r *mutationResolver) RemoveUserWallets(ctx context.Context, walletIds []pe
 func (r *mutationResolver) UpdateUserInfo(ctx context.Context, input model.UpdateUserInfoInput) (model.UpdateUserInfoPayloadOrError, error) {
 	api := publicapi.For(ctx)
 
-	err := api.User.UpdateUserInfo(ctx, input.Username, input.Bio)
+	err := api.User.UpdateUserInfo(ctx, input.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -77,12 +77,30 @@ func (r *mutationResolver) UpdateUserInfo(ctx context.Context, input model.Updat
 
 // RegisterUserPushToken is the resolver for the registerUserPushToken field.
 func (r *mutationResolver) RegisterUserPushToken(ctx context.Context, pushToken string) (model.RegisterUserPushTokenPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: RegisterUserPushToken - registerUserPushToken"))
+	_, err := publicapi.For(ctx).User.CreatePushTokenForUser(ctx, pushToken)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.RegisterUserPushTokenPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // UnregisterUserPushToken is the resolver for the unregisterUserPushToken field.
 func (r *mutationResolver) UnregisterUserPushToken(ctx context.Context, pushToken string) (model.UnregisterUserPushTokenPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UnregisterUserPushToken - unregisterUserPushToken"))
+	err := publicapi.For(ctx).User.DeletePushTokenByPushToken(ctx, pushToken)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &model.UnregisterUserPushTokenPayload{
+		Viewer: resolveViewer(ctx),
+	}
+
+	return output, nil
 }
 
 // GetAuthNonce is the resolver for the getAuthNonce field.
@@ -112,24 +130,18 @@ func (r *mutationResolver) CreateUser(ctx context.Context, authMechanism model.A
 		userName = *input.Username
 	}
 
-	bioStr := ""
-	if input.Bio != nil {
-		bioStr = *input.Bio
-	}
-
 	var email *persist.Email
 	if input.Email != nil {
-		it := persist.Email(*input.Email)
+		it := *input.Email
 		email = &it
 	}
 
-	userID, err := publicapi.For(ctx).User.CreateUser(ctx, authenticator, userName, email, bioStr)
+	_, err = publicapi.For(ctx).User.CreateUser(ctx, authenticator, userName, email)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &model.CreateUserPayload{
-		UserID: &userID,
 		Viewer: resolveViewer(ctx),
 	}
 
@@ -173,13 +185,12 @@ func (r *mutationResolver) Login(ctx context.Context, authMechanism model.AuthMe
 		return nil, err
 	}
 
-	userId, err := publicapi.For(ctx).Auth.Login(ctx, authenticator)
+	_, err = publicapi.For(ctx).Auth.Login(ctx, authenticator)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &model.LoginPayload{
-		UserID: &userId,
 		Viewer: resolveViewer(ctx),
 	}
 	return output, nil
@@ -194,11 +205,6 @@ func (r *mutationResolver) Logout(ctx context.Context, pushTokenToUnregister *st
 	}
 
 	return output, nil
-}
-
-// ViewSplit is the resolver for the viewSplit field.
-func (r *mutationResolver) ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: ViewSplit - viewSplit"))
 }
 
 // UpdateSplit is the resolver for the updateSplit field.
@@ -323,17 +329,39 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input model.VerifyEm
 
 // VerifyEmailMagicLink is the resolver for the verifyEmailMagicLink field.
 func (r *mutationResolver) VerifyEmailMagicLink(ctx context.Context, input model.VerifyEmailMagicLinkInput) (model.VerifyEmailMagicLinkPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: VerifyEmailMagicLink - verifyEmailMagicLink"))
+	_, err := publicapi.For(ctx).User.GetUserByVerifiedEmailAddress(ctx, input.Email)
+
+	return model.VerifyEmailMagicLinkPayload{
+		CanSend: err == nil,
+	}, nil
 }
 
 // OptInForRoles is the resolver for the optInForRoles field.
 func (r *mutationResolver) OptInForRoles(ctx context.Context, roles []persist.Role) (model.OptInForRolesPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: OptInForRoles - optInForRoles"))
+	user, err := publicapi.For(ctx).User.OptInForRoles(ctx, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := model.OptInForRolesPayload{
+		User: userToModel(ctx, *user),
+	}
+
+	return payload, nil
 }
 
 // OptOutForRoles is the resolver for the optOutForRoles field.
 func (r *mutationResolver) OptOutForRoles(ctx context.Context, roles []persist.Role) (model.OptOutForRolesPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: OptOutForRoles - optOutForRoles"))
+	user, err := publicapi.For(ctx).User.OptOutForRoles(ctx, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := model.OptOutForRolesPayload{
+		User: userToModel(ctx, *user),
+	}
+
+	return payload, nil
 }
 
 // AddRolesToUser is the resolver for the addRolesToUser field.
@@ -375,7 +403,15 @@ func (r *mutationResolver) RevokeRolesFromUser(ctx context.Context, username str
 
 // UploadPersistedQueries is the resolver for the uploadPersistedQueries field.
 func (r *mutationResolver) UploadPersistedQueries(ctx context.Context, input *model.UploadPersistedQueriesInput) (model.UploadPersistedQueriesPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UploadPersistedQueries - uploadPersistedQueries"))
+	err := publicapi.For(ctx).APQ.UploadPersistedQueries(ctx, *input.PersistedQueries)
+
+	if err != nil {
+		return nil, err
+	}
+
+	message := "Persisted queries uploaded successfully"
+
+	return model.UploadPersistedQueriesPayload{Message: &message}, nil
 }
 
 // UpdatePrimaryWallet is the resolver for the updatePrimaryWallet field.
@@ -398,13 +434,6 @@ func (r *mutationResolver) UpdateUserExperience(ctx context.Context, input model
 	return model.UpdateUserExperiencePayload{
 		Viewer: resolveViewer(ctx),
 	}, nil
-}
-
-// Blurhash is the resolver for the blurhash field.
-func (r *previewURLSetResolver) Blurhash(ctx context.Context, obj *model.PreviewURLSet) (*string, error) {
-	mm := mediamapper.For(ctx)
-
-	return mm.GetBlurhash(*obj.Raw), nil
 }
 
 // Node is the resolver for the node field.
@@ -432,11 +461,6 @@ func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.
 	return resolveSplitFiUserByAddress(ctx, chainAddress)
 }
 
-// UsersWithTrait is the resolver for the usersWithTrait field.
-func (r *queryResolver) UsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error) {
-	panic(fmt.Errorf("not implemented: UsersWithTrait - usersWithTrait"))
-}
-
 // SplitByID is the resolver for the splitById field.
 func (r *queryResolver) SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error) {
 	split, err := resolveSplitBySplitID(ctx, id)
@@ -460,13 +484,24 @@ func (r *queryResolver) ViewerSplitByID(ctx context.Context, id persist.DBID) (m
 }
 
 // SearchUsers is the resolver for the searchUsers field.
-func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error) {
+func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersPayloadOrError, error) {
 	panic(fmt.Errorf("not implemented: SearchUsers - searchUsers"))
 }
 
 // SearchSplits is the resolver for the searchSplits field.
 func (r *queryResolver) SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error) {
 	panic(fmt.Errorf("not implemented: SearchSplits - searchSplits"))
+}
+
+// IsEmailAddressAvailable is the resolver for the isEmailAddressAvailable field.
+func (r *queryResolver) IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error) {
+	exists, err := publicapi.For(ctx).User.VerifiedEmailAddressExists(ctx, emailAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	available := !exists
+	return &available, nil
 }
 
 // UsersByRole is the resolver for the usersByRole field.
@@ -545,7 +580,16 @@ func (r *subscriptionResolver) NotificationUpdated(ctx context.Context) (<-chan 
 
 // EmailNotificationSettings is the resolver for the emailNotificationSettings field.
 func (r *userEmailResolver) EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error) {
-	panic(fmt.Errorf("not implemented: EmailNotificationSettings - emailNotificationSettings"))
+	unsubs, err := publicapi.For(ctx).User.GetCurrentUserEmailNotificationSettings(ctx)
+	if err != nil {
+		logger.For(ctx).Errorf("error getting email notification settings from email service: %s", err)
+		return obj.EmailNotificationSettings, nil
+	}
+
+	return &model.EmailNotificationSettings{
+		UnsubscribedFromAll:           unsubs.All.Bool(),
+		UnsubscribedFromNotifications: unsubs.Notifications.Bool(),
+	}, nil
 }
 
 // User is the resolver for the user field.
@@ -625,9 +669,6 @@ func (r *Resolver) Asset() generated.AssetResolver { return &assetResolver{r} }
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
-// PreviewURLSet returns generated.PreviewURLSetResolver implementation.
-func (r *Resolver) PreviewURLSet() generated.PreviewURLSetResolver { return &previewURLSetResolver{r} }
-
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
@@ -664,7 +705,6 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 
 type assetResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
-type previewURLSetResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type recipientResolver struct{ *Resolver }
 type splitResolver struct{ *Resolver }
@@ -675,11 +715,3 @@ type viewerResolver struct{ *Resolver }
 type walletResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-type setSpamPreferencePayloadResolver struct{ *Resolver }

@@ -627,12 +627,10 @@ func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
 
 	return &model.SplitFiUser{
 		HelperSplitFiUserData: model.HelperSplitFiUserData{
-			UserID:          user.ID,
-			FeaturedSplitID: user.FeaturedSplit,
+			UserID: user.ID,
 		},
 		Dbid:      user.ID,
 		Username:  &user.Username.String,
-		Bio:       &user.Bio.String,
 		Wallets:   wallets,
 		Universal: &user.Universal,
 

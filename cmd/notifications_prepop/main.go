@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// run with `go run cmd/notification_prepop/main.go ${some user ID to use as the viewer}`
+// run with `go run cmd/notification_prepop/streamer.go ${some user ID to use as the viewer}`
 
 func main() {
 

@@ -53,16 +53,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"Media": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(Media)
-		return obj, ok
-	},
-
-	"MediaSubtype": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(MediaSubtype)
-		return obj, ok
-	},
-
 	"Node": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(Node)
 		return obj, ok
@@ -220,11 +210,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"VerifyEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(VerifyEmailPayloadOrError)
-		return obj, ok
-	},
-
-	"ViewSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(ViewSplitPayloadOrError)
 		return obj, ok
 	},
 

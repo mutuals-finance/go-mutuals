@@ -79,11 +79,8 @@ type SplitFiUser implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
   username: String
-  bio: String
-  traits: String
   universal: Boolean
   roles: [Role] @goField(forceResolver: true)
-
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
   # Returns all splits owned by this user. Useful for retrieving all tokens without any duplicates,
@@ -113,11 +110,6 @@ type ChainPubKey {
   chain: Chain
 }
 
-type ChainTokens {
-  chain: Chain
-  tokens: [Token]
-}
-
 type ChainSplits {
   chain: Chain
   splits: [Split]
@@ -137,164 +129,7 @@ union SplitFiUserOrWallet = SplitFiUser | Wallet
 
 union SplitFiUserOrAddress = SplitFiUser | ChainAddress
 
-union MediaSubtype =
-    ImageMedia
-  | GIFMedia
-  | VideoMedia
-  | AudioMedia
-  | TextMedia
-  | PdfMedia
-  | HtmlMedia
-  | JsonMedia
-  | GltfMedia
-  | UnknownMedia
-  | InvalidMedia
-
-type PreviewURLSet {
-  raw: String
-  thumbnail: String
-  small: String
-  medium: String
-  large: String
-  srcSet: String
-  liveRender: String
-  blurhash: String @experimental @goField(forceResolver: true)
-}
-
-type VideoURLSet {
-  raw: String
-  small: String
-  medium: String
-  large: String
-}
-
-type MediaDimensions {
-  width: Int
-  height: Int
-  aspectRatio: Float
-}
-
-interface Media {
-  # Various sizes of preview images for the media
-  previewURLs: PreviewURLSet
-
-  # The original source URL for the media (may be IPFS, etc)
-  mediaURL: String
-
-  # The type of media, as determined by the backend. May be redundant given the approach we're using here
-  # (media subtypes implementing the Media interface)
-  mediaType: String
-
-  # All Media types will also have something like contentRenderURL or contentRenderURLs,
-  # which are the URL(s) that should actually be used for rendering the media's content
-
-  # The dimensions of the media, if known
-  dimensions: MediaDimensions
-}
-
-type ImageMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type GIFMedia implements Media {
-  previewURLs: PreviewURLSet
-  staticPreviewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type VideoMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURLs: VideoURLSet
-  dimensions: MediaDimensions
-}
-
-type AudioMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type TextMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type PdfMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type HtmlMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type JsonMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type GltfMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type UnknownMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type InvalidMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
 enum TokenType {
-  ERC721
-  ERC1155
   ERC20
 }
 
@@ -398,12 +233,10 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 }
 
 type NotificationSettings {
-  someoneFollowedYou: Boolean
   someoneViewedYourSplit: Boolean
 }
 
 input NotificationSettingsInput {
-  someoneFollowedYou: Boolean
   someoneViewedYourSplit: Boolean
 }
 
@@ -533,20 +366,19 @@ type Query {
   userByUsername(username: String!): UserByUsernameOrError
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-  usersWithTrait(trait: String!): [SplitFiUser]
   splitById(id: DBID!): SplitByIdPayloadOrError
   viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
   bioWeight defaults to 0.2, meaning that a search result matching a username is considered
-  twice as relevant as a search result matching a bio.
+  twice as relevant as a search result matching another entry (currently nothing provided.
+  See searchSplits(...) for more).
   """
   searchUsers(
     query: String!
     limit: Int
     usernameWeight: Float
-    bioWeight: Float
   ): SearchUsersPayloadOrError
   """
   Search for splits with optional weighting. Weights are floats in the [0.0. 1.0] range
@@ -560,6 +392,8 @@ type Query {
     nameWeight: Float
     descriptionWeight: Float
   ): SearchSplitsPayloadOrError
+
+  isEmailAddressAvailable(emailAddress: Email!): Boolean
 
   # Retool Specific
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
@@ -588,7 +422,6 @@ type RemoveUserWalletsPayload {
 
 input UpdateUserInfoInput {
   username: String!
-  bio: String!
 }
 
 union UpdateUserInfoPayloadOrError =
@@ -756,8 +589,6 @@ union LoginPayloadOrError =
   | ErrDoesNotOwnRequiredToken
 
 type LoginPayload {
-  # TODO: Remove userId in favor of viewer
-  userId: DBID
   viewer: Viewer
 }
 
@@ -766,7 +597,6 @@ type LogoutPayload {
 }
 input CreateUserInput {
   username: String
-  bio: String
   email: Email
 }
 
@@ -779,8 +609,6 @@ union CreateUserPayloadOrError =
   | ErrInvalidInput
 
 type CreateUserPayload {
-  userId: DBID
-  # TODO: Remove userId in favor of viewer
   viewer: Viewer
 }
 
@@ -813,12 +641,6 @@ type GroupNotificationUsersConnection @goEmbedHelper {
 type ClearAllNotificationsPayload {
   notifications: [Notification]
 }
-
-type ViewSplitPayload {
-  split: Split
-}
-
-union ViewSplitPayloadOrError = ViewSplitPayload | ErrAuthenticationFailed
 
 input VerifyEmailInput {
   token: String! @scrub
@@ -993,16 +815,10 @@ input UpdateSplitInput {
   name: String
   description: String
 
-  # leaving caption around for a bit for backwards compatibility
-  caption: String
-
-  deletedCollections: [DBID!]
-
   order: [DBID!]
 
   # generated on the frontend
-  # will be String! in the future, not required for temp backwards compatibility
-  editId: String
+  editId: String!
 }
 
 type UpdateSplitPayload {
@@ -1086,8 +902,6 @@ type Mutation {
   ): UnsubscribeFromEmailTypePayloadOrError
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout(pushTokenToUnregister: String): LogoutPayload
-
-  viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
   updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
   publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired

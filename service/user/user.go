@@ -15,7 +15,6 @@ import (
 	"github.com/SplitFi/go-splitfi/service/eth"
 	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/SplitFi/go-splitfi/util"
-	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -217,7 +216,7 @@ func GetUser(pCtx context.Context, pInput GetUserInput, userRepo postgres.UserRe
 }
 
 // UpdateUserInfo updates a user by ID and ensures that if they are using an ENS name as a username that their address resolves to that ENS
-func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, bio string, userRepository *postgres.UserRepository, ethClient *ethclient.Client) error {
+func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, userRepository *postgres.UserRepository, ethClient *ethclient.Client) error {
 	if strings.HasSuffix(strings.ToLower(username), ".eth") {
 		user, err := userRepository.GetByID(pCtx, userID)
 		if err != nil {
@@ -241,7 +240,6 @@ func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, 
 		persist.UserUpdateInfoInput{
 			UsernameIdempotent: persist.NullString(strings.ToLower(username)),
 			Username:           persist.NullString(username),
-			Bio:                persist.NullString(validate.SanitizationPolicy.Sanitize(bio)),
 		},
 	)
 	if err != nil {

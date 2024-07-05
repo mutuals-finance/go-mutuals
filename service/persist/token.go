@@ -94,6 +94,8 @@ const (
 	ChainOptimism
 	// ChainBase represents the base chain
 	ChainBase
+	// ChainSepolia - Ethereum testnet
+	ChainSepolia
 	// ChainBaseSepolia - Base testnet
 	ChainBaseSepolia
 
@@ -983,6 +985,12 @@ func (hex HexString) BigInt() *big.Int {
 func (hex HexString) Add(new HexString) HexString {
 	asInt := hex.BigInt()
 	return HexString(asInt.Add(asInt, new.BigInt()).Text(16))
+}
+
+// Sub subtracts the given hex string from the current hex string
+func (hex HexString) Sub(new HexString) HexString {
+	asInt := hex.BigInt()
+	return HexString(asInt.Sub(asInt, new.BigInt()).Text(16))
 }
 
 // IsServable returns true if the token's Media has enough information to serve it's assets.

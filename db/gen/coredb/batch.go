@@ -289,7 +289,7 @@ func (b *GetSplitsByUserIDBatchBatchResults) Close() error {
 }
 
 const getUserByAddressAndL1Batch = `-- name: GetUserByAddressAndL1Batch :batchone
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.bio, users.traits, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
+select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_split, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
   and wallets.l1_chain = $2
@@ -342,8 +342,6 @@ func (b *GetUserByAddressAndL1BatchBatchResults) QueryRow(f func(int, User, erro
 			&i.Username,
 			&i.UsernameIdempotent,
 			&i.Wallets,
-			&i.Bio,
-			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
@@ -363,7 +361,7 @@ func (b *GetUserByAddressAndL1BatchBatchResults) Close() error {
 }
 
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
 type GetUserByIdBatchBatchResults struct {
@@ -404,8 +402,6 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 			&i.Username,
 			&i.UsernameIdempotent,
 			&i.Wallets,
-			&i.Bio,
-			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
@@ -425,7 +421,7 @@ func (b *GetUserByIdBatchBatchResults) Close() error {
 }
 
 const getUserByUsernameBatch = `-- name: GetUserByUsernameBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 type GetUserByUsernameBatchBatchResults struct {
@@ -466,8 +462,6 @@ func (b *GetUserByUsernameBatchBatchResults) QueryRow(f func(int, User, error)) 
 			&i.Username,
 			&i.UsernameIdempotent,
 			&i.Wallets,
-			&i.Bio,
-			&i.Traits,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
@@ -579,7 +573,7 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal and t.pos > $2::int and t.pos < $3::int
@@ -639,8 +633,6 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Query(f func(int, []User, 
 					&i.Username,
 					&i.UsernameIdempotent,
 					&i.Wallets,
-					&i.Bio,
-					&i.Traits,
 					&i.Universal,
 					&i.NotificationSettings,
 					&i.EmailUnsubscriptions,
@@ -666,7 +658,7 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.bio, u.traits, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_split, u.primary_wallet_id, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal
@@ -719,8 +711,6 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 					&i.Username,
 					&i.UsernameIdempotent,
 					&i.Wallets,
-					&i.Bio,
-					&i.Traits,
 					&i.Universal,
 					&i.NotificationSettings,
 					&i.EmailUnsubscriptions,
@@ -741,81 +731,6 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 }
 
 func (b *GetUsersByPositionPersonalizedBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getUsersWithTraitBatch = `-- name: GetUsersWithTraitBatch :batchmany
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, bio, traits, universal, notification_settings, email_unsubscriptions, featured_split, primary_wallet_id, user_experiences FROM users WHERE (traits->$1::string) IS NOT NULL AND deleted = false
-`
-
-type GetUsersWithTraitBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetUsersWithTraitBatch(ctx context.Context, dollar_1 []string) *GetUsersWithTraitBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range dollar_1 {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getUsersWithTraitBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetUsersWithTraitBatchBatchResults{br, len(dollar_1), false}
-}
-
-func (b *GetUsersWithTraitBatchBatchResults) Query(f func(int, []User, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []User
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i User
-				if err := rows.Scan(
-					&i.ID,
-					&i.Deleted,
-					&i.Version,
-					&i.LastUpdated,
-					&i.CreatedAt,
-					&i.Username,
-					&i.UsernameIdempotent,
-					&i.Wallets,
-					&i.Bio,
-					&i.Traits,
-					&i.Universal,
-					&i.NotificationSettings,
-					&i.EmailUnsubscriptions,
-					&i.FeaturedSplit,
-					&i.PrimaryWalletID,
-					&i.UserExperiences,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetUsersWithTraitBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -876,7 +791,7 @@ func (b *GetWalletByIDBatchBatchResults) Close() error {
 }
 
 const getWalletsByUserIDBatch = `-- name: GetWalletsByUserIDBatch :batchmany
-SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
+SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
 `
 
 type GetWalletsByUserIDBatchBatchResults struct {

@@ -16,7 +16,6 @@
 -- we select all columns in a table, and pgx can't handle them, so "select *" queries
 -- will fail if we don't hide these columns.
 alter table users drop column if exists fts_username;
-alter table users drop column if exists fts_bio_english;
 
 alter table wallets drop column if exists fts_address;
 

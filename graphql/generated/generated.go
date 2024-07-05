@@ -45,7 +45,6 @@ type Config struct {
 type ResolverRoot interface {
 	Asset() AssetResolver
 	Mutation() MutationResolver
-	PreviewURLSet() PreviewURLSetResolver
 	Query() QueryResolver
 	Recipient() RecipientResolver
 	Split() SplitResolver
@@ -84,14 +83,6 @@ type ComplexityRoot struct {
 		Version      func(childComplexity int) int
 	}
 
-	AudioMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
-	}
-
 	AuthNonce struct {
 		Message func(childComplexity int) int
 		Nonce   func(childComplexity int) int
@@ -112,11 +103,6 @@ type ComplexityRoot struct {
 		Splits func(childComplexity int) int
 	}
 
-	ChainTokens struct {
-		Chain  func(childComplexity int) int
-		Tokens func(childComplexity int) int
-	}
-
 	ClearAllNotificationsPayload struct {
 		Notifications func(childComplexity int) int
 	}
@@ -126,7 +112,6 @@ type ComplexityRoot struct {
 	}
 
 	CreateUserPayload struct {
-		UserID func(childComplexity int) int
 		Viewer func(childComplexity int) int
 	}
 
@@ -211,23 +196,6 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	GIFMedia struct {
-		ContentRenderURL  func(childComplexity int) int
-		Dimensions        func(childComplexity int) int
-		MediaType         func(childComplexity int) int
-		MediaURL          func(childComplexity int) int
-		PreviewURLs       func(childComplexity int) int
-		StaticPreviewURLs func(childComplexity int) int
-	}
-
-	GltfMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
-	}
-
 	GroupNotificationUserEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
@@ -238,51 +206,12 @@ type ComplexityRoot struct {
 		PageInfo func(childComplexity int) int
 	}
 
-	HtmlMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
-	}
-
-	ImageMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
-	}
-
-	InvalidMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
-	}
-
-	JsonMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
-	}
-
 	LoginPayload struct {
-		UserID func(childComplexity int) int
 		Viewer func(childComplexity int) int
 	}
 
 	LogoutPayload struct {
 		Viewer func(childComplexity int) int
-	}
-
-	MediaDimensions struct {
-		AspectRatio func(childComplexity int) int
-		Height      func(childComplexity int) int
-		Width       func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -319,7 +248,6 @@ type ComplexityRoot struct {
 		UploadPersistedQueries          func(childComplexity int, input *model.UploadPersistedQueriesInput) int
 		VerifyEmail                     func(childComplexity int, input model.VerifyEmailInput) int
 		VerifyEmailMagicLink            func(childComplexity int, input model.VerifyEmailMagicLinkInput) int
-		ViewSplit                       func(childComplexity int, splitID persist.DBID) int
 	}
 
 	NotificationEdge struct {
@@ -328,7 +256,6 @@ type ComplexityRoot struct {
 	}
 
 	NotificationSettings struct {
-		SomeoneFollowedYou     func(childComplexity int) int
 		SomeoneViewedYourSplit func(childComplexity int) int
 	}
 
@@ -355,28 +282,9 @@ type ComplexityRoot struct {
 		Total           func(childComplexity int) int
 	}
 
-	PdfMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
-	}
-
 	PreverifyEmailPayload struct {
 		Email  func(childComplexity int) int
 		Result func(childComplexity int) int
-	}
-
-	PreviewURLSet struct {
-		Blurhash   func(childComplexity int) int
-		Large      func(childComplexity int) int
-		LiveRender func(childComplexity int) int
-		Medium     func(childComplexity int) int
-		Raw        func(childComplexity int) int
-		Small      func(childComplexity int) int
-		SrcSet     func(childComplexity int) int
-		Thumbnail  func(childComplexity int) int
 	}
 
 	PublishSplitPayload struct {
@@ -384,18 +292,18 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Node               func(childComplexity int, id model.GqlID) int
-		SearchSplits       func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
-		SearchUsers        func(childComplexity int, query string, limit *int, usernameWeight *float64, bioWeight *float64) int
-		SplitByID          func(childComplexity int, id persist.DBID) int
-		UserByAddress      func(childComplexity int, chainAddress persist.ChainAddress) int
-		UserByID           func(childComplexity int, id persist.DBID) int
-		UserByUsername     func(childComplexity int, username string) int
-		UsersByRole        func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
-		UsersWithTrait     func(childComplexity int, trait string) int
-		Viewer             func(childComplexity int) int
-		ViewerSplitByID    func(childComplexity int, id persist.DBID) int
-		__resolve__service func(childComplexity int) int
+		IsEmailAddressAvailable func(childComplexity int, emailAddress persist.Email) int
+		Node                    func(childComplexity int, id model.GqlID) int
+		SearchSplits            func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
+		SearchUsers             func(childComplexity int, query string, limit *int, usernameWeight *float64) int
+		SplitByID               func(childComplexity int, id persist.DBID) int
+		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
+		UserByID                func(childComplexity int, id persist.DBID) int
+		UserByUsername          func(childComplexity int, username string) int
+		UsersByRole             func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
+		Viewer                  func(childComplexity int) int
+		ViewerSplitByID         func(childComplexity int, id persist.DBID) int
+		__resolve__service      func(childComplexity int) int
 	}
 
 	Recipient struct {
@@ -444,7 +352,6 @@ type ComplexityRoot struct {
 	}
 
 	SplitFiUser struct {
-		Bio                 func(childComplexity int) int
 		Dbid                func(childComplexity int) int
 		ID                  func(childComplexity int) int
 		IsAuthenticatedUser func(childComplexity int) int
@@ -452,7 +359,6 @@ type ComplexityRoot struct {
 		Roles               func(childComplexity int) int
 		Splits              func(childComplexity int) int
 		SplitsByChain       func(childComplexity int, chain persist.Chain) int
-		Traits              func(childComplexity int) int
 		Universal           func(childComplexity int) int
 		Username            func(childComplexity int) int
 		Wallets             func(childComplexity int) int
@@ -465,14 +371,6 @@ type ComplexityRoot struct {
 	Subscription struct {
 		NewNotification     func(childComplexity int) int
 		NotificationUpdated func(childComplexity int) int
-	}
-
-	TextMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
 	}
 
 	Token struct {
@@ -491,14 +389,6 @@ type ComplexityRoot struct {
 		TokenType       func(childComplexity int) int
 		TotalSupply     func(childComplexity int) int
 		Version         func(childComplexity int) int
-	}
-
-	UnknownMedia struct {
-		ContentRenderURL func(childComplexity int) int
-		Dimensions       func(childComplexity int) int
-		MediaType        func(childComplexity int) int
-		MediaURL         func(childComplexity int) int
-		PreviewURLs      func(childComplexity int) int
 	}
 
 	UnregisterUserPushTokenPayload struct {
@@ -582,25 +472,6 @@ type ComplexityRoot struct {
 		Email func(childComplexity int) int
 	}
 
-	VideoMedia struct {
-		ContentRenderURLs func(childComplexity int) int
-		Dimensions        func(childComplexity int) int
-		MediaType         func(childComplexity int) int
-		MediaURL          func(childComplexity int) int
-		PreviewURLs       func(childComplexity int) int
-	}
-
-	VideoURLSet struct {
-		Large  func(childComplexity int) int
-		Medium func(childComplexity int) int
-		Raw    func(childComplexity int) int
-		Small  func(childComplexity int) int
-	}
-
-	ViewSplitPayload struct {
-		Split func(childComplexity int) int
-	}
-
 	Viewer struct {
 		Email                func(childComplexity int) int
 		ID                   func(childComplexity int) int
@@ -646,7 +517,6 @@ type MutationResolver interface {
 	UnsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailTypePayloadOrError, error)
 	Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginPayloadOrError, error)
 	Logout(ctx context.Context, pushTokenToUnregister *string) (*model.LogoutPayload, error)
-	ViewSplit(ctx context.Context, splitID persist.DBID) (model.ViewSplitPayloadOrError, error)
 	UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error)
 	PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error)
 	CreateSplit(ctx context.Context, input model.CreateSplitInput) (model.CreateSplitPayloadOrError, error)
@@ -668,20 +538,17 @@ type MutationResolver interface {
 	UpdatePrimaryWallet(ctx context.Context, walletID persist.DBID) (model.UpdatePrimaryWalletPayloadOrError, error)
 	UpdateUserExperience(ctx context.Context, input model.UpdateUserExperienceInput) (model.UpdateUserExperiencePayloadOrError, error)
 }
-type PreviewURLSetResolver interface {
-	Blurhash(ctx context.Context, obj *model.PreviewURLSet) (*string, error)
-}
 type QueryResolver interface {
 	Node(ctx context.Context, id model.GqlID) (model.Node, error)
 	Viewer(ctx context.Context) (model.ViewerOrError, error)
 	UserByUsername(ctx context.Context, username string) (model.UserByUsernameOrError, error)
 	UserByID(ctx context.Context, id persist.DBID) (model.UserByIDOrError, error)
 	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error)
-	UsersWithTrait(ctx context.Context, trait string) ([]*model.SplitFiUser, error)
 	SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error)
 	ViewerSplitByID(ctx context.Context, id persist.DBID) (model.ViewerSplitByIDPayloadOrError, error)
-	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64, bioWeight *float64) (model.SearchUsersPayloadOrError, error)
+	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersPayloadOrError, error)
 	SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error)
+	IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error)
 	UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error)
 }
 type RecipientResolver interface {
@@ -801,41 +668,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Asset.Version(childComplexity), true
 
-	case "AudioMedia.contentRenderURL":
-		if e.complexity.AudioMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.AudioMedia.ContentRenderURL(childComplexity), true
-
-	case "AudioMedia.dimensions":
-		if e.complexity.AudioMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.AudioMedia.Dimensions(childComplexity), true
-
-	case "AudioMedia.mediaType":
-		if e.complexity.AudioMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.AudioMedia.MediaType(childComplexity), true
-
-	case "AudioMedia.mediaURL":
-		if e.complexity.AudioMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.AudioMedia.MediaURL(childComplexity), true
-
-	case "AudioMedia.previewURLs":
-		if e.complexity.AudioMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.AudioMedia.PreviewURLs(childComplexity), true
-
 	case "AuthNonce.message":
 		if e.complexity.AuthNonce.Message == nil {
 			break
@@ -892,20 +724,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ChainSplits.Splits(childComplexity), true
 
-	case "ChainTokens.chain":
-		if e.complexity.ChainTokens.Chain == nil {
-			break
-		}
-
-		return e.complexity.ChainTokens.Chain(childComplexity), true
-
-	case "ChainTokens.tokens":
-		if e.complexity.ChainTokens.Tokens == nil {
-			break
-		}
-
-		return e.complexity.ChainTokens.Tokens(childComplexity), true
-
 	case "ClearAllNotificationsPayload.notifications":
 		if e.complexity.ClearAllNotificationsPayload.Notifications == nil {
 			break
@@ -919,13 +737,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateSplitPayload.Split(childComplexity), true
-
-	case "CreateUserPayload.userId":
-		if e.complexity.CreateUserPayload.UserID == nil {
-			break
-		}
-
-		return e.complexity.CreateUserPayload.UserID(childComplexity), true
 
 	case "CreateUserPayload.viewer":
 		if e.complexity.CreateUserPayload.Viewer == nil {
@@ -1102,83 +913,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ErrUsernameNotAvailable.Message(childComplexity), true
 
-	case "GIFMedia.contentRenderURL":
-		if e.complexity.GIFMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.GIFMedia.ContentRenderURL(childComplexity), true
-
-	case "GIFMedia.dimensions":
-		if e.complexity.GIFMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.GIFMedia.Dimensions(childComplexity), true
-
-	case "GIFMedia.mediaType":
-		if e.complexity.GIFMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.GIFMedia.MediaType(childComplexity), true
-
-	case "GIFMedia.mediaURL":
-		if e.complexity.GIFMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.GIFMedia.MediaURL(childComplexity), true
-
-	case "GIFMedia.previewURLs":
-		if e.complexity.GIFMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.GIFMedia.PreviewURLs(childComplexity), true
-
-	case "GIFMedia.staticPreviewURLs":
-		if e.complexity.GIFMedia.StaticPreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.GIFMedia.StaticPreviewURLs(childComplexity), true
-
-	case "GltfMedia.contentRenderURL":
-		if e.complexity.GltfMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.GltfMedia.ContentRenderURL(childComplexity), true
-
-	case "GltfMedia.dimensions":
-		if e.complexity.GltfMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.GltfMedia.Dimensions(childComplexity), true
-
-	case "GltfMedia.mediaType":
-		if e.complexity.GltfMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.GltfMedia.MediaType(childComplexity), true
-
-	case "GltfMedia.mediaURL":
-		if e.complexity.GltfMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.GltfMedia.MediaURL(childComplexity), true
-
-	case "GltfMedia.previewURLs":
-		if e.complexity.GltfMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.GltfMedia.PreviewURLs(childComplexity), true
-
 	case "GroupNotificationUserEdge.cursor":
 		if e.complexity.GroupNotificationUserEdge.Cursor == nil {
 			break
@@ -1207,153 +941,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GroupNotificationUsersConnection.PageInfo(childComplexity), true
 
-	case "HtmlMedia.contentRenderURL":
-		if e.complexity.HtmlMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.HtmlMedia.ContentRenderURL(childComplexity), true
-
-	case "HtmlMedia.dimensions":
-		if e.complexity.HtmlMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.HtmlMedia.Dimensions(childComplexity), true
-
-	case "HtmlMedia.mediaType":
-		if e.complexity.HtmlMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.HtmlMedia.MediaType(childComplexity), true
-
-	case "HtmlMedia.mediaURL":
-		if e.complexity.HtmlMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.HtmlMedia.MediaURL(childComplexity), true
-
-	case "HtmlMedia.previewURLs":
-		if e.complexity.HtmlMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.HtmlMedia.PreviewURLs(childComplexity), true
-
-	case "ImageMedia.contentRenderURL":
-		if e.complexity.ImageMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.ImageMedia.ContentRenderURL(childComplexity), true
-
-	case "ImageMedia.dimensions":
-		if e.complexity.ImageMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.ImageMedia.Dimensions(childComplexity), true
-
-	case "ImageMedia.mediaType":
-		if e.complexity.ImageMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.ImageMedia.MediaType(childComplexity), true
-
-	case "ImageMedia.mediaURL":
-		if e.complexity.ImageMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.ImageMedia.MediaURL(childComplexity), true
-
-	case "ImageMedia.previewURLs":
-		if e.complexity.ImageMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.ImageMedia.PreviewURLs(childComplexity), true
-
-	case "InvalidMedia.contentRenderURL":
-		if e.complexity.InvalidMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.InvalidMedia.ContentRenderURL(childComplexity), true
-
-	case "InvalidMedia.dimensions":
-		if e.complexity.InvalidMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.InvalidMedia.Dimensions(childComplexity), true
-
-	case "InvalidMedia.mediaType":
-		if e.complexity.InvalidMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.InvalidMedia.MediaType(childComplexity), true
-
-	case "InvalidMedia.mediaURL":
-		if e.complexity.InvalidMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.InvalidMedia.MediaURL(childComplexity), true
-
-	case "InvalidMedia.previewURLs":
-		if e.complexity.InvalidMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.InvalidMedia.PreviewURLs(childComplexity), true
-
-	case "JsonMedia.contentRenderURL":
-		if e.complexity.JsonMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.JsonMedia.ContentRenderURL(childComplexity), true
-
-	case "JsonMedia.dimensions":
-		if e.complexity.JsonMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.JsonMedia.Dimensions(childComplexity), true
-
-	case "JsonMedia.mediaType":
-		if e.complexity.JsonMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.JsonMedia.MediaType(childComplexity), true
-
-	case "JsonMedia.mediaURL":
-		if e.complexity.JsonMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.JsonMedia.MediaURL(childComplexity), true
-
-	case "JsonMedia.previewURLs":
-		if e.complexity.JsonMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.JsonMedia.PreviewURLs(childComplexity), true
-
-	case "LoginPayload.userId":
-		if e.complexity.LoginPayload.UserID == nil {
-			break
-		}
-
-		return e.complexity.LoginPayload.UserID(childComplexity), true
-
 	case "LoginPayload.viewer":
 		if e.complexity.LoginPayload.Viewer == nil {
 			break
@@ -1367,27 +954,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.LogoutPayload.Viewer(childComplexity), true
-
-	case "MediaDimensions.aspectRatio":
-		if e.complexity.MediaDimensions.AspectRatio == nil {
-			break
-		}
-
-		return e.complexity.MediaDimensions.AspectRatio(childComplexity), true
-
-	case "MediaDimensions.height":
-		if e.complexity.MediaDimensions.Height == nil {
-			break
-		}
-
-		return e.complexity.MediaDimensions.Height(childComplexity), true
-
-	case "MediaDimensions.width":
-		if e.complexity.MediaDimensions.Width == nil {
-			break
-		}
-
-		return e.complexity.MediaDimensions.Width(childComplexity), true
 
 	case "Mutation.addRolesToUser":
 		if e.complexity.Mutation.AddRolesToUser == nil {
@@ -1770,18 +1336,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.VerifyEmailMagicLink(childComplexity, args["input"].(model.VerifyEmailMagicLinkInput)), true
 
-	case "Mutation.viewSplit":
-		if e.complexity.Mutation.ViewSplit == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_viewSplit_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ViewSplit(childComplexity, args["splitId"].(persist.DBID)), true
-
 	case "NotificationEdge.cursor":
 		if e.complexity.NotificationEdge.Cursor == nil {
 			break
@@ -1795,13 +1349,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.NotificationEdge.Node(childComplexity), true
-
-	case "NotificationSettings.someoneFollowedYou":
-		if e.complexity.NotificationSettings.SomeoneFollowedYou == nil {
-			break
-		}
-
-		return e.complexity.NotificationSettings.SomeoneFollowedYou(childComplexity), true
 
 	case "NotificationSettings.someoneViewedYourSplit":
 		if e.complexity.NotificationSettings.SomeoneViewedYourSplit == nil {
@@ -1887,41 +1434,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.Total(childComplexity), true
 
-	case "PdfMedia.contentRenderURL":
-		if e.complexity.PdfMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.PdfMedia.ContentRenderURL(childComplexity), true
-
-	case "PdfMedia.dimensions":
-		if e.complexity.PdfMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.PdfMedia.Dimensions(childComplexity), true
-
-	case "PdfMedia.mediaType":
-		if e.complexity.PdfMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.PdfMedia.MediaType(childComplexity), true
-
-	case "PdfMedia.mediaURL":
-		if e.complexity.PdfMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.PdfMedia.MediaURL(childComplexity), true
-
-	case "PdfMedia.previewURLs":
-		if e.complexity.PdfMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.PdfMedia.PreviewURLs(childComplexity), true
-
 	case "PreverifyEmailPayload.email":
 		if e.complexity.PreverifyEmailPayload.Email == nil {
 			break
@@ -1936,68 +1448,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PreverifyEmailPayload.Result(childComplexity), true
 
-	case "PreviewURLSet.blurhash":
-		if e.complexity.PreviewURLSet.Blurhash == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.Blurhash(childComplexity), true
-
-	case "PreviewURLSet.large":
-		if e.complexity.PreviewURLSet.Large == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.Large(childComplexity), true
-
-	case "PreviewURLSet.liveRender":
-		if e.complexity.PreviewURLSet.LiveRender == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.LiveRender(childComplexity), true
-
-	case "PreviewURLSet.medium":
-		if e.complexity.PreviewURLSet.Medium == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.Medium(childComplexity), true
-
-	case "PreviewURLSet.raw":
-		if e.complexity.PreviewURLSet.Raw == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.Raw(childComplexity), true
-
-	case "PreviewURLSet.small":
-		if e.complexity.PreviewURLSet.Small == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.Small(childComplexity), true
-
-	case "PreviewURLSet.srcSet":
-		if e.complexity.PreviewURLSet.SrcSet == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.SrcSet(childComplexity), true
-
-	case "PreviewURLSet.thumbnail":
-		if e.complexity.PreviewURLSet.Thumbnail == nil {
-			break
-		}
-
-		return e.complexity.PreviewURLSet.Thumbnail(childComplexity), true
-
 	case "PublishSplitPayload.split":
 		if e.complexity.PublishSplitPayload.Split == nil {
 			break
 		}
 
 		return e.complexity.PublishSplitPayload.Split(childComplexity), true
+
+	case "Query.isEmailAddressAvailable":
+		if e.complexity.Query.IsEmailAddressAvailable == nil {
+			break
+		}
+
+		args, err := ec.field_Query_isEmailAddressAvailable_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.IsEmailAddressAvailable(childComplexity, args["emailAddress"].(persist.Email)), true
 
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
@@ -2033,7 +1501,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.SearchUsers(childComplexity, args["query"].(string), args["limit"].(*int), args["usernameWeight"].(*float64), args["bioWeight"].(*float64)), true
+		return e.complexity.Query.SearchUsers(childComplexity, args["query"].(string), args["limit"].(*int), args["usernameWeight"].(*float64)), true
 
 	case "Query.splitById":
 		if e.complexity.Query.SplitByID == nil {
@@ -2094,18 +1562,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.UsersByRole(childComplexity, args["role"].(persist.Role), args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
-
-	case "Query.usersWithTrait":
-		if e.complexity.Query.UsersWithTrait == nil {
-			break
-		}
-
-		args, err := ec.field_Query_usersWithTrait_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.UsersWithTrait(childComplexity, args["trait"].(string)), true
 
 	case "Query.viewer":
 		if e.complexity.Query.Viewer == nil {
@@ -2311,13 +1767,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Split.Version(childComplexity), true
 
-	case "SplitFiUser.bio":
-		if e.complexity.SplitFiUser.Bio == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Bio(childComplexity), true
-
 	case "SplitFiUser.dbid":
 		if e.complexity.SplitFiUser.Dbid == nil {
 			break
@@ -2372,13 +1821,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SplitFiUser.SplitsByChain(childComplexity, args["chain"].(persist.Chain)), true
 
-	case "SplitFiUser.traits":
-		if e.complexity.SplitFiUser.Traits == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Traits(childComplexity), true
-
 	case "SplitFiUser.universal":
 		if e.complexity.SplitFiUser.Universal == nil {
 			break
@@ -2420,41 +1862,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Subscription.NotificationUpdated(childComplexity), true
-
-	case "TextMedia.contentRenderURL":
-		if e.complexity.TextMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.TextMedia.ContentRenderURL(childComplexity), true
-
-	case "TextMedia.dimensions":
-		if e.complexity.TextMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.TextMedia.Dimensions(childComplexity), true
-
-	case "TextMedia.mediaType":
-		if e.complexity.TextMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.TextMedia.MediaType(childComplexity), true
-
-	case "TextMedia.mediaURL":
-		if e.complexity.TextMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.TextMedia.MediaURL(childComplexity), true
-
-	case "TextMedia.previewURLs":
-		if e.complexity.TextMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.TextMedia.PreviewURLs(childComplexity), true
 
 	case "Token.blockNumber":
 		if e.complexity.Token.BlockNumber == nil {
@@ -2560,41 +1967,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Token.Version(childComplexity), true
-
-	case "UnknownMedia.contentRenderURL":
-		if e.complexity.UnknownMedia.ContentRenderURL == nil {
-			break
-		}
-
-		return e.complexity.UnknownMedia.ContentRenderURL(childComplexity), true
-
-	case "UnknownMedia.dimensions":
-		if e.complexity.UnknownMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.UnknownMedia.Dimensions(childComplexity), true
-
-	case "UnknownMedia.mediaType":
-		if e.complexity.UnknownMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.UnknownMedia.MediaType(childComplexity), true
-
-	case "UnknownMedia.mediaURL":
-		if e.complexity.UnknownMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.UnknownMedia.MediaURL(childComplexity), true
-
-	case "UnknownMedia.previewURLs":
-		if e.complexity.UnknownMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.UnknownMedia.PreviewURLs(childComplexity), true
 
 	case "UnregisterUserPushTokenPayload.viewer":
 		if e.complexity.UnregisterUserPushTokenPayload.Viewer == nil {
@@ -2763,76 +2135,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VerifyEmailPayload.Email(childComplexity), true
-
-	case "VideoMedia.contentRenderURLs":
-		if e.complexity.VideoMedia.ContentRenderURLs == nil {
-			break
-		}
-
-		return e.complexity.VideoMedia.ContentRenderURLs(childComplexity), true
-
-	case "VideoMedia.dimensions":
-		if e.complexity.VideoMedia.Dimensions == nil {
-			break
-		}
-
-		return e.complexity.VideoMedia.Dimensions(childComplexity), true
-
-	case "VideoMedia.mediaType":
-		if e.complexity.VideoMedia.MediaType == nil {
-			break
-		}
-
-		return e.complexity.VideoMedia.MediaType(childComplexity), true
-
-	case "VideoMedia.mediaURL":
-		if e.complexity.VideoMedia.MediaURL == nil {
-			break
-		}
-
-		return e.complexity.VideoMedia.MediaURL(childComplexity), true
-
-	case "VideoMedia.previewURLs":
-		if e.complexity.VideoMedia.PreviewURLs == nil {
-			break
-		}
-
-		return e.complexity.VideoMedia.PreviewURLs(childComplexity), true
-
-	case "VideoURLSet.large":
-		if e.complexity.VideoURLSet.Large == nil {
-			break
-		}
-
-		return e.complexity.VideoURLSet.Large(childComplexity), true
-
-	case "VideoURLSet.medium":
-		if e.complexity.VideoURLSet.Medium == nil {
-			break
-		}
-
-		return e.complexity.VideoURLSet.Medium(childComplexity), true
-
-	case "VideoURLSet.raw":
-		if e.complexity.VideoURLSet.Raw == nil {
-			break
-		}
-
-		return e.complexity.VideoURLSet.Raw(childComplexity), true
-
-	case "VideoURLSet.small":
-		if e.complexity.VideoURLSet.Small == nil {
-			break
-		}
-
-		return e.complexity.VideoURLSet.Small(childComplexity), true
-
-	case "ViewSplitPayload.split":
-		if e.complexity.ViewSplitPayload.Split == nil {
-			break
-		}
-
-		return e.complexity.ViewSplitPayload.Split(childComplexity), true
 
 	case "Viewer.email":
 		if e.complexity.Viewer.Email == nil {
@@ -3176,11 +2478,8 @@ type SplitFiUser implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
   username: String
-  bio: String
-  traits: String
   universal: Boolean
   roles: [Role] @goField(forceResolver: true)
-
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
   # Returns all splits owned by this user. Useful for retrieving all tokens without any duplicates,
@@ -3210,11 +2509,6 @@ type ChainPubKey {
   chain: Chain
 }
 
-type ChainTokens {
-  chain: Chain
-  tokens: [Token]
-}
-
 type ChainSplits {
   chain: Chain
   splits: [Split]
@@ -3234,164 +2528,7 @@ union SplitFiUserOrWallet = SplitFiUser | Wallet
 
 union SplitFiUserOrAddress = SplitFiUser | ChainAddress
 
-union MediaSubtype =
-    ImageMedia
-  | GIFMedia
-  | VideoMedia
-  | AudioMedia
-  | TextMedia
-  | PdfMedia
-  | HtmlMedia
-  | JsonMedia
-  | GltfMedia
-  | UnknownMedia
-  | InvalidMedia
-
-type PreviewURLSet {
-  raw: String
-  thumbnail: String
-  small: String
-  medium: String
-  large: String
-  srcSet: String
-  liveRender: String
-  blurhash: String @experimental @goField(forceResolver: true)
-}
-
-type VideoURLSet {
-  raw: String
-  small: String
-  medium: String
-  large: String
-}
-
-type MediaDimensions {
-  width: Int
-  height: Int
-  aspectRatio: Float
-}
-
-interface Media {
-  # Various sizes of preview images for the media
-  previewURLs: PreviewURLSet
-
-  # The original source URL for the media (may be IPFS, etc)
-  mediaURL: String
-
-  # The type of media, as determined by the backend. May be redundant given the approach we're using here
-  # (media subtypes implementing the Media interface)
-  mediaType: String
-
-  # All Media types will also have something like contentRenderURL or contentRenderURLs,
-  # which are the URL(s) that should actually be used for rendering the media's content
-
-  # The dimensions of the media, if known
-  dimensions: MediaDimensions
-}
-
-type ImageMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type GIFMedia implements Media {
-  previewURLs: PreviewURLSet
-  staticPreviewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type VideoMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURLs: VideoURLSet
-  dimensions: MediaDimensions
-}
-
-type AudioMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type TextMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type PdfMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type HtmlMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type JsonMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type GltfMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type UnknownMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
-type InvalidMedia implements Media {
-  previewURLs: PreviewURLSet
-  mediaURL: String
-  mediaType: String
-
-  contentRenderURL: String
-  dimensions: MediaDimensions
-}
-
 enum TokenType {
-  ERC721
-  ERC1155
   ERC20
 }
 
@@ -3495,12 +2632,10 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 }
 
 type NotificationSettings {
-  someoneFollowedYou: Boolean
   someoneViewedYourSplit: Boolean
 }
 
 input NotificationSettingsInput {
-  someoneFollowedYou: Boolean
   someoneViewedYourSplit: Boolean
 }
 
@@ -3630,20 +2765,19 @@ type Query {
   userByUsername(username: String!): UserByUsernameOrError
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-  usersWithTrait(trait: String!): [SplitFiUser]
   splitById(id: DBID!): SplitByIdPayloadOrError
   viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
   bioWeight defaults to 0.2, meaning that a search result matching a username is considered
-  twice as relevant as a search result matching a bio.
+  twice as relevant as a search result matching another entry (currently nothing provided.
+  See searchSplits(...) for more).
   """
   searchUsers(
     query: String!
     limit: Int
     usernameWeight: Float
-    bioWeight: Float
   ): SearchUsersPayloadOrError
   """
   Search for splits with optional weighting. Weights are floats in the [0.0. 1.0] range
@@ -3657,6 +2791,8 @@ type Query {
     nameWeight: Float
     descriptionWeight: Float
   ): SearchSplitsPayloadOrError
+
+  isEmailAddressAvailable(emailAddress: Email!): Boolean
 
   # Retool Specific
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
@@ -3685,7 +2821,6 @@ type RemoveUserWalletsPayload {
 
 input UpdateUserInfoInput {
   username: String!
-  bio: String!
 }
 
 union UpdateUserInfoPayloadOrError =
@@ -3853,8 +2988,6 @@ union LoginPayloadOrError =
   | ErrDoesNotOwnRequiredToken
 
 type LoginPayload {
-  # TODO: Remove userId in favor of viewer
-  userId: DBID
   viewer: Viewer
 }
 
@@ -3863,7 +2996,6 @@ type LogoutPayload {
 }
 input CreateUserInput {
   username: String
-  bio: String
   email: Email
 }
 
@@ -3876,8 +3008,6 @@ union CreateUserPayloadOrError =
   | ErrInvalidInput
 
 type CreateUserPayload {
-  userId: DBID
-  # TODO: Remove userId in favor of viewer
   viewer: Viewer
 }
 
@@ -3910,12 +3040,6 @@ type GroupNotificationUsersConnection @goEmbedHelper {
 type ClearAllNotificationsPayload {
   notifications: [Notification]
 }
-
-type ViewSplitPayload {
-  split: Split
-}
-
-union ViewSplitPayloadOrError = ViewSplitPayload | ErrAuthenticationFailed
 
 input VerifyEmailInput {
   token: String! @scrub
@@ -4090,16 +3214,10 @@ input UpdateSplitInput {
   name: String
   description: String
 
-  # leaving caption around for a bit for backwards compatibility
-  caption: String
-
-  deletedCollections: [DBID!]
-
   order: [DBID!]
 
   # generated on the frontend
-  # will be String! in the future, not required for temp backwards compatibility
-  editId: String
+  editId: String!
 }
 
 type UpdateSplitPayload {
@@ -4183,8 +3301,6 @@ type Mutation {
   ): UnsubscribeFromEmailTypePayloadOrError
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout(pushTokenToUnregister: String): LogoutPayload
-
-  viewSplit(splitId: DBID!): ViewSplitPayloadOrError
 
   updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
   publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired
@@ -4812,21 +3928,6 @@ func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_viewSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["splitId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["splitId"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4839,6 +3940,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_isEmailAddressAvailable_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 persist.Email
+	if tmp, ok := rawArgs["emailAddress"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailAddress"))
+		arg0, err = ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["emailAddress"] = arg0
 	return args, nil
 }
 
@@ -4929,15 +4045,6 @@ func (ec *executionContext) field_Query_searchUsers_args(ctx context.Context, ra
 		}
 	}
 	args["usernameWeight"] = arg2
-	var arg3 *float64
-	if tmp, ok := rawArgs["bioWeight"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bioWeight"))
-		arg3, err = ec.unmarshalOFloat2ᚖfloat64(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["bioWeight"] = arg3
 	return args, nil
 }
 
@@ -5049,21 +4156,6 @@ func (ec *executionContext) field_Query_usersByRole_args(ctx context.Context, ra
 		}
 	}
 	args["last"] = arg4
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_usersWithTrait_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["trait"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trait"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["trait"] = arg0
 	return args, nil
 }
 
@@ -5306,10 +4398,6 @@ func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(ctx context.
 				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
 			case "username":
 				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
 			case "universal":
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
@@ -5616,237 +4704,6 @@ func (ec *executionContext) fieldContext_Asset_token(ctx context.Context, field 
 				return ec.fieldContext_Token_isSpam(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AudioMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.AudioMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AudioMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AudioMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AudioMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AudioMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.AudioMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AudioMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AudioMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AudioMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AudioMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.AudioMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AudioMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AudioMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AudioMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AudioMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.AudioMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AudioMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AudioMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AudioMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AudioMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.AudioMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AudioMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AudioMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AudioMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
 		},
 	}
 	return fc, nil
@@ -6204,120 +5061,6 @@ func (ec *executionContext) fieldContext_ChainSplits_splits(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _ChainTokens_chain(ctx context.Context, field graphql.CollectedField, obj *model.ChainTokens) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainTokens_chain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Chain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Chain)
-	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainTokens_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainTokens",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Chain does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainTokens_tokens(ctx context.Context, field graphql.CollectedField, obj *model.ChainTokens) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainTokens_tokens(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Tokens, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Token)
-	fc.Result = res
-	return ec.marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainTokens_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainTokens",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Token_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Token_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Token_version(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_Token_creationTime(ctx, field)
-			case "lastUpdated":
-				return ec.fieldContext_Token_lastUpdated(ctx, field)
-			case "tokenType":
-				return ec.fieldContext_Token_tokenType(ctx, field)
-			case "chain":
-				return ec.fieldContext_Token_chain(ctx, field)
-			case "name":
-				return ec.fieldContext_Token_name(ctx, field)
-			case "symbol":
-				return ec.fieldContext_Token_symbol(ctx, field)
-			case "decimals":
-				return ec.fieldContext_Token_decimals(ctx, field)
-			case "logo":
-				return ec.fieldContext_Token_logo(ctx, field)
-			case "totalSupply":
-				return ec.fieldContext_Token_totalSupply(ctx, field)
-			case "contractAddress":
-				return ec.fieldContext_Token_contractAddress(ctx, field)
-			case "blockNumber":
-				return ec.fieldContext_Token_blockNumber(ctx, field)
-			case "isSpam":
-				return ec.fieldContext_Token_isSpam(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Token", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ClearAllNotificationsPayload_notifications(ctx context.Context, field graphql.CollectedField, obj *model.ClearAllNotificationsPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ClearAllNotificationsPayload_notifications(ctx, field)
 	if err != nil {
@@ -6419,47 +5162,6 @@ func (ec *executionContext) fieldContext_CreateSplitPayload_split(ctx context.Co
 				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateUserPayload_userId(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateUserPayload_userId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.DBID)
-	fc.Result = res
-	return ec.marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CreateUserPayload_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateUserPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7581,527 +6283,6 @@ func (ec *executionContext) fieldContext_ErrUsernameNotAvailable_message(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _GIFMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.GIFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GIFMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GIFMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GIFMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GIFMedia_staticPreviewURLs(ctx context.Context, field graphql.CollectedField, obj *model.GIFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GIFMedia_staticPreviewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StaticPreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GIFMedia_staticPreviewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GIFMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GIFMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.GIFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GIFMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GIFMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GIFMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GIFMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.GIFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GIFMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GIFMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GIFMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GIFMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.GIFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GIFMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GIFMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GIFMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GIFMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.GIFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GIFMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GIFMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GIFMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GltfMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.GltfMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GltfMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GltfMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GltfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GltfMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.GltfMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GltfMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GltfMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GltfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GltfMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.GltfMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GltfMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GltfMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GltfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GltfMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.GltfMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GltfMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GltfMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GltfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GltfMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.GltfMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GltfMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GltfMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GltfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _GroupNotificationUserEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.GroupNotificationUserEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GroupNotificationUserEdge_node(ctx, field)
 	if err != nil {
@@ -8144,10 +6325,6 @@ func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(ctx cont
 				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
 			case "username":
 				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
 			case "universal":
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
@@ -8312,971 +6489,6 @@ func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_pageIn
 	return fc, nil
 }
 
-func (ec *executionContext) _HtmlMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.HTMLMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_HtmlMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_HtmlMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HtmlMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HtmlMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.HTMLMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_HtmlMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_HtmlMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HtmlMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HtmlMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.HTMLMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_HtmlMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_HtmlMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HtmlMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HtmlMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.HTMLMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_HtmlMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_HtmlMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HtmlMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _HtmlMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.HTMLMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_HtmlMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_HtmlMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HtmlMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImageMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.ImageMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImageMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImageMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImageMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImageMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.ImageMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImageMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImageMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImageMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImageMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.ImageMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImageMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImageMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImageMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImageMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.ImageMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImageMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImageMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImageMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ImageMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.ImageMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImageMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ImageMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImageMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvalidMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.InvalidMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_InvalidMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_InvalidMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvalidMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvalidMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.InvalidMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_InvalidMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_InvalidMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvalidMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvalidMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.InvalidMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_InvalidMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_InvalidMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvalidMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvalidMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.InvalidMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_InvalidMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_InvalidMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvalidMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvalidMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.InvalidMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_InvalidMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_InvalidMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvalidMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _JsonMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.JSONMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JsonMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_JsonMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "JsonMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _JsonMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.JSONMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JsonMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_JsonMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "JsonMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _JsonMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.JSONMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JsonMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_JsonMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "JsonMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _JsonMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.JSONMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JsonMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_JsonMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "JsonMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _JsonMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.JSONMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JsonMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_JsonMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "JsonMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _LoginPayload_userId(ctx context.Context, field graphql.CollectedField, obj *model.LoginPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LoginPayload_userId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.DBID)
-	fc.Result = res
-	return ec.marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_LoginPayload_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "LoginPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _LoginPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.LoginPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LoginPayload_viewer(ctx, field)
 	if err != nil {
@@ -9386,129 +6598,6 @@ func (ec *executionContext) fieldContext_LogoutPayload_viewer(ctx context.Contex
 				return ec.fieldContext_Viewer_userExperiences(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MediaDimensions_width(ctx context.Context, field graphql.CollectedField, obj *model.MediaDimensions) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediaDimensions_width(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Width, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MediaDimensions_width(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MediaDimensions",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MediaDimensions_height(ctx context.Context, field graphql.CollectedField, obj *model.MediaDimensions) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediaDimensions_height(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Height, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MediaDimensions_height(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MediaDimensions",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MediaDimensions_aspectRatio(ctx context.Context, field graphql.CollectedField, obj *model.MediaDimensions) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AspectRatio, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*float64)
-	fc.Result = res
-	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MediaDimensions_aspectRatio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MediaDimensions",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10332,58 +7421,6 @@ func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_viewSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_viewSplit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ViewSplit(rctx, fc.Args["splitId"].(persist.DBID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.ViewSplitPayloadOrError)
-	fc.Result = res
-	return ec.marshalOViewSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_viewSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ViewSplitPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_viewSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_updateSplit(ctx, field)
 	if err != nil {
@@ -10989,8 +8026,6 @@ func (ec *executionContext) fieldContext_Mutation_updateNotificationSettings(ctx
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "someoneFollowedYou":
-				return ec.fieldContext_NotificationSettings_someoneFollowedYou(ctx, field)
 			case "someoneViewedYourSplit":
 				return ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
 			}
@@ -11837,47 +8872,6 @@ func (ec *executionContext) fieldContext_NotificationEdge_cursor(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationSettings_someoneFollowedYou(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationSettings_someoneFollowedYou(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SomeoneFollowedYou, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationSettings_someoneFollowedYou(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationSettings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _NotificationSettings_someoneViewedYourSplit(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettings) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
 	if err != nil {
@@ -12104,10 +9098,6 @@ func (ec *executionContext) fieldContext_OptInForRolesPayload_user(ctx context.C
 				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
 			case "username":
 				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
 			case "universal":
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
@@ -12171,10 +9161,6 @@ func (ec *executionContext) fieldContext_OptOutForRolesPayload_user(ctx context.
 				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
 			case "username":
 				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
 			case "universal":
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
@@ -12457,237 +9443,6 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _PdfMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.PDFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PdfMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PdfMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PdfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PdfMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.PDFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PdfMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PdfMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PdfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PdfMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.PDFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PdfMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PdfMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PdfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PdfMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.PDFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PdfMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PdfMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PdfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PdfMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.PDFMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PdfMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PdfMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PdfMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _PreverifyEmailPayload_email(ctx context.Context, field graphql.CollectedField, obj *model.PreverifyEmailPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PreverifyEmailPayload_email(ctx, field)
 	if err != nil {
@@ -12771,354 +9526,6 @@ func (ec *executionContext) fieldContext_PreverifyEmailPayload_result(ctx contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type PreverifyEmailResult does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_raw(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_raw(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Raw, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_raw(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_thumbnail(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Thumbnail, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_thumbnail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_small(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_small(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Small, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_small(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_medium(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_medium(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Medium, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_medium(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_large(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_large(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Large, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_large(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_srcSet(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SrcSet, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_srcSet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_liveRender(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LiveRender, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_liveRender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreviewURLSet_blurhash(ctx context.Context, field graphql.CollectedField, obj *model.PreviewURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.PreviewURLSet().Blurhash(rctx, obj)
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.Experimental == nil {
-				return nil, errors.New("directive experimental is not implemented")
-			}
-			return ec.directives.Experimental(ctx, obj, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreviewURLSet_blurhash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreviewURLSet",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13458,84 +9865,6 @@ func (ec *executionContext) fieldContext_Query_userByAddress(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_usersWithTrait(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_usersWithTrait(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UsersWithTrait(rctx, fc.Args["trait"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.SplitFiUser)
-	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_usersWithTrait(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
-			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
-			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
-			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
-			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
-			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
-			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_usersWithTrait_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_splitById(ctx, field)
 	if err != nil {
@@ -13654,7 +9983,7 @@ func (ec *executionContext) _Query_searchUsers(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SearchUsers(rctx, fc.Args["query"].(string), fc.Args["limit"].(*int), fc.Args["usernameWeight"].(*float64), fc.Args["bioWeight"].(*float64))
+		return ec.resolvers.Query().SearchUsers(rctx, fc.Args["query"].(string), fc.Args["limit"].(*int), fc.Args["usernameWeight"].(*float64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13738,6 +10067,58 @@ func (ec *executionContext) fieldContext_Query_searchSplits(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_searchSplits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_isEmailAddressAvailable(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_isEmailAddressAvailable(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().IsEmailAddressAvailable(rctx, fc.Args["emailAddress"].(persist.Email))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_isEmailAddressAvailable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_isEmailAddressAvailable_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -15262,88 +11643,6 @@ func (ec *executionContext) fieldContext_SplitFiUser_username(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _SplitFiUser_bio(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_bio(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Bio, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_bio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_traits(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_traits(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Traits, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_traits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SplitFiUser_universal(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SplitFiUser_universal(ctx, field)
 	if err != nil {
@@ -15870,237 +12169,6 @@ func (ec *executionContext) fieldContext_Subscription_notificationUpdated(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TextMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.TextMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TextMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TextMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TextMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TextMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.TextMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TextMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TextMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TextMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TextMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.TextMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TextMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TextMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TextMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TextMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.TextMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TextMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TextMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TextMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TextMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.TextMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TextMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TextMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TextMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
 		},
 	}
 	return fc, nil
@@ -16722,237 +12790,6 @@ func (ec *executionContext) fieldContext_Token_isSpam(ctx context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UnknownMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.UnknownMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnknownMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnknownMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnknownMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UnknownMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.UnknownMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnknownMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnknownMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnknownMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UnknownMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.UnknownMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnknownMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnknownMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnknownMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UnknownMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField, obj *model.UnknownMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnknownMedia_contentRenderURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnknownMedia_contentRenderURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnknownMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UnknownMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.UnknownMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnknownMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnknownMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnknownMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
 		},
 	}
 	return fc, nil
@@ -17692,10 +13529,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
 			case "username":
 				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
 			case "universal":
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
@@ -18017,10 +13850,6 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(ctx context.Conte
 				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
 			case "username":
 				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
 			case "universal":
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
@@ -18235,476 +14064,6 @@ func (ec *executionContext) fieldContext_VerifyEmailPayload_email(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _VideoMedia_previewURLs(ctx context.Context, field graphql.CollectedField, obj *model.VideoMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoMedia_previewURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PreviewURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PreviewURLSet)
-	fc.Result = res
-	return ec.marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoMedia_previewURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_PreviewURLSet_raw(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_PreviewURLSet_thumbnail(ctx, field)
-			case "small":
-				return ec.fieldContext_PreviewURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_PreviewURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_PreviewURLSet_large(ctx, field)
-			case "srcSet":
-				return ec.fieldContext_PreviewURLSet_srcSet(ctx, field)
-			case "liveRender":
-				return ec.fieldContext_PreviewURLSet_liveRender(ctx, field)
-			case "blurhash":
-				return ec.fieldContext_PreviewURLSet_blurhash(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PreviewURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoMedia_mediaURL(ctx context.Context, field graphql.CollectedField, obj *model.VideoMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoMedia_mediaURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoMedia_mediaURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.VideoMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoMedia_mediaType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MediaType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoMedia_mediaType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoMedia_contentRenderURLs(ctx context.Context, field graphql.CollectedField, obj *model.VideoMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoMedia_contentRenderURLs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentRenderURLs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.VideoURLSet)
-	fc.Result = res
-	return ec.marshalOVideoURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVideoURLSet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoMedia_contentRenderURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "raw":
-				return ec.fieldContext_VideoURLSet_raw(ctx, field)
-			case "small":
-				return ec.fieldContext_VideoURLSet_small(ctx, field)
-			case "medium":
-				return ec.fieldContext_VideoURLSet_medium(ctx, field)
-			case "large":
-				return ec.fieldContext_VideoURLSet_large(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type VideoURLSet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoMedia_dimensions(ctx context.Context, field graphql.CollectedField, obj *model.VideoMedia) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoMedia_dimensions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dimensions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MediaDimensions)
-	fc.Result = res
-	return ec.marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoMedia_dimensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoMedia",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "width":
-				return ec.fieldContext_MediaDimensions_width(ctx, field)
-			case "height":
-				return ec.fieldContext_MediaDimensions_height(ctx, field)
-			case "aspectRatio":
-				return ec.fieldContext_MediaDimensions_aspectRatio(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediaDimensions", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoURLSet_raw(ctx context.Context, field graphql.CollectedField, obj *model.VideoURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoURLSet_raw(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Raw, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoURLSet_raw(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoURLSet_small(ctx context.Context, field graphql.CollectedField, obj *model.VideoURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoURLSet_small(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Small, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoURLSet_small(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoURLSet_medium(ctx context.Context, field graphql.CollectedField, obj *model.VideoURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoURLSet_medium(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Medium, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoURLSet_medium(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VideoURLSet_large(ctx context.Context, field graphql.CollectedField, obj *model.VideoURLSet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VideoURLSet_large(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Large, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VideoURLSet_large(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VideoURLSet",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ViewSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.ViewSplitPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ViewSplitPayload_split(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ViewSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ViewSplitPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Viewer_id(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Viewer_id(ctx, field)
 	if err != nil {
@@ -18791,10 +14150,6 @@ func (ec *executionContext) fieldContext_Viewer_user(ctx context.Context, field 
 				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
 			case "username":
 				return ec.fieldContext_SplitFiUser_username(ctx, field)
-			case "bio":
-				return ec.fieldContext_SplitFiUser_bio(ctx, field)
-			case "traits":
-				return ec.fieldContext_SplitFiUser_traits(ctx, field)
 			case "universal":
 				return ec.fieldContext_SplitFiUser_universal(ctx, field)
 			case "roles":
@@ -19006,8 +14361,6 @@ func (ec *executionContext) fieldContext_Viewer_notificationSettings(ctx context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "someoneFollowedYou":
-				return ec.fieldContext_NotificationSettings_someoneFollowedYou(ctx, field)
 			case "someoneViewedYourSplit":
 				return ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
 			}
@@ -21473,7 +16826,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "bio", "email"}
+	fieldsInOrder := [...]string{"username", "email"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21487,13 +16840,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Username = data
-		case "bio":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bio"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Bio = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
@@ -21758,20 +17104,13 @@ func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"someoneFollowedYou", "someoneViewedYourSplit"}
+	fieldsInOrder := [...]string{"someoneViewedYourSplit"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "someoneFollowedYou":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneFollowedYou"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SomeoneFollowedYou = data
 		case "someoneViewedYourSplit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneViewedYourSplit"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -22166,7 +17505,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"splitId", "name", "description", "caption", "deletedCollections", "order", "editId"}
+	fieldsInOrder := [...]string{"splitId", "name", "description", "order", "editId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22194,20 +17533,6 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 				return it, err
 			}
 			it.Description = data
-		case "caption":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("caption"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Caption = data
-		case "deletedCollections":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedCollections"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedCollections = data
 		case "order":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
 			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
@@ -22217,7 +17542,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			it.Order = data
 		case "editId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("editId"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22296,7 +17621,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInfoInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "bio"}
+	fieldsInOrder := [...]string{"username"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22310,13 +17635,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInfoInput(ctx context.Contex
 				return it, err
 			}
 			it.Username = data
-		case "bio":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bio"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Bio = data
 		}
 	}
 
@@ -22838,178 +18156,6 @@ func (ec *executionContext) _LoginPayloadOrError(ctx context.Context, sel ast.Se
 			return graphql.Null
 		}
 		return ec._LoginPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _Media(ctx context.Context, sel ast.SelectionSet, obj model.Media) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ImageMedia:
-		return ec._ImageMedia(ctx, sel, &obj)
-	case *model.ImageMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ImageMedia(ctx, sel, obj)
-	case model.GIFMedia:
-		return ec._GIFMedia(ctx, sel, &obj)
-	case *model.GIFMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._GIFMedia(ctx, sel, obj)
-	case model.VideoMedia:
-		return ec._VideoMedia(ctx, sel, &obj)
-	case *model.VideoMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._VideoMedia(ctx, sel, obj)
-	case model.AudioMedia:
-		return ec._AudioMedia(ctx, sel, &obj)
-	case *model.AudioMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._AudioMedia(ctx, sel, obj)
-	case model.TextMedia:
-		return ec._TextMedia(ctx, sel, &obj)
-	case *model.TextMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._TextMedia(ctx, sel, obj)
-	case model.PDFMedia:
-		return ec._PdfMedia(ctx, sel, &obj)
-	case *model.PDFMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PdfMedia(ctx, sel, obj)
-	case model.HTMLMedia:
-		return ec._HtmlMedia(ctx, sel, &obj)
-	case *model.HTMLMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._HtmlMedia(ctx, sel, obj)
-	case model.JSONMedia:
-		return ec._JsonMedia(ctx, sel, &obj)
-	case *model.JSONMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._JsonMedia(ctx, sel, obj)
-	case model.GltfMedia:
-		return ec._GltfMedia(ctx, sel, &obj)
-	case *model.GltfMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._GltfMedia(ctx, sel, obj)
-	case model.UnknownMedia:
-		return ec._UnknownMedia(ctx, sel, &obj)
-	case *model.UnknownMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UnknownMedia(ctx, sel, obj)
-	case model.InvalidMedia:
-		return ec._InvalidMedia(ctx, sel, &obj)
-	case *model.InvalidMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._InvalidMedia(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _MediaSubtype(ctx context.Context, sel ast.SelectionSet, obj model.MediaSubtype) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ImageMedia:
-		return ec._ImageMedia(ctx, sel, &obj)
-	case *model.ImageMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ImageMedia(ctx, sel, obj)
-	case model.GIFMedia:
-		return ec._GIFMedia(ctx, sel, &obj)
-	case *model.GIFMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._GIFMedia(ctx, sel, obj)
-	case model.VideoMedia:
-		return ec._VideoMedia(ctx, sel, &obj)
-	case *model.VideoMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._VideoMedia(ctx, sel, obj)
-	case model.AudioMedia:
-		return ec._AudioMedia(ctx, sel, &obj)
-	case *model.AudioMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._AudioMedia(ctx, sel, obj)
-	case model.TextMedia:
-		return ec._TextMedia(ctx, sel, &obj)
-	case *model.TextMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._TextMedia(ctx, sel, obj)
-	case model.PDFMedia:
-		return ec._PdfMedia(ctx, sel, &obj)
-	case *model.PDFMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PdfMedia(ctx, sel, obj)
-	case model.HTMLMedia:
-		return ec._HtmlMedia(ctx, sel, &obj)
-	case *model.HTMLMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._HtmlMedia(ctx, sel, obj)
-	case model.JSONMedia:
-		return ec._JsonMedia(ctx, sel, &obj)
-	case *model.JSONMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._JsonMedia(ctx, sel, obj)
-	case model.GltfMedia:
-		return ec._GltfMedia(ctx, sel, &obj)
-	case *model.GltfMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._GltfMedia(ctx, sel, obj)
-	case model.UnknownMedia:
-		return ec._UnknownMedia(ctx, sel, &obj)
-	case *model.UnknownMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UnknownMedia(ctx, sel, obj)
-	case model.InvalidMedia:
-		return ec._InvalidMedia(ctx, sel, &obj)
-	case *model.InvalidMedia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._InvalidMedia(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -23925,29 +19071,6 @@ func (ec *executionContext) _VerifyEmailPayloadOrError(ctx context.Context, sel 
 	}
 }
 
-func (ec *executionContext) _ViewSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewSplitPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrAuthenticationFailed:
-		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
-	case *model.ErrAuthenticationFailed:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrAuthenticationFailed(ctx, sel, obj)
-	case model.ViewSplitPayload:
-		return ec._ViewSplitPayload(ctx, sel, &obj)
-	case *model.ViewSplitPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ViewSplitPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _ViewerOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewerOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -24153,50 +19276,6 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
-var audioMediaImplementors = []string{"AudioMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _AudioMedia(ctx context.Context, sel ast.SelectionSet, obj *model.AudioMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, audioMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("AudioMedia")
-		case "previewURLs":
-			out.Values[i] = ec._AudioMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._AudioMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._AudioMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._AudioMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._AudioMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var authNonceImplementors = []string{"AuthNonce", "GetAuthNoncePayloadOrError"}
 
 func (ec *executionContext) _AuthNonce(ctx context.Context, sel ast.SelectionSet, obj *model.AuthNonce) graphql.Marshaler {
@@ -24349,44 +19428,6 @@ func (ec *executionContext) _ChainSplits(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var chainTokensImplementors = []string{"ChainTokens"}
-
-func (ec *executionContext) _ChainTokens(ctx context.Context, sel ast.SelectionSet, obj *model.ChainTokens) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, chainTokensImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ChainTokens")
-		case "chain":
-			out.Values[i] = ec._ChainTokens_chain(ctx, field, obj)
-		case "tokens":
-			out.Values[i] = ec._ChainTokens_tokens(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var clearAllNotificationsPayloadImplementors = []string{"ClearAllNotificationsPayload"}
 
 func (ec *executionContext) _ClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ClearAllNotificationsPayload) graphql.Marshaler {
@@ -24470,8 +19511,6 @@ func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.Sele
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateUserPayload")
-		case "userId":
-			out.Values[i] = ec._CreateUserPayload_userId(ctx, field, obj)
 		case "viewer":
 			out.Values[i] = ec._CreateUserPayload_viewer(ctx, field, obj)
 		default:
@@ -24660,7 +19699,7 @@ func (ec *executionContext) _ErrAddressOwnedByUser(ctx context.Context, sel ast.
 	return out
 }
 
-var errAuthenticationFailedImplementors = []string{"ErrAuthenticationFailed", "AddUserWalletPayloadOrError", "Error", "LoginPayloadOrError", "CreateUserPayloadOrError", "ViewSplitPayloadOrError"}
+var errAuthenticationFailedImplementors = []string{"ErrAuthenticationFailed", "AddUserWalletPayloadOrError", "Error", "LoginPayloadOrError", "CreateUserPayloadOrError"}
 
 func (ec *executionContext) _ErrAuthenticationFailed(ctx context.Context, sel ast.SelectionSet, obj *model.ErrAuthenticationFailed) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errAuthenticationFailedImplementors)
@@ -25260,96 +20299,6 @@ func (ec *executionContext) _ErrUsernameNotAvailable(ctx context.Context, sel as
 	return out
 }
 
-var gIFMediaImplementors = []string{"GIFMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _GIFMedia(ctx context.Context, sel ast.SelectionSet, obj *model.GIFMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, gIFMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("GIFMedia")
-		case "previewURLs":
-			out.Values[i] = ec._GIFMedia_previewURLs(ctx, field, obj)
-		case "staticPreviewURLs":
-			out.Values[i] = ec._GIFMedia_staticPreviewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._GIFMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._GIFMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._GIFMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._GIFMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var gltfMediaImplementors = []string{"GltfMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _GltfMedia(ctx context.Context, sel ast.SelectionSet, obj *model.GltfMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, gltfMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("GltfMedia")
-		case "previewURLs":
-			out.Values[i] = ec._GltfMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._GltfMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._GltfMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._GltfMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._GltfMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var groupNotificationUserEdgeImplementors = []string{"GroupNotificationUserEdge"}
 
 func (ec *executionContext) _GroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, obj *model.GroupNotificationUserEdge) graphql.Marshaler {
@@ -25426,182 +20375,6 @@ func (ec *executionContext) _GroupNotificationUsersConnection(ctx context.Contex
 	return out
 }
 
-var htmlMediaImplementors = []string{"HtmlMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _HtmlMedia(ctx context.Context, sel ast.SelectionSet, obj *model.HTMLMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, htmlMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("HtmlMedia")
-		case "previewURLs":
-			out.Values[i] = ec._HtmlMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._HtmlMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._HtmlMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._HtmlMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._HtmlMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var imageMediaImplementors = []string{"ImageMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _ImageMedia(ctx context.Context, sel ast.SelectionSet, obj *model.ImageMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, imageMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ImageMedia")
-		case "previewURLs":
-			out.Values[i] = ec._ImageMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._ImageMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._ImageMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._ImageMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._ImageMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var invalidMediaImplementors = []string{"InvalidMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _InvalidMedia(ctx context.Context, sel ast.SelectionSet, obj *model.InvalidMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, invalidMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("InvalidMedia")
-		case "previewURLs":
-			out.Values[i] = ec._InvalidMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._InvalidMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._InvalidMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._InvalidMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._InvalidMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var jsonMediaImplementors = []string{"JsonMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _JsonMedia(ctx context.Context, sel ast.SelectionSet, obj *model.JSONMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, jsonMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("JsonMedia")
-		case "previewURLs":
-			out.Values[i] = ec._JsonMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._JsonMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._JsonMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._JsonMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._JsonMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var loginPayloadImplementors = []string{"LoginPayload", "LoginPayloadOrError"}
 
 func (ec *executionContext) _LoginPayload(ctx context.Context, sel ast.SelectionSet, obj *model.LoginPayload) graphql.Marshaler {
@@ -25613,8 +20386,6 @@ func (ec *executionContext) _LoginPayload(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LoginPayload")
-		case "userId":
-			out.Values[i] = ec._LoginPayload_userId(ctx, field, obj)
 		case "viewer":
 			out.Values[i] = ec._LoginPayload_viewer(ctx, field, obj)
 		default:
@@ -25653,46 +20424,6 @@ func (ec *executionContext) _LogoutPayload(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("LogoutPayload")
 		case "viewer":
 			out.Values[i] = ec._LogoutPayload_viewer(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var mediaDimensionsImplementors = []string{"MediaDimensions"}
-
-func (ec *executionContext) _MediaDimensions(ctx context.Context, sel ast.SelectionSet, obj *model.MediaDimensions) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, mediaDimensionsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MediaDimensions")
-		case "width":
-			out.Values[i] = ec._MediaDimensions_width(ctx, field, obj)
-		case "height":
-			out.Values[i] = ec._MediaDimensions_height(ctx, field, obj)
-		case "aspectRatio":
-			out.Values[i] = ec._MediaDimensions_aspectRatio(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -25786,10 +20517,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "logout":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_logout(ctx, field)
-			})
-		case "viewSplit":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_viewSplit(ctx, field)
 			})
 		case "updateSplit":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -25943,8 +20670,6 @@ func (ec *executionContext) _NotificationSettings(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NotificationSettings")
-		case "someoneFollowedYou":
-			out.Values[i] = ec._NotificationSettings_someoneFollowedYou(ctx, field, obj)
 		case "someoneViewedYourSplit":
 			out.Values[i] = ec._NotificationSettings_someoneViewedYourSplit(ctx, field, obj)
 		default:
@@ -26143,50 +20868,6 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var pdfMediaImplementors = []string{"PdfMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _PdfMedia(ctx context.Context, sel ast.SelectionSet, obj *model.PDFMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, pdfMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("PdfMedia")
-		case "previewURLs":
-			out.Values[i] = ec._PdfMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._PdfMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._PdfMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._PdfMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._PdfMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var preverifyEmailPayloadImplementors = []string{"PreverifyEmailPayload", "PreverifyEmailPayloadOrError"}
 
 func (ec *executionContext) _PreverifyEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PreverifyEmailPayload) graphql.Marshaler {
@@ -26208,87 +20889,6 @@ func (ec *executionContext) _PreverifyEmailPayload(ctx context.Context, sel ast.
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var previewURLSetImplementors = []string{"PreviewURLSet"}
-
-func (ec *executionContext) _PreviewURLSet(ctx context.Context, sel ast.SelectionSet, obj *model.PreviewURLSet) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, previewURLSetImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("PreviewURLSet")
-		case "raw":
-			out.Values[i] = ec._PreviewURLSet_raw(ctx, field, obj)
-		case "thumbnail":
-			out.Values[i] = ec._PreviewURLSet_thumbnail(ctx, field, obj)
-		case "small":
-			out.Values[i] = ec._PreviewURLSet_small(ctx, field, obj)
-		case "medium":
-			out.Values[i] = ec._PreviewURLSet_medium(ctx, field, obj)
-		case "large":
-			out.Values[i] = ec._PreviewURLSet_large(ctx, field, obj)
-		case "srcSet":
-			out.Values[i] = ec._PreviewURLSet_srcSet(ctx, field, obj)
-		case "liveRender":
-			out.Values[i] = ec._PreviewURLSet_liveRender(ctx, field, obj)
-		case "blurhash":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._PreviewURLSet_blurhash(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -26462,25 +21062,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "usersWithTrait":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_usersWithTrait(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "splitById":
 			field := field
 
@@ -26548,6 +21129,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_searchSplits(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "isEmailAddressAvailable":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_isEmailAddressAvailable(ctx, field)
 				return res
 			}
 
@@ -27043,10 +21643,6 @@ func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionS
 			}
 		case "username":
 			out.Values[i] = ec._SplitFiUser_username(ctx, field, obj)
-		case "bio":
-			out.Values[i] = ec._SplitFiUser_bio(ctx, field, obj)
-		case "traits":
-			out.Values[i] = ec._SplitFiUser_traits(ctx, field, obj)
 		case "universal":
 			out.Values[i] = ec._SplitFiUser_universal(ctx, field, obj)
 		case "roles":
@@ -27297,50 +21893,6 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	}
 }
 
-var textMediaImplementors = []string{"TextMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _TextMedia(ctx context.Context, sel ast.SelectionSet, obj *model.TextMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, textMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("TextMedia")
-		case "previewURLs":
-			out.Values[i] = ec._TextMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._TextMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._TextMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._TextMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._TextMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var tokenImplementors = []string{"Token", "Node"}
 
 func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, obj *model.Token) graphql.Marshaler {
@@ -27388,50 +21940,6 @@ func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Token_blockNumber(ctx, field, obj)
 		case "isSpam":
 			out.Values[i] = ec._Token_isSpam(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var unknownMediaImplementors = []string{"UnknownMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _UnknownMedia(ctx context.Context, sel ast.SelectionSet, obj *model.UnknownMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, unknownMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UnknownMedia")
-		case "previewURLs":
-			out.Values[i] = ec._UnknownMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._UnknownMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._UnknownMedia_mediaType(ctx, field, obj)
-		case "contentRenderURL":
-			out.Values[i] = ec._UnknownMedia_contentRenderURL(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._UnknownMedia_dimensions(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -28172,128 +22680,6 @@ func (ec *executionContext) _VerifyEmailPayload(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var videoMediaImplementors = []string{"VideoMedia", "MediaSubtype", "Media"}
-
-func (ec *executionContext) _VideoMedia(ctx context.Context, sel ast.SelectionSet, obj *model.VideoMedia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, videoMediaImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("VideoMedia")
-		case "previewURLs":
-			out.Values[i] = ec._VideoMedia_previewURLs(ctx, field, obj)
-		case "mediaURL":
-			out.Values[i] = ec._VideoMedia_mediaURL(ctx, field, obj)
-		case "mediaType":
-			out.Values[i] = ec._VideoMedia_mediaType(ctx, field, obj)
-		case "contentRenderURLs":
-			out.Values[i] = ec._VideoMedia_contentRenderURLs(ctx, field, obj)
-		case "dimensions":
-			out.Values[i] = ec._VideoMedia_dimensions(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var videoURLSetImplementors = []string{"VideoURLSet"}
-
-func (ec *executionContext) _VideoURLSet(ctx context.Context, sel ast.SelectionSet, obj *model.VideoURLSet) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, videoURLSetImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("VideoURLSet")
-		case "raw":
-			out.Values[i] = ec._VideoURLSet_raw(ctx, field, obj)
-		case "small":
-			out.Values[i] = ec._VideoURLSet_small(ctx, field, obj)
-		case "medium":
-			out.Values[i] = ec._VideoURLSet_medium(ctx, field, obj)
-		case "large":
-			out.Values[i] = ec._VideoURLSet_large(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var viewSplitPayloadImplementors = []string{"ViewSplitPayload", "ViewSplitPayloadOrError"}
-
-func (ec *executionContext) _ViewSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ViewSplitPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, viewSplitPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ViewSplitPayload")
-		case "split":
-			out.Values[i] = ec._ViewSplitPayload_split(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -30478,13 +24864,6 @@ func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋSplitFiᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMediaDimensions2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMediaDimensions(ctx context.Context, sel ast.SelectionSet, v *model.MediaDimensions) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._MediaDimensions(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalONode2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -30644,13 +25023,6 @@ func (ec *executionContext) marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._PreverifyEmailPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPreviewURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreviewURLSet(ctx context.Context, sel ast.SelectionSet, v *model.PreviewURLSet) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._PreviewURLSet(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOPrivyAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPrivyAuth(ctx context.Context, v interface{}) (*model.PrivyAuth, error) {
@@ -30901,47 +25273,6 @@ func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋSplit
 	return ec._SplitByIdPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplitFiUser2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v []*model.SplitFiUser) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v *model.SplitFiUser) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -31074,47 +25405,6 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	}
 	res := graphql.MarshalTime(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOToken2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v []*model.Token) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
 }
 
 func (ec *executionContext) marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v *model.Token) graphql.Marshaler {
@@ -31421,20 +25711,6 @@ func (ec *executionContext) marshalOVerifyEmailPayloadOrError2githubᚗcomᚋSpl
 		return graphql.Null
 	}
 	return ec._VerifyEmailPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOVideoURLSet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVideoURLSet(ctx context.Context, sel ast.SelectionSet, v *model.VideoURLSet) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._VideoURLSet(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOViewSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewSplitPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ViewSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {

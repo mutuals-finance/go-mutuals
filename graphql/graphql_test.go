@@ -96,7 +96,7 @@ func testCreateUser(t *testing.T) {
 
 	response, err := createUserMutation(context.Background(), c, authMechanismInput(nonceF.Wallet, nonceF.Nonce, nonceF.Message),
 		CreateUserInput{
-			Username: username,
+			Username: &username,
 		},
 	)
 
@@ -412,7 +412,7 @@ func newUser(t *testing.T, ctx context.Context, c genql.Client, w wallet) (userI
 	username = "user" + persist.GenerateID().String()
 
 	response, err := createUserMutation(ctx, c, authMechanismInput(w, nonce, message),
-		CreateUserInput{Username: username},
+		CreateUserInput{Username: &username},
 	)
 
 	require.NoError(t, err)

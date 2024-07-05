@@ -44,19 +44,6 @@ type EventData struct {
 	AnnouncementDetails    *AnnouncementDetails `json:"announcement_details"`
 }
 
-type FeedEventData struct {
-	UserBio           string            `json:"user_bio"`
-	UserFollowedIDs   DBIDList          `json:"user_followed_ids"`
-	UserFollowedBack  []bool            `json:"user_followed_back"`
-	TokenID           DBID              `json:"token_id"`
-	TokenCollectionID DBID              `json:"token_collection_id"`
-	TokenSplitID      DBID              `json:"token_split_id"`
-	SplitID           DBID              `json:"split_id"`
-	SplitName         string            `json:"split_name"`
-	SplitDescription  string            `json:"split_description"`
-	SplitNewTokenIDs  map[DBID]DBIDList `json:"split_new_token_ids"`
-}
-
 type ErrUnknownAction struct {
 	Action Action
 }

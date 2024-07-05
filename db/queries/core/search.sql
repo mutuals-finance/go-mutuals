@@ -1,4 +1,31 @@
 /*
+-- name: SearchUsers :many
+with min_content_score as (
+    select score from user_relevance where id is null
+)
+select u.* from users u left join user_relevance on u.id = user_relevance.id,
+                -- Adding the search condition to the wallet join statement is a very helpful optimization, but we can't use
+                -- "simple_full_query" at this point in the statement, so we're repeating the "websearch_to_tsquery..." part here
+                unnest(u.wallets) as wallet_id left join wallets w on w.id = wallet_id and w.deleted = false and websearch_to_tsquery('simple', @query) @@ w.fts_address,
+                to_tsquery('simple', websearch_to_tsquery('simple', @query)::text || ':*') simple_partial_query,
+                websearch_to_tsquery('simple', @query) simple_full_query,
+                websearch_to_tsquery('english', @query) english_full_query,
+                min_content_score,
+                greatest(
+                        ts_rank_cd(concat('{', @username_weight::float4, ', 1, 1, 1}')::float4[], u.fts_username, simple_partial_query, 1),
+                        ts_rank_cd(concat('{', @bio_weight::float4, ', 1, 1, 1}')::float4[], u.fts_bio_english, english_full_query, 1),
+                        ts_rank_cd('{1, 1, 1, 1}', w.fts_address, simple_full_query) * 1000000000
+                    ) as match_score,
+                coalesce(user_relevance.score, min_content_score.score) as content_score
+where (
+            simple_partial_query @@ u.fts_username or
+            simple_full_query @@ w.fts_address
+    )
+  and u.universal = false and u.deleted = false
+group by (u.id, content_score * match_score, content_score, match_score)
+order by content_score * match_score desc, content_score desc, match_score desc, length(u.username_idempotent) asc
+limit sqlc.arg('limit');
+
 name: SearchSplits :many
 with min_content_score as (
     select score from split_relevance where id is null

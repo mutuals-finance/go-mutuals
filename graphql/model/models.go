@@ -23,8 +23,7 @@ type HelperGroupNotificationUsersConnectionData struct {
 }
 
 type HelperSplitFiUserData struct {
-	UserID          persist.DBID
-	FeaturedSplitID *persist.DBID
+	UserID persist.DBID
 }
 
 type HelperNotificationSettingsData struct {
