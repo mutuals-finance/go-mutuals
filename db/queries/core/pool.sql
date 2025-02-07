@@ -1,15 +1,15 @@
--- name: CreateSplit :one
-INSERT INTO splits (id, chain, address, name, description, created_at, last_updated)
+-- name: CreatePool :one
+INSERT INTO pools (id, chain, address, name, description, created_at, last_updated)
 VALUES (@id, @chain, @address, @name, @description, NOW(), NOW())
 RETURNING *;
 
 /*
-// name: UpdateSplitHidden :one
-update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
+// name: UpdatePoolHidden :one
+update pools set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
 */
 
--- name: UpsertSplit :one
-INSERT INTO splits (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,
+-- name: UpsertPool :one
+INSERT INTO pools (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,
                     last_updated, created_at)
 VALUES (@id, @name, @description, @status, @chain, @l1_chain, @address, @owner_address, @creator_address, NOW(), NOW())
 ON CONFLICT (id)
@@ -39,9 +39,9 @@ FROM allocation_aggregations
 WHERE id = $1
   AND deleted = FALSE;
 
--- name: UpsertSplitAllocations :many
+-- name: UpsertPoolAllocations :many
 WITH updates AS (SELECT UNNEST(@ids::text[])               AS id,
-                        @split_id                          AS split_id,
+                        @pool_id                          AS pool_id,
                         UNNEST(@recipient_address::text[]) AS recipient_address,
                         UNNEST(@recipient_type::int[])     AS recipient_type,
                         UNNEST(@calculation_type::int[])   AS calculation_type,
@@ -50,10 +50,10 @@ WITH updates AS (SELECT UNNEST(@ids::text[])               AS id,
                         UNNEST(@label::text[])             AS label,
                         UNNEST(@path::ltree[])             AS path)
 INSERT
-INTO allocations (id, split_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,
+INTO allocations (id, pool_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,
                   last_updated, created_at, deleted)
 SELECT id,
-       split_id,
+       pool_id,
        recipient_address,
        expression,
        recipient_type,
@@ -79,19 +79,19 @@ SET recipient_address = EXCLUDED.recipient_address,
     last_updated      = NOW()
 RETURNING *;
 
--- name: UpsertSplitAggregatedAllocations :many
+-- name: UpsertPoolAggregatedAllocations :many
 WITH updates AS (SELECT UNNEST(@id::text[])                AS id,
-                        @split_id                          AS split_id,
+                        @pool_id                          AS pool_id,
                         UNNEST(@recipient_address::text[]) AS recipient_address,
                         UNNEST(@expression::text[])        AS expression)
 INSERT
-INTO allocation_aggregations (id, split_id, recipient_address, expression, last_updated, created_at, deleted)
-SELECT id, split_id, recipient_address, expression, NOW(), NOW(), FALSE
+INTO allocation_aggregations (id, pool_id, recipient_address, expression, last_updated, created_at, deleted)
+SELECT id, pool_id, recipient_address, expression, NOW(), NOW(), FALSE
 FROM updates
 ON CONFLICT (id)
 WHERE deleted = FALSE DO
 UPDATE
-SET split_id          = EXCLUDED.split_id,
+SET pool_id          = EXCLUDED.pool_id,
     recipient_address = EXCLUDED.recipient_address,
     expression        = EXCLUDED.expression,
     last_updated      = NOW()

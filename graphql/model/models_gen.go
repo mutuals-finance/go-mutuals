@@ -27,16 +27,16 @@ type AuthorizationError interface {
 	IsAuthorizationError()
 }
 
-type CreateSplitPayloadOrError interface {
-	IsCreateSplitPayloadOrError()
+type CreatePoolPayloadOrError interface {
+	IsCreatePoolPayloadOrError()
 }
 
 type CreateUserPayloadOrError interface {
 	IsCreateUserPayloadOrError()
 }
 
-type DeleteSplitPayloadOrError interface {
-	IsDeleteSplitPayloadOrError()
+type DeletePoolPayloadOrError interface {
+	IsDeletePoolPayloadOrError()
 }
 
 type Error interface {
@@ -82,12 +82,16 @@ type OptOutForRolesPayloadOrError interface {
 	IsOptOutForRolesPayloadOrError()
 }
 
+type PoolByIDPayloadOrError interface {
+	IsPoolByIDPayloadOrError()
+}
+
 type PreverifyEmailPayloadOrError interface {
 	IsPreverifyEmailPayloadOrError()
 }
 
-type PublishSplitPayloadOrError interface {
-	IsPublishSplitPayloadOrError()
+type PublishPoolPayloadOrError interface {
+	IsPublishPoolPayloadOrError()
 }
 
 type RegisterUserPushTokenPayloadOrError interface {
@@ -106,16 +110,12 @@ type RevokeRolesFromUserPayloadOrError interface {
 	IsRevokeRolesFromUserPayloadOrError()
 }
 
-type SearchSplitsPayloadOrError interface {
-	IsSearchSplitsPayloadOrError()
+type SearchPoolsPayloadOrError interface {
+	IsSearchPoolsPayloadOrError()
 }
 
 type SearchUsersPayloadOrError interface {
 	IsSearchUsersPayloadOrError()
-}
-
-type SplitByIDPayloadOrError interface {
-	IsSplitByIDPayloadOrError()
 }
 
 type UnregisterUserPushTokenPayloadOrError interface {
@@ -134,20 +134,20 @@ type UpdateEmailPayloadOrError interface {
 	IsUpdateEmailPayloadOrError()
 }
 
+type UpdatePoolHiddenPayloadOrError interface {
+	IsUpdatePoolHiddenPayloadOrError()
+}
+
+type UpdatePoolOrderPayloadOrError interface {
+	IsUpdatePoolOrderPayloadOrError()
+}
+
+type UpdatePoolPayloadOrError interface {
+	IsUpdatePoolPayloadOrError()
+}
+
 type UpdatePrimaryWalletPayloadOrError interface {
 	IsUpdatePrimaryWalletPayloadOrError()
-}
-
-type UpdateSplitHiddenPayloadOrError interface {
-	IsUpdateSplitHiddenPayloadOrError()
-}
-
-type UpdateSplitOrderPayloadOrError interface {
-	IsUpdateSplitOrderPayloadOrError()
-}
-
-type UpdateSplitPayloadOrError interface {
-	IsUpdateSplitPayloadOrError()
 }
 
 type UpdateUserExperiencePayloadOrError interface {
@@ -162,8 +162,8 @@ type UploadPersistedQueriesPayloadOrError interface {
 	IsUploadPersistedQueriesPayloadOrError()
 }
 
-type UpsertSplitPayloadOrError interface {
-	IsUpsertSplitPayloadOrError()
+type UpsertPoolPayloadOrError interface {
+	IsUpsertPoolPayloadOrError()
 }
 
 type UserByAddressOrError interface {
@@ -190,8 +190,8 @@ type ViewerOrError interface {
 	IsViewerOrError()
 }
 
-type ViewerSplitByIDPayloadOrError interface {
-	IsViewerSplitByIDPayloadOrError()
+type ViewerPoolByIDPayloadOrError interface {
+	IsViewerPoolByIDPayloadOrError()
 }
 
 type AddUserWalletPayload struct {
@@ -219,7 +219,7 @@ type Allocation struct {
 	Value            *persist.HexString `json:"value"`
 	CreationTime     *time.Time         `json:"creationTime"`
 	LastUpdated      *time.Time         `json:"lastUpdated"`
-	Split            *Split             `json:"split"`
+	Pool             *Pool              `json:"pool"`
 }
 
 func (Allocation) IsNode() {}
@@ -231,7 +231,7 @@ type AllocationAggregation struct {
 	Expression       *string          `json:"expression"`
 	CreationTime     *time.Time       `json:"creationTime"`
 	LastUpdated      *time.Time       `json:"lastUpdated"`
-	Split            *Split           `json:"split"`
+	Pool             *Pool            `json:"pool"`
 }
 
 func (AllocationAggregation) IsNode() {}
@@ -262,26 +262,26 @@ type AuthNonce struct {
 
 func (AuthNonce) IsGetAuthNoncePayloadOrError() {}
 
-type ChainSplits struct {
-	Chain  *persist.Chain `json:"chain"`
-	Splits []*Split       `json:"splits"`
+type ChainPools struct {
+	Chain *persist.Chain `json:"chain"`
+	Pools []*Pool        `json:"pools"`
 }
 
 type ClearAllNotificationsPayload struct {
 	Notifications []Notification `json:"notifications"`
 }
 
-type CreateSplitInput struct {
+type CreatePoolInput struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Logo        *string `json:"logo"`
 }
 
-type CreateSplitPayload struct {
-	Split *Split `json:"split"`
+type CreatePoolPayload struct {
+	Pool *Pool `json:"pool"`
 }
 
-func (CreateSplitPayload) IsCreateSplitPayloadOrError() {}
+func (CreatePoolPayload) IsCreatePoolPayloadOrError() {}
 
 type CreateUserInput struct {
 	Username *string        `json:"username"`
@@ -301,11 +301,11 @@ type DebugAuth struct {
 	DebugToolsPassword *string                 `json:"debugToolsPassword"`
 }
 
-type DeleteSplitPayload struct {
+type DeletePoolPayload struct {
 	DeletedID *DeletedNode `json:"deletedId"`
 }
 
-func (DeleteSplitPayload) IsDeleteSplitPayloadOrError() {}
+func (DeletePoolPayload) IsDeletePoolPayloadOrError() {}
 
 type DeletedNode struct {
 	Dbid persist.DBID `json:"dbid"`
@@ -367,7 +367,7 @@ func (ErrInvalidInput) IsUserByUsernameOrError()                         {}
 func (ErrInvalidInput) IsUserByIDOrError()                               {}
 func (ErrInvalidInput) IsUserByAddressOrError()                          {}
 func (ErrInvalidInput) IsSearchUsersPayloadOrError()                     {}
-func (ErrInvalidInput) IsSearchSplitsPayloadOrError()                    {}
+func (ErrInvalidInput) IsSearchPoolsPayloadOrError()                     {}
 func (ErrInvalidInput) IsAddUserWalletPayloadOrError()                   {}
 func (ErrInvalidInput) IsRemoveUserWalletsPayloadOrError()               {}
 func (ErrInvalidInput) IsUpdateUserInfoPayloadOrError()                  {}
@@ -384,13 +384,13 @@ func (ErrInvalidInput) IsUpdateEmailNotificationSettingsPayloadOrError() {}
 func (ErrInvalidInput) IsUnsubscribeFromEmailTypePayloadOrError()        {}
 func (ErrInvalidInput) IsOptInForRolesPayloadOrError()                   {}
 func (ErrInvalidInput) IsOptOutForRolesPayloadOrError()                  {}
-func (ErrInvalidInput) IsCreateSplitPayloadOrError()                     {}
-func (ErrInvalidInput) IsUpsertSplitPayloadOrError()                     {}
-func (ErrInvalidInput) IsUpdateSplitHiddenPayloadOrError()               {}
-func (ErrInvalidInput) IsDeleteSplitPayloadOrError()                     {}
-func (ErrInvalidInput) IsUpdateSplitOrderPayloadOrError()                {}
-func (ErrInvalidInput) IsUpdateSplitPayloadOrError()                     {}
-func (ErrInvalidInput) IsPublishSplitPayloadOrError()                    {}
+func (ErrInvalidInput) IsCreatePoolPayloadOrError()                      {}
+func (ErrInvalidInput) IsUpsertPoolPayloadOrError()                      {}
+func (ErrInvalidInput) IsUpdatePoolHiddenPayloadOrError()                {}
+func (ErrInvalidInput) IsDeletePoolPayloadOrError()                      {}
+func (ErrInvalidInput) IsUpdatePoolOrderPayloadOrError()                 {}
+func (ErrInvalidInput) IsUpdatePoolPayloadOrError()                      {}
+func (ErrInvalidInput) IsPublishPoolPayloadOrError()                     {}
 func (ErrInvalidInput) IsUpdatePrimaryWalletPayloadOrError()             {}
 func (ErrInvalidInput) IsUpdateUserExperiencePayloadOrError()            {}
 
@@ -425,16 +425,24 @@ func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()     {}
 func (ErrNotAuthorized) IsOptInForRolesPayloadOrError()           {}
 func (ErrNotAuthorized) IsOptOutForRolesPayloadOrError()          {}
 func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError()  {}
-func (ErrNotAuthorized) IsCreateSplitPayloadOrError()             {}
-func (ErrNotAuthorized) IsUpsertSplitPayloadOrError()             {}
-func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()       {}
-func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()             {}
-func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()        {}
-func (ErrNotAuthorized) IsUpdateSplitPayloadOrError()             {}
-func (ErrNotAuthorized) IsPublishSplitPayloadOrError()            {}
+func (ErrNotAuthorized) IsCreatePoolPayloadOrError()              {}
+func (ErrNotAuthorized) IsUpsertPoolPayloadOrError()              {}
+func (ErrNotAuthorized) IsUpdatePoolHiddenPayloadOrError()        {}
+func (ErrNotAuthorized) IsDeletePoolPayloadOrError()              {}
+func (ErrNotAuthorized) IsUpdatePoolOrderPayloadOrError()         {}
+func (ErrNotAuthorized) IsUpdatePoolPayloadOrError()              {}
+func (ErrNotAuthorized) IsPublishPoolPayloadOrError()             {}
 func (ErrNotAuthorized) IsUpdatePrimaryWalletPayloadOrError()     {}
 func (ErrNotAuthorized) IsAdminAddWalletPayloadOrError()          {}
 func (ErrNotAuthorized) IsUpdateUserExperiencePayloadOrError()    {}
+
+type ErrPoolNotFound struct {
+	Message string `json:"message"`
+}
+
+func (ErrPoolNotFound) IsError()                        {}
+func (ErrPoolNotFound) IsPoolByIDPayloadOrError()       {}
+func (ErrPoolNotFound) IsViewerPoolByIDPayloadOrError() {}
 
 type ErrPushTokenBelongsToAnotherUser struct {
 	Message string `json:"message"`
@@ -450,14 +458,6 @@ type ErrSessionInvalidated struct {
 
 func (ErrSessionInvalidated) IsAuthorizationError() {}
 func (ErrSessionInvalidated) IsError()              {}
-
-type ErrSplitNotFound struct {
-	Message string `json:"message"`
-}
-
-func (ErrSplitNotFound) IsError()                         {}
-func (ErrSplitNotFound) IsSplitByIDPayloadOrError()       {}
-func (ErrSplitNotFound) IsViewerSplitByIDPayloadOrError() {}
 
 type ErrSyncFailed struct {
 	Message string `json:"message"`
@@ -536,8 +536,8 @@ type MutualsUser struct {
 	Roles               []*persist.Role `json:"roles"`
 	Wallets             []*Wallet       `json:"wallets"`
 	PrimaryWallet       *Wallet         `json:"primaryWallet"`
-	Splits              []*Split        `json:"splits"`
-	SplitsByChain       *ChainSplits    `json:"splitsByChain"`
+	Pools               []*Pool         `json:"pools"`
+	PoolsByChain        *ChainPools     `json:"poolsByChain"`
 	IsAuthenticatedUser *bool           `json:"isAuthenticatedUser"`
 }
 
@@ -556,11 +556,11 @@ type NotificationEdge struct {
 }
 
 type NotificationSettings struct {
-	SomeoneViewedYourSplit *bool `json:"someoneViewedYourSplit"`
+	SomeoneViewedYourPool *bool `json:"someoneViewedYourPool"`
 }
 
 type NotificationSettingsInput struct {
-	SomeoneViewedYourSplit *bool `json:"someoneViewedYourSplit"`
+	SomeoneViewedYourPool *bool `json:"someoneViewedYourPool"`
 }
 
 type NotificationsConnection struct {
@@ -595,6 +595,42 @@ type PageInfo struct {
 	EndCursor       string `json:"endCursor"`
 }
 
+type Pool struct {
+	Dbid                  persist.DBID             `json:"dbid"`
+	Version               *int                     `json:"version"`
+	Status                PoolStatus               `json:"status"`
+	Name                  *string                  `json:"name"`
+	Description           *string                  `json:"description"`
+	Address               *persist.Address         `json:"address"`
+	OwnerAddress          *persist.Address         `json:"ownerAddress"`
+	CreatorAddress        *persist.Address         `json:"creatorAddress"`
+	Chain                 *persist.Chain           `json:"chain"`
+	AllocationAggregation []*AllocationAggregation `json:"allocationAggregation"`
+	Allocations           []*Allocation            `json:"allocations"`
+	Assets                []*Asset                 `json:"assets"`
+}
+
+func (Pool) IsNode()                   {}
+func (Pool) IsPoolByIDPayloadOrError() {}
+
+type PoolAllocationInput struct {
+	ID               *persist.DBID             `json:"id"`
+	RecipientAddress *persist.Address          `json:"recipientAddress"`
+	CalculationType  []persist.CalculationType `json:"calculationType"`
+	RecipientType    []persist.RecipientType   `json:"recipientType"`
+	Value            persist.HexString         `json:"value"`
+	Children         []*PoolAllocationInput    `json:"children"`
+}
+
+type PoolPositionInput struct {
+	PoolID   persist.DBID `json:"poolId"`
+	Position string       `json:"position"`
+}
+
+type PoolSearchResult struct {
+	Pool *Pool `json:"pool"`
+}
+
 type PreverifyEmailInput struct {
 	Email persist.Email `json:"email"`
 }
@@ -610,17 +646,17 @@ type PrivyAuth struct {
 	Token string `json:"token"`
 }
 
-type PublishSplitInput struct {
-	SplitID persist.DBID `json:"splitId"`
+type PublishPoolInput struct {
+	PoolID  persist.DBID `json:"poolId"`
 	EditID  string       `json:"editId"`
 	Caption *string      `json:"caption"`
 }
 
-type PublishSplitPayload struct {
-	Split *Split `json:"split"`
+type PublishPoolPayload struct {
+	Pool *Pool `json:"pool"`
 }
 
-func (PublishSplitPayload) IsPublishSplitPayloadOrError() {}
+func (PublishPoolPayload) IsPublishPoolPayloadOrError() {}
 
 type RegisterUserPushTokenPayload struct {
 	Viewer *Viewer `json:"viewer"`
@@ -640,53 +676,17 @@ type ResendVerificationEmailPayload struct {
 
 func (ResendVerificationEmailPayload) IsResendVerificationEmailPayloadOrError() {}
 
-type SearchSplitsPayload struct {
-	Results []*SplitSearchResult `json:"results"`
+type SearchPoolsPayload struct {
+	Results []*PoolSearchResult `json:"results"`
 }
 
-func (SearchSplitsPayload) IsSearchSplitsPayloadOrError() {}
+func (SearchPoolsPayload) IsSearchPoolsPayloadOrError() {}
 
 type SearchUsersPayload struct {
 	Results []*UserSearchResult `json:"results"`
 }
 
 func (SearchUsersPayload) IsSearchUsersPayloadOrError() {}
-
-type Split struct {
-	Dbid                  persist.DBID             `json:"dbid"`
-	Version               *int                     `json:"version"`
-	Status                SplitStatus              `json:"status"`
-	Name                  *string                  `json:"name"`
-	Description           *string                  `json:"description"`
-	Address               *persist.Address         `json:"address"`
-	OwnerAddress          *persist.Address         `json:"ownerAddress"`
-	CreatorAddress        *persist.Address         `json:"creatorAddress"`
-	Chain                 *persist.Chain           `json:"chain"`
-	AllocationAggregation []*AllocationAggregation `json:"allocationAggregation"`
-	Allocations           []*Allocation            `json:"allocations"`
-	Assets                []*Asset                 `json:"assets"`
-}
-
-func (Split) IsNode()                    {}
-func (Split) IsSplitByIDPayloadOrError() {}
-
-type SplitAllocationInput struct {
-	ID               *persist.DBID             `json:"id"`
-	RecipientAddress *persist.Address          `json:"recipientAddress"`
-	CalculationType  []persist.CalculationType `json:"calculationType"`
-	RecipientType    []persist.RecipientType   `json:"recipientType"`
-	Value            persist.HexString         `json:"value"`
-	Children         []*SplitAllocationInput   `json:"children"`
-}
-
-type SplitPositionInput struct {
-	SplitID  persist.DBID `json:"splitId"`
-	Position string       `json:"position"`
-}
-
-type SplitSearchResult struct {
-	Split *Split `json:"split"`
-}
 
 type Token struct {
 	Dbid            persist.DBID   `json:"dbid"`
@@ -748,52 +748,52 @@ type UpdateEmailPayload struct {
 
 func (UpdateEmailPayload) IsUpdateEmailPayloadOrError() {}
 
-type UpdatePrimaryWalletPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (UpdatePrimaryWalletPayload) IsUpdatePrimaryWalletPayloadOrError() {}
-
-type UpdateSplitHiddenInput struct {
+type UpdatePoolHiddenInput struct {
 	ID     persist.DBID `json:"id"`
 	Hidden bool         `json:"hidden"`
 }
 
-type UpdateSplitHiddenPayload struct {
-	Split *Split `json:"split"`
+type UpdatePoolHiddenPayload struct {
+	Pool *Pool `json:"pool"`
 }
 
-func (UpdateSplitHiddenPayload) IsUpdateSplitHiddenPayloadOrError() {}
+func (UpdatePoolHiddenPayload) IsUpdatePoolHiddenPayloadOrError() {}
 
-type UpdateSplitInfoInput struct {
+type UpdatePoolInfoInput struct {
 	ID          persist.DBID `json:"id"`
 	Name        *string      `json:"name"`
 	Description *string      `json:"description"`
 }
 
-type UpdateSplitInput struct {
-	SplitID     persist.DBID   `json:"splitId"`
+type UpdatePoolInput struct {
+	PoolID      persist.DBID   `json:"poolId"`
 	Name        *string        `json:"name"`
 	Description *string        `json:"description"`
 	Order       []persist.DBID `json:"order"`
 	EditID      string         `json:"editId"`
 }
 
-type UpdateSplitOrderInput struct {
-	Positions []*SplitPositionInput `json:"positions"`
+type UpdatePoolOrderInput struct {
+	Positions []*PoolPositionInput `json:"positions"`
 }
 
-type UpdateSplitOrderPayload struct {
+type UpdatePoolOrderPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (UpdateSplitOrderPayload) IsUpdateSplitOrderPayloadOrError() {}
+func (UpdatePoolOrderPayload) IsUpdatePoolOrderPayloadOrError() {}
 
-type UpdateSplitPayload struct {
-	Split *Split `json:"split"`
+type UpdatePoolPayload struct {
+	Pool *Pool `json:"pool"`
 }
 
-func (UpdateSplitPayload) IsUpdateSplitPayloadOrError() {}
+func (UpdatePoolPayload) IsUpdatePoolPayloadOrError() {}
+
+type UpdatePrimaryWalletPayload struct {
+	Viewer *Viewer `json:"viewer"`
+}
+
+func (UpdatePrimaryWalletPayload) IsUpdatePrimaryWalletPayloadOrError() {}
 
 type UpdateUserExperienceInput struct {
 	ExperienceType UserExperienceType `json:"experienceType"`
@@ -826,18 +826,18 @@ type UploadPersistedQueriesPayload struct {
 
 func (UploadPersistedQueriesPayload) IsUploadPersistedQueriesPayloadOrError() {}
 
-type UpsertSplitInput struct {
-	SplitID     *persist.DBID           `json:"splitId"`
-	Name        *string                 `json:"name"`
-	Description *string                 `json:"description"`
-	Allocations []*SplitAllocationInput `json:"allocations"`
+type UpsertPoolInput struct {
+	PoolID      *persist.DBID          `json:"poolId"`
+	Name        *string                `json:"name"`
+	Description *string                `json:"description"`
+	Allocations []*PoolAllocationInput `json:"allocations"`
 }
 
-type UpsertSplitPayload struct {
-	Split *Split `json:"split"`
+type UpsertPoolPayload struct {
+	Pool *Pool `json:"pool"`
 }
 
-func (UpsertSplitPayload) IsUpsertSplitPayloadOrError() {}
+func (UpsertPoolPayload) IsUpsertPoolPayloadOrError() {}
 
 type UserEdge struct {
 	Node   *MutualsUser `json:"node"`
@@ -886,9 +886,9 @@ func (VerifyEmailPayload) IsVerifyEmailPayloadOrError() {}
 
 type Viewer struct {
 	HelperViewerData
-	User         *MutualsUser   `json:"user"`
-	ViewerSplits []*ViewerSplit `json:"viewerSplits"`
-	Email        *UserEmail     `json:"email"`
+	User        *MutualsUser  `json:"user"`
+	ViewerPools []*ViewerPool `json:"viewerPools"`
+	Email       *UserEmail    `json:"email"`
 	// Returns a list of notifications in reverse chronological order.
 	// Seen notifications come after unseen notifications
 	Notifications        *NotificationsConnection `json:"notifications"`
@@ -899,18 +899,18 @@ type Viewer struct {
 func (Viewer) IsNode()          {}
 func (Viewer) IsViewerOrError() {}
 
-type ViewerSplit struct {
-	Split *Split `json:"split"`
+type ViewerPool struct {
+	Pool *Pool `json:"pool"`
 }
 
-func (ViewerSplit) IsViewerSplitByIDPayloadOrError() {}
+func (ViewerPool) IsViewerPoolByIDPayloadOrError() {}
 
 type Wallet struct {
 	Dbid         persist.DBID          `json:"dbid"`
 	ChainAddress *persist.ChainAddress `json:"chainAddress"`
 	Chain        *persist.Chain        `json:"chain"`
 	WalletType   *persist.WalletType   `json:"walletType"`
-	Splits       []*Split              `json:"splits"`
+	Pools        []*Pool               `json:"pools"`
 }
 
 func (Wallet) IsNode()                {}
@@ -957,6 +957,49 @@ func (e EmailUnsubscriptionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type PoolStatus string
+
+const (
+	PoolStatusDraft  PoolStatus = "Draft"
+	PoolStatusActive PoolStatus = "Active"
+	PoolStatusPaused PoolStatus = "Paused"
+)
+
+var AllPoolStatus = []PoolStatus{
+	PoolStatusDraft,
+	PoolStatusActive,
+	PoolStatusPaused,
+}
+
+func (e PoolStatus) IsValid() bool {
+	switch e {
+	case PoolStatusDraft, PoolStatusActive, PoolStatusPaused:
+		return true
+	}
+	return false
+}
+
+func (e PoolStatus) String() string {
+	return string(e)
+}
+
+func (e *PoolStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PoolStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PoolStatus", str)
+	}
+	return nil
+}
+
+func (e PoolStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type PreverifyEmailResult string
 
 const (
@@ -997,49 +1040,6 @@ func (e *PreverifyEmailResult) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PreverifyEmailResult) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type SplitStatus string
-
-const (
-	SplitStatusDraft  SplitStatus = "Draft"
-	SplitStatusActive SplitStatus = "Active"
-	SplitStatusPaused SplitStatus = "Paused"
-)
-
-var AllSplitStatus = []SplitStatus{
-	SplitStatusDraft,
-	SplitStatusActive,
-	SplitStatusPaused,
-}
-
-func (e SplitStatus) IsValid() bool {
-	switch e {
-	case SplitStatusDraft, SplitStatusActive, SplitStatusPaused:
-		return true
-	}
-	return false
-}
-
-func (e SplitStatus) String() string {
-	return string(e)
-}
-
-func (e *SplitStatus) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SplitStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SplitStatus", str)
-	}
-	return nil
-}
-
-func (e SplitStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

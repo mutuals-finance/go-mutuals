@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users
     email_unsubscriptions jsonb                              NOT NULL DEFAULT '{
       "all": false
     }'::jsonb,
-    featured_split        character varying,
+    featured_pool        character varying,
     primary_wallet_id     character varying(255)             ,
     user_experiences      jsonb                              NOT NULL DEFAULT '{}'::jsonb,
     fts_username          tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, ((username)::text ||
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS token_metadatas
 
 CREATE UNIQUE INDEX IF NOT EXISTS token_metadatas_chain_contract_address_idx on token_metadatas(chain, contract_address) where not deleted;
 
-CREATE TABLE IF NOT EXISTS splits
+CREATE TABLE IF NOT EXISTS pools
 (
     id                      character varying(255) PRIMARY KEY,
     version                 integer                           DEFAULT 0,
@@ -91,22 +91,22 @@ CREATE TABLE IF NOT EXISTS splits
 --     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
 );
 
-CREATE INDEX splits_fts_description_english_idx ON splits USING gin (fts_description_english);
+CREATE INDEX pools_fts_description_english_idx ON pools USING gin (fts_description_english);
 
-CREATE INDEX splits_fts_name_idx ON splits USING gin (fts_name);
+CREATE INDEX pools_fts_name_idx ON pools USING gin (fts_name);
 
--- CREATE INDEX splits_fts_address_idx ON splits USING gin (fts_address);
+-- CREATE INDEX pools_fts_address_idx ON pools USING gin (fts_address);
 
-CREATE UNIQUE INDEX split_address_chain_idx ON splits USING btree (address, chain) WHERE (NOT deleted AND status > 0);
+CREATE UNIQUE INDEX pool_address_chain_idx ON pools USING btree (address, chain) WHERE (NOT deleted AND status > 0);
 
-CREATE INDEX splits_l1_chain_idx ON splits (address,chain,l1_chain) WHERE (NOT deleted AND status > 0);
-CREATE UNIQUE INDEX splits_l1_chain_unique_idx ON splits (l1_chain,chain,address) WHERE (NOT deleted AND status > 0);
+CREATE INDEX pools_l1_chain_idx ON pools (address,chain,l1_chain) WHERE (NOT deleted AND status > 0);
+CREATE UNIQUE INDEX pools_l1_chain_unique_idx ON pools (l1_chain,chain,address) WHERE (NOT deleted AND status > 0);
 
 CREATE TABLE IF NOT EXISTS allocations
 (
     id               character varying(255) PRIMARY KEY,
     version          integer                           DEFAULT 0,
-    split_id         character varying(255)   NOT NULL REFERENCES splits ON DELETE CASCADE,
+    pool_id         character varying(255)   NOT NULL REFERENCES pools ON DELETE CASCADE,
     recipient_address character varying(255),
     recipient_type integer   NOT NULL,
     calculation_type  integer   NOT NULL,
@@ -125,7 +125,7 @@ CREATE INDEX allocation_path_idx ON allocations USING btree(path);
 
 CREATE TABLE IF NOT EXISTS allocation_aggregations (
       id             character varying(255) PRIMARY KEY,
-      split_id       character varying(255) NOT NULL REFERENCES splits(id) ON DELETE CASCADE,
+      pool_id       character varying(255) NOT NULL REFERENCES pools(id) ON DELETE CASCADE,
       recipient_address character varying(255),
       expression     character varying(255) NOT NULL,
       last_updated   timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS allocation_aggregations (
 );
 
 ALTER TABLE allocation_aggregations
-    ADD CONSTRAINT allocation_aggregations_split_recipient_address UNIQUE (split_id,recipient_address);
+    ADD CONSTRAINT allocation_aggregations_pool_recipient_address UNIQUE (pool_id,recipient_address);
 
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS events
     deleted          boolean                            NOT NULL DEFAULT FALSE,
     last_updated     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    split_id         character varying(255),
+    pool_id         character varying(255),
     external_id      character varying(255),
     caption          character varying,
     group_id         character varying(255)
@@ -165,8 +165,8 @@ CREATE TABLE IF NOT EXISTS events
 
 CREATE INDEX events_actor_id_action_created_at_idx ON events USING btree (actor_id, action, created_at);
 
-CREATE INDEX events_split_edit_idx ON events USING btree (created_at, actor_id) WHERE ((action)::text = ANY
-                                                                                       ((ARRAY ['SplitCreated'::character varying, 'SplitInfoUpdated'::character varying])::text[]));
+CREATE INDEX events_pool_edit_idx ON events USING btree (created_at, actor_id) WHERE ((action)::text = ANY
+                                                                                       ((ARRAY ['PoolCreated'::character varying, 'PoolInfoUpdated'::character varying])::text[]));
 
 CREATE INDEX group_id_idx ON events USING btree (group_id);
 
@@ -175,8 +175,8 @@ ALTER TABLE events
         FOREIGN KEY (actor_id) REFERENCES users (id);
 
 ALTER TABLE events
-    ADD CONSTRAINT events_split_id_fkey
-        FOREIGN KEY (split_id) REFERENCES splits (id);
+    ADD CONSTRAINT events_pool_id_fkey
+        FOREIGN KEY (pool_id) REFERENCES pools (id);
 
 ALTER TABLE events
     ADD CONSTRAINT events_user_id_fkey
@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS notifications
     action       character varying(255)             NOT NULL,
     data         jsonb,
     event_ids    character varying(255)[],
-    split_id     character varying(255),
+    pool_id     character varying(255),
     seen         boolean                            NOT NULL DEFAULT FALSE,
     amount       integer                            NOT NULL DEFAULT 1
 );
@@ -226,8 +226,8 @@ CREATE INDEX notification_created_at_id_idx ON notifications USING btree (create
 CREATE INDEX notification_owner_id_idx ON notifications USING btree (owner_id);
 
 ALTER TABLE notifications
-    ADD CONSTRAINT notifications_split_id_fkey
-        FOREIGN KEY (split_id) REFERENCES splits (id);
+    ADD CONSTRAINT notifications_pool_id_fkey
+        FOREIGN KEY (pool_id) REFERENCES pools (id);
 
 -- Spam scores for newly-created users. Contains all newly created users,
 -- but users with score 0 can typically be ignored since they're not likely to
@@ -315,7 +315,7 @@ SELECT users.id,
        users.universal,
        users.notification_settings,
        users.email_unsubscriptions,
-       users.featured_split,
+       users.featured_pool,
        users.primary_wallet_id,
        users.user_experiences,
        for_users.pii_unverified_email_address,

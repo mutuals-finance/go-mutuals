@@ -29,7 +29,7 @@ var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 var nodeFetcher = model.NodeFetcher{
 	OnAsset:                 resolveAssetByAssetID,
 	OnToken:                 resolveTokenByTokenID,
-	OnSplit:                 resolveSplitBySplitID,
+	OnPool:                  resolvePoolByPoolID,
 	OnAllocation:            resolveAllocationByAllocationID,
 	OnAllocationAggregation: resolveAllocationAggregationByAllocationID,
 	OnMutualsUser:           resolveMutualsUserByUserID,
@@ -70,8 +70,8 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 		mappedErr = model.ErrInvalidInput{Message: message, Parameters: validationErr.Parameters, Reasons: validationErr.Reasons}
 	//case persist.ErrUnknownAction:
 	//	mappedErr = model.ErrUnknownAction{Message: message}
-	case persist.ErrSplitNotFound:
-		mappedErr = model.ErrSplitNotFound{Message: message}
+	case persist.ErrPoolNotFound:
+		mappedErr = model.ErrPoolNotFound{Message: message}
 	}
 	// TODO add missing errors
 	if mappedErr != nil {
@@ -135,7 +135,7 @@ func resolveMutualsUserByUserID(ctx context.Context, userID persist.DBID) (*mode
 }
 
 func resolveAllocationByAllocationID(ctx context.Context, allocationID persist.DBID) (*model.Allocation, error) {
-	allocation, err := publicapi.For(ctx).Split.GetAllocationById(ctx, allocationID)
+	allocation, err := publicapi.For(ctx).Pool.GetAllocationById(ctx, allocationID)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func resolveAllocationByAllocationID(ctx context.Context, allocationID persist.D
 }
 
 func resolveAllocationAggregationByAllocationID(ctx context.Context, allocationAggregationID persist.DBID) (*model.AllocationAggregation, error) {
-	allocationAggregation, err := publicapi.For(ctx).Split.GetAllocationAggregationById(ctx, allocationAggregationID)
+	allocationAggregation, err := publicapi.For(ctx).Pool.GetAllocationAggregationById(ctx, allocationAggregationID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,41 +172,41 @@ func resolveMutualsUserByUsername(ctx context.Context, username string) (*model.
 	return userToModel(ctx, *user), nil
 }
 
-func resolveSplitBySplitID(ctx context.Context, splitID persist.DBID) (*model.Split, error) {
-	dbSplit, err := publicapi.For(ctx).Split.GetSplitById(ctx, splitID)
+func resolvePoolByPoolID(ctx context.Context, poolID persist.DBID) (*model.Pool, error) {
+	dbPool, err := publicapi.For(ctx).Pool.GetPoolById(ctx, poolID)
 	if err != nil {
 		return nil, err
 	}
-	split := &model.Split{
-		Dbid:        splitID,
-		Name:        &dbSplit.Name,
-		Description: &dbSplit.Description,
-		//TODO return full split data
+	pool := &model.Pool{
+		Dbid:        poolID,
+		Name:        &dbPool.Name,
+		Description: &dbPool.Description,
+		//TODO return full pool data
 	}
 
-	return split, nil
+	return pool, nil
 }
 
-func resolveViewerSplitBySplitID(ctx context.Context, splitID persist.DBID) (*model.ViewerSplit, error) {
-	split, err := publicapi.For(ctx).Split.GetViewerSplitById(ctx, splitID)
+func resolveViewerPoolByPoolID(ctx context.Context, poolID persist.DBID) (*model.ViewerPool, error) {
+	pool, err := publicapi.For(ctx).Pool.GetViewerPoolById(ctx, poolID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.ViewerSplit{
-		Split: splitToModel(ctx, *split),
+	return &model.ViewerPool{
+		Pool: poolToModel(ctx, *pool),
 	}, nil
 }
 
-func resolveSplitsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Split, error) {
-	splits, err := publicapi.For(ctx).Split.GetSplitsByUserID(ctx, userID)
+func resolvePoolsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Pool, error) {
+	pools, err := publicapi.For(ctx).Pool.GetPoolsByUserID(ctx, userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return splitsToModels(ctx, splits), nil
+	return poolsToModels(ctx, pools), nil
 }
 
 func resolveViewerExperiencesByUserID(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {
@@ -262,8 +262,8 @@ func resolveViewer(ctx context.Context) *model.Viewer {
 		HelperViewerData: model.HelperViewerData{
 			UserId: userID,
 		},
-		User:         nil, // handled by dedicated resolver
-		ViewerSplits: nil, // handled by dedicated resolver
+		User:        nil, // handled by dedicated resolver
+		ViewerPools: nil, // handled by dedicated resolver
 	}
 
 	return viewer
@@ -516,8 +516,8 @@ func resolveViewerByID(ctx context.Context, id string) (*model.Viewer, error) {
 		HelperViewerData: model.HelperViewerData{
 			UserId: userID,
 		},
-		User:         nil, // handled by dedicated resolver
-		ViewerSplits: nil, // handled by dedicated resolver
+		User:        nil, // handled by dedicated resolver
+		ViewerPools: nil, // handled by dedicated resolver
 	}, nil
 }
 
@@ -597,25 +597,25 @@ func unsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEm
 
 }
 
-func splitToModel(ctx context.Context, split db.Split) *model.Split {
+func poolToModel(ctx context.Context, pool db.Pool) *model.Pool {
 
-	return &model.Split{
-		Dbid:           split.ID,
-		Name:           &split.Name,
-		Description:    &split.Description,
-		Chain:          &split.Chain,
-		Address:        &split.Address,
-		OwnerAddress:   &split.OwnerAddress,
-		CreatorAddress: &split.CreatorAddress,
+	return &model.Pool{
+		Dbid:           pool.ID,
+		Name:           &pool.Name,
+		Description:    &pool.Description,
+		Chain:          &pool.Chain,
+		Address:        &pool.Address,
+		OwnerAddress:   &pool.OwnerAddress,
+		CreatorAddress: &pool.CreatorAddress,
 		Assets:         nil, // handled by dedicated resolver
 		Allocations:    nil, // handled by dedicated resolver
 	}
 }
 
-func splitsToModels(ctx context.Context, splits []db.Split) []*model.Split {
-	models := make([]*model.Split, len(splits))
-	for i, split := range splits {
-		models[i] = splitToModel(ctx, split)
+func poolsToModels(ctx context.Context, pools []db.Pool) []*model.Pool {
+	models := make([]*model.Pool, len(pools))
+	for i, pool := range pools {
+		models[i] = poolToModel(ctx, pool)
 	}
 
 	return models
@@ -629,7 +629,7 @@ func allocationToModel(ctx context.Context, allocation db.Allocation) *model.All
 		Value:            util.ToPointer(allocation.Value),
 		CreationTime:     &allocation.CreatedAt,
 		LastUpdated:      &allocation.LastUpdated,
-		Split:            nil, // handled by dedicated resolver
+		Pool:             nil, // handled by dedicated resolver
 	}
 }
 
@@ -643,7 +643,7 @@ func allocationAggregationToModel(ctx context.Context, allocationAggregation db.
 		Expression:       &allocationAggregation.Expression,
 		CreationTime:     &allocationAggregation.CreatedAt,
 		LastUpdated:      &allocationAggregation.LastUpdated,
-		Split:            nil, // handled by dedicated resolver
+		Pool:             nil, // handled by dedicated resolver
 	}
 }
 
@@ -667,8 +667,8 @@ func userToModel(ctx context.Context, user db.User) *model.MutualsUser {
 		Universal: &user.Universal,
 
 		// each handled by dedicated resolver
-		Splits: nil,
-		Roles:  nil,
+		Pools: nil,
+		Roles: nil,
 
 		IsAuthenticatedUser: &isAuthenticatedUser,
 	}

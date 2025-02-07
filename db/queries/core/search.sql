@@ -26,11 +26,11 @@ group by (u.id, content_score * match_score, content_score, match_score)
 order by content_score * match_score desc, content_score desc, match_score desc, length(u.username_idempotent) asc
 limit sqlc.arg('limit');
 
-name: SearchSplits :many
+name: SearchPools :many
 with min_content_score as (
-    select score from split_relevance where id is null
+    select score from pool_relevance where id is null
 )
-select splits.* from splits left join split_relevance on split_relevance.id = splits.id,
+select pools.* from pools left join pool_relevance on pool_relevance.id = pools.id,
     to_tsquery('simple', websearch_to_tsquery('simple', @query)::text || ':*') simple_partial_query,
     websearch_to_tsquery('english', @query) english_full_query,
     min_content_score,
@@ -38,7 +38,7 @@ select splits.* from splits left join split_relevance on split_relevance.id = sp
         ts_rank_cd(concat('{', @name_weight::float4, ', 1, 1, 1}')::float4[], fts_name, simple_partial_query, 1),
         ts_rank_cd(concat('{', @description_weight::float4, ', 1, 1, 1}')::float4[], fts_description_english, english_full_query, 1)
         ) as match_score,
-    coalesce(split_relevance.score, min_content_score.score) as content_score
+    coalesce(pool_relevance.score, min_content_score.score) as content_score
 where (
     simple_partial_query @@ fts_name or
     english_full_query @@ fts_description_english

@@ -10,42 +10,42 @@ import (
 	"github.com/mutuals/go-mutuals/util"
 )
 
-var errGetSplitsInput = errors.New("id or user_id must be provided")
+var errGetPoolsInput = errors.New("id or user_id must be provided")
 
-type getSplitsInput struct {
+type getPoolsInput struct {
 	ID     persist.DBID `form:"id"`
 	UserID persist.DBID `form:"user_id"`
 }
 
-func getSplits(splitRepo postgres.SplitRepository) gin.HandlerFunc {
+func getPools(poolRepo postgres.PoolRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var input getSplitsInput
+		var input getPoolsInput
 		if err := c.ShouldBindQuery(&input); err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
 		if input.ID == "" && input.UserID == "" {
-			util.ErrResponse(c, http.StatusBadRequest, errGetSplitsInput)
+			util.ErrResponse(c, http.StatusBadRequest, errGetPoolsInput)
 			return
 		}
 
-		var splits []persist.Split
+		var pools []persist.Pool
 		//var err error
 		//
 		//if input.ID == "" {
-		//	split, e := splitRepo.GetByID(c, input.ID)
-		//	splits = []persist.Split{split}
+		//	pool, e := poolRepo.GetByID(c, input.ID)
+		//	pools = []persist.Pool{pool}
 		//	err = e
 		//} else {
-		//	splits, err = splitRepo.GetByRecipient(c, input.UserID)
+		//	pools, err = poolRepo.GetByRecipient(c, input.UserID)
 		//}
 		//if err != nil {
 		//	util.ErrResponse(c, http.StatusInternalServerError, err)
 		//	return
 		//}
 
-		c.JSON(http.StatusOK, splits)
+		c.JSON(http.StatusOK, pools)
 	}
 }

@@ -15,17 +15,17 @@ type statements struct {
 	getUserByUsernameStmt *sql.Stmt
 	getUserByAddressStmt  *sql.Stmt
 	deleteUserStmt        *sql.Stmt
-	getSplitsRawStmt      *sql.Stmt
-	deleteSplitStmt       *sql.Stmt
+	getPoolsRawStmt       *sql.Stmt
+	deletePoolStmt        *sql.Stmt
 	deleteCollectionStmt  *sql.Stmt
 	updateUserStmt        *sql.Stmt
-	updateSplitStmt       *sql.Stmt
+	updatePoolStmt        *sql.Stmt
 	createUserStmt        *sql.Stmt
-	createSplitStmt       *sql.Stmt
+	createPoolStmt        *sql.Stmt
 	createNonceStmt       *sql.Stmt
 
-	splitRepo postgres.SplitRepository
-	userRepo  postgres.UserRepository
+	poolRepo postgres.PoolRepository
+	userRepo postgres.UserRepository
 }
 
 func newStatements(db *sql.DB) *statements {
@@ -44,10 +44,10 @@ func newStatements(db *sql.DB) *statements {
 	deleteUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
 
-	getSplitsRawStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM splits WHERE OWNER_USER_ID = $1;`)
+	getPoolsRawStmt, err := db.PrepareContext(ctx, `SELECT ID, COLLECTIONS FROM pools WHERE OWNER_USER_ID = $1;`)
 	checkNoErr(err)
 
-	deleteSplitStmt, err := db.PrepareContext(ctx, `UPDATE splits SET DELETED = TRUE WHERE ID = $1;`)
+	deletePoolStmt, err := db.PrepareContext(ctx, `UPDATE pools SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
 
 	deleteCollectionStmt, err := db.PrepareContext(ctx, `UPDATE collections SET DELETED = TRUE WHERE ID = $1;`)
@@ -56,35 +56,35 @@ func newStatements(db *sql.DB) *statements {
 	updateUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET ADDRESSES = $1, BIO = $2, USERNAME = $3, USERNAME_IDEMPOTENT = $4, LAST_UPDATED = $5 WHERE ID = $6;`)
 	checkNoErr(err)
 
-	updateSplitStmt, err := db.PrepareContext(ctx, `UPDATE splits SET COLLECTIONS = $1, LAST_UPDATED = $2 WHERE ID = $3;`)
+	updatePoolStmt, err := db.PrepareContext(ctx, `UPDATE pools SET COLLECTIONS = $1, LAST_UPDATED = $2 WHERE ID = $3;`)
 	checkNoErr(err)
 
 	createUserStmt, err := db.PrepareContext(ctx, `INSERT INTO users (ID, ADDRESSES, USERNAME, USERNAME_IDEMPOTENT, BIO) VALUES ($1, $2, $3, $4, $5) RETURNING ID;`)
 	checkNoErr(err)
 
-	createSplitStmt, err := db.PrepareContext(ctx, `INSERT INTO splits (ID,OWNER_USER_ID, COLLECTIONS) VALUES ($1, $2, $3) RETURNING ID;`)
+	createPoolStmt, err := db.PrepareContext(ctx, `INSERT INTO pools (ID,OWNER_USER_ID, COLLECTIONS) VALUES ($1, $2, $3) RETURNING ID;`)
 	checkNoErr(err)
 
 	createNonceStmt, err := db.PrepareContext(ctx, `INSERT INTO nonces (ID,USER_ID, ADDRESS, VALUE) VALUES ($1, $2, $3, $4);`)
 	checkNoErr(err)
 
-	//splitRepo := postgres.NewSplitRepository(db, nil)
+	//poolRepo := postgres.NewPoolRepository(db, nil)
 	return &statements{
 		getUserByIDStmt:       getUserByIDStmt,
 		getUserByUsernameStmt: getUserByUsernameStmt,
 		getUserByAddressStmt:  getUserByAddressStmt,
 		deleteUserStmt:        deleteUserStmt,
-		getSplitsRawStmt:      getSplitsRawStmt,
-		deleteSplitStmt:       deleteSplitStmt,
+		getPoolsRawStmt:       getPoolsRawStmt,
+		deletePoolStmt:        deletePoolStmt,
 		deleteCollectionStmt:  deleteCollectionStmt,
 		updateUserStmt:        updateUserStmt,
-		updateSplitStmt:       updateSplitStmt,
+		updatePoolStmt:        updatePoolStmt,
 		createUserStmt:        createUserStmt,
-		createSplitStmt:       createSplitStmt,
+		createPoolStmt:        createPoolStmt,
 		createNonceStmt:       createNonceStmt,
 
-		//splitRepo: splitRepo,
-		//// nftRepo:     postgres.NewNFTRepository(db, splitRepo),
+		//poolRepo: poolRepo,
+		//// nftRepo:     postgres.NewNFTRepository(db, poolRepo),
 		//userRepo: postgres.NewUserRepository(db),
 		//backupRepo: postgres.NewBackupRepository(db),
 	}

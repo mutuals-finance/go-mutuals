@@ -60,7 +60,7 @@ func (p *Provider) UpdateTokensForPoolUnchecked(ctx context.Context, poolID pers
 		return nil, err
 	}
 
-	pool, err := p.Queries.GetSplitByChainAddress(ctx, db.GetSplitByChainAddressParams{Address: poolID.Address(), Chain: poolID.Chain()})
+	pool, err := p.Queries.GetPoolByChainAddress(ctx, db.GetPoolByChainAddressParams{Address: poolID.Address(), Chain: poolID.Chain()})
 	if err != nil {
 		return nil, err
 	}

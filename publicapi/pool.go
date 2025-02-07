@@ -13,7 +13,7 @@ import (
 	"github.com/mutuals/go-mutuals/validate"
 )
 
-type SplitAPI struct {
+type PoolAPI struct {
 	repos     *postgres.Repositories
 	queries   *db.Queries
 	loaders   *dataloader.Loaders
@@ -21,38 +21,38 @@ type SplitAPI struct {
 	ethClient *ethclient.Client
 }
 
-func (api SplitAPI) CreateSplit(ctx context.Context, name, description, logoUrl *string) (db.Split, error) {
+func (api PoolAPI) CreatePool(ctx context.Context, name, description, logoUrl *string) (db.Pool, error) {
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"name":        {name, "max=200"},
 		"description": {description, "max=600"},
 		"logoUrl":     {logoUrl, "max=200"},
 	}); err != nil {
-		return db.Split{}, err
+		return db.Pool{}, err
 	}
 
-	split, err := api.queries.CreateSplit(ctx, db.CreateSplitParams{
+	pool, err := api.queries.CreatePool(ctx, db.CreatePoolParams{
 		ID:          persist.GenerateID(),
 		Name:        util.FromPointer(name),
 		Description: util.FromPointer(description),
 	})
 	if err != nil {
-		return db.Split{}, err
+		return db.Pool{}, err
 	}
 
-	return split, nil
+	return pool, nil
 }
 
-func (api SplitAPI) PublishSplit(ctx context.Context, update model.PublishSplitInput) error {
+func (api PoolAPI) PublishPool(ctx context.Context, update model.PublishPoolInput) error {
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": {update.SplitID, "required"},
-		"editID":  {update.EditID, "required"},
+		"poolID": {update.PoolID, "required"},
+		"editID": {update.EditID, "required"},
 	}); err != nil {
 		return err
 	}
 
-	//err := publishEventGroup(ctx, update.EditID, persist.ActionSplitUpdated, update.Caption)
+	//err := publishEventGroup(ctx, update.EditID, persist.ActionPoolUpdated, update.Caption)
 	//if err != nil {
 	//	return err
 	//}
@@ -60,10 +60,10 @@ func (api SplitAPI) PublishSplit(ctx context.Context, update model.PublishSplitI
 	return nil
 }
 
-func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID) (*db.Split, error) {
+func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": validate.WithTag(splitID, "required"),
+		"poolID": validate.WithTag(poolID, "required"),
 	}); err != nil {
 		return nil, err
 	}
@@ -74,18 +74,18 @@ func (api SplitAPI) GetViewerSplitById(ctx context.Context, splitID persist.DBID
 		return nil, err
 	}
 
-	split, err := api.queries.GetSplitByUserID(ctx, db.GetSplitByUserIDParams{
-		UserID:  userID,
-		SplitID: splitID,
+	pool, err := api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
+		UserID: userID,
+		PoolID: poolID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &split, nil
+	return &pool, nil
 }
 
-func (api SplitAPI) GetSplitsByUserID(ctx context.Context, userID persist.DBID) ([]db.Split, error) {
+func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([]db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),
@@ -93,68 +93,68 @@ func (api SplitAPI) GetSplitsByUserID(ctx context.Context, userID persist.DBID) 
 		return nil, err
 	}
 
-	splits, err := api.loaders.GetSplitsByUserIDBatch.Load(userID)
+	pools, err := api.loaders.GetPoolsByUserIDBatch.Load(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return splits, nil
+	return pools, nil
 }
 
-func (api SplitAPI) GetSplitById(ctx context.Context, splitID persist.DBID) (*db.Split, error) {
+func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID": {splitID, "required"},
+		"poolID": {poolID, "required"},
 	}); err != nil {
 		return nil, err
 	}
 
-	split, err := api.loaders.GetSplitByIdBatch.Load(splitID)
+	pool, err := api.loaders.GetPoolByIdBatch.Load(poolID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &split, nil
+	return &pool, nil
 }
 
-func (api SplitAPI) GetSplitsByIds(ctx context.Context, splitIDs []persist.DBID) ([]*db.Split, []error) {
-	splitThunk := func(splitID persist.DBID) func() (db.Split, error) {
+func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([]*db.Pool, []error) {
+	poolThunk := func(poolID persist.DBID) func() (db.Pool, error) {
 		if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-			"splitIDs": {splitID, "required"},
+			"poolIDs": {poolID, "required"},
 		}); err != nil {
-			return func() (db.Split, error) { return db.Split{}, err }
+			return func() (db.Pool, error) { return db.Pool{}, err }
 		}
 
-		return api.loaders.GetSplitByIdBatch.LoadThunk(splitID)
+		return api.loaders.GetPoolByIdBatch.LoadThunk(poolID)
 	}
 
 	// A "thunk" will add this request to a batch, and then return a function that will block to fetch
 	// data when called. By creating all of the thunks first (without invoking the functions they return),
 	// we're setting up a batch that will eventually fetch all of these requests at the same time when
 	// their functions are invoked. "LoadAll" would accomplish something similar, but wouldn't let us
-	// validate each splitID parameter first.
-	thunks := make([]func() (db.Split, error), len(splitIDs))
+	// validate each poolID parameter first.
+	thunks := make([]func() (db.Pool, error), len(poolIDs))
 
-	for i, splitID := range splitIDs {
-		thunks[i] = splitThunk(splitID)
+	for i, poolID := range poolIDs {
+		thunks[i] = poolThunk(poolID)
 	}
 
-	splits := make([]*db.Split, len(splitIDs))
-	errors := make([]error, len(splitIDs))
+	pools := make([]*db.Pool, len(poolIDs))
+	errors := make([]error, len(poolIDs))
 
-	for i := range splitIDs {
-		split, err := thunks[i]()
+	for i := range poolIDs {
+		pool, err := thunks[i]()
 		if err == nil {
-			splits[i] = &split
+			pools[i] = &pool
 		} else {
 			errors[i] = err
 		}
 	}
 
-	return splits, errors
+	return pools, errors
 }
 
-func (api SplitAPI) GetSplitByChainAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.Split, error) {
+func (api PoolAPI) GetPoolByChainAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"chainAddress": {chainAddress, "required"},
@@ -162,7 +162,7 @@ func (api SplitAPI) GetSplitByChainAddress(ctx context.Context, chainAddress per
 		return nil, err
 	}
 
-	split, err := api.loaders.GetSplitByChainAddressBatch.Load(db.GetSplitByChainAddressBatchParams{
+	pool, err := api.loaders.GetPoolByChainAddressBatch.Load(db.GetPoolByChainAddressBatchParams{
 		Address: chainAddress.Address(),
 		Chain:   chainAddress.Chain(),
 	})
@@ -170,13 +170,13 @@ func (api SplitAPI) GetSplitByChainAddress(ctx context.Context, chainAddress per
 		return nil, err
 	}
 
-	return &split, nil
+	return &pool, nil
 }
 
-func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, name, description, logoUrl *string) error {
+func (api PoolAPI) UpdatePoolInfo(ctx context.Context, poolID persist.DBID, name, description, logoUrl *string) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"splitID":     {splitID, "required"},
+		"poolID":      {poolID, "required"},
 		"name":        {name, "max=200"},
 		"description": {description, "max=600"},
 		"logoUrl":     {logoUrl, "max=200"},
@@ -188,89 +188,89 @@ func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, n
 }
 
 /*
-	func (api SplitAPI) UpdateSplitHidden(ctx context.Context, splitID persist.DBID, hidden bool) (db.Split, error) {
+	func (api PoolAPI) UpdatePoolHidden(ctx context.Context, poolID persist.DBID, hidden bool) (db.Pool, error) {
 		// Validate
 		if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-			"splitID": validate.WithTag(splitID, "required"),
+			"poolID": validate.WithTag(poolID, "required"),
 		}); err != nil {
-			return db.Split{}, err
+			return db.Pool{}, err
 		}
 
-		split, err := api.queries.UpdateSplitHidden(ctx, db.UpdateSplitHiddenParams{
-			ID:     splitID,
+		pool, err := api.queries.UpdatePoolHidden(ctx, db.UpdatePoolHiddenParams{
+			ID:     poolID,
 			Hidden: hidden,
 		})
 		if err != nil {
-			return db.Split{}, err
+			return db.Pool{}, err
 		}
 
-		return split, nil
+		return pool, nil
 	}
 */
 
-func (api SplitAPI) UpsertSplit(ctx context.Context, input model.UpsertSplitInput) (db.Split, error) {
+func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) (db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"name":        validate.WithTag(input.Name, "max=200"),
 		"description": validate.WithTag(input.Description, "max=600"),
 	}); err != nil {
-		return db.Split{}, err
+		return db.Pool{}, err
 	}
 
-	splitID := input.SplitID
-	if splitID == nil {
-		splitID = util.ToPointer(persist.GenerateID())
+	poolID := input.PoolID
+	if poolID == nil {
+		poolID = util.ToPointer(persist.GenerateID())
 	}
 
 	tx, err := api.repos.BeginTx(ctx)
 	if err != nil {
-		return db.Split{}, err
+		return db.Pool{}, err
 	}
 	defer tx.Rollback(ctx)
 
 	q := api.queries.WithTx(tx)
 
-	split, err := api.queries.UpsertSplit(ctx, db.UpsertSplitParams{
-		ID:          *splitID,
+	pool, err := api.queries.UpsertPool(ctx, db.UpsertPoolParams{
+		ID:          *poolID,
 		Name:        *input.Name,
 		Description: *input.Description,
-		Status:      int32(persist.SplitStatusDraft),
+		Status:      int32(persist.PoolStatusDraft),
 	})
 
 	if err != nil {
-		return db.Split{}, err
+		return db.Pool{}, err
 	}
 
 	if len(input.Allocations) > 0 {
-		allocationParams, aggregationParams := processAllocations(splitID, input.Allocations)
+		allocationParams, aggregationParams := processAllocations(poolID, input.Allocations)
 
-		_, err = q.UpsertSplitAllocations(ctx, allocationParams)
+		_, err = q.UpsertPoolAllocations(ctx, allocationParams)
 		if err != nil {
-			return db.Split{}, err
+			return db.Pool{}, err
 		}
 
-		_, err = q.UpsertSplitAggregatedAllocations(ctx, aggregationParams)
+		_, err = q.UpsertPoolAggregatedAllocations(ctx, aggregationParams)
 		if err != nil {
-			return db.Split{}, err
+			return db.Pool{}, err
 		}
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		return db.Split{}, err
+		return db.Pool{}, err
 	}
 
-	return split, nil
+	return pool, nil
 }
 
-func processAllocations(splitID *persist.DBID, a []*model.SplitAllocationInput) (allocationParams db.UpsertSplitAllocationsParams, aggregationParams db.UpsertSplitAggregatedAllocationsParams) {
-	recipientToAllocations := make(map[persist.Address][]*model.SplitAllocationInput)
+func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (allocationParams db.UpsertPoolAllocationsParams, aggregationParams db.UpsertPoolAggregatedAllocationsParams) {
+	recipientToAllocations := make(map[persist.Address][]*model.PoolAllocationInput)
 
-	allocationParams.SplitID = *splitID
-	aggregationParams.SplitID = *splitID
+	allocationParams.PoolID = *poolID
+	aggregationParams.PoolID = *poolID
 
-	var traverse func(node *model.SplitAllocationInput, path string)
-	traverse = func(node *model.SplitAllocationInput, parentPath string) {
+	var traverse func(node *model.PoolAllocationInput, path string)
+	traverse = func(node *model.PoolAllocationInput, parentPath string) {
 		id := node.ID
 		if id == nil {
 			id = util.ToPointer(persist.GenerateID())
@@ -327,7 +327,7 @@ func processAllocations(splitID *persist.DBID, a []*model.SplitAllocationInput) 
 	return allocationParams, aggregationParams
 }
 
-func (api SplitAPI) GetAllocationById(ctx context.Context, allocationID persist.DBID) (*db.Allocation, error) {
+func (api PoolAPI) GetAllocationById(ctx context.Context, allocationID persist.DBID) (*db.Allocation, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"allocationID": {allocationID, "required"},
@@ -343,7 +343,7 @@ func (api SplitAPI) GetAllocationById(ctx context.Context, allocationID persist.
 	return &allocation, nil
 }
 
-func (api SplitAPI) GetAllocationAggregationById(ctx context.Context, allocationAggregationID persist.DBID) (*db.AllocationAggregation, error) {
+func (api PoolAPI) GetAllocationAggregationById(ctx context.Context, allocationAggregationID persist.DBID) (*db.AllocationAggregation, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"allocationAggregationID": {allocationAggregationID, "required"},

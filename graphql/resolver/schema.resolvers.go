@@ -17,14 +17,14 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-// Split is the resolver for the split field.
-func (r *allocationResolver) Split(ctx context.Context, obj *model.Allocation) (*model.Split, error) {
-	panic(fmt.Errorf("not implemented: Split - split"))
+// Pool is the resolver for the pool field.
+func (r *allocationResolver) Pool(ctx context.Context, obj *model.Allocation) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
 }
 
-// Split is the resolver for the split field.
-func (r *allocationAggregationResolver) Split(ctx context.Context, obj *model.AllocationAggregation) (*model.Split, error) {
-	panic(fmt.Errorf("not implemented: Split - split"))
+// Pool is the resolver for the pool field.
+func (r *allocationAggregationResolver) Pool(ctx context.Context, obj *model.AllocationAggregation) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
 }
 
 // Token is the resolver for the token field.
@@ -217,64 +217,64 @@ func (r *mutationResolver) Logout(ctx context.Context, pushTokenToUnregister *st
 	return output, nil
 }
 
-// UpsertSplit is the resolver for the upsertSplit field.
-func (r *mutationResolver) UpsertSplit(ctx context.Context, input model.UpsertSplitInput) (model.UpsertSplitPayloadOrError, error) {
-	dbSplit, err := publicapi.For(ctx).Split.UpsertSplit(ctx, input)
+// UpsertPool is the resolver for the upsertPool field.
+func (r *mutationResolver) UpsertPool(ctx context.Context, input model.UpsertPoolInput) (model.UpsertPoolPayloadOrError, error) {
+	dbPool, err := publicapi.For(ctx).Pool.UpsertPool(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	payload := model.UpsertSplitPayload{
-		Split: splitToModel(ctx, dbSplit),
+	payload := model.UpsertPoolPayload{
+		Pool: poolToModel(ctx, dbPool),
 	}
 
 	return payload, nil
 }
 
-// PublishSplit is the resolver for the publishSplit field.
-func (r *mutationResolver) PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error) {
-	err := publicapi.For(ctx).Split.PublishSplit(ctx, input)
+// PublishPool is the resolver for the publishPool field.
+func (r *mutationResolver) PublishPool(ctx context.Context, input model.PublishPoolInput) (model.PublishPoolPayloadOrError, error) {
+	err := publicapi.For(ctx).Pool.PublishPool(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	split, err := resolveSplitBySplitID(ctx, input.SplitID)
+	pool, err := resolvePoolByPoolID(ctx, input.PoolID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.PublishSplitPayload{
-		Split: split,
+	return &model.PublishPoolPayload{
+		Pool: pool,
 	}, nil
 }
 
-// CreateSplit is the resolver for the createSplit field.
-func (r *mutationResolver) CreateSplit(ctx context.Context, input model.CreateSplitInput) (model.CreateSplitPayloadOrError, error) {
-	split, err := publicapi.For(ctx).Split.CreateSplit(ctx, input.Name, input.Description, input.Logo)
+// CreatePool is the resolver for the createPool field.
+func (r *mutationResolver) CreatePool(ctx context.Context, input model.CreatePoolInput) (model.CreatePoolPayloadOrError, error) {
+	pool, err := publicapi.For(ctx).Pool.CreatePool(ctx, input.Name, input.Description, input.Logo)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.CreateSplitPayload{
-		Split: splitToModel(ctx, split),
+	output := &model.CreatePoolPayload{
+		Pool: poolToModel(ctx, pool),
 	}
 
 	return output, nil
 }
 
-// UpdateSplitHidden is the resolver for the updateSplitHidden field.
-func (r *mutationResolver) UpdateSplitHidden(ctx context.Context, input model.UpdateSplitHiddenInput) (model.UpdateSplitHiddenPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateSplitHidden - updateSplitHidden"))
+// UpdatePoolHidden is the resolver for the updatePoolHidden field.
+func (r *mutationResolver) UpdatePoolHidden(ctx context.Context, input model.UpdatePoolHiddenInput) (model.UpdatePoolHiddenPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: UpdatePoolHidden - updatePoolHidden"))
 }
 
-// DeleteSplit is the resolver for the deleteSplit field.
-func (r *mutationResolver) DeleteSplit(ctx context.Context, splitID persist.DBID) (model.DeleteSplitPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: DeleteSplit - deleteSplit"))
+// DeletePool is the resolver for the deletePool field.
+func (r *mutationResolver) DeletePool(ctx context.Context, poolID persist.DBID) (model.DeletePoolPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: DeletePool - deletePool"))
 }
 
-// UpdateSplitOrder is the resolver for the updateSplitOrder field.
-func (r *mutationResolver) UpdateSplitOrder(ctx context.Context, input model.UpdateSplitOrderInput) (model.UpdateSplitOrderPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateSplitOrder - updateSplitOrder"))
+// UpdatePoolOrder is the resolver for the updatePoolOrder field.
+func (r *mutationResolver) UpdatePoolOrder(ctx context.Context, input model.UpdatePoolOrderInput) (model.UpdatePoolOrderPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: UpdatePoolOrder - updatePoolOrder"))
 }
 
 // ClearAllNotifications is the resolver for the clearAllNotifications field.
@@ -476,14 +476,29 @@ func (r *mutualsUserResolver) PrimaryWallet(ctx context.Context, obj *model.Mutu
 	return resolvePrimaryWalletByUserID(ctx, obj.HelperMutualsUserData.UserID)
 }
 
-// Splits is the resolver for the splits field.
-func (r *mutualsUserResolver) Splits(ctx context.Context, obj *model.MutualsUser) ([]*model.Split, error) {
-	panic(fmt.Errorf("not implemented: Splits - splits"))
+// Pools is the resolver for the pools field.
+func (r *mutualsUserResolver) Pools(ctx context.Context, obj *model.MutualsUser) ([]*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pools - pools"))
 }
 
-// SplitsByChain is the resolver for the splitsByChain field.
-func (r *mutualsUserResolver) SplitsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainSplits, error) {
-	panic(fmt.Errorf("not implemented: SplitsByChain - splitsByChain"))
+// PoolsByChain is the resolver for the poolsByChain field.
+func (r *mutualsUserResolver) PoolsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainPools, error) {
+	panic(fmt.Errorf("not implemented: PoolsByChain - poolsByChain"))
+}
+
+// AllocationAggregation is the resolver for the allocationAggregation field.
+func (r *poolResolver) AllocationAggregation(ctx context.Context, obj *model.Pool) ([]*model.AllocationAggregation, error) {
+	panic(fmt.Errorf("not implemented: AllocationAggregation - allocationAggregation"))
+}
+
+// Allocations is the resolver for the allocations field.
+func (r *poolResolver) Allocations(ctx context.Context, obj *model.Pool) ([]*model.Allocation, error) {
+	panic(fmt.Errorf("not implemented: Allocations - allocations"))
+}
+
+// Assets is the resolver for the assets field.
+func (r *poolResolver) Assets(ctx context.Context, obj *model.Pool, limit *int) ([]*model.Asset, error) {
+	panic(fmt.Errorf("not implemented: Assets - assets"))
 }
 
 // Node is the resolver for the node field.
@@ -511,26 +526,26 @@ func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.
 	return resolveMutualsUserByAddress(ctx, chainAddress)
 }
 
-// SplitByID is the resolver for the splitById field.
-func (r *queryResolver) SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error) {
-	split, err := resolveSplitBySplitID(ctx, id)
+// PoolByID is the resolver for the poolById field.
+func (r *queryResolver) PoolByID(ctx context.Context, id persist.DBID) (model.PoolByIDPayloadOrError, error) {
+	pool, err := resolvePoolByPoolID(ctx, id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return split, nil
+	return pool, nil
 }
 
-// ViewerSplitByID is the resolver for the viewerSplitById field.
-func (r *queryResolver) ViewerSplitByID(ctx context.Context, id persist.DBID) (model.ViewerSplitByIDPayloadOrError, error) {
-	split, err := resolveViewerSplitBySplitID(ctx, id)
+// ViewerPoolByID is the resolver for the viewerPoolById field.
+func (r *queryResolver) ViewerPoolByID(ctx context.Context, id persist.DBID) (model.ViewerPoolByIDPayloadOrError, error) {
+	pool, err := resolveViewerPoolByPoolID(ctx, id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return split, nil
+	return pool, nil
 }
 
 // SearchUsers is the resolver for the searchUsers field.
@@ -538,9 +553,9 @@ func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *in
 	panic(fmt.Errorf("not implemented: SearchUsers - searchUsers"))
 }
 
-// SearchSplits is the resolver for the searchSplits field.
-func (r *queryResolver) SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: SearchSplits - searchSplits"))
+// SearchPools is the resolver for the searchPools field.
+func (r *queryResolver) SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsPayloadOrError, error) {
+	panic(fmt.Errorf("not implemented: SearchPools - searchPools"))
 }
 
 // IsEmailAddressAvailable is the resolver for the isEmailAddressAvailable field.
@@ -565,21 +580,6 @@ func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, befo
 		Edges:    usersToEdges(ctx, users),
 		PageInfo: pageInfoToModel(ctx, pageInfo),
 	}, nil
-}
-
-// AllocationAggregation is the resolver for the allocationAggregation field.
-func (r *splitResolver) AllocationAggregation(ctx context.Context, obj *model.Split) ([]*model.AllocationAggregation, error) {
-	panic(fmt.Errorf("not implemented: AllocationAggregation - allocationAggregation"))
-}
-
-// Allocations is the resolver for the allocations field.
-func (r *splitResolver) Allocations(ctx context.Context, obj *model.Split) ([]*model.Allocation, error) {
-	panic(fmt.Errorf("not implemented: Allocations - allocations"))
-}
-
-// Assets is the resolver for the assets field.
-func (r *splitResolver) Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
 }
 
 // NewNotification is the resolver for the newNotification field.
@@ -612,20 +612,20 @@ func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.Mu
 	return resolveMutualsUserByUserID(ctx, userID)
 }
 
-// ViewerSplits is the resolver for the viewerSplits field.
-func (r *viewerResolver) ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error) {
+// ViewerPools is the resolver for the viewerPools field.
+func (r *viewerResolver) ViewerPools(ctx context.Context, obj *model.Viewer) ([]*model.ViewerPool, error) {
 	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 
-	splits, err := resolveSplitsByUserID(ctx, userID)
+	pools, err := resolvePoolsByUserID(ctx, userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	output := make([]*model.ViewerSplit, len(splits))
-	for i, split := range splits {
-		output[i] = &model.ViewerSplit{
-			Split: split,
+	output := make([]*model.ViewerPool, len(pools))
+	for i, pool := range pools {
+		output[i] = &model.ViewerPool{
+			Pool: pool,
 		}
 	}
 
@@ -652,9 +652,9 @@ func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer)
 	return resolveViewerExperiencesByUserID(ctx, obj.UserId)
 }
 
-// Splits is the resolver for the splits field.
-func (r *walletResolver) Splits(ctx context.Context, obj *model.Wallet) ([]*model.Split, error) {
-	panic(fmt.Errorf("not implemented: Splits - splits"))
+// Pools is the resolver for the pools field.
+func (r *walletResolver) Pools(ctx context.Context, obj *model.Wallet) ([]*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pools - pools"))
 }
 
 // Address is the resolver for the address field.
@@ -694,11 +694,11 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // MutualsUser returns generated.MutualsUserResolver implementation.
 func (r *Resolver) MutualsUser() generated.MutualsUserResolver { return &mutualsUserResolver{r} }
 
+// Pool returns generated.PoolResolver implementation.
+func (r *Resolver) Pool() generated.PoolResolver { return &poolResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
-// Split returns generated.SplitResolver implementation.
-func (r *Resolver) Split() generated.SplitResolver { return &splitResolver{r} }
 
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
@@ -727,8 +727,8 @@ type allocationAggregationResolver struct{ *Resolver }
 type assetResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type mutualsUserResolver struct{ *Resolver }
+type poolResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type splitResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type userEmailResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }

@@ -125,7 +125,7 @@ func New(queries *db.Queries, pub *pubsub.Client, taskClient *task.Client, lock 
 	// notifDispatcher.AddHandler(persist.ActionAdmiredToken, tokenGroupedHandler)
 
 	// viewed notifications are handled separately
-	notifDispatcher.AddHandler(persist.ActionViewedSplit, viewHandler)
+	notifDispatcher.AddHandler(persist.ActionViewedPool, viewHandler)
 
 	// announcements are handled separately
 	notifDispatcher.AddHandler(persist.ActionAnnouncement, announcementHandler)
@@ -450,7 +450,7 @@ func createPushMessage(ctx context.Context, notif db.Notification, queries *db.Q
 	}
 
 	message := task.PushNotificationMessage{
-		Title: "Split",
+		Title: "Pool",
 		Sound: true,
 		Badge: int(badgeCount),
 		Data: map[string]any{
@@ -511,11 +511,11 @@ func (u UserFacingNotificationData) String() string {
 func NotificationToUserFacingData(ctx context.Context, queries *db.Queries, n db.Notification) (UserFacingNotificationData, error) {
 
 	switch n.Action {
-	case persist.ActionViewedSplit:
+	case persist.ActionViewedPool:
 		if len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs) > 1 {
 			return UserFacingNotificationData{
 				Actor:  fmt.Sprintf("%d collectors", len(n.Data.AuthedViewerIDs)+len(n.Data.UnauthedViewerIDs)),
-				Action: "viewed your split",
+				Action: "viewed your pool",
 			}, nil
 		}
 		if len(n.Data.AuthedViewerIDs) == 1 {
@@ -525,13 +525,13 @@ func NotificationToUserFacingData(ctx context.Context, queries *db.Queries, n db
 			}
 			return UserFacingNotificationData{
 				Actor:  userActor.Username.String,
-				Action: "viewed your split",
+				Action: "viewed your pool",
 			}, nil
 		}
 		if len(n.Data.UnauthedViewerIDs) == 1 {
 			return UserFacingNotificationData{
 				Actor:  "Someone",
-				Action: "viewed your split",
+				Action: "viewed your pool",
 			}, nil
 		}
 
@@ -696,7 +696,7 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 	var amount = notif.Amount
 	resultData := mostRecentNotif.Data.Concat(notif.Data)
 	switch notif.Action {
-	case persist.ActionViewedSplit:
+	case persist.ActionViewedPool:
 		amount = int32(len(resultData.AuthedViewerIDs) + len(resultData.UnauthedViewerIDs))
 	case persist.ActionNewTokensReceived:
 		amount = int32(resultData.NewTokenQuantity.BigInt().Uint64())
@@ -746,14 +746,14 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 func addNotification(ctx context.Context, notif db.Notification, queries *db.Queries) (db.Notification, error) {
 	id := persist.GenerateID()
 	switch notif.Action {
-	case persist.ActionViewedSplit:
-		return queries.CreateViewSplitNotification(ctx, db.CreateViewSplitNotificationParams{
+	case persist.ActionViewedPool:
+		return queries.CreateViewPoolNotification(ctx, db.CreateViewPoolNotificationParams{
 			ID:       id,
 			OwnerID:  notif.OwnerID,
 			Action:   notif.Action,
 			Data:     notif.Data,
 			EventIds: notif.EventIds,
-			SplitID:  notif.SplitID,
+			PoolID:   notif.PoolID,
 		})
 		/*	case persist.ActionNewTokensReceived:
 			amount := notif.Data.NewTokenQuantity.BigInt().Int64()

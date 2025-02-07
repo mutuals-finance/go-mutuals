@@ -6,8 +6,8 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-func (*GetSplitByIdBatch) getNotFoundError(key persist.DBID) error {
-	return persist.ErrSplitNotFound{ID: key}
+func (*GetPoolByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrPoolNotFound{ID: key}
 }
 
 func (*GetAllocationByIdBatch) getNotFoundError(key persist.DBID) error {
@@ -18,8 +18,8 @@ func (*GetAllocationAggregationByIdBatch) getNotFoundError(key persist.DBID) err
 	return persist.ErrAllocationAggregationNotFound{ID: key}
 }
 
-func (*GetSplitByChainAddressBatch) getNotFoundError(key coredb.GetSplitByChainAddressBatchParams) error {
-	return persist.ErrSplitNotFoundByAddress{Address: key.Address}
+func (*GetPoolByChainAddressBatch) getNotFoundError(key coredb.GetPoolByChainAddressBatchParams) error {
+	return persist.ErrPoolNotFoundByAddress{Address: key.Address}
 }
 
 func (*GetNotificationByIDBatch) getNotFoundError(key persist.DBID) error {

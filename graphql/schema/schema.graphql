@@ -84,11 +84,11 @@ type MutualsUser implements Node @goEmbedHelper {
   roles: [Role] @goField(forceResolver: true)
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
-  # Returns all splits owned by this user. Useful for retrieving all tokens without any duplicates,
-  # as opposed to retrieving user -> wallets -> splits, which would contain duplicates for any token
+  # Returns all pools owned by this user. Useful for retrieving all tokens without any duplicates,
+  # as opposed to retrieving user -> wallets -> pools, which would contain duplicates for any token
   # that appears in more than one of the user's wallets.
-  splits: [Split] @goField(forceResolver: true)
-  splitsByChain(chain: Chain!): ChainSplits @goField(forceResolver: true)
+  pools: [Pool] @goField(forceResolver: true)
+  poolsByChain(chain: Chain!): ChainPools @goField(forceResolver: true)
   isAuthenticatedUser: Boolean
 }
 
@@ -98,7 +98,7 @@ type Wallet implements Node {
   chainAddress: ChainAddress
   chain: Chain
   walletType: WalletType
-  splits: [Split] @goField(forceResolver: true)
+  pools: [Pool] @goField(forceResolver: true)
 }
 
 type ChainAddress {
@@ -111,9 +111,9 @@ type ChainPubKey {
   chain: Chain
 }
 
-type ChainSplits {
+type ChainPools {
   chain: Chain
-  splits: [Split]
+  pools: [Pool]
 }
 
 input ChainAddressInput {
@@ -193,7 +193,7 @@ type AllocationAggregation implements Node {
   expression: String
   creationTime: Time
   lastUpdated: Time
-  split: Split @goField(forceResolver: true)
+  pool: Pool @goField(forceResolver: true)
 }
 
 type Allocation implements Node {
@@ -204,14 +204,14 @@ type Allocation implements Node {
   value: HexString
   creationTime: Time
   lastUpdated: Time
-  split: Split @goField(forceResolver: true)
+  pool: Pool @goField(forceResolver: true)
 }
 
-type Split implements Node {
+type Pool implements Node {
   id: ID!
   dbid: DBID!
   version: Int
-  status: SplitStatus!
+  status: PoolStatus!
   name: String
   description: String
   address: Address
@@ -225,8 +225,8 @@ type Split implements Node {
 
 # We have this extra type in case we need to stick authed data
 # in here one day.
-type ViewerSplit {
-  split: Split
+type ViewerPool {
+  pool: Pool
 }
 
 type NotificationEdge {
@@ -243,7 +243,7 @@ type NotificationsConnection @goEmbedHelper {
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: MutualsUser @goField(forceResolver: true)
-  viewerSplits: [ViewerSplit] @goField(forceResolver: true)
+  viewerPools: [ViewerPool] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
   """
@@ -259,11 +259,11 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 }
 
 type NotificationSettings {
-  someoneViewedYourSplit: Boolean
+  someoneViewedYourPool: Boolean
 }
 
 input NotificationSettingsInput {
-  someoneViewedYourSplit: Boolean
+  someoneViewedYourPool: Boolean
 }
 
 enum EmailVerificationStatus {
@@ -353,12 +353,12 @@ enum Role {
   EARLY_ACCESS
 }
 
-type ErrSplitNotFound implements Error {
+type ErrPoolNotFound implements Error {
   message: String!
 }
 
-union SplitByIdPayloadOrError = Split | ErrSplitNotFound
-union ViewerSplitByIdPayloadOrError = ViewerSplit | ErrSplitNotFound
+union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
+union ViewerPoolByIdPayloadOrError = ViewerPool | ErrPoolNotFound
 
 enum ReportWindow {
   LAST_5_DAYS
@@ -376,15 +376,15 @@ type SearchUsersPayload {
 
 union SearchUsersPayloadOrError = SearchUsersPayload | ErrInvalidInput
 
-type SplitSearchResult {
-  split: Split
+type PoolSearchResult {
+  pool: Pool
 }
 
-type SearchSplitsPayload {
-  results: [SplitSearchResult!]
+type SearchPoolsPayload {
+  results: [PoolSearchResult!]
 }
 
-union SearchSplitsPayloadOrError = SearchSplitsPayload | ErrInvalidInput
+union SearchPoolsPayloadOrError = SearchPoolsPayload | ErrInvalidInput
 
 type Query {
   node(id: ID!): Node
@@ -392,14 +392,14 @@ type Query {
   userByUsername(username: String!): UserByUsernameOrError
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-  splitById(id: DBID!): SplitByIdPayloadOrError
-  viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
+  poolById(id: DBID!): PoolByIdPayloadOrError
+  viewerPoolById(id: DBID!): ViewerPoolByIdPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
   bioWeight defaults to 0.2, meaning that a search result matching a username is considered
   twice as relevant as a search result matching another entry (currently nothing provided.
-  See searchSplits(...) for more).
+  See searchPools(...) for more).
   """
   searchUsers(
     query: String!
@@ -407,17 +407,17 @@ type Query {
     usernameWeight: Float
   ): SearchUsersPayloadOrError
   """
-  Search for splits with optional weighting. Weights are floats in the [0.0. 1.0] range
+  Search for pools with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. nameWeight defaults to 0.4 and
-  descriptionWeight defaults to 0.2, meaning that a search result matching a split name is
-  considered twice as relevant as a search result matching a split description.
+  descriptionWeight defaults to 0.2, meaning that a search result matching a pool name is
+  considered twice as relevant as a search result matching a pool description.
   """
-  searchSplits(
+  searchPools(
     query: String!
     limit: Int
     nameWeight: Float
     descriptionWeight: Float
-  ): SearchSplitsPayloadOrError
+  ): SearchPoolsPayloadOrError
 
   isEmailAddressAvailable(emailAddress: Email!): Boolean
 
@@ -764,95 +764,95 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-input SplitAllocationInput {
+input PoolAllocationInput {
   id: DBID
   recipientAddress: Address
   calculationType: [CalculationType!]!
   recipientType: [RecipientType!]!
   value: HexString!
-  children: [SplitAllocationInput!]
+  children: [PoolAllocationInput!]
 }
 
-enum SplitStatus {
+enum PoolStatus {
   Draft
   Active
   Paused
 }
 
-input UpsertSplitInput {
-  splitId: DBID
+input UpsertPoolInput {
+  poolId: DBID
   name: String
   description: String
-  allocations: [SplitAllocationInput!]
+  allocations: [PoolAllocationInput!]
 }
 
-input SplitPositionInput {
-  splitId: DBID!
+input PoolPositionInput {
+  poolId: DBID!
   position: String!
 }
 
-input UpdateSplitOrderInput {
-  positions: [SplitPositionInput!]!
+input UpdatePoolOrderInput {
+  positions: [PoolPositionInput!]!
 }
 
-input UpdateSplitHiddenInput {
+input UpdatePoolHiddenInput {
   id: DBID!
   hidden: Boolean!
 }
 
-input UpdateSplitInfoInput {
+input UpdatePoolInfoInput {
   id: DBID!
   name: String
   description: String
 }
 
-input CreateSplitInput {
+input CreatePoolInput {
   name: String
   description: String
   logo: String
 }
 
-type CreateSplitPayload {
-  split: Split
+type CreatePoolPayload {
+  pool: Pool
 }
 
-union CreateSplitPayloadOrError = CreateSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union CreatePoolPayloadOrError = CreatePoolPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpsertSplitPayload {
-  split: Split
+type UpsertPoolPayload {
+  pool: Pool
 }
 
-union UpsertSplitPayloadOrError =
-  UpsertSplitPayload
+union UpsertPoolPayloadOrError =
+  UpsertPoolPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type UpdateSplitHiddenPayload {
-  split: Split
+type UpdatePoolHiddenPayload {
+  pool: Pool
 }
 
-union UpdateSplitHiddenPayloadOrError =
-    UpdateSplitHiddenPayload
+union UpdatePoolHiddenPayloadOrError =
+    UpdatePoolHiddenPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type DeleteSplitPayload {
+type DeletePoolPayload {
   deletedId: DeletedNode
 }
 
-union DeleteSplitPayloadOrError = DeleteSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union DeletePoolPayloadOrError = DeletePoolPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateSplitOrderPayload {
+type UpdatePoolOrderPayload {
   viewer: Viewer
 }
 
-union UpdateSplitOrderPayloadOrError =
-    UpdateSplitOrderPayload
+union UpdatePoolOrderPayloadOrError =
+    UpdatePoolOrderPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-input UpdateSplitInput {
-  splitId: DBID!
+input UpdatePoolInput {
+  poolId: DBID!
 
   name: String
   description: String
@@ -863,23 +863,23 @@ input UpdateSplitInput {
   editId: String!
 }
 
-type UpdateSplitPayload {
-  split: Split
+type UpdatePoolPayload {
+  pool: Pool
 }
 
-union UpdateSplitPayloadOrError = UpdateSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union UpdatePoolPayloadOrError = UpdatePoolPayload | ErrInvalidInput | ErrNotAuthorized
 
-input PublishSplitInput {
-  splitId: DBID!
+input PublishPoolInput {
+  poolId: DBID!
   editId: String!
   caption: String
 }
 
-type PublishSplitPayload {
-  split: Split
+type PublishPoolPayload {
+  pool: Pool
 }
 
-union PublishSplitPayloadOrError = PublishSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union PublishPoolPayloadOrError = PublishPoolPayload | ErrInvalidInput | ErrNotAuthorized
 
 type UpdatePrimaryWalletPayload {
   viewer: Viewer
@@ -945,14 +945,14 @@ type Mutation {
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout(pushTokenToUnregister: String): LogoutPayload
 
-  upsertSplit(input: UpsertSplitInput!): UpsertSplitPayloadOrError @authRequired
-  publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired
+  upsertPool(input: UpsertPoolInput!): UpsertPoolPayloadOrError @authRequired
+  publishPool(input: PublishPoolInput!): PublishPoolPayloadOrError @authRequired
 
-  createSplit(input: CreateSplitInput!): CreateSplitPayloadOrError @authRequired
-  updateSplitHidden(input: UpdateSplitHiddenInput!): UpdateSplitHiddenPayloadOrError
+  createPool(input: CreatePoolInput!): CreatePoolPayloadOrError @authRequired
+  updatePoolHidden(input: UpdatePoolHiddenInput!): UpdatePoolHiddenPayloadOrError
     @authRequired
-  deleteSplit(splitId: DBID!): DeleteSplitPayloadOrError @authRequired
-  updateSplitOrder(input: UpdateSplitOrderInput!): UpdateSplitOrderPayloadOrError
+  deletePool(poolId: DBID!): DeletePoolPayloadOrError @authRequired
+  updatePoolOrder(input: UpdatePoolOrderInput!): UpdatePoolOrderPayloadOrError
     @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired

@@ -19,7 +19,7 @@ alter table users drop column if exists fts_username;
 
 alter table wallets drop column if exists fts_address;
 
-alter table splits drop column if exists fts_name;
-alter table splits drop column if exists fts_description_english;
+alter table pools drop column if exists fts_name;
+alter table pools drop column if exists fts_description_english;
 
 

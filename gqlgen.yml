@@ -82,9 +82,9 @@ models:
   InteractionType:
     model:
       - github.com/mutuals/go-mutuals/service/persist.InteractionType
-  SplitStatusType:
+  PoolStatusType:
     model:
-      - github.com/mutuals/go-mutuals/service/persist.SplitStatus
+      - github.com/mutuals/go-mutuals/service/persist.PoolStatus
   CalculationType:
     model:
       - github.com/mutuals/go-mutuals/service/persist.CalculationType

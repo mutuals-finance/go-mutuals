@@ -88,20 +88,20 @@ func (v *ChainPubKeyInput) GetPubKey() string { return v.PubKey }
 // GetChain returns ChainPubKeyInput.Chain, and is useful for accessing the field via an interface.
 func (v *ChainPubKeyInput) GetChain() Chain { return v.Chain }
 
-type CreateSplitInput struct {
+type CreatePoolInput struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Logo        *string `json:"logo"`
 }
 
-// GetName returns CreateSplitInput.Name, and is useful for accessing the field via an interface.
-func (v *CreateSplitInput) GetName() *string { return v.Name }
+// GetName returns CreatePoolInput.Name, and is useful for accessing the field via an interface.
+func (v *CreatePoolInput) GetName() *string { return v.Name }
 
-// GetDescription returns CreateSplitInput.Description, and is useful for accessing the field via an interface.
-func (v *CreateSplitInput) GetDescription() *string { return v.Description }
+// GetDescription returns CreatePoolInput.Description, and is useful for accessing the field via an interface.
+func (v *CreatePoolInput) GetDescription() *string { return v.Description }
 
-// GetLogo returns CreateSplitInput.Logo, and is useful for accessing the field via an interface.
-func (v *CreateSplitInput) GetLogo() *string { return v.Logo }
+// GetLogo returns CreatePoolInput.Logo, and is useful for accessing the field via an interface.
+func (v *CreatePoolInput) GetLogo() *string { return v.Logo }
 
 type CreateUserInput struct {
 	Username *string `json:"username"`
@@ -181,6 +181,33 @@ type OneTimeLoginTokenAuth struct {
 // GetToken returns OneTimeLoginTokenAuth.Token, and is useful for accessing the field via an interface.
 func (v *OneTimeLoginTokenAuth) GetToken() string { return v.Token }
 
+type PoolAllocationInput struct {
+	Id               *persist.DBID         `json:"id"`
+	RecipientAddress *persist.Address      `json:"recipientAddress"`
+	CalculationType  []CalculationType     `json:"calculationType"`
+	RecipientType    []RecipientType       `json:"recipientType"`
+	Value            persist.HexString     `json:"value"`
+	Children         []PoolAllocationInput `json:"children"`
+}
+
+// GetId returns PoolAllocationInput.Id, and is useful for accessing the field via an interface.
+func (v *PoolAllocationInput) GetId() *persist.DBID { return v.Id }
+
+// GetRecipientAddress returns PoolAllocationInput.RecipientAddress, and is useful for accessing the field via an interface.
+func (v *PoolAllocationInput) GetRecipientAddress() *persist.Address { return v.RecipientAddress }
+
+// GetCalculationType returns PoolAllocationInput.CalculationType, and is useful for accessing the field via an interface.
+func (v *PoolAllocationInput) GetCalculationType() []CalculationType { return v.CalculationType }
+
+// GetRecipientType returns PoolAllocationInput.RecipientType, and is useful for accessing the field via an interface.
+func (v *PoolAllocationInput) GetRecipientType() []RecipientType { return v.RecipientType }
+
+// GetValue returns PoolAllocationInput.Value, and is useful for accessing the field via an interface.
+func (v *PoolAllocationInput) GetValue() persist.HexString { return v.Value }
+
+// GetChildren returns PoolAllocationInput.Children, and is useful for accessing the field via an interface.
+func (v *PoolAllocationInput) GetChildren() []PoolAllocationInput { return v.Children }
+
 type PrivyAuth struct {
 	Token string `json:"token"`
 }
@@ -188,20 +215,20 @@ type PrivyAuth struct {
 // GetToken returns PrivyAuth.Token, and is useful for accessing the field via an interface.
 func (v *PrivyAuth) GetToken() string { return v.Token }
 
-type PublishSplitInput struct {
-	SplitId persist.DBID `json:"splitId"`
+type PublishPoolInput struct {
+	PoolId  persist.DBID `json:"poolId"`
 	EditId  string       `json:"editId"`
 	Caption *string      `json:"caption"`
 }
 
-// GetSplitId returns PublishSplitInput.SplitId, and is useful for accessing the field via an interface.
-func (v *PublishSplitInput) GetSplitId() persist.DBID { return v.SplitId }
+// GetPoolId returns PublishPoolInput.PoolId, and is useful for accessing the field via an interface.
+func (v *PublishPoolInput) GetPoolId() persist.DBID { return v.PoolId }
 
-// GetEditId returns PublishSplitInput.EditId, and is useful for accessing the field via an interface.
-func (v *PublishSplitInput) GetEditId() string { return v.EditId }
+// GetEditId returns PublishPoolInput.EditId, and is useful for accessing the field via an interface.
+func (v *PublishPoolInput) GetEditId() string { return v.EditId }
 
-// GetCaption returns PublishSplitInput.Caption, and is useful for accessing the field via an interface.
-func (v *PublishSplitInput) GetCaption() *string { return v.Caption }
+// GetCaption returns PublishPoolInput.Caption, and is useful for accessing the field via an interface.
+func (v *PublishPoolInput) GetCaption() *string { return v.Caption }
 
 type RecipientType string
 
@@ -219,33 +246,6 @@ var AllRecipientType = []RecipientType{
 	RecipientTypeTimedgroup,
 }
 
-type SplitAllocationInput struct {
-	Id               *persist.DBID          `json:"id"`
-	RecipientAddress *persist.Address       `json:"recipientAddress"`
-	CalculationType  []CalculationType      `json:"calculationType"`
-	RecipientType    []RecipientType        `json:"recipientType"`
-	Value            persist.HexString      `json:"value"`
-	Children         []SplitAllocationInput `json:"children"`
-}
-
-// GetId returns SplitAllocationInput.Id, and is useful for accessing the field via an interface.
-func (v *SplitAllocationInput) GetId() *persist.DBID { return v.Id }
-
-// GetRecipientAddress returns SplitAllocationInput.RecipientAddress, and is useful for accessing the field via an interface.
-func (v *SplitAllocationInput) GetRecipientAddress() *persist.Address { return v.RecipientAddress }
-
-// GetCalculationType returns SplitAllocationInput.CalculationType, and is useful for accessing the field via an interface.
-func (v *SplitAllocationInput) GetCalculationType() []CalculationType { return v.CalculationType }
-
-// GetRecipientType returns SplitAllocationInput.RecipientType, and is useful for accessing the field via an interface.
-func (v *SplitAllocationInput) GetRecipientType() []RecipientType { return v.RecipientType }
-
-// GetValue returns SplitAllocationInput.Value, and is useful for accessing the field via an interface.
-func (v *SplitAllocationInput) GetValue() persist.HexString { return v.Value }
-
-// GetChildren returns SplitAllocationInput.Children, and is useful for accessing the field via an interface.
-func (v *SplitAllocationInput) GetChildren() []SplitAllocationInput { return v.Children }
-
 type UpdateUserExperienceInput struct {
 	ExperienceType UserExperienceType `json:"experienceType"`
 	Experienced    bool               `json:"experienced"`
@@ -257,24 +257,24 @@ func (v *UpdateUserExperienceInput) GetExperienceType() UserExperienceType { ret
 // GetExperienced returns UpdateUserExperienceInput.Experienced, and is useful for accessing the field via an interface.
 func (v *UpdateUserExperienceInput) GetExperienced() bool { return v.Experienced }
 
-type UpsertSplitInput struct {
-	SplitId     *persist.DBID          `json:"splitId"`
-	Name        *string                `json:"name"`
-	Description *string                `json:"description"`
-	Allocations []SplitAllocationInput `json:"allocations"`
+type UpsertPoolInput struct {
+	PoolId      *persist.DBID         `json:"poolId"`
+	Name        *string               `json:"name"`
+	Description *string               `json:"description"`
+	Allocations []PoolAllocationInput `json:"allocations"`
 }
 
-// GetSplitId returns UpsertSplitInput.SplitId, and is useful for accessing the field via an interface.
-func (v *UpsertSplitInput) GetSplitId() *persist.DBID { return v.SplitId }
+// GetPoolId returns UpsertPoolInput.PoolId, and is useful for accessing the field via an interface.
+func (v *UpsertPoolInput) GetPoolId() *persist.DBID { return v.PoolId }
 
-// GetName returns UpsertSplitInput.Name, and is useful for accessing the field via an interface.
-func (v *UpsertSplitInput) GetName() *string { return v.Name }
+// GetName returns UpsertPoolInput.Name, and is useful for accessing the field via an interface.
+func (v *UpsertPoolInput) GetName() *string { return v.Name }
 
-// GetDescription returns UpsertSplitInput.Description, and is useful for accessing the field via an interface.
-func (v *UpsertSplitInput) GetDescription() *string { return v.Description }
+// GetDescription returns UpsertPoolInput.Description, and is useful for accessing the field via an interface.
+func (v *UpsertPoolInput) GetDescription() *string { return v.Description }
 
-// GetAllocations returns UpsertSplitInput.Allocations, and is useful for accessing the field via an interface.
-func (v *UpsertSplitInput) GetAllocations() []SplitAllocationInput { return v.Allocations }
+// GetAllocations returns UpsertPoolInput.Allocations, and is useful for accessing the field via an interface.
+func (v *UpsertPoolInput) GetAllocations() []PoolAllocationInput { return v.Allocations }
 
 type UserExperienceType string
 
@@ -304,13 +304,13 @@ func (v *__addUserWalletMutationInput) GetChainAddress() ChainAddressInput { ret
 // GetAuthMechanism returns __addUserWalletMutationInput.AuthMechanism, and is useful for accessing the field via an interface.
 func (v *__addUserWalletMutationInput) GetAuthMechanism() AuthMechanism { return v.AuthMechanism }
 
-// __createSplitMutationInput is used internally by genqlient
-type __createSplitMutationInput struct {
-	Input CreateSplitInput `json:"input"`
+// __createPoolMutationInput is used internally by genqlient
+type __createPoolMutationInput struct {
+	Input CreatePoolInput `json:"input"`
 }
 
-// GetInput returns __createSplitMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__createSplitMutationInput) GetInput() CreateSplitInput { return v.Input }
+// GetInput returns __createPoolMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__createPoolMutationInput) GetInput() CreatePoolInput { return v.Input }
 
 // __createUserMutationInput is used internally by genqlient
 type __createUserMutationInput struct {
@@ -332,13 +332,13 @@ type __loginMutationInput struct {
 // GetAuthMechanism returns __loginMutationInput.AuthMechanism, and is useful for accessing the field via an interface.
 func (v *__loginMutationInput) GetAuthMechanism() AuthMechanism { return v.AuthMechanism }
 
-// __publishSplitMutationInput is used internally by genqlient
-type __publishSplitMutationInput struct {
-	Input PublishSplitInput `json:"input"`
+// __publishPoolMutationInput is used internally by genqlient
+type __publishPoolMutationInput struct {
+	Input PublishPoolInput `json:"input"`
 }
 
-// GetInput returns __publishSplitMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__publishSplitMutationInput) GetInput() PublishSplitInput { return v.Input }
+// GetInput returns __publishPoolMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__publishPoolMutationInput) GetInput() PublishPoolInput { return v.Input }
 
 // __registerPushTokenMutationInput is used internally by genqlient
 type __registerPushTokenMutationInput struct {
@@ -364,13 +364,13 @@ type __updateUserExperienceInput struct {
 // GetInput returns __updateUserExperienceInput.Input, and is useful for accessing the field via an interface.
 func (v *__updateUserExperienceInput) GetInput() UpdateUserExperienceInput { return v.Input }
 
-// __upsertSplitMutationInput is used internally by genqlient
-type __upsertSplitMutationInput struct {
-	Input UpsertSplitInput `json:"input"`
+// __upsertPoolMutationInput is used internally by genqlient
+type __upsertPoolMutationInput struct {
+	Input UpsertPoolInput `json:"input"`
 }
 
-// GetInput returns __upsertSplitMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__upsertSplitMutationInput) GetInput() UpsertSplitInput { return v.Input }
+// GetInput returns __upsertPoolMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__upsertPoolMutationInput) GetInput() UpsertPoolInput { return v.Input }
 
 // __userByAddressQueryInput is used internally by genqlient
 type __userByAddressQueryInput struct {
@@ -711,40 +711,40 @@ func (v *addUserWalletMutationResponse) __premarshalJSON() (*__premarshaladdUser
 	return &retval, nil
 }
 
-// createSplitMutationCreateSplitCreateSplitPayload includes the requested fields of the GraphQL type CreateSplitPayload.
-type createSplitMutationCreateSplitCreateSplitPayload struct {
-	Typename *string                                                `json:"__typename"`
-	Split    *createSplitMutationCreateSplitCreateSplitPayloadSplit `json:"split"`
+// createPoolMutationCreatePoolCreatePoolPayload includes the requested fields of the GraphQL type CreatePoolPayload.
+type createPoolMutationCreatePoolCreatePoolPayload struct {
+	Typename *string                                            `json:"__typename"`
+	Pool     *createPoolMutationCreatePoolCreatePoolPayloadPool `json:"pool"`
 }
 
-// GetTypename returns createSplitMutationCreateSplitCreateSplitPayload.Typename, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitCreateSplitPayload) GetTypename() *string { return v.Typename }
+// GetTypename returns createPoolMutationCreatePoolCreatePoolPayload.Typename, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolCreatePoolPayload) GetTypename() *string { return v.Typename }
 
-// GetSplit returns createSplitMutationCreateSplitCreateSplitPayload.Split, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitCreateSplitPayload) GetSplit() *createSplitMutationCreateSplitCreateSplitPayloadSplit {
-	return v.Split
+// GetPool returns createPoolMutationCreatePoolCreatePoolPayload.Pool, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolCreatePoolPayload) GetPool() *createPoolMutationCreatePoolCreatePoolPayloadPool {
+	return v.Pool
 }
 
-// createSplitMutationCreateSplitCreateSplitPayloadOrError includes the requested fields of the GraphQL interface CreateSplitPayloadOrError.
+// createPoolMutationCreatePoolCreatePoolPayloadOrError includes the requested fields of the GraphQL interface CreatePoolPayloadOrError.
 //
-// createSplitMutationCreateSplitCreateSplitPayloadOrError is implemented by the following types:
-// createSplitMutationCreateSplitCreateSplitPayload
-// createSplitMutationCreateSplitErrInvalidInput
-// createSplitMutationCreateSplitErrNotAuthorized
-type createSplitMutationCreateSplitCreateSplitPayloadOrError interface {
-	implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError()
+// createPoolMutationCreatePoolCreatePoolPayloadOrError is implemented by the following types:
+// createPoolMutationCreatePoolCreatePoolPayload
+// createPoolMutationCreatePoolErrInvalidInput
+// createPoolMutationCreatePoolErrNotAuthorized
+type createPoolMutationCreatePoolCreatePoolPayloadOrError interface {
+	implementsGraphQLInterfacecreatePoolMutationCreatePoolCreatePoolPayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *createSplitMutationCreateSplitCreateSplitPayload) implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError() {
+func (v *createPoolMutationCreatePoolCreatePoolPayload) implementsGraphQLInterfacecreatePoolMutationCreatePoolCreatePoolPayloadOrError() {
 }
-func (v *createSplitMutationCreateSplitErrInvalidInput) implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError() {
+func (v *createPoolMutationCreatePoolErrInvalidInput) implementsGraphQLInterfacecreatePoolMutationCreatePoolCreatePoolPayloadOrError() {
 }
-func (v *createSplitMutationCreateSplitErrNotAuthorized) implementsGraphQLInterfacecreateSplitMutationCreateSplitCreateSplitPayloadOrError() {
+func (v *createPoolMutationCreatePoolErrNotAuthorized) implementsGraphQLInterfacecreatePoolMutationCreatePoolCreatePoolPayloadOrError() {
 }
 
-func __unmarshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(b []byte, v *createSplitMutationCreateSplitCreateSplitPayloadOrError) error {
+func __unmarshalcreatePoolMutationCreatePoolCreatePoolPayloadOrError(b []byte, v *createPoolMutationCreatePoolCreatePoolPayloadOrError) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -758,124 +758,124 @@ func __unmarshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(b []byte
 	}
 
 	switch tn.TypeName {
-	case "CreateSplitPayload":
-		*v = new(createSplitMutationCreateSplitCreateSplitPayload)
+	case "CreatePoolPayload":
+		*v = new(createPoolMutationCreatePoolCreatePoolPayload)
 		return json.Unmarshal(b, *v)
 	case "ErrInvalidInput":
-		*v = new(createSplitMutationCreateSplitErrInvalidInput)
+		*v = new(createPoolMutationCreatePoolErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(createSplitMutationCreateSplitErrNotAuthorized)
+		*v = new(createPoolMutationCreatePoolErrNotAuthorized)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing CreateSplitPayloadOrError.__typename")
+			"response was missing CreatePoolPayloadOrError.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for createSplitMutationCreateSplitCreateSplitPayloadOrError: "%v"`, tn.TypeName)
+			`unexpected concrete type for createPoolMutationCreatePoolCreatePoolPayloadOrError: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(v *createSplitMutationCreateSplitCreateSplitPayloadOrError) ([]byte, error) {
+func __marshalcreatePoolMutationCreatePoolCreatePoolPayloadOrError(v *createPoolMutationCreatePoolCreatePoolPayloadOrError) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *createSplitMutationCreateSplitCreateSplitPayload:
-		typename = "CreateSplitPayload"
+	case *createPoolMutationCreatePoolCreatePoolPayload:
+		typename = "CreatePoolPayload"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*createSplitMutationCreateSplitCreateSplitPayload
+			*createPoolMutationCreatePoolCreatePoolPayload
 		}{typename, v}
 		return json.Marshal(result)
-	case *createSplitMutationCreateSplitErrInvalidInput:
+	case *createPoolMutationCreatePoolErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*createSplitMutationCreateSplitErrInvalidInput
+			*createPoolMutationCreatePoolErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *createSplitMutationCreateSplitErrNotAuthorized:
+	case *createPoolMutationCreatePoolErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*createSplitMutationCreateSplitErrNotAuthorized
+			*createPoolMutationCreatePoolErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for createSplitMutationCreateSplitCreateSplitPayloadOrError: "%T"`, v)
+			`unexpected concrete type for createPoolMutationCreatePoolCreatePoolPayloadOrError: "%T"`, v)
 	}
 }
 
-// createSplitMutationCreateSplitCreateSplitPayloadSplit includes the requested fields of the GraphQL type Split.
-type createSplitMutationCreateSplitCreateSplitPayloadSplit struct {
+// createPoolMutationCreatePoolCreatePoolPayloadPool includes the requested fields of the GraphQL type Pool.
+type createPoolMutationCreatePoolCreatePoolPayloadPool struct {
 	Dbid        persist.DBID `json:"dbid"`
 	Name        *string      `json:"name"`
 	Description *string      `json:"description"`
 }
 
-// GetDbid returns createSplitMutationCreateSplitCreateSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitCreateSplitPayloadSplit) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns createPoolMutationCreatePoolCreatePoolPayloadPool.Dbid, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolCreatePoolPayloadPool) GetDbid() persist.DBID { return v.Dbid }
 
-// GetName returns createSplitMutationCreateSplitCreateSplitPayloadSplit.Name, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitCreateSplitPayloadSplit) GetName() *string { return v.Name }
+// GetName returns createPoolMutationCreatePoolCreatePoolPayloadPool.Name, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolCreatePoolPayloadPool) GetName() *string { return v.Name }
 
-// GetDescription returns createSplitMutationCreateSplitCreateSplitPayloadSplit.Description, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitCreateSplitPayloadSplit) GetDescription() *string {
+// GetDescription returns createPoolMutationCreatePoolCreatePoolPayloadPool.Description, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolCreatePoolPayloadPool) GetDescription() *string {
 	return v.Description
 }
 
-// createSplitMutationCreateSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type createSplitMutationCreateSplitErrInvalidInput struct {
+// createPoolMutationCreatePoolErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type createPoolMutationCreatePoolErrInvalidInput struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns createSplitMutationCreateSplitErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitErrInvalidInput) GetTypename() *string { return v.Typename }
+// GetTypename returns createPoolMutationCreatePoolErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// GetMessage returns createSplitMutationCreateSplitErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitErrInvalidInput) GetMessage() string { return v.Message }
+// GetMessage returns createPoolMutationCreatePoolErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolErrInvalidInput) GetMessage() string { return v.Message }
 
-// createSplitMutationCreateSplitErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type createSplitMutationCreateSplitErrNotAuthorized struct {
+// createPoolMutationCreatePoolErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type createPoolMutationCreatePoolErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns createSplitMutationCreateSplitErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitErrNotAuthorized) GetTypename() *string { return v.Typename }
+// GetTypename returns createPoolMutationCreatePoolErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolErrNotAuthorized) GetTypename() *string { return v.Typename }
 
-// GetMessage returns createSplitMutationCreateSplitErrNotAuthorized.Message, and is useful for accessing the field via an interface.
-func (v *createSplitMutationCreateSplitErrNotAuthorized) GetMessage() string { return v.Message }
+// GetMessage returns createPoolMutationCreatePoolErrNotAuthorized.Message, and is useful for accessing the field via an interface.
+func (v *createPoolMutationCreatePoolErrNotAuthorized) GetMessage() string { return v.Message }
 
-// createSplitMutationResponse is returned by createSplitMutation on success.
-type createSplitMutationResponse struct {
-	CreateSplit *createSplitMutationCreateSplitCreateSplitPayloadOrError `json:"-"`
+// createPoolMutationResponse is returned by createPoolMutation on success.
+type createPoolMutationResponse struct {
+	CreatePool *createPoolMutationCreatePoolCreatePoolPayloadOrError `json:"-"`
 }
 
-// GetCreateSplit returns createSplitMutationResponse.CreateSplit, and is useful for accessing the field via an interface.
-func (v *createSplitMutationResponse) GetCreateSplit() *createSplitMutationCreateSplitCreateSplitPayloadOrError {
-	return v.CreateSplit
+// GetCreatePool returns createPoolMutationResponse.CreatePool, and is useful for accessing the field via an interface.
+func (v *createPoolMutationResponse) GetCreatePool() *createPoolMutationCreatePoolCreatePoolPayloadOrError {
+	return v.CreatePool
 }
 
-func (v *createSplitMutationResponse) UnmarshalJSON(b []byte) error {
+func (v *createPoolMutationResponse) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*createSplitMutationResponse
-		CreateSplit json.RawMessage `json:"createSplit"`
+		*createPoolMutationResponse
+		CreatePool json.RawMessage `json:"createPool"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.createSplitMutationResponse = v
+	firstPass.createPoolMutationResponse = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -883,26 +883,26 @@ func (v *createSplitMutationResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.CreateSplit
-		src := firstPass.CreateSplit
+		dst := &v.CreatePool
+		src := firstPass.CreatePool
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(createSplitMutationCreateSplitCreateSplitPayloadOrError)
-			err = __unmarshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(
+			*dst = new(createPoolMutationCreatePoolCreatePoolPayloadOrError)
+			err = __unmarshalcreatePoolMutationCreatePoolCreatePoolPayloadOrError(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal createSplitMutationResponse.CreateSplit: %w", err)
+					"unable to unmarshal createPoolMutationResponse.CreatePool: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalcreateSplitMutationResponse struct {
-	CreateSplit json.RawMessage `json:"createSplit"`
+type __premarshalcreatePoolMutationResponse struct {
+	CreatePool json.RawMessage `json:"createPool"`
 }
 
-func (v *createSplitMutationResponse) MarshalJSON() ([]byte, error) {
+func (v *createPoolMutationResponse) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -910,20 +910,20 @@ func (v *createSplitMutationResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(premarshaled)
 }
 
-func (v *createSplitMutationResponse) __premarshalJSON() (*__premarshalcreateSplitMutationResponse, error) {
-	var retval __premarshalcreateSplitMutationResponse
+func (v *createPoolMutationResponse) __premarshalJSON() (*__premarshalcreatePoolMutationResponse, error) {
+	var retval __premarshalcreatePoolMutationResponse
 
 	{
 
-		dst := &retval.CreateSplit
-		src := v.CreateSplit
+		dst := &retval.CreatePool
+		src := v.CreatePool
 		if src != nil {
 			var err error
-			*dst, err = __marshalcreateSplitMutationCreateSplitCreateSplitPayloadOrError(
+			*dst, err = __marshalcreatePoolMutationCreatePoolCreatePoolPayloadOrError(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal createSplitMutationResponse.CreateSplit: %w", err)
+					"unable to marshal createPoolMutationResponse.CreatePool: %w", err)
 			}
 		}
 	}
@@ -1085,9 +1085,9 @@ func (v *createUserMutationCreateUserCreateUserPayloadViewer) GetUser() *createU
 
 // createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser includes the requested fields of the GraphQL type MutualsUser.
 type createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser struct {
-	Username *string                                                                          `json:"username"`
-	Dbid     persist.DBID                                                                     `json:"dbid"`
-	Splits   []*createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit `json:"splits"`
+	Username *string                                                                        `json:"username"`
+	Dbid     persist.DBID                                                                   `json:"dbid"`
+	Pools    []*createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserPoolsPool `json:"pools"`
 }
 
 // GetUsername returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser.Username, and is useful for accessing the field via an interface.
@@ -1100,18 +1100,18 @@ func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser) Get
 	return v.Dbid
 }
 
-// GetSplits returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser.Splits, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser) GetSplits() []*createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit {
-	return v.Splits
+// GetPools returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser.Pools, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser) GetPools() []*createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserPoolsPool {
+	return v.Pools
 }
 
-// createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit includes the requested fields of the GraphQL type Split.
-type createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit struct {
+// createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserPoolsPool includes the requested fields of the GraphQL type Pool.
+type createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserPoolsPool struct {
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit.Dbid, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit) GetDbid() persist.DBID {
+// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserPoolsPool.Dbid, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserPoolsPool) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
@@ -1890,66 +1890,64 @@ func __marshalnotificationsForViewerQueryViewerViewerOrError(v *notificationsFor
 	}
 }
 
-// publishSplitMutationPublishSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type publishSplitMutationPublishSplitErrInvalidInput struct {
+// publishPoolMutationPublishPoolErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type publishPoolMutationPublishPoolErrInvalidInput struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns publishSplitMutationPublishSplitErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationPublishSplitErrInvalidInput) GetTypename() *string { return v.Typename }
+// GetTypename returns publishPoolMutationPublishPoolErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationPublishPoolErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// GetMessage returns publishSplitMutationPublishSplitErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationPublishSplitErrInvalidInput) GetMessage() string { return v.Message }
+// GetMessage returns publishPoolMutationPublishPoolErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationPublishPoolErrInvalidInput) GetMessage() string { return v.Message }
 
-// publishSplitMutationPublishSplitErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type publishSplitMutationPublishSplitErrNotAuthorized struct {
+// publishPoolMutationPublishPoolErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type publishPoolMutationPublishPoolErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns publishSplitMutationPublishSplitErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationPublishSplitErrNotAuthorized) GetTypename() *string { return v.Typename }
+// GetTypename returns publishPoolMutationPublishPoolErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationPublishPoolErrNotAuthorized) GetTypename() *string { return v.Typename }
 
-// GetMessage returns publishSplitMutationPublishSplitErrNotAuthorized.Message, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationPublishSplitErrNotAuthorized) GetMessage() string { return v.Message }
+// GetMessage returns publishPoolMutationPublishPoolErrNotAuthorized.Message, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationPublishPoolErrNotAuthorized) GetMessage() string { return v.Message }
 
-// publishSplitMutationPublishSplitPublishSplitPayload includes the requested fields of the GraphQL type PublishSplitPayload.
-type publishSplitMutationPublishSplitPublishSplitPayload struct {
-	Typename *string                                                   `json:"__typename"`
-	Split    *publishSplitMutationPublishSplitPublishSplitPayloadSplit `json:"split"`
+// publishPoolMutationPublishPoolPublishPoolPayload includes the requested fields of the GraphQL type PublishPoolPayload.
+type publishPoolMutationPublishPoolPublishPoolPayload struct {
+	Typename *string                                               `json:"__typename"`
+	Pool     *publishPoolMutationPublishPoolPublishPoolPayloadPool `json:"pool"`
 }
 
-// GetTypename returns publishSplitMutationPublishSplitPublishSplitPayload.Typename, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationPublishSplitPublishSplitPayload) GetTypename() *string {
-	return v.Typename
+// GetTypename returns publishPoolMutationPublishPoolPublishPoolPayload.Typename, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationPublishPoolPublishPoolPayload) GetTypename() *string { return v.Typename }
+
+// GetPool returns publishPoolMutationPublishPoolPublishPoolPayload.Pool, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationPublishPoolPublishPoolPayload) GetPool() *publishPoolMutationPublishPoolPublishPoolPayloadPool {
+	return v.Pool
 }
 
-// GetSplit returns publishSplitMutationPublishSplitPublishSplitPayload.Split, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationPublishSplitPublishSplitPayload) GetSplit() *publishSplitMutationPublishSplitPublishSplitPayloadSplit {
-	return v.Split
-}
-
-// publishSplitMutationPublishSplitPublishSplitPayloadOrError includes the requested fields of the GraphQL interface PublishSplitPayloadOrError.
+// publishPoolMutationPublishPoolPublishPoolPayloadOrError includes the requested fields of the GraphQL interface PublishPoolPayloadOrError.
 //
-// publishSplitMutationPublishSplitPublishSplitPayloadOrError is implemented by the following types:
-// publishSplitMutationPublishSplitErrInvalidInput
-// publishSplitMutationPublishSplitErrNotAuthorized
-// publishSplitMutationPublishSplitPublishSplitPayload
-type publishSplitMutationPublishSplitPublishSplitPayloadOrError interface {
-	implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError()
+// publishPoolMutationPublishPoolPublishPoolPayloadOrError is implemented by the following types:
+// publishPoolMutationPublishPoolErrInvalidInput
+// publishPoolMutationPublishPoolErrNotAuthorized
+// publishPoolMutationPublishPoolPublishPoolPayload
+type publishPoolMutationPublishPoolPublishPoolPayloadOrError interface {
+	implementsGraphQLInterfacepublishPoolMutationPublishPoolPublishPoolPayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *publishSplitMutationPublishSplitErrInvalidInput) implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError() {
+func (v *publishPoolMutationPublishPoolErrInvalidInput) implementsGraphQLInterfacepublishPoolMutationPublishPoolPublishPoolPayloadOrError() {
 }
-func (v *publishSplitMutationPublishSplitErrNotAuthorized) implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError() {
+func (v *publishPoolMutationPublishPoolErrNotAuthorized) implementsGraphQLInterfacepublishPoolMutationPublishPoolPublishPoolPayloadOrError() {
 }
-func (v *publishSplitMutationPublishSplitPublishSplitPayload) implementsGraphQLInterfacepublishSplitMutationPublishSplitPublishSplitPayloadOrError() {
+func (v *publishPoolMutationPublishPoolPublishPoolPayload) implementsGraphQLInterfacepublishPoolMutationPublishPoolPublishPoolPayloadOrError() {
 }
 
-func __unmarshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(b []byte, v *publishSplitMutationPublishSplitPublishSplitPayloadOrError) error {
+func __unmarshalpublishPoolMutationPublishPoolPublishPoolPayloadOrError(b []byte, v *publishPoolMutationPublishPoolPublishPoolPayloadOrError) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -1964,91 +1962,89 @@ func __unmarshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(b []b
 
 	switch tn.TypeName {
 	case "ErrInvalidInput":
-		*v = new(publishSplitMutationPublishSplitErrInvalidInput)
+		*v = new(publishPoolMutationPublishPoolErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(publishSplitMutationPublishSplitErrNotAuthorized)
+		*v = new(publishPoolMutationPublishPoolErrNotAuthorized)
 		return json.Unmarshal(b, *v)
-	case "PublishSplitPayload":
-		*v = new(publishSplitMutationPublishSplitPublishSplitPayload)
+	case "PublishPoolPayload":
+		*v = new(publishPoolMutationPublishPoolPublishPoolPayload)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing PublishSplitPayloadOrError.__typename")
+			"response was missing PublishPoolPayloadOrError.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for publishSplitMutationPublishSplitPublishSplitPayloadOrError: "%v"`, tn.TypeName)
+			`unexpected concrete type for publishPoolMutationPublishPoolPublishPoolPayloadOrError: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(v *publishSplitMutationPublishSplitPublishSplitPayloadOrError) ([]byte, error) {
+func __marshalpublishPoolMutationPublishPoolPublishPoolPayloadOrError(v *publishPoolMutationPublishPoolPublishPoolPayloadOrError) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *publishSplitMutationPublishSplitErrInvalidInput:
+	case *publishPoolMutationPublishPoolErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*publishSplitMutationPublishSplitErrInvalidInput
+			*publishPoolMutationPublishPoolErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *publishSplitMutationPublishSplitErrNotAuthorized:
+	case *publishPoolMutationPublishPoolErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*publishSplitMutationPublishSplitErrNotAuthorized
+			*publishPoolMutationPublishPoolErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
-	case *publishSplitMutationPublishSplitPublishSplitPayload:
-		typename = "PublishSplitPayload"
+	case *publishPoolMutationPublishPoolPublishPoolPayload:
+		typename = "PublishPoolPayload"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*publishSplitMutationPublishSplitPublishSplitPayload
+			*publishPoolMutationPublishPoolPublishPoolPayload
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for publishSplitMutationPublishSplitPublishSplitPayloadOrError: "%T"`, v)
+			`unexpected concrete type for publishPoolMutationPublishPoolPublishPoolPayloadOrError: "%T"`, v)
 	}
 }
 
-// publishSplitMutationPublishSplitPublishSplitPayloadSplit includes the requested fields of the GraphQL type Split.
-type publishSplitMutationPublishSplitPublishSplitPayloadSplit struct {
+// publishPoolMutationPublishPoolPublishPoolPayloadPool includes the requested fields of the GraphQL type Pool.
+type publishPoolMutationPublishPoolPublishPoolPayloadPool struct {
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetDbid returns publishSplitMutationPublishSplitPublishSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationPublishSplitPublishSplitPayloadSplit) GetDbid() persist.DBID {
-	return v.Dbid
+// GetDbid returns publishPoolMutationPublishPoolPublishPoolPayloadPool.Dbid, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationPublishPoolPublishPoolPayloadPool) GetDbid() persist.DBID { return v.Dbid }
+
+// publishPoolMutationResponse is returned by publishPoolMutation on success.
+type publishPoolMutationResponse struct {
+	PublishPool *publishPoolMutationPublishPoolPublishPoolPayloadOrError `json:"-"`
 }
 
-// publishSplitMutationResponse is returned by publishSplitMutation on success.
-type publishSplitMutationResponse struct {
-	PublishSplit *publishSplitMutationPublishSplitPublishSplitPayloadOrError `json:"-"`
+// GetPublishPool returns publishPoolMutationResponse.PublishPool, and is useful for accessing the field via an interface.
+func (v *publishPoolMutationResponse) GetPublishPool() *publishPoolMutationPublishPoolPublishPoolPayloadOrError {
+	return v.PublishPool
 }
 
-// GetPublishSplit returns publishSplitMutationResponse.PublishSplit, and is useful for accessing the field via an interface.
-func (v *publishSplitMutationResponse) GetPublishSplit() *publishSplitMutationPublishSplitPublishSplitPayloadOrError {
-	return v.PublishSplit
-}
-
-func (v *publishSplitMutationResponse) UnmarshalJSON(b []byte) error {
+func (v *publishPoolMutationResponse) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*publishSplitMutationResponse
-		PublishSplit json.RawMessage `json:"publishSplit"`
+		*publishPoolMutationResponse
+		PublishPool json.RawMessage `json:"publishPool"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.publishSplitMutationResponse = v
+	firstPass.publishPoolMutationResponse = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -2056,26 +2052,26 @@ func (v *publishSplitMutationResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.PublishSplit
-		src := firstPass.PublishSplit
+		dst := &v.PublishPool
+		src := firstPass.PublishPool
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(publishSplitMutationPublishSplitPublishSplitPayloadOrError)
-			err = __unmarshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(
+			*dst = new(publishPoolMutationPublishPoolPublishPoolPayloadOrError)
+			err = __unmarshalpublishPoolMutationPublishPoolPublishPoolPayloadOrError(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal publishSplitMutationResponse.PublishSplit: %w", err)
+					"unable to unmarshal publishPoolMutationResponse.PublishPool: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalpublishSplitMutationResponse struct {
-	PublishSplit json.RawMessage `json:"publishSplit"`
+type __premarshalpublishPoolMutationResponse struct {
+	PublishPool json.RawMessage `json:"publishPool"`
 }
 
-func (v *publishSplitMutationResponse) MarshalJSON() ([]byte, error) {
+func (v *publishPoolMutationResponse) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -2083,20 +2079,20 @@ func (v *publishSplitMutationResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(premarshaled)
 }
 
-func (v *publishSplitMutationResponse) __premarshalJSON() (*__premarshalpublishSplitMutationResponse, error) {
-	var retval __premarshalpublishSplitMutationResponse
+func (v *publishPoolMutationResponse) __premarshalJSON() (*__premarshalpublishPoolMutationResponse, error) {
+	var retval __premarshalpublishPoolMutationResponse
 
 	{
 
-		dst := &retval.PublishSplit
-		src := v.PublishSplit
+		dst := &retval.PublishPool
+		src := v.PublishPool
 		if src != nil {
 			var err error
-			*dst, err = __marshalpublishSplitMutationPublishSplitPublishSplitPayloadOrError(
+			*dst, err = __marshalpublishPoolMutationPublishPoolPublishPoolPayloadOrError(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal publishSplitMutationResponse.PublishSplit: %w", err)
+					"unable to marshal publishPoolMutationResponse.PublishPool: %w", err)
 			}
 		}
 	}
@@ -2838,28 +2834,28 @@ func (v *updateUserExperienceUpdateUserExperienceUpdateUserExperiencePayloadView
 	return v.Experienced
 }
 
-// upsertSplitMutationResponse is returned by upsertSplitMutation on success.
-type upsertSplitMutationResponse struct {
-	UpsertSplit *upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError `json:"-"`
+// upsertPoolMutationResponse is returned by upsertPoolMutation on success.
+type upsertPoolMutationResponse struct {
+	UpsertPool *upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError `json:"-"`
 }
 
-// GetUpsertSplit returns upsertSplitMutationResponse.UpsertSplit, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationResponse) GetUpsertSplit() *upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError {
-	return v.UpsertSplit
+// GetUpsertPool returns upsertPoolMutationResponse.UpsertPool, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationResponse) GetUpsertPool() *upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError {
+	return v.UpsertPool
 }
 
-func (v *upsertSplitMutationResponse) UnmarshalJSON(b []byte) error {
+func (v *upsertPoolMutationResponse) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*upsertSplitMutationResponse
-		UpsertSplit json.RawMessage `json:"upsertSplit"`
+		*upsertPoolMutationResponse
+		UpsertPool json.RawMessage `json:"upsertPool"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.upsertSplitMutationResponse = v
+	firstPass.upsertPoolMutationResponse = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -2867,26 +2863,26 @@ func (v *upsertSplitMutationResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.UpsertSplit
-		src := firstPass.UpsertSplit
+		dst := &v.UpsertPool
+		src := firstPass.UpsertPool
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError)
-			err = __unmarshalupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError(
+			*dst = new(upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError)
+			err = __unmarshalupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal upsertSplitMutationResponse.UpsertSplit: %w", err)
+					"unable to unmarshal upsertPoolMutationResponse.UpsertPool: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalupsertSplitMutationResponse struct {
-	UpsertSplit json.RawMessage `json:"upsertSplit"`
+type __premarshalupsertPoolMutationResponse struct {
+	UpsertPool json.RawMessage `json:"upsertPool"`
 }
 
-func (v *upsertSplitMutationResponse) MarshalJSON() ([]byte, error) {
+func (v *upsertPoolMutationResponse) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -2894,76 +2890,76 @@ func (v *upsertSplitMutationResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(premarshaled)
 }
 
-func (v *upsertSplitMutationResponse) __premarshalJSON() (*__premarshalupsertSplitMutationResponse, error) {
-	var retval __premarshalupsertSplitMutationResponse
+func (v *upsertPoolMutationResponse) __premarshalJSON() (*__premarshalupsertPoolMutationResponse, error) {
+	var retval __premarshalupsertPoolMutationResponse
 
 	{
 
-		dst := &retval.UpsertSplit
-		src := v.UpsertSplit
+		dst := &retval.UpsertPool
+		src := v.UpsertPool
 		if src != nil {
 			var err error
-			*dst, err = __marshalupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError(
+			*dst, err = __marshalupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal upsertSplitMutationResponse.UpsertSplit: %w", err)
+					"unable to marshal upsertPoolMutationResponse.UpsertPool: %w", err)
 			}
 		}
 	}
 	return &retval, nil
 }
 
-// upsertSplitMutationUpsertSplitErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type upsertSplitMutationUpsertSplitErrInvalidInput struct {
+// upsertPoolMutationUpsertPoolErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type upsertPoolMutationUpsertPoolErrInvalidInput struct {
 	Typename *string `json:"__typename"`
 }
 
-// GetTypename returns upsertSplitMutationUpsertSplitErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationUpsertSplitErrInvalidInput) GetTypename() *string { return v.Typename }
+// GetTypename returns upsertPoolMutationUpsertPoolErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationUpsertPoolErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// upsertSplitMutationUpsertSplitErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type upsertSplitMutationUpsertSplitErrNotAuthorized struct {
+// upsertPoolMutationUpsertPoolErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type upsertPoolMutationUpsertPoolErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 }
 
-// GetTypename returns upsertSplitMutationUpsertSplitErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationUpsertSplitErrNotAuthorized) GetTypename() *string { return v.Typename }
+// GetTypename returns upsertPoolMutationUpsertPoolErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationUpsertPoolErrNotAuthorized) GetTypename() *string { return v.Typename }
 
-// upsertSplitMutationUpsertSplitUpsertSplitPayload includes the requested fields of the GraphQL type UpsertSplitPayload.
-type upsertSplitMutationUpsertSplitUpsertSplitPayload struct {
-	Typename *string                                                `json:"__typename"`
-	Split    *upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit `json:"split"`
+// upsertPoolMutationUpsertPoolUpsertPoolPayload includes the requested fields of the GraphQL type UpsertPoolPayload.
+type upsertPoolMutationUpsertPoolUpsertPoolPayload struct {
+	Typename *string                                            `json:"__typename"`
+	Pool     *upsertPoolMutationUpsertPoolUpsertPoolPayloadPool `json:"pool"`
 }
 
-// GetTypename returns upsertSplitMutationUpsertSplitUpsertSplitPayload.Typename, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationUpsertSplitUpsertSplitPayload) GetTypename() *string { return v.Typename }
+// GetTypename returns upsertPoolMutationUpsertPoolUpsertPoolPayload.Typename, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationUpsertPoolUpsertPoolPayload) GetTypename() *string { return v.Typename }
 
-// GetSplit returns upsertSplitMutationUpsertSplitUpsertSplitPayload.Split, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationUpsertSplitUpsertSplitPayload) GetSplit() *upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit {
-	return v.Split
+// GetPool returns upsertPoolMutationUpsertPoolUpsertPoolPayload.Pool, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationUpsertPoolUpsertPoolPayload) GetPool() *upsertPoolMutationUpsertPoolUpsertPoolPayloadPool {
+	return v.Pool
 }
 
-// upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError includes the requested fields of the GraphQL interface UpsertSplitPayloadOrError.
+// upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError includes the requested fields of the GraphQL interface UpsertPoolPayloadOrError.
 //
-// upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError is implemented by the following types:
-// upsertSplitMutationUpsertSplitErrInvalidInput
-// upsertSplitMutationUpsertSplitErrNotAuthorized
-// upsertSplitMutationUpsertSplitUpsertSplitPayload
-type upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError interface {
-	implementsGraphQLInterfaceupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError()
+// upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError is implemented by the following types:
+// upsertPoolMutationUpsertPoolErrInvalidInput
+// upsertPoolMutationUpsertPoolErrNotAuthorized
+// upsertPoolMutationUpsertPoolUpsertPoolPayload
+type upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError interface {
+	implementsGraphQLInterfaceupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *upsertSplitMutationUpsertSplitErrInvalidInput) implementsGraphQLInterfaceupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError() {
+func (v *upsertPoolMutationUpsertPoolErrInvalidInput) implementsGraphQLInterfaceupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError() {
 }
-func (v *upsertSplitMutationUpsertSplitErrNotAuthorized) implementsGraphQLInterfaceupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError() {
+func (v *upsertPoolMutationUpsertPoolErrNotAuthorized) implementsGraphQLInterfaceupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError() {
 }
-func (v *upsertSplitMutationUpsertSplitUpsertSplitPayload) implementsGraphQLInterfaceupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError() {
+func (v *upsertPoolMutationUpsertPoolUpsertPoolPayload) implementsGraphQLInterfaceupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError() {
 }
 
-func __unmarshalupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError(b []byte, v *upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError) error {
+func __unmarshalupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError(b []byte, v *upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -2978,74 +2974,74 @@ func __unmarshalupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError(b []byte
 
 	switch tn.TypeName {
 	case "ErrInvalidInput":
-		*v = new(upsertSplitMutationUpsertSplitErrInvalidInput)
+		*v = new(upsertPoolMutationUpsertPoolErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(upsertSplitMutationUpsertSplitErrNotAuthorized)
+		*v = new(upsertPoolMutationUpsertPoolErrNotAuthorized)
 		return json.Unmarshal(b, *v)
-	case "UpsertSplitPayload":
-		*v = new(upsertSplitMutationUpsertSplitUpsertSplitPayload)
+	case "UpsertPoolPayload":
+		*v = new(upsertPoolMutationUpsertPoolUpsertPoolPayload)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing UpsertSplitPayloadOrError.__typename")
+			"response was missing UpsertPoolPayloadOrError.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError: "%v"`, tn.TypeName)
+			`unexpected concrete type for upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalupsertSplitMutationUpsertSplitUpsertSplitPayloadOrError(v *upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError) ([]byte, error) {
+func __marshalupsertPoolMutationUpsertPoolUpsertPoolPayloadOrError(v *upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *upsertSplitMutationUpsertSplitErrInvalidInput:
+	case *upsertPoolMutationUpsertPoolErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*upsertSplitMutationUpsertSplitErrInvalidInput
+			*upsertPoolMutationUpsertPoolErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *upsertSplitMutationUpsertSplitErrNotAuthorized:
+	case *upsertPoolMutationUpsertPoolErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*upsertSplitMutationUpsertSplitErrNotAuthorized
+			*upsertPoolMutationUpsertPoolErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
-	case *upsertSplitMutationUpsertSplitUpsertSplitPayload:
-		typename = "UpsertSplitPayload"
+	case *upsertPoolMutationUpsertPoolUpsertPoolPayload:
+		typename = "UpsertPoolPayload"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*upsertSplitMutationUpsertSplitUpsertSplitPayload
+			*upsertPoolMutationUpsertPoolUpsertPoolPayload
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for upsertSplitMutationUpsertSplitUpsertSplitPayloadOrError: "%T"`, v)
+			`unexpected concrete type for upsertPoolMutationUpsertPoolUpsertPoolPayloadOrError: "%T"`, v)
 	}
 }
 
-// upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit includes the requested fields of the GraphQL type Split.
-type upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit struct {
+// upsertPoolMutationUpsertPoolUpsertPoolPayloadPool includes the requested fields of the GraphQL type Pool.
+type upsertPoolMutationUpsertPoolUpsertPoolPayloadPool struct {
 	Dbid        persist.DBID `json:"dbid"`
 	Name        *string      `json:"name"`
 	Description *string      `json:"description"`
 }
 
-// GetDbid returns upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit.Dbid, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns upsertPoolMutationUpsertPoolUpsertPoolPayloadPool.Dbid, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationUpsertPoolUpsertPoolPayloadPool) GetDbid() persist.DBID { return v.Dbid }
 
-// GetName returns upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit.Name, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit) GetName() *string { return v.Name }
+// GetName returns upsertPoolMutationUpsertPoolUpsertPoolPayloadPool.Name, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationUpsertPoolUpsertPoolPayloadPool) GetName() *string { return v.Name }
 
-// GetDescription returns upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit.Description, and is useful for accessing the field via an interface.
-func (v *upsertSplitMutationUpsertSplitUpsertSplitPayloadSplit) GetDescription() *string {
+// GetDescription returns upsertPoolMutationUpsertPoolUpsertPoolPayloadPool.Description, and is useful for accessing the field via an interface.
+func (v *upsertPoolMutationUpsertPoolUpsertPoolPayloadPool) GetDescription() *string {
 	return v.Description
 }
 
@@ -3893,17 +3889,17 @@ func addUserWalletMutation(
 	return data_, err_
 }
 
-// The mutation executed by createSplitMutation.
-const createSplitMutation_Operation = `
-mutation createSplitMutation ($input: CreateSplitInput!) {
-	createSplit(input: $input) {
+// The mutation executed by createPoolMutation.
+const createPoolMutation_Operation = `
+mutation createPoolMutation ($input: CreatePoolInput!) {
+	createPool(input: $input) {
 		__typename
 		... on Error {
 			__typename
 			message
 		}
-		... on CreateSplitPayload {
-			split {
+		... on CreatePoolPayload {
+			pool {
 				dbid
 				name
 				description
@@ -3913,20 +3909,20 @@ mutation createSplitMutation ($input: CreateSplitInput!) {
 }
 `
 
-func createSplitMutation(
+func createPoolMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	input CreateSplitInput,
-) (data_ *createSplitMutationResponse, err_ error) {
+	input CreatePoolInput,
+) (data_ *createPoolMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "createSplitMutation",
-		Query:  createSplitMutation_Operation,
-		Variables: &__createSplitMutationInput{
+		OpName: "createPoolMutation",
+		Query:  createPoolMutation_Operation,
+		Variables: &__createPoolMutationInput{
 			Input: input,
 		},
 	}
 
-	data_ = &createSplitMutationResponse{}
+	data_ = &createPoolMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -3952,7 +3948,7 @@ mutation createUserMutation ($authMechanism: AuthMechanism!, $input: CreateUserI
 				user {
 					username
 					dbid
-					splits {
+					pools {
 						dbid
 					}
 				}
@@ -4143,17 +4139,17 @@ func notificationsForViewerQuery(
 	return data_, err_
 }
 
-// The mutation executed by publishSplitMutation.
-const publishSplitMutation_Operation = `
-mutation publishSplitMutation ($input: PublishSplitInput!) {
-	publishSplit(input: $input) {
+// The mutation executed by publishPoolMutation.
+const publishPoolMutation_Operation = `
+mutation publishPoolMutation ($input: PublishPoolInput!) {
+	publishPool(input: $input) {
 		__typename
 		... on Error {
 			__typename
 			message
 		}
-		... on PublishSplitPayload {
-			split {
+		... on PublishPoolPayload {
+			pool {
 				dbid
 			}
 		}
@@ -4161,20 +4157,20 @@ mutation publishSplitMutation ($input: PublishSplitInput!) {
 }
 `
 
-func publishSplitMutation(
+func publishPoolMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	input PublishSplitInput,
-) (data_ *publishSplitMutationResponse, err_ error) {
+	input PublishPoolInput,
+) (data_ *publishPoolMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "publishSplitMutation",
-		Query:  publishSplitMutation_Operation,
-		Variables: &__publishSplitMutationInput{
+		OpName: "publishPoolMutation",
+		Query:  publishPoolMutation_Operation,
+		Variables: &__publishPoolMutationInput{
 			Input: input,
 		},
 	}
 
-	data_ = &publishSplitMutationResponse{}
+	data_ = &publishPoolMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -4324,13 +4320,13 @@ func updateUserExperience(
 	return data_, err_
 }
 
-// The mutation executed by upsertSplitMutation.
-const upsertSplitMutation_Operation = `
-mutation upsertSplitMutation ($input: UpsertSplitInput!) {
-	upsertSplit(input: $input) {
+// The mutation executed by upsertPoolMutation.
+const upsertPoolMutation_Operation = `
+mutation upsertPoolMutation ($input: UpsertPoolInput!) {
+	upsertPool(input: $input) {
 		__typename
-		... on UpsertSplitPayload {
-			split {
+		... on UpsertPoolPayload {
+			pool {
 				dbid
 				name
 				description
@@ -4340,20 +4336,20 @@ mutation upsertSplitMutation ($input: UpsertSplitInput!) {
 }
 `
 
-func upsertSplitMutation(
+func upsertPoolMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	input UpsertSplitInput,
-) (data_ *upsertSplitMutationResponse, err_ error) {
+	input UpsertPoolInput,
+) (data_ *upsertPoolMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "upsertSplitMutation",
-		Query:  upsertSplitMutation_Operation,
-		Variables: &__upsertSplitMutationInput{
+		OpName: "upsertPoolMutation",
+		Query:  upsertPoolMutation_Operation,
+		Variables: &__upsertPoolMutationInput{
 			Input: input,
 		},
 	}
 
-	data_ = &upsertSplitMutationResponse{}
+	data_ = &upsertPoolMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

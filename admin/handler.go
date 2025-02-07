@@ -13,18 +13,18 @@ func handlersInit(router *gin.Engine, db *sql.DB, stmts *statements, ethcl *ethc
 
 	users := api.Group("/users")
 	users.GET("/get", getUser(stmts.getUserByIDStmt, stmts.getUserByUsernameStmt, stmts.getUserByAddressStmt))
-	users.POST("/merge", mergeUser(db, stmts.getUserByIDStmt, stmts.updateUserStmt, stmts.deleteUserStmt, stmts.getSplitsRawStmt, stmts.deleteSplitStmt, stmts.updateSplitStmt))
+	users.POST("/merge", mergeUser(db, stmts.getUserByIDStmt, stmts.updateUserStmt, stmts.deleteUserStmt, stmts.getPoolsRawStmt, stmts.deletePoolStmt, stmts.updatePoolStmt))
 	users.POST("/update", updateUser(stmts.updateUserStmt))
-	users.POST("/delete", deleteUser(db, stmts.deleteUserStmt, stmts.getSplitsRawStmt, stmts.deleteSplitStmt, stmts.deleteCollectionStmt))
+	users.POST("/delete", deleteUser(db, stmts.deleteUserStmt, stmts.getPoolsRawStmt, stmts.deletePoolStmt, stmts.deleteCollectionStmt))
 	users.POST("/create", createUser(db, stmts.createUserStmt, stmts.createNonceStmt))
 
 	raw := api.Group("/raw")
 	raw.POST("/query", queryRaw(db))
 
-	splits := api.Group("/splits")
-	splits.GET("/get", getSplits(stmts.splitRepo))
-	//splits.GET("/refresh", refreshCache(stmts.splitRepo))
-	//splits.GET("/backup", backupSplits(stmts.splitRepo, stmts.backupRepo))
+	pools := api.Group("/pools")
+	pools.GET("/get", getPools(stmts.poolRepo))
+	//pools.GET("/refresh", refreshCache(stmts.poolRepo))
+	//pools.GET("/backup", backupPools(stmts.poolRepo, stmts.backupRepo))
 
 	snapshot := api.Group("/snapshot")
 	snapshot.GET("/get", getSnapshot(stg))

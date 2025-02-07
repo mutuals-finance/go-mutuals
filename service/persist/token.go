@@ -761,7 +761,7 @@ func (id *DecimalTokenID) DecodeBinary(ci *pgtype.ConnInfo, src []byte) error {
 }
 
 func expandNumericString(s string) (string, error) {
-	// Split the string on 'e'. If 'e' is not present, parts will contain the original string as its only element.
+	// Pool the string on 'e'. If 'e' is not present, parts will contain the original string as its only element.
 	parts := strings.Split(s, "e")
 	if len(parts) == 1 {
 		// No 'e' in the string, return it as is.

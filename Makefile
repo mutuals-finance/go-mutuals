@@ -284,7 +284,7 @@ _$(JOB)-$(DEPLOY)-%:
 _$(PROMOTE)-%:
 	@version='$(version)'; \
 	if [ -z "$$version" ]; then echo "Please add 'version=...' to the command!" ; exit 1; fi; \
-	gcloud beta app services set-traffic $(SERVICE) --splits $$version=1
+	gcloud beta app services set-traffic $(SERVICE) --pools $$version=1
 
 _$(DOCKER)-$(PROMOTE)-%:
 	@version='$(version)'; \

@@ -17,9 +17,9 @@ type Loaders struct {
 	GetAllocationAggregationByIdBatch   *GetAllocationAggregationByIdBatch
 	GetAllocationByIdBatch              *GetAllocationByIdBatch
 	GetNotificationByIDBatch            *GetNotificationByIDBatch
-	GetSplitByChainAddressBatch         *GetSplitByChainAddressBatch
-	GetSplitByIdBatch                   *GetSplitByIdBatch
-	GetSplitsByUserIDBatch              *GetSplitsByUserIDBatch
+	GetPoolByChainAddressBatch          *GetPoolByChainAddressBatch
+	GetPoolByIdBatch                    *GetPoolByIdBatch
+	GetPoolsByUserIDBatch               *GetPoolsByUserIDBatch
 	GetUserByAddressAndL1Batch          *GetUserByAddressAndL1Batch
 	GetUserByIdBatch                    *GetUserByIdBatch
 	GetUserByUsernameBatch              *GetUserByUsernameBatch
@@ -36,9 +36,9 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetAllocationAggregationByIdBatch = newGetAllocationAggregationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAllocationAggregationByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetAllocationByIdBatch = newGetAllocationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAllocationByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
-	loaders.GetSplitByChainAddressBatch = newGetSplitByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByChainAddressBatch(q), preFetchHook, postFetchHook)
-	loaders.GetSplitByIdBatch = newGetSplitByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetSplitsByUserIDBatch = newGetSplitsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitsByUserIDBatch(q), preFetchHook, postFetchHook)
+	loaders.GetPoolByChainAddressBatch = newGetPoolByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolByChainAddressBatch(q), preFetchHook, postFetchHook)
+	loaders.GetPoolByIdBatch = newGetPoolByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetPoolsByUserIDBatch = newGetPoolsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolsByUserIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByAddressAndL1Batch = newGetUserByAddressAndL1Batch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByAddressAndL1Batch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByUsernameBatch = newGetUserByUsernameBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByUsernameBatch(q), preFetchHook, postFetchHook)
@@ -53,12 +53,12 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 			loaders.GetNotificationByIDBatch.Prime(loaders.GetNotificationByIDBatch.getKeyForResult(entry), entry)
 		}
 	})
-	loaders.GetSplitByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Split) {
-		loaders.GetSplitByIdBatch.Prime(loaders.GetSplitByIdBatch.getKeyForResult(result), result)
+	loaders.GetPoolByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Pool) {
+		loaders.GetPoolByIdBatch.Prime(loaders.GetPoolByIdBatch.getKeyForResult(result), result)
 	})
-	loaders.GetSplitsByUserIDBatch.RegisterResultSubscriber(func(result []coredb.Split) {
+	loaders.GetPoolsByUserIDBatch.RegisterResultSubscriber(func(result []coredb.Pool) {
 		for _, entry := range result {
-			loaders.GetSplitByIdBatch.Prime(loaders.GetSplitByIdBatch.getKeyForResult(entry), entry)
+			loaders.GetPoolByIdBatch.Prime(loaders.GetPoolByIdBatch.getKeyForResult(entry), entry)
 		}
 	})
 	loaders.GetUserByAddressAndL1Batch.RegisterResultSubscriber(func(result coredb.User) {
@@ -159,15 +159,15 @@ func loadGetNotificationByIDBatch(q *coredb.Queries) func(context.Context, *GetN
 	}
 }
 
-func loadGetSplitByChainAddressBatch(q *coredb.Queries) func(context.Context, *GetSplitByChainAddressBatch, []coredb.GetSplitByChainAddressBatchParams) ([]coredb.Split, []error) {
-	return func(ctx context.Context, d *GetSplitByChainAddressBatch, params []coredb.GetSplitByChainAddressBatchParams) ([]coredb.Split, []error) {
-		results := make([]coredb.Split, len(params))
+func loadGetPoolByChainAddressBatch(q *coredb.Queries) func(context.Context, *GetPoolByChainAddressBatch, []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error) {
+	return func(ctx context.Context, d *GetPoolByChainAddressBatch, params []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error) {
+		results := make([]coredb.Pool, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetSplitByChainAddressBatch(ctx, params)
+		b := q.GetPoolByChainAddressBatch(ctx, params)
 		defer b.Close()
 
-		b.QueryRow(func(i int, r coredb.Split, err error) {
+		b.QueryRow(func(i int, r coredb.Pool, err error) {
 			results[i], errors[i] = r, err
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = d.getNotFoundError(params[i])
@@ -178,15 +178,15 @@ func loadGetSplitByChainAddressBatch(q *coredb.Queries) func(context.Context, *G
 	}
 }
 
-func loadGetSplitByIdBatch(q *coredb.Queries) func(context.Context, *GetSplitByIdBatch, []persist.DBID) ([]coredb.Split, []error) {
-	return func(ctx context.Context, d *GetSplitByIdBatch, params []persist.DBID) ([]coredb.Split, []error) {
-		results := make([]coredb.Split, len(params))
+func loadGetPoolByIdBatch(q *coredb.Queries) func(context.Context, *GetPoolByIdBatch, []persist.DBID) ([]coredb.Pool, []error) {
+	return func(ctx context.Context, d *GetPoolByIdBatch, params []persist.DBID) ([]coredb.Pool, []error) {
+		results := make([]coredb.Pool, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetSplitByIdBatch(ctx, params)
+		b := q.GetPoolByIdBatch(ctx, params)
 		defer b.Close()
 
-		b.QueryRow(func(i int, r coredb.Split, err error) {
+		b.QueryRow(func(i int, r coredb.Pool, err error) {
 			results[i], errors[i] = r, err
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = d.getNotFoundError(params[i])
@@ -197,15 +197,15 @@ func loadGetSplitByIdBatch(q *coredb.Queries) func(context.Context, *GetSplitByI
 	}
 }
 
-func loadGetSplitsByUserIDBatch(q *coredb.Queries) func(context.Context, *GetSplitsByUserIDBatch, []persist.DBID) ([][]coredb.Split, []error) {
-	return func(ctx context.Context, d *GetSplitsByUserIDBatch, params []persist.DBID) ([][]coredb.Split, []error) {
-		results := make([][]coredb.Split, len(params))
+func loadGetPoolsByUserIDBatch(q *coredb.Queries) func(context.Context, *GetPoolsByUserIDBatch, []persist.DBID) ([][]coredb.Pool, []error) {
+	return func(ctx context.Context, d *GetPoolsByUserIDBatch, params []persist.DBID) ([][]coredb.Pool, []error) {
+		results := make([][]coredb.Pool, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetSplitsByUserIDBatch(ctx, params)
+		b := q.GetPoolsByUserIDBatch(ctx, params)
 		defer b.Close()
 
-		b.Query(func(i int, r []coredb.Split, err error) {
+		b.Query(func(i int, r []coredb.Pool, err error) {
 			results[i], errors[i] = r, err
 		})
 

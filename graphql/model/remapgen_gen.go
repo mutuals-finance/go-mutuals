@@ -23,8 +23,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"CreateSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CreateSplitPayloadOrError)
+	"CreatePoolPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(CreatePoolPayloadOrError)
 		return obj, ok
 	},
 
@@ -33,8 +33,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"DeleteSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(DeleteSplitPayloadOrError)
+	"DeletePoolPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(DeletePoolPayloadOrError)
 		return obj, ok
 	},
 
@@ -83,13 +83,18 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
+	"PoolByIdPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PoolByIDPayloadOrError)
+		return obj, ok
+	},
+
 	"PreverifyEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(PreverifyEmailPayloadOrError)
 		return obj, ok
 	},
 
-	"PublishSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PublishSplitPayloadOrError)
+	"PublishPoolPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PublishPoolPayloadOrError)
 		return obj, ok
 	},
 
@@ -113,18 +118,13 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"SearchSplitsPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SearchSplitsPayloadOrError)
+	"SearchPoolsPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(SearchPoolsPayloadOrError)
 		return obj, ok
 	},
 
 	"SearchUsersPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(SearchUsersPayloadOrError)
-		return obj, ok
-	},
-
-	"SplitByIdPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SplitByIDPayloadOrError)
 		return obj, ok
 	},
 
@@ -148,23 +148,23 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
+	"UpdatePoolHiddenPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UpdatePoolHiddenPayloadOrError)
+		return obj, ok
+	},
+
+	"UpdatePoolOrderPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UpdatePoolOrderPayloadOrError)
+		return obj, ok
+	},
+
+	"UpdatePoolPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UpdatePoolPayloadOrError)
+		return obj, ok
+	},
+
 	"UpdatePrimaryWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UpdatePrimaryWalletPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateSplitHiddenPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateSplitHiddenPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateSplitOrderPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateSplitOrderPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateSplitPayloadOrError)
 		return obj, ok
 	},
 
@@ -183,8 +183,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"UpsertSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpsertSplitPayloadOrError)
+	"UpsertPoolPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UpsertPoolPayloadOrError)
 		return obj, ok
 	},
 
@@ -218,8 +218,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"ViewerSplitByIdPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(ViewerSplitByIDPayloadOrError)
+	"ViewerPoolByIdPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ViewerPoolByIDPayloadOrError)
 		return obj, ok
 	},
 }

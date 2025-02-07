@@ -30,7 +30,7 @@ var followNotif coredb.Notification
 
 var viewNotif coredb.Notification
 
-var testSplit coredb.Split
+var testPool coredb.Pool
 
 func setupTest(t *testing.T) (*assert.Assertions, *sql.DB, *pgxpool.Pool) {
 	setDefaults()
@@ -65,8 +65,8 @@ func newRepos(pq *sql.DB, pgx *pgxpool.Pool) *postgres.Repositories {
 	return &postgres.Repositories{
 		UserRepository:        postgres.NewUserRepository(pq, queries),
 		NonceRepository:       postgres.NewNonceRepository(pq, queries),
-		TokenRepository:       postgres.NewTokenSplitRepository(pq, queries),
-		SplitRepository:       postgres.NewSplitRepository(queries),
+		TokenRepository:       postgres.NewTokenPoolRepository(pq, queries),
+		PoolRepository:        postgres.NewPoolRepository(queries),
 		EarlyAccessRepository: postgres.NewEarlyAccessRepository(pq, queries),
 		WalletRepository:      postgres.NewWalletRepository(pq, queries),
 	}
@@ -90,40 +90,40 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 
 	testUser2.ID = userID2
 
-	splitInsert := coredb.SplitRepoCreateParams{OwnerUserID: userID, SplitID: persist.GenerateID(), Position: "0.1"}
+	poolInsert := coredb.PoolRepoCreateParams{OwnerUserID: userID, PoolID: persist.GenerateID(), Position: "0.1"}
 
-	split, err := repos.SplitRepository.Create(ctx, splitInsert)
+	pool, err := repos.PoolRepository.Create(ctx, poolInsert)
 	if err != nil {
-		t.Fatalf("failed to create split: %s", err)
+		t.Fatalf("failed to create pool: %s", err)
 	}
 
-	splitInsert2 := coredb.SplitRepoCreateParams{OwnerUserID: userID2, SplitID: persist.GenerateID(), Position: "0.2"}
+	poolInsert2 := coredb.PoolRepoCreateParams{OwnerUserID: userID2, PoolID: persist.GenerateID(), Position: "0.2"}
 
-	_, err = repos.SplitRepository.Create(ctx, splitInsert2)
+	_, err = repos.PoolRepository.Create(ctx, poolInsert2)
 	if err != nil {
-		t.Fatalf("failed to create split: %s", err)
+		t.Fatalf("failed to create pool: %s", err)
 	}
 
 	collID, err := repos.CollectionRepository.Create(ctx, persist.CollectionDB{
 		Name:        "test coll",
 		OwnerUserID: userID,
-		SplitID:     split.ID,
+		PoolID:      pool.ID,
 	})
 
 	if err != nil {
 		t.Fatalf("failed to create collection: %s", err)
 	}
 
-	err = repos.SplitRepository.Update(ctx, split.ID, userID, persist.SplitTokenUpdateInput{
+	err = repos.PoolRepository.Update(ctx, pool.ID, userID, persist.PoolTokenUpdateInput{
 		Collections: []persist.DBID{collID},
 	})
 	if err != nil {
-		t.Fatalf("failed to update split: %s", err)
+		t.Fatalf("failed to update pool: %s", err)
 	}
 
-	testSplit, err = q.GetSplitById(ctx, split.ID)
+	testPool, err = q.GetPoolById(ctx, pool.ID)
 	if err != nil {
-		t.Fatalf("failed to get split: %s", err)
+		t.Fatalf("failed to get pool: %s", err)
 	}
 
 	_, err = q.CreateCollectionEvent(ctx, coredb.CreateCollectionEventParams{
@@ -131,8 +131,8 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 		ActorID:        persist.DBIDToNullStr(userID),
 		Action:         persist.ActionCollectionCreated,
 		ResourceTypeID: persist.ResourceTypeCollection,
-		CollectionID:   testSplit.Collections[0],
-		SplitID:        split.ID,
+		CollectionID:   testPool.Collections[0],
+		PoolID:         pool.ID,
 	})
 
 	if err != nil {
@@ -146,27 +146,27 @@ func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, rep
 
 func seedViewNotif(ctx context.Context, t *testing.T, q *coredb.Queries, repos *postgres.Repositories, userID persist.DBID, userID2 persist.DBID) {
 
-	viewEvent, err := q.CreateSplitEvent(ctx, coredb.CreateSplitEventParams{
+	viewEvent, err := q.CreatePoolEvent(ctx, coredb.CreatePoolEventParams{
 		ID:             persist.GenerateID(),
 		ActorID:        persist.DBIDToNullStr(userID2),
-		Action:         persist.ActionViewedSplit,
-		ResourceTypeID: persist.ResourceTypeSplit,
-		SplitID:        testSplit.ID,
+		Action:         persist.ActionViewedPool,
+		ResourceTypeID: persist.ResourceTypePool,
+		PoolID:         testPool.ID,
 	})
 
 	if err != nil {
 		t.Fatalf("failed to create view event: %s", err)
 	}
 
-	viewNotif, err = q.CreateViewSplitNotification(ctx, coredb.CreateViewSplitNotificationParams{
+	viewNotif, err = q.CreateViewPoolNotification(ctx, coredb.CreateViewPoolNotificationParams{
 		ID:       persist.GenerateID(),
 		OwnerID:  userID,
-		Action:   persist.ActionViewedSplit,
+		Action:   persist.ActionViewedPool,
 		EventIds: []persist.DBID{viewEvent.ID},
 		Data: persist.NotificationData{
 			AuthedViewerIDs: []persist.DBID{userID2},
 		},
-		SplitID: testSplit.ID,
+		PoolID: testPool.ID,
 	})
 
 	if err != nil {

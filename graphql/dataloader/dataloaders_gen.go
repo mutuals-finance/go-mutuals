@@ -151,34 +151,34 @@ func (*GetNotificationByIDBatch) getKeyForResult(result coredb.Notification) per
 	return result.ID
 }
 
-// GetSplitByChainAddressBatch batches and caches requests
-type GetSplitByChainAddressBatch struct {
-	generator.Dataloader[coredb.GetSplitByChainAddressBatchParams, coredb.Split]
+// GetPoolByChainAddressBatch batches and caches requests
+type GetPoolByChainAddressBatch struct {
+	generator.Dataloader[coredb.GetPoolByChainAddressBatchParams, coredb.Pool]
 }
 
-// newGetSplitByChainAddressBatch creates a new GetSplitByChainAddressBatch with the given settings, functions, and options
-func newGetSplitByChainAddressBatch(
+// newGetPoolByChainAddressBatch creates a new GetPoolByChainAddressBatch with the given settings, functions, and options
+func newGetPoolByChainAddressBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetSplitByChainAddressBatch, []coredb.GetSplitByChainAddressBatchParams) ([]coredb.Split, []error),
+	fetch func(context.Context, *GetPoolByChainAddressBatch, []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetSplitByChainAddressBatch {
-	d := &GetSplitByChainAddressBatch{}
+) *GetPoolByChainAddressBatch {
+	d := &GetPoolByChainAddressBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []coredb.GetSplitByChainAddressBatchParams) ([]coredb.Split, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetSplitByChainAddressBatch")
+			ctx = preFetchHook(ctx, "GetPoolByChainAddressBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetSplitByChainAddressBatch")
+			postFetchHook(ctx, "GetPoolByChainAddressBatch")
 		}
 
 		return results, errors
@@ -188,34 +188,34 @@ func newGetSplitByChainAddressBatch(
 	return d
 }
 
-// GetSplitByIdBatch batches and caches requests
-type GetSplitByIdBatch struct {
-	generator.Dataloader[persist.DBID, coredb.Split]
+// GetPoolByIdBatch batches and caches requests
+type GetPoolByIdBatch struct {
+	generator.Dataloader[persist.DBID, coredb.Pool]
 }
 
-// newGetSplitByIdBatch creates a new GetSplitByIdBatch with the given settings, functions, and options
-func newGetSplitByIdBatch(
+// newGetPoolByIdBatch creates a new GetPoolByIdBatch with the given settings, functions, and options
+func newGetPoolByIdBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetSplitByIdBatch, []persist.DBID) ([]coredb.Split, []error),
+	fetch func(context.Context, *GetPoolByIdBatch, []persist.DBID) ([]coredb.Pool, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetSplitByIdBatch {
-	d := &GetSplitByIdBatch{}
+) *GetPoolByIdBatch {
+	d := &GetPoolByIdBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Split, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Pool, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetSplitByIdBatch")
+			ctx = preFetchHook(ctx, "GetPoolByIdBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetSplitByIdBatch")
+			postFetchHook(ctx, "GetPoolByIdBatch")
 		}
 
 		return results, errors
@@ -225,38 +225,38 @@ func newGetSplitByIdBatch(
 	return d
 }
 
-func (*GetSplitByIdBatch) getKeyForResult(result coredb.Split) persist.DBID {
+func (*GetPoolByIdBatch) getKeyForResult(result coredb.Pool) persist.DBID {
 	return result.ID
 }
 
-// GetSplitsByUserIDBatch batches and caches requests
-type GetSplitsByUserIDBatch struct {
-	generator.Dataloader[persist.DBID, []coredb.Split]
+// GetPoolsByUserIDBatch batches and caches requests
+type GetPoolsByUserIDBatch struct {
+	generator.Dataloader[persist.DBID, []coredb.Pool]
 }
 
-// newGetSplitsByUserIDBatch creates a new GetSplitsByUserIDBatch with the given settings, functions, and options
-func newGetSplitsByUserIDBatch(
+// newGetPoolsByUserIDBatch creates a new GetPoolsByUserIDBatch with the given settings, functions, and options
+func newGetPoolsByUserIDBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetSplitsByUserIDBatch, []persist.DBID) ([][]coredb.Split, []error),
+	fetch func(context.Context, *GetPoolsByUserIDBatch, []persist.DBID) ([][]coredb.Pool, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetSplitsByUserIDBatch {
-	d := &GetSplitsByUserIDBatch{}
+) *GetPoolsByUserIDBatch {
+	d := &GetPoolsByUserIDBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]coredb.Split, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]coredb.Pool, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetSplitsByUserIDBatch")
+			ctx = preFetchHook(ctx, "GetPoolsByUserIDBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetSplitsByUserIDBatch")
+			postFetchHook(ctx, "GetPoolsByUserIDBatch")
 		}
 
 		return results, errors

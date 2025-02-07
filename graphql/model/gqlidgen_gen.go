@@ -30,8 +30,8 @@ func (r *MutualsUser) ID() GqlID {
 	return GqlID(fmt.Sprintf("MutualsUser:%s", r.Dbid))
 }
 
-func (r *Split) ID() GqlID {
-	return GqlID(fmt.Sprintf("Split:%s", r.Dbid))
+func (r *Pool) ID() GqlID {
+	return GqlID(fmt.Sprintf("Pool:%s", r.Dbid))
 }
 
 func (r *Token) ID() GqlID {
@@ -61,7 +61,7 @@ type NodeFetcher struct {
 	OnAsset                 func(ctx context.Context, dbid persist.DBID) (*Asset, error)
 	OnDeletedNode           func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
 	OnMutualsUser           func(ctx context.Context, dbid persist.DBID) (*MutualsUser, error)
-	OnSplit                 func(ctx context.Context, dbid persist.DBID) (*Split, error)
+	OnPool                  func(ctx context.Context, dbid persist.DBID) (*Pool, error)
 	OnToken                 func(ctx context.Context, dbid persist.DBID) (*Token, error)
 	OnViewer                func(ctx context.Context, userId string) (*Viewer, error)
 	OnWallet                func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
@@ -102,11 +102,11 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MutualsUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnMutualsUser(ctx, persist.DBID(ids[0]))
-	case "Split":
+	case "Pool":
 		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Split' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Pool' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
-		return n.OnSplit(ctx, persist.DBID(ids[0]))
+		return n.OnPool(ctx, persist.DBID(ids[0]))
 	case "Token":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Token' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -139,8 +139,8 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
 	case n.OnMutualsUser == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMutualsUser")
-	case n.OnSplit == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplit")
+	case n.OnPool == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPool")
 	case n.OnToken == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnToken")
 	case n.OnViewer == nil:

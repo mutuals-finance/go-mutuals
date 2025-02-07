@@ -44,7 +44,7 @@ type PublicAPI struct {
 	APQ       *apq.APQCache
 
 	Auth          *AuthAPI
-	Split         *SplitAPI
+	Pool          *PoolAPI
 	User          *UserAPI
 	Asset         *AssetAPI
 	Wallet        *WalletAPI
@@ -71,7 +71,7 @@ func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching boo
 		validator:     validator,
 		APQ:           apq,
 		Auth:          &AuthAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multiChainProvider: multichainProvider, magicLinkClient: magicClient, oneTimeLoginCache: oneTimeLoginCache, authRefreshCache: authRefreshCache}, // privyClient: privyClient
-		Split:         &SplitAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient},
+		Pool:          &PoolAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient},
 		User:          &UserAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
 		Asset:         &AssetAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
 		Wallet:        &WalletAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},

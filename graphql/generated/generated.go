@@ -48,8 +48,8 @@ type ResolverRoot interface {
 	Asset() AssetResolver
 	Mutation() MutationResolver
 	MutualsUser() MutualsUserResolver
+	Pool() PoolResolver
 	Query() QueryResolver
-	Split() SplitResolver
 	Subscription() SubscriptionResolver
 	UserEmail() UserEmailResolver
 	Viewer() ViewerResolver
@@ -80,8 +80,8 @@ type ComplexityRoot struct {
 		Dbid             func(childComplexity int) int
 		ID               func(childComplexity int) int
 		LastUpdated      func(childComplexity int) int
+		Pool             func(childComplexity int) int
 		RecipientAddress func(childComplexity int) int
-		Split            func(childComplexity int) int
 		Value            func(childComplexity int) int
 		Version          func(childComplexity int) int
 	}
@@ -92,8 +92,8 @@ type ComplexityRoot struct {
 		Expression       func(childComplexity int) int
 		ID               func(childComplexity int) int
 		LastUpdated      func(childComplexity int) int
+		Pool             func(childComplexity int) int
 		RecipientAddress func(childComplexity int) int
-		Split            func(childComplexity int) int
 		Version          func(childComplexity int) int
 	}
 
@@ -116,29 +116,29 @@ type ComplexityRoot struct {
 		Chain   func(childComplexity int) int
 	}
 
+	ChainPools struct {
+		Chain func(childComplexity int) int
+		Pools func(childComplexity int) int
+	}
+
 	ChainPubKey struct {
 		Chain  func(childComplexity int) int
 		PubKey func(childComplexity int) int
-	}
-
-	ChainSplits struct {
-		Chain  func(childComplexity int) int
-		Splits func(childComplexity int) int
 	}
 
 	ClearAllNotificationsPayload struct {
 		Notifications func(childComplexity int) int
 	}
 
-	CreateSplitPayload struct {
-		Split func(childComplexity int) int
+	CreatePoolPayload struct {
+		Pool func(childComplexity int) int
 	}
 
 	CreateUserPayload struct {
 		Viewer func(childComplexity int) int
 	}
 
-	DeleteSplitPayload struct {
+	DeletePoolPayload struct {
 		DeletedID func(childComplexity int) int
 	}
 
@@ -187,15 +187,15 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
+	ErrPoolNotFound struct {
+		Message func(childComplexity int) int
+	}
+
 	ErrPushTokenBelongsToAnotherUser struct {
 		Message func(childComplexity int) int
 	}
 
 	ErrSessionInvalidated struct {
-		Message func(childComplexity int) int
-	}
-
-	ErrSplitNotFound struct {
 		Message func(childComplexity int) int
 	}
 
@@ -242,16 +242,16 @@ type ComplexityRoot struct {
 		AddUserWallet                   func(childComplexity int, chainAddress persist.ChainAddress, authMechanism model.AuthMechanism) int
 		AddWalletToUserUnchecked        func(childComplexity int, input model.AdminAddWalletInput) int
 		ClearAllNotifications           func(childComplexity int) int
-		CreateSplit                     func(childComplexity int, input model.CreateSplitInput) int
+		CreatePool                      func(childComplexity int, input model.CreatePoolInput) int
 		CreateUser                      func(childComplexity int, authMechanism model.AuthMechanism, input model.CreateUserInput) int
-		DeleteSplit                     func(childComplexity int, splitID persist.DBID) int
+		DeletePool                      func(childComplexity int, poolID persist.DBID) int
 		GetAuthNonce                    func(childComplexity int) int
 		Login                           func(childComplexity int, authMechanism model.AuthMechanism) int
 		Logout                          func(childComplexity int, pushTokenToUnregister *string) int
 		OptInForRoles                   func(childComplexity int, roles []persist.Role) int
 		OptOutForRoles                  func(childComplexity int, roles []persist.Role) int
 		PreverifyEmail                  func(childComplexity int, input model.PreverifyEmailInput) int
-		PublishSplit                    func(childComplexity int, input model.PublishSplitInput) int
+		PublishPool                     func(childComplexity int, input model.PublishPoolInput) int
 		RegisterUserPushToken           func(childComplexity int, pushToken string) int
 		RemoveUserWallets               func(childComplexity int, walletIds []persist.DBID) int
 		ResendVerificationEmail         func(childComplexity int) int
@@ -261,13 +261,13 @@ type ComplexityRoot struct {
 		UpdateEmail                     func(childComplexity int, input model.UpdateEmailInput) int
 		UpdateEmailNotificationSettings func(childComplexity int, input model.UpdateEmailNotificationSettingsInput) int
 		UpdateNotificationSettings      func(childComplexity int, settings *model.NotificationSettingsInput) int
+		UpdatePoolHidden                func(childComplexity int, input model.UpdatePoolHiddenInput) int
+		UpdatePoolOrder                 func(childComplexity int, input model.UpdatePoolOrderInput) int
 		UpdatePrimaryWallet             func(childComplexity int, walletID persist.DBID) int
-		UpdateSplitHidden               func(childComplexity int, input model.UpdateSplitHiddenInput) int
-		UpdateSplitOrder                func(childComplexity int, input model.UpdateSplitOrderInput) int
 		UpdateUserExperience            func(childComplexity int, input model.UpdateUserExperienceInput) int
 		UpdateUserInfo                  func(childComplexity int, input model.UpdateUserInfoInput) int
 		UploadPersistedQueries          func(childComplexity int, input *model.UploadPersistedQueriesInput) int
-		UpsertSplit                     func(childComplexity int, input model.UpsertSplitInput) int
+		UpsertPool                      func(childComplexity int, input model.UpsertPoolInput) int
 		VerifyEmail                     func(childComplexity int, input model.VerifyEmailInput) int
 		VerifyEmailMagicLink            func(childComplexity int, input model.VerifyEmailMagicLinkInput) int
 	}
@@ -276,10 +276,10 @@ type ComplexityRoot struct {
 		Dbid                func(childComplexity int) int
 		ID                  func(childComplexity int) int
 		IsAuthenticatedUser func(childComplexity int) int
+		Pools               func(childComplexity int) int
+		PoolsByChain        func(childComplexity int, chain persist.Chain) int
 		PrimaryWallet       func(childComplexity int) int
 		Roles               func(childComplexity int) int
-		Splits              func(childComplexity int) int
-		SplitsByChain       func(childComplexity int, chain persist.Chain) int
 		Universal           func(childComplexity int) int
 		Username            func(childComplexity int) int
 		Wallets             func(childComplexity int) int
@@ -291,7 +291,7 @@ type ComplexityRoot struct {
 	}
 
 	NotificationSettings struct {
-		SomeoneViewedYourSplit func(childComplexity int) int
+		SomeoneViewedYourPool func(childComplexity int) int
 	}
 
 	NotificationsConnection struct {
@@ -317,51 +317,7 @@ type ComplexityRoot struct {
 		Total           func(childComplexity int) int
 	}
 
-	PreverifyEmailPayload struct {
-		Email  func(childComplexity int) int
-		Result func(childComplexity int) int
-	}
-
-	PublishSplitPayload struct {
-		Split func(childComplexity int) int
-	}
-
-	Query struct {
-		IsEmailAddressAvailable func(childComplexity int, emailAddress persist.Email) int
-		Node                    func(childComplexity int, id model.GqlID) int
-		SearchSplits            func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
-		SearchUsers             func(childComplexity int, query string, limit *int, usernameWeight *float64) int
-		SplitByID               func(childComplexity int, id persist.DBID) int
-		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
-		UserByID                func(childComplexity int, id persist.DBID) int
-		UserByUsername          func(childComplexity int, username string) int
-		UsersByRole             func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
-		Viewer                  func(childComplexity int) int
-		ViewerSplitByID         func(childComplexity int, id persist.DBID) int
-		__resolve__service      func(childComplexity int) int
-	}
-
-	RegisterUserPushTokenPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	RemoveUserWalletsPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	ResendVerificationEmailPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	SearchSplitsPayload struct {
-		Results func(childComplexity int) int
-	}
-
-	SearchUsersPayload struct {
-		Results func(childComplexity int) int
-	}
-
-	Split struct {
+	Pool struct {
 		Address               func(childComplexity int) int
 		AllocationAggregation func(childComplexity int) int
 		Allocations           func(childComplexity int) int
@@ -377,8 +333,52 @@ type ComplexityRoot struct {
 		Version               func(childComplexity int) int
 	}
 
-	SplitSearchResult struct {
-		Split func(childComplexity int) int
+	PoolSearchResult struct {
+		Pool func(childComplexity int) int
+	}
+
+	PreverifyEmailPayload struct {
+		Email  func(childComplexity int) int
+		Result func(childComplexity int) int
+	}
+
+	PublishPoolPayload struct {
+		Pool func(childComplexity int) int
+	}
+
+	Query struct {
+		IsEmailAddressAvailable func(childComplexity int, emailAddress persist.Email) int
+		Node                    func(childComplexity int, id model.GqlID) int
+		PoolByID                func(childComplexity int, id persist.DBID) int
+		SearchPools             func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
+		SearchUsers             func(childComplexity int, query string, limit *int, usernameWeight *float64) int
+		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
+		UserByID                func(childComplexity int, id persist.DBID) int
+		UserByUsername          func(childComplexity int, username string) int
+		UsersByRole             func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
+		Viewer                  func(childComplexity int) int
+		ViewerPoolByID          func(childComplexity int, id persist.DBID) int
+		__resolve__service      func(childComplexity int) int
+	}
+
+	RegisterUserPushTokenPayload struct {
+		Viewer func(childComplexity int) int
+	}
+
+	RemoveUserWalletsPayload struct {
+		Viewer func(childComplexity int) int
+	}
+
+	ResendVerificationEmailPayload struct {
+		Viewer func(childComplexity int) int
+	}
+
+	SearchPoolsPayload struct {
+		Results func(childComplexity int) int
+	}
+
+	SearchUsersPayload struct {
+		Results func(childComplexity int) int
 	}
 
 	Subscription struct {
@@ -420,20 +420,20 @@ type ComplexityRoot struct {
 		Viewer func(childComplexity int) int
 	}
 
+	UpdatePoolHiddenPayload struct {
+		Pool func(childComplexity int) int
+	}
+
+	UpdatePoolOrderPayload struct {
+		Viewer func(childComplexity int) int
+	}
+
+	UpdatePoolPayload struct {
+		Pool func(childComplexity int) int
+	}
+
 	UpdatePrimaryWalletPayload struct {
 		Viewer func(childComplexity int) int
-	}
-
-	UpdateSplitHiddenPayload struct {
-		Split func(childComplexity int) int
-	}
-
-	UpdateSplitOrderPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	UpdateSplitPayload struct {
-		Split func(childComplexity int) int
 	}
 
 	UpdateUserExperiencePayload struct {
@@ -448,8 +448,8 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	UpsertSplitPayload struct {
-		Split func(childComplexity int) int
+	UpsertPoolPayload struct {
+		Pool func(childComplexity int) int
 	}
 
 	UserEdge struct {
@@ -492,11 +492,11 @@ type ComplexityRoot struct {
 		Notifications        func(childComplexity int, before *string, after *string, first *int, last *int) int
 		User                 func(childComplexity int) int
 		UserExperiences      func(childComplexity int) int
-		ViewerSplits         func(childComplexity int) int
+		ViewerPools          func(childComplexity int) int
 	}
 
-	ViewerSplit struct {
-		Split func(childComplexity int) int
+	ViewerPool struct {
+		Pool func(childComplexity int) int
 	}
 
 	Wallet struct {
@@ -504,7 +504,7 @@ type ComplexityRoot struct {
 		ChainAddress func(childComplexity int) int
 		Dbid         func(childComplexity int) int
 		ID           func(childComplexity int) int
-		Splits       func(childComplexity int) int
+		Pools        func(childComplexity int) int
 		WalletType   func(childComplexity int) int
 	}
 
@@ -514,10 +514,10 @@ type ComplexityRoot struct {
 }
 
 type AllocationResolver interface {
-	Split(ctx context.Context, obj *model.Allocation) (*model.Split, error)
+	Pool(ctx context.Context, obj *model.Allocation) (*model.Pool, error)
 }
 type AllocationAggregationResolver interface {
-	Split(ctx context.Context, obj *model.AllocationAggregation) (*model.Split, error)
+	Pool(ctx context.Context, obj *model.AllocationAggregation) (*model.Pool, error)
 }
 type AssetResolver interface {
 	Token(ctx context.Context, obj *model.Asset) (*model.Token, error)
@@ -536,12 +536,12 @@ type MutationResolver interface {
 	UnsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailTypePayloadOrError, error)
 	Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginPayloadOrError, error)
 	Logout(ctx context.Context, pushTokenToUnregister *string) (*model.LogoutPayload, error)
-	UpsertSplit(ctx context.Context, input model.UpsertSplitInput) (model.UpsertSplitPayloadOrError, error)
-	PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error)
-	CreateSplit(ctx context.Context, input model.CreateSplitInput) (model.CreateSplitPayloadOrError, error)
-	UpdateSplitHidden(ctx context.Context, input model.UpdateSplitHiddenInput) (model.UpdateSplitHiddenPayloadOrError, error)
-	DeleteSplit(ctx context.Context, splitID persist.DBID) (model.DeleteSplitPayloadOrError, error)
-	UpdateSplitOrder(ctx context.Context, input model.UpdateSplitOrderInput) (model.UpdateSplitOrderPayloadOrError, error)
+	UpsertPool(ctx context.Context, input model.UpsertPoolInput) (model.UpsertPoolPayloadOrError, error)
+	PublishPool(ctx context.Context, input model.PublishPoolInput) (model.PublishPoolPayloadOrError, error)
+	CreatePool(ctx context.Context, input model.CreatePoolInput) (model.CreatePoolPayloadOrError, error)
+	UpdatePoolHidden(ctx context.Context, input model.UpdatePoolHiddenInput) (model.UpdatePoolHiddenPayloadOrError, error)
+	DeletePool(ctx context.Context, poolID persist.DBID) (model.DeletePoolPayloadOrError, error)
+	UpdatePoolOrder(ctx context.Context, input model.UpdatePoolOrderInput) (model.UpdatePoolOrderPayloadOrError, error)
 	ClearAllNotifications(ctx context.Context) (*model.ClearAllNotificationsPayload, error)
 	UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error)
 	PreverifyEmail(ctx context.Context, input model.PreverifyEmailInput) (model.PreverifyEmailPayloadOrError, error)
@@ -560,8 +560,13 @@ type MutualsUserResolver interface {
 	Roles(ctx context.Context, obj *model.MutualsUser) ([]*persist.Role, error)
 	Wallets(ctx context.Context, obj *model.MutualsUser) ([]*model.Wallet, error)
 	PrimaryWallet(ctx context.Context, obj *model.MutualsUser) (*model.Wallet, error)
-	Splits(ctx context.Context, obj *model.MutualsUser) ([]*model.Split, error)
-	SplitsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainSplits, error)
+	Pools(ctx context.Context, obj *model.MutualsUser) ([]*model.Pool, error)
+	PoolsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainPools, error)
+}
+type PoolResolver interface {
+	AllocationAggregation(ctx context.Context, obj *model.Pool) ([]*model.AllocationAggregation, error)
+	Allocations(ctx context.Context, obj *model.Pool) ([]*model.Allocation, error)
+	Assets(ctx context.Context, obj *model.Pool, limit *int) ([]*model.Asset, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id model.GqlID) (model.Node, error)
@@ -569,17 +574,12 @@ type QueryResolver interface {
 	UserByUsername(ctx context.Context, username string) (model.UserByUsernameOrError, error)
 	UserByID(ctx context.Context, id persist.DBID) (model.UserByIDOrError, error)
 	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error)
-	SplitByID(ctx context.Context, id persist.DBID) (model.SplitByIDPayloadOrError, error)
-	ViewerSplitByID(ctx context.Context, id persist.DBID) (model.ViewerSplitByIDPayloadOrError, error)
+	PoolByID(ctx context.Context, id persist.DBID) (model.PoolByIDPayloadOrError, error)
+	ViewerPoolByID(ctx context.Context, id persist.DBID) (model.ViewerPoolByIDPayloadOrError, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersPayloadOrError, error)
-	SearchSplits(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchSplitsPayloadOrError, error)
+	SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsPayloadOrError, error)
 	IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error)
 	UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error)
-}
-type SplitResolver interface {
-	AllocationAggregation(ctx context.Context, obj *model.Split) ([]*model.AllocationAggregation, error)
-	Allocations(ctx context.Context, obj *model.Split) ([]*model.Allocation, error)
-	Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error)
 }
 type SubscriptionResolver interface {
 	NewNotification(ctx context.Context) (<-chan model.Notification, error)
@@ -590,14 +590,14 @@ type UserEmailResolver interface {
 }
 type ViewerResolver interface {
 	User(ctx context.Context, obj *model.Viewer) (*model.MutualsUser, error)
-	ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error)
+	ViewerPools(ctx context.Context, obj *model.Viewer) ([]*model.ViewerPool, error)
 	Email(ctx context.Context, obj *model.Viewer) (*model.UserEmail, error)
 	Notifications(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error)
 	NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error)
 	UserExperiences(ctx context.Context, obj *model.Viewer) ([]*model.UserExperience, error)
 }
 type WalletResolver interface {
-	Splits(ctx context.Context, obj *model.Wallet) ([]*model.Split, error)
+	Pools(ctx context.Context, obj *model.Wallet) ([]*model.Pool, error)
 }
 
 type ChainAddressInputResolver interface {
@@ -670,19 +670,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Allocation.LastUpdated(childComplexity), true
 
+	case "Allocation.pool":
+		if e.complexity.Allocation.Pool == nil {
+			break
+		}
+
+		return e.complexity.Allocation.Pool(childComplexity), true
+
 	case "Allocation.recipientAddress":
 		if e.complexity.Allocation.RecipientAddress == nil {
 			break
 		}
 
 		return e.complexity.Allocation.RecipientAddress(childComplexity), true
-
-	case "Allocation.split":
-		if e.complexity.Allocation.Split == nil {
-			break
-		}
-
-		return e.complexity.Allocation.Split(childComplexity), true
 
 	case "Allocation.value":
 		if e.complexity.Allocation.Value == nil {
@@ -733,19 +733,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AllocationAggregation.LastUpdated(childComplexity), true
 
+	case "AllocationAggregation.pool":
+		if e.complexity.AllocationAggregation.Pool == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.Pool(childComplexity), true
+
 	case "AllocationAggregation.recipientAddress":
 		if e.complexity.AllocationAggregation.RecipientAddress == nil {
 			break
 		}
 
 		return e.complexity.AllocationAggregation.RecipientAddress(childComplexity), true
-
-	case "AllocationAggregation.split":
-		if e.complexity.AllocationAggregation.Split == nil {
-			break
-		}
-
-		return e.complexity.AllocationAggregation.Split(childComplexity), true
 
 	case "AllocationAggregation.version":
 		if e.complexity.AllocationAggregation.Version == nil {
@@ -824,6 +824,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ChainAddress.Chain(childComplexity), true
 
+	case "ChainPools.chain":
+		if e.complexity.ChainPools.Chain == nil {
+			break
+		}
+
+		return e.complexity.ChainPools.Chain(childComplexity), true
+
+	case "ChainPools.pools":
+		if e.complexity.ChainPools.Pools == nil {
+			break
+		}
+
+		return e.complexity.ChainPools.Pools(childComplexity), true
+
 	case "ChainPubKey.chain":
 		if e.complexity.ChainPubKey.Chain == nil {
 			break
@@ -838,20 +852,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ChainPubKey.PubKey(childComplexity), true
 
-	case "ChainSplits.chain":
-		if e.complexity.ChainSplits.Chain == nil {
-			break
-		}
-
-		return e.complexity.ChainSplits.Chain(childComplexity), true
-
-	case "ChainSplits.splits":
-		if e.complexity.ChainSplits.Splits == nil {
-			break
-		}
-
-		return e.complexity.ChainSplits.Splits(childComplexity), true
-
 	case "ClearAllNotificationsPayload.notifications":
 		if e.complexity.ClearAllNotificationsPayload.Notifications == nil {
 			break
@@ -859,12 +859,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ClearAllNotificationsPayload.Notifications(childComplexity), true
 
-	case "CreateSplitPayload.split":
-		if e.complexity.CreateSplitPayload.Split == nil {
+	case "CreatePoolPayload.pool":
+		if e.complexity.CreatePoolPayload.Pool == nil {
 			break
 		}
 
-		return e.complexity.CreateSplitPayload.Split(childComplexity), true
+		return e.complexity.CreatePoolPayload.Pool(childComplexity), true
 
 	case "CreateUserPayload.viewer":
 		if e.complexity.CreateUserPayload.Viewer == nil {
@@ -873,12 +873,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreateUserPayload.Viewer(childComplexity), true
 
-	case "DeleteSplitPayload.deletedId":
-		if e.complexity.DeleteSplitPayload.DeletedID == nil {
+	case "DeletePoolPayload.deletedId":
+		if e.complexity.DeletePoolPayload.DeletedID == nil {
 			break
 		}
 
-		return e.complexity.DeleteSplitPayload.DeletedID(childComplexity), true
+		return e.complexity.DeletePoolPayload.DeletedID(childComplexity), true
 
 	case "DeletedNode.dbid":
 		if e.complexity.DeletedNode.Dbid == nil {
@@ -985,6 +985,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ErrNotAuthorized.Message(childComplexity), true
 
+	case "ErrPoolNotFound.message":
+		if e.complexity.ErrPoolNotFound.Message == nil {
+			break
+		}
+
+		return e.complexity.ErrPoolNotFound.Message(childComplexity), true
+
 	case "ErrPushTokenBelongsToAnotherUser.message":
 		if e.complexity.ErrPushTokenBelongsToAnotherUser.Message == nil {
 			break
@@ -998,13 +1005,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ErrSessionInvalidated.Message(childComplexity), true
-
-	case "ErrSplitNotFound.message":
-		if e.complexity.ErrSplitNotFound.Message == nil {
-			break
-		}
-
-		return e.complexity.ErrSplitNotFound.Message(childComplexity), true
 
 	case "ErrSyncFailed.message":
 		if e.complexity.ErrSyncFailed.Message == nil {
@@ -1126,17 +1126,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ClearAllNotifications(childComplexity), true
 
-	case "Mutation.createSplit":
-		if e.complexity.Mutation.CreateSplit == nil {
+	case "Mutation.createPool":
+		if e.complexity.Mutation.CreatePool == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createSplit_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createPool_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateSplit(childComplexity, args["input"].(model.CreateSplitInput)), true
+		return e.complexity.Mutation.CreatePool(childComplexity, args["input"].(model.CreatePoolInput)), true
 
 	case "Mutation.createUser":
 		if e.complexity.Mutation.CreateUser == nil {
@@ -1150,17 +1150,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["authMechanism"].(model.AuthMechanism), args["input"].(model.CreateUserInput)), true
 
-	case "Mutation.deleteSplit":
-		if e.complexity.Mutation.DeleteSplit == nil {
+	case "Mutation.deletePool":
+		if e.complexity.Mutation.DeletePool == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteSplit_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deletePool_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSplit(childComplexity, args["splitId"].(persist.DBID)), true
+		return e.complexity.Mutation.DeletePool(childComplexity, args["poolId"].(persist.DBID)), true
 
 	case "Mutation.getAuthNonce":
 		if e.complexity.Mutation.GetAuthNonce == nil {
@@ -1229,17 +1229,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.PreverifyEmail(childComplexity, args["input"].(model.PreverifyEmailInput)), true
 
-	case "Mutation.publishSplit":
-		if e.complexity.Mutation.PublishSplit == nil {
+	case "Mutation.publishPool":
+		if e.complexity.Mutation.PublishPool == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_publishSplit_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_publishPool_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PublishSplit(childComplexity, args["input"].(model.PublishSplitInput)), true
+		return e.complexity.Mutation.PublishPool(childComplexity, args["input"].(model.PublishPoolInput)), true
 
 	case "Mutation.registerUserPushToken":
 		if e.complexity.Mutation.RegisterUserPushToken == nil {
@@ -1344,6 +1344,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateNotificationSettings(childComplexity, args["settings"].(*model.NotificationSettingsInput)), true
 
+	case "Mutation.updatePoolHidden":
+		if e.complexity.Mutation.UpdatePoolHidden == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePoolHidden_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePoolHidden(childComplexity, args["input"].(model.UpdatePoolHiddenInput)), true
+
+	case "Mutation.updatePoolOrder":
+		if e.complexity.Mutation.UpdatePoolOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePoolOrder_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePoolOrder(childComplexity, args["input"].(model.UpdatePoolOrderInput)), true
+
 	case "Mutation.updatePrimaryWallet":
 		if e.complexity.Mutation.UpdatePrimaryWallet == nil {
 			break
@@ -1355,30 +1379,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdatePrimaryWallet(childComplexity, args["walletID"].(persist.DBID)), true
-
-	case "Mutation.updateSplitHidden":
-		if e.complexity.Mutation.UpdateSplitHidden == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateSplitHidden_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateSplitHidden(childComplexity, args["input"].(model.UpdateSplitHiddenInput)), true
-
-	case "Mutation.updateSplitOrder":
-		if e.complexity.Mutation.UpdateSplitOrder == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateSplitOrder_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateSplitOrder(childComplexity, args["input"].(model.UpdateSplitOrderInput)), true
 
 	case "Mutation.updateUserExperience":
 		if e.complexity.Mutation.UpdateUserExperience == nil {
@@ -1416,17 +1416,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UploadPersistedQueries(childComplexity, args["input"].(*model.UploadPersistedQueriesInput)), true
 
-	case "Mutation.upsertSplit":
-		if e.complexity.Mutation.UpsertSplit == nil {
+	case "Mutation.upsertPool":
+		if e.complexity.Mutation.UpsertPool == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_upsertSplit_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_upsertPool_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpsertSplit(childComplexity, args["input"].(model.UpsertSplitInput)), true
+		return e.complexity.Mutation.UpsertPool(childComplexity, args["input"].(model.UpsertPoolInput)), true
 
 	case "Mutation.verifyEmail":
 		if e.complexity.Mutation.VerifyEmail == nil {
@@ -1473,6 +1473,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MutualsUser.IsAuthenticatedUser(childComplexity), true
 
+	case "MutualsUser.pools":
+		if e.complexity.MutualsUser.Pools == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.Pools(childComplexity), true
+
+	case "MutualsUser.poolsByChain":
+		if e.complexity.MutualsUser.PoolsByChain == nil {
+			break
+		}
+
+		args, err := ec.field_MutualsUser_poolsByChain_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.MutualsUser.PoolsByChain(childComplexity, args["chain"].(persist.Chain)), true
+
 	case "MutualsUser.primaryWallet":
 		if e.complexity.MutualsUser.PrimaryWallet == nil {
 			break
@@ -1486,25 +1505,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MutualsUser.Roles(childComplexity), true
-
-	case "MutualsUser.splits":
-		if e.complexity.MutualsUser.Splits == nil {
-			break
-		}
-
-		return e.complexity.MutualsUser.Splits(childComplexity), true
-
-	case "MutualsUser.splitsByChain":
-		if e.complexity.MutualsUser.SplitsByChain == nil {
-			break
-		}
-
-		args, err := ec.field_MutualsUser_splitsByChain_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.MutualsUser.SplitsByChain(childComplexity, args["chain"].(persist.Chain)), true
 
 	case "MutualsUser.universal":
 		if e.complexity.MutualsUser.Universal == nil {
@@ -1541,12 +1541,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NotificationEdge.Node(childComplexity), true
 
-	case "NotificationSettings.someoneViewedYourSplit":
-		if e.complexity.NotificationSettings.SomeoneViewedYourSplit == nil {
+	case "NotificationSettings.someoneViewedYourPool":
+		if e.complexity.NotificationSettings.SomeoneViewedYourPool == nil {
 			break
 		}
 
-		return e.complexity.NotificationSettings.SomeoneViewedYourSplit(childComplexity), true
+		return e.complexity.NotificationSettings.SomeoneViewedYourPool(childComplexity), true
 
 	case "NotificationsConnection.edges":
 		if e.complexity.NotificationsConnection.Edges == nil {
@@ -1625,6 +1625,109 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.Total(childComplexity), true
 
+	case "Pool.address":
+		if e.complexity.Pool.Address == nil {
+			break
+		}
+
+		return e.complexity.Pool.Address(childComplexity), true
+
+	case "Pool.allocationAggregation":
+		if e.complexity.Pool.AllocationAggregation == nil {
+			break
+		}
+
+		return e.complexity.Pool.AllocationAggregation(childComplexity), true
+
+	case "Pool.allocations":
+		if e.complexity.Pool.Allocations == nil {
+			break
+		}
+
+		return e.complexity.Pool.Allocations(childComplexity), true
+
+	case "Pool.assets":
+		if e.complexity.Pool.Assets == nil {
+			break
+		}
+
+		args, err := ec.field_Pool_assets_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Pool.Assets(childComplexity, args["limit"].(*int)), true
+
+	case "Pool.chain":
+		if e.complexity.Pool.Chain == nil {
+			break
+		}
+
+		return e.complexity.Pool.Chain(childComplexity), true
+
+	case "Pool.creatorAddress":
+		if e.complexity.Pool.CreatorAddress == nil {
+			break
+		}
+
+		return e.complexity.Pool.CreatorAddress(childComplexity), true
+
+	case "Pool.dbid":
+		if e.complexity.Pool.Dbid == nil {
+			break
+		}
+
+		return e.complexity.Pool.Dbid(childComplexity), true
+
+	case "Pool.description":
+		if e.complexity.Pool.Description == nil {
+			break
+		}
+
+		return e.complexity.Pool.Description(childComplexity), true
+
+	case "Pool.id":
+		if e.complexity.Pool.ID == nil {
+			break
+		}
+
+		return e.complexity.Pool.ID(childComplexity), true
+
+	case "Pool.name":
+		if e.complexity.Pool.Name == nil {
+			break
+		}
+
+		return e.complexity.Pool.Name(childComplexity), true
+
+	case "Pool.ownerAddress":
+		if e.complexity.Pool.OwnerAddress == nil {
+			break
+		}
+
+		return e.complexity.Pool.OwnerAddress(childComplexity), true
+
+	case "Pool.status":
+		if e.complexity.Pool.Status == nil {
+			break
+		}
+
+		return e.complexity.Pool.Status(childComplexity), true
+
+	case "Pool.version":
+		if e.complexity.Pool.Version == nil {
+			break
+		}
+
+		return e.complexity.Pool.Version(childComplexity), true
+
+	case "PoolSearchResult.pool":
+		if e.complexity.PoolSearchResult.Pool == nil {
+			break
+		}
+
+		return e.complexity.PoolSearchResult.Pool(childComplexity), true
+
 	case "PreverifyEmailPayload.email":
 		if e.complexity.PreverifyEmailPayload.Email == nil {
 			break
@@ -1639,12 +1742,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PreverifyEmailPayload.Result(childComplexity), true
 
-	case "PublishSplitPayload.split":
-		if e.complexity.PublishSplitPayload.Split == nil {
+	case "PublishPoolPayload.pool":
+		if e.complexity.PublishPoolPayload.Pool == nil {
 			break
 		}
 
-		return e.complexity.PublishSplitPayload.Split(childComplexity), true
+		return e.complexity.PublishPoolPayload.Pool(childComplexity), true
 
 	case "Query.isEmailAddressAvailable":
 		if e.complexity.Query.IsEmailAddressAvailable == nil {
@@ -1670,17 +1773,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Node(childComplexity, args["id"].(model.GqlID)), true
 
-	case "Query.searchSplits":
-		if e.complexity.Query.SearchSplits == nil {
+	case "Query.poolById":
+		if e.complexity.Query.PoolByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_searchSplits_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_poolById_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.SearchSplits(childComplexity, args["query"].(string), args["limit"].(*int), args["nameWeight"].(*float64), args["descriptionWeight"].(*float64)), true
+		return e.complexity.Query.PoolByID(childComplexity, args["id"].(persist.DBID)), true
+
+	case "Query.searchPools":
+		if e.complexity.Query.SearchPools == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchPools_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchPools(childComplexity, args["query"].(string), args["limit"].(*int), args["nameWeight"].(*float64), args["descriptionWeight"].(*float64)), true
 
 	case "Query.searchUsers":
 		if e.complexity.Query.SearchUsers == nil {
@@ -1693,18 +1808,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.SearchUsers(childComplexity, args["query"].(string), args["limit"].(*int), args["usernameWeight"].(*float64)), true
-
-	case "Query.splitById":
-		if e.complexity.Query.SplitByID == nil {
-			break
-		}
-
-		args, err := ec.field_Query_splitById_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.SplitByID(childComplexity, args["id"].(persist.DBID)), true
 
 	case "Query.userByAddress":
 		if e.complexity.Query.UserByAddress == nil {
@@ -1761,17 +1864,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Viewer(childComplexity), true
 
-	case "Query.viewerSplitById":
-		if e.complexity.Query.ViewerSplitByID == nil {
+	case "Query.viewerPoolById":
+		if e.complexity.Query.ViewerPoolByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_viewerSplitById_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_viewerPoolById_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.ViewerSplitByID(childComplexity, args["id"].(persist.DBID)), true
+		return e.complexity.Query.ViewerPoolByID(childComplexity, args["id"].(persist.DBID)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -1801,12 +1904,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ResendVerificationEmailPayload.Viewer(childComplexity), true
 
-	case "SearchSplitsPayload.results":
-		if e.complexity.SearchSplitsPayload.Results == nil {
+	case "SearchPoolsPayload.results":
+		if e.complexity.SearchPoolsPayload.Results == nil {
 			break
 		}
 
-		return e.complexity.SearchSplitsPayload.Results(childComplexity), true
+		return e.complexity.SearchPoolsPayload.Results(childComplexity), true
 
 	case "SearchUsersPayload.results":
 		if e.complexity.SearchUsersPayload.Results == nil {
@@ -1814,109 +1917,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SearchUsersPayload.Results(childComplexity), true
-
-	case "Split.address":
-		if e.complexity.Split.Address == nil {
-			break
-		}
-
-		return e.complexity.Split.Address(childComplexity), true
-
-	case "Split.allocationAggregation":
-		if e.complexity.Split.AllocationAggregation == nil {
-			break
-		}
-
-		return e.complexity.Split.AllocationAggregation(childComplexity), true
-
-	case "Split.allocations":
-		if e.complexity.Split.Allocations == nil {
-			break
-		}
-
-		return e.complexity.Split.Allocations(childComplexity), true
-
-	case "Split.assets":
-		if e.complexity.Split.Assets == nil {
-			break
-		}
-
-		args, err := ec.field_Split_assets_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Split.Assets(childComplexity, args["limit"].(*int)), true
-
-	case "Split.chain":
-		if e.complexity.Split.Chain == nil {
-			break
-		}
-
-		return e.complexity.Split.Chain(childComplexity), true
-
-	case "Split.creatorAddress":
-		if e.complexity.Split.CreatorAddress == nil {
-			break
-		}
-
-		return e.complexity.Split.CreatorAddress(childComplexity), true
-
-	case "Split.dbid":
-		if e.complexity.Split.Dbid == nil {
-			break
-		}
-
-		return e.complexity.Split.Dbid(childComplexity), true
-
-	case "Split.description":
-		if e.complexity.Split.Description == nil {
-			break
-		}
-
-		return e.complexity.Split.Description(childComplexity), true
-
-	case "Split.id":
-		if e.complexity.Split.ID == nil {
-			break
-		}
-
-		return e.complexity.Split.ID(childComplexity), true
-
-	case "Split.name":
-		if e.complexity.Split.Name == nil {
-			break
-		}
-
-		return e.complexity.Split.Name(childComplexity), true
-
-	case "Split.ownerAddress":
-		if e.complexity.Split.OwnerAddress == nil {
-			break
-		}
-
-		return e.complexity.Split.OwnerAddress(childComplexity), true
-
-	case "Split.status":
-		if e.complexity.Split.Status == nil {
-			break
-		}
-
-		return e.complexity.Split.Status(childComplexity), true
-
-	case "Split.version":
-		if e.complexity.Split.Version == nil {
-			break
-		}
-
-		return e.complexity.Split.Version(childComplexity), true
-
-	case "SplitSearchResult.split":
-		if e.complexity.SplitSearchResult.Split == nil {
-			break
-		}
-
-		return e.complexity.SplitSearchResult.Split(childComplexity), true
 
 	case "Subscription.newNotification":
 		if e.complexity.Subscription.NewNotification == nil {
@@ -2065,33 +2065,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UpdateEmailPayload.Viewer(childComplexity), true
 
+	case "UpdatePoolHiddenPayload.pool":
+		if e.complexity.UpdatePoolHiddenPayload.Pool == nil {
+			break
+		}
+
+		return e.complexity.UpdatePoolHiddenPayload.Pool(childComplexity), true
+
+	case "UpdatePoolOrderPayload.viewer":
+		if e.complexity.UpdatePoolOrderPayload.Viewer == nil {
+			break
+		}
+
+		return e.complexity.UpdatePoolOrderPayload.Viewer(childComplexity), true
+
+	case "UpdatePoolPayload.pool":
+		if e.complexity.UpdatePoolPayload.Pool == nil {
+			break
+		}
+
+		return e.complexity.UpdatePoolPayload.Pool(childComplexity), true
+
 	case "UpdatePrimaryWalletPayload.viewer":
 		if e.complexity.UpdatePrimaryWalletPayload.Viewer == nil {
 			break
 		}
 
 		return e.complexity.UpdatePrimaryWalletPayload.Viewer(childComplexity), true
-
-	case "UpdateSplitHiddenPayload.split":
-		if e.complexity.UpdateSplitHiddenPayload.Split == nil {
-			break
-		}
-
-		return e.complexity.UpdateSplitHiddenPayload.Split(childComplexity), true
-
-	case "UpdateSplitOrderPayload.viewer":
-		if e.complexity.UpdateSplitOrderPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.UpdateSplitOrderPayload.Viewer(childComplexity), true
-
-	case "UpdateSplitPayload.split":
-		if e.complexity.UpdateSplitPayload.Split == nil {
-			break
-		}
-
-		return e.complexity.UpdateSplitPayload.Split(childComplexity), true
 
 	case "UpdateUserExperiencePayload.viewer":
 		if e.complexity.UpdateUserExperiencePayload.Viewer == nil {
@@ -2114,12 +2114,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UploadPersistedQueriesPayload.Message(childComplexity), true
 
-	case "UpsertSplitPayload.split":
-		if e.complexity.UpsertSplitPayload.Split == nil {
+	case "UpsertPoolPayload.pool":
+		if e.complexity.UpsertPoolPayload.Pool == nil {
 			break
 		}
 
-		return e.complexity.UpsertSplitPayload.Split(childComplexity), true
+		return e.complexity.UpsertPoolPayload.Pool(childComplexity), true
 
 	case "UserEdge.cursor":
 		if e.complexity.UserEdge.Cursor == nil {
@@ -2252,19 +2252,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Viewer.UserExperiences(childComplexity), true
 
-	case "Viewer.viewerSplits":
-		if e.complexity.Viewer.ViewerSplits == nil {
+	case "Viewer.viewerPools":
+		if e.complexity.Viewer.ViewerPools == nil {
 			break
 		}
 
-		return e.complexity.Viewer.ViewerSplits(childComplexity), true
+		return e.complexity.Viewer.ViewerPools(childComplexity), true
 
-	case "ViewerSplit.split":
-		if e.complexity.ViewerSplit.Split == nil {
+	case "ViewerPool.pool":
+		if e.complexity.ViewerPool.Pool == nil {
 			break
 		}
 
-		return e.complexity.ViewerSplit.Split(childComplexity), true
+		return e.complexity.ViewerPool.Pool(childComplexity), true
 
 	case "Wallet.chain":
 		if e.complexity.Wallet.Chain == nil {
@@ -2294,12 +2294,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Wallet.ID(childComplexity), true
 
-	case "Wallet.splits":
-		if e.complexity.Wallet.Splits == nil {
+	case "Wallet.pools":
+		if e.complexity.Wallet.Pools == nil {
 			break
 		}
 
-		return e.complexity.Wallet.Splits(childComplexity), true
+		return e.complexity.Wallet.Pools(childComplexity), true
 
 	case "Wallet.walletType":
 		if e.complexity.Wallet.WalletType == nil {
@@ -2327,7 +2327,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAuthMechanism,
 		ec.unmarshalInputChainAddressInput,
 		ec.unmarshalInputChainPubKeyInput,
-		ec.unmarshalInputCreateSplitInput,
+		ec.unmarshalInputCreatePoolInput,
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputDebugAuth,
 		ec.unmarshalInputEoaAuth,
@@ -2335,22 +2335,22 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMagicLinkAuth,
 		ec.unmarshalInputNotificationSettingsInput,
 		ec.unmarshalInputOneTimeLoginTokenAuth,
+		ec.unmarshalInputPoolAllocationInput,
+		ec.unmarshalInputPoolPositionInput,
 		ec.unmarshalInputPreverifyEmailInput,
 		ec.unmarshalInputPrivyAuth,
-		ec.unmarshalInputPublishSplitInput,
-		ec.unmarshalInputSplitAllocationInput,
-		ec.unmarshalInputSplitPositionInput,
+		ec.unmarshalInputPublishPoolInput,
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
 		ec.unmarshalInputUpdateEmailInput,
 		ec.unmarshalInputUpdateEmailNotificationSettingsInput,
-		ec.unmarshalInputUpdateSplitHiddenInput,
-		ec.unmarshalInputUpdateSplitInfoInput,
-		ec.unmarshalInputUpdateSplitInput,
-		ec.unmarshalInputUpdateSplitOrderInput,
+		ec.unmarshalInputUpdatePoolHiddenInput,
+		ec.unmarshalInputUpdatePoolInfoInput,
+		ec.unmarshalInputUpdatePoolInput,
+		ec.unmarshalInputUpdatePoolOrderInput,
 		ec.unmarshalInputUpdateUserExperienceInput,
 		ec.unmarshalInputUpdateUserInfoInput,
 		ec.unmarshalInputUploadPersistedQueriesInput,
-		ec.unmarshalInputUpsertSplitInput,
+		ec.unmarshalInputUpsertPoolInput,
 		ec.unmarshalInputVerifyEmailInput,
 		ec.unmarshalInputVerifyEmailMagicLinkInput,
 	)
@@ -2553,11 +2553,11 @@ type MutualsUser implements Node @goEmbedHelper {
   roles: [Role] @goField(forceResolver: true)
   wallets: [Wallet] @goField(forceResolver: true)
   primaryWallet: Wallet @goField(forceResolver: true)
-  # Returns all splits owned by this user. Useful for retrieving all tokens without any duplicates,
-  # as opposed to retrieving user -> wallets -> splits, which would contain duplicates for any token
+  # Returns all pools owned by this user. Useful for retrieving all tokens without any duplicates,
+  # as opposed to retrieving user -> wallets -> pools, which would contain duplicates for any token
   # that appears in more than one of the user's wallets.
-  splits: [Split] @goField(forceResolver: true)
-  splitsByChain(chain: Chain!): ChainSplits @goField(forceResolver: true)
+  pools: [Pool] @goField(forceResolver: true)
+  poolsByChain(chain: Chain!): ChainPools @goField(forceResolver: true)
   isAuthenticatedUser: Boolean
 }
 
@@ -2567,7 +2567,7 @@ type Wallet implements Node {
   chainAddress: ChainAddress
   chain: Chain
   walletType: WalletType
-  splits: [Split] @goField(forceResolver: true)
+  pools: [Pool] @goField(forceResolver: true)
 }
 
 type ChainAddress {
@@ -2580,9 +2580,9 @@ type ChainPubKey {
   chain: Chain
 }
 
-type ChainSplits {
+type ChainPools {
   chain: Chain
-  splits: [Split]
+  pools: [Pool]
 }
 
 input ChainAddressInput {
@@ -2662,7 +2662,7 @@ type AllocationAggregation implements Node {
   expression: String
   creationTime: Time
   lastUpdated: Time
-  split: Split @goField(forceResolver: true)
+  pool: Pool @goField(forceResolver: true)
 }
 
 type Allocation implements Node {
@@ -2673,14 +2673,14 @@ type Allocation implements Node {
   value: HexString
   creationTime: Time
   lastUpdated: Time
-  split: Split @goField(forceResolver: true)
+  pool: Pool @goField(forceResolver: true)
 }
 
-type Split implements Node {
+type Pool implements Node {
   id: ID!
   dbid: DBID!
   version: Int
-  status: SplitStatus!
+  status: PoolStatus!
   name: String
   description: String
   address: Address
@@ -2694,8 +2694,8 @@ type Split implements Node {
 
 # We have this extra type in case we need to stick authed data
 # in here one day.
-type ViewerSplit {
-  split: Split
+type ViewerPool {
+  pool: Pool
 }
 
 type NotificationEdge {
@@ -2712,7 +2712,7 @@ type NotificationsConnection @goEmbedHelper {
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: MutualsUser @goField(forceResolver: true)
-  viewerSplits: [ViewerSplit] @goField(forceResolver: true)
+  viewerPools: [ViewerPool] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
   """
@@ -2728,11 +2728,11 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 }
 
 type NotificationSettings {
-  someoneViewedYourSplit: Boolean
+  someoneViewedYourPool: Boolean
 }
 
 input NotificationSettingsInput {
-  someoneViewedYourSplit: Boolean
+  someoneViewedYourPool: Boolean
 }
 
 enum EmailVerificationStatus {
@@ -2822,12 +2822,12 @@ enum Role {
   EARLY_ACCESS
 }
 
-type ErrSplitNotFound implements Error {
+type ErrPoolNotFound implements Error {
   message: String!
 }
 
-union SplitByIdPayloadOrError = Split | ErrSplitNotFound
-union ViewerSplitByIdPayloadOrError = ViewerSplit | ErrSplitNotFound
+union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
+union ViewerPoolByIdPayloadOrError = ViewerPool | ErrPoolNotFound
 
 enum ReportWindow {
   LAST_5_DAYS
@@ -2845,15 +2845,15 @@ type SearchUsersPayload {
 
 union SearchUsersPayloadOrError = SearchUsersPayload | ErrInvalidInput
 
-type SplitSearchResult {
-  split: Split
+type PoolSearchResult {
+  pool: Pool
 }
 
-type SearchSplitsPayload {
-  results: [SplitSearchResult!]
+type SearchPoolsPayload {
+  results: [PoolSearchResult!]
 }
 
-union SearchSplitsPayloadOrError = SearchSplitsPayload | ErrInvalidInput
+union SearchPoolsPayloadOrError = SearchPoolsPayload | ErrInvalidInput
 
 type Query {
   node(id: ID!): Node
@@ -2861,14 +2861,14 @@ type Query {
   userByUsername(username: String!): UserByUsernameOrError
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-  splitById(id: DBID!): SplitByIdPayloadOrError
-  viewerSplitById(id: DBID!): ViewerSplitByIdPayloadOrError
+  poolById(id: DBID!): PoolByIdPayloadOrError
+  viewerPoolById(id: DBID!): ViewerPoolByIdPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
   bioWeight defaults to 0.2, meaning that a search result matching a username is considered
   twice as relevant as a search result matching another entry (currently nothing provided.
-  See searchSplits(...) for more).
+  See searchPools(...) for more).
   """
   searchUsers(
     query: String!
@@ -2876,17 +2876,17 @@ type Query {
     usernameWeight: Float
   ): SearchUsersPayloadOrError
   """
-  Search for splits with optional weighting. Weights are floats in the [0.0. 1.0] range
+  Search for pools with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. nameWeight defaults to 0.4 and
-  descriptionWeight defaults to 0.2, meaning that a search result matching a split name is
-  considered twice as relevant as a search result matching a split description.
+  descriptionWeight defaults to 0.2, meaning that a search result matching a pool name is
+  considered twice as relevant as a search result matching a pool description.
   """
-  searchSplits(
+  searchPools(
     query: String!
     limit: Int
     nameWeight: Float
     descriptionWeight: Float
-  ): SearchSplitsPayloadOrError
+  ): SearchPoolsPayloadOrError
 
   isEmailAddressAvailable(emailAddress: Email!): Boolean
 
@@ -3233,95 +3233,95 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-input SplitAllocationInput {
+input PoolAllocationInput {
   id: DBID
   recipientAddress: Address
   calculationType: [CalculationType!]!
   recipientType: [RecipientType!]!
   value: HexString!
-  children: [SplitAllocationInput!]
+  children: [PoolAllocationInput!]
 }
 
-enum SplitStatus {
+enum PoolStatus {
   Draft
   Active
   Paused
 }
 
-input UpsertSplitInput {
-  splitId: DBID
+input UpsertPoolInput {
+  poolId: DBID
   name: String
   description: String
-  allocations: [SplitAllocationInput!]
+  allocations: [PoolAllocationInput!]
 }
 
-input SplitPositionInput {
-  splitId: DBID!
+input PoolPositionInput {
+  poolId: DBID!
   position: String!
 }
 
-input UpdateSplitOrderInput {
-  positions: [SplitPositionInput!]!
+input UpdatePoolOrderInput {
+  positions: [PoolPositionInput!]!
 }
 
-input UpdateSplitHiddenInput {
+input UpdatePoolHiddenInput {
   id: DBID!
   hidden: Boolean!
 }
 
-input UpdateSplitInfoInput {
+input UpdatePoolInfoInput {
   id: DBID!
   name: String
   description: String
 }
 
-input CreateSplitInput {
+input CreatePoolInput {
   name: String
   description: String
   logo: String
 }
 
-type CreateSplitPayload {
-  split: Split
+type CreatePoolPayload {
+  pool: Pool
 }
 
-union CreateSplitPayloadOrError = CreateSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union CreatePoolPayloadOrError = CreatePoolPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpsertSplitPayload {
-  split: Split
+type UpsertPoolPayload {
+  pool: Pool
 }
 
-union UpsertSplitPayloadOrError =
-  UpsertSplitPayload
+union UpsertPoolPayloadOrError =
+  UpsertPoolPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type UpdateSplitHiddenPayload {
-  split: Split
+type UpdatePoolHiddenPayload {
+  pool: Pool
 }
 
-union UpdateSplitHiddenPayloadOrError =
-    UpdateSplitHiddenPayload
+union UpdatePoolHiddenPayloadOrError =
+    UpdatePoolHiddenPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-type DeleteSplitPayload {
+type DeletePoolPayload {
   deletedId: DeletedNode
 }
 
-union DeleteSplitPayloadOrError = DeleteSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union DeletePoolPayloadOrError = DeletePoolPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateSplitOrderPayload {
+type UpdatePoolOrderPayload {
   viewer: Viewer
 }
 
-union UpdateSplitOrderPayloadOrError =
-    UpdateSplitOrderPayload
+union UpdatePoolOrderPayloadOrError =
+    UpdatePoolOrderPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
-input UpdateSplitInput {
-  splitId: DBID!
+input UpdatePoolInput {
+  poolId: DBID!
 
   name: String
   description: String
@@ -3332,23 +3332,23 @@ input UpdateSplitInput {
   editId: String!
 }
 
-type UpdateSplitPayload {
-  split: Split
+type UpdatePoolPayload {
+  pool: Pool
 }
 
-union UpdateSplitPayloadOrError = UpdateSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union UpdatePoolPayloadOrError = UpdatePoolPayload | ErrInvalidInput | ErrNotAuthorized
 
-input PublishSplitInput {
-  splitId: DBID!
+input PublishPoolInput {
+  poolId: DBID!
   editId: String!
   caption: String
 }
 
-type PublishSplitPayload {
-  split: Split
+type PublishPoolPayload {
+  pool: Pool
 }
 
-union PublishSplitPayloadOrError = PublishSplitPayload | ErrInvalidInput | ErrNotAuthorized
+union PublishPoolPayloadOrError = PublishPoolPayload | ErrInvalidInput | ErrNotAuthorized
 
 type UpdatePrimaryWalletPayload {
   viewer: Viewer
@@ -3414,14 +3414,14 @@ type Mutation {
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout(pushTokenToUnregister: String): LogoutPayload
 
-  upsertSplit(input: UpsertSplitInput!): UpsertSplitPayloadOrError @authRequired
-  publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired
+  upsertPool(input: UpsertPoolInput!): UpsertPoolPayloadOrError @authRequired
+  publishPool(input: PublishPoolInput!): PublishPoolPayloadOrError @authRequired
 
-  createSplit(input: CreateSplitInput!): CreateSplitPayloadOrError @authRequired
-  updateSplitHidden(input: UpdateSplitHiddenInput!): UpdateSplitHiddenPayloadOrError
+  createPool(input: CreatePoolInput!): CreatePoolPayloadOrError @authRequired
+  updatePoolHidden(input: UpdatePoolHiddenInput!): UpdatePoolHiddenPayloadOrError
     @authRequired
-  deleteSplit(splitId: DBID!): DeleteSplitPayloadOrError @authRequired
-  updateSplitOrder(input: UpdateSplitOrderInput!): UpdateSplitOrderPayloadOrError
+  deletePool(poolId: DBID!): DeletePoolPayloadOrError @authRequired
+  updatePoolOrder(input: UpdatePoolOrderInput!): UpdatePoolOrderPayloadOrError
     @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired
@@ -3737,35 +3737,35 @@ func (ec *executionContext) field_Mutation_addWalletToUserUnchecked_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createPool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_createSplit_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createPool_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createSplit_argsInput(
+func (ec *executionContext) field_Mutation_createPool_argsInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.CreateSplitInput, error) {
+) (model.CreatePoolInput, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["input"]
 	if !ok {
-		var zeroVal model.CreateSplitInput
+		var zeroVal model.CreatePoolInput
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitInput(ctx, tmp)
+		return ec.unmarshalNCreatePoolInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreatePoolInput(ctx, tmp)
 	}
 
-	var zeroVal model.CreateSplitInput
+	var zeroVal model.CreatePoolInput
 	return zeroVal, nil
 }
 
@@ -3828,31 +3828,31 @@ func (ec *executionContext) field_Mutation_createUser_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deletePool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_deleteSplit_argsSplitID(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deletePool_argsPoolID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["splitId"] = arg0
+	args["poolId"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteSplit_argsSplitID(
+func (ec *executionContext) field_Mutation_deletePool_argsPoolID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (persist.DBID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
-	_, ok := rawArgs["splitId"]
+	_, ok := rawArgs["poolId"]
 	if !ok {
 		var zeroVal persist.DBID
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-	if tmp, ok := rawArgs["splitId"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+	if tmp, ok := rawArgs["poolId"]; ok {
 		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
 	}
 
@@ -4020,35 +4020,35 @@ func (ec *executionContext) field_Mutation_preverifyEmail_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_publishSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_publishPool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_publishSplit_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_publishPool_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_publishSplit_argsInput(
+func (ec *executionContext) field_Mutation_publishPool_argsInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.PublishSplitInput, error) {
+) (model.PublishPoolInput, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["input"]
 	if !ok {
-		var zeroVal model.PublishSplitInput
+		var zeroVal model.PublishPoolInput
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNPublishSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitInput(ctx, tmp)
+		return ec.unmarshalNPublishPoolInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishPoolInput(ctx, tmp)
 	}
 
-	var zeroVal model.PublishSplitInput
+	var zeroVal model.PublishPoolInput
 	return zeroVal, nil
 }
 
@@ -4335,6 +4335,70 @@ func (ec *executionContext) field_Mutation_updateNotificationSettings_argsSettin
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_updatePoolHidden_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_updatePoolHidden_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updatePoolHidden_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdatePoolHiddenInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdatePoolHiddenInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdatePoolHiddenInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolHiddenInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdatePoolHiddenInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePoolOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_updatePoolOrder_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updatePoolOrder_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdatePoolOrderInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdatePoolOrderInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdatePoolOrderInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolOrderInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdatePoolOrderInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_updatePrimaryWallet_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4364,70 +4428,6 @@ func (ec *executionContext) field_Mutation_updatePrimaryWallet_argsWalletID(
 	}
 
 	var zeroVal persist.DBID
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSplitHidden_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updateSplitHidden_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_updateSplitHidden_argsInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.UpdateSplitHiddenInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["input"]
-	if !ok {
-		var zeroVal model.UpdateSplitHiddenInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx, tmp)
-	}
-
-	var zeroVal model.UpdateSplitHiddenInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSplitOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updateSplitOrder_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_updateSplitOrder_argsInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.UpdateSplitOrderInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["input"]
-	if !ok {
-		var zeroVal model.UpdateSplitOrderInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx, tmp)
-	}
-
-	var zeroVal model.UpdateSplitOrderInput
 	return zeroVal, nil
 }
 
@@ -4527,35 +4527,35 @@ func (ec *executionContext) field_Mutation_uploadPersistedQueries_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_upsertSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_upsertPool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_upsertSplit_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_upsertPool_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_upsertSplit_argsInput(
+func (ec *executionContext) field_Mutation_upsertPool_argsInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.UpsertSplitInput, error) {
+) (model.UpsertPoolInput, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["input"]
 	if !ok {
-		var zeroVal model.UpsertSplitInput
+		var zeroVal model.UpsertPoolInput
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpsertSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx, tmp)
+		return ec.unmarshalNUpsertPoolInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertPoolInput(ctx, tmp)
 	}
 
-	var zeroVal model.UpsertSplitInput
+	var zeroVal model.UpsertPoolInput
 	return zeroVal, nil
 }
 
@@ -4623,17 +4623,17 @@ func (ec *executionContext) field_Mutation_verifyEmail_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_MutualsUser_splitsByChain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_MutualsUser_poolsByChain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_MutualsUser_splitsByChain_argsChain(ctx, rawArgs)
+	arg0, err := ec.field_MutualsUser_poolsByChain_argsChain(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["chain"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_MutualsUser_splitsByChain_argsChain(
+func (ec *executionContext) field_MutualsUser_poolsByChain_argsChain(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (persist.Chain, error) {
@@ -4652,6 +4652,38 @@ func (ec *executionContext) field_MutualsUser_splitsByChain_argsChain(
 	}
 
 	var zeroVal persist.Chain
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Pool_assets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Pool_assets_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Pool_assets_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["limit"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
 	return zeroVal, nil
 }
 
@@ -4751,32 +4783,64 @@ func (ec *executionContext) field_Query_node_argsID(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_searchSplits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_poolById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_searchSplits_argsQuery(ctx, rawArgs)
+	arg0, err := ec.field_Query_poolById_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_poolById_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchPools_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_searchPools_argsQuery(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["query"] = arg0
-	arg1, err := ec.field_Query_searchSplits_argsLimit(ctx, rawArgs)
+	arg1, err := ec.field_Query_searchPools_argsLimit(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["limit"] = arg1
-	arg2, err := ec.field_Query_searchSplits_argsNameWeight(ctx, rawArgs)
+	arg2, err := ec.field_Query_searchPools_argsNameWeight(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["nameWeight"] = arg2
-	arg3, err := ec.field_Query_searchSplits_argsDescriptionWeight(ctx, rawArgs)
+	arg3, err := ec.field_Query_searchPools_argsDescriptionWeight(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["descriptionWeight"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Query_searchSplits_argsQuery(
+func (ec *executionContext) field_Query_searchPools_argsQuery(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (string, error) {
@@ -4798,7 +4862,7 @@ func (ec *executionContext) field_Query_searchSplits_argsQuery(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_searchSplits_argsLimit(
+func (ec *executionContext) field_Query_searchPools_argsLimit(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*int, error) {
@@ -4820,7 +4884,7 @@ func (ec *executionContext) field_Query_searchSplits_argsLimit(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_searchSplits_argsNameWeight(
+func (ec *executionContext) field_Query_searchPools_argsNameWeight(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*float64, error) {
@@ -4842,7 +4906,7 @@ func (ec *executionContext) field_Query_searchSplits_argsNameWeight(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_searchSplits_argsDescriptionWeight(
+func (ec *executionContext) field_Query_searchPools_argsDescriptionWeight(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*float64, error) {
@@ -4947,38 +5011,6 @@ func (ec *executionContext) field_Query_searchUsers_argsUsernameWeight(
 	}
 
 	var zeroVal *float64
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_splitById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_splitById_argsID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_splitById_argsID(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (persist.DBID, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["id"]
-	if !ok {
-		var zeroVal persist.DBID
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
-	}
-
-	var zeroVal persist.DBID
 	return zeroVal, nil
 }
 
@@ -5218,17 +5250,17 @@ func (ec *executionContext) field_Query_usersByRole_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_viewerSplitById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_viewerPoolById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_viewerSplitById_argsID(ctx, rawArgs)
+	arg0, err := ec.field_Query_viewerPoolById_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["id"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Query_viewerSplitById_argsID(
+func (ec *executionContext) field_Query_viewerPoolById_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (persist.DBID, error) {
@@ -5247,38 +5279,6 @@ func (ec *executionContext) field_Query_viewerSplitById_argsID(
 	}
 
 	var zeroVal persist.DBID
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Split_assets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Split_assets_argsLimit(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["limit"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Split_assets_argsLimit(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*int, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["limit"]
-	if !ok {
-		var zeroVal *int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-	if tmp, ok := rawArgs["limit"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
 	return zeroVal, nil
 }
 
@@ -5507,8 +5507,8 @@ func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(_ context.C
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -5574,10 +5574,10 @@ func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(_ context.Co
 				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_MutualsUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+			case "pools":
+				return ec.fieldContext_MutualsUser_pools(ctx, field)
+			case "poolsByChain":
+				return ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 			case "isAuthenticatedUser":
 				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
@@ -5880,8 +5880,8 @@ func (ec *executionContext) fieldContext_Allocation_lastUpdated(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Allocation_split(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Allocation_split(ctx, field)
+func (ec *executionContext) _Allocation_pool(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_pool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5894,7 +5894,7 @@ func (ec *executionContext) _Allocation_split(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Allocation().Split(rctx, obj)
+		return ec.resolvers.Allocation().Pool(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5903,12 +5903,12 @@ func (ec *executionContext) _Allocation_split(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Split)
+	res := resTmp.(*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -5917,33 +5917,33 @@ func (ec *executionContext) fieldContext_Allocation_split(_ context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -6242,8 +6242,8 @@ func (ec *executionContext) fieldContext_AllocationAggregation_lastUpdated(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _AllocationAggregation_split(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AllocationAggregation_split(ctx, field)
+func (ec *executionContext) _AllocationAggregation_pool(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_pool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6256,7 +6256,7 @@ func (ec *executionContext) _AllocationAggregation_split(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AllocationAggregation().Split(rctx, obj)
+		return ec.resolvers.AllocationAggregation().Pool(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6265,12 +6265,12 @@ func (ec *executionContext) _AllocationAggregation_split(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Split)
+	res := resTmp.(*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -6279,33 +6279,33 @@ func (ec *executionContext) fieldContext_AllocationAggregation_split(_ context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -6765,6 +6765,116 @@ func (ec *executionContext) fieldContext_ChainAddress_chain(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _ChainPools_chain(ctx context.Context, field graphql.CollectedField, obj *model.ChainPools) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChainPools_chain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Chain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Chain)
+	fc.Result = res
+	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChainPools_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChainPools",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Chain does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChainPools_pools(ctx context.Context, field graphql.CollectedField, obj *model.ChainPools) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChainPools_pools(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pools, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Pool)
+	fc.Result = res
+	return ec.marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChainPools_pools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChainPools",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Pool_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Pool_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Pool_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Pool_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Pool_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Pool_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Pool_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Pool_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Pool_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Pool_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ChainPubKey_pubKey(ctx context.Context, field graphql.CollectedField, obj *persist.ChainPubKey) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ChainPubKey_pubKey(ctx, field)
 	if err != nil {
@@ -6847,116 +6957,6 @@ func (ec *executionContext) fieldContext_ChainPubKey_chain(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _ChainSplits_chain(ctx context.Context, field graphql.CollectedField, obj *model.ChainSplits) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainSplits_chain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Chain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Chain)
-	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainSplits_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainSplits",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Chain does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainSplits_splits(ctx context.Context, field graphql.CollectedField, obj *model.ChainSplits) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainSplits_splits(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Splits, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainSplits_splits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainSplits",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
-			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
-			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
-			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ClearAllNotificationsPayload_notifications(ctx context.Context, field graphql.CollectedField, obj *model.ClearAllNotificationsPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ClearAllNotificationsPayload_notifications(ctx, field)
 	if err != nil {
@@ -6998,8 +6998,8 @@ func (ec *executionContext) fieldContext_ClearAllNotificationsPayload_notificati
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.CreateSplitPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateSplitPayload_split(ctx, field)
+func (ec *executionContext) _CreatePoolPayload_pool(ctx context.Context, field graphql.CollectedField, obj *model.CreatePoolPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreatePoolPayload_pool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7012,7 +7012,7 @@ func (ec *executionContext) _CreateSplitPayload_split(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
+		return obj.Pool, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7021,47 +7021,47 @@ func (ec *executionContext) _CreateSplitPayload_split(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Split)
+	res := resTmp.(*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreatePoolPayload_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateSplitPayload",
+		Object:     "CreatePoolPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -7107,8 +7107,8 @@ func (ec *executionContext) fieldContext_CreateUserPayload_viewer(_ context.Cont
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -7124,8 +7124,8 @@ func (ec *executionContext) fieldContext_CreateUserPayload_viewer(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteSplitPayload_deletedId(ctx context.Context, field graphql.CollectedField, obj *model.DeleteSplitPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteSplitPayload_deletedId(ctx, field)
+func (ec *executionContext) _DeletePoolPayload_deletedId(ctx context.Context, field graphql.CollectedField, obj *model.DeletePoolPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeletePoolPayload_deletedId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7152,9 +7152,9 @@ func (ec *executionContext) _DeleteSplitPayload_deletedId(ctx context.Context, f
 	return ec.marshalODeletedNode2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeletedNode(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteSplitPayload_deletedId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeletePoolPayload_deletedId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteSplitPayload",
+		Object:     "DeletePoolPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -7831,6 +7831,50 @@ func (ec *executionContext) fieldContext_ErrNotAuthorized_cause(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _ErrPoolNotFound_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrPoolNotFound) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ErrPoolNotFound_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ErrPoolNotFound_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ErrPoolNotFound",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ErrPushTokenBelongsToAnotherUser_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrPushTokenBelongsToAnotherUser) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ErrPushTokenBelongsToAnotherUser_message(ctx, field)
 	if err != nil {
@@ -7909,50 +7953,6 @@ func (ec *executionContext) _ErrSessionInvalidated_message(ctx context.Context, 
 func (ec *executionContext) fieldContext_ErrSessionInvalidated_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrSessionInvalidated",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ErrSplitNotFound_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrSplitNotFound) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ErrSplitNotFound_message(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Message, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ErrSplitNotFound_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ErrSplitNotFound",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -8233,10 +8233,10 @@ func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(_ contex
 				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_MutualsUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+			case "pools":
+				return ec.fieldContext_MutualsUser_pools(ctx, field)
+			case "poolsByChain":
+				return ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 			case "isAuthenticatedUser":
 				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
@@ -8429,8 +8429,8 @@ func (ec *executionContext) fieldContext_LoginPayload_viewer(_ context.Context, 
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -8486,8 +8486,8 @@ func (ec *executionContext) fieldContext_LogoutPayload_viewer(_ context.Context,
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -9337,8 +9337,8 @@ func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_upsertSplit(ctx, field)
+func (ec *executionContext) _Mutation_upsertPool(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_upsertPool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9352,12 +9352,12 @@ func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpsertSplit(rctx, fc.Args["input"].(model.UpsertSplitInput))
+			return ec.resolvers.Mutation().UpsertPool(rctx, fc.Args["input"].(model.UpsertPoolInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal model.UpsertSplitPayloadOrError
+				var zeroVal model.UpsertPoolPayloadOrError
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -9370,10 +9370,10 @@ func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field gra
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpsertSplitPayloadOrError); ok {
+		if data, ok := tmp.(model.UpsertPoolPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpsertSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpsertPoolPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9382,19 +9382,19 @@ func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpsertSplitPayloadOrError)
+	res := resTmp.(model.UpsertPoolPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpsertSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpsertPoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertPoolPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_upsertSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_upsertPool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpsertSplitPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpsertPoolPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -9404,15 +9404,15 @@ func (ec *executionContext) fieldContext_Mutation_upsertSplit(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_upsertSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_upsertPool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_publishSplit(ctx, field)
+func (ec *executionContext) _Mutation_publishPool(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_publishPool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9426,12 +9426,12 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PublishSplit(rctx, fc.Args["input"].(model.PublishSplitInput))
+			return ec.resolvers.Mutation().PublishPool(rctx, fc.Args["input"].(model.PublishPoolInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal model.PublishSplitPayloadOrError
+				var zeroVal model.PublishPoolPayloadOrError
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -9444,10 +9444,10 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.PublishSplitPayloadOrError); ok {
+		if data, ok := tmp.(model.PublishPoolPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.PublishSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.PublishPoolPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9456,19 +9456,19 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.PublishSplitPayloadOrError)
+	res := resTmp.(model.PublishPoolPayloadOrError)
 	fc.Result = res
-	return ec.marshalOPublishSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPublishPoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishPoolPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_publishSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_publishPool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PublishSplitPayloadOrError does not have child fields")
+			return nil, errors.New("field of type PublishPoolPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -9478,15 +9478,15 @@ func (ec *executionContext) fieldContext_Mutation_publishSplit(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_publishSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_publishPool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createSplit(ctx, field)
+func (ec *executionContext) _Mutation_createPool(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createPool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9500,12 +9500,12 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateSplit(rctx, fc.Args["input"].(model.CreateSplitInput))
+			return ec.resolvers.Mutation().CreatePool(rctx, fc.Args["input"].(model.CreatePoolInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal model.CreateSplitPayloadOrError
+				var zeroVal model.CreatePoolPayloadOrError
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -9518,10 +9518,10 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.CreateSplitPayloadOrError); ok {
+		if data, ok := tmp.(model.CreatePoolPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.CreateSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.CreatePoolPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9530,19 +9530,19 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.CreateSplitPayloadOrError)
+	res := resTmp.(model.CreatePoolPayloadOrError)
 	fc.Result = res
-	return ec.marshalOCreateSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOCreatePoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreatePoolPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createPool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CreateSplitPayloadOrError does not have child fields")
+			return nil, errors.New("field of type CreatePoolPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -9552,15 +9552,15 @@ func (ec *executionContext) fieldContext_Mutation_createSplit(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createPool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSplitHidden(ctx, field)
+func (ec *executionContext) _Mutation_updatePoolHidden(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePoolHidden(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9574,12 +9574,12 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateSplitHidden(rctx, fc.Args["input"].(model.UpdateSplitHiddenInput))
+			return ec.resolvers.Mutation().UpdatePoolHidden(rctx, fc.Args["input"].(model.UpdatePoolHiddenInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal model.UpdateSplitHiddenPayloadOrError
+				var zeroVal model.UpdatePoolHiddenPayloadOrError
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -9592,10 +9592,10 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateSplitHiddenPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdatePoolHiddenPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateSplitHiddenPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdatePoolHiddenPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9604,19 +9604,19 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateSplitHiddenPayloadOrError)
+	res := resTmp.(model.UpdatePoolHiddenPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdatePoolHiddenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolHiddenPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateSplitHidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updatePoolHidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateSplitHiddenPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdatePoolHiddenPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -9626,15 +9626,15 @@ func (ec *executionContext) fieldContext_Mutation_updateSplitHidden(ctx context.
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSplitHidden_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updatePoolHidden_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteSplit(ctx, field)
+func (ec *executionContext) _Mutation_deletePool(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deletePool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9648,12 +9648,12 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteSplit(rctx, fc.Args["splitId"].(persist.DBID))
+			return ec.resolvers.Mutation().DeletePool(rctx, fc.Args["poolId"].(persist.DBID))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal model.DeleteSplitPayloadOrError
+				var zeroVal model.DeletePoolPayloadOrError
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -9666,10 +9666,10 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.DeleteSplitPayloadOrError); ok {
+		if data, ok := tmp.(model.DeletePoolPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.DeleteSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.DeletePoolPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9678,19 +9678,19 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.DeleteSplitPayloadOrError)
+	res := resTmp.(model.DeletePoolPayloadOrError)
 	fc.Result = res
-	return ec.marshalODeleteSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalODeletePoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeletePoolPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deletePool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DeleteSplitPayloadOrError does not have child fields")
+			return nil, errors.New("field of type DeletePoolPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -9700,15 +9700,15 @@ func (ec *executionContext) fieldContext_Mutation_deleteSplit(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deletePool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSplitOrder(ctx, field)
+func (ec *executionContext) _Mutation_updatePoolOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePoolOrder(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9722,12 +9722,12 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateSplitOrder(rctx, fc.Args["input"].(model.UpdateSplitOrderInput))
+			return ec.resolvers.Mutation().UpdatePoolOrder(rctx, fc.Args["input"].(model.UpdatePoolOrderInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal model.UpdateSplitOrderPayloadOrError
+				var zeroVal model.UpdatePoolOrderPayloadOrError
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -9740,10 +9740,10 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateSplitOrderPayloadOrError); ok {
+		if data, ok := tmp.(model.UpdatePoolOrderPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateSplitOrderPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdatePoolOrderPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9752,19 +9752,19 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateSplitOrderPayloadOrError)
+	res := resTmp.(model.UpdatePoolOrderPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdatePoolOrderPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolOrderPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateSplitOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updatePoolOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateSplitOrderPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpdatePoolOrderPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -9774,7 +9774,7 @@ func (ec *executionContext) fieldContext_Mutation_updateSplitOrder(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSplitOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updatePoolOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -9884,8 +9884,8 @@ func (ec *executionContext) fieldContext_Mutation_updateNotificationSettings(ctx
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "someoneViewedYourSplit":
-				return ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
+			case "someoneViewedYourPool":
+				return ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
 		},
@@ -10924,8 +10924,8 @@ func (ec *executionContext) fieldContext_MutualsUser_wallets(_ context.Context, 
 				return ec.fieldContext_Wallet_chain(ctx, field)
 			case "walletType":
 				return ec.fieldContext_Wallet_walletType(ctx, field)
-			case "splits":
-				return ec.fieldContext_Wallet_splits(ctx, field)
+			case "pools":
+				return ec.fieldContext_Wallet_pools(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
 		},
@@ -10979,8 +10979,8 @@ func (ec *executionContext) fieldContext_MutualsUser_primaryWallet(_ context.Con
 				return ec.fieldContext_Wallet_chain(ctx, field)
 			case "walletType":
 				return ec.fieldContext_Wallet_walletType(ctx, field)
-			case "splits":
-				return ec.fieldContext_Wallet_splits(ctx, field)
+			case "pools":
+				return ec.fieldContext_Wallet_pools(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
 		},
@@ -10988,8 +10988,8 @@ func (ec *executionContext) fieldContext_MutualsUser_primaryWallet(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _MutualsUser_splits(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MutualsUser_splits(ctx, field)
+func (ec *executionContext) _MutualsUser_pools(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_pools(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11002,7 +11002,7 @@ func (ec *executionContext) _MutualsUser_splits(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.MutualsUser().Splits(rctx, obj)
+		return ec.resolvers.MutualsUser().Pools(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11011,12 +11011,12 @@ func (ec *executionContext) _MutualsUser_splits(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Split)
+	res := resTmp.([]*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MutualsUser_splits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MutualsUser_pools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MutualsUser",
 		Field:      field,
@@ -11025,40 +11025,40 @@ func (ec *executionContext) fieldContext_MutualsUser_splits(_ context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _MutualsUser_splitsByChain(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+func (ec *executionContext) _MutualsUser_poolsByChain(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11071,7 +11071,7 @@ func (ec *executionContext) _MutualsUser_splitsByChain(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.MutualsUser().SplitsByChain(rctx, obj, fc.Args["chain"].(persist.Chain))
+		return ec.resolvers.MutualsUser().PoolsByChain(rctx, obj, fc.Args["chain"].(persist.Chain))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11080,12 +11080,12 @@ func (ec *executionContext) _MutualsUser_splitsByChain(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.ChainSplits)
+	res := resTmp.(*model.ChainPools)
 	fc.Result = res
-	return ec.marshalOChainSplits2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐChainSplits(ctx, field.Selections, res)
+	return ec.marshalOChainPools2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐChainPools(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MutualsUser_splitsByChain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MutualsUser_poolsByChain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MutualsUser",
 		Field:      field,
@@ -11094,11 +11094,11 @@ func (ec *executionContext) fieldContext_MutualsUser_splitsByChain(ctx context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "chain":
-				return ec.fieldContext_ChainSplits_chain(ctx, field)
-			case "splits":
-				return ec.fieldContext_ChainSplits_splits(ctx, field)
+				return ec.fieldContext_ChainPools_chain(ctx, field)
+			case "pools":
+				return ec.fieldContext_ChainPools_pools(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ChainSplits", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ChainPools", field.Name)
 		},
 	}
 	defer func() {
@@ -11108,7 +11108,7 @@ func (ec *executionContext) fieldContext_MutualsUser_splitsByChain(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_MutualsUser_splitsByChain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_MutualsUser_poolsByChain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11238,8 +11238,8 @@ func (ec *executionContext) fieldContext_NotificationEdge_cursor(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationSettings_someoneViewedYourSplit(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
+func (ec *executionContext) _NotificationSettings_someoneViewedYourPool(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11252,7 +11252,7 @@ func (ec *executionContext) _NotificationSettings_someoneViewedYourSplit(ctx con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SomeoneViewedYourSplit, nil
+		return obj.SomeoneViewedYourPool, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11266,7 +11266,7 @@ func (ec *executionContext) _NotificationSettings_someoneViewedYourSplit(ctx con
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationSettings_someoneViewedYourSplit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationSettings_someoneViewedYourPool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationSettings",
 		Field:      field,
@@ -11472,10 +11472,10 @@ func (ec *executionContext) fieldContext_OptInForRolesPayload_user(_ context.Con
 				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_MutualsUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+			case "pools":
+				return ec.fieldContext_MutualsUser_pools(ctx, field)
+			case "poolsByChain":
+				return ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 			case "isAuthenticatedUser":
 				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
@@ -11535,10 +11535,10 @@ func (ec *executionContext) fieldContext_OptOutForRolesPayload_user(_ context.Co
 				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_MutualsUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+			case "pools":
+				return ec.fieldContext_MutualsUser_pools(ctx, field)
+			case "poolsByChain":
+				return ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 			case "isAuthenticatedUser":
 				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
@@ -11809,6 +11809,678 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Pool_id(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_dbid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dbid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.DBID)
+	fc.Result = res
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DBID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_version(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_version(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_status(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PoolStatus)
+	fc.Result = res
+	return ec.marshalNPoolStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PoolStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_name(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_description(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_address(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_ownerAddress(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_ownerAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_ownerAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_creatorAddress(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_creatorAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatorAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_creatorAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_chain(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_chain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Chain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Chain)
+	fc.Result = res
+	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Chain does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_allocationAggregation(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_allocationAggregation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Pool().AllocationAggregation(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AllocationAggregation)
+	fc.Result = res
+	return ec.marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_allocationAggregation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AllocationAggregation_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_AllocationAggregation_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_AllocationAggregation_version(ctx, field)
+			case "recipientAddress":
+				return ec.fieldContext_AllocationAggregation_recipientAddress(ctx, field)
+			case "expression":
+				return ec.fieldContext_AllocationAggregation_expression(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_AllocationAggregation_creationTime(ctx, field)
+			case "lastUpdated":
+				return ec.fieldContext_AllocationAggregation_lastUpdated(ctx, field)
+			case "pool":
+				return ec.fieldContext_AllocationAggregation_pool(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AllocationAggregation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_allocations(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_allocations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Pool().Allocations(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Allocation)
+	fc.Result = res
+	return ec.marshalOAllocation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_allocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Allocation_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Allocation_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Allocation_version(ctx, field)
+			case "recipientAddress":
+				return ec.fieldContext_Allocation_recipientAddress(ctx, field)
+			case "value":
+				return ec.fieldContext_Allocation_value(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Allocation_creationTime(ctx, field)
+			case "lastUpdated":
+				return ec.fieldContext_Allocation_lastUpdated(ctx, field)
+			case "pool":
+				return ec.fieldContext_Allocation_pool(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Allocation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_assets(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_assets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Pool().Assets(rctx, obj, fc.Args["limit"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Asset)
+	fc.Result = res
+	return ec.marshalOAsset2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAsset(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_assets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Asset_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Asset_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Asset_version(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Asset_ownerAddress(ctx, field)
+			case "balance":
+				return ec.fieldContext_Asset_balance(ctx, field)
+			case "token":
+				return ec.fieldContext_Asset_token(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Pool_assets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolSearchResult_pool(ctx context.Context, field graphql.CollectedField, obj *model.PoolSearchResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolSearchResult_pool(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pool, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Pool)
+	fc.Result = res
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolSearchResult_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolSearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Pool_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Pool_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Pool_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Pool_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Pool_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Pool_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Pool_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Pool_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Pool_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Pool_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PreverifyEmailPayload_email(ctx context.Context, field graphql.CollectedField, obj *model.PreverifyEmailPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PreverifyEmailPayload_email(ctx, field)
 	if err != nil {
@@ -11897,8 +12569,8 @@ func (ec *executionContext) fieldContext_PreverifyEmailPayload_result(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _PublishSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.PublishSplitPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PublishSplitPayload_split(ctx, field)
+func (ec *executionContext) _PublishPoolPayload_pool(ctx context.Context, field graphql.CollectedField, obj *model.PublishPoolPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PublishPoolPayload_pool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11911,7 +12583,7 @@ func (ec *executionContext) _PublishSplitPayload_split(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
+		return obj.Pool, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11920,47 +12592,47 @@ func (ec *executionContext) _PublishSplitPayload_split(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Split)
+	res := resTmp.(*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PublishSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PublishPoolPayload_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PublishSplitPayload",
+		Object:     "PublishPoolPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -12237,8 +12909,8 @@ func (ec *executionContext) fieldContext_Query_userByAddress(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_splitById(ctx, field)
+func (ec *executionContext) _Query_poolById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_poolById(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12251,7 +12923,7 @@ func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SplitByID(rctx, fc.Args["id"].(persist.DBID))
+		return ec.resolvers.Query().PoolByID(rctx, fc.Args["id"].(persist.DBID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12260,19 +12932,19 @@ func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.SplitByIDPayloadOrError)
+	res := resTmp.(model.PoolByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPoolByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolByIDPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_splitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_poolById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SplitByIdPayloadOrError does not have child fields")
+			return nil, errors.New("field of type PoolByIdPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -12282,15 +12954,15 @@ func (ec *executionContext) fieldContext_Query_splitById(ctx context.Context, fi
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_splitById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_poolById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_viewerSplitById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_viewerSplitById(ctx, field)
+func (ec *executionContext) _Query_viewerPoolById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_viewerPoolById(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12303,7 +12975,7 @@ func (ec *executionContext) _Query_viewerSplitById(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ViewerSplitByID(rctx, fc.Args["id"].(persist.DBID))
+		return ec.resolvers.Query().ViewerPoolByID(rctx, fc.Args["id"].(persist.DBID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12312,19 +12984,19 @@ func (ec *executionContext) _Query_viewerSplitById(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.ViewerSplitByIDPayloadOrError)
+	res := resTmp.(model.ViewerPoolByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOViewerPoolByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerPoolByIDPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_viewerSplitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_viewerPoolById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ViewerSplitByIdPayloadOrError does not have child fields")
+			return nil, errors.New("field of type ViewerPoolByIdPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -12334,7 +13006,7 @@ func (ec *executionContext) fieldContext_Query_viewerSplitById(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_viewerSplitById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_viewerPoolById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12393,8 +13065,8 @@ func (ec *executionContext) fieldContext_Query_searchUsers(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_searchSplits(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_searchSplits(ctx, field)
+func (ec *executionContext) _Query_searchPools(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchPools(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12407,7 +13079,7 @@ func (ec *executionContext) _Query_searchSplits(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SearchSplits(rctx, fc.Args["query"].(string), fc.Args["limit"].(*int), fc.Args["nameWeight"].(*float64), fc.Args["descriptionWeight"].(*float64))
+		return ec.resolvers.Query().SearchPools(rctx, fc.Args["query"].(string), fc.Args["limit"].(*int), fc.Args["nameWeight"].(*float64), fc.Args["descriptionWeight"].(*float64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12416,19 +13088,19 @@ func (ec *executionContext) _Query_searchSplits(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.SearchSplitsPayloadOrError)
+	res := resTmp.(model.SearchPoolsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSearchPoolsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchPoolsPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_searchSplits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_searchPools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SearchSplitsPayloadOrError does not have child fields")
+			return nil, errors.New("field of type SearchPoolsPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -12438,7 +13110,7 @@ func (ec *executionContext) fieldContext_Query_searchSplits(ctx context.Context,
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_searchSplits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_searchPools_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12799,8 +13471,8 @@ func (ec *executionContext) fieldContext_RegisterUserPushTokenPayload_viewer(_ c
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -12856,8 +13528,8 @@ func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(_ conte
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -12913,8 +13585,8 @@ func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(_
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -12930,8 +13602,8 @@ func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(_
 	return fc, nil
 }
 
-func (ec *executionContext) _SearchSplitsPayload_results(ctx context.Context, field graphql.CollectedField, obj *model.SearchSplitsPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchSplitsPayload_results(ctx, field)
+func (ec *executionContext) _SearchPoolsPayload_results(ctx context.Context, field graphql.CollectedField, obj *model.SearchPoolsPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchPoolsPayload_results(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12953,23 +13625,23 @@ func (ec *executionContext) _SearchSplitsPayload_results(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SplitSearchResult)
+	res := resTmp.([]*model.PoolSearchResult)
 	fc.Result = res
-	return ec.marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalOPoolSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResultᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchSplitsPayload_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchPoolsPayload_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SearchSplitsPayload",
+		Object:     "SearchPoolsPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "split":
-				return ec.fieldContext_SplitSearchResult_split(ctx, field)
+			case "pool":
+				return ec.fieldContext_PoolSearchResult_pool(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitSearchResult", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PoolSearchResult", field.Name)
 		},
 	}
 	return fc, nil
@@ -13015,678 +13687,6 @@ func (ec *executionContext) fieldContext_SearchUsersPayload_results(_ context.Co
 				return ec.fieldContext_UserSearchResult_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type UserSearchResult", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_id(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_version(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_version(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Version, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_status(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.SplitStatus)
-	fc.Result = res
-	return ec.marshalNSplitStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SplitStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_name(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_description(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_description(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_address(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_address(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Address, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Address)
-	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_ownerAddress(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_ownerAddress(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OwnerAddress, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Address)
-	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_ownerAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_creatorAddress(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_creatorAddress(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatorAddress, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Address)
-	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_creatorAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_chain(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_chain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Chain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Chain)
-	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Chain does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_allocationAggregation(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_allocationAggregation(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Split().AllocationAggregation(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.AllocationAggregation)
-	fc.Result = res
-	return ec.marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_allocationAggregation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_AllocationAggregation_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_AllocationAggregation_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_AllocationAggregation_version(ctx, field)
-			case "recipientAddress":
-				return ec.fieldContext_AllocationAggregation_recipientAddress(ctx, field)
-			case "expression":
-				return ec.fieldContext_AllocationAggregation_expression(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_AllocationAggregation_creationTime(ctx, field)
-			case "lastUpdated":
-				return ec.fieldContext_AllocationAggregation_lastUpdated(ctx, field)
-			case "split":
-				return ec.fieldContext_AllocationAggregation_split(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type AllocationAggregation", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_allocations(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_allocations(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Split().Allocations(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Allocation)
-	fc.Result = res
-	return ec.marshalOAllocation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocation(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_allocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Allocation_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Allocation_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Allocation_version(ctx, field)
-			case "recipientAddress":
-				return ec.fieldContext_Allocation_recipientAddress(ctx, field)
-			case "value":
-				return ec.fieldContext_Allocation_value(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_Allocation_creationTime(ctx, field)
-			case "lastUpdated":
-				return ec.fieldContext_Allocation_lastUpdated(ctx, field)
-			case "split":
-				return ec.fieldContext_Allocation_split(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Allocation", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_assets(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_assets(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Split().Assets(rctx, obj, fc.Args["limit"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Asset)
-	fc.Result = res
-	return ec.marshalOAsset2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAsset(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_assets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Asset_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Asset_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Asset_version(ctx, field)
-			case "ownerAddress":
-				return ec.fieldContext_Asset_ownerAddress(ctx, field)
-			case "balance":
-				return ec.fieldContext_Asset_balance(ctx, field)
-			case "token":
-				return ec.fieldContext_Asset_token(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Split_assets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitSearchResult_split(ctx context.Context, field graphql.CollectedField, obj *model.SplitSearchResult) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitSearchResult_split(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitSearchResult_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitSearchResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
-			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
-			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
-			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -14463,8 +14463,8 @@ func (ec *executionContext) fieldContext_UnregisterUserPushTokenPayload_viewer(_
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -14520,8 +14520,8 @@ func (ec *executionContext) fieldContext_UnsubscribeFromEmailTypePayload_viewer(
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -14577,8 +14577,8 @@ func (ec *executionContext) fieldContext_UpdateEmailNotificationSettingsPayload_
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -14634,8 +14634,8 @@ func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(_ context.Con
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -14646,6 +14646,201 @@ func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(_ context.Con
 				return ec.fieldContext_Viewer_userExperiences(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdatePoolHiddenPayload_pool(ctx context.Context, field graphql.CollectedField, obj *model.UpdatePoolHiddenPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdatePoolHiddenPayload_pool(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pool, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Pool)
+	fc.Result = res
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdatePoolHiddenPayload_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdatePoolHiddenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Pool_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Pool_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Pool_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Pool_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Pool_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Pool_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Pool_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Pool_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Pool_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Pool_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdatePoolOrderPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdatePoolOrderPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdatePoolOrderPayload_viewer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Viewer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Viewer)
+	fc.Result = res
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdatePoolOrderPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdatePoolOrderPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Viewer_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Viewer_user(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
+			case "email":
+				return ec.fieldContext_Viewer_email(ctx, field)
+			case "notifications":
+				return ec.fieldContext_Viewer_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+			case "userExperiences":
+				return ec.fieldContext_Viewer_userExperiences(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdatePoolPayload_pool(ctx context.Context, field graphql.CollectedField, obj *model.UpdatePoolPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdatePoolPayload_pool(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pool, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Pool)
+	fc.Result = res
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdatePoolPayload_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdatePoolPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Pool_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Pool_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Pool_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Pool_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Pool_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Pool_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Pool_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Pool_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Pool_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Pool_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -14691,8 +14886,8 @@ func (ec *executionContext) fieldContext_UpdatePrimaryWalletPayload_viewer(_ con
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -14703,201 +14898,6 @@ func (ec *executionContext) fieldContext_UpdatePrimaryWalletPayload_viewer(_ con
 				return ec.fieldContext_Viewer_userExperiences(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateSplitHiddenPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitHiddenPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateSplitHiddenPayload_split(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateSplitHiddenPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateSplitHiddenPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
-			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
-			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
-			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateSplitOrderPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitOrderPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateSplitOrderPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Viewer)
-	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateSplitOrderPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateSplitOrderPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
-			case "email":
-				return ec.fieldContext_Viewer_email(ctx, field)
-			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
-			case "userExperiences":
-				return ec.fieldContext_Viewer_userExperiences(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateSplitPayload_split(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateSplitPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
-			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
-			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
-			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -14943,8 +14943,8 @@ func (ec *executionContext) fieldContext_UpdateUserExperiencePayload_viewer(_ co
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -15000,8 +15000,8 @@ func (ec *executionContext) fieldContext_UpdateUserInfoPayload_viewer(_ context.
 				return ec.fieldContext_Viewer_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Viewer_user(ctx, field)
-			case "viewerSplits":
-				return ec.fieldContext_Viewer_viewerSplits(ctx, field)
+			case "viewerPools":
+				return ec.fieldContext_Viewer_viewerPools(ctx, field)
 			case "email":
 				return ec.fieldContext_Viewer_email(ctx, field)
 			case "notifications":
@@ -15058,8 +15058,8 @@ func (ec *executionContext) fieldContext_UploadPersistedQueriesPayload_message(_
 	return fc, nil
 }
 
-func (ec *executionContext) _UpsertSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpsertSplitPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpsertSplitPayload_split(ctx, field)
+func (ec *executionContext) _UpsertPoolPayload_pool(ctx context.Context, field graphql.CollectedField, obj *model.UpsertPoolPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpsertPoolPayload_pool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15072,7 +15072,7 @@ func (ec *executionContext) _UpsertSplitPayload_split(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
+		return obj.Pool, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15081,47 +15081,47 @@ func (ec *executionContext) _UpsertSplitPayload_split(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Split)
+	res := resTmp.(*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpsertSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpsertPoolPayload_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "UpsertSplitPayload",
+		Object:     "UpsertPoolPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -15177,10 +15177,10 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_MutualsUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+			case "pools":
+				return ec.fieldContext_MutualsUser_pools(ctx, field)
+			case "poolsByChain":
+				return ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 			case "isAuthenticatedUser":
 				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
@@ -15498,10 +15498,10 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(_ context.Context
 				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_MutualsUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+			case "pools":
+				return ec.fieldContext_MutualsUser_pools(ctx, field)
+			case "poolsByChain":
+				return ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 			case "isAuthenticatedUser":
 				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
@@ -15798,10 +15798,10 @@ func (ec *executionContext) fieldContext_Viewer_user(_ context.Context, field gr
 				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
 				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
-			case "splits":
-				return ec.fieldContext_MutualsUser_splits(ctx, field)
-			case "splitsByChain":
-				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+			case "pools":
+				return ec.fieldContext_MutualsUser_pools(ctx, field)
+			case "poolsByChain":
+				return ec.fieldContext_MutualsUser_poolsByChain(ctx, field)
 			case "isAuthenticatedUser":
 				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
@@ -15811,8 +15811,8 @@ func (ec *executionContext) fieldContext_Viewer_user(_ context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Viewer_viewerSplits(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_viewerSplits(ctx, field)
+func (ec *executionContext) _Viewer_viewerPools(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Viewer_viewerPools(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15825,7 +15825,7 @@ func (ec *executionContext) _Viewer_viewerSplits(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().ViewerSplits(rctx, obj)
+		return ec.resolvers.Viewer().ViewerPools(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15834,12 +15834,12 @@ func (ec *executionContext) _Viewer_viewerSplits(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.ViewerSplit)
+	res := resTmp.([]*model.ViewerPool)
 	fc.Result = res
-	return ec.marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx, field.Selections, res)
+	return ec.marshalOViewerPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_viewerSplits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_viewerPools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -15847,10 +15847,10 @@ func (ec *executionContext) fieldContext_Viewer_viewerSplits(_ context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "split":
-				return ec.fieldContext_ViewerSplit_split(ctx, field)
+			case "pool":
+				return ec.fieldContext_ViewerPool_pool(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ViewerSplit", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ViewerPool", field.Name)
 		},
 	}
 	return fc, nil
@@ -16001,8 +16001,8 @@ func (ec *executionContext) fieldContext_Viewer_notificationSettings(_ context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "someoneViewedYourSplit":
-				return ec.fieldContext_NotificationSettings_someoneViewedYourSplit(ctx, field)
+			case "someoneViewedYourPool":
+				return ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
 		},
@@ -16057,8 +16057,8 @@ func (ec *executionContext) fieldContext_Viewer_userExperiences(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _ViewerSplit_split(ctx context.Context, field graphql.CollectedField, obj *model.ViewerSplit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ViewerSplit_split(ctx, field)
+func (ec *executionContext) _ViewerPool_pool(ctx context.Context, field graphql.CollectedField, obj *model.ViewerPool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ViewerPool_pool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16071,7 +16071,7 @@ func (ec *executionContext) _ViewerSplit_split(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
+		return obj.Pool, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16080,47 +16080,47 @@ func (ec *executionContext) _ViewerSplit_split(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Split)
+	res := resTmp.(*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ViewerSplit_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ViewerPool_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "ViewerSplit",
+		Object:     "ViewerPool",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -16343,8 +16343,8 @@ func (ec *executionContext) fieldContext_Wallet_walletType(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Wallet_splits(ctx context.Context, field graphql.CollectedField, obj *model.Wallet) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Wallet_splits(ctx, field)
+func (ec *executionContext) _Wallet_pools(ctx context.Context, field graphql.CollectedField, obj *model.Wallet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Wallet_pools(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16357,7 +16357,7 @@ func (ec *executionContext) _Wallet_splits(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Wallet().Splits(rctx, obj)
+		return ec.resolvers.Wallet().Pools(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16366,12 +16366,12 @@ func (ec *executionContext) _Wallet_splits(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Split)
+	res := resTmp.([]*model.Pool)
 	fc.Result = res
-	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Wallet_splits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Wallet_pools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Wallet",
 		Field:      field,
@@ -16380,33 +16380,33 @@ func (ec *executionContext) fieldContext_Wallet_splits(_ context.Context, field 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
+				return ec.fieldContext_Pool_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
+				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
+				return ec.fieldContext_Pool_version(ctx, field)
 			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
+				return ec.fieldContext_Pool_status(ctx, field)
 			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
+				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
+				return ec.fieldContext_Pool_description(ctx, field)
 			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
+				return ec.fieldContext_Pool_address(ctx, field)
 			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
+				return ec.fieldContext_Pool_ownerAddress(ctx, field)
 			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
+				return ec.fieldContext_Pool_creatorAddress(ctx, field)
 			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
+				return ec.fieldContext_Pool_chain(ctx, field)
 			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+				return ec.fieldContext_Pool_allocationAggregation(ctx, field)
 			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
+				return ec.fieldContext_Pool_allocations(ctx, field)
 			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
+				return ec.fieldContext_Pool_assets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -18429,8 +18429,8 @@ func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateSplitInput(ctx context.Context, obj interface{}) (model.CreateSplitInput, error) {
-	var it model.CreateSplitInput
+func (ec *executionContext) unmarshalInputCreatePoolInput(ctx context.Context, obj interface{}) (model.CreatePoolInput, error) {
+	var it model.CreatePoolInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -18767,20 +18767,20 @@ func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"someoneViewedYourSplit"}
+	fieldsInOrder := [...]string{"someoneViewedYourPool"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "someoneViewedYourSplit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneViewedYourSplit"))
+		case "someoneViewedYourPool":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneViewedYourPool"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SomeoneViewedYourSplit = data
+			it.SomeoneViewedYourPool = data
 		}
 	}
 
@@ -18808,6 +18808,102 @@ func (ec *executionContext) unmarshalInputOneTimeLoginTokenAuth(ctx context.Cont
 				return it, err
 			}
 			it.Token = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPoolAllocationInput(ctx context.Context, obj interface{}) (model.PoolAllocationInput, error) {
+	var it model.PoolAllocationInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "recipientAddress", "calculationType", "recipientType", "value", "children"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "recipientAddress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RecipientAddress = data
+		case "calculationType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("calculationType"))
+			data, err := ec.unmarshalNCalculationType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CalculationType = data
+		case "recipientType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientType"))
+			data, err := ec.unmarshalNRecipientType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RecipientType = data
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		case "children":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
+			data, err := ec.unmarshalOPoolAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolAllocationInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Children = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPoolPositionInput(ctx context.Context, obj interface{}) (model.PoolPositionInput, error) {
+	var it model.PoolPositionInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"poolId", "position"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "poolId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PoolID = data
+		case "position":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Position = data
 		}
 	}
 
@@ -18868,27 +18964,27 @@ func (ec *executionContext) unmarshalInputPrivyAuth(ctx context.Context, obj int
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context, obj interface{}) (model.PublishSplitInput, error) {
-	var it model.PublishSplitInput
+func (ec *executionContext) unmarshalInputPublishPoolInput(ctx context.Context, obj interface{}) (model.PublishPoolInput, error) {
+	var it model.PublishPoolInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"splitId", "editId", "caption"}
+	fieldsInOrder := [...]string{"poolId", "editId", "caption"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "splitId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
+		case "poolId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SplitID = data
+			it.PoolID = data
 		case "editId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("editId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -18903,102 +18999,6 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 				return it, err
 			}
 			it.Caption = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputSplitAllocationInput(ctx context.Context, obj interface{}) (model.SplitAllocationInput, error) {
-	var it model.SplitAllocationInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "recipientAddress", "calculationType", "recipientType", "value", "children"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "recipientAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
-			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RecipientAddress = data
-		case "calculationType":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("calculationType"))
-			data, err := ec.unmarshalNCalculationType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CalculationType = data
-		case "recipientType":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientType"))
-			data, err := ec.unmarshalNRecipientType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RecipientType = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Value = data
-		case "children":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
-			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Children = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context, obj interface{}) (model.SplitPositionInput, error) {
-	var it model.SplitPositionInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"splitId", "position"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "splitId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SplitID = data
-		case "position":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Position = data
 		}
 	}
 
@@ -19107,8 +19107,8 @@ func (ec *executionContext) unmarshalInputUpdateEmailNotificationSettingsInput(c
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateSplitHiddenInput(ctx context.Context, obj interface{}) (model.UpdateSplitHiddenInput, error) {
-	var it model.UpdateSplitHiddenInput
+func (ec *executionContext) unmarshalInputUpdatePoolHiddenInput(ctx context.Context, obj interface{}) (model.UpdatePoolHiddenInput, error) {
+	var it model.UpdatePoolHiddenInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -19141,8 +19141,8 @@ func (ec *executionContext) unmarshalInputUpdateSplitHiddenInput(ctx context.Con
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Context, obj interface{}) (model.UpdateSplitInfoInput, error) {
-	var it model.UpdateSplitInfoInput
+func (ec *executionContext) unmarshalInputUpdatePoolInfoInput(ctx context.Context, obj interface{}) (model.UpdatePoolInfoInput, error) {
+	var it model.UpdatePoolInfoInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -19182,27 +19182,27 @@ func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, obj interface{}) (model.UpdateSplitInput, error) {
-	var it model.UpdateSplitInput
+func (ec *executionContext) unmarshalInputUpdatePoolInput(ctx context.Context, obj interface{}) (model.UpdatePoolInput, error) {
+	var it model.UpdatePoolInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"splitId", "name", "description", "order", "editId"}
+	fieldsInOrder := [...]string{"poolId", "name", "description", "order", "editId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "splitId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
+		case "poolId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SplitID = data
+			it.PoolID = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -19237,8 +19237,8 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateSplitOrderInput(ctx context.Context, obj interface{}) (model.UpdateSplitOrderInput, error) {
-	var it model.UpdateSplitOrderInput
+func (ec *executionContext) unmarshalInputUpdatePoolOrderInput(ctx context.Context, obj interface{}) (model.UpdatePoolOrderInput, error) {
+	var it model.UpdatePoolOrderInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -19253,7 +19253,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitOrderInput(ctx context.Cont
 		switch k {
 		case "positions":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("positions"))
-			data, err := ec.unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx, v)
+			data, err := ec.unmarshalNPoolPositionInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolPositionInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19352,27 +19352,27 @@ func (ec *executionContext) unmarshalInputUploadPersistedQueriesInput(ctx contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpsertSplitInput(ctx context.Context, obj interface{}) (model.UpsertSplitInput, error) {
-	var it model.UpsertSplitInput
+func (ec *executionContext) unmarshalInputUpsertPoolInput(ctx context.Context, obj interface{}) (model.UpsertPoolInput, error) {
+	var it model.UpsertPoolInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"splitId", "name", "description", "allocations"}
+	fieldsInOrder := [...]string{"poolId", "name", "description", "allocations"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "splitId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
+		case "poolId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SplitID = data
+			it.PoolID = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -19389,7 +19389,7 @@ func (ec *executionContext) unmarshalInputUpsertSplitInput(ctx context.Context, 
 			it.Description = data
 		case "allocations":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocations"))
-			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
+			data, err := ec.unmarshalOPoolAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolAllocationInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19599,7 +19599,7 @@ func (ec *executionContext) _AuthorizationError(ctx context.Context, sel ast.Sel
 	}
 }
 
-func (ec *executionContext) _CreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.CreateSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _CreatePoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.CreatePoolPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -19617,13 +19617,13 @@ func (ec *executionContext) _CreateSplitPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.CreateSplitPayload:
-		return ec._CreateSplitPayload(ctx, sel, &obj)
-	case *model.CreateSplitPayload:
+	case model.CreatePoolPayload:
+		return ec._CreatePoolPayload(ctx, sel, &obj)
+	case *model.CreatePoolPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._CreateSplitPayload(ctx, sel, obj)
+		return ec._CreatePoolPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -19680,7 +19680,7 @@ func (ec *executionContext) _CreateUserPayloadOrError(ctx context.Context, sel a
 	}
 }
 
-func (ec *executionContext) _DeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.DeleteSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _DeletePoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.DeletePoolPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -19698,13 +19698,13 @@ func (ec *executionContext) _DeleteSplitPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.DeleteSplitPayload:
-		return ec._DeleteSplitPayload(ctx, sel, &obj)
-	case *model.DeleteSplitPayload:
+	case model.DeletePoolPayload:
+		return ec._DeletePoolPayload(ctx, sel, &obj)
+	case *model.DeletePoolPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._DeleteSplitPayload(ctx, sel, obj)
+		return ec._DeletePoolPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -19721,13 +19721,13 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 			return graphql.Null
 		}
 		return ec._ErrTokenNotFound(ctx, sel, obj)
-	case model.ErrSplitNotFound:
-		return ec._ErrSplitNotFound(ctx, sel, &obj)
-	case *model.ErrSplitNotFound:
+	case model.ErrPoolNotFound:
+		return ec._ErrPoolNotFound(ctx, sel, &obj)
+	case *model.ErrPoolNotFound:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._ErrSplitNotFound(ctx, sel, obj)
+		return ec._ErrPoolNotFound(ctx, sel, obj)
 	case model.ErrAuthenticationFailed:
 		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
 	case *model.ErrAuthenticationFailed:
@@ -19995,13 +19995,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Allocation(ctx, sel, obj)
-	case model.Split:
-		return ec._Split(ctx, sel, &obj)
-	case *model.Split:
+	case model.Pool:
+		return ec._Pool(ctx, sel, &obj)
+	case *model.Pool:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Split(ctx, sel, obj)
+		return ec._Pool(ctx, sel, obj)
 	case model.Viewer:
 		return ec._Viewer(ctx, sel, &obj)
 	case *model.Viewer:
@@ -20093,6 +20093,29 @@ func (ec *executionContext) _OptOutForRolesPayloadOrError(ctx context.Context, s
 	}
 }
 
+func (ec *executionContext) _PoolByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.PoolByIDPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.Pool:
+		return ec._Pool(ctx, sel, &obj)
+	case *model.Pool:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Pool(ctx, sel, obj)
+	case model.ErrPoolNotFound:
+		return ec._ErrPoolNotFound(ctx, sel, &obj)
+	case *model.ErrPoolNotFound:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrPoolNotFound(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 func (ec *executionContext) _PreverifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.PreverifyEmailPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -20116,7 +20139,7 @@ func (ec *executionContext) _PreverifyEmailPayloadOrError(ctx context.Context, s
 	}
 }
 
-func (ec *executionContext) _PublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.PublishSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _PublishPoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.PublishPoolPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -20134,13 +20157,13 @@ func (ec *executionContext) _PublishSplitPayloadOrError(ctx context.Context, sel
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.PublishSplitPayload:
-		return ec._PublishSplitPayload(ctx, sel, &obj)
-	case *model.PublishSplitPayload:
+	case model.PublishPoolPayload:
+		return ec._PublishPoolPayload(ctx, sel, &obj)
+	case *model.PublishPoolPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._PublishSplitPayload(ctx, sel, obj)
+		return ec._PublishPoolPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -20259,7 +20282,7 @@ func (ec *executionContext) _RevokeRolesFromUserPayloadOrError(ctx context.Conte
 	}
 }
 
-func (ec *executionContext) _SearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.SearchSplitsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _SearchPoolsPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.SearchPoolsPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -20270,13 +20293,13 @@ func (ec *executionContext) _SearchSplitsPayloadOrError(ctx context.Context, sel
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.SearchSplitsPayload:
-		return ec._SearchSplitsPayload(ctx, sel, &obj)
-	case *model.SearchSplitsPayload:
+	case model.SearchPoolsPayload:
+		return ec._SearchPoolsPayload(ctx, sel, &obj)
+	case *model.SearchPoolsPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SearchSplitsPayload(ctx, sel, obj)
+		return ec._SearchPoolsPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -20300,29 +20323,6 @@ func (ec *executionContext) _SearchUsersPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._SearchUsersPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _SplitByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.SplitByIDPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.Split:
-		return ec._Split(ctx, sel, &obj)
-	case *model.Split:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Split(ctx, sel, obj)
-	case model.ErrSplitNotFound:
-		return ec._ErrSplitNotFound(ctx, sel, &obj)
-	case *model.ErrSplitNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrSplitNotFound(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -20434,6 +20434,96 @@ func (ec *executionContext) _UpdateEmailPayloadOrError(ctx context.Context, sel 
 	}
 }
 
+func (ec *executionContext) _UpdatePoolHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdatePoolHiddenPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdatePoolHiddenPayload:
+		return ec._UpdatePoolHiddenPayload(ctx, sel, &obj)
+	case *model.UpdatePoolHiddenPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdatePoolHiddenPayload(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpdatePoolOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdatePoolOrderPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdatePoolOrderPayload:
+		return ec._UpdatePoolOrderPayload(ctx, sel, &obj)
+	case *model.UpdatePoolOrderPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdatePoolOrderPayload(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpdatePoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdatePoolPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpdatePoolPayload:
+		return ec._UpdatePoolPayload(ctx, sel, &obj)
+	case *model.UpdatePoolPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpdatePoolPayload(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 func (ec *executionContext) _UpdatePrimaryWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdatePrimaryWalletPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -20459,96 +20549,6 @@ func (ec *executionContext) _UpdatePrimaryWalletPayloadOrError(ctx context.Conte
 			return graphql.Null
 		}
 		return ec._UpdatePrimaryWalletPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.UpdateSplitHiddenPayload:
-		return ec._UpdateSplitHiddenPayload(ctx, sel, &obj)
-	case *model.UpdateSplitHiddenPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitHiddenPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.UpdateSplitOrderPayload:
-		return ec._UpdateSplitOrderPayload(ctx, sel, &obj)
-	case *model.UpdateSplitOrderPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitOrderPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.UpdateSplitPayload:
-		return ec._UpdateSplitPayload(ctx, sel, &obj)
-	case *model.UpdateSplitPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -20644,7 +20644,7 @@ func (ec *executionContext) _UploadPersistedQueriesPayloadOrError(ctx context.Co
 	}
 }
 
-func (ec *executionContext) _UpsertSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpsertSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _UpsertPoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpsertPoolPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -20662,13 +20662,13 @@ func (ec *executionContext) _UpsertSplitPayloadOrError(ctx context.Context, sel 
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.UpsertSplitPayload:
-		return ec._UpsertSplitPayload(ctx, sel, &obj)
-	case *model.UpsertSplitPayload:
+	case model.UpsertPoolPayload:
+		return ec._UpsertPoolPayload(ctx, sel, &obj)
+	case *model.UpsertPoolPayload:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._UpsertSplitPayload(ctx, sel, obj)
+		return ec._UpsertPoolPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -20833,24 +20833,24 @@ func (ec *executionContext) _ViewerOrError(ctx context.Context, sel ast.Selectio
 	}
 }
 
-func (ec *executionContext) _ViewerSplitByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) _ViewerPoolByIdPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.ViewerPoolByIDPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ErrSplitNotFound:
-		return ec._ErrSplitNotFound(ctx, sel, &obj)
-	case *model.ErrSplitNotFound:
+	case model.ErrPoolNotFound:
+		return ec._ErrPoolNotFound(ctx, sel, &obj)
+	case *model.ErrPoolNotFound:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._ErrSplitNotFound(ctx, sel, obj)
-	case model.ViewerSplit:
-		return ec._ViewerSplit(ctx, sel, &obj)
-	case *model.ViewerSplit:
+		return ec._ErrPoolNotFound(ctx, sel, obj)
+	case model.ViewerPool:
+		return ec._ViewerPool(ctx, sel, &obj)
+	case *model.ViewerPool:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._ViewerSplit(ctx, sel, obj)
+		return ec._ViewerPool(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -20963,7 +20963,7 @@ func (ec *executionContext) _Allocation(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._Allocation_creationTime(ctx, field, obj)
 		case "lastUpdated":
 			out.Values[i] = ec._Allocation_lastUpdated(ctx, field, obj)
-		case "split":
+		case "pool":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -20972,7 +20972,7 @@ func (ec *executionContext) _Allocation(ctx context.Context, sel ast.SelectionSe
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Allocation_split(ctx, field, obj)
+				res = ec._Allocation_pool(ctx, field, obj)
 				return res
 			}
 
@@ -21050,7 +21050,7 @@ func (ec *executionContext) _AllocationAggregation(ctx context.Context, sel ast.
 			out.Values[i] = ec._AllocationAggregation_creationTime(ctx, field, obj)
 		case "lastUpdated":
 			out.Values[i] = ec._AllocationAggregation_lastUpdated(ctx, field, obj)
-		case "split":
+		case "pool":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -21059,7 +21059,7 @@ func (ec *executionContext) _AllocationAggregation(ctx context.Context, sel ast.
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._AllocationAggregation_split(ctx, field, obj)
+				res = ec._AllocationAggregation_pool(ctx, field, obj)
 				return res
 			}
 
@@ -21265,21 +21265,21 @@ func (ec *executionContext) _ChainAddress(ctx context.Context, sel ast.Selection
 	return out
 }
 
-var chainPubKeyImplementors = []string{"ChainPubKey"}
+var chainPoolsImplementors = []string{"ChainPools"}
 
-func (ec *executionContext) _ChainPubKey(ctx context.Context, sel ast.SelectionSet, obj *persist.ChainPubKey) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, chainPubKeyImplementors)
+func (ec *executionContext) _ChainPools(ctx context.Context, sel ast.SelectionSet, obj *model.ChainPools) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, chainPoolsImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("ChainPubKey")
-		case "pubKey":
-			out.Values[i] = ec._ChainPubKey_pubKey(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("ChainPools")
 		case "chain":
-			out.Values[i] = ec._ChainPubKey_chain(ctx, field, obj)
+			out.Values[i] = ec._ChainPools_chain(ctx, field, obj)
+		case "pools":
+			out.Values[i] = ec._ChainPools_pools(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21303,21 +21303,21 @@ func (ec *executionContext) _ChainPubKey(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var chainSplitsImplementors = []string{"ChainSplits"}
+var chainPubKeyImplementors = []string{"ChainPubKey"}
 
-func (ec *executionContext) _ChainSplits(ctx context.Context, sel ast.SelectionSet, obj *model.ChainSplits) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, chainSplitsImplementors)
+func (ec *executionContext) _ChainPubKey(ctx context.Context, sel ast.SelectionSet, obj *persist.ChainPubKey) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, chainPubKeyImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("ChainSplits")
+			out.Values[i] = graphql.MarshalString("ChainPubKey")
+		case "pubKey":
+			out.Values[i] = ec._ChainPubKey_pubKey(ctx, field, obj)
 		case "chain":
-			out.Values[i] = ec._ChainSplits_chain(ctx, field, obj)
-		case "splits":
-			out.Values[i] = ec._ChainSplits_splits(ctx, field, obj)
+			out.Values[i] = ec._ChainPubKey_chain(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21377,19 +21377,19 @@ func (ec *executionContext) _ClearAllNotificationsPayload(ctx context.Context, s
 	return out
 }
 
-var createSplitPayloadImplementors = []string{"CreateSplitPayload", "CreateSplitPayloadOrError"}
+var createPoolPayloadImplementors = []string{"CreatePoolPayload", "CreatePoolPayloadOrError"}
 
-func (ec *executionContext) _CreateSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreateSplitPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createSplitPayloadImplementors)
+func (ec *executionContext) _CreatePoolPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreatePoolPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createPoolPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateSplitPayload")
-		case "split":
-			out.Values[i] = ec._CreateSplitPayload_split(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("CreatePoolPayload")
+		case "pool":
+			out.Values[i] = ec._CreatePoolPayload_pool(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21449,19 +21449,19 @@ func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var deleteSplitPayloadImplementors = []string{"DeleteSplitPayload", "DeleteSplitPayloadOrError"}
+var deletePoolPayloadImplementors = []string{"DeletePoolPayload", "DeletePoolPayloadOrError"}
 
-func (ec *executionContext) _DeleteSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteSplitPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteSplitPayloadImplementors)
+func (ec *executionContext) _DeletePoolPayload(ctx context.Context, sel ast.SelectionSet, obj *model.DeletePoolPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deletePoolPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteSplitPayload")
+			out.Values[i] = graphql.MarshalString("DeletePoolPayload")
 		case "deletedId":
-			out.Values[i] = ec._DeleteSplitPayload_deletedId(ctx, field, obj)
+			out.Values[i] = ec._DeletePoolPayload_deletedId(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21729,7 +21729,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "CreateSplitPayloadOrError", "UpsertSplitPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SearchUsersPayloadOrError", "SearchPoolsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "CreatePoolPayloadOrError", "UpsertPoolPayloadOrError", "UpdatePoolHiddenPayloadOrError", "DeletePoolPayloadOrError", "UpdatePoolOrderPayloadOrError", "UpdatePoolPayloadOrError", "PublishPoolPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -21856,7 +21856,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpsertSplitPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreatePoolPayloadOrError", "UpsertPoolPayloadOrError", "UpdatePoolHiddenPayloadOrError", "DeletePoolPayloadOrError", "UpdatePoolOrderPayloadOrError", "UpdatePoolPayloadOrError", "PublishPoolPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -21874,6 +21874,45 @@ func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.Selec
 			}
 		case "cause":
 			out.Values[i] = ec._ErrNotAuthorized_cause(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var errPoolNotFoundImplementors = []string{"ErrPoolNotFound", "Error", "PoolByIdPayloadOrError", "ViewerPoolByIdPayloadOrError"}
+
+func (ec *executionContext) _ErrPoolNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrPoolNotFound) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, errPoolNotFoundImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ErrPoolNotFound")
+		case "message":
+			out.Values[i] = ec._ErrPoolNotFound_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -21952,45 +21991,6 @@ func (ec *executionContext) _ErrSessionInvalidated(ctx context.Context, sel ast.
 			out.Values[i] = graphql.MarshalString("ErrSessionInvalidated")
 		case "message":
 			out.Values[i] = ec._ErrSessionInvalidated_message(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var errSplitNotFoundImplementors = []string{"ErrSplitNotFound", "Error", "SplitByIdPayloadOrError", "ViewerSplitByIdPayloadOrError"}
-
-func (ec *executionContext) _ErrSplitNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrSplitNotFound) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, errSplitNotFoundImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ErrSplitNotFound")
-		case "message":
-			out.Values[i] = ec._ErrSplitNotFound_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22431,29 +22431,29 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_logout(ctx, field)
 			})
-		case "upsertSplit":
+		case "upsertPool":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_upsertSplit(ctx, field)
+				return ec._Mutation_upsertPool(ctx, field)
 			})
-		case "publishSplit":
+		case "publishPool":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_publishSplit(ctx, field)
+				return ec._Mutation_publishPool(ctx, field)
 			})
-		case "createSplit":
+		case "createPool":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createSplit(ctx, field)
+				return ec._Mutation_createPool(ctx, field)
 			})
-		case "updateSplitHidden":
+		case "updatePoolHidden":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSplitHidden(ctx, field)
+				return ec._Mutation_updatePoolHidden(ctx, field)
 			})
-		case "deleteSplit":
+		case "deletePool":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteSplit(ctx, field)
+				return ec._Mutation_deletePool(ctx, field)
 			})
-		case "updateSplitOrder":
+		case "updatePoolOrder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSplitOrder(ctx, field)
+				return ec._Mutation_updatePoolOrder(ctx, field)
 			})
 		case "clearAllNotifications":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -22654,7 +22654,7 @@ func (ec *executionContext) _MutualsUser(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "splits":
+		case "pools":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -22663,7 +22663,7 @@ func (ec *executionContext) _MutualsUser(ctx context.Context, sel ast.SelectionS
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._MutualsUser_splits(ctx, field, obj)
+				res = ec._MutualsUser_pools(ctx, field, obj)
 				return res
 			}
 
@@ -22687,7 +22687,7 @@ func (ec *executionContext) _MutualsUser(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "splitsByChain":
+		case "poolsByChain":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -22696,7 +22696,7 @@ func (ec *executionContext) _MutualsUser(ctx context.Context, sel ast.SelectionS
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._MutualsUser_splitsByChain(ctx, field, obj)
+				res = ec._MutualsUser_poolsByChain(ctx, field, obj)
 				return res
 			}
 
@@ -22794,8 +22794,8 @@ func (ec *executionContext) _NotificationSettings(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NotificationSettings")
-		case "someoneViewedYourSplit":
-			out.Values[i] = ec._NotificationSettings_someoneViewedYourSplit(ctx, field, obj)
+		case "someoneViewedYourPool":
+			out.Values[i] = ec._NotificationSettings_someoneViewedYourPool(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22992,6 +22992,204 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var poolImplementors = []string{"Pool", "Node", "PoolByIdPayloadOrError"}
+
+func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj *model.Pool) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Pool")
+		case "id":
+			out.Values[i] = ec._Pool_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dbid":
+			out.Values[i] = ec._Pool_dbid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._Pool_version(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._Pool_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._Pool_name(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._Pool_description(ctx, field, obj)
+		case "address":
+			out.Values[i] = ec._Pool_address(ctx, field, obj)
+		case "ownerAddress":
+			out.Values[i] = ec._Pool_ownerAddress(ctx, field, obj)
+		case "creatorAddress":
+			out.Values[i] = ec._Pool_creatorAddress(ctx, field, obj)
+		case "chain":
+			out.Values[i] = ec._Pool_chain(ctx, field, obj)
+		case "allocationAggregation":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Pool_allocationAggregation(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "allocations":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Pool_allocations(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "assets":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Pool_assets(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var poolSearchResultImplementors = []string{"PoolSearchResult"}
+
+func (ec *executionContext) _PoolSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.PoolSearchResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolSearchResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PoolSearchResult")
+		case "pool":
+			out.Values[i] = ec._PoolSearchResult_pool(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var preverifyEmailPayloadImplementors = []string{"PreverifyEmailPayload", "PreverifyEmailPayloadOrError"}
 
 func (ec *executionContext) _PreverifyEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PreverifyEmailPayload) graphql.Marshaler {
@@ -23036,19 +23234,19 @@ func (ec *executionContext) _PreverifyEmailPayload(ctx context.Context, sel ast.
 	return out
 }
 
-var publishSplitPayloadImplementors = []string{"PublishSplitPayload", "PublishSplitPayloadOrError"}
+var publishPoolPayloadImplementors = []string{"PublishPoolPayload", "PublishPoolPayloadOrError"}
 
-func (ec *executionContext) _PublishSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PublishSplitPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, publishSplitPayloadImplementors)
+func (ec *executionContext) _PublishPoolPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PublishPoolPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, publishPoolPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PublishSplitPayload")
-		case "split":
-			out.Values[i] = ec._PublishSplitPayload_split(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("PublishPoolPayload")
+		case "pool":
+			out.Values[i] = ec._PublishPoolPayload_pool(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23186,7 +23384,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "splitById":
+		case "poolById":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -23195,7 +23393,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_splitById(ctx, field)
+				res = ec._Query_poolById(ctx, field)
 				return res
 			}
 
@@ -23205,7 +23403,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "viewerSplitById":
+		case "viewerPoolById":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -23214,7 +23412,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_viewerSplitById(ctx, field)
+				res = ec._Query_viewerPoolById(ctx, field)
 				return res
 			}
 
@@ -23243,7 +23441,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "searchSplits":
+		case "searchPools":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -23252,7 +23450,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_searchSplits(ctx, field)
+				res = ec._Query_searchPools(ctx, field)
 				return res
 			}
 
@@ -23461,19 +23659,19 @@ func (ec *executionContext) _ResendVerificationEmailPayload(ctx context.Context,
 	return out
 }
 
-var searchSplitsPayloadImplementors = []string{"SearchSplitsPayload", "SearchSplitsPayloadOrError"}
+var searchPoolsPayloadImplementors = []string{"SearchPoolsPayload", "SearchPoolsPayloadOrError"}
 
-func (ec *executionContext) _SearchSplitsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SearchSplitsPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, searchSplitsPayloadImplementors)
+func (ec *executionContext) _SearchPoolsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.SearchPoolsPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchPoolsPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SearchSplitsPayload")
+			out.Values[i] = graphql.MarshalString("SearchPoolsPayload")
 		case "results":
-			out.Values[i] = ec._SearchSplitsPayload_results(ctx, field, obj)
+			out.Values[i] = ec._SearchPoolsPayload_results(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23510,204 +23708,6 @@ func (ec *executionContext) _SearchUsersPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("SearchUsersPayload")
 		case "results":
 			out.Values[i] = ec._SearchUsersPayload_results(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var splitImplementors = []string{"Split", "Node", "SplitByIdPayloadOrError"}
-
-func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, obj *model.Split) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, splitImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Split")
-		case "id":
-			out.Values[i] = ec._Split_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "dbid":
-			out.Values[i] = ec._Split_dbid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "version":
-			out.Values[i] = ec._Split_version(ctx, field, obj)
-		case "status":
-			out.Values[i] = ec._Split_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "name":
-			out.Values[i] = ec._Split_name(ctx, field, obj)
-		case "description":
-			out.Values[i] = ec._Split_description(ctx, field, obj)
-		case "address":
-			out.Values[i] = ec._Split_address(ctx, field, obj)
-		case "ownerAddress":
-			out.Values[i] = ec._Split_ownerAddress(ctx, field, obj)
-		case "creatorAddress":
-			out.Values[i] = ec._Split_creatorAddress(ctx, field, obj)
-		case "chain":
-			out.Values[i] = ec._Split_chain(ctx, field, obj)
-		case "allocationAggregation":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Split_allocationAggregation(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "allocations":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Split_allocations(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "assets":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Split_assets(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var splitSearchResultImplementors = []string{"SplitSearchResult"}
-
-func (ec *executionContext) _SplitSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.SplitSearchResult) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, splitSearchResultImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SplitSearchResult")
-		case "split":
-			out.Values[i] = ec._SplitSearchResult_split(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23967,6 +23967,114 @@ func (ec *executionContext) _UpdateEmailPayload(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var updatePoolHiddenPayloadImplementors = []string{"UpdatePoolHiddenPayload", "UpdatePoolHiddenPayloadOrError"}
+
+func (ec *executionContext) _UpdatePoolHiddenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdatePoolHiddenPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updatePoolHiddenPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdatePoolHiddenPayload")
+		case "pool":
+			out.Values[i] = ec._UpdatePoolHiddenPayload_pool(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updatePoolOrderPayloadImplementors = []string{"UpdatePoolOrderPayload", "UpdatePoolOrderPayloadOrError"}
+
+func (ec *executionContext) _UpdatePoolOrderPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdatePoolOrderPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updatePoolOrderPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdatePoolOrderPayload")
+		case "viewer":
+			out.Values[i] = ec._UpdatePoolOrderPayload_viewer(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updatePoolPayloadImplementors = []string{"UpdatePoolPayload", "UpdatePoolPayloadOrError"}
+
+func (ec *executionContext) _UpdatePoolPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdatePoolPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updatePoolPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdatePoolPayload")
+		case "pool":
+			out.Values[i] = ec._UpdatePoolPayload_pool(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updatePrimaryWalletPayloadImplementors = []string{"UpdatePrimaryWalletPayload", "UpdatePrimaryWalletPayloadOrError"}
 
 func (ec *executionContext) _UpdatePrimaryWalletPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdatePrimaryWalletPayload) graphql.Marshaler {
@@ -23980,114 +24088,6 @@ func (ec *executionContext) _UpdatePrimaryWalletPayload(ctx context.Context, sel
 			out.Values[i] = graphql.MarshalString("UpdatePrimaryWalletPayload")
 		case "viewer":
 			out.Values[i] = ec._UpdatePrimaryWalletPayload_viewer(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateSplitHiddenPayloadImplementors = []string{"UpdateSplitHiddenPayload", "UpdateSplitHiddenPayloadOrError"}
-
-func (ec *executionContext) _UpdateSplitHiddenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitHiddenPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitHiddenPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateSplitHiddenPayload")
-		case "split":
-			out.Values[i] = ec._UpdateSplitHiddenPayload_split(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateSplitOrderPayloadImplementors = []string{"UpdateSplitOrderPayload", "UpdateSplitOrderPayloadOrError"}
-
-func (ec *executionContext) _UpdateSplitOrderPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitOrderPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitOrderPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateSplitOrderPayload")
-		case "viewer":
-			out.Values[i] = ec._UpdateSplitOrderPayload_viewer(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateSplitPayloadImplementors = []string{"UpdateSplitPayload", "UpdateSplitPayloadOrError"}
-
-func (ec *executionContext) _UpdateSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateSplitPayload")
-		case "split":
-			out.Values[i] = ec._UpdateSplitPayload_split(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24219,19 +24219,19 @@ func (ec *executionContext) _UploadPersistedQueriesPayload(ctx context.Context, 
 	return out
 }
 
-var upsertSplitPayloadImplementors = []string{"UpsertSplitPayload", "UpsertSplitPayloadOrError"}
+var upsertPoolPayloadImplementors = []string{"UpsertPoolPayload", "UpsertPoolPayloadOrError"}
 
-func (ec *executionContext) _UpsertSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpsertSplitPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, upsertSplitPayloadImplementors)
+func (ec *executionContext) _UpsertPoolPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpsertPoolPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, upsertPoolPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpsertSplitPayload")
-		case "split":
-			out.Values[i] = ec._UpsertSplitPayload_split(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("UpsertPoolPayload")
+		case "pool":
+			out.Values[i] = ec._UpsertPoolPayload_pool(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24612,7 +24612,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "viewerSplits":
+		case "viewerPools":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -24621,7 +24621,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Viewer_viewerSplits(ctx, field, obj)
+				res = ec._Viewer_viewerPools(ctx, field, obj)
 				return res
 			}
 
@@ -24800,19 +24800,19 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var viewerSplitImplementors = []string{"ViewerSplit", "ViewerSplitByIdPayloadOrError"}
+var viewerPoolImplementors = []string{"ViewerPool", "ViewerPoolByIdPayloadOrError"}
 
-func (ec *executionContext) _ViewerSplit(ctx context.Context, sel ast.SelectionSet, obj *model.ViewerSplit) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, viewerSplitImplementors)
+func (ec *executionContext) _ViewerPool(ctx context.Context, sel ast.SelectionSet, obj *model.ViewerPool) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, viewerPoolImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("ViewerSplit")
-		case "split":
-			out.Values[i] = ec._ViewerSplit_split(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("ViewerPool")
+		case "pool":
+			out.Values[i] = ec._ViewerPool_pool(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24863,7 +24863,7 @@ func (ec *executionContext) _Wallet(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Wallet_chain(ctx, field, obj)
 		case "walletType":
 			out.Values[i] = ec._Wallet_walletType(ctx, field, obj)
-		case "splits":
+		case "pools":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -24872,7 +24872,7 @@ func (ec *executionContext) _Wallet(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Wallet_splits(ctx, field, obj)
+				res = ec._Wallet_pools(ctx, field, obj)
 				return res
 			}
 
@@ -25515,8 +25515,8 @@ func (ec *executionContext) unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋmutuals
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitInput(ctx context.Context, v interface{}) (model.CreateSplitInput, error) {
-	res, err := ec.unmarshalInputCreateSplitInput(ctx, v)
+func (ec *executionContext) unmarshalNCreatePoolInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreatePoolInput(ctx context.Context, v interface{}) (model.CreatePoolInput, error) {
+	res, err := ec.unmarshalInputCreatePoolInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -25671,6 +25671,53 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmu
 	return ec._PageInfo(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNPoolAllocationInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolAllocationInput(ctx context.Context, v interface{}) (*model.PoolAllocationInput, error) {
+	res, err := ec.unmarshalInputPoolAllocationInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNPoolPositionInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.PoolPositionInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.PoolPositionInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNPoolPositionInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolPositionInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNPoolPositionInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolPositionInput(ctx context.Context, v interface{}) (*model.PoolPositionInput, error) {
+	res, err := ec.unmarshalInputPoolPositionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPoolSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.PoolSearchResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolSearchResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPoolStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolStatus(ctx context.Context, v interface{}) (model.PoolStatus, error) {
+	var res model.PoolStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPoolStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolStatus(ctx context.Context, sel ast.SelectionSet, v model.PoolStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNPreverifyEmailInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx context.Context, v interface{}) (model.PreverifyEmailInput, error) {
 	res, err := ec.unmarshalInputPreverifyEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -25702,8 +25749,8 @@ func (ec *executionContext) marshalNPubKey2githubᚗcomᚋmutualsᚋgoᚑmutuals
 	return res
 }
 
-func (ec *executionContext) unmarshalNPublishSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitInput(ctx context.Context, v interface{}) (model.PublishSplitInput, error) {
-	res, err := ec.unmarshalInputPublishSplitInput(ctx, v)
+func (ec *executionContext) unmarshalNPublishPoolInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishPoolInput(ctx context.Context, v interface{}) (model.PublishPoolInput, error) {
+	res, err := ec.unmarshalInputPublishPoolInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -25849,53 +25896,6 @@ func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutual
 	return ret
 }
 
-func (ec *executionContext) unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx context.Context, v interface{}) (*model.SplitAllocationInput, error) {
-	res, err := ec.unmarshalInputSplitAllocationInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*model.SplitPositionInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInput(ctx context.Context, v interface{}) (*model.SplitPositionInput, error) {
-	res, err := ec.unmarshalInputSplitPositionInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SplitSearchResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SplitSearchResult(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNSplitStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, v interface{}) (model.SplitStatus, error) {
-	var res model.SplitStatus
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSplitStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, sel ast.SelectionSet, v model.SplitStatus) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -25958,13 +25958,13 @@ func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githu
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx context.Context, v interface{}) (model.UpdateSplitHiddenInput, error) {
-	res, err := ec.unmarshalInputUpdateSplitHiddenInput(ctx, v)
+func (ec *executionContext) unmarshalNUpdatePoolHiddenInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolHiddenInput(ctx context.Context, v interface{}) (model.UpdatePoolHiddenInput, error) {
+	res, err := ec.unmarshalInputUpdatePoolHiddenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx context.Context, v interface{}) (model.UpdateSplitOrderInput, error) {
-	res, err := ec.unmarshalInputUpdateSplitOrderInput(ctx, v)
+func (ec *executionContext) unmarshalNUpdatePoolOrderInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolOrderInput(ctx context.Context, v interface{}) (model.UpdatePoolOrderInput, error) {
+	res, err := ec.unmarshalInputUpdatePoolOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -25978,8 +25978,8 @@ func (ec *executionContext) unmarshalNUpdateUserInfoInput2githubᚗcomᚋmutuals
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpsertSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx context.Context, v interface{}) (model.UpsertSplitInput, error) {
-	res, err := ec.unmarshalInputUpsertSplitInput(ctx, v)
+func (ec *executionContext) unmarshalNUpsertPoolInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertPoolInput(ctx context.Context, v interface{}) (model.UpsertPoolInput, error) {
+	res, err := ec.unmarshalInputUpsertPoolInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -26727,11 +26727,11 @@ func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmut
 	return res, nil
 }
 
-func (ec *executionContext) marshalOChainSplits2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐChainSplits(ctx context.Context, sel ast.SelectionSet, v *model.ChainSplits) graphql.Marshaler {
+func (ec *executionContext) marshalOChainPools2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐChainPools(ctx context.Context, sel ast.SelectionSet, v *model.ChainPools) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._ChainSplits(ctx, sel, v)
+	return ec._ChainPools(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v *model.ClearAllNotificationsPayload) graphql.Marshaler {
@@ -26741,11 +26741,11 @@ func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcom
 	return ec._ClearAllNotificationsPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreateSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCreatePoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreatePoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreatePoolPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._CreateSplitPayloadOrError(ctx, sel, v)
+	return ec._CreatePoolPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOCreateUserPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateUserPayloadOrError) graphql.Marshaler {
@@ -26818,11 +26818,11 @@ func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋmutualsᚋgo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODeleteSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalODeletePoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeletePoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeletePoolPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._DeleteSplitPayloadOrError(ctx, sel, v)
+	return ec._DeletePoolPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalODeletedNode2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeletedNode(ctx context.Context, sel ast.SelectionSet, v *model.DeletedNode) graphql.Marshaler {
@@ -27175,6 +27175,128 @@ func (ec *executionContext) marshalOPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmu
 	return ec._PageInfo(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx context.Context, sel ast.SelectionSet, v []*model.Pool) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx context.Context, sel ast.SelectionSet, v *model.Pool) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Pool(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPoolAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolAllocationInputᚄ(ctx context.Context, v interface{}) ([]*model.PoolAllocationInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.PoolAllocationInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNPoolAllocationInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolAllocationInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOPoolByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PoolByIDPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PoolByIdPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPoolSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolSearchResult) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPoolSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -27201,11 +27323,11 @@ func (ec *executionContext) marshalOPubKey2githubᚗcomᚋmutualsᚋgoᚑmutuals
 	return res
 }
 
-func (ec *executionContext) marshalOPublishSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOPublishPoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishPoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishPoolPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._PublishSplitPayloadOrError(ctx, sel, v)
+	return ec._PublishPoolPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORegisterUserPushTokenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRegisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RegisterUserPushTokenPayloadOrError) graphql.Marshaler {
@@ -27313,11 +27435,11 @@ func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutual
 	return v
 }
 
-func (ec *executionContext) marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchSplitsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSearchPoolsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchPoolsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchPoolsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._SearchSplitsPayloadOrError(ctx, sel, v)
+	return ec._SearchPoolsPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchUsersPayloadOrError) graphql.Marshaler {
@@ -27325,128 +27447,6 @@ func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋmut
 		return graphql.Null
 	}
 	return ec._SearchUsersPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v *model.Split) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Split(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitAllocationInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*model.SplitAllocationInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SplitByIDPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SplitByIdPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SplitSearchResult) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSplitSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResult(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
@@ -27580,25 +27580,25 @@ func (ec *executionContext) marshalOUpdateEmailPayloadOrError2githubᚗcomᚋmut
 	return ec._UpdateEmailPayloadOrError(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOUpdatePoolHiddenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePoolHiddenPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdatePoolHiddenPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdatePoolOrderPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePoolOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePoolOrderPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdatePoolOrderPayloadOrError(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePrimaryWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdatePrimaryWalletPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateSplitHiddenPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateSplitOrderPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserExperiencePayloadOrError) graphql.Marshaler {
@@ -27630,11 +27630,11 @@ func (ec *executionContext) marshalOUploadPersistedQueriesPayloadOrError2github�
 	return ec._UploadPersistedQueriesPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpsertSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpsertSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpsertPoolPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertPoolPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpsertPoolPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._UpsertSplitPayloadOrError(ctx, sel, v)
+	return ec._UpsertPoolPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUserByAddressOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByAddressOrError) graphql.Marshaler {
@@ -27842,7 +27842,7 @@ func (ec *executionContext) marshalOViewerOrError2githubᚗcomᚋmutualsᚋgoᚑ
 	return ec._ViewerOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerSplit) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerPool(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerPool) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -27869,7 +27869,7 @@ func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmutualsᚋg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOViewerSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx, sel, v[i])
+			ret[i] = ec.marshalOViewerPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerPool(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -27883,18 +27883,18 @@ func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmutualsᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalOViewerSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v *model.ViewerSplit) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerPool(ctx context.Context, sel ast.SelectionSet, v *model.ViewerPool) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._ViewerSplit(ctx, sel, v)
+	return ec._ViewerPool(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerPoolByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerPoolByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerPoolByIDPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._ViewerSplitByIdPayloadOrError(ctx, sel, v)
+	return ec._ViewerPoolByIdPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v []*model.Wallet) graphql.Marshaler {

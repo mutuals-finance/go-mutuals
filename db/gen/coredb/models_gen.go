@@ -15,7 +15,7 @@ import (
 type Allocation struct {
 	ID               persist.DBID            `db:"id" json:"id"`
 	Version          sql.NullInt32           `db:"version" json:"version"`
-	SplitID          persist.DBID            `db:"split_id" json:"split_id"`
+	PoolID           persist.DBID            `db:"pool_id" json:"pool_id"`
 	RecipientAddress persist.Address         `db:"recipient_address" json:"recipient_address"`
 	RecipientType    persist.RecipientType   `db:"recipient_type" json:"recipient_type"`
 	CalculationType  persist.CalculationType `db:"calculation_type" json:"calculation_type"`
@@ -30,7 +30,7 @@ type Allocation struct {
 
 type AllocationAggregation struct {
 	ID               persist.DBID    `db:"id" json:"id"`
-	SplitID          persist.DBID    `db:"split_id" json:"split_id"`
+	PoolID           persist.DBID    `db:"pool_id" json:"pool_id"`
 	RecipientAddress persist.Address `db:"recipient_address" json:"recipient_address"`
 	Expression       string          `db:"expression" json:"expression"`
 	LastUpdated      time.Time       `db:"last_updated" json:"last_updated"`
@@ -57,7 +57,7 @@ type Event struct {
 	Deleted        bool                 `db:"deleted" json:"deleted"`
 	LastUpdated    time.Time            `db:"last_updated" json:"last_updated"`
 	CreatedAt      time.Time            `db:"created_at" json:"created_at"`
-	SplitID        persist.DBID         `db:"split_id" json:"split_id"`
+	PoolID         persist.DBID         `db:"pool_id" json:"pool_id"`
 	ExternalID     sql.NullString       `db:"external_id" json:"external_id"`
 	Caption        sql.NullString       `db:"caption" json:"caption"`
 	GroupID        sql.NullString       `db:"group_id" json:"group_id"`
@@ -88,7 +88,7 @@ type Notification struct {
 	Action      persist.Action           `db:"action" json:"action"`
 	Data        persist.NotificationData `db:"data" json:"data"`
 	EventIds    persist.DBIDList         `db:"event_ids" json:"event_ids"`
-	SplitID     persist.DBID             `db:"split_id" json:"split_id"`
+	PoolID      persist.DBID             `db:"pool_id" json:"pool_id"`
 	Seen        bool                     `db:"seen" json:"seen"`
 	Amount      int32                    `db:"amount" json:"amount"`
 }
@@ -118,11 +118,27 @@ type PiiUserView struct {
 	Universal                 bool                             `db:"universal" json:"universal"`
 	NotificationSettings      persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions      persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	FeaturedSplit             *persist.DBID                    `db:"featured_split" json:"featured_split"`
+	FeaturedPool              *persist.DBID                    `db:"featured_pool" json:"featured_pool"`
 	PrimaryWalletID           persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
 	UserExperiences           pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
 	PiiUnverifiedEmailAddress persist.Email                    `db:"pii_unverified_email_address" json:"pii_unverified_email_address"`
 	PiiVerifiedEmailAddress   persist.Email                    `db:"pii_verified_email_address" json:"pii_verified_email_address"`
+}
+
+type Pool struct {
+	ID             persist.DBID    `db:"id" json:"id"`
+	Version        sql.NullInt32   `db:"version" json:"version"`
+	LastUpdated    time.Time       `db:"last_updated" json:"last_updated"`
+	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
+	Deleted        bool            `db:"deleted" json:"deleted"`
+	Name           string          `db:"name" json:"name"`
+	Description    string          `db:"description" json:"description"`
+	Status         int32           `db:"status" json:"status"`
+	Chain          persist.Chain   `db:"chain" json:"chain"`
+	L1Chain        persist.L1Chain `db:"l1_chain" json:"l1_chain"`
+	Address        persist.Address `db:"address" json:"address"`
+	OwnerAddress   persist.Address `db:"owner_address" json:"owner_address"`
+	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
 }
 
 type PushNotificationTicket struct {
@@ -177,22 +193,6 @@ type SpamUserScore struct {
 	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
 }
 
-type Split struct {
-	ID             persist.DBID    `db:"id" json:"id"`
-	Version        sql.NullInt32   `db:"version" json:"version"`
-	LastUpdated    time.Time       `db:"last_updated" json:"last_updated"`
-	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
-	Deleted        bool            `db:"deleted" json:"deleted"`
-	Name           string          `db:"name" json:"name"`
-	Description    string          `db:"description" json:"description"`
-	Status         int32           `db:"status" json:"status"`
-	Chain          persist.Chain   `db:"chain" json:"chain"`
-	L1Chain        persist.L1Chain `db:"l1_chain" json:"l1_chain"`
-	Address        persist.Address `db:"address" json:"address"`
-	OwnerAddress   persist.Address `db:"owner_address" json:"owner_address"`
-	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
-}
-
 type Token struct {
 	ID           persist.DBID      `db:"id" json:"id"`
 	Deleted      bool              `db:"deleted" json:"deleted"`
@@ -230,7 +230,7 @@ type User struct {
 	Universal            bool                             `db:"universal" json:"universal"`
 	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	FeaturedSplit        *persist.DBID                    `db:"featured_split" json:"featured_split"`
+	FeaturedPool         *persist.DBID                    `db:"featured_pool" json:"featured_pool"`
 	PrimaryWalletID      persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
 	UserExperiences      pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
 }

@@ -160,7 +160,7 @@ type userFixture struct {
 	Wallet   wallet
 	Username string
 	ID       persist.DBID
-	SplitID  persist.DBID
+	PoolID   persist.DBID
 }
 
 // newUserFixture generates a new user
@@ -169,8 +169,8 @@ func newUserFixture(t *testing.T) userFixture {
 	wallet := newWallet(t)
 	ctx := context.Background()
 	c := defaultHandlerClient(t)
-	userID, username, splitID := newUser(t, ctx, c, wallet)
-	return userFixture{wallet, username, userID, splitID}
+	userID, username, poolID := newUser(t, ctx, c, wallet)
+	return userFixture{wallet, username, userID, poolID}
 }
 
 type userWithTokensFixture struct {

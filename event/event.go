@@ -37,7 +37,7 @@ func AddTo(ctx *gin.Context, disableDataloaderCaching bool, notif *notifications
 	notifications := newEventDispatcher()
 	notificationHandler := newNotificationHandler(notif, disableDataloaderCaching, queries)
 	sender.addDelayedHandler(notifications, persist.ActionUserFollowedUsers, notificationHandler)
-	sender.addDelayedHandler(notifications, persist.ActionViewedSplit, notificationHandler)
+	sender.addDelayedHandler(notifications, persist.ActionViewedPool, notificationHandler)
 
 	sender.notifications = notifications
 	ctx.Set(eventSenderContextKey, &sender)
@@ -368,7 +368,7 @@ func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent d
 	}
 
 	// Don't notify the user on un-authed views
-	if persistedEvent.Action == persist.ActionViewedSplit && persistedEvent.ActorID.String == "" {
+	if persistedEvent.Action == persist.ActionViewedPool && persistedEvent.ActorID.String == "" {
 		return nil
 	}
 
@@ -377,20 +377,20 @@ func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent d
 		Action:   persistedEvent.Action,
 		Data:     h.createNotificationDataForEvent(persistedEvent),
 		EventIds: persist.DBIDList{persistedEvent.ID},
-		SplitID:  persistedEvent.SplitID,
+		PoolID:   persistedEvent.PoolID,
 		//TokenID:  persistedEvent.TokenID,
 	})
 }
 
 func (h notificationHandler) findOwnerForNotificationFromEvent(ctx context.Context, event db.Event) (persist.DBID, error) {
 	switch event.ResourceTypeID {
-	case persist.ResourceTypeSplit:
+	case persist.ResourceTypePool:
 		// TODO return the creator user id
-		//split, err := h.dataloaders.GetSplitByIdBatch.Load(event.SplitID)
+		//pool, err := h.dataloaders.GetPoolByIdBatch.Load(event.PoolID)
 		//if err != nil {
 		//	return "", err
 		//}
-		// return split.CreatorAddress, nil
+		// return pool.CreatorAddress, nil
 		return persist.DBID("1"), nil
 	case persist.ResourceTypeUser:
 		return event.SubjectID, nil
@@ -403,7 +403,7 @@ func (h notificationHandler) findOwnerForNotificationFromEvent(ctx context.Conte
 
 func (h notificationHandler) createNotificationDataForEvent(event db.Event) (data persist.NotificationData) {
 	switch event.Action {
-	case persist.ActionViewedSplit:
+	case persist.ActionViewedPool:
 		if event.ActorID.String != "" {
 			data.AuthedViewerIDs = []persist.DBID{persist.NullStrToDBID(event.ActorID)}
 		}
@@ -444,7 +444,7 @@ func (h followerNotificationHandler) handleDelayed(ctx context.Context, persiste
 		// no owner or data for follower notifications
 		Action:   persistedEvent.Action,
 		EventIds: persist.DBIDList{persistedEvent.ID},
-		SplitID:  persistedEvent.SplitID,
+		PoolID:   persistedEvent.PoolID,
 		//TokenID:  persistedEvent.TokenID,
 	})
 }

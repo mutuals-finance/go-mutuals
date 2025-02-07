@@ -15,7 +15,7 @@ import (
 )
 
 var errMustProvideUserIdentifier = fmt.Errorf("must provide either ID or username")
-var errNoSplits = errors.New("no splits found for first user")
+var errNoPools = errors.New("no pools found for first user")
 
 type getUserInput struct {
 	ID       persist.DBID    `form:"id"`
@@ -132,7 +132,7 @@ func updateUser(updateUserStmt *sql.Stmt) gin.HandlerFunc {
 	}
 }
 
-func deleteUser(db *sql.DB, deleteUserStmt, getSplitsStmt, deleteSplitStmt, deleteCollectionStmt *sql.Stmt) gin.HandlerFunc {
+func deleteUser(db *sql.DB, deleteUserStmt, getPoolsStmt, deletePoolStmt, deleteCollectionStmt *sql.Stmt) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		var input deleteUserInput
@@ -152,7 +152,7 @@ func deleteUser(db *sql.DB, deleteUserStmt, getSplitsStmt, deleteSplitStmt, dele
 			return
 		}
 
-		res, err := getSplitsStmt.QueryContext(c, input.ID)
+		res, err := getPoolsStmt.QueryContext(c, input.ID)
 		if err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
@@ -160,13 +160,13 @@ func deleteUser(db *sql.DB, deleteUserStmt, getSplitsStmt, deleteSplitStmt, dele
 		defer res.Close()
 
 		for res.Next() {
-			var g persist.SplitDB
+			var g persist.PoolDB
 			if err := res.Scan(&g.ID); err != nil {
 				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 				return
 			}
-			// TODO delete split if user is the only recipient
-			//if _, err := tx.StmtContext(c, deleteSplitStmt).ExecContext(c, g.ID); err != nil {
+			// TODO delete pool if user is the only recipient
+			//if _, err := tx.StmtContext(c, deletePoolStmt).ExecContext(c, g.ID); err != nil {
 			//	rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			//	return
 			//}
@@ -186,7 +186,7 @@ func deleteUser(db *sql.DB, deleteUserStmt, getSplitsStmt, deleteSplitStmt, dele
 	}
 }
 
-func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getSplitsStmt, deleteSplitsStmt, updateSplitStmt *sql.Stmt) gin.HandlerFunc {
+func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getPoolsStmt, deletePoolsStmt, updatePoolStmt *sql.Stmt) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input mergeUserInput
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -217,21 +217,21 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 			return
 		}
 
-		res, err := getSplitsStmt.QueryContext(c, input.FirstUserID)
+		res, err := getPoolsStmt.QueryContext(c, input.FirstUserID)
 		if err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
 		defer res.Close()
 
-		splits := make([]persist.SplitDB, 0, 1)
+		pools := make([]persist.PoolDB, 0, 1)
 		for res.Next() {
-			var g persist.SplitDB
+			var g persist.PoolDB
 			if err := res.Scan(&g.ID); err != nil {
 				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 				return
 			}
-			splits = append(splits, g)
+			pools = append(pools, g)
 		}
 
 		if err := res.Err(); err != nil {
@@ -239,21 +239,21 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 			return
 		}
 
-		nextRes, err := getSplitsStmt.QueryContext(c, input.SecondUserID)
+		nextRes, err := getPoolsStmt.QueryContext(c, input.SecondUserID)
 		if err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
 		defer nextRes.Close()
 
-		secondSplits := make([]persist.SplitDB, 0, 1)
+		secondPools := make([]persist.PoolDB, 0, 1)
 		for nextRes.Next() {
-			var g persist.SplitDB
+			var g persist.PoolDB
 			if err := nextRes.Scan(&g.ID); err != nil {
 				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 				return
 			}
-			secondSplits = append(secondSplits, g)
+			secondPools = append(secondPools, g)
 		}
 
 		if err := nextRes.Err(); err != nil {
@@ -261,10 +261,10 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 			return
 		}
 
-		// TODO: delete splits only if user is last recipient of split
-		//if len(secondSplits) > 0 {
-		//	delStmt := tx.StmtContext(c, deleteSplitsStmt)
-		//	for _, g := range secondSplits {
+		// TODO: delete pools only if user is last recipient of pool
+		//if len(secondPools) > 0 {
+		//	delStmt := tx.StmtContext(c, deletePoolsStmt)
+		//	for _, g := range secondPools {
 		//		if _, err := delStmt.ExecContext(c, g.ID); err != nil {
 		//			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 		//			return
@@ -272,7 +272,7 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getS
 		//	}
 		//}
 		//
-		//if _, err := tx.StmtContext(c, updateSplitStmt).ExecContext(c, persist.LastUpdatedTime{}, split.ID); err != nil {
+		//if _, err := tx.StmtContext(c, updatePoolStmt).ExecContext(c, persist.LastUpdatedTime{}, pool.ID); err != nil {
 		//	rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 		//	return
 		//}

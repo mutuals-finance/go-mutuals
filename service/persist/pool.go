@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// SplitStatus is the type of status
-type SplitStatus int
+// PoolStatus is the type of status
+type PoolStatus int
 
 // CalculationType is the type of calculation
 type CalculationType int
@@ -25,16 +25,16 @@ type Recipient struct {
 	CreationTime time.Time `json:"created_at"`
 	LastUpdated  time.Time `json:"last_updated"`
 
-	SplitID   DBID      `json:"split_id"`
+	PoolID    DBID      `json:"pool_id"`
 	Address   Address   `json:"recipient_address"`
 	Ownership Ownership `json:"ownership"`
 }
 
-// SplitDB represents a split in the database.
+// PoolDB represents a pool in the database.
 // Assets will be represented as a list of token balance IDs creating
 // a join relationship in the database
 // This struct will only be used in database operations
-type SplitDB struct {
+type PoolDB struct {
 	ID             DBID           `json:"id" binding:"required"`
 	Version        NullInt32      `json:"version"` // schema version for this model
 	CreationTime   time.Time      `json:"created_at"`
@@ -52,11 +52,11 @@ type SplitDB struct {
 	Assets         []DBID         `json:"assets"`
 }
 
-// Split represents a group of collections of NFTS in the application.
+// Pool represents a group of collections of NFTS in the application.
 // Assets are represented as structs instead of IDs
 // This struct will be decoded from a find database operation and used throughout
-// the application where SplitDB is not used
-type Split struct {
+// the application where PoolDB is not used
+type Pool struct {
 	ID             DBID        `json:"id" binding:"required"`
 	Version        NullInt32   `json:"version"` // schema version for this model
 	CreationTime   time.Time   `json:"created_at"`
@@ -74,40 +74,40 @@ type Split struct {
 	Assets         []Asset     `json:"assets"`
 }
 
-// SplitRepository represents a repository for interacting with persisted splits
-type SplitRepository interface {
-	Create(context.Context, SplitDB) (DBID, error)
-	GetByID(context.Context, DBID) (Split, error)
-	GetByAddress(context.Context, Address, Chain) (Split, error)
-	GetByRecipient(context.Context, Address, int64, int64) ([]Split, error)
-	Upsert(context.Context, SplitDB) error
+// PoolRepository represents a repository for interacting with persisted pools
+type PoolRepository interface {
+	Create(context.Context, PoolDB) (DBID, error)
+	GetByID(context.Context, DBID) (Pool, error)
+	GetByAddress(context.Context, Address, Chain) (Pool, error)
+	GetByRecipient(context.Context, Address, int64, int64) ([]Pool, error)
+	Upsert(context.Context, PoolDB) error
 }
 
-// SplitTokenUpdateInput represents a struct that is used to update a splits list of collections in the databse
-type SplitTokenUpdateInput struct {
+// PoolTokenUpdateInput represents a struct that is used to update a pools list of collections in the databse
+type PoolTokenUpdateInput struct {
 	LastUpdated time.Time `json:"last_updated"`
 
 	Assets []DBID `json:"assets"`
 }
 
-// ErrSplitNotFound is returned when a split is not found by its ID
-type ErrSplitNotFound struct {
-	ID      DBID
-	SplitID DBID
+// ErrPoolNotFound is returned when a pool is not found by its ID
+type ErrPoolNotFound struct {
+	ID     DBID
+	PoolID DBID
 }
 
-func (e ErrSplitNotFound) Error() string {
-	return fmt.Sprintf("split not found with ID: %v SplitID: %v", e.ID, e.SplitID)
+func (e ErrPoolNotFound) Error() string {
+	return fmt.Sprintf("pool not found with ID: %v PoolID: %v", e.ID, e.PoolID)
 }
 
-// ErrSplitNotFoundByAddress is returned when a split is not found by its address
-type ErrSplitNotFoundByAddress struct {
+// ErrPoolNotFoundByAddress is returned when a pool is not found by its address
+type ErrPoolNotFoundByAddress struct {
 	Address Address
 	Chain   Chain
 }
 
-func (e ErrSplitNotFoundByAddress) Error() string {
-	return fmt.Sprintf("split not found with address: %v-%v", e.Address, e.Chain)
+func (e ErrPoolNotFoundByAddress) Error() string {
+	return fmt.Sprintf("pool not found with address: %v-%v", e.Address, e.Chain)
 }
 
 // ErrAllocationNotFound is returned when an allocation is not found by its ID
@@ -129,41 +129,41 @@ func (e ErrAllocationAggregationNotFound) Error() string {
 }
 
 const (
-	// SplitStatusDraft represents an draft split status
-	SplitStatusDraft SplitStatus = iota
-	// SplitStatusActive represents an active split status
-	SplitStatusActive
-	// SplitStatusPaused represents an active but paused split status
-	SplitStatusPaused
+	// PoolStatusDraft represents an draft pool status
+	PoolStatusDraft PoolStatus = iota
+	// PoolStatusActive represents an active pool status
+	PoolStatusActive
+	// PoolStatusPaused represents an active but paused pool status
+	PoolStatusPaused
 )
 
 // UnmarshalGQL implements the graphql.Unmarshaler interface
-func (ss *SplitStatus) UnmarshalGQL(v interface{}) error {
+func (ss *PoolStatus) UnmarshalGQL(v interface{}) error {
 	n, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("wrong type for SplitStatus: %T", v)
+		return fmt.Errorf("wrong type for PoolStatus: %T", v)
 	}
 	switch n {
 	case "Draft":
-		*ss = SplitStatusDraft
+		*ss = PoolStatusDraft
 	case "Active":
-		*ss = SplitStatusActive
+		*ss = PoolStatusActive
 	case "Paused":
-		*ss = SplitStatusPaused
+		*ss = PoolStatusPaused
 	default:
-		return fmt.Errorf("unknown SplitStatus: %s", n)
+		return fmt.Errorf("unknown PoolStatus: %s", n)
 	}
 	return nil
 }
 
 // MarshalGQL implements the graphql.Marshaler interface
-func (ss SplitStatus) MarshalGQL(w io.Writer) {
+func (ss PoolStatus) MarshalGQL(w io.Writer) {
 	switch ss {
-	case SplitStatusDraft:
+	case PoolStatusDraft:
 		w.Write([]byte(`"Draft"`))
-	case SplitStatusActive:
+	case PoolStatusActive:
 		w.Write([]byte(`"Active"`))
-	case SplitStatusPaused:
+	case PoolStatusPaused:
 		w.Write([]byte(`"Paused"`))
 	}
 }

@@ -66,9 +66,9 @@ func testGraphQL(t *testing.T) {
 		{title: "should get viewer", run: testViewer},
 		{title: "should add a wallet", run: testAddWallet},
 		{title: "should remove a wallet", run: testRemoveWallet},
-		{title: "should update split and ensure name still gets set when not sent in update", run: testUpsertSplitWithNoNameChange},
+		{title: "should update pool and ensure name still gets set when not sent in update", run: testUpsertPoolWithNoNameChange},
 		{title: "should update user experiences", run: testUpdateUserExperiences},
-		{title: "should create split", run: testCreateSplit},
+		{title: "should create pool", run: testCreatePool},
 		//{title: "should send notifications", run: testSendNotifications, fixtures: []fixture{usePostgres, useRedis}},
 	}
 	for _, test := range tests {
@@ -211,63 +211,63 @@ func testLogout(t *testing.T) {
 	assert.Nil(t, response.Logout.Viewer)
 }
 
-func testUpsertSplitWithPublish(t *testing.T) {
+func testUpsertPoolWithPublish(t *testing.T) {
 	serverF := newServerFixture(t)
 	userF := newUserWithTokensFixture(t)
 	c := authedServerClient(t, serverF.URL, userF.ID)
 
-	updateReponse, err := upsertSplitMutation(context.Background(), c, UpsertSplitInput{
-		SplitId: userF.SplitID,
-		Name:    util.ToPointer("newName"),
+	updateReponse, err := upsertPoolMutation(context.Background(), c, UpsertPoolInput{
+		PoolId: userF.PoolID,
+		Name:   util.ToPointer("newName"),
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, updateReponse.UpsertSplit)
-	updatePayload, ok := (*updateReponse.UpsertSplit).(*upsertSplitMutationUpsertSplitUpsertSplitPayload)
+	require.NotNil(t, updateReponse.UpsertPool)
+	updatePayload, ok := (*updateReponse.UpsertPool).(*upsertPoolMutationUpsertPoolUpsertPoolPayload)
 	if !ok {
-		err := (*updateReponse.UpsertSplit).(*upsertSplitMutationUpsertSplitErrInvalidInput)
+		err := (*updateReponse.UpsertPool).(*upsertPoolMutationUpsertPoolErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.NotEmpty(t, updatePayload.Split.Name)
+	assert.NotEmpty(t, updatePayload.Pool.Name)
 
-	update2Reponse, err := upsertSplitMutation(context.Background(), c, UpsertSplitInput{
-		SplitId:     userF.SplitID,
+	update2Reponse, err := upsertPoolMutation(context.Background(), c, UpsertPoolInput{
+		PoolId:      userF.PoolID,
 		Description: util.ToPointer("newDesc"),
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, update2Reponse.UpsertSplit)
+	require.NotNil(t, update2Reponse.UpsertPool)
 
 	// Wait for event handlers to store update events
 	time.Sleep(time.Second)
 
 	// publish
-	publishResponse, err := publishSplitMutation(context.Background(), c, PublishSplitInput{
-		SplitId: userF.SplitID,
+	publishResponse, err := publishPoolMutation(context.Background(), c, PublishPoolInput{
+		PoolId:  userF.PoolID,
 		EditId:  "edit_id",
 		Caption: util.ToPointer("newCaption"),
 	})
 	require.NoError(t, err)
-	require.NotNil(t, publishResponse.PublishSplit)
+	require.NotNil(t, publishResponse.PublishPool)
 
 	_, err = viewerQuery(context.Background(), c)
 	require.NoError(t, err)
 }
 
-func testCreateSplit(t *testing.T) {
+func testCreatePool(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
 
-	response, err := createSplitMutation(context.Background(), c, CreateSplitInput{
-		Name:        util.ToPointer("newSplit"),
+	response, err := createPoolMutation(context.Background(), c, CreatePoolInput{
+		Name:        util.ToPointer("newPool"),
 		Description: util.ToPointer("this is a description"),
 	})
 
 	require.NoError(t, err)
-	payload := (*response.CreateSplit).(*createSplitMutationCreateSplitCreateSplitPayload)
-	assert.NotEmpty(t, payload.Split.Dbid)
-	assert.Equal(t, "newSplit", *payload.Split.Name)
-	assert.Equal(t, "this is a description", *payload.Split.Description)
+	payload := (*response.CreatePool).(*createPoolMutationCreatePoolCreatePoolPayload)
+	assert.NotEmpty(t, payload.Pool.Dbid)
+	assert.Equal(t, "newPool", *payload.Pool.Name)
+	assert.Equal(t, "this is a description", *payload.Pool.Description)
 }
 
 func testUpdateUserExperiences(t *testing.T) {
@@ -291,34 +291,34 @@ func testUpdateUserExperiences(t *testing.T) {
 	}
 }
 
-func testUpsertSplitWithNoNameChange(t *testing.T) {
+func testUpsertPoolWithNoNameChange(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
 
-	response, err := upsertSplitMutation(context.Background(), c, UpsertSplitInput{
-		SplitId: userF.SplitID,
-		Name:    util.ToPointer("newName"),
+	response, err := upsertPoolMutation(context.Background(), c, UpsertPoolInput{
+		PoolId: userF.PoolID,
+		Name:   util.ToPointer("newName"),
 	})
 
 	require.NoError(t, err)
-	payload, ok := (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitUpsertSplitPayload)
+	payload, ok := (*response.UpsertPool).(*upsertPoolMutationUpsertPoolUpsertPoolPayload)
 	if !ok {
-		err := (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitErrInvalidInput)
+		err := (*response.UpsertPool).(*upsertPoolMutationUpsertPoolErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.NotEmpty(t, payload.Split.Name)
+	assert.NotEmpty(t, payload.Pool.Name)
 
-	response, err = upsertSplitMutation(context.Background(), c, UpsertSplitInput{
-		SplitId: userF.SplitID,
+	response, err = upsertPoolMutation(context.Background(), c, UpsertPoolInput{
+		PoolId: userF.PoolID,
 	})
 
 	require.NoError(t, err)
-	payload, ok = (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitUpsertSplitPayload)
+	payload, ok = (*response.UpsertPool).(*upsertPoolMutationUpsertPoolUpsertPoolPayload)
 	if !ok {
-		err := (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitErrInvalidInput)
+		err := (*response.UpsertPool).(*upsertPoolMutationUpsertPoolErrInvalidInput)
 		t.Fatal(err)
 	}
-	assert.NotEmpty(t, payload.Split.Name)
+	assert.NotEmpty(t, payload.Pool.Name)
 }
 
 // authMechanismInput signs a nonce with an ethereum wallet
@@ -397,7 +397,7 @@ func newUser(t *testing.T, ctx context.Context, c genql.Client, w wallet) (userI
 
 	require.NoError(t, err)
 	payload := (*response.CreateUser).(*createUserMutationCreateUserCreateUserPayload)
-	return payload.Viewer.User.Dbid, username, payload.Viewer.User.Splits[0].Dbid
+	return payload.Viewer.User.Dbid, username, payload.Viewer.User.Pools[0].Dbid
 }
 
 // defaultHandler returns a backend GraphQL http.Handler

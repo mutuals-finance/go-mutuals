@@ -32,8 +32,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	var ownerSplitID persist.DBID
-	err := pg.QueryRow(ctx, "SELECT id FROM splits WHERE owner_user_id = $1", ownerID).Scan(&ownerSplitID)
+	var ownerPoolID persist.DBID
+	err := pg.QueryRow(ctx, "SELECT id FROM pools WHERE owner_user_id = $1", ownerID).Scan(&ownerPoolID)
 	if err != nil {
 		panic(err)
 	}
@@ -65,9 +65,9 @@ func main() {
 		var resource persist.ResourceType
 		var subject persist.DBID
 		switch action {
-		case persist.ActionViewedSplit:
-			resource = persist.ResourceTypeSplit
-			subject = ownerSplitID
+		case persist.ActionViewedPool:
+			resource = persist.ResourceTypePool
+			subject = ownerPoolID
 		case persist.ActionUserFollowedUsers:
 			resource = persist.ResourceTypeUser
 			subject = ownerID
@@ -80,8 +80,8 @@ func main() {
 			Action:         action,
 		}
 
-		if action == persist.ActionViewedSplit {
-			event.SplitID = subject
+		if action == persist.ActionViewedPool {
+			event.PoolID = subject
 		} else if action == persist.ActionUserFollowedUsers {
 			event.UserID = subject
 		}
@@ -94,8 +94,8 @@ func main() {
 			Action:   action,
 			EventIds: []persist.DBID{event.ID},
 		}
-		if action == persist.ActionViewedSplit {
-			notif.SplitID = ownerSplitID
+		if action == persist.ActionViewedPool {
+			notif.PoolID = ownerPoolID
 			notif.Data.AuthedViewerIDs = []persist.DBID{id}
 		} else if action == persist.ActionUserFollowedUsers {
 			notif.Data.FollowerIDs = []persist.DBID{id}
@@ -106,9 +106,9 @@ func main() {
 	}
 
 	for _, event := range events {
-		if event.Action == persist.ActionViewedSplit {
-			fmt.Printf("SplitID %s\n", event.SplitID)
-			_, err := pg.Exec(ctx, "INSERT INTO EVENTS (ID, ACTOR_ID, RESOURCE_TYPE_ID, SUBJECT_ID, SPLIT_ID, ACTION) VALUES ($1, $2, $3, $4, $5, $6)", event.ID, event.ActorID, event.ResourceTypeID, event.SubjectID, event.SplitID, event.Action)
+		if event.Action == persist.ActionViewedPool {
+			fmt.Printf("PoolID %s\n", event.PoolID)
+			_, err := pg.Exec(ctx, "INSERT INTO EVENTS (ID, ACTOR_ID, RESOURCE_TYPE_ID, SUBJECT_ID, SPLIT_ID, ACTION) VALUES ($1, $2, $3, $4, $5, $6)", event.ID, event.ActorID, event.ResourceTypeID, event.SubjectID, event.PoolID, event.Action)
 			if err != nil {
 				panic(err)
 			}
@@ -127,9 +127,9 @@ func main() {
 	}
 
 	for _, notif := range notifs {
-		if notif.Action == persist.ActionViewedSplit {
-			fmt.Printf("SplitID %s\n", notif.SplitID)
-			_, err := pg.Exec(ctx, "INSERT INTO NOTIFICATIONS (ID, OWNER_ID, ACTION, SPLIT_ID, DATA, EVENT_IDS) VALUES ($1, $2, $3, $4, $5, $6)", notif.ID, notif.OwnerID, notif.Action, notif.SplitID, notif.Data, notif.EventIds)
+		if notif.Action == persist.ActionViewedPool {
+			fmt.Printf("PoolID %s\n", notif.PoolID)
+			_, err := pg.Exec(ctx, "INSERT INTO NOTIFICATIONS (ID, OWNER_ID, ACTION, SPLIT_ID, DATA, EVENT_IDS) VALUES ($1, $2, $3, $4, $5, $6)", notif.ID, notif.OwnerID, notif.Action, notif.PoolID, notif.Data, notif.EventIds)
 			if err != nil {
 				panic(err)
 			}
@@ -152,11 +152,11 @@ func main() {
 func actionForNum(num int) persist.Action {
 	switch num {
 	case 0:
-		return persist.ActionViewedSplit
+		return persist.ActionViewedPool
 	case 1:
 		return persist.ActionUserFollowedUsers
 	default:
-		return persist.ActionViewedSplit
+		return persist.ActionViewedPool
 	}
 }
 

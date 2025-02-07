@@ -13,16 +13,16 @@ const (
 	ResourceTypeUser ResourceType = iota
 	ResourceTypeToken
 	ResourceTypeCollection
-	ResourceTypeSplit
+	ResourceTypePool
 	ResourceTypeAllUsers
 	ActionUserCreated              Action = "UserCreated"
 	ActionUserFollowedUsers        Action = "UserFollowedUsers"
 	ActionCollectionCreated        Action = "CollectionCreated"
 	ActionAdmiredToken             Action = "AdmiredToken"
-	ActionViewedSplit              Action = "ViewedSplit"
+	ActionViewedPool               Action = "ViewedPool"
 	ActionViewedToken              Action = "ViewedToken"
-	ActionSplitUpdated             Action = "SplitUpdated"
-	ActionSplitInfoUpdated         Action = "SplitInfoUpdated"
+	ActionPoolUpdated              Action = "PoolUpdated"
+	ActionPoolInfoUpdated          Action = "PoolInfoUpdated"
 	ActionNewTokensReceived        Action = "NewTokensReceived"
 	ActionTopActivityBadgeReceived Action = "ActivityBadgeReceived"
 	ActionAnnouncement             Action = "Announcement"
@@ -36,9 +36,9 @@ type EventData struct {
 	NewTokenQuantity       HexString            `json:"new_token_quantity"`
 	TokenContractID        DBID                 `json:"token_contract_id"`
 	TokenDefinitionID      DBID                 `json:"token_definition_id"`
-	SplitName              *string              `json:"split_name"`
-	SplitDescription       *string              `json:"split_description"`
-	SplitNewTokenIDs       map[DBID]DBIDList    `json:"split_new_token_ids"`
+	PoolName               *string              `json:"pool_name"`
+	PoolDescription        *string              `json:"pool_description"`
+	PoolNewTokenIDs        map[DBID]DBIDList    `json:"pool_new_token_ids"`
 	ActivityBadgeThreshold int                  `json:"activity_badge_threshold"`
 	NewTopActiveUser       bool                 `json:"new_top_active_user"`
 	AnnouncementDetails    *AnnouncementDetails `json:"announcement_details"`

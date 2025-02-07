@@ -67,7 +67,7 @@ type CreateUserOutput struct {
 	SignatureValid bool         `json:"signature_valid"`
 	JWTtoken       string       `json:"jwt_token"` // JWT token is sent back to user to use to continue onboarding
 	UserID         persist.DBID `json:"user_id"`
-	SplitID        persist.DBID `json:"split_id"`
+	PoolID         persist.DBID `json:"pool_id"`
 }
 
 // MergeUsersInput is the input for the user merge pipeline

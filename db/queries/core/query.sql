@@ -45,45 +45,45 @@ where wallets.address = sqlc.arg('address')
   and wallets.deleted = false
   and users.deleted = false;
 
--- name: GetSplitById :one
-SELECT * FROM splits WHERE id = $1 AND deleted = false;
+-- name: GetPoolById :one
+SELECT * FROM pools WHERE id = $1 AND deleted = false;
 
--- name: GetSplitByUserID :one
+-- name: GetPoolByUserID :one
 SELECT s.* FROM users u, unnest(u.wallets)
     WITH ORDINALITY AS a(wallet_id, wallet_ord)
     INNER JOIN wallets w on w.id = a.wallet_id
     INNER JOIN allocations a ON a.address = w.address
-    INNER JOIN splits s ON s.id = a.split_id
-    WHERE u.id = @user_id AND s.id = @split_id AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false;
+    INNER JOIN pools s ON s.id = a.pool_id
+    WHERE u.id = @user_id AND s.id = @pool_id AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false;
 
--- name: GetSplitsByUserIDBatch :batchmany
+-- name: GetPoolsByUserIDBatch :batchmany
 select s.*
-from users u, splits s, wallets w, allocation_aggregations a
+from users u, pools s, wallets w, allocation_aggregations a
 where u.id = $1
   and w.id = any(u.wallets)
   and a.recipient_address = w.address
-  and s.id = a.split_id
+  and s.id = a.pool_id
   and s.l1_chain = w.l1_chain
   and u.deleted = false
   and w.deleted = false
   and a.deleted = false
   and s.deleted = false;
 
--- name: GetSplitByIdBatch :batchone
-SELECT * FROM splits WHERE id = $1 AND deleted = false;
+-- name: GetPoolByIdBatch :batchone
+SELECT * FROM pools WHERE id = $1 AND deleted = false;
 
--- name: GetSplitByChainAddress :one
-SELECT * FROM splits WHERE address = $1 AND chain = $2 AND deleted = false;
+-- name: GetPoolByChainAddress :one
+SELECT * FROM pools WHERE address = $1 AND chain = $2 AND deleted = false;
 
--- name: GetSplitByChainAddressBatch :batchone
-SELECT * FROM splits WHERE address = $1 AND chain = $2 AND deleted = false;
+-- name: GetPoolByChainAddressBatch :batchone
+SELECT * FROM pools WHERE address = $1 AND chain = $2 AND deleted = false;
 
--- name: GetSplitsByChainsAndAddresses :many
-SELECT * FROM splits WHERE chain = any(@chains::int[]) OR contract_address = any(@addresses::varchar[]) AND deleted = false;
+-- name: GetPoolsByChainsAndAddresses :many
+SELECT * FROM pools WHERE chain = any(@chains::int[]) OR contract_address = any(@addresses::varchar[]) AND deleted = false;
 
--- name: GetSplitsByRecipientAddress :many
+-- name: GetPoolsByRecipientAddress :many
 SELECT s.* FROM allocations a
-                    JOIN splits s ON s.id = a.split_id
+                    JOIN pools s ON s.id = a.pool_id
 WHERE a.recipient_address = $1 AND s.deleted = false;
 
 -- name: GetWalletByID :one
@@ -106,7 +106,7 @@ with params as (
     select unnest(@pool_addresses::address[]) as pool_address, unnest(@token_addresses::address[]) as token_address, unnest(@chains::chain[]) as chain
 )
 SELECT t.*
-from splits s
+from pools s
          left join tokens t on s.address = t.owner_address
          join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain
 where s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false;
@@ -122,8 +122,8 @@ select m.* from params p
 -- name: CreateUserEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING *;
 
--- name: CreateSplitEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, split_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
+-- name: CreatePoolEvent :one
+INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING *;
 
 -- name: GetEvent :one
 SELECT * FROM events WHERE id = $1 AND deleted = false;
@@ -143,14 +143,14 @@ with recursive activity as (
 )
 select * from events where id = any(select id from activity) order by (created_at, id) asc;
 
--- name: GetSplitEventsInWindow :many
+-- name: GetPoolEventsInWindow :many
 with recursive activity as (
     select * from events where events.id = $1 and deleted = false
     union
     select e.* from events e, activity a
     where e.actor_id = a.actor_id
       and e.action = any(@actions)
-      and e.split_id = @split_id
+      and e.pool_id = @pool_id
       and e.created_at < a.created_at
       and e.created_at >= a.created_at - make_interval(secs => $2)
       and e.deleted = false
@@ -188,11 +188,11 @@ select exists(
                            and created_at > @window_start and created_at <= @window_end
 );
 
--- name: IsActorSplitActive :one
+-- name: IsActorPoolActive :one
 select exists(
     select 1 from events where deleted = false
                            and actor_id = $1
-                           and split_id = $2
+                           and pool_id = $2
                            and created_at > @window_start and created_at <= @window_end
 );
 
@@ -297,8 +297,8 @@ SELECT count(*) FROM users WHERE deleted = false and universal = false;
 -- name: CreateSimpleNotification :one
 INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
--- name: CreateViewSplitNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, split_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+-- name: CreateViewPoolNotification :one
+INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- name: UpdateNotification :exec
 UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4;

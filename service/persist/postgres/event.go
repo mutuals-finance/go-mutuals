@@ -23,8 +23,8 @@ func (r *EventRepository) Add(ctx context.Context, event db.Event) (*db.Event, e
 		/*	case persist.ResourceTypeToken:
 			return r.AddTokenEvent(ctx, event)
 		*/
-	case persist.ResourceTypeSplit:
-		return r.AddSplitEvent(ctx, event)
+	case persist.ResourceTypePool:
+		return r.AddPoolEvent(ctx, event)
 	default:
 		return nil, persist.ErrUnknownResourceType{ResourceType: event.ResourceTypeID}
 	}
@@ -55,18 +55,18 @@ func (r *EventRepository) AddUserEvent(ctx context.Context, event db.Event) (*db
 			Data:           event.Data,
 			GroupID:        event.GroupID,
 			Caption:        event.Caption,
-			SplitID:        event.SplitID,
+			PoolID:        event.PoolID,
 		})
 		return &event, err
 	}
 */
-func (r *EventRepository) AddSplitEvent(ctx context.Context, event db.Event) (*db.Event, error) {
-	event, err := r.Queries.CreateSplitEvent(ctx, db.CreateSplitEventParams{
+func (r *EventRepository) AddPoolEvent(ctx context.Context, event db.Event) (*db.Event, error) {
+	event, err := r.Queries.CreatePoolEvent(ctx, db.CreatePoolEventParams{
 		ID:             persist.GenerateID(),
 		ActorID:        event.ActorID,
 		Action:         event.Action,
 		ResourceTypeID: event.ResourceTypeID,
-		SplitID:        event.SplitID,
+		PoolID:         event.PoolID,
 		Data:           event.Data,
 		ExternalID:     event.ExternalID,
 		GroupID:        event.GroupID,
@@ -93,10 +93,10 @@ func (r *EventRepository) IsActorSubjectActive(ctx context.Context, event db.Eve
 	})
 }
 
-func (r *EventRepository) IsActorSplitActive(ctx context.Context, event db.Event, windowSize time.Duration) (bool, error) {
-	return r.Queries.IsActorSplitActive(ctx, db.IsActorSplitActiveParams{
+func (r *EventRepository) IsActorPoolActive(ctx context.Context, event db.Event, windowSize time.Duration) (bool, error) {
+	return r.Queries.IsActorPoolActive(ctx, db.IsActorPoolActiveParams{
 		ActorID:     event.ActorID,
-		SplitID:     event.SplitID,
+		PoolID:      event.PoolID,
 		WindowStart: event.CreatedAt,
 		WindowEnd:   event.CreatedAt.Add(windowSize),
 	})
@@ -122,13 +122,13 @@ func (r *EventRepository) EventsInWindow(ctx context.Context, eventID persist.DB
 	})
 }
 
-// EventsInWindowForSplit returns events belonging to the same window of activity as the given eventID.
-func (r *EventRepository) EventsInWindowForSplit(ctx context.Context, eventID, splitID persist.DBID, windowSeconds int, actions persist.ActionList, includeSubject bool) ([]db.Event, error) {
-	return r.Queries.GetSplitEventsInWindow(ctx, db.GetSplitEventsInWindowParams{
+// EventsInWindowForPool returns events belonging to the same window of activity as the given eventID.
+func (r *EventRepository) EventsInWindowForPool(ctx context.Context, eventID, poolID persist.DBID, windowSeconds int, actions persist.ActionList, includeSubject bool) ([]db.Event, error) {
+	return r.Queries.GetPoolEventsInWindow(ctx, db.GetPoolEventsInWindowParams{
 		ID:             eventID,
 		Secs:           float64(windowSeconds),
 		Actions:        actions,
 		IncludeSubject: includeSubject,
-		SplitID:        splitID,
+		PoolID:         poolID,
 	})
 }

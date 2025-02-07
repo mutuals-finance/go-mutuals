@@ -228,7 +228,7 @@ func NewPgxClient(opts ...ConnectionOption) *pgxpool.Pool {
 		panic(err)
 	}
 
-	// Split 50/50 with existing database/sql implementation so we don't go over the GCP limit
+	// Pool 50/50 with existing database/sql implementation so we don't go over the GCP limit
 	// for incoming connections. Once we remove database/sql, this can go back up to 100.
 	db.Config().MaxConns = 50
 
@@ -347,7 +347,7 @@ type Repositories struct {
 	db               *sql.DB
 	pool             *pgxpool.Pool
 	UserRepository   *UserRepository
-	SplitRepository  *SplitRepository
+	PoolRepository   *PoolRepository
 	WalletRepository *WalletRepository
 }
 
@@ -358,7 +358,7 @@ func NewRepositories(pq *sql.DB, pgx *pgxpool.Pool) *Repositories {
 		db:               pq,
 		pool:             pgx,
 		UserRepository:   NewUserRepository(pq, queries, pgx),
-		SplitRepository:  NewSplitRepository(queries),
+		PoolRepository:   NewPoolRepository(queries),
 		WalletRepository: NewWalletRepository(pq, queries),
 	}
 }

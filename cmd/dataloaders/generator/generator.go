@@ -859,7 +859,7 @@ func getBatchOutputType(signature *types.Signature, queryFuncName string) types.
 }
 
 func loadQueriesType(sourceType string) *types.Named {
-	sourceTypePackage, sourceTypeName := splitSourceType(sourceType)
+	sourceTypePackage, sourceTypeName := poolSourceType(sourceType)
 
 	// Load the package so we can get type info
 	pkg := loadPackage(sourceTypePackage)
@@ -1040,7 +1040,7 @@ func loadPackage(path string) *packages.Package {
 	return pkgs[0]
 }
 
-func splitSourceType(sourceType string) (string, string) {
+func poolSourceType(sourceType string) (string, string) {
 	idx := strings.LastIndexByte(sourceType, '.')
 	if idx == -1 {
 		failWithErr(fmt.Errorf(`couldn't find type: "%s". expected qualified type as "pkg/path.Type"`, sourceType))
