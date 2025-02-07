@@ -68,6 +68,16 @@ sql:
           - column: "wallets.wallet_type"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.WalletType"
 
+          # Pool
+          - column: 'split.status'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.SplitStatus'
+          - column: 'allocations.recipient_type'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.RecipientType'
+          - column: 'allocations.calculation_type'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.CalculationType'
+          - column: 'allocations.value'
+            go_type: 'github.com/SplitFi/go-splitfi/service/persist.HexString'
+
           # Events
           - column: "events.resource_type_id"
             go_type: "github.com/SplitFi/go-splitfi/service/persist.ResourceType"

@@ -43,10 +43,11 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Allocation() AllocationResolver
+	AllocationAggregation() AllocationAggregationResolver
 	Asset() AssetResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
-	Recipient() RecipientResolver
 	Split() SplitResolver
 	SplitFiUser() SplitFiUserResolver
 	Subscription() SubscriptionResolver
@@ -72,6 +73,28 @@ type ComplexityRoot struct {
 
 	AdminAddWalletPayload struct {
 		User func(childComplexity int) int
+	}
+
+	Allocation struct {
+		CreationTime     func(childComplexity int) int
+		Dbid             func(childComplexity int) int
+		ID               func(childComplexity int) int
+		LastUpdated      func(childComplexity int) int
+		RecipientAddress func(childComplexity int) int
+		Split            func(childComplexity int) int
+		Value            func(childComplexity int) int
+		Version          func(childComplexity int) int
+	}
+
+	AllocationAggregation struct {
+		CreationTime     func(childComplexity int) int
+		Dbid             func(childComplexity int) int
+		Expression       func(childComplexity int) int
+		ID               func(childComplexity int) int
+		LastUpdated      func(childComplexity int) int
+		RecipientAddress func(childComplexity int) int
+		Split            func(childComplexity int) int
+		Version          func(childComplexity int) int
 	}
 
 	Asset struct {
@@ -239,13 +262,12 @@ type ComplexityRoot struct {
 		UpdateEmailNotificationSettings func(childComplexity int, input model.UpdateEmailNotificationSettingsInput) int
 		UpdateNotificationSettings      func(childComplexity int, settings *model.NotificationSettingsInput) int
 		UpdatePrimaryWallet             func(childComplexity int, walletID persist.DBID) int
-		UpdateSplit                     func(childComplexity int, input model.UpdateSplitInput) int
 		UpdateSplitHidden               func(childComplexity int, input model.UpdateSplitHiddenInput) int
-		UpdateSplitInfo                 func(childComplexity int, input model.UpdateSplitInfoInput) int
 		UpdateSplitOrder                func(childComplexity int, input model.UpdateSplitOrderInput) int
 		UpdateUserExperience            func(childComplexity int, input model.UpdateUserExperienceInput) int
 		UpdateUserInfo                  func(childComplexity int, input model.UpdateUserInfoInput) int
 		UploadPersistedQueries          func(childComplexity int, input *model.UploadPersistedQueriesInput) int
+		UpsertSplit                     func(childComplexity int, input model.UpsertSplitInput) int
 		VerifyEmail                     func(childComplexity int, input model.VerifyEmailInput) int
 		VerifyEmailMagicLink            func(childComplexity int, input model.VerifyEmailMagicLinkInput) int
 	}
@@ -306,17 +328,6 @@ type ComplexityRoot struct {
 		__resolve__service      func(childComplexity int) int
 	}
 
-	Recipient struct {
-		Address      func(childComplexity int) int
-		CreationTime func(childComplexity int) int
-		Dbid         func(childComplexity int) int
-		ID           func(childComplexity int) int
-		LastUpdated  func(childComplexity int) int
-		Ownership    func(childComplexity int) int
-		Split        func(childComplexity int) int
-		Version      func(childComplexity int) int
-	}
-
 	RegisterUserPushTokenPayload struct {
 		Viewer func(childComplexity int) int
 	}
@@ -338,17 +349,19 @@ type ComplexityRoot struct {
 	}
 
 	Split struct {
-		Assets      func(childComplexity int, limit *int) int
-		BadgeURL    func(childComplexity int) int
-		BannerURL   func(childComplexity int) int
-		Chain       func(childComplexity int) int
-		Dbid        func(childComplexity int) int
-		Description func(childComplexity int) int
-		ID          func(childComplexity int) int
-		LogoURL     func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Shares      func(childComplexity int, limit *int) int
-		Version     func(childComplexity int) int
+		Address               func(childComplexity int) int
+		AllocationAggregation func(childComplexity int) int
+		Allocations           func(childComplexity int) int
+		Assets                func(childComplexity int, limit *int) int
+		Chain                 func(childComplexity int) int
+		CreatorAddress        func(childComplexity int) int
+		Dbid                  func(childComplexity int) int
+		Description           func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Name                  func(childComplexity int) int
+		OwnerAddress          func(childComplexity int) int
+		Status                func(childComplexity int) int
+		Version               func(childComplexity int) int
 	}
 
 	SplitFiUser struct {
@@ -415,10 +428,6 @@ type ComplexityRoot struct {
 		Split func(childComplexity int) int
 	}
 
-	UpdateSplitInfoPayload struct {
-		Split func(childComplexity int) int
-	}
-
 	UpdateSplitOrderPayload struct {
 		Viewer func(childComplexity int) int
 	}
@@ -437,6 +446,10 @@ type ComplexityRoot struct {
 
 	UploadPersistedQueriesPayload struct {
 		Message func(childComplexity int) int
+	}
+
+	UpsertSplitPayload struct {
+		Split func(childComplexity int) int
 	}
 
 	UserEdge struct {
@@ -500,6 +513,12 @@ type ComplexityRoot struct {
 	}
 }
 
+type AllocationResolver interface {
+	Split(ctx context.Context, obj *model.Allocation) (*model.Split, error)
+}
+type AllocationAggregationResolver interface {
+	Split(ctx context.Context, obj *model.AllocationAggregation) (*model.Split, error)
+}
 type AssetResolver interface {
 	Token(ctx context.Context, obj *model.Asset) (*model.Token, error)
 }
@@ -517,13 +536,12 @@ type MutationResolver interface {
 	UnsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailTypePayloadOrError, error)
 	Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginPayloadOrError, error)
 	Logout(ctx context.Context, pushTokenToUnregister *string) (*model.LogoutPayload, error)
-	UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error)
+	UpsertSplit(ctx context.Context, input model.UpsertSplitInput) (model.UpsertSplitPayloadOrError, error)
 	PublishSplit(ctx context.Context, input model.PublishSplitInput) (model.PublishSplitPayloadOrError, error)
 	CreateSplit(ctx context.Context, input model.CreateSplitInput) (model.CreateSplitPayloadOrError, error)
 	UpdateSplitHidden(ctx context.Context, input model.UpdateSplitHiddenInput) (model.UpdateSplitHiddenPayloadOrError, error)
 	DeleteSplit(ctx context.Context, splitID persist.DBID) (model.DeleteSplitPayloadOrError, error)
 	UpdateSplitOrder(ctx context.Context, input model.UpdateSplitOrderInput) (model.UpdateSplitOrderPayloadOrError, error)
-	UpdateSplitInfo(ctx context.Context, input model.UpdateSplitInfoInput) (model.UpdateSplitInfoPayloadOrError, error)
 	ClearAllNotifications(ctx context.Context) (*model.ClearAllNotificationsPayload, error)
 	UpdateNotificationSettings(ctx context.Context, settings *model.NotificationSettingsInput) (*model.NotificationSettings, error)
 	PreverifyEmail(ctx context.Context, input model.PreverifyEmailInput) (model.PreverifyEmailPayloadOrError, error)
@@ -551,12 +569,10 @@ type QueryResolver interface {
 	IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error)
 	UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error)
 }
-type RecipientResolver interface {
-	Split(ctx context.Context, obj *model.Recipient) (*model.Split, error)
-}
 type SplitResolver interface {
+	AllocationAggregation(ctx context.Context, obj *model.Split) ([]*model.AllocationAggregation, error)
+	Allocations(ctx context.Context, obj *model.Split) ([]*model.Allocation, error)
 	Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error)
-	Shares(ctx context.Context, obj *model.Split, limit *int) ([]*model.Recipient, error)
 }
 type SplitFiUserResolver interface {
 	Roles(ctx context.Context, obj *model.SplitFiUser) ([]*persist.Role, error)
@@ -625,6 +641,118 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AdminAddWalletPayload.User(childComplexity), true
+
+	case "Allocation.creationTime":
+		if e.complexity.Allocation.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.Allocation.CreationTime(childComplexity), true
+
+	case "Allocation.dbid":
+		if e.complexity.Allocation.Dbid == nil {
+			break
+		}
+
+		return e.complexity.Allocation.Dbid(childComplexity), true
+
+	case "Allocation.id":
+		if e.complexity.Allocation.ID == nil {
+			break
+		}
+
+		return e.complexity.Allocation.ID(childComplexity), true
+
+	case "Allocation.lastUpdated":
+		if e.complexity.Allocation.LastUpdated == nil {
+			break
+		}
+
+		return e.complexity.Allocation.LastUpdated(childComplexity), true
+
+	case "Allocation.recipientAddress":
+		if e.complexity.Allocation.RecipientAddress == nil {
+			break
+		}
+
+		return e.complexity.Allocation.RecipientAddress(childComplexity), true
+
+	case "Allocation.split":
+		if e.complexity.Allocation.Split == nil {
+			break
+		}
+
+		return e.complexity.Allocation.Split(childComplexity), true
+
+	case "Allocation.value":
+		if e.complexity.Allocation.Value == nil {
+			break
+		}
+
+		return e.complexity.Allocation.Value(childComplexity), true
+
+	case "Allocation.version":
+		if e.complexity.Allocation.Version == nil {
+			break
+		}
+
+		return e.complexity.Allocation.Version(childComplexity), true
+
+	case "AllocationAggregation.creationTime":
+		if e.complexity.AllocationAggregation.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.CreationTime(childComplexity), true
+
+	case "AllocationAggregation.dbid":
+		if e.complexity.AllocationAggregation.Dbid == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.Dbid(childComplexity), true
+
+	case "AllocationAggregation.expression":
+		if e.complexity.AllocationAggregation.Expression == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.Expression(childComplexity), true
+
+	case "AllocationAggregation.id":
+		if e.complexity.AllocationAggregation.ID == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.ID(childComplexity), true
+
+	case "AllocationAggregation.lastUpdated":
+		if e.complexity.AllocationAggregation.LastUpdated == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.LastUpdated(childComplexity), true
+
+	case "AllocationAggregation.recipientAddress":
+		if e.complexity.AllocationAggregation.RecipientAddress == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.RecipientAddress(childComplexity), true
+
+	case "AllocationAggregation.split":
+		if e.complexity.AllocationAggregation.Split == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.Split(childComplexity), true
+
+	case "AllocationAggregation.version":
+		if e.complexity.AllocationAggregation.Version == nil {
+			break
+		}
+
+		return e.complexity.AllocationAggregation.Version(childComplexity), true
 
 	case "Asset.balance":
 		if e.complexity.Asset.Balance == nil {
@@ -1228,18 +1356,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdatePrimaryWallet(childComplexity, args["walletID"].(persist.DBID)), true
 
-	case "Mutation.updateSplit":
-		if e.complexity.Mutation.UpdateSplit == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateSplit_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateSplit(childComplexity, args["input"].(model.UpdateSplitInput)), true
-
 	case "Mutation.updateSplitHidden":
 		if e.complexity.Mutation.UpdateSplitHidden == nil {
 			break
@@ -1251,18 +1367,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateSplitHidden(childComplexity, args["input"].(model.UpdateSplitHiddenInput)), true
-
-	case "Mutation.updateSplitInfo":
-		if e.complexity.Mutation.UpdateSplitInfo == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateSplitInfo_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateSplitInfo(childComplexity, args["input"].(model.UpdateSplitInfoInput)), true
 
 	case "Mutation.updateSplitOrder":
 		if e.complexity.Mutation.UpdateSplitOrder == nil {
@@ -1311,6 +1415,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UploadPersistedQueries(childComplexity, args["input"].(*model.UploadPersistedQueriesInput)), true
+
+	case "Mutation.upsertSplit":
+		if e.complexity.Mutation.UpsertSplit == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_upsertSplit_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpsertSplit(childComplexity, args["input"].(model.UpsertSplitInput)), true
 
 	case "Mutation.verifyEmail":
 		if e.complexity.Mutation.VerifyEmail == nil {
@@ -1589,62 +1705,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.__resolve__service(childComplexity), true
 
-	case "Recipient.address":
-		if e.complexity.Recipient.Address == nil {
-			break
-		}
-
-		return e.complexity.Recipient.Address(childComplexity), true
-
-	case "Recipient.creationTime":
-		if e.complexity.Recipient.CreationTime == nil {
-			break
-		}
-
-		return e.complexity.Recipient.CreationTime(childComplexity), true
-
-	case "Recipient.dbid":
-		if e.complexity.Recipient.Dbid == nil {
-			break
-		}
-
-		return e.complexity.Recipient.Dbid(childComplexity), true
-
-	case "Recipient.id":
-		if e.complexity.Recipient.ID == nil {
-			break
-		}
-
-		return e.complexity.Recipient.ID(childComplexity), true
-
-	case "Recipient.lastUpdated":
-		if e.complexity.Recipient.LastUpdated == nil {
-			break
-		}
-
-		return e.complexity.Recipient.LastUpdated(childComplexity), true
-
-	case "Recipient.ownership":
-		if e.complexity.Recipient.Ownership == nil {
-			break
-		}
-
-		return e.complexity.Recipient.Ownership(childComplexity), true
-
-	case "Recipient.split":
-		if e.complexity.Recipient.Split == nil {
-			break
-		}
-
-		return e.complexity.Recipient.Split(childComplexity), true
-
-	case "Recipient.version":
-		if e.complexity.Recipient.Version == nil {
-			break
-		}
-
-		return e.complexity.Recipient.Version(childComplexity), true
-
 	case "RegisterUserPushTokenPayload.viewer":
 		if e.complexity.RegisterUserPushTokenPayload.Viewer == nil {
 			break
@@ -1680,6 +1740,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SearchUsersPayload.Results(childComplexity), true
 
+	case "Split.address":
+		if e.complexity.Split.Address == nil {
+			break
+		}
+
+		return e.complexity.Split.Address(childComplexity), true
+
+	case "Split.allocationAggregation":
+		if e.complexity.Split.AllocationAggregation == nil {
+			break
+		}
+
+		return e.complexity.Split.AllocationAggregation(childComplexity), true
+
+	case "Split.allocations":
+		if e.complexity.Split.Allocations == nil {
+			break
+		}
+
+		return e.complexity.Split.Allocations(childComplexity), true
+
 	case "Split.assets":
 		if e.complexity.Split.Assets == nil {
 			break
@@ -1692,26 +1773,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Split.Assets(childComplexity, args["limit"].(*int)), true
 
-	case "Split.badgeURL":
-		if e.complexity.Split.BadgeURL == nil {
-			break
-		}
-
-		return e.complexity.Split.BadgeURL(childComplexity), true
-
-	case "Split.bannerURL":
-		if e.complexity.Split.BannerURL == nil {
-			break
-		}
-
-		return e.complexity.Split.BannerURL(childComplexity), true
-
 	case "Split.chain":
 		if e.complexity.Split.Chain == nil {
 			break
 		}
 
 		return e.complexity.Split.Chain(childComplexity), true
+
+	case "Split.creatorAddress":
+		if e.complexity.Split.CreatorAddress == nil {
+			break
+		}
+
+		return e.complexity.Split.CreatorAddress(childComplexity), true
 
 	case "Split.dbid":
 		if e.complexity.Split.Dbid == nil {
@@ -1734,13 +1808,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Split.ID(childComplexity), true
 
-	case "Split.logoURL":
-		if e.complexity.Split.LogoURL == nil {
-			break
-		}
-
-		return e.complexity.Split.LogoURL(childComplexity), true
-
 	case "Split.name":
 		if e.complexity.Split.Name == nil {
 			break
@@ -1748,17 +1815,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Split.Name(childComplexity), true
 
-	case "Split.shares":
-		if e.complexity.Split.Shares == nil {
+	case "Split.ownerAddress":
+		if e.complexity.Split.OwnerAddress == nil {
 			break
 		}
 
-		args, err := ec.field_Split_shares_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
+		return e.complexity.Split.OwnerAddress(childComplexity), true
+
+	case "Split.status":
+		if e.complexity.Split.Status == nil {
+			break
 		}
 
-		return e.complexity.Split.Shares(childComplexity, args["limit"].(*int)), true
+		return e.complexity.Split.Status(childComplexity), true
 
 	case "Split.version":
 		if e.complexity.Split.Version == nil {
@@ -2010,13 +2079,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UpdateSplitHiddenPayload.Split(childComplexity), true
 
-	case "UpdateSplitInfoPayload.split":
-		if e.complexity.UpdateSplitInfoPayload.Split == nil {
-			break
-		}
-
-		return e.complexity.UpdateSplitInfoPayload.Split(childComplexity), true
-
 	case "UpdateSplitOrderPayload.viewer":
 		if e.complexity.UpdateSplitOrderPayload.Viewer == nil {
 			break
@@ -2051,6 +2113,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UploadPersistedQueriesPayload.Message(childComplexity), true
+
+	case "UpsertSplitPayload.split":
+		if e.complexity.UpsertSplitPayload.Split == nil {
+			break
+		}
+
+		return e.complexity.UpsertSplitPayload.Split(childComplexity), true
 
 	case "UserEdge.cursor":
 		if e.complexity.UserEdge.Cursor == nil {
@@ -2269,8 +2338,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPreverifyEmailInput,
 		ec.unmarshalInputPrivyAuth,
 		ec.unmarshalInputPublishSplitInput,
+		ec.unmarshalInputSplitAllocationInput,
 		ec.unmarshalInputSplitPositionInput,
-		ec.unmarshalInputSplitShareInput,
 		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
 		ec.unmarshalInputUpdateEmailInput,
 		ec.unmarshalInputUpdateEmailNotificationSettingsInput,
@@ -2281,6 +2350,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateUserExperienceInput,
 		ec.unmarshalInputUpdateUserInfoInput,
 		ec.unmarshalInputUploadPersistedQueriesInput,
+		ec.unmarshalInputUpsertSplitInput,
 		ec.unmarshalInputVerifyEmailInput,
 		ec.unmarshalInputVerifyEmailMagicLinkInput,
 	)
@@ -2455,6 +2525,7 @@ scalar Address
 scalar PubKey
 scalar DBID
 scalar Email
+scalar HexString
 
 enum BasicAuthType {
   Retool
@@ -2567,33 +2638,58 @@ type Asset implements Node {
   dbid: DBID!
   version: Int
   ownerAddress: ChainAddress
-  balance: Int
+  balance: HexString
   token: Token @goField(forceResolver: true)
 }
 
-type Recipient implements Node {
+enum CalculationType {
+  Percentage
+  Fixed
+}
+
+enum RecipientType {
+  DefaultItem
+  DefaultGroup
+  PrioritizedGroup
+  TimedGroup
+}
+
+type AllocationAggregation implements Node {
   id: ID!
   dbid: DBID!
   version: Int
+  recipientAddress: Address
+  expression: String
   creationTime: Time
   lastUpdated: Time
-  address: Address
   split: Split @goField(forceResolver: true)
-  ownership: Int
+}
+
+type Allocation implements Node {
+  id: ID!
+  dbid: DBID!
+  version: Int
+  recipientAddress: Address
+  value: HexString
+  creationTime: Time
+  lastUpdated: Time
+  split: Split @goField(forceResolver: true)
 }
 
 type Split implements Node {
   id: ID!
   dbid: DBID!
   version: Int
+  status: SplitStatus!
   name: String
   description: String
+  address: Address
+  ownerAddress: Address
+  creatorAddress: Address
   chain: Chain
-  logoURL: String
-  bannerURL: String
-  badgeURL: String
+  allocationAggregation: [AllocationAggregation!] @goField(forceResolver: true)
+  allocations: [Allocation] @goField(forceResolver: true)
   assets(limit: Int): [Asset] @goField(forceResolver: true)
-  shares(limit: Int): [Recipient] @goField(forceResolver: true)
 }
 
 # We have this extra type in case we need to stick authed data
@@ -3137,10 +3233,26 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-input SplitShareInput {
-  splitId: DBID!
-  recipientAddress: Address!
-  ownership: Int!
+input SplitAllocationInput {
+  id: DBID
+  recipientAddress: Address
+  calculationType: [CalculationType!]!
+  recipientType: [RecipientType!]!
+  value: HexString!
+  children: [SplitAllocationInput!]
+}
+
+enum SplitStatus {
+  Draft
+  Active
+  Paused
+}
+
+input UpsertSplitInput {
+  splitId: DBID
+  name: String
+  description: String
+  allocations: [SplitAllocationInput!]
 }
 
 input SplitPositionInput {
@@ -3175,12 +3287,12 @@ type CreateSplitPayload {
 
 union CreateSplitPayloadOrError = CreateSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateSplitInfoPayload {
+type UpsertSplitPayload {
   split: Split
 }
 
-union UpdateSplitInfoPayloadOrError =
-    UpdateSplitInfoPayload
+union UpsertSplitPayloadOrError =
+  UpsertSplitPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
@@ -3302,7 +3414,7 @@ type Mutation {
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout(pushTokenToUnregister: String): LogoutPayload
 
-  updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
+  upsertSplit(input: UpsertSplitInput!): UpsertSplitPayloadOrError @authRequired
   publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired
 
   createSplit(input: CreateSplitInput!): CreateSplitPayloadOrError @authRequired
@@ -3311,7 +3423,6 @@ type Mutation {
   deleteSplit(splitId: DBID!): DeleteSplitPayloadOrError @authRequired
   updateSplitOrder(input: UpdateSplitOrderInput!): UpdateSplitOrderPayloadOrError
     @authRequired
-  updateSplitInfo(input: UpdateSplitInfoInput!): UpdateSplitInfoPayloadOrError @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired
 
@@ -3808,21 +3919,6 @@ func (ec *executionContext) field_Mutation_updateSplitHidden_args(ctx context.Co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateSplitInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateSplitInfoInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_updateSplitOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3830,21 +3926,6 @@ func (ec *executionContext) field_Mutation_updateSplitOrder_args(ctx context.Con
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNUpdateSplitOrderInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.UpdateSplitInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3890,6 +3971,21 @@ func (ec *executionContext) field_Mutation_uploadPersistedQueries_args(ctx conte
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_upsertSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpsertSplitInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpsertSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4204,21 +4300,6 @@ func (ec *executionContext) field_Split_assets_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Split_shares_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["limit"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Viewer_notifications_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4414,6 +4495,730 @@ func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(ctx context.
 				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_id(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_dbid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dbid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.DBID)
+	fc.Result = res
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DBID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_version(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_version(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_recipientAddress(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_recipientAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecipientAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_recipientAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_value(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_value(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.HexString)
+	fc.Result = res
+	return ec.marshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type HexString does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_lastUpdated(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_lastUpdated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_lastUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Allocation_split(ctx context.Context, field graphql.CollectedField, obj *model.Allocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Allocation_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Allocation().Split(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Allocation_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Allocation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Split_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Split_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_id(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_dbid(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_dbid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dbid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.DBID)
+	fc.Result = res
+	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DBID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_version(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_version(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_recipientAddress(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_recipientAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecipientAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_recipientAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_expression(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_expression(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Expression, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_expression(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_lastUpdated(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_lastUpdated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_lastUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AllocationAggregation_split(ctx context.Context, field graphql.CollectedField, obj *model.AllocationAggregation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AllocationAggregation_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.AllocationAggregation().Split(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AllocationAggregation_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AllocationAggregation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Split_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Split_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -4618,9 +5423,9 @@ func (ec *executionContext) _Asset_balance(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(*persist.HexString)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Asset_balance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4630,7 +5435,7 @@ func (ec *executionContext) fieldContext_Asset_balance(ctx context.Context, fiel
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type HexString does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5038,22 +5843,26 @@ func (ec *executionContext) fieldContext_ChainSplits_splits(ctx context.Context,
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -5144,22 +5953,26 @@ func (ec *executionContext) fieldContext_CreateSplitPayload_split(ctx context.Co
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -7421,8 +8234,8 @@ func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSplit(ctx, field)
+func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_upsertSplit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7436,7 +8249,7 @@ func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateSplit(rctx, fc.Args["input"].(model.UpdateSplitInput))
+			return ec.resolvers.Mutation().UpsertSplit(rctx, fc.Args["input"].(model.UpsertSplitInput))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
@@ -7452,10 +8265,10 @@ func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field gra
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.UpdateSplitPayloadOrError); ok {
+		if data, ok := tmp.(model.UpsertSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpsertSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7464,19 +8277,19 @@ func (ec *executionContext) _Mutation_updateSplit(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.UpdateSplitPayloadOrError)
+	res := resTmp.(model.UpsertSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpsertSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_upsertSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateSplitPayloadOrError does not have child fields")
+			return nil, errors.New("field of type UpsertSplitPayloadOrError does not have child fields")
 		},
 	}
 	defer func() {
@@ -7486,7 +8299,7 @@ func (ec *executionContext) fieldContext_Mutation_updateSplit(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_upsertSplit_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7847,78 +8660,6 @@ func (ec *executionContext) fieldContext_Mutation_updateSplitOrder(ctx context.C
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateSplitOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateSplitInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateSplitInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateSplitInfo(rctx, fc.Args["input"].(model.UpdateSplitInfoInput))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.UpdateSplitInfoPayloadOrError); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitInfoPayloadOrError`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.UpdateSplitInfoPayloadOrError)
-	fc.Result = res
-	return ec.marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateSplitInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateSplitInfoPayloadOrError does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSplitInfo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -9573,22 +10314,26 @@ func (ec *executionContext) fieldContext_PublishSplitPayload_split(ctx context.C
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -10384,364 +11129,6 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Recipient_id(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Recipient_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Recipient_version(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_version(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Version, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Recipient_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_creationTime(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreationTime, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Recipient_lastUpdated(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_lastUpdated(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastUpdated, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_lastUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Recipient_address(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_address(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Address, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Address)
-	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Recipient_split(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_split(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Recipient().Split(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Recipient_ownership(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Recipient_ownership(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Ownership, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Recipient_ownership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Recipient",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _RegisterUserPushTokenPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.RegisterUserPushTokenPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_RegisterUserPushTokenPayload_viewer(ctx, field)
 	if err != nil {
@@ -11132,6 +11519,50 @@ func (ec *executionContext) fieldContext_Split_version(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Split_status(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.SplitStatus)
+	fc.Result = res
+	return ec.marshalNSplitStatus2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type SplitStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Split_name(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Split_name(ctx, field)
 	if err != nil {
@@ -11214,6 +11645,129 @@ func (ec *executionContext) fieldContext_Split_description(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Split_address(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_ownerAddress(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_ownerAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_ownerAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Split_creatorAddress(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_creatorAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatorAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*persist.Address)
+	fc.Result = res
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Split_creatorAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Split",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Split_chain(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Split_chain(ctx, field)
 	if err != nil {
@@ -11255,8 +11809,8 @@ func (ec *executionContext) fieldContext_Split_chain(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Split_logoURL(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_logoURL(ctx, field)
+func (ec *executionContext) _Split_allocationAggregation(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_allocationAggregation(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11269,7 +11823,7 @@ func (ec *executionContext) _Split_logoURL(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.LogoURL, nil
+		return ec.resolvers.Split().AllocationAggregation(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11278,26 +11832,44 @@ func (ec *executionContext) _Split_logoURL(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.([]*model.AllocationAggregation)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_logoURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_allocationAggregation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AllocationAggregation_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_AllocationAggregation_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_AllocationAggregation_version(ctx, field)
+			case "recipientAddress":
+				return ec.fieldContext_AllocationAggregation_recipientAddress(ctx, field)
+			case "expression":
+				return ec.fieldContext_AllocationAggregation_expression(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_AllocationAggregation_creationTime(ctx, field)
+			case "lastUpdated":
+				return ec.fieldContext_AllocationAggregation_lastUpdated(ctx, field)
+			case "split":
+				return ec.fieldContext_AllocationAggregation_split(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AllocationAggregation", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Split_bannerURL(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_bannerURL(ctx, field)
+func (ec *executionContext) _Split_allocations(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Split_allocations(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11310,7 +11882,7 @@ func (ec *executionContext) _Split_bannerURL(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.BannerURL, nil
+		return ec.resolvers.Split().Allocations(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11319,60 +11891,37 @@ func (ec *executionContext) _Split_bannerURL(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.([]*model.Allocation)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOAllocation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_bannerURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_allocations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_badgeURL(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_badgeURL(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BadgeURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_badgeURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Allocation_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Allocation_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Allocation_version(ctx, field)
+			case "recipientAddress":
+				return ec.fieldContext_Allocation_recipientAddress(ctx, field)
+			case "value":
+				return ec.fieldContext_Allocation_value(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Allocation_creationTime(ctx, field)
+			case "lastUpdated":
+				return ec.fieldContext_Allocation_lastUpdated(ctx, field)
+			case "split":
+				return ec.fieldContext_Allocation_split(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Allocation", field.Name)
 		},
 	}
 	return fc, nil
@@ -11438,76 +11987,6 @@ func (ec *executionContext) fieldContext_Split_assets(ctx context.Context, field
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Split_assets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Split_shares(ctx context.Context, field graphql.CollectedField, obj *model.Split) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Split_shares(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Split().Shares(rctx, obj, fc.Args["limit"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Recipient)
-	fc.Result = res
-	return ec.marshalORecipient2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRecipient(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Split_shares(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Split",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Recipient_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Recipient_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Recipient_version(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_Recipient_creationTime(ctx, field)
-			case "lastUpdated":
-				return ec.fieldContext_Recipient_lastUpdated(ctx, field)
-			case "address":
-				return ec.fieldContext_Recipient_address(ctx, field)
-			case "split":
-				return ec.fieldContext_Recipient_split(ctx, field)
-			case "ownership":
-				return ec.fieldContext_Recipient_ownership(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Recipient", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Split_shares_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11877,22 +12356,26 @@ func (ec *executionContext) fieldContext_SplitFiUser_splits(ctx context.Context,
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -12041,22 +12524,26 @@ func (ec *executionContext) fieldContext_SplitSearchResult_split(ctx context.Con
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -13122,87 +13609,26 @@ func (ec *executionContext) fieldContext_UpdateSplitHiddenPayload_split(ctx cont
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateSplitInfoPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSplitInfoPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateSplitInfoPayload_split(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Split, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateSplitInfoPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateSplitInfoPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -13309,22 +13735,26 @@ func (ec *executionContext) fieldContext_UpdateSplitPayload_split(ctx context.Co
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -13482,6 +13912,75 @@ func (ec *executionContext) fieldContext_UploadPersistedQueriesPayload_message(c
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpsertSplitPayload_split(ctx context.Context, field graphql.CollectedField, obj *model.UpsertSplitPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpsertSplitPayload_split(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Split, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpsertSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpsertSplitPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Split_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Split_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
 	}
 	return fc, nil
@@ -14459,22 +14958,26 @@ func (ec *executionContext) fieldContext_ViewerSplit_split(ctx context.Context, 
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -14741,22 +15244,26 @@ func (ec *executionContext) fieldContext_Wallet_splits(ctx context.Context, fiel
 				return ec.fieldContext_Split_dbid(ctx, field)
 			case "version":
 				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
 			case "name":
 				return ec.fieldContext_Split_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
 			case "chain":
 				return ec.fieldContext_Split_chain(ctx, field)
-			case "logoURL":
-				return ec.fieldContext_Split_logoURL(ctx, field)
-			case "bannerURL":
-				return ec.fieldContext_Split_bannerURL(ctx, field)
-			case "badgeURL":
-				return ec.fieldContext_Split_badgeURL(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
 			case "assets":
 				return ec.fieldContext_Split_assets(ctx, field)
-			case "shares":
-				return ec.fieldContext_Split_shares(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
 		},
@@ -17246,6 +17753,68 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSplitAllocationInput(ctx context.Context, obj interface{}) (model.SplitAllocationInput, error) {
+	var it model.SplitAllocationInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "recipientAddress", "calculationType", "recipientType", "value", "children"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "recipientAddress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RecipientAddress = data
+		case "calculationType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("calculationType"))
+			data, err := ec.unmarshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CalculationType = data
+		case "recipientType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientType"))
+			data, err := ec.unmarshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RecipientType = data
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalNHexString2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		case "children":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
+			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Children = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context, obj interface{}) (model.SplitPositionInput, error) {
 	var it model.SplitPositionInput
 	asMap := map[string]interface{}{}
@@ -17274,47 +17843,6 @@ func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context
 				return it, err
 			}
 			it.Position = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputSplitShareInput(ctx context.Context, obj interface{}) (model.SplitShareInput, error) {
-	var it model.SplitShareInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"splitId", "recipientAddress", "ownership"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "splitId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SplitID = data
-		case "recipientAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
-			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RecipientAddress = data
-		case "ownership":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownership"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Ownership = data
 		}
 	}
 
@@ -17662,6 +18190,54 @@ func (ec *executionContext) unmarshalInputUploadPersistedQueriesInput(ctx contex
 				return it, err
 			}
 			it.PersistedQueries = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpsertSplitInput(ctx context.Context, obj interface{}) (model.UpsertSplitInput, error) {
+	var it model.UpsertSplitInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"splitId", "name", "description", "allocations"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "splitId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
+			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SplitID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "allocations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocations"))
+			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Allocations = data
 		}
 	}
 
@@ -18205,13 +18781,20 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Asset(ctx, sel, obj)
-	case model.Recipient:
-		return ec._Recipient(ctx, sel, &obj)
-	case *model.Recipient:
+	case model.AllocationAggregation:
+		return ec._AllocationAggregation(ctx, sel, &obj)
+	case *model.AllocationAggregation:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Recipient(ctx, sel, obj)
+		return ec._AllocationAggregation(ctx, sel, obj)
+	case model.Allocation:
+		return ec._Allocation(ctx, sel, &obj)
+	case *model.Allocation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Allocation(ctx, sel, obj)
 	case model.Split:
 		return ec._Split(ctx, sel, &obj)
 	case *model.Split:
@@ -18755,36 +19338,6 @@ func (ec *executionContext) _UpdateSplitHiddenPayloadOrError(ctx context.Context
 	}
 }
 
-func (ec *executionContext) _UpdateSplitInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitInfoPayloadOrError) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.UpdateSplitInfoPayload:
-		return ec._UpdateSplitInfoPayload(ctx, sel, &obj)
-	case *model.UpdateSplitInfoPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateSplitInfoPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _UpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -18930,6 +19483,36 @@ func (ec *executionContext) _UploadPersistedQueriesPayloadOrError(ctx context.Co
 			return graphql.Null
 		}
 		return ec._UploadPersistedQueriesPayload(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _UpsertSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.UpsertSplitPayloadOrError) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ErrInvalidInput:
+		return ec._ErrInvalidInput(ctx, sel, &obj)
+	case *model.ErrInvalidInput:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
+	case model.UpsertSplitPayload:
+		return ec._UpsertSplitPayload(ctx, sel, &obj)
+	case *model.UpsertSplitPayload:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._UpsertSplitPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -19170,6 +19753,180 @@ func (ec *executionContext) _AdminAddWalletPayload(ctx context.Context, sel ast.
 			out.Values[i] = graphql.MarshalString("AdminAddWalletPayload")
 		case "user":
 			out.Values[i] = ec._AdminAddWalletPayload_user(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var allocationImplementors = []string{"Allocation", "Node"}
+
+func (ec *executionContext) _Allocation(ctx context.Context, sel ast.SelectionSet, obj *model.Allocation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, allocationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Allocation")
+		case "id":
+			out.Values[i] = ec._Allocation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dbid":
+			out.Values[i] = ec._Allocation_dbid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._Allocation_version(ctx, field, obj)
+		case "recipientAddress":
+			out.Values[i] = ec._Allocation_recipientAddress(ctx, field, obj)
+		case "value":
+			out.Values[i] = ec._Allocation_value(ctx, field, obj)
+		case "creationTime":
+			out.Values[i] = ec._Allocation_creationTime(ctx, field, obj)
+		case "lastUpdated":
+			out.Values[i] = ec._Allocation_lastUpdated(ctx, field, obj)
+		case "split":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Allocation_split(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var allocationAggregationImplementors = []string{"AllocationAggregation", "Node"}
+
+func (ec *executionContext) _AllocationAggregation(ctx context.Context, sel ast.SelectionSet, obj *model.AllocationAggregation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, allocationAggregationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AllocationAggregation")
+		case "id":
+			out.Values[i] = ec._AllocationAggregation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dbid":
+			out.Values[i] = ec._AllocationAggregation_dbid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._AllocationAggregation_version(ctx, field, obj)
+		case "recipientAddress":
+			out.Values[i] = ec._AllocationAggregation_recipientAddress(ctx, field, obj)
+		case "expression":
+			out.Values[i] = ec._AllocationAggregation_expression(ctx, field, obj)
+		case "creationTime":
+			out.Values[i] = ec._AllocationAggregation_creationTime(ctx, field, obj)
+		case "lastUpdated":
+			out.Values[i] = ec._AllocationAggregation_lastUpdated(ctx, field, obj)
+		case "split":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AllocationAggregation_split(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19816,7 +20573,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "SearchUsersPayloadOrError", "SearchSplitsPayloadOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "CreateUserPayloadOrError", "VerifyEmailPayloadOrError", "PreverifyEmailPayloadOrError", "VerifyEmailMagicLinkPayloadOrError", "UpdateEmailPayloadOrError", "ResendVerificationEmailPayloadOrError", "UpdateEmailNotificationSettingsPayloadOrError", "UnsubscribeFromEmailTypePayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "CreateSplitPayloadOrError", "UpsertSplitPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -19943,7 +20700,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpdateSplitInfoPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "ViewerOrError", "AddUserWalletPayloadOrError", "RemoveUserWalletsPayloadOrError", "UpdateUserInfoPayloadOrError", "RegisterUserPushTokenPayloadOrError", "UnregisterUserPushTokenPayloadOrError", "Error", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError", "OptInForRolesPayloadOrError", "OptOutForRolesPayloadOrError", "UploadPersistedQueriesPayloadOrError", "CreateSplitPayloadOrError", "UpsertSplitPayloadOrError", "UpdateSplitHiddenPayloadOrError", "DeleteSplitPayloadOrError", "UpdateSplitOrderPayloadOrError", "UpdateSplitPayloadOrError", "PublishSplitPayloadOrError", "UpdatePrimaryWalletPayloadOrError", "AdminAddWalletPayloadOrError", "UpdateUserExperiencePayloadOrError"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -20518,9 +21275,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_logout(ctx, field)
 			})
-		case "updateSplit":
+		case "upsertSplit":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSplit(ctx, field)
+				return ec._Mutation_upsertSplit(ctx, field)
 			})
 		case "publishSplit":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -20541,10 +21298,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateSplitOrder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateSplitOrder(ctx, field)
-			})
-		case "updateSplitInfo":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSplitInfo(ctx, field)
 			})
 		case "clearAllNotifications":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -21229,93 +21982,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var recipientImplementors = []string{"Recipient", "Node"}
-
-func (ec *executionContext) _Recipient(ctx context.Context, sel ast.SelectionSet, obj *model.Recipient) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, recipientImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Recipient")
-		case "id":
-			out.Values[i] = ec._Recipient_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "dbid":
-			out.Values[i] = ec._Recipient_dbid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "version":
-			out.Values[i] = ec._Recipient_version(ctx, field, obj)
-		case "creationTime":
-			out.Values[i] = ec._Recipient_creationTime(ctx, field, obj)
-		case "lastUpdated":
-			out.Values[i] = ec._Recipient_lastUpdated(ctx, field, obj)
-		case "address":
-			out.Values[i] = ec._Recipient_address(ctx, field, obj)
-		case "split":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Recipient_split(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "ownership":
-			out.Values[i] = ec._Recipient_ownership(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var registerUserPushTokenPayloadImplementors = []string{"RegisterUserPushTokenPayload", "RegisterUserPushTokenPayloadOrError"}
 
 func (ec *executionContext) _RegisterUserPushTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RegisterUserPushTokenPayload) graphql.Marshaler {
@@ -21519,19 +22185,24 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "version":
 			out.Values[i] = ec._Split_version(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._Split_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "name":
 			out.Values[i] = ec._Split_name(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Split_description(ctx, field, obj)
+		case "address":
+			out.Values[i] = ec._Split_address(ctx, field, obj)
+		case "ownerAddress":
+			out.Values[i] = ec._Split_ownerAddress(ctx, field, obj)
+		case "creatorAddress":
+			out.Values[i] = ec._Split_creatorAddress(ctx, field, obj)
 		case "chain":
 			out.Values[i] = ec._Split_chain(ctx, field, obj)
-		case "logoURL":
-			out.Values[i] = ec._Split_logoURL(ctx, field, obj)
-		case "bannerURL":
-			out.Values[i] = ec._Split_bannerURL(ctx, field, obj)
-		case "badgeURL":
-			out.Values[i] = ec._Split_badgeURL(ctx, field, obj)
-		case "assets":
+		case "allocationAggregation":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -21540,7 +22211,7 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Split_assets(ctx, field, obj)
+				res = ec._Split_allocationAggregation(ctx, field, obj)
 				return res
 			}
 
@@ -21564,7 +22235,7 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "shares":
+		case "allocations":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -21573,7 +22244,40 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Split_shares(ctx, field, obj)
+				res = ec._Split_allocations(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "assets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Split_assets(ctx, field, obj)
 				return res
 			}
 
@@ -22179,42 +22883,6 @@ func (ec *executionContext) _UpdateSplitHiddenPayload(ctx context.Context, sel a
 	return out
 }
 
-var updateSplitInfoPayloadImplementors = []string{"UpdateSplitInfoPayload", "UpdateSplitInfoPayloadOrError"}
-
-func (ec *executionContext) _UpdateSplitInfoPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitInfoPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateSplitInfoPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateSplitInfoPayload")
-		case "split":
-			out.Values[i] = ec._UpdateSplitInfoPayload_split(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var updateSplitOrderPayloadImplementors = []string{"UpdateSplitOrderPayload", "UpdateSplitOrderPayloadOrError"}
 
 func (ec *executionContext) _UpdateSplitOrderPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSplitOrderPayload) graphql.Marshaler {
@@ -22372,6 +23040,42 @@ func (ec *executionContext) _UploadPersistedQueriesPayload(ctx context.Context, 
 			out.Values[i] = graphql.MarshalString("UploadPersistedQueriesPayload")
 		case "message":
 			out.Values[i] = ec._UploadPersistedQueriesPayload_message(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var upsertSplitPayloadImplementors = []string{"UpsertSplitPayload", "UpsertSplitPayloadOrError"}
+
+func (ec *executionContext) _UpsertSplitPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpsertSplitPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, upsertSplitPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpsertSplitPayload")
+		case "split":
+			out.Values[i] = ec._UpsertSplitPayload_split(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23442,6 +24146,16 @@ func (ec *executionContext) unmarshalNAdminAddWalletInput2githubᚗcomᚋSplitFi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNAllocationAggregation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregation(ctx context.Context, sel ast.SelectionSet, v *model.AllocationAggregation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AllocationAggregation(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (model.AuthMechanism, error) {
 	res, err := ec.unmarshalInputAuthMechanism(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23547,6 +24261,77 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx context.Context, v interface{}) (persist.CalculationType, error) {
+	var res persist.CalculationType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx context.Context, sel ast.SelectionSet, v persist.CalculationType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx context.Context, v interface{}) ([]persist.CalculationType, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]persist.CalculationType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.CalculationType) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
@@ -23673,6 +24458,22 @@ func (ec *executionContext) marshalNFieldSet2string(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalNHexString2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (persist.HexString, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := persist.HexString(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNHexString2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, sel ast.SelectionSet, v persist.HexString) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := model.GqlID(tmp)
@@ -23750,6 +24551,77 @@ func (ec *executionContext) unmarshalNPublishSplitInput2githubᚗcomᚋSplitFi�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx context.Context, v interface{}) (persist.RecipientType, error) {
+	var res persist.RecipientType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx context.Context, sel ast.SelectionSet, v persist.RecipientType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx context.Context, v interface{}) ([]persist.RecipientType, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]persist.RecipientType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.RecipientType) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
 	var res persist.Role
 	err := res.UnmarshalGQL(v)
@@ -23821,6 +24693,11 @@ func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 	return ret
 }
 
+func (ec *executionContext) unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx context.Context, v interface{}) (*model.SplitAllocationInput, error) {
+	res, err := ec.unmarshalInputSplitAllocationInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
 	var vSlice []interface{}
 	if v != nil {
@@ -23851,6 +24728,16 @@ func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋSplitFi�
 		return graphql.Null
 	}
 	return ec._SplitSearchResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSplitStatus2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, v interface{}) (model.SplitStatus, error) {
+	var res model.SplitStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSplitStatus2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, sel ast.SelectionSet, v model.SplitStatus) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -23920,16 +24807,6 @@ func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋSpli
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoInput(ctx context.Context, v interface{}) (model.UpdateSplitInfoInput, error) {
-	res, err := ec.unmarshalInputUpdateSplitInfoInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInput(ctx context.Context, v interface{}) (model.UpdateSplitInput, error) {
-	res, err := ec.unmarshalInputUpdateSplitInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNUpdateSplitOrderInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx context.Context, v interface{}) (model.UpdateSplitOrderInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23942,6 +24819,11 @@ func (ec *executionContext) unmarshalNUpdateUserExperienceInput2githubᚗcomᚋS
 
 func (ec *executionContext) unmarshalNUpdateUserInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx context.Context, v interface{}) (model.UpdateUserInfoInput, error) {
 	res, err := ec.unmarshalInputUpdateUserInfoInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpsertSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx context.Context, v interface{}) (model.UpsertSplitInput, error) {
+	res, err := ec.unmarshalInputUpsertSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -24459,6 +25341,101 @@ func (ec *executionContext) marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋ
 	return ec._AdminAddWalletPayloadOrError(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOAllocation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx context.Context, sel ast.SelectionSet, v []*model.Allocation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOAllocation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOAllocation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx context.Context, sel ast.SelectionSet, v *model.Allocation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Allocation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AllocationAggregation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAllocationAggregation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOAsset2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAsset(ctx context.Context, sel ast.SelectionSet, v []*model.Asset) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -24826,6 +25803,23 @@ func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋ
 	return ec._GroupNotificationUserEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (*persist.HexString, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := persist.HexString(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, sel ast.SelectionSet, v *persist.HexString) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -25051,54 +26045,6 @@ func (ec *executionContext) marshalOPublishSplitPayloadOrError2githubᚗcomᚋSp
 	return ec._PublishSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORecipient2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRecipient(ctx context.Context, sel ast.SelectionSet, v []*model.Recipient) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalORecipient2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRecipient(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalORecipient2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRecipient(ctx context.Context, sel ast.SelectionSet, v *model.Recipient) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Recipient(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalORegisterUserPushTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRegisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RegisterUserPushTokenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -25264,6 +26210,26 @@ func (ec *executionContext) marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplit
 		return graphql.Null
 	}
 	return ec._Split(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitAllocationInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.SplitAllocationInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SplitByIDPayloadOrError) graphql.Marshaler {
@@ -25472,25 +26438,11 @@ func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcom
 	return ec._UpdateSplitHiddenPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitInfoPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateSplitInfoPayloadOrError(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitOrderPayloadOrError(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdateSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserExperiencePayloadOrError) graphql.Marshaler {
@@ -25520,6 +26472,13 @@ func (ec *executionContext) marshalOUploadPersistedQueriesPayloadOrError2github�
 		return graphql.Null
 	}
 	return ec._UploadPersistedQueriesPayloadOrError(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpsertSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpsertSplitPayloadOrError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpsertSplitPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUserByAddressOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByAddressOrError) graphql.Marshaler {

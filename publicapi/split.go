@@ -32,10 +32,9 @@ func (api SplitAPI) CreateSplit(ctx context.Context, name, description, logoUrl 
 	}
 
 	split, err := api.queries.CreateSplit(ctx, db.CreateSplitParams{
-		SplitID:     persist.GenerateID(),
+		ID:          persist.GenerateID(),
 		Name:        util.FromPointer(name),
 		Description: util.FromPointer(description),
-		LogoUrl:     util.ToNullString(util.FromPointer(logoUrl), false),
 	})
 	if err != nil {
 		return db.Split{}, err
@@ -174,22 +173,6 @@ func (api SplitAPI) GetSplitByChainAddress(ctx context.Context, chainAddress per
 	return &split, nil
 }
 
-func (api SplitAPI) GetRecipientByRecipientID(ctx context.Context, recipientID persist.DBID) (*db.Recipient, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"recipientID": validate.WithTag(recipientID, "required"),
-	}); err != nil {
-		return nil, err
-	}
-
-	/*	recipient, err := api.loaders.GetRecipientByRecipienID.Load(recipientID)
-		if err != nil {
-			return nil, err
-		}
-	*/
-	return nil, nil
-}
-
 func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, name, description, logoUrl *string) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -198,36 +181,6 @@ func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, n
 		"description": {description, "max=600"},
 		"logoUrl":     {logoUrl, "max=200"},
 	}); err != nil {
-		return err
-	}
-
-	var nullName, nullDesc, nullLogoUrl string
-	var nameSet, descSet, logoUrlSet bool
-
-	if name != nil {
-		nullName = *name
-		nameSet = true
-	}
-	if description != nil {
-		nullDesc = *description
-		descSet = true
-	}
-	if logoUrl != nil {
-		nullLogoUrl = *logoUrl
-		logoUrlSet = true
-	}
-
-	err := api.queries.UpdateSplitInfo(ctx, db.UpdateSplitInfoParams{
-		ID:             splitID,
-		Name:           nullName,
-		Description:    nullDesc,
-		LogoUrl:        util.ToNullString(nullLogoUrl, false),
-		NameSet:        nameSet,
-		DescriptionSet: descSet,
-		LogoUrlSet:     logoUrlSet,
-	})
-
-	if err != nil {
 		return err
 	}
 
@@ -255,33 +208,153 @@ func (api SplitAPI) UpdateSplitInfo(ctx context.Context, splitID persist.DBID, n
 	}
 */
 
-func (api SplitAPI) UpdateSplitShares(ctx context.Context, shares []*model.SplitShareInput) error {
+func (api SplitAPI) UpsertSplit(ctx context.Context, input model.UpsertSplitInput) (db.Split, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"shares": validate.WithTag(shares, "required,min=1"),
+		"name":        validate.WithTag(input.Name, "max=200"),
+		"description": validate.WithTag(input.Description, "max=600"),
 	}); err != nil {
-		return err
+		return db.Split{}, err
 	}
 
-	sids := make([]string, len(shares))
-	adds := make([]string, len(shares))
-	owns := make([]int32, len(shares))
-
-	for i, share := range shares {
-		sids[i] = share.SplitID.String()
-		adds[i] = share.RecipientAddress.String()
-		owns[i] = int32(share.Ownership)
+	splitID := input.SplitID
+	if splitID == nil {
+		splitID = util.ToPointer(persist.GenerateID())
 	}
 
-	err := api.queries.UpdateSplitShares(ctx, db.UpdateSplitSharesParams{
-		SplitIds:           sids,
-		RecipientAddresses: adds,
-		Ownerships:         owns,
+	tx, err := api.repos.BeginTx(ctx)
+	if err != nil {
+		return db.Split{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	q := api.queries.WithTx(tx)
+
+	split, err := api.queries.UpsertSplit(ctx, db.UpsertSplitParams{
+		ID:          *splitID,
+		Name:        *input.Name,
+		Description: *input.Description,
+		Status:      int32(persist.SplitStatusDraft),
 	})
 
 	if err != nil {
-		return err
+		return db.Split{}, err
 	}
 
-	return nil
+	if len(input.Allocations) > 0 {
+		allocationParams, aggregationParams := processAllocations(splitID, input.Allocations)
+
+		_, err = q.UpsertSplitAllocations(ctx, allocationParams)
+		if err != nil {
+			return db.Split{}, err
+		}
+
+		_, err = q.UpsertSplitAggregatedAllocations(ctx, aggregationParams)
+		if err != nil {
+			return db.Split{}, err
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return db.Split{}, err
+	}
+
+	return split, nil
+}
+
+func processAllocations(splitID *persist.DBID, a []*model.SplitAllocationInput) (allocationParams db.UpsertSplitAllocationsParams, aggregationParams db.UpsertSplitAggregatedAllocationsParams) {
+	recipientToAllocations := make(map[persist.Address][]*model.SplitAllocationInput)
+
+	allocationParams.SplitID = *splitID
+	aggregationParams.SplitID = *splitID
+
+	var traverse func(node *model.SplitAllocationInput, path string)
+	traverse = func(node *model.SplitAllocationInput, parentPath string) {
+		id := node.ID
+		if id == nil {
+			id = util.ToPointer(persist.GenerateID())
+		}
+		// Determine the label: use RecipientAddress if not empty, otherwise use id
+		label := node.RecipientAddress.String()
+		if label == "" {
+			label = id.String()
+		}
+
+		// Construct the current path
+		path := parentPath
+		if parentPath == "" {
+			path = label
+		} else {
+			path = parentPath + "." + label
+		}
+
+		allocationParams.Ids = append(allocationParams.Ids, id.String())
+		allocationParams.RecipientAddress = append(allocationParams.RecipientAddress, node.RecipientAddress.String())
+		allocationParams.RecipientType = append(allocationParams.RecipientType, int32(node.RecipientType[0]))
+		allocationParams.CalculationType = append(allocationParams.CalculationType, int32(node.CalculationType[0]))
+		allocationParams.Value = append(allocationParams.Value, persist.MustHexString(node.Value.String()).String())
+		allocationParams.Expression = append(allocationParams.Expression, "")
+		allocationParams.Label = append(allocationParams.Label, label)
+		allocationParams.Path = append(allocationParams.Path, path)
+
+		if node.RecipientType[0] == persist.RecipientTypeDefaultItem && node.RecipientAddress != nil {
+			recipientToAllocations[*node.RecipientAddress] = append(recipientToAllocations[*node.RecipientAddress], node)
+		}
+
+		// Recursively process children
+		for _, child := range node.Children {
+			traverse(child, path)
+		}
+	}
+
+	// Process each top-level node
+	for _, allocation := range a {
+		traverse(allocation, "")
+	}
+
+	// Calculate aggregation
+	for recipient, inputs := range recipientToAllocations {
+		expression := ""
+		for _, input := range inputs {
+			expression = expression + input.Value.String()
+		}
+		aggregationParams.ID = append(aggregationParams.RecipientAddress, persist.GenerateID().String())
+		aggregationParams.RecipientAddress = append(aggregationParams.RecipientAddress, recipient.String())
+		aggregationParams.Expression = append(aggregationParams.Expression, expression)
+	}
+
+	return allocationParams, aggregationParams
+}
+
+func (api SplitAPI) GetAllocationById(ctx context.Context, allocationID persist.DBID) (*db.Allocation, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"allocationID": {allocationID, "required"},
+	}); err != nil {
+		return nil, err
+	}
+
+	allocation, err := api.loaders.GetAllocationByIdBatch.Load(allocationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &allocation, nil
+}
+
+func (api SplitAPI) GetAllocationAggregationById(ctx context.Context, allocationAggregationID persist.DBID) (*db.AllocationAggregation, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"allocationAggregationID": {allocationAggregationID, "required"},
+	}); err != nil {
+		return nil, err
+	}
+
+	allocationAggregation, err := api.loaders.GetAllocationAggregationByIdBatch.Load(allocationAggregationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &allocationAggregation, nil
 }

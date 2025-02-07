@@ -302,57 +302,6 @@ func (q *Queries) CreateSimpleNotification(ctx context.Context, arg CreateSimple
 	return i, err
 }
 
-const createSplit = `-- name: CreateSplit :one
-insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
-`
-
-type CreateSplitParams struct {
-	SplitID        persist.DBID    `db:"split_id" json:"split_id"`
-	Chain          persist.Chain   `db:"chain" json:"chain"`
-	Address        persist.Address `db:"address" json:"address"`
-	Name           string          `db:"name" json:"name"`
-	Description    string          `db:"description" json:"description"`
-	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
-	LogoUrl        sql.NullString  `db:"logo_url" json:"logo_url"`
-	BannerUrl      sql.NullString  `db:"banner_url" json:"banner_url"`
-	BadgeUrl       sql.NullString  `db:"badge_url" json:"badge_url"`
-	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
-}
-
-func (q *Queries) CreateSplit(ctx context.Context, arg CreateSplitParams) (Split, error) {
-	row := q.db.QueryRow(ctx, createSplit,
-		arg.SplitID,
-		arg.Chain,
-		arg.Address,
-		arg.Name,
-		arg.Description,
-		arg.CreatorAddress,
-		arg.LogoUrl,
-		arg.BannerUrl,
-		arg.BadgeUrl,
-		arg.TotalOwnership,
-	)
-	var i Split
-	err := row.Scan(
-		&i.ID,
-		&i.Version,
-		&i.LastUpdated,
-		&i.CreatedAt,
-		&i.Deleted,
-		&i.Chain,
-		&i.L1Chain,
-		&i.Address,
-		&i.Name,
-		&i.Description,
-		&i.CreatorAddress,
-		&i.LogoUrl,
-		&i.BannerUrl,
-		&i.BadgeUrl,
-		&i.TotalOwnership,
-	)
-	return i, err
-}
-
 const createSplitEvent = `-- name: CreateSplitEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, split_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, split_id, external_id, caption, group_id
 `
@@ -1003,7 +952,7 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 }
 
 const getSplitByChainAddress = `-- name: GetSplitByChainAddress :one
-SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
 `
 
 type GetSplitByChainAddressParams struct {
@@ -1020,22 +969,20 @@ func (q *Queries) GetSplitByChainAddress(ctx context.Context, arg GetSplitByChai
 		&i.LastUpdated,
 		&i.CreatedAt,
 		&i.Deleted,
+		&i.Name,
+		&i.Description,
+		&i.Status,
 		&i.Chain,
 		&i.L1Chain,
 		&i.Address,
-		&i.Name,
-		&i.Description,
+		&i.OwnerAddress,
 		&i.CreatorAddress,
-		&i.LogoUrl,
-		&i.BannerUrl,
-		&i.BadgeUrl,
-		&i.TotalOwnership,
 	)
 	return i, err
 }
 
 const getSplitById = `-- name: GetSplitById :one
-SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM splits WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetSplitById(ctx context.Context, id persist.DBID) (Split, error) {
@@ -1047,27 +994,25 @@ func (q *Queries) GetSplitById(ctx context.Context, id persist.DBID) (Split, err
 		&i.LastUpdated,
 		&i.CreatedAt,
 		&i.Deleted,
+		&i.Name,
+		&i.Description,
+		&i.Status,
 		&i.Chain,
 		&i.L1Chain,
 		&i.Address,
-		&i.Name,
-		&i.Description,
+		&i.OwnerAddress,
 		&i.CreatorAddress,
-		&i.LogoUrl,
-		&i.BannerUrl,
-		&i.BadgeUrl,
-		&i.TotalOwnership,
 	)
 	return i, err
 }
 
 const getSplitByUserID = `-- name: GetSplitByUserID :one
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM users u, unnest(u.wallets)
+SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM users u, unnest(u.wallets)
     WITH ORDINALITY AS a(wallet_id, wallet_ord)
     INNER JOIN wallets w on w.id = a.wallet_id
-    INNER JOIN recipients r ON r.address = w.address
-    INNER JOIN splits s ON s.id = r.split_id
-    WHERE u.id = $1 AND s.id = $2 AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false
+    INNER JOIN allocations a ON a.address = w.address
+    INNER JOIN splits s ON s.id = a.split_id
+    WHERE u.id = $1 AND s.id = $2 AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false
 `
 
 type GetSplitByUserIDParams struct {
@@ -1084,16 +1029,14 @@ func (q *Queries) GetSplitByUserID(ctx context.Context, arg GetSplitByUserIDPara
 		&i.LastUpdated,
 		&i.CreatedAt,
 		&i.Deleted,
+		&i.Name,
+		&i.Description,
+		&i.Status,
 		&i.Chain,
 		&i.L1Chain,
 		&i.Address,
-		&i.Name,
-		&i.Description,
+		&i.OwnerAddress,
 		&i.CreatorAddress,
-		&i.LogoUrl,
-		&i.BannerUrl,
-		&i.BadgeUrl,
-		&i.TotalOwnership,
 	)
 	return i, err
 }
@@ -1166,7 +1109,7 @@ func (q *Queries) GetSplitEventsInWindow(ctx context.Context, arg GetSplitEvents
 }
 
 const getSplitsByChainsAndAddresses = `-- name: GetSplitsByChainsAndAddresses :many
-SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM splits WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
 `
 
 type GetSplitsByChainsAndAddressesParams struct {
@@ -1189,16 +1132,14 @@ func (q *Queries) GetSplitsByChainsAndAddresses(ctx context.Context, arg GetSpli
 			&i.LastUpdated,
 			&i.CreatedAt,
 			&i.Deleted,
+			&i.Name,
+			&i.Description,
+			&i.Status,
 			&i.Chain,
 			&i.L1Chain,
 			&i.Address,
-			&i.Name,
-			&i.Description,
+			&i.OwnerAddress,
 			&i.CreatorAddress,
-			&i.LogoUrl,
-			&i.BannerUrl,
-			&i.BadgeUrl,
-			&i.TotalOwnership,
 		); err != nil {
 			return nil, err
 		}
@@ -1211,13 +1152,13 @@ func (q *Queries) GetSplitsByChainsAndAddresses(ctx context.Context, arg GetSpli
 }
 
 const getSplitsByRecipientAddress = `-- name: GetSplitsByRecipientAddress :many
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership FROM recipients r
-                    JOIN splits s ON s.id = r.split_id
-WHERE r.address = $1 AND s.deleted = false
+SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM allocations a
+                    JOIN splits s ON s.id = a.split_id
+WHERE a.recipient_address = $1 AND s.deleted = false
 `
 
-func (q *Queries) GetSplitsByRecipientAddress(ctx context.Context, address persist.Address) ([]Split, error) {
-	rows, err := q.db.Query(ctx, getSplitsByRecipientAddress, address)
+func (q *Queries) GetSplitsByRecipientAddress(ctx context.Context, recipientAddress persist.Address) ([]Split, error) {
+	rows, err := q.db.Query(ctx, getSplitsByRecipientAddress, recipientAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -1231,16 +1172,14 @@ func (q *Queries) GetSplitsByRecipientAddress(ctx context.Context, address persi
 			&i.LastUpdated,
 			&i.CreatedAt,
 			&i.Deleted,
+			&i.Name,
+			&i.Description,
+			&i.Status,
 			&i.Chain,
 			&i.L1Chain,
 			&i.Address,
-			&i.Name,
-			&i.Description,
+			&i.OwnerAddress,
 			&i.CreatorAddress,
-			&i.LogoUrl,
-			&i.BannerUrl,
-			&i.BadgeUrl,
-			&i.TotalOwnership,
 		); err != nil {
 			return nil, err
 		}
@@ -2250,56 +2189,6 @@ func (q *Queries) UpdatePushTickets(ctx context.Context, arg UpdatePushTicketsPa
 		arg.Status,
 		arg.Deleted,
 	)
-	return err
-}
-
-const updateSplitInfo = `-- name: UpdateSplitInfo :exec
-/*
-// name: UpdateSplitHidden :one
-update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
-*/
-
-update splits set name = case when $1::bool then $2 else name end, description = case when $3::bool then $4 else description end, logo_url = case when $5::bool then $6 else logo_url end, last_updated = now() where id = $7 and deleted = false
-`
-
-type UpdateSplitInfoParams struct {
-	NameSet        bool           `db:"name_set" json:"name_set"`
-	Name           string         `db:"name" json:"name"`
-	DescriptionSet bool           `db:"description_set" json:"description_set"`
-	Description    string         `db:"description" json:"description"`
-	LogoUrlSet     bool           `db:"logo_url_set" json:"logo_url_set"`
-	LogoUrl        sql.NullString `db:"logo_url" json:"logo_url"`
-	ID             persist.DBID   `db:"id" json:"id"`
-}
-
-func (q *Queries) UpdateSplitInfo(ctx context.Context, arg UpdateSplitInfoParams) error {
-	_, err := q.db.Exec(ctx, updateSplitInfo,
-		arg.NameSet,
-		arg.Name,
-		arg.DescriptionSet,
-		arg.Description,
-		arg.LogoUrlSet,
-		arg.LogoUrl,
-		arg.ID,
-	)
-	return err
-}
-
-const updateSplitShares = `-- name: UpdateSplitShares :exec
-with updates as (
-    select unnest($1::text[]) as split_id, unnest($2::text[]) as recipient_address, unnest($3::int[]) as ownership
-)
-update recipients r set ownership = updates.ownership, last_updated = now() from updates where r.split_id = updates.split_id and r.address = updates.recipient_address
-`
-
-type UpdateSplitSharesParams struct {
-	SplitIds           []string `db:"split_ids" json:"split_ids"`
-	RecipientAddresses []string `db:"recipient_addresses" json:"recipient_addresses"`
-	Ownerships         []int32  `db:"ownerships" json:"ownerships"`
-}
-
-func (q *Queries) UpdateSplitShares(ctx context.Context, arg UpdateSplitSharesParams) error {
-	_, err := q.db.Exec(ctx, updateSplitShares, arg.SplitIds, arg.RecipientAddresses, arg.Ownerships)
 	return err
 }
 

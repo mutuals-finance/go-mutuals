@@ -28,6 +28,88 @@ type notFoundErrorProvider[TKey any] interface {
 type PreFetchHook func(context.Context, string) context.Context
 type PostFetchHook func(context.Context, string)
 
+// GetAllocationAggregationByIdBatch batches and caches requests
+type GetAllocationAggregationByIdBatch struct {
+	generator.Dataloader[persist.DBID, coredb.AllocationAggregation]
+}
+
+// newGetAllocationAggregationByIdBatch creates a new GetAllocationAggregationByIdBatch with the given settings, functions, and options
+func newGetAllocationAggregationByIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetAllocationAggregationByIdBatch, []persist.DBID) ([]coredb.AllocationAggregation, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetAllocationAggregationByIdBatch {
+	d := &GetAllocationAggregationByIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.AllocationAggregation, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetAllocationAggregationByIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetAllocationAggregationByIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+func (*GetAllocationAggregationByIdBatch) getKeyForResult(result coredb.AllocationAggregation) persist.DBID {
+	return result.ID
+}
+
+// GetAllocationByIdBatch batches and caches requests
+type GetAllocationByIdBatch struct {
+	generator.Dataloader[persist.DBID, coredb.Allocation]
+}
+
+// newGetAllocationByIdBatch creates a new GetAllocationByIdBatch with the given settings, functions, and options
+func newGetAllocationByIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetAllocationByIdBatch, []persist.DBID) ([]coredb.Allocation, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetAllocationByIdBatch {
+	d := &GetAllocationByIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Allocation, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetAllocationByIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetAllocationByIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+func (*GetAllocationByIdBatch) getKeyForResult(result coredb.Allocation) persist.DBID {
+	return result.ID
+}
+
 // GetNotificationByIDBatch batches and caches requests
 type GetNotificationByIDBatch struct {
 	generator.Dataloader[persist.DBID, coredb.Notification]

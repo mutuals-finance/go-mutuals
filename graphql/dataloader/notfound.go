@@ -10,6 +10,14 @@ func (*GetSplitByIdBatch) getNotFoundError(key persist.DBID) error {
 	return persist.ErrSplitNotFound{ID: key}
 }
 
+func (*GetAllocationByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrAllocationNotFound{ID: key}
+}
+
+func (*GetAllocationAggregationByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrAllocationAggregationNotFound{ID: key}
+}
+
 func (*GetSplitByChainAddressBatch) getNotFoundError(key coredb.GetSplitByChainAddressBatchParams) error {
 	return persist.ErrSplitNotFoundByAddress{Address: key.Address}
 }

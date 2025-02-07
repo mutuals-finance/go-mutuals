@@ -38,23 +38,6 @@ CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
 CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = FALSE);
 
-CREATE TABLE IF NOT EXISTS token_metadatas
-(
-    id               character varying(255) PRIMARY KEY NOT NULL,
-    deleted          boolean                            NOT NULL DEFAULT false,
-    created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    symbol           character varying,
-    name             character varying,
-    logo             character varying,
-    thumbnail        character varying,
-    chain            integer,
-    contract_address character varying(255),
-    foreign key(chain, contract_address) references tokens(chain, token_address) on update cascade
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS token_metadatas_chain_contract_address_idx on token_metadatas(chain, contract_address) where not deleted;
-
 CREATE TABLE IF NOT EXISTS tokens
 (
     id            character varying(255) PRIMARY KEY,
@@ -72,6 +55,22 @@ CREATE UNIQUE INDEX IF NOT EXISTS tokens_chain_token_address_owner_address_idx O
 CREATE INDEX IF NOT EXISTS tokens_owner_address_idx ON tokens (owner_address);
 CREATE INDEX IF NOT EXISTS tokens_token_address_idx ON tokens (token_address);
 
+CREATE TABLE IF NOT EXISTS token_metadatas
+(
+    id               character varying(255) PRIMARY KEY NOT NULL,
+    deleted          boolean                            NOT NULL DEFAULT false,
+    created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    symbol           character varying,
+    name             character varying,
+    logo             character varying,
+    thumbnail        character varying,
+    chain            integer,
+    contract_address character varying(255)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS token_metadatas_chain_contract_address_idx on token_metadatas(chain, contract_address) where not deleted;
+
 CREATE TABLE IF NOT EXISTS splits
 (
     id                      character varying(255) PRIMARY KEY,
@@ -79,31 +78,17 @@ CREATE TABLE IF NOT EXISTS splits
     last_updated            timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted                 boolean                  NOT NULL DEFAULT FALSE,
-    chain                   integer,
-    l1_chain                integer,
-    address                 character varying(255),
     name                    character varying        NOT NULL DEFAULT ''::character varying,
     description             character varying        NOT NULL DEFAULT ''::character varying,
-    creator_address         character varying(255),
-    logo_url                character varying,
-    banner_url              character varying,
-    badge_url               character varying,
-    total_ownership         integer                  NOT NULL,
+    status                  integer                  NOT NULL DEFAULT 0,
+    chain                   integer NULL,
+    l1_chain                integer NULL,
+    address                 character varying(255) NULL,
+    owner_address           character varying(255) NULL,
+    creator_address         character varying(255) NULL,
     fts_name                tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
     fts_description_english tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig, (description)::text)) STORED
 --     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
-);
-
-CREATE TABLE IF NOT EXISTS recipients
-(
-    id           character varying(255) PRIMARY KEY,
-    version      integer                           DEFAULT 0,
-    last_updated timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                  NOT NULL DEFAULT FALSE,
-    split_id     character varying(255)   NOT NULL REFERENCES splits ON DELETE CASCADE,
-    address      character varying(255),
-    ownership    integer                  NOT NULL
 );
 
 CREATE INDEX splits_fts_description_english_idx ON splits USING gin (fts_description_english);
@@ -112,10 +97,45 @@ CREATE INDEX splits_fts_name_idx ON splits USING gin (fts_name);
 
 -- CREATE INDEX splits_fts_address_idx ON splits USING gin (fts_address);
 
-CREATE UNIQUE INDEX split_address_chain_idx ON splits USING btree (address, chain);
+CREATE UNIQUE INDEX split_address_chain_idx ON splits USING btree (address, chain) WHERE (NOT deleted AND status > 0);
 
-CREATE INDEX splits_l1_chain_idx ON splits (address,chain,l1_chain) WHERE deleted = false;
-CREATE UNIQUE INDEX splits_l1_chain_unique_idx ON splits (l1_chain,chain,address);
+CREATE INDEX splits_l1_chain_idx ON splits (address,chain,l1_chain) WHERE (NOT deleted AND status > 0);
+CREATE UNIQUE INDEX splits_l1_chain_unique_idx ON splits (l1_chain,chain,address) WHERE (NOT deleted AND status > 0);
+
+CREATE TABLE IF NOT EXISTS allocations
+(
+    id               character varying(255) PRIMARY KEY,
+    version          integer                           DEFAULT 0,
+    split_id         character varying(255)   NOT NULL REFERENCES splits ON DELETE CASCADE,
+    recipient_address character varying(255),
+    recipient_type integer   NOT NULL,
+    calculation_type  integer   NOT NULL,
+    value            character varying(255)   NOT NULL,
+    expression       character varying(255)   NOT NULL,
+    label            character varying(255)   NOT NULL,
+    path             ltree                    NULL,
+    deleted          boolean                  NOT NULL DEFAULT FALSE,
+    last_updated     timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at       timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+create index allocation_path_gist_idx on allocations using gist (path);
+
+CREATE INDEX allocation_path_idx ON allocations USING btree(path);
+
+CREATE TABLE IF NOT EXISTS allocation_aggregations (
+      id             character varying(255) PRIMARY KEY,
+      split_id       character varying(255) NOT NULL REFERENCES splits(id) ON DELETE CASCADE,
+      recipient_address character varying(255),
+      expression     character varying(255) NOT NULL,
+      last_updated   timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_at     timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      version        integer DEFAULT 0,
+      deleted        boolean NOT NULL DEFAULT FALSE
+);
+
+ALTER TABLE allocation_aggregations
+    ADD CONSTRAINT allocation_aggregations_split_recipient_address UNIQUE (split_id,recipient_address);
 
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (

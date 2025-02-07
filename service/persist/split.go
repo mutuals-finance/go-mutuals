@@ -4,8 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io"
 	"time"
 )
+
+// SplitStatus is the type of status
+type SplitStatus int
+
+// CalculationType is the type of calculation
+type CalculationType int
+
+// RecipientType is the type of allocation
+type RecipientType int
 
 type Ownership = float64
 
@@ -38,7 +48,7 @@ type SplitDB struct {
 	LogoURL        NullString     `json:"logo_url"`
 	BannerURL      NullString     `json:"banner_url"`
 	BadgeURL       NullString     `json:"badge_url"`
-	Recipients     []DBID         `json:"recipients"`
+	Allocations    []DBID         `json:"allocations"`
 	Assets         []DBID         `json:"assets"`
 }
 
@@ -60,7 +70,7 @@ type Split struct {
 	LogoURL        NullString  `json:"logo_url"`
 	BannerURL      NullString  `json:"banner_url"`
 	BadgeURL       NullString  `json:"badge_url"`
-	Recipients     []Recipient `json:"recipients"`
+	Allocations    []Recipient `json:"allocations"`
 	Assets         []Asset     `json:"assets"`
 }
 
@@ -98,4 +108,142 @@ type ErrSplitNotFoundByAddress struct {
 
 func (e ErrSplitNotFoundByAddress) Error() string {
 	return fmt.Sprintf("split not found with address: %v-%v", e.Address, e.Chain)
+}
+
+// ErrAllocationNotFound is returned when an allocation is not found by its ID
+type ErrAllocationNotFound struct {
+	ID DBID
+}
+
+func (e ErrAllocationNotFound) Error() string {
+	return fmt.Sprintf("allocation not found with ID: %v", e.ID)
+}
+
+// ErrAllocationAggregationNotFound is returned when an allocation aggregation is not found by its ID
+type ErrAllocationAggregationNotFound struct {
+	ID DBID
+}
+
+func (e ErrAllocationAggregationNotFound) Error() string {
+	return fmt.Sprintf("allocation aggregation not found with ID: %v", e.ID)
+}
+
+const (
+	// SplitStatusDraft represents an draft split status
+	SplitStatusDraft SplitStatus = iota
+	// SplitStatusActive represents an active split status
+	SplitStatusActive
+	// SplitStatusPaused represents an active but paused split status
+	SplitStatusPaused
+)
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (ss *SplitStatus) UnmarshalGQL(v interface{}) error {
+	n, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("wrong type for SplitStatus: %T", v)
+	}
+	switch n {
+	case "Draft":
+		*ss = SplitStatusDraft
+	case "Active":
+		*ss = SplitStatusActive
+	case "Paused":
+		*ss = SplitStatusPaused
+	default:
+		return fmt.Errorf("unknown SplitStatus: %s", n)
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (ss SplitStatus) MarshalGQL(w io.Writer) {
+	switch ss {
+	case SplitStatusDraft:
+		w.Write([]byte(`"Draft"`))
+	case SplitStatusActive:
+		w.Write([]byte(`"Active"`))
+	case SplitStatusPaused:
+		w.Write([]byte(`"Paused"`))
+	}
+}
+
+const (
+	// CalculationTypePercentage represents a percentage allocation
+	CalculationTypePercentage CalculationType = iota
+	// CalculationTypeFixed represents a fixed allocation
+	CalculationTypeFixed
+)
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (ct *CalculationType) UnmarshalGQL(v interface{}) error {
+	n, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("wrong type for CalculationType: %T", v)
+	}
+	switch n {
+	case "Percentage":
+		*ct = CalculationTypePercentage
+	case "Fixed":
+		*ct = CalculationTypeFixed
+	default:
+		return fmt.Errorf("unknown CalculationType: %s", n)
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (ct CalculationType) MarshalGQL(w io.Writer) {
+	switch ct {
+	case CalculationTypePercentage:
+		w.Write([]byte(`"Percentage"`))
+	case CalculationTypeFixed:
+		w.Write([]byte(`"Fixed"`))
+	}
+}
+
+const (
+	// RecipientTypeDefaultItem represents
+	RecipientTypeDefaultItem RecipientType = iota
+	// RecipientTypeDefaultGroup represents
+	RecipientTypeDefaultGroup
+	// RecipientTypePrioritizedGroup represents
+	RecipientTypePrioritizedGroup
+	// RecipientTypeTimedGroup represents
+	RecipientTypeTimedGroup
+)
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (at *RecipientType) UnmarshalGQL(v interface{}) error {
+	n, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("wrong type for RecipientType: %T", v)
+	}
+	switch n {
+	case "DefaultItem":
+		*at = RecipientTypeDefaultItem
+	case "DefaultGroup":
+		*at = RecipientTypeDefaultGroup
+	case "PrioritizedGroup":
+		*at = RecipientTypePrioritizedGroup
+	case "TimedGroup":
+		*at = RecipientTypeTimedGroup
+	default:
+		return fmt.Errorf("unknown RecipientType: %s", n)
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (at RecipientType) MarshalGQL(w io.Writer) {
+	switch at {
+	case RecipientTypeDefaultItem:
+		w.Write([]byte(`"DefaultRecipient"`))
+	case RecipientTypeDefaultGroup:
+		w.Write([]byte(`"DefaultGroup"`))
+	case RecipientTypePrioritizedGroup:
+		w.Write([]byte(`"PrioritizedGroup"`))
+	case RecipientTypeTimedGroup:
+		w.Write([]byte(`"TimedGroup"`))
+	}
 }

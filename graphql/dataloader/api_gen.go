@@ -14,6 +14,8 @@ import (
 )
 
 type Loaders struct {
+	GetAllocationAggregationByIdBatch   *GetAllocationAggregationByIdBatch
+	GetAllocationByIdBatch              *GetAllocationByIdBatch
 	GetNotificationByIDBatch            *GetNotificationByIDBatch
 	GetSplitByChainAddressBatch         *GetSplitByChainAddressBatch
 	GetSplitByIdBatch                   *GetSplitByIdBatch
@@ -31,6 +33,8 @@ type Loaders struct {
 func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
 	loaders := &Loaders{}
 
+	loaders.GetAllocationAggregationByIdBatch = newGetAllocationAggregationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAllocationAggregationByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetAllocationByIdBatch = newGetAllocationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAllocationByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitByChainAddressBatch = newGetSplitByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetSplitByIdBatch = newGetSplitByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetSplitByIdBatch(q), preFetchHook, postFetchHook)
@@ -96,6 +100,44 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	})
 
 	return loaders
+}
+
+func loadGetAllocationAggregationByIdBatch(q *coredb.Queries) func(context.Context, *GetAllocationAggregationByIdBatch, []persist.DBID) ([]coredb.AllocationAggregation, []error) {
+	return func(ctx context.Context, d *GetAllocationAggregationByIdBatch, params []persist.DBID) ([]coredb.AllocationAggregation, []error) {
+		results := make([]coredb.AllocationAggregation, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetAllocationAggregationByIdBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r coredb.AllocationAggregation, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetAllocationByIdBatch(q *coredb.Queries) func(context.Context, *GetAllocationByIdBatch, []persist.DBID) ([]coredb.Allocation, []error) {
+	return func(ctx context.Context, d *GetAllocationByIdBatch, params []persist.DBID) ([]coredb.Allocation, []error) {
+		results := make([]coredb.Allocation, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetAllocationByIdBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r coredb.Allocation, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
 }
 
 func loadGetNotificationByIDBatch(q *coredb.Queries) func(context.Context, *GetNotificationByIDBatch, []persist.DBID) ([]coredb.Notification, []error) {

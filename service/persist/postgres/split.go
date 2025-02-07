@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
 )
 
@@ -14,14 +13,4 @@ type SplitRepository struct {
 func NewSplitRepository(queries *db.Queries) *SplitRepository {
 
 	return &SplitRepository{queries: queries}
-}
-
-// Create creates a new split in the database
-func (s *SplitRepository) Create(pCtx context.Context, pSplit db.SplitRepoCreateParams) (db.Split, error) {
-	split, err := s.queries.SplitRepoCreate(pCtx, pSplit)
-	if err != nil {
-		return db.Split{}, err
-	}
-
-	return split, nil
 }

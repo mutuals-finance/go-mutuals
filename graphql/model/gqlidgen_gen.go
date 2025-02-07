@@ -10,16 +10,20 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
+func (r *Allocation) ID() GqlID {
+	return GqlID(fmt.Sprintf("Allocation:%s", r.Dbid))
+}
+
+func (r *AllocationAggregation) ID() GqlID {
+	return GqlID(fmt.Sprintf("AllocationAggregation:%s", r.Dbid))
+}
+
 func (r *Asset) ID() GqlID {
 	return GqlID(fmt.Sprintf("Asset:%s", r.Dbid))
 }
 
 func (r *DeletedNode) ID() GqlID {
 	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
-}
-
-func (r *Recipient) ID() GqlID {
-	return GqlID(fmt.Sprintf("Recipient:%s", r.Dbid))
 }
 
 func (r *Split) ID() GqlID {
@@ -52,14 +56,15 @@ func (r *Wallet) ID() GqlID {
 }
 
 type NodeFetcher struct {
-	OnAsset       func(ctx context.Context, dbid persist.DBID) (*Asset, error)
-	OnDeletedNode func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
-	OnRecipient   func(ctx context.Context, dbid persist.DBID) (*Recipient, error)
-	OnSplit       func(ctx context.Context, dbid persist.DBID) (*Split, error)
-	OnSplitFiUser func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
-	OnToken       func(ctx context.Context, dbid persist.DBID) (*Token, error)
-	OnViewer      func(ctx context.Context, userId string) (*Viewer, error)
-	OnWallet      func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
+	OnAllocation            func(ctx context.Context, dbid persist.DBID) (*Allocation, error)
+	OnAllocationAggregation func(ctx context.Context, dbid persist.DBID) (*AllocationAggregation, error)
+	OnAsset                 func(ctx context.Context, dbid persist.DBID) (*Asset, error)
+	OnDeletedNode           func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
+	OnSplit                 func(ctx context.Context, dbid persist.DBID) (*Split, error)
+	OnSplitFiUser           func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
+	OnToken                 func(ctx context.Context, dbid persist.DBID) (*Token, error)
+	OnViewer                func(ctx context.Context, userId string) (*Viewer, error)
+	OnWallet                func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
@@ -72,6 +77,16 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 	ids := parts[1:]
 
 	switch typeName {
+	case "Allocation":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Allocation' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnAllocation(ctx, persist.DBID(ids[0]))
+	case "AllocationAggregation":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'AllocationAggregation' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnAllocationAggregation(ctx, persist.DBID(ids[0]))
 	case "Asset":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Asset' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -82,11 +97,6 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnDeletedNode(ctx, persist.DBID(ids[0]))
-	case "Recipient":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Recipient' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnRecipient(ctx, persist.DBID(ids[0]))
 	case "Split":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Split' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -119,12 +129,14 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 
 func (n *NodeFetcher) ValidateHandlers() {
 	switch {
+	case n.OnAllocation == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAllocation")
+	case n.OnAllocationAggregation == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAllocationAggregation")
 	case n.OnAsset == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAsset")
 	case n.OnDeletedNode == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
-	case n.OnRecipient == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnRecipient")
 	case n.OnSplit == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplit")
 	case n.OnSplitFiUser == nil:

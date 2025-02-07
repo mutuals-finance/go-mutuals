@@ -56,6 +56,7 @@ scalar Address
 scalar PubKey
 scalar DBID
 scalar Email
+scalar HexString
 
 enum BasicAuthType {
   Retool
@@ -168,33 +169,58 @@ type Asset implements Node {
   dbid: DBID!
   version: Int
   ownerAddress: ChainAddress
-  balance: Int
+  balance: HexString
   token: Token @goField(forceResolver: true)
 }
 
-type Recipient implements Node {
+enum CalculationType {
+  Percentage
+  Fixed
+}
+
+enum RecipientType {
+  DefaultItem
+  DefaultGroup
+  PrioritizedGroup
+  TimedGroup
+}
+
+type AllocationAggregation implements Node {
   id: ID!
   dbid: DBID!
   version: Int
+  recipientAddress: Address
+  expression: String
   creationTime: Time
   lastUpdated: Time
-  address: Address
   split: Split @goField(forceResolver: true)
-  ownership: Int
+}
+
+type Allocation implements Node {
+  id: ID!
+  dbid: DBID!
+  version: Int
+  recipientAddress: Address
+  value: HexString
+  creationTime: Time
+  lastUpdated: Time
+  split: Split @goField(forceResolver: true)
 }
 
 type Split implements Node {
   id: ID!
   dbid: DBID!
   version: Int
+  status: SplitStatus!
   name: String
   description: String
+  address: Address
+  ownerAddress: Address
+  creatorAddress: Address
   chain: Chain
-  logoURL: String
-  bannerURL: String
-  badgeURL: String
+  allocationAggregation: [AllocationAggregation!] @goField(forceResolver: true)
+  allocations: [Allocation] @goField(forceResolver: true)
   assets(limit: Int): [Asset] @goField(forceResolver: true)
-  shares(limit: Int): [Recipient] @goField(forceResolver: true)
 }
 
 # We have this extra type in case we need to stick authed data
@@ -738,10 +764,26 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-input SplitShareInput {
-  splitId: DBID!
-  recipientAddress: Address!
-  ownership: Int!
+input SplitAllocationInput {
+  id: DBID
+  recipientAddress: Address
+  calculationType: [CalculationType!]!
+  recipientType: [RecipientType!]!
+  value: HexString!
+  children: [SplitAllocationInput!]
+}
+
+enum SplitStatus {
+  Draft
+  Active
+  Paused
+}
+
+input UpsertSplitInput {
+  splitId: DBID
+  name: String
+  description: String
+  allocations: [SplitAllocationInput!]
 }
 
 input SplitPositionInput {
@@ -776,12 +818,12 @@ type CreateSplitPayload {
 
 union CreateSplitPayloadOrError = CreateSplitPayload | ErrInvalidInput | ErrNotAuthorized
 
-type UpdateSplitInfoPayload {
+type UpsertSplitPayload {
   split: Split
 }
 
-union UpdateSplitInfoPayloadOrError =
-    UpdateSplitInfoPayload
+union UpsertSplitPayloadOrError =
+  UpsertSplitPayload
   | ErrInvalidInput
   | ErrNotAuthorized
 
@@ -903,7 +945,7 @@ type Mutation {
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout(pushTokenToUnregister: String): LogoutPayload
 
-  updateSplit(input: UpdateSplitInput!): UpdateSplitPayloadOrError @authRequired
+  upsertSplit(input: UpsertSplitInput!): UpsertSplitPayloadOrError @authRequired
   publishSplit(input: PublishSplitInput!): PublishSplitPayloadOrError @authRequired
 
   createSplit(input: CreateSplitInput!): CreateSplitPayloadOrError @authRequired
@@ -912,7 +954,6 @@ type Mutation {
   deleteSplit(splitId: DBID!): DeleteSplitPayloadOrError @authRequired
   updateSplitOrder(input: UpdateSplitOrderInput!): UpdateSplitOrderPayloadOrError
     @authRequired
-  updateSplitInfo(input: UpdateSplitInfoInput!): UpdateSplitInfoPayloadOrError @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired
 

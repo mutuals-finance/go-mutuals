@@ -11,6 +11,7 @@ import (
 	"github.com/SplitFi/go-splitfi/service/emails"
 	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/SplitFi/go-splitfi/service/notifications"
+	"github.com/SplitFi/go-splitfi/util"
 	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/gammazero/workerpool"
 	"github.com/magiclabs/magic-admin-go/token"
@@ -26,14 +27,15 @@ import (
 var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
 
 var nodeFetcher = model.NodeFetcher{
-	OnAsset:       resolveAssetByAssetID,
-	OnToken:       resolveTokenByTokenID,
-	OnSplit:       resolveSplitBySplitID,
-	OnRecipient:   resolveRecipientByRecipientID,
-	OnSplitFiUser: resolveSplitFiUserByUserID,
-	OnWallet:      resolveWalletByAddress,
-	OnViewer:      resolveViewerByID,
-	OnDeletedNode: resolveDeletedNodeByID,
+	OnAsset:                 resolveAssetByAssetID,
+	OnToken:                 resolveTokenByTokenID,
+	OnSplit:                 resolveSplitBySplitID,
+	OnAllocation:            resolveAllocationByAllocationID,
+	OnAllocationAggregation: resolveAllocationAggregationByAllocationID,
+	OnSplitFiUser:           resolveSplitFiUserByUserID,
+	OnWallet:                resolveWalletByAddress,
+	OnViewer:                resolveViewerByID,
+	OnDeletedNode:           resolveDeletedNodeByID,
 }
 
 func init() {
@@ -132,18 +134,22 @@ func resolveSplitFiUserByUserID(ctx context.Context, userID persist.DBID) (*mode
 	return userToModel(ctx, *user), nil
 }
 
-func resolveRecipientByRecipientID(ctx context.Context, recipientID persist.DBID) (*model.Recipient, error) {
-	recipient, err := publicapi.For(ctx).Split.GetRecipientByRecipientID(ctx, recipientID)
-
+func resolveAllocationByAllocationID(ctx context.Context, allocationID persist.DBID) (*model.Allocation, error) {
+	allocation, err := publicapi.For(ctx).Split.GetAllocationById(ctx, allocationID)
 	if err != nil {
 		return nil, err
 	}
 
-	//return userToModel(ctx, *user), nil
+	return allocationToModel(ctx, *allocation), nil
+}
 
-	return &model.Recipient{
-		Address: &recipient.Address,
-	}, nil
+func resolveAllocationAggregationByAllocationID(ctx context.Context, allocationAggregationID persist.DBID) (*model.AllocationAggregation, error) {
+	allocationAggregation, err := publicapi.For(ctx).Split.GetAllocationAggregationById(ctx, allocationAggregationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return allocationAggregationToModel(ctx, *allocationAggregation), nil
 }
 
 func resolveSplitFiUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.SplitFiUser, error) {
@@ -594,15 +600,15 @@ func unsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEm
 func splitToModel(ctx context.Context, split db.Split) *model.Split {
 
 	return &model.Split{
-		Dbid:        split.ID,
-		Name:        &split.Name,
-		Description: &split.Description,
-		Chain:       &split.Chain,
-		LogoURL:     &split.LogoUrl.String,
-		BannerURL:   &split.BannerUrl.String,
-		BadgeURL:    &split.BadgeUrl.String,
-		Assets:      nil, // handled by dedicated resolver
-		Shares:      nil, // handled by dedicated resolver
+		Dbid:           split.ID,
+		Name:           &split.Name,
+		Description:    &split.Description,
+		Chain:          &split.Chain,
+		Address:        &split.Address,
+		OwnerAddress:   &split.OwnerAddress,
+		CreatorAddress: &split.CreatorAddress,
+		Assets:         nil, // handled by dedicated resolver
+		Allocations:    nil, // handled by dedicated resolver
 	}
 }
 
@@ -613,6 +619,32 @@ func splitsToModels(ctx context.Context, splits []db.Split) []*model.Split {
 	}
 
 	return models
+}
+
+func allocationToModel(ctx context.Context, allocation db.Allocation) *model.Allocation {
+
+	return &model.Allocation{
+		Dbid:             allocation.ID,
+		RecipientAddress: &allocation.RecipientAddress,
+		Value:            util.ToPointer(allocation.Value),
+		CreationTime:     &allocation.CreatedAt,
+		LastUpdated:      &allocation.LastUpdated,
+		Split:            nil, // handled by dedicated resolver
+	}
+}
+
+func allocationAggregationToModel(ctx context.Context, allocationAggregation db.AllocationAggregation) *model.AllocationAggregation {
+	version := int(allocationAggregation.Version.Int32)
+
+	return &model.AllocationAggregation{
+		Dbid:             allocationAggregation.ID,
+		Version:          &version,
+		RecipientAddress: &allocationAggregation.RecipientAddress,
+		Expression:       &allocationAggregation.Expression,
+		CreationTime:     &allocationAggregation.CreatedAt,
+		LastUpdated:      &allocationAggregation.LastUpdated,
+		Split:            nil, // handled by dedicated resolver
+	}
 }
 
 // userToModel converts a db.User to a model.User

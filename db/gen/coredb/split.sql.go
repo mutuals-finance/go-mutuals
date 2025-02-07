@@ -7,40 +7,31 @@ package coredb
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
-const splitRepoCreate = `-- name: SplitRepoCreate :one
-insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership
+const createSplit = `-- name: CreateSplit :one
+INSERT INTO splits (id, chain, address, name, description, created_at, last_updated)
+VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+RETURNING id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
 `
 
-type SplitRepoCreateParams struct {
-	SplitID        persist.DBID    `db:"split_id" json:"split_id"`
-	Chain          persist.Chain   `db:"chain" json:"chain"`
-	Address        persist.Address `db:"address" json:"address"`
-	Name           string          `db:"name" json:"name"`
-	Description    string          `db:"description" json:"description"`
-	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
-	LogoUrl        sql.NullString  `db:"logo_url" json:"logo_url"`
-	BannerUrl      sql.NullString  `db:"banner_url" json:"banner_url"`
-	BadgeUrl       sql.NullString  `db:"badge_url" json:"badge_url"`
-	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
+type CreateSplitParams struct {
+	ID          persist.DBID    `db:"id" json:"id"`
+	Chain       persist.Chain   `db:"chain" json:"chain"`
+	Address     persist.Address `db:"address" json:"address"`
+	Name        string          `db:"name" json:"name"`
+	Description string          `db:"description" json:"description"`
 }
 
-func (q *Queries) SplitRepoCreate(ctx context.Context, arg SplitRepoCreateParams) (Split, error) {
-	row := q.db.QueryRow(ctx, splitRepoCreate,
-		arg.SplitID,
+func (q *Queries) CreateSplit(ctx context.Context, arg CreateSplitParams) (Split, error) {
+	row := q.db.QueryRow(ctx, createSplit,
+		arg.ID,
 		arg.Chain,
 		arg.Address,
 		arg.Name,
 		arg.Description,
-		arg.CreatorAddress,
-		arg.LogoUrl,
-		arg.BannerUrl,
-		arg.BadgeUrl,
-		arg.TotalOwnership,
 	)
 	var i Split
 	err := row.Scan(
@@ -49,28 +40,239 @@ func (q *Queries) SplitRepoCreate(ctx context.Context, arg SplitRepoCreateParams
 		&i.LastUpdated,
 		&i.CreatedAt,
 		&i.Deleted,
+		&i.Name,
+		&i.Description,
+		&i.Status,
 		&i.Chain,
 		&i.L1Chain,
 		&i.Address,
-		&i.Name,
-		&i.Description,
+		&i.OwnerAddress,
 		&i.CreatorAddress,
-		&i.LogoUrl,
-		&i.BannerUrl,
-		&i.BadgeUrl,
-		&i.TotalOwnership,
 	)
 	return i, err
 }
 
-const splitRepoUpdate = `-- name: SplitRepoUpdate :execrows
-update splits set last_updated = now() where splits.id = $1
+const upsertSplit = `-- name: UpsertSplit :one
+/*
+// name: UpdateSplitHidden :one
+update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
+*/
+
+INSERT INTO splits (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,
+                    last_updated, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+ON CONFLICT (id)
+WHERE deleted = FALSE
+    DO
+UPDATE
+SET name            = EXCLUDED.name,
+    description     = EXCLUDED.description,
+    status          = EXCLUDED.status,
+    chain           = EXCLUDED.chain,
+    l1_chain        = EXCLUDED.l1_chain,
+    address         = EXCLUDED.address,
+    owner_address   = EXCLUDED.owner_address,
+    creator_address = EXCLUDED.creator_address,
+    last_updated    = NOW()
+RETURNING id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
 `
 
-func (q *Queries) SplitRepoUpdate(ctx context.Context, splitID persist.DBID) (int64, error) {
-	result, err := q.db.Exec(ctx, splitRepoUpdate, splitID)
+type UpsertSplitParams struct {
+	ID             persist.DBID    `db:"id" json:"id"`
+	Name           string          `db:"name" json:"name"`
+	Description    string          `db:"description" json:"description"`
+	Status         int32           `db:"status" json:"status"`
+	Chain          persist.Chain   `db:"chain" json:"chain"`
+	L1Chain        persist.L1Chain `db:"l1_chain" json:"l1_chain"`
+	Address        persist.Address `db:"address" json:"address"`
+	OwnerAddress   persist.Address `db:"owner_address" json:"owner_address"`
+	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
+}
+
+func (q *Queries) UpsertSplit(ctx context.Context, arg UpsertSplitParams) (Split, error) {
+	row := q.db.QueryRow(ctx, upsertSplit,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.Status,
+		arg.Chain,
+		arg.L1Chain,
+		arg.Address,
+		arg.OwnerAddress,
+		arg.CreatorAddress,
+	)
+	var i Split
+	err := row.Scan(
+		&i.ID,
+		&i.Version,
+		&i.LastUpdated,
+		&i.CreatedAt,
+		&i.Deleted,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.Chain,
+		&i.L1Chain,
+		&i.Address,
+		&i.OwnerAddress,
+		&i.CreatorAddress,
+	)
+	return i, err
+}
+
+const upsertSplitAggregatedAllocations = `-- name: UpsertSplitAggregatedAllocations :many
+WITH updates AS (SELECT UNNEST($1::text[])                AS id,
+                        $2                          AS split_id,
+                        UNNEST($3::text[]) AS recipient_address,
+                        UNNEST($4::text[])        AS expression)
+INSERT
+INTO allocation_aggregations (id, split_id, recipient_address, expression, last_updated, created_at, deleted)
+SELECT id, split_id, recipient_address, expression, NOW(), NOW(), FALSE
+FROM updates
+ON CONFLICT (id)
+WHERE deleted = FALSE DO
+UPDATE
+SET split_id          = EXCLUDED.split_id,
+    recipient_address = EXCLUDED.recipient_address,
+    expression        = EXCLUDED.expression,
+    last_updated      = NOW()
+RETURNING id, split_id, recipient_address, expression, last_updated, created_at, version, deleted
+`
+
+type UpsertSplitAggregatedAllocationsParams struct {
+	ID               []string     `db:"id" json:"id"`
+	SplitID          persist.DBID `db:"split_id" json:"split_id"`
+	RecipientAddress []string     `db:"recipient_address" json:"recipient_address"`
+	Expression       []string     `db:"expression" json:"expression"`
+}
+
+func (q *Queries) UpsertSplitAggregatedAllocations(ctx context.Context, arg UpsertSplitAggregatedAllocationsParams) ([]AllocationAggregation, error) {
+	rows, err := q.db.Query(ctx, upsertSplitAggregatedAllocations,
+		arg.ID,
+		arg.SplitID,
+		arg.RecipientAddress,
+		arg.Expression,
+	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return result.RowsAffected(), nil
+	defer rows.Close()
+	var items []AllocationAggregation
+	for rows.Next() {
+		var i AllocationAggregation
+		if err := rows.Scan(
+			&i.ID,
+			&i.SplitID,
+			&i.RecipientAddress,
+			&i.Expression,
+			&i.LastUpdated,
+			&i.CreatedAt,
+			&i.Version,
+			&i.Deleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upsertSplitAllocations = `-- name: UpsertSplitAllocations :many
+WITH updates AS (SELECT UNNEST($1::text[])               AS id,
+                        $2                          AS split_id,
+                        UNNEST($3::text[]) AS recipient_address,
+                        UNNEST($4::int[])     AS recipient_type,
+                        UNNEST($5::int[])   AS calculation_type,
+                        UNNEST($6::text[])             AS value,
+                        UNNEST($7::text[])        AS expression,
+                        UNNEST($8::text[])             AS label,
+                        UNNEST($9::ltree[])             AS path)
+INSERT
+INTO allocations (id, split_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,
+                  last_updated, created_at, deleted)
+SELECT id,
+       split_id,
+       recipient_address,
+       expression,
+       recipient_type,
+       calculation_type,
+       value,
+       label,
+       path,
+       NOW(),
+       NOW(),
+       FALSE
+FROM updates
+ON CONFLICT (id)
+WHERE deleted = FALSE
+    DO
+UPDATE
+SET recipient_address = EXCLUDED.recipient_address,
+    expression        = EXCLUDED.expression,
+    recipient_type    = EXCLUDED.recipient_type,
+    calculation_type  = EXCLUDED.calculation_type,
+    value             = EXCLUDED.value,
+    label             = EXCLUDED.label,
+    path              = EXCLUDED.path,
+    last_updated      = NOW()
+RETURNING id, version, split_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, last_updated, created_at
+`
+
+type UpsertSplitAllocationsParams struct {
+	Ids              []string     `db:"ids" json:"ids"`
+	SplitID          persist.DBID `db:"split_id" json:"split_id"`
+	RecipientAddress []string     `db:"recipient_address" json:"recipient_address"`
+	RecipientType    []int32      `db:"recipient_type" json:"recipient_type"`
+	CalculationType  []int32      `db:"calculation_type" json:"calculation_type"`
+	Value            []string     `db:"value" json:"value"`
+	Expression       []string     `db:"expression" json:"expression"`
+	Label            []string     `db:"label" json:"label"`
+	Path             []string     `db:"path" json:"path"`
+}
+
+func (q *Queries) UpsertSplitAllocations(ctx context.Context, arg UpsertSplitAllocationsParams) ([]Allocation, error) {
+	rows, err := q.db.Query(ctx, upsertSplitAllocations,
+		arg.Ids,
+		arg.SplitID,
+		arg.RecipientAddress,
+		arg.RecipientType,
+		arg.CalculationType,
+		arg.Value,
+		arg.Expression,
+		arg.Label,
+		arg.Path,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Allocation
+	for rows.Next() {
+		var i Allocation
+		if err := rows.Scan(
+			&i.ID,
+			&i.Version,
+			&i.SplitID,
+			&i.RecipientAddress,
+			&i.RecipientType,
+			&i.CalculationType,
+			&i.Value,
+			&i.Expression,
+			&i.Label,
+			&i.Path,
+			&i.Deleted,
+			&i.LastUpdated,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

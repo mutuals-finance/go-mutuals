@@ -12,6 +12,33 @@ import (
 	"github.com/jackc/pgtype"
 )
 
+type Allocation struct {
+	ID               persist.DBID            `db:"id" json:"id"`
+	Version          sql.NullInt32           `db:"version" json:"version"`
+	SplitID          persist.DBID            `db:"split_id" json:"split_id"`
+	RecipientAddress persist.Address         `db:"recipient_address" json:"recipient_address"`
+	RecipientType    persist.RecipientType   `db:"recipient_type" json:"recipient_type"`
+	CalculationType  persist.CalculationType `db:"calculation_type" json:"calculation_type"`
+	Value            persist.HexString       `db:"value" json:"value"`
+	Expression       string                  `db:"expression" json:"expression"`
+	Label            string                  `db:"label" json:"label"`
+	Path             sql.NullString          `db:"path" json:"path"`
+	Deleted          bool                    `db:"deleted" json:"deleted"`
+	LastUpdated      time.Time               `db:"last_updated" json:"last_updated"`
+	CreatedAt        time.Time               `db:"created_at" json:"created_at"`
+}
+
+type AllocationAggregation struct {
+	ID               persist.DBID    `db:"id" json:"id"`
+	SplitID          persist.DBID    `db:"split_id" json:"split_id"`
+	RecipientAddress persist.Address `db:"recipient_address" json:"recipient_address"`
+	Expression       string          `db:"expression" json:"expression"`
+	LastUpdated      time.Time       `db:"last_updated" json:"last_updated"`
+	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
+	Version          sql.NullInt32   `db:"version" json:"version"`
+	Deleted          bool            `db:"deleted" json:"deleted"`
+}
+
 type DevMetadataUser struct {
 	UserID          persist.DBID  `db:"user_id" json:"user_id"`
 	HasEmailAddress persist.Email `db:"has_email_address" json:"has_email_address"`
@@ -116,17 +143,6 @@ type PushNotificationToken struct {
 	Deleted   bool         `db:"deleted" json:"deleted"`
 }
 
-type Recipient struct {
-	ID          persist.DBID    `db:"id" json:"id"`
-	Version     sql.NullInt32   `db:"version" json:"version"`
-	LastUpdated time.Time       `db:"last_updated" json:"last_updated"`
-	CreatedAt   time.Time       `db:"created_at" json:"created_at"`
-	Deleted     bool            `db:"deleted" json:"deleted"`
-	SplitID     persist.DBID    `db:"split_id" json:"split_id"`
-	Address     persist.Address `db:"address" json:"address"`
-	Ownership   int32           `db:"ownership" json:"ownership"`
-}
-
 type ScrubbedPiiForUser struct {
 	UserID                    persist.DBID  `db:"user_id" json:"user_id"`
 	PiiUnverifiedEmailAddress persist.Email `db:"pii_unverified_email_address" json:"pii_unverified_email_address"`
@@ -167,16 +183,14 @@ type Split struct {
 	LastUpdated    time.Time       `db:"last_updated" json:"last_updated"`
 	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
 	Deleted        bool            `db:"deleted" json:"deleted"`
+	Name           string          `db:"name" json:"name"`
+	Description    string          `db:"description" json:"description"`
+	Status         int32           `db:"status" json:"status"`
 	Chain          persist.Chain   `db:"chain" json:"chain"`
 	L1Chain        persist.L1Chain `db:"l1_chain" json:"l1_chain"`
 	Address        persist.Address `db:"address" json:"address"`
-	Name           string          `db:"name" json:"name"`
-	Description    string          `db:"description" json:"description"`
+	OwnerAddress   persist.Address `db:"owner_address" json:"owner_address"`
 	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
-	LogoUrl        sql.NullString  `db:"logo_url" json:"logo_url"`
-	BannerUrl      sql.NullString  `db:"banner_url" json:"banner_url"`
-	BadgeUrl       sql.NullString  `db:"badge_url" json:"badge_url"`
-	TotalOwnership int32           `db:"total_ownership" json:"total_ownership"`
 }
 
 type Token struct {

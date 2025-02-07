@@ -52,22 +52,22 @@ SELECT * FROM splits WHERE id = $1 AND deleted = false;
 SELECT s.* FROM users u, unnest(u.wallets)
     WITH ORDINALITY AS a(wallet_id, wallet_ord)
     INNER JOIN wallets w on w.id = a.wallet_id
-    INNER JOIN recipients r ON r.address = w.address
-    INNER JOIN splits s ON s.id = r.split_id
-    WHERE u.id = @user_id AND s.id = @split_id AND u.deleted = false AND w.deleted = false AND r.deleted = false AND s.deleted = false;
+    INNER JOIN allocations a ON a.address = w.address
+    INNER JOIN splits s ON s.id = a.split_id
+    WHERE u.id = @user_id AND s.id = @split_id AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false;
 
 -- name: GetSplitsByUserIDBatch :batchmany
 select s.*
-    from users u, unnest(u.wallets)
-    with ordinality as a(wallet_id, wallet_ord)
-        join wallets w on w.id = a.wallet_id
-        join recipients r on r.address = w.address
-        join splits s on s.id = r.split_id
-    where u.id = $1
-      and u.deleted = false
-      and w.deleted = false
-      and r.deleted = false
-      and s.deleted = false;
+from users u, splits s, wallets w, allocation_aggregations a
+where u.id = $1
+  and w.id = any(u.wallets)
+  and a.recipient_address = w.address
+  and s.id = a.split_id
+  and s.l1_chain = w.l1_chain
+  and u.deleted = false
+  and w.deleted = false
+  and a.deleted = false
+  and s.deleted = false;
 
 -- name: GetSplitByIdBatch :batchone
 SELECT * FROM splits WHERE id = $1 AND deleted = false;
@@ -82,9 +82,9 @@ SELECT * FROM splits WHERE address = $1 AND chain = $2 AND deleted = false;
 SELECT * FROM splits WHERE chain = any(@chains::int[]) OR contract_address = any(@addresses::varchar[]) AND deleted = false;
 
 -- name: GetSplitsByRecipientAddress :many
-SELECT s.* FROM recipients r
-                    JOIN splits s ON s.id = r.split_id
-WHERE r.address = $1 AND s.deleted = false;
+SELECT s.* FROM allocations a
+                    JOIN splits s ON s.id = a.split_id
+WHERE a.recipient_address = $1 AND s.deleted = false;
 
 -- name: GetWalletByID :one
 SELECT * FROM wallets WHERE id = $1 AND deleted = false;
@@ -380,23 +380,6 @@ update user_roles set deleted = true, last_updated = now() where user_id = $1 an
 
 -- name: GetUserRolesByUserId :many
 select role from user_roles where user_id = $1 and deleted = false;
-
--- name: CreateSplit :one
-insert into splits (id, chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership, created_at, last_updated) values (@split_id, @chain, @address, @name, @description, @creator_address, @logo_url, @banner_url, @badge_url, @total_ownership, now(), now()) returning *;
-
-/*
-// name: UpdateSplitHidden :one
-update splits set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
-*/
-
--- name: UpdateSplitInfo :exec
-update splits set name = case when @name_set::bool then @name else name end, description = case when @description_set::bool then @description else description end, logo_url = case when @logo_url_set::bool then @logo_url else logo_url end, last_updated = now() where id = @id and deleted = false;
-
--- name: UpdateSplitShares :exec
-with updates as (
-    select unnest(@split_ids::text[]) as split_id, unnest(@recipient_addresses::text[]) as recipient_address, unnest(@ownerships::int[]) as ownership
-)
-update recipients r set ownership = updates.ownership, last_updated = now() from updates where r.split_id = updates.split_id and r.address = updates.recipient_address;
 
 -- name: UpdateUserExperience :exec
 update users set user_experiences = user_experiences || @experience where id = @user_id;

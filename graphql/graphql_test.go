@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Khan/genqlient/graphql"
 	genql "github.com/Khan/genqlient/graphql"
 
 	"github.com/SplitFi/go-splitfi/server"
@@ -67,8 +66,7 @@ func testGraphQL(t *testing.T) {
 		{title: "should get viewer", run: testViewer},
 		{title: "should add a wallet", run: testAddWallet},
 		{title: "should remove a wallet", run: testRemoveWallet},
-		{title: "views from multiple users are rolled up", run: testViewsAreRolledUp},
-		{title: "should update split and ensure name still gets set when not sent in update", run: testUpdateSplitWithNoNameChange},
+		{title: "should update split and ensure name still gets set when not sent in update", run: testUpsertSplitWithNoNameChange},
 		{title: "should update user experiences", run: testUpdateUserExperiences},
 		{title: "should create split", run: testCreateSplit},
 		//{title: "should send notifications", run: testSendNotifications, fixtures: []fixture{usePostgres, useRedis}},
@@ -213,34 +211,32 @@ func testLogout(t *testing.T) {
 	assert.Nil(t, response.Logout.Viewer)
 }
 
-func testUpdateSplitWithPublish(t *testing.T) {
+func testUpsertSplitWithPublish(t *testing.T) {
 	serverF := newServerFixture(t)
 	userF := newUserWithTokensFixture(t)
 	c := authedServerClient(t, serverF.URL, userF.ID)
 
-	updateReponse, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+	updateReponse, err := upsertSplitMutation(context.Background(), c, UpsertSplitInput{
 		SplitId: userF.SplitID,
 		Name:    util.ToPointer("newName"),
-		EditId:  util.ToPointer("edit_id"),
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, updateReponse.UpdateSplit)
-	updatePayload, ok := (*updateReponse.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
+	require.NotNil(t, updateReponse.UpsertSplit)
+	updatePayload, ok := (*updateReponse.UpsertSplit).(*upsertSplitMutationUpsertSplitUpsertSplitPayload)
 	if !ok {
-		err := (*updateReponse.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
+		err := (*updateReponse.UpsertSplit).(*upsertSplitMutationUpsertSplitErrInvalidInput)
 		t.Fatal(err)
 	}
 	assert.NotEmpty(t, updatePayload.Split.Name)
 
-	update2Reponse, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+	update2Reponse, err := upsertSplitMutation(context.Background(), c, UpsertSplitInput{
 		SplitId:     userF.SplitID,
 		Description: util.ToPointer("newDesc"),
-		EditId:      util.ToPointer("edit_id"),
 	})
 
 	require.NoError(t, err)
-	require.NotNil(t, update2Reponse.UpdateSplit)
+	require.NotNil(t, update2Reponse.UpsertSplit)
 
 	// Wait for event handlers to store update events
 	time.Sleep(time.Second)
@@ -295,50 +291,34 @@ func testUpdateUserExperiences(t *testing.T) {
 	}
 }
 
-func testUpdateSplitWithNoNameChange(t *testing.T) {
+func testUpsertSplitWithNoNameChange(t *testing.T) {
 	userF := newUserWithTokensFixture(t)
 	c := authedHandlerClient(t, userF.ID)
 
-	response, err := updateSplitMutation(context.Background(), c, UpdateSplitInput{
+	response, err := upsertSplitMutation(context.Background(), c, UpsertSplitInput{
 		SplitId: userF.SplitID,
 		Name:    util.ToPointer("newName"),
 	})
 
 	require.NoError(t, err)
-	payload, ok := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
+	payload, ok := (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitUpsertSplitPayload)
 	if !ok {
-		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
+		err := (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitErrInvalidInput)
 		t.Fatal(err)
 	}
 	assert.NotEmpty(t, payload.Split.Name)
 
-	response, err = updateSplitMutation(context.Background(), c, UpdateSplitInput{
+	response, err = upsertSplitMutation(context.Background(), c, UpsertSplitInput{
 		SplitId: userF.SplitID,
 	})
 
 	require.NoError(t, err)
-	payload, ok = (*response.UpdateSplit).(*updateSplitMutationUpdateSplitUpdateSplitPayload)
+	payload, ok = (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitUpsertSplitPayload)
 	if !ok {
-		err := (*response.UpdateSplit).(*updateSplitMutationUpdateSplitErrInvalidInput)
+		err := (*response.UpsertSplit).(*upsertSplitMutationUpsertSplitErrInvalidInput)
 		t.Fatal(err)
 	}
 	assert.NotEmpty(t, payload.Split.Name)
-}
-
-func testViewsAreRolledUp(t *testing.T) {
-	serverF := newServerFixture(t)
-	userF := newUserFixture(t)
-	bob := newUserFixture(t)
-	alice := newUserFixture(t)
-	ctx := context.Background()
-	// bob views split
-	client := authedServerClient(t, serverF.URL, bob.ID)
-	viewSplit(t, ctx, client, userF.SplitID)
-	// // alice views split
-	client = authedServerClient(t, serverF.URL, alice.ID)
-	viewSplit(t, ctx, client, userF.SplitID)
-
-	// TODO: Actually verify that the views get rolled up
 }
 
 // authMechanismInput signs a nonce with an ethereum wallet
@@ -418,14 +398,6 @@ func newUser(t *testing.T, ctx context.Context, c genql.Client, w wallet) (userI
 	require.NoError(t, err)
 	payload := (*response.CreateUser).(*createUserMutationCreateUserCreateUserPayload)
 	return payload.Viewer.User.Dbid, username, payload.Viewer.User.Splits[0].Dbid
-}
-
-// viewSplit makes a GraphQL request to view a split
-func viewSplit(t *testing.T, ctx context.Context, c graphql.Client, splitID persist.DBID) {
-	t.Helper()
-	resp, err := viewSplitMutation(ctx, c, splitID)
-	require.NoError(t, err)
-	_ = (*resp.ViewSplit).(*viewSplitMutationViewSplitViewSplitPayload)
 }
 
 // defaultHandler returns a backend GraphQL http.Handler

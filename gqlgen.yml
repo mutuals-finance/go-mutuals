@@ -70,6 +70,9 @@ models:
   ChainPubKeyInput:
     model:
       - github.com/SplitFi/go-splitfi/service/persist.ChainPubKey
+  HexString:
+    model:
+      - github.com/SplitFi/go-splitfi/service/persist.HexString
   DBID:
     model:
       - github.com/SplitFi/go-splitfi/service/persist.DBID
@@ -79,6 +82,15 @@ models:
   InteractionType:
     model:
       - github.com/SplitFi/go-splitfi/service/persist.InteractionType
+  SplitStatusType:
+    model:
+      - github.com/SplitFi/go-splitfi/service/persist.SplitStatus
+  CalculationType:
+    model:
+      - github.com/SplitFi/go-splitfi/service/persist.CalculationType
+  RecipientType:
+    model:
+      - github.com/SplitFi/go-splitfi/service/persist.RecipientType
   ID:
     model:
       - github.com/SplitFi/go-splitfi/graphql/model.GqlID

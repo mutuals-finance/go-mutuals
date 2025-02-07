@@ -158,11 +158,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"UpdateSplitInfoPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateSplitInfoPayloadOrError)
-		return obj, ok
-	},
-
 	"UpdateSplitOrderPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UpdateSplitOrderPayloadOrError)
 		return obj, ok
@@ -185,6 +180,11 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UploadPersistedQueriesPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UploadPersistedQueriesPayloadOrError)
+		return obj, ok
+	},
+
+	"UpsertSplitPayloadOrError": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UpsertSplitPayloadOrError)
 		return obj, ok
 	},
 

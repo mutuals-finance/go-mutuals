@@ -142,10 +142,6 @@ type UpdateSplitHiddenPayloadOrError interface {
 	IsUpdateSplitHiddenPayloadOrError()
 }
 
-type UpdateSplitInfoPayloadOrError interface {
-	IsUpdateSplitInfoPayloadOrError()
-}
-
 type UpdateSplitOrderPayloadOrError interface {
 	IsUpdateSplitOrderPayloadOrError()
 }
@@ -164,6 +160,10 @@ type UpdateUserInfoPayloadOrError interface {
 
 type UploadPersistedQueriesPayloadOrError interface {
 	IsUploadPersistedQueriesPayloadOrError()
+}
+
+type UpsertSplitPayloadOrError interface {
+	IsUpsertSplitPayloadOrError()
 }
 
 type UserByAddressOrError interface {
@@ -212,11 +212,35 @@ type AdminAddWalletPayload struct {
 
 func (AdminAddWalletPayload) IsAdminAddWalletPayloadOrError() {}
 
+type Allocation struct {
+	Dbid             persist.DBID       `json:"dbid"`
+	Version          *int               `json:"version"`
+	RecipientAddress *persist.Address   `json:"recipientAddress"`
+	Value            *persist.HexString `json:"value"`
+	CreationTime     *time.Time         `json:"creationTime"`
+	LastUpdated      *time.Time         `json:"lastUpdated"`
+	Split            *Split             `json:"split"`
+}
+
+func (Allocation) IsNode() {}
+
+type AllocationAggregation struct {
+	Dbid             persist.DBID     `json:"dbid"`
+	Version          *int             `json:"version"`
+	RecipientAddress *persist.Address `json:"recipientAddress"`
+	Expression       *string          `json:"expression"`
+	CreationTime     *time.Time       `json:"creationTime"`
+	LastUpdated      *time.Time       `json:"lastUpdated"`
+	Split            *Split           `json:"split"`
+}
+
+func (AllocationAggregation) IsNode() {}
+
 type Asset struct {
 	Dbid         persist.DBID          `json:"dbid"`
 	Version      *int                  `json:"version"`
 	OwnerAddress *persist.ChainAddress `json:"ownerAddress"`
-	Balance      *int                  `json:"balance"`
+	Balance      *persist.HexString    `json:"balance"`
 	Token        *Token                `json:"token"`
 }
 
@@ -361,7 +385,7 @@ func (ErrInvalidInput) IsUnsubscribeFromEmailTypePayloadOrError()        {}
 func (ErrInvalidInput) IsOptInForRolesPayloadOrError()                   {}
 func (ErrInvalidInput) IsOptOutForRolesPayloadOrError()                  {}
 func (ErrInvalidInput) IsCreateSplitPayloadOrError()                     {}
-func (ErrInvalidInput) IsUpdateSplitInfoPayloadOrError()                 {}
+func (ErrInvalidInput) IsUpsertSplitPayloadOrError()                     {}
 func (ErrInvalidInput) IsUpdateSplitHiddenPayloadOrError()               {}
 func (ErrInvalidInput) IsDeleteSplitPayloadOrError()                     {}
 func (ErrInvalidInput) IsUpdateSplitOrderPayloadOrError()                {}
@@ -402,7 +426,7 @@ func (ErrNotAuthorized) IsOptInForRolesPayloadOrError()           {}
 func (ErrNotAuthorized) IsOptOutForRolesPayloadOrError()          {}
 func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError()  {}
 func (ErrNotAuthorized) IsCreateSplitPayloadOrError()             {}
-func (ErrNotAuthorized) IsUpdateSplitInfoPayloadOrError()         {}
+func (ErrNotAuthorized) IsUpsertSplitPayloadOrError()             {}
 func (ErrNotAuthorized) IsUpdateSplitHiddenPayloadOrError()       {}
 func (ErrNotAuthorized) IsDeleteSplitPayloadOrError()             {}
 func (ErrNotAuthorized) IsUpdateSplitOrderPayloadOrError()        {}
@@ -576,18 +600,6 @@ type PublishSplitPayload struct {
 
 func (PublishSplitPayload) IsPublishSplitPayloadOrError() {}
 
-type Recipient struct {
-	Dbid         persist.DBID     `json:"dbid"`
-	Version      *int             `json:"version"`
-	CreationTime *time.Time       `json:"creationTime"`
-	LastUpdated  *time.Time       `json:"lastUpdated"`
-	Address      *persist.Address `json:"address"`
-	Split        *Split           `json:"split"`
-	Ownership    *int             `json:"ownership"`
-}
-
-func (Recipient) IsNode() {}
-
 type RegisterUserPushTokenPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
@@ -619,20 +631,31 @@ type SearchUsersPayload struct {
 func (SearchUsersPayload) IsSearchUsersPayloadOrError() {}
 
 type Split struct {
-	Dbid        persist.DBID   `json:"dbid"`
-	Version     *int           `json:"version"`
-	Name        *string        `json:"name"`
-	Description *string        `json:"description"`
-	Chain       *persist.Chain `json:"chain"`
-	LogoURL     *string        `json:"logoURL"`
-	BannerURL   *string        `json:"bannerURL"`
-	BadgeURL    *string        `json:"badgeURL"`
-	Assets      []*Asset       `json:"assets"`
-	Shares      []*Recipient   `json:"shares"`
+	Dbid                  persist.DBID             `json:"dbid"`
+	Version               *int                     `json:"version"`
+	Status                SplitStatus              `json:"status"`
+	Name                  *string                  `json:"name"`
+	Description           *string                  `json:"description"`
+	Address               *persist.Address         `json:"address"`
+	OwnerAddress          *persist.Address         `json:"ownerAddress"`
+	CreatorAddress        *persist.Address         `json:"creatorAddress"`
+	Chain                 *persist.Chain           `json:"chain"`
+	AllocationAggregation []*AllocationAggregation `json:"allocationAggregation"`
+	Allocations           []*Allocation            `json:"allocations"`
+	Assets                []*Asset                 `json:"assets"`
 }
 
 func (Split) IsNode()                    {}
 func (Split) IsSplitByIDPayloadOrError() {}
+
+type SplitAllocationInput struct {
+	ID               *persist.DBID             `json:"id"`
+	RecipientAddress *persist.Address          `json:"recipientAddress"`
+	CalculationType  []persist.CalculationType `json:"calculationType"`
+	RecipientType    []persist.RecipientType   `json:"recipientType"`
+	Value            persist.HexString         `json:"value"`
+	Children         []*SplitAllocationInput   `json:"children"`
+}
 
 type SplitFiUser struct {
 	HelperSplitFiUserData
@@ -663,12 +686,6 @@ type SplitPositionInput struct {
 
 type SplitSearchResult struct {
 	Split *Split `json:"split"`
-}
-
-type SplitShareInput struct {
-	SplitID          persist.DBID    `json:"splitId"`
-	RecipientAddress persist.Address `json:"recipientAddress"`
-	Ownership        int             `json:"ownership"`
 }
 
 type Token struct {
@@ -754,12 +771,6 @@ type UpdateSplitInfoInput struct {
 	Description *string      `json:"description"`
 }
 
-type UpdateSplitInfoPayload struct {
-	Split *Split `json:"split"`
-}
-
-func (UpdateSplitInfoPayload) IsUpdateSplitInfoPayloadOrError() {}
-
 type UpdateSplitInput struct {
 	SplitID     persist.DBID   `json:"splitId"`
 	Name        *string        `json:"name"`
@@ -814,6 +825,19 @@ type UploadPersistedQueriesPayload struct {
 }
 
 func (UploadPersistedQueriesPayload) IsUploadPersistedQueriesPayloadOrError() {}
+
+type UpsertSplitInput struct {
+	SplitID     *persist.DBID           `json:"splitId"`
+	Name        *string                 `json:"name"`
+	Description *string                 `json:"description"`
+	Allocations []*SplitAllocationInput `json:"allocations"`
+}
+
+type UpsertSplitPayload struct {
+	Split *Split `json:"split"`
+}
+
+func (UpsertSplitPayload) IsUpsertSplitPayloadOrError() {}
 
 type UserEdge struct {
 	Node   *SplitFiUser `json:"node"`
@@ -973,6 +997,49 @@ func (e *PreverifyEmailResult) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PreverifyEmailResult) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type SplitStatus string
+
+const (
+	SplitStatusDraft  SplitStatus = "Draft"
+	SplitStatusActive SplitStatus = "Active"
+	SplitStatusPaused SplitStatus = "Paused"
+)
+
+var AllSplitStatus = []SplitStatus{
+	SplitStatusDraft,
+	SplitStatusActive,
+	SplitStatusPaused,
+}
+
+func (e SplitStatus) IsValid() bool {
+	switch e {
+	case SplitStatusDraft, SplitStatusActive, SplitStatusPaused:
+		return true
+	}
+	return false
+}
+
+func (e SplitStatus) String() string {
+	return string(e)
+}
+
+func (e *SplitStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SplitStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SplitStatus", str)
+	}
+	return nil
+}
+
+func (e SplitStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

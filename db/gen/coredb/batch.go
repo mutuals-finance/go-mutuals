@@ -18,6 +18,125 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
+const getAllocationAggregationByIdBatch = `-- name: GetAllocationAggregationByIdBatch :batchone
+SELECT id, split_id, recipient_address, expression, last_updated, created_at, version, deleted
+FROM allocation_aggregations
+WHERE id = $1
+  AND deleted = FALSE
+`
+
+type GetAllocationAggregationByIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetAllocationAggregationByIdBatch(ctx context.Context, id []persist.DBID) *GetAllocationAggregationByIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getAllocationAggregationByIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetAllocationAggregationByIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetAllocationAggregationByIdBatchBatchResults) QueryRow(f func(int, AllocationAggregation, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i AllocationAggregation
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.SplitID,
+			&i.RecipientAddress,
+			&i.Expression,
+			&i.LastUpdated,
+			&i.CreatedAt,
+			&i.Version,
+			&i.Deleted,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetAllocationAggregationByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getAllocationByIdBatch = `-- name: GetAllocationByIdBatch :batchone
+SELECT id, version, split_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, last_updated, created_at
+FROM allocations
+WHERE id = $1
+  AND deleted = FALSE
+`
+
+type GetAllocationByIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetAllocationByIdBatch(ctx context.Context, id []persist.DBID) *GetAllocationByIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getAllocationByIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetAllocationByIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetAllocationByIdBatchBatchResults) QueryRow(f func(int, Allocation, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Allocation
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Version,
+			&i.SplitID,
+			&i.RecipientAddress,
+			&i.RecipientType,
+			&i.CalculationType,
+			&i.Value,
+			&i.Expression,
+			&i.Label,
+			&i.Path,
+			&i.Deleted,
+			&i.LastUpdated,
+			&i.CreatedAt,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetAllocationByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
 const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
 SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, split_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
 `
@@ -77,7 +196,7 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 }
 
 const getSplitByChainAddressBatch = `-- name: GetSplitByChainAddressBatch :batchone
-SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM splits WHERE address = $1 AND chain = $2 AND deleted = false
 `
 
 type GetSplitByChainAddressBatchBatchResults struct {
@@ -121,16 +240,14 @@ func (b *GetSplitByChainAddressBatchBatchResults) QueryRow(f func(int, Split, er
 			&i.LastUpdated,
 			&i.CreatedAt,
 			&i.Deleted,
+			&i.Name,
+			&i.Description,
+			&i.Status,
 			&i.Chain,
 			&i.L1Chain,
 			&i.Address,
-			&i.Name,
-			&i.Description,
+			&i.OwnerAddress,
 			&i.CreatorAddress,
-			&i.LogoUrl,
-			&i.BannerUrl,
-			&i.BadgeUrl,
-			&i.TotalOwnership,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -144,7 +261,7 @@ func (b *GetSplitByChainAddressBatchBatchResults) Close() error {
 }
 
 const getSplitByIdBatch = `-- name: GetSplitByIdBatch :batchone
-SELECT id, version, last_updated, created_at, deleted, chain, l1_chain, address, name, description, creator_address, logo_url, banner_url, badge_url, total_ownership FROM splits WHERE id = $1 AND deleted = false
+SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM splits WHERE id = $1 AND deleted = false
 `
 
 type GetSplitByIdBatchBatchResults struct {
@@ -182,16 +299,14 @@ func (b *GetSplitByIdBatchBatchResults) QueryRow(f func(int, Split, error)) {
 			&i.LastUpdated,
 			&i.CreatedAt,
 			&i.Deleted,
+			&i.Name,
+			&i.Description,
+			&i.Status,
 			&i.Chain,
 			&i.L1Chain,
 			&i.Address,
-			&i.Name,
-			&i.Description,
+			&i.OwnerAddress,
 			&i.CreatorAddress,
-			&i.LogoUrl,
-			&i.BannerUrl,
-			&i.BadgeUrl,
-			&i.TotalOwnership,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -205,17 +320,17 @@ func (b *GetSplitByIdBatchBatchResults) Close() error {
 }
 
 const getSplitsByUserIDBatch = `-- name: GetSplitsByUserIDBatch :batchmany
-select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.chain, s.l1_chain, s.address, s.name, s.description, s.creator_address, s.logo_url, s.banner_url, s.badge_url, s.total_ownership
-    from users u, unnest(u.wallets)
-    with ordinality as a(wallet_id, wallet_ord)
-        join wallets w on w.id = a.wallet_id
-        join recipients r on r.address = w.address
-        join splits s on s.id = r.split_id
-    where u.id = $1
-      and u.deleted = false
-      and w.deleted = false
-      and r.deleted = false
-      and s.deleted = false
+select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address
+from users u, splits s, wallets w, allocation_aggregations a
+where u.id = $1
+  and w.id = any(u.wallets)
+  and a.recipient_address = w.address
+  and s.id = a.split_id
+  and s.l1_chain = w.l1_chain
+  and u.deleted = false
+  and w.deleted = false
+  and a.deleted = false
+  and s.deleted = false
 `
 
 type GetSplitsByUserIDBatchBatchResults struct {
@@ -260,16 +375,14 @@ func (b *GetSplitsByUserIDBatchBatchResults) Query(f func(int, []Split, error)) 
 					&i.LastUpdated,
 					&i.CreatedAt,
 					&i.Deleted,
+					&i.Name,
+					&i.Description,
+					&i.Status,
 					&i.Chain,
 					&i.L1Chain,
 					&i.Address,
-					&i.Name,
-					&i.Description,
+					&i.OwnerAddress,
 					&i.CreatorAddress,
-					&i.LogoUrl,
-					&i.BannerUrl,
-					&i.BadgeUrl,
-					&i.TotalOwnership,
 				); err != nil {
 					return err
 				}

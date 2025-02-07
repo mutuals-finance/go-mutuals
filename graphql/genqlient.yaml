@@ -11,11 +11,13 @@ bindings:
   DBID:
     type: github.com/SplitFi/go-splitfi/service/persist.DBID
   Address:
-    type: string
+    type: github.com/SplitFi/go-splitfi/service/persist.Address
   PubKey:
     type: string
   Time:
     type: string
+  HexString:
+    type: github.com/SplitFi/go-splitfi/service/persist.HexString
 operations:
 - testdata/*.graphql
 generated: generated_test.go

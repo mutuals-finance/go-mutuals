@@ -368,7 +368,7 @@ func (wa WalletType) MarshalGQL(w io.Writer) {
 }
 
 func (n Address) String() string {
-	return string(n)
+	return strings.ToLower(string(n))
 }
 
 // Value implements the database/sql driver Valuer interface for the NullString type
@@ -395,7 +395,7 @@ func (n *Address) Scan(value interface{}) error {
 		asString = string(asUint8Array)
 	}
 
-	*n = Address(asString)
+	*n = Address(strings.ToLower(asString))
 	return nil
 }
 

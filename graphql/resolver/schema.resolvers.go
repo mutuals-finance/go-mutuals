@@ -17,6 +17,16 @@ import (
 	"github.com/SplitFi/go-splitfi/service/persist"
 )
 
+// Split is the resolver for the split field.
+func (r *allocationResolver) Split(ctx context.Context, obj *model.Allocation) (*model.Split, error) {
+	panic(fmt.Errorf("not implemented: Split - split"))
+}
+
+// Split is the resolver for the split field.
+func (r *allocationAggregationResolver) Split(ctx context.Context, obj *model.AllocationAggregation) (*model.Split, error) {
+	panic(fmt.Errorf("not implemented: Split - split"))
+}
+
 // Token is the resolver for the token field.
 func (r *assetResolver) Token(ctx context.Context, obj *model.Asset) (*model.Token, error) {
 	panic(fmt.Errorf("not implemented: Token - token"))
@@ -207,9 +217,18 @@ func (r *mutationResolver) Logout(ctx context.Context, pushTokenToUnregister *st
 	return output, nil
 }
 
-// UpdateSplit is the resolver for the updateSplit field.
-func (r *mutationResolver) UpdateSplit(ctx context.Context, input model.UpdateSplitInput) (model.UpdateSplitPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateSplit - updateSplit"))
+// UpsertSplit is the resolver for the upsertSplit field.
+func (r *mutationResolver) UpsertSplit(ctx context.Context, input model.UpsertSplitInput) (model.UpsertSplitPayloadOrError, error) {
+	dbSplit, err := publicapi.For(ctx).Split.UpsertSplit(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := model.UpsertSplitPayload{
+		Split: splitToModel(ctx, dbSplit),
+	}
+
+	return payload, nil
 }
 
 // PublishSplit is the resolver for the publishSplit field.
@@ -219,13 +238,13 @@ func (r *mutationResolver) PublishSplit(ctx context.Context, input model.Publish
 		return nil, err
 	}
 
-	gal, err := resolveSplitBySplitID(ctx, input.SplitID)
+	split, err := resolveSplitBySplitID(ctx, input.SplitID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.PublishSplitPayload{
-		Split: gal,
+		Split: split,
 	}, nil
 }
 
@@ -256,11 +275,6 @@ func (r *mutationResolver) DeleteSplit(ctx context.Context, splitID persist.DBID
 // UpdateSplitOrder is the resolver for the updateSplitOrder field.
 func (r *mutationResolver) UpdateSplitOrder(ctx context.Context, input model.UpdateSplitOrderInput) (model.UpdateSplitOrderPayloadOrError, error) {
 	panic(fmt.Errorf("not implemented: UpdateSplitOrder - updateSplitOrder"))
-}
-
-// UpdateSplitInfo is the resolver for the updateSplitInfo field.
-func (r *mutationResolver) UpdateSplitInfo(ctx context.Context, input model.UpdateSplitInfoInput) (model.UpdateSplitInfoPayloadOrError, error) {
-	panic(fmt.Errorf("not implemented: UpdateSplitInfo - updateSplitInfo"))
 }
 
 // ClearAllNotifications is the resolver for the clearAllNotifications field.
@@ -517,19 +531,19 @@ func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, befo
 	}, nil
 }
 
-// Split is the resolver for the split field.
-func (r *recipientResolver) Split(ctx context.Context, obj *model.Recipient) (*model.Split, error) {
-	panic(fmt.Errorf("not implemented: Split - split"))
+// AllocationAggregation is the resolver for the allocationAggregation field.
+func (r *splitResolver) AllocationAggregation(ctx context.Context, obj *model.Split) ([]*model.AllocationAggregation, error) {
+	panic(fmt.Errorf("not implemented: AllocationAggregation - allocationAggregation"))
+}
+
+// Allocations is the resolver for the allocations field.
+func (r *splitResolver) Allocations(ctx context.Context, obj *model.Split) ([]*model.Allocation, error) {
+	panic(fmt.Errorf("not implemented: Allocations - allocations"))
 }
 
 // Assets is the resolver for the assets field.
 func (r *splitResolver) Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error) {
 	panic(fmt.Errorf("not implemented: Assets - assets"))
-}
-
-// Shares is the resolver for the shares field.
-func (r *splitResolver) Shares(ctx context.Context, obj *model.Split, limit *int) ([]*model.Recipient, error) {
-	panic(fmt.Errorf("not implemented: Shares - shares"))
 }
 
 // Roles is the resolver for the roles field.
@@ -663,6 +677,14 @@ func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.Chain
 	return obj.GQLSetChainFromResolver(data)
 }
 
+// Allocation returns generated.AllocationResolver implementation.
+func (r *Resolver) Allocation() generated.AllocationResolver { return &allocationResolver{r} }
+
+// AllocationAggregation returns generated.AllocationAggregationResolver implementation.
+func (r *Resolver) AllocationAggregation() generated.AllocationAggregationResolver {
+	return &allocationAggregationResolver{r}
+}
+
 // Asset returns generated.AssetResolver implementation.
 func (r *Resolver) Asset() generated.AssetResolver { return &assetResolver{r} }
 
@@ -671,9 +693,6 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
-// Recipient returns generated.RecipientResolver implementation.
-func (r *Resolver) Recipient() generated.RecipientResolver { return &recipientResolver{r} }
 
 // Split returns generated.SplitResolver implementation.
 func (r *Resolver) Split() generated.SplitResolver { return &splitResolver{r} }
@@ -703,10 +722,11 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 	return &chainPubKeyInputResolver{r}
 }
 
+type allocationResolver struct{ *Resolver }
+type allocationAggregationResolver struct{ *Resolver }
 type assetResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type recipientResolver struct{ *Resolver }
 type splitResolver struct{ *Resolver }
 type splitFiUserResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }

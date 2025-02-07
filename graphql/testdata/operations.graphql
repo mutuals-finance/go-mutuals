@@ -153,9 +153,9 @@ mutation removeUserWalletsMutation($walletIds: [DBID!]!) {
   }
 }
 
-mutation updateSplitMutation($input: UpdateSplitInput!) {
-  updateSplit(input: $input) {
-    ... on UpdateSplitPayload {
+mutation upsertSplitMutation($input: UpsertSplitInput!) {
+  upsertSplit(input: $input) {
+    ... on UpsertSplitPayload {
       split {
         dbid
         name
