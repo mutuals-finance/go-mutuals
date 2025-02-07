@@ -2,16 +2,16 @@ package streamer
 
 import (
 	"context"
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/middleware"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/middleware"
+	"github.com/mutuals/go-mutuals/util"
 	"net/http"
 
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/task"
-	"github.com/SplitFi/go-splitfi/service/throttle"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/service/task"
+	"github.com/mutuals/go-mutuals/service/throttle"
 )
 
 func handlersInitServer(ctx context.Context, router *gin.Engine, s *streamer, mc *multichain.Provider, repos *postgres.Repositories, throttler *throttle.Locker, taskClient *task.Client) *gin.Engine {

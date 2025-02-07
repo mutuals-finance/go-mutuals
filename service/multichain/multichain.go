@@ -3,15 +3,15 @@ package multichain
 import (
 	"context"
 	"fmt"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/multichain/common"
-	op "github.com/SplitFi/go-splitfi/service/multichain/operation"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/util"
-	"github.com/SplitFi/go-splitfi/validate"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/multichain/common"
+	op "github.com/mutuals/go-mutuals/service/multichain/operation"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/util"
+	"github.com/mutuals/go-mutuals/validate"
 )
 
 func init() {

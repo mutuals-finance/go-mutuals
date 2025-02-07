@@ -8,8 +8,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/jackc/pgtype"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type Allocation struct {

@@ -5,7 +5,7 @@ ___
 `sqlc.yaml` must be set up to use sqlc's `sqlc-gen-json` example plugin to generate a JSON manifest file with information about generated queries
 
 ### Quickstart
-From the go-splitfi root directory, run:
+From the go-mutuals root directory, run:
 ```bash
 make sqlc-generate
 ```

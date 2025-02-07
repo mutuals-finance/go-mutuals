@@ -9,13 +9,13 @@ import (
 	"math/big"
 	"net/http"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/event"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/task"
-	"github.com/SplitFi/go-splitfi/util"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/event"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/task"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 func processTokenTransfers(mc *multichain.Provider, queries *db.Queries) gin.HandlerFunc {

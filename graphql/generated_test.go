@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type AuthMechanism struct {
@@ -45,6 +45,11 @@ const (
 	CalculationTypeFixed      CalculationType = "Fixed"
 )
 
+var AllCalculationType = []CalculationType{
+	CalculationTypePercentage,
+	CalculationTypeFixed,
+}
+
 type Chain string
 
 const (
@@ -53,6 +58,13 @@ const (
 	ChainPolygon  Chain = "Polygon"
 	ChainOptimism Chain = "Optimism"
 )
+
+var AllChain = []Chain{
+	ChainEthereum,
+	ChainArbitrum,
+	ChainPolygon,
+	ChainOptimism,
+}
 
 type ChainAddressInput struct {
 	Address persist.Address `json:"address"`
@@ -200,6 +212,13 @@ const (
 	RecipientTypeTimedgroup       RecipientType = "TimedGroup"
 )
 
+var AllRecipientType = []RecipientType{
+	RecipientTypeDefaultitem,
+	RecipientTypeDefaultgroup,
+	RecipientTypePrioritizedgroup,
+	RecipientTypeTimedgroup,
+}
+
 type SplitAllocationInput struct {
 	Id               *persist.DBID          `json:"id"`
 	RecipientAddress *persist.Address       `json:"recipientAddress"`
@@ -265,6 +284,13 @@ const (
 	UserExperienceTypeTwitterconnectiononboardingupsell UserExperienceType = "TwitterConnectionOnboardingUpsell"
 	UserExperienceTypeUpsellmintmemento4                UserExperienceType = "UpsellMintMemento4"
 )
+
+var AllUserExperienceType = []UserExperienceType{
+	UserExperienceTypeEmailupsell,
+	UserExperienceTypeMaintenancefeb2023,
+	UserExperienceTypeTwitterconnectiononboardingupsell,
+	UserExperienceTypeUpsellmintmemento4,
+}
 
 // __addUserWalletMutationInput is used internally by genqlient
 type __addUserWalletMutationInput struct {
@@ -503,53 +529,53 @@ func __marshaladdUserWalletMutationAddUserWalletAddUserWalletPayloadOrError(v *a
 
 // addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer struct {
-	User *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser `json:"user"`
+	User *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUser `json:"user"`
 }
 
 // GetUser returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer) GetUser() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser {
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewer) GetUser() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUser {
 	return v.User
 }
 
-// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser struct {
-	Wallets []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet `json:"wallets"`
+// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUser struct {
+	Wallets []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet `json:"wallets"`
 }
 
-// GetWallets returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser.Wallets, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUser) GetWallets() []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet {
+// GetWallets returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUser.Wallets, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUser) GetWallets() []*addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet {
 	return v.Wallets
 }
 
-// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
-type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet struct {
+// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
+type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet struct {
 	Dbid         persist.DBID                                                                                          `json:"dbid"`
-	ChainAddress *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress `json:"chainAddress"`
+	ChainAddress *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress `json:"chainAddress"`
 }
 
-// GetDbid returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet) GetDbid() persist.DBID {
+// GetDbid returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetChainAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWallet) GetChainAddress() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress {
+// GetChainAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWallet) GetChainAddress() *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress {
 	return v.ChainAddress
 }
 
-// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
-type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress struct {
+// addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
+type addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress struct {
 	Address *persist.Address `json:"address"`
 	Chain   *Chain           `json:"chain"`
 }
 
-// GetAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetAddress() *persist.Address {
+// GetAddress returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress) GetAddress() *persist.Address {
 	return v.Address
 }
 
-// GetChain returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetChain() *Chain {
+// GetChain returns addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
+func (v *addUserWalletMutationAddUserWalletAddUserWalletPayloadViewerUserMutualsUserWalletsWalletChainAddress) GetChain() *Chain {
 	return v.Chain
 }
 
@@ -1049,43 +1075,43 @@ func __marshalcreateUserMutationCreateUserCreateUserPayloadOrError(v *createUser
 
 // createUserMutationCreateUserCreateUserPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type createUserMutationCreateUserCreateUserPayloadViewer struct {
-	User *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser `json:"user"`
+	User *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser `json:"user"`
 }
 
 // GetUser returns createUserMutationCreateUserCreateUserPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewer) GetUser() *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser {
+func (v *createUserMutationCreateUserCreateUserPayloadViewer) GetUser() *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser {
 	return v.User
 }
 
-// createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser struct {
+// createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser struct {
 	Username *string                                                                          `json:"username"`
 	Dbid     persist.DBID                                                                     `json:"dbid"`
-	Splits   []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit `json:"splits"`
+	Splits   []*createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit `json:"splits"`
 }
 
-// GetUsername returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetUsername() *string {
+// GetUsername returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser.Username, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser) GetUsername() *string {
 	return v.Username
 }
 
-// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetDbid() persist.DBID {
+// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser.Dbid, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetSplits returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser.Splits, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUser) GetSplits() []*createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit {
+// GetSplits returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser.Splits, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUser) GetSplits() []*createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit {
 	return v.Splits
 }
 
-// createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit includes the requested fields of the GraphQL type Split.
-type createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit struct {
+// createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit includes the requested fields of the GraphQL type Split.
+type createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit struct {
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit.Dbid, and is useful for accessing the field via an interface.
-func (v *createUserMutationCreateUserCreateUserPayloadViewerUserSplitFiUserSplitsSplit) GetDbid() persist.DBID {
+// GetDbid returns createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit.Dbid, and is useful for accessing the field via an interface.
+func (v *createUserMutationCreateUserCreateUserPayloadViewerUserMutualsUserSplitsSplit) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
@@ -1537,27 +1563,27 @@ func __marshalloginMutationLoginLoginPayloadOrError(v *loginMutationLoginLoginPa
 
 // loginMutationLoginLoginPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type loginMutationLoginLoginPayloadViewer struct {
-	User *loginMutationLoginLoginPayloadViewerUserSplitFiUser `json:"user"`
+	User *loginMutationLoginLoginPayloadViewerUserMutualsUser `json:"user"`
 }
 
 // GetUser returns loginMutationLoginLoginPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *loginMutationLoginLoginPayloadViewer) GetUser() *loginMutationLoginLoginPayloadViewerUserSplitFiUser {
+func (v *loginMutationLoginLoginPayloadViewer) GetUser() *loginMutationLoginLoginPayloadViewerUserMutualsUser {
 	return v.User
 }
 
-// loginMutationLoginLoginPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type loginMutationLoginLoginPayloadViewerUserSplitFiUser struct {
+// loginMutationLoginLoginPayloadViewerUserMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type loginMutationLoginLoginPayloadViewerUserMutualsUser struct {
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetUsername returns loginMutationLoginLoginPayloadViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
-func (v *loginMutationLoginLoginPayloadViewerUserSplitFiUser) GetUsername() *string {
+// GetUsername returns loginMutationLoginLoginPayloadViewerUserMutualsUser.Username, and is useful for accessing the field via an interface.
+func (v *loginMutationLoginLoginPayloadViewerUserMutualsUser) GetUsername() *string {
 	return v.Username
 }
 
-// GetDbid returns loginMutationLoginLoginPayloadViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
-func (v *loginMutationLoginLoginPayloadViewerUserSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns loginMutationLoginLoginPayloadViewerUserMutualsUser.Dbid, and is useful for accessing the field via an interface.
+func (v *loginMutationLoginLoginPayloadViewerUserMutualsUser) GetDbid() persist.DBID { return v.Dbid }
 
 // loginMutationResponse is returned by loginMutation on success.
 type loginMutationResponse struct {
@@ -1645,27 +1671,27 @@ func (v *logoutMutationLogoutLogoutPayload) GetViewer() *logoutMutationLogoutLog
 
 // logoutMutationLogoutLogoutPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type logoutMutationLogoutLogoutPayloadViewer struct {
-	User *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser `json:"user"`
+	User *logoutMutationLogoutLogoutPayloadViewerUserMutualsUser `json:"user"`
 }
 
 // GetUser returns logoutMutationLogoutLogoutPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *logoutMutationLogoutLogoutPayloadViewer) GetUser() *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser {
+func (v *logoutMutationLogoutLogoutPayloadViewer) GetUser() *logoutMutationLogoutLogoutPayloadViewerUserMutualsUser {
 	return v.User
 }
 
-// logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser struct {
+// logoutMutationLogoutLogoutPayloadViewerUserMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type logoutMutationLogoutLogoutPayloadViewerUserMutualsUser struct {
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetUsername returns logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
-func (v *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser) GetUsername() *string {
+// GetUsername returns logoutMutationLogoutLogoutPayloadViewerUserMutualsUser.Username, and is useful for accessing the field via an interface.
+func (v *logoutMutationLogoutLogoutPayloadViewerUserMutualsUser) GetUsername() *string {
 	return v.Username
 }
 
-// GetDbid returns logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
-func (v *logoutMutationLogoutLogoutPayloadViewerUserSplitFiUser) GetDbid() persist.DBID {
+// GetDbid returns logoutMutationLogoutLogoutPayloadViewerUserMutualsUser.Dbid, and is useful for accessing the field via an interface.
+func (v *logoutMutationLogoutLogoutPayloadViewerUserMutualsUser) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
@@ -2449,53 +2475,53 @@ func __marshalremoveUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayload
 
 // removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer includes the requested fields of the GraphQL type Viewer.
 type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer struct {
-	User *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser `json:"user"`
+	User *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUser `json:"user"`
 }
 
 // GetUser returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer.User, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer) GetUser() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser {
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewer) GetUser() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUser {
 	return v.User
 }
 
-// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser struct {
-	Wallets []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet `json:"wallets"`
+// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUser struct {
+	Wallets []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet `json:"wallets"`
 }
 
-// GetWallets returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser.Wallets, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUser) GetWallets() []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet {
+// GetWallets returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUser.Wallets, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUser) GetWallets() []*removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet {
 	return v.Wallets
 }
 
-// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
-type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet struct {
+// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet includes the requested fields of the GraphQL type Wallet.
+type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet struct {
 	Dbid         persist.DBID                                                                                                      `json:"dbid"`
-	ChainAddress *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress `json:"chainAddress"`
+	ChainAddress *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress `json:"chainAddress"`
 }
 
-// GetDbid returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet) GetDbid() persist.DBID {
+// GetDbid returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet.Dbid, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet) GetDbid() persist.DBID {
 	return v.Dbid
 }
 
-// GetChainAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWallet) GetChainAddress() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress {
+// GetChainAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet.ChainAddress, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWallet) GetChainAddress() *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress {
 	return v.ChainAddress
 }
 
-// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
-type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress struct {
+// removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress includes the requested fields of the GraphQL type ChainAddress.
+type removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress struct {
 	Address *persist.Address `json:"address"`
 	Chain   *Chain           `json:"chain"`
 }
 
-// GetAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetAddress() *persist.Address {
+// GetAddress returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress.Address, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress) GetAddress() *persist.Address {
 	return v.Address
 }
 
-// GetChain returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserSplitFiUserWalletsWalletChainAddress) GetChain() *Chain {
+// GetChain returns removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress.Chain, and is useful for accessing the field via an interface.
+func (v *removeUserWalletsMutationRemoveUserWalletsRemoveUserWalletsPayloadViewerUserMutualsUserWalletsWalletChainAddress) GetChain() *Chain {
 	return v.Chain
 }
 
@@ -3123,28 +3149,28 @@ func (v *userByAddressQueryUserByAddressErrUserNotFound) GetTypename() *string {
 // GetMessage returns userByAddressQueryUserByAddressErrUserNotFound.Message, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByAddressQueryUserByAddressSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type userByAddressQueryUserByAddressSplitFiUser struct {
+// userByAddressQueryUserByAddressMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type userByAddressQueryUserByAddressMutualsUser struct {
 	Typename *string      `json:"__typename"`
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetTypename returns userByAddressQueryUserByAddressSplitFiUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressSplitFiUser) GetTypename() *string { return v.Typename }
+// GetTypename returns userByAddressQueryUserByAddressMutualsUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressMutualsUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByAddressQueryUserByAddressSplitFiUser.Username, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressSplitFiUser) GetUsername() *string { return v.Username }
+// GetUsername returns userByAddressQueryUserByAddressMutualsUser.Username, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressMutualsUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns userByAddressQueryUserByAddressSplitFiUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns userByAddressQueryUserByAddressMutualsUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressMutualsUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userByAddressQueryUserByAddressUserByAddressOrError includes the requested fields of the GraphQL interface UserByAddressOrError.
 //
 // userByAddressQueryUserByAddressUserByAddressOrError is implemented by the following types:
 // userByAddressQueryUserByAddressErrInvalidInput
 // userByAddressQueryUserByAddressErrUserNotFound
-// userByAddressQueryUserByAddressSplitFiUser
+// userByAddressQueryUserByAddressMutualsUser
 type userByAddressQueryUserByAddressUserByAddressOrError interface {
 	implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -3155,7 +3181,7 @@ func (v *userByAddressQueryUserByAddressErrInvalidInput) implementsGraphQLInterf
 }
 func (v *userByAddressQueryUserByAddressErrUserNotFound) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError() {
 }
-func (v *userByAddressQueryUserByAddressSplitFiUser) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError() {
+func (v *userByAddressQueryUserByAddressMutualsUser) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserByAddressOrError() {
 }
 
 func __unmarshaluserByAddressQueryUserByAddressUserByAddressOrError(b []byte, v *userByAddressQueryUserByAddressUserByAddressOrError) error {
@@ -3178,8 +3204,8 @@ func __unmarshaluserByAddressQueryUserByAddressUserByAddressOrError(b []byte, v 
 	case "ErrUserNotFound":
 		*v = new(userByAddressQueryUserByAddressErrUserNotFound)
 		return json.Unmarshal(b, *v)
-	case "SplitFiUser":
-		*v = new(userByAddressQueryUserByAddressSplitFiUser)
+	case "MutualsUser":
+		*v = new(userByAddressQueryUserByAddressMutualsUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -3210,12 +3236,12 @@ func __marshaluserByAddressQueryUserByAddressUserByAddressOrError(v *userByAddre
 			*userByAddressQueryUserByAddressErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByAddressQueryUserByAddressSplitFiUser:
-		typename = "SplitFiUser"
+	case *userByAddressQueryUserByAddressMutualsUser:
+		typename = "MutualsUser"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByAddressQueryUserByAddressSplitFiUser
+			*userByAddressQueryUserByAddressMutualsUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -3326,28 +3352,28 @@ func (v *userByIdQueryUserByIdErrUserNotFound) GetTypename() *string { return v.
 // GetMessage returns userByIdQueryUserByIdErrUserNotFound.Message, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByIdQueryUserByIdSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type userByIdQueryUserByIdSplitFiUser struct {
+// userByIdQueryUserByIdMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type userByIdQueryUserByIdMutualsUser struct {
 	Typename *string      `json:"__typename"`
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetTypename returns userByIdQueryUserByIdSplitFiUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdSplitFiUser) GetTypename() *string { return v.Typename }
+// GetTypename returns userByIdQueryUserByIdMutualsUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdMutualsUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByIdQueryUserByIdSplitFiUser.Username, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdSplitFiUser) GetUsername() *string { return v.Username }
+// GetUsername returns userByIdQueryUserByIdMutualsUser.Username, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdMutualsUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns userByIdQueryUserByIdSplitFiUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns userByIdQueryUserByIdMutualsUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdMutualsUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userByIdQueryUserByIdUserByIdOrError includes the requested fields of the GraphQL interface UserByIdOrError.
 //
 // userByIdQueryUserByIdUserByIdOrError is implemented by the following types:
 // userByIdQueryUserByIdErrInvalidInput
 // userByIdQueryUserByIdErrUserNotFound
-// userByIdQueryUserByIdSplitFiUser
+// userByIdQueryUserByIdMutualsUser
 type userByIdQueryUserByIdUserByIdOrError interface {
 	implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -3358,7 +3384,7 @@ func (v *userByIdQueryUserByIdErrInvalidInput) implementsGraphQLInterfaceuserByI
 }
 func (v *userByIdQueryUserByIdErrUserNotFound) implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError() {
 }
-func (v *userByIdQueryUserByIdSplitFiUser) implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError() {
+func (v *userByIdQueryUserByIdMutualsUser) implementsGraphQLInterfaceuserByIdQueryUserByIdUserByIdOrError() {
 }
 
 func __unmarshaluserByIdQueryUserByIdUserByIdOrError(b []byte, v *userByIdQueryUserByIdUserByIdOrError) error {
@@ -3381,8 +3407,8 @@ func __unmarshaluserByIdQueryUserByIdUserByIdOrError(b []byte, v *userByIdQueryU
 	case "ErrUserNotFound":
 		*v = new(userByIdQueryUserByIdErrUserNotFound)
 		return json.Unmarshal(b, *v)
-	case "SplitFiUser":
-		*v = new(userByIdQueryUserByIdSplitFiUser)
+	case "MutualsUser":
+		*v = new(userByIdQueryUserByIdMutualsUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -3413,12 +3439,12 @@ func __marshaluserByIdQueryUserByIdUserByIdOrError(v *userByIdQueryUserByIdUserB
 			*userByIdQueryUserByIdErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByIdQueryUserByIdSplitFiUser:
-		typename = "SplitFiUser"
+	case *userByIdQueryUserByIdMutualsUser:
+		typename = "MutualsUser"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByIdQueryUserByIdSplitFiUser
+			*userByIdQueryUserByIdMutualsUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -3529,28 +3555,28 @@ func (v *userByUsernameQueryUserByUsernameErrUserNotFound) GetTypename() *string
 // GetMessage returns userByUsernameQueryUserByUsernameErrUserNotFound.Message, and is useful for accessing the field via an interface.
 func (v *userByUsernameQueryUserByUsernameErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByUsernameQueryUserByUsernameSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type userByUsernameQueryUserByUsernameSplitFiUser struct {
+// userByUsernameQueryUserByUsernameMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type userByUsernameQueryUserByUsernameMutualsUser struct {
 	Typename *string      `json:"__typename"`
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetTypename returns userByUsernameQueryUserByUsernameSplitFiUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameSplitFiUser) GetTypename() *string { return v.Typename }
+// GetTypename returns userByUsernameQueryUserByUsernameMutualsUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByUsernameQueryUserByUsernameMutualsUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByUsernameQueryUserByUsernameSplitFiUser.Username, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameSplitFiUser) GetUsername() *string { return v.Username }
+// GetUsername returns userByUsernameQueryUserByUsernameMutualsUser.Username, and is useful for accessing the field via an interface.
+func (v *userByUsernameQueryUserByUsernameMutualsUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns userByUsernameQueryUserByUsernameSplitFiUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns userByUsernameQueryUserByUsernameMutualsUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userByUsernameQueryUserByUsernameMutualsUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userByUsernameQueryUserByUsernameUserByUsernameOrError includes the requested fields of the GraphQL interface UserByUsernameOrError.
 //
 // userByUsernameQueryUserByUsernameUserByUsernameOrError is implemented by the following types:
 // userByUsernameQueryUserByUsernameErrInvalidInput
 // userByUsernameQueryUserByUsernameErrUserNotFound
-// userByUsernameQueryUserByUsernameSplitFiUser
+// userByUsernameQueryUserByUsernameMutualsUser
 type userByUsernameQueryUserByUsernameUserByUsernameOrError interface {
 	implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -3561,7 +3587,7 @@ func (v *userByUsernameQueryUserByUsernameErrInvalidInput) implementsGraphQLInte
 }
 func (v *userByUsernameQueryUserByUsernameErrUserNotFound) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
 }
-func (v *userByUsernameQueryUserByUsernameSplitFiUser) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
+func (v *userByUsernameQueryUserByUsernameMutualsUser) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
 }
 
 func __unmarshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(b []byte, v *userByUsernameQueryUserByUsernameUserByUsernameOrError) error {
@@ -3584,8 +3610,8 @@ func __unmarshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(b []byte,
 	case "ErrUserNotFound":
 		*v = new(userByUsernameQueryUserByUsernameErrUserNotFound)
 		return json.Unmarshal(b, *v)
-	case "SplitFiUser":
-		*v = new(userByUsernameQueryUserByUsernameSplitFiUser)
+	case "MutualsUser":
+		*v = new(userByUsernameQueryUserByUsernameMutualsUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -3616,12 +3642,12 @@ func __marshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(v *userByUs
 			*userByUsernameQueryUserByUsernameErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByUsernameQueryUserByUsernameSplitFiUser:
-		typename = "SplitFiUser"
+	case *userByUsernameQueryUserByUsernameMutualsUser:
+		typename = "MutualsUser"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByUsernameQueryUserByUsernameSplitFiUser
+			*userByUsernameQueryUserByUsernameMutualsUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -3709,14 +3735,14 @@ func (v *viewerQueryResponse) __premarshalJSON() (*__premarshalviewerQueryRespon
 // viewerQueryViewer includes the requested fields of the GraphQL type Viewer.
 type viewerQueryViewer struct {
 	Typename *string                           `json:"__typename"`
-	User     *viewerQueryViewerUserSplitFiUser `json:"user"`
+	User     *viewerQueryViewerUserMutualsUser `json:"user"`
 }
 
 // GetTypename returns viewerQueryViewer.Typename, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewer) GetTypename() *string { return v.Typename }
 
 // GetUser returns viewerQueryViewer.User, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewer) GetUser() *viewerQueryViewerUserSplitFiUser { return v.User }
+func (v *viewerQueryViewer) GetUser() *viewerQueryViewerUserMutualsUser { return v.User }
 
 // viewerQueryViewerErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
 type viewerQueryViewerErrNotAuthorized struct {
@@ -3730,17 +3756,17 @@ func (v *viewerQueryViewerErrNotAuthorized) GetTypename() *string { return v.Typ
 // GetMessage returns viewerQueryViewerErrNotAuthorized.Message, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerErrNotAuthorized) GetMessage() string { return v.Message }
 
-// viewerQueryViewerUserSplitFiUser includes the requested fields of the GraphQL type SplitFiUser.
-type viewerQueryViewerUserSplitFiUser struct {
+// viewerQueryViewerUserMutualsUser includes the requested fields of the GraphQL type MutualsUser.
+type viewerQueryViewerUserMutualsUser struct {
 	Username *string      `json:"username"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
-// GetUsername returns viewerQueryViewerUserSplitFiUser.Username, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserSplitFiUser) GetUsername() *string { return v.Username }
+// GetUsername returns viewerQueryViewerUserMutualsUser.Username, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUserMutualsUser) GetUsername() *string { return v.Username }
 
-// GetDbid returns viewerQueryViewerUserSplitFiUser.Dbid, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUserSplitFiUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns viewerQueryViewerUserMutualsUser.Dbid, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUserMutualsUser) GetDbid() persist.DBID { return v.Dbid }
 
 // viewerQueryViewerViewerOrError includes the requested fields of the GraphQL interface ViewerOrError.
 //
@@ -3814,7 +3840,7 @@ func __marshalviewerQueryViewerViewerOrError(v *viewerQueryViewerViewerOrError) 
 	}
 }
 
-// The query or mutation executed by addUserWalletMutation.
+// The mutation executed by addUserWalletMutation.
 const addUserWalletMutation_Operation = `
 mutation addUserWalletMutation ($chainAddress: ChainAddressInput!, $authMechanism: AuthMechanism!) {
 	addUserWallet(chainAddress: $chainAddress, authMechanism: $authMechanism) {
@@ -3845,7 +3871,7 @@ func addUserWalletMutation(
 	client_ graphql.Client,
 	chainAddress ChainAddressInput,
 	authMechanism AuthMechanism,
-) (*addUserWalletMutationResponse, error) {
+) (data_ *addUserWalletMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "addUserWalletMutation",
 		Query:  addUserWalletMutation_Operation,
@@ -3854,10 +3880,9 @@ func addUserWalletMutation(
 			AuthMechanism: authMechanism,
 		},
 	}
-	var err_ error
 
-	var data_ addUserWalletMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &addUserWalletMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -3865,10 +3890,10 @@ func addUserWalletMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by createSplitMutation.
+// The mutation executed by createSplitMutation.
 const createSplitMutation_Operation = `
 mutation createSplitMutation ($input: CreateSplitInput!) {
 	createSplit(input: $input) {
@@ -3892,7 +3917,7 @@ func createSplitMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	input CreateSplitInput,
-) (*createSplitMutationResponse, error) {
+) (data_ *createSplitMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "createSplitMutation",
 		Query:  createSplitMutation_Operation,
@@ -3900,10 +3925,9 @@ func createSplitMutation(
 			Input: input,
 		},
 	}
-	var err_ error
 
-	var data_ createSplitMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &createSplitMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -3911,10 +3935,10 @@ func createSplitMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by createUserMutation.
+// The mutation executed by createUserMutation.
 const createUserMutation_Operation = `
 mutation createUserMutation ($authMechanism: AuthMechanism!, $input: CreateUserInput!) {
 	createUser(authMechanism: $authMechanism, input: $input) {
@@ -3943,7 +3967,7 @@ func createUserMutation(
 	client_ graphql.Client,
 	authMechanism AuthMechanism,
 	input CreateUserInput,
-) (*createUserMutationResponse, error) {
+) (data_ *createUserMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "createUserMutation",
 		Query:  createUserMutation_Operation,
@@ -3952,10 +3976,9 @@ func createUserMutation(
 			Input:         input,
 		},
 	}
-	var err_ error
 
-	var data_ createUserMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &createUserMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -3963,10 +3986,10 @@ func createUserMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by getAuthNonceMutation.
+// The mutation executed by getAuthNonceMutation.
 const getAuthNonceMutation_Operation = `
 mutation getAuthNonceMutation {
 	getAuthNonce {
@@ -3982,15 +4005,14 @@ mutation getAuthNonceMutation {
 func getAuthNonceMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*getAuthNonceMutationResponse, error) {
+) (data_ *getAuthNonceMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "getAuthNonceMutation",
 		Query:  getAuthNonceMutation_Operation,
 	}
-	var err_ error
 
-	var data_ getAuthNonceMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &getAuthNonceMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -3998,10 +4020,10 @@ func getAuthNonceMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by loginMutation.
+// The mutation executed by loginMutation.
 const loginMutation_Operation = `
 mutation loginMutation ($authMechanism: AuthMechanism!) {
 	login(authMechanism: $authMechanism) {
@@ -4026,7 +4048,7 @@ func loginMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	authMechanism AuthMechanism,
-) (*loginMutationResponse, error) {
+) (data_ *loginMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "loginMutation",
 		Query:  loginMutation_Operation,
@@ -4034,10 +4056,9 @@ func loginMutation(
 			AuthMechanism: authMechanism,
 		},
 	}
-	var err_ error
 
-	var data_ loginMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &loginMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4045,10 +4066,10 @@ func loginMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by logoutMutation.
+// The mutation executed by logoutMutation.
 const logoutMutation_Operation = `
 mutation logoutMutation {
 	logout {
@@ -4065,15 +4086,14 @@ mutation logoutMutation {
 func logoutMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*logoutMutationResponse, error) {
+) (data_ *logoutMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "logoutMutation",
 		Query:  logoutMutation_Operation,
 	}
-	var err_ error
 
-	var data_ logoutMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &logoutMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4081,10 +4101,10 @@ func logoutMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by notificationsForViewerQuery.
+// The query executed by notificationsForViewerQuery.
 const notificationsForViewerQuery_Operation = `
 query notificationsForViewerQuery {
 	viewer {
@@ -4105,15 +4125,14 @@ query notificationsForViewerQuery {
 func notificationsForViewerQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*notificationsForViewerQueryResponse, error) {
+) (data_ *notificationsForViewerQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "notificationsForViewerQuery",
 		Query:  notificationsForViewerQuery_Operation,
 	}
-	var err_ error
 
-	var data_ notificationsForViewerQueryResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &notificationsForViewerQueryResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4121,10 +4140,10 @@ func notificationsForViewerQuery(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by publishSplitMutation.
+// The mutation executed by publishSplitMutation.
 const publishSplitMutation_Operation = `
 mutation publishSplitMutation ($input: PublishSplitInput!) {
 	publishSplit(input: $input) {
@@ -4146,7 +4165,7 @@ func publishSplitMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	input PublishSplitInput,
-) (*publishSplitMutationResponse, error) {
+) (data_ *publishSplitMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "publishSplitMutation",
 		Query:  publishSplitMutation_Operation,
@@ -4154,10 +4173,9 @@ func publishSplitMutation(
 			Input: input,
 		},
 	}
-	var err_ error
 
-	var data_ publishSplitMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &publishSplitMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4165,10 +4183,10 @@ func publishSplitMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by registerPushTokenMutation.
+// The mutation executed by registerPushTokenMutation.
 const registerPushTokenMutation_Operation = `
 mutation registerPushTokenMutation ($pushToken: String!) {
 	registerUserPushToken(pushToken: $pushToken) {
@@ -4188,7 +4206,7 @@ func registerPushTokenMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	pushToken string,
-) (*registerPushTokenMutationResponse, error) {
+) (data_ *registerPushTokenMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "registerPushTokenMutation",
 		Query:  registerPushTokenMutation_Operation,
@@ -4196,10 +4214,9 @@ func registerPushTokenMutation(
 			PushToken: pushToken,
 		},
 	}
-	var err_ error
 
-	var data_ registerPushTokenMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &registerPushTokenMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4207,10 +4224,10 @@ func registerPushTokenMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by removeUserWalletsMutation.
+// The mutation executed by removeUserWalletsMutation.
 const removeUserWalletsMutation_Operation = `
 mutation removeUserWalletsMutation ($walletIds: [DBID!]!) {
 	removeUserWallets(walletIds: $walletIds) {
@@ -4240,7 +4257,7 @@ func removeUserWalletsMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	walletIds []persist.DBID,
-) (*removeUserWalletsMutationResponse, error) {
+) (data_ *removeUserWalletsMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "removeUserWalletsMutation",
 		Query:  removeUserWalletsMutation_Operation,
@@ -4248,10 +4265,9 @@ func removeUserWalletsMutation(
 			WalletIds: walletIds,
 		},
 	}
-	var err_ error
 
-	var data_ removeUserWalletsMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &removeUserWalletsMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4259,10 +4275,10 @@ func removeUserWalletsMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by updateUserExperience.
+// The mutation executed by updateUserExperience.
 const updateUserExperience_Operation = `
 mutation updateUserExperience ($input: UpdateUserExperienceInput!) {
 	updateUserExperience(input: $input) {
@@ -4287,7 +4303,7 @@ func updateUserExperience(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	input UpdateUserExperienceInput,
-) (*updateUserExperienceResponse, error) {
+) (data_ *updateUserExperienceResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "updateUserExperience",
 		Query:  updateUserExperience_Operation,
@@ -4295,10 +4311,9 @@ func updateUserExperience(
 			Input: input,
 		},
 	}
-	var err_ error
 
-	var data_ updateUserExperienceResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &updateUserExperienceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4306,10 +4321,10 @@ func updateUserExperience(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by upsertSplitMutation.
+// The mutation executed by upsertSplitMutation.
 const upsertSplitMutation_Operation = `
 mutation upsertSplitMutation ($input: UpsertSplitInput!) {
 	upsertSplit(input: $input) {
@@ -4329,7 +4344,7 @@ func upsertSplitMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	input UpsertSplitInput,
-) (*upsertSplitMutationResponse, error) {
+) (data_ *upsertSplitMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "upsertSplitMutation",
 		Query:  upsertSplitMutation_Operation,
@@ -4337,10 +4352,9 @@ func upsertSplitMutation(
 			Input: input,
 		},
 	}
-	var err_ error
 
-	var data_ upsertSplitMutationResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &upsertSplitMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4348,10 +4362,10 @@ func upsertSplitMutation(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by userByAddressQuery.
+// The query executed by userByAddressQuery.
 const userByAddressQuery_Operation = `
 query userByAddressQuery ($input: ChainAddressInput!) {
 	userByAddress(chainAddress: $input) {
@@ -4360,7 +4374,7 @@ query userByAddressQuery ($input: ChainAddressInput!) {
 			__typename
 			message
 		}
-		... on SplitFiUser {
+		... on MutualsUser {
 			username
 			dbid
 		}
@@ -4372,7 +4386,7 @@ func userByAddressQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	input ChainAddressInput,
-) (*userByAddressQueryResponse, error) {
+) (data_ *userByAddressQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "userByAddressQuery",
 		Query:  userByAddressQuery_Operation,
@@ -4380,10 +4394,9 @@ func userByAddressQuery(
 			Input: input,
 		},
 	}
-	var err_ error
 
-	var data_ userByAddressQueryResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &userByAddressQueryResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4391,10 +4404,10 @@ func userByAddressQuery(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by userByIdQuery.
+// The query executed by userByIdQuery.
 const userByIdQuery_Operation = `
 query userByIdQuery ($id: DBID!) {
 	userById(id: $id) {
@@ -4403,7 +4416,7 @@ query userByIdQuery ($id: DBID!) {
 			__typename
 			message
 		}
-		... on SplitFiUser {
+		... on MutualsUser {
 			username
 			dbid
 		}
@@ -4415,7 +4428,7 @@ func userByIdQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	id persist.DBID,
-) (*userByIdQueryResponse, error) {
+) (data_ *userByIdQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "userByIdQuery",
 		Query:  userByIdQuery_Operation,
@@ -4423,10 +4436,9 @@ func userByIdQuery(
 			Id: id,
 		},
 	}
-	var err_ error
 
-	var data_ userByIdQueryResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &userByIdQueryResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4434,10 +4446,10 @@ func userByIdQuery(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by userByUsernameQuery.
+// The query executed by userByUsernameQuery.
 const userByUsernameQuery_Operation = `
 query userByUsernameQuery ($user: String!) {
 	userByUsername(username: $user) {
@@ -4446,7 +4458,7 @@ query userByUsernameQuery ($user: String!) {
 			__typename
 			message
 		}
-		... on SplitFiUser {
+		... on MutualsUser {
 			username
 			dbid
 		}
@@ -4458,7 +4470,7 @@ func userByUsernameQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	user string,
-) (*userByUsernameQueryResponse, error) {
+) (data_ *userByUsernameQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "userByUsernameQuery",
 		Query:  userByUsernameQuery_Operation,
@@ -4466,10 +4478,9 @@ func userByUsernameQuery(
 			User: user,
 		},
 	}
-	var err_ error
 
-	var data_ userByUsernameQueryResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &userByUsernameQueryResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4477,10 +4488,10 @@ func userByUsernameQuery(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by viewerQuery.
+// The query executed by viewerQuery.
 const viewerQuery_Operation = `
 query viewerQuery {
 	viewer {
@@ -4502,15 +4513,14 @@ query viewerQuery {
 func viewerQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*viewerQueryResponse, error) {
+) (data_ *viewerQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "viewerQuery",
 		Query:  viewerQuery_Operation,
 	}
-	var err_ error
 
-	var data_ viewerQueryResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &viewerQueryResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -4518,5 +4528,5 @@ func viewerQuery(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }

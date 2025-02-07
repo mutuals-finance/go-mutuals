@@ -3,10 +3,10 @@ package ipfs
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/tracing"
-	"github.com/SplitFi/go-splitfi/util"
 	shell "github.com/ipfs/go-ipfs-api"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/tracing"
+	"github.com/mutuals/go-mutuals/util"
 	"io"
 	"net/http"
 	"net/url"

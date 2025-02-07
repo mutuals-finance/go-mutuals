@@ -4,17 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/emails"
-	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/emails"
+	"github.com/mutuals/go-mutuals/service/task"
 	"net/http"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 	"github.com/sendgrid/sendgrid-go"
 )
 
@@ -228,7 +228,7 @@ type sendgridEmailValidation struct {
 /*
 {
    "result":{
-      "email":"bc@splitfi.com",
+      "email":"bc@mutuals.com",
       "verdict":"Risky",
       "score":0.21029,
       "local":"bc",

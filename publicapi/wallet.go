@@ -3,16 +3,16 @@ package publicapi
 import (
 	"context"
 
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/validate"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/validate"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/multichain"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/multichain"
 
-	"github.com/SplitFi/go-splitfi/graphql/dataloader"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
+	"github.com/mutuals/go-mutuals/graphql/dataloader"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type WalletAPI struct {

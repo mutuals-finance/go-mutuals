@@ -3,11 +3,11 @@ package sentryutil
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/util"
 	"github.com/sirupsen/logrus"
 	"reflect"
 	"time"

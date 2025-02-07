@@ -53,6 +53,16 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
+	"MutualsUserOrAddress": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(MutualsUserOrAddress)
+		return obj, ok
+	},
+
+	"MutualsUserOrWallet": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(MutualsUserOrWallet)
+		return obj, ok
+	},
+
 	"Node": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(Node)
 		return obj, ok
@@ -115,16 +125,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"SplitByIdPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(SplitByIDPayloadOrError)
-		return obj, ok
-	},
-
-	"SplitFiUserOrAddress": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SplitFiUserOrAddress)
-		return obj, ok
-	},
-
-	"SplitFiUserOrWallet": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SplitFiUserOrWallet)
 		return obj, ok
 	},
 

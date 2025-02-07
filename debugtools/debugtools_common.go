@@ -5,11 +5,11 @@ package debugtools
 
 import (
 	"fmt"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/env"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/env"
 
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 func IsDebugEnv() bool {

@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
 	"github.com/imgix/imgix-go/v2"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 const contextKey = "mediamapper.instance"
 
-const assetDomain = "assets.splitfi.com"
+const assetDomain = "assets.mutuals.com"
 
 const (
 	thumbnailWidth = 64

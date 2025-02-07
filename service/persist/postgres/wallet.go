@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 // WalletRepository is a repository for wallets

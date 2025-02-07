@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/validate"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/validate"
 )
 
 var (

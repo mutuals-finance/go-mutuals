@@ -5,14 +5,14 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/util"
 
 	"cloud.google.com/go/storage"
-	"github.com/SplitFi/go-splitfi/middleware"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/rpc"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/middleware"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/service/rpc"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/api/option"
@@ -62,14 +62,14 @@ func setDefaults() {
 	viper.SetDefault("PORT", 4000)
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
+	viper.SetDefault("POSTGRES_USER", "mutuals_backend")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("CONTRACT_ADDRESSES", "0x93eC9b03a9C14a530F582aef24a21d7FC88aaC46=[0,1,2,3,4,5,6,7,8]")
 	viper.SetDefault("GENERAL_ADDRESS", "0xe3d0fe9b7e0b951663267a3ed1e6577f6f79757e")
 	viper.SetDefault("RPC_URL", "https://eth-rinkeby.alchemyapi.io/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
 	viper.SetDefault("GCLOUD_SERVICE_KEY", "")
-	viper.SetDefault("SNAPSHOT_BUCKET", "splitfi-dev-322005.appspot.com")
+	viper.SetDefault("SNAPSHOT_BUCKET", "mutuals-dev-322005.appspot.com")
 
 	viper.AutomaticEnv()
 

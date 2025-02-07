@@ -2,7 +2,7 @@ package common
 
 import (
 	"context"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 // ChainAgnosticIdentifiers identify tokens despite their chain

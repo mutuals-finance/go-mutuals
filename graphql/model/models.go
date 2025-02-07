@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type GqlID string
@@ -22,7 +22,7 @@ type HelperGroupNotificationUsersConnectionData struct {
 	UserIDs persist.DBIDList
 }
 
-type HelperSplitFiUserData struct {
+type HelperMutualsUserData struct {
 	UserID persist.DBID
 }
 

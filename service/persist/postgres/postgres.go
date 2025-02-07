@@ -4,18 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/util/retry"
+	"github.com/mutuals/go-mutuals/util/retry"
 	"strings"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/env"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/env"
 
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/getsentry/sentry-go"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/tracing"
 
 	// register postgres driver
 	_ "github.com/jackc/pgx/v4/stdlib"

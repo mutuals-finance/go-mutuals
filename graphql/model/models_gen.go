@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type AddRolesToUserPayloadOrError interface {
@@ -55,6 +55,14 @@ type GroupedNotification interface {
 
 type LoginPayloadOrError interface {
 	IsLoginPayloadOrError()
+}
+
+type MutualsUserOrAddress interface {
+	IsMutualsUserOrAddress()
+}
+
+type MutualsUserOrWallet interface {
+	IsMutualsUserOrWallet()
 }
 
 type Node interface {
@@ -108,14 +116,6 @@ type SearchUsersPayloadOrError interface {
 
 type SplitByIDPayloadOrError interface {
 	IsSplitByIDPayloadOrError()
-}
-
-type SplitFiUserOrAddress interface {
-	IsSplitFiUserOrAddress()
-}
-
-type SplitFiUserOrWallet interface {
-	IsSplitFiUserOrWallet()
 }
 
 type UnregisterUserPushTokenPayloadOrError interface {
@@ -207,7 +207,7 @@ type AdminAddWalletInput struct {
 }
 
 type AdminAddWalletPayload struct {
-	User *SplitFiUser `json:"user"`
+	User *MutualsUser `json:"user"`
 }
 
 func (AdminAddWalletPayload) IsAdminAddWalletPayloadOrError() {}
@@ -504,7 +504,7 @@ type GnosisSafeAuth struct {
 }
 
 type GroupNotificationUserEdge struct {
-	Node   *SplitFiUser `json:"node"`
+	Node   *MutualsUser `json:"node"`
 	Cursor *string      `json:"cursor"`
 }
 
@@ -527,6 +527,28 @@ type LogoutPayload struct {
 type MagicLinkAuth struct {
 	Token string `json:"token"`
 }
+
+type MutualsUser struct {
+	HelperMutualsUserData
+	Dbid                persist.DBID    `json:"dbid"`
+	Username            *string         `json:"username"`
+	Universal           *bool           `json:"universal"`
+	Roles               []*persist.Role `json:"roles"`
+	Wallets             []*Wallet       `json:"wallets"`
+	PrimaryWallet       *Wallet         `json:"primaryWallet"`
+	Splits              []*Split        `json:"splits"`
+	SplitsByChain       *ChainSplits    `json:"splitsByChain"`
+	IsAuthenticatedUser *bool           `json:"isAuthenticatedUser"`
+}
+
+func (MutualsUser) IsNode()                              {}
+func (MutualsUser) IsMutualsUserOrWallet()               {}
+func (MutualsUser) IsMutualsUserOrAddress()              {}
+func (MutualsUser) IsUserByUsernameOrError()             {}
+func (MutualsUser) IsUserByIDOrError()                   {}
+func (MutualsUser) IsUserByAddressOrError()              {}
+func (MutualsUser) IsAddRolesToUserPayloadOrError()      {}
+func (MutualsUser) IsRevokeRolesFromUserPayloadOrError() {}
 
 type NotificationEdge struct {
 	Node   Notification `json:"node"`
@@ -553,13 +575,13 @@ type OneTimeLoginTokenAuth struct {
 }
 
 type OptInForRolesPayload struct {
-	User *SplitFiUser `json:"user"`
+	User *MutualsUser `json:"user"`
 }
 
 func (OptInForRolesPayload) IsOptInForRolesPayloadOrError() {}
 
 type OptOutForRolesPayload struct {
-	User *SplitFiUser `json:"user"`
+	User *MutualsUser `json:"user"`
 }
 
 func (OptOutForRolesPayload) IsOptOutForRolesPayloadOrError() {}
@@ -656,28 +678,6 @@ type SplitAllocationInput struct {
 	Value            persist.HexString         `json:"value"`
 	Children         []*SplitAllocationInput   `json:"children"`
 }
-
-type SplitFiUser struct {
-	HelperSplitFiUserData
-	Dbid                persist.DBID    `json:"dbid"`
-	Username            *string         `json:"username"`
-	Universal           *bool           `json:"universal"`
-	Roles               []*persist.Role `json:"roles"`
-	Wallets             []*Wallet       `json:"wallets"`
-	PrimaryWallet       *Wallet         `json:"primaryWallet"`
-	Splits              []*Split        `json:"splits"`
-	SplitsByChain       *ChainSplits    `json:"splitsByChain"`
-	IsAuthenticatedUser *bool           `json:"isAuthenticatedUser"`
-}
-
-func (SplitFiUser) IsNode()                              {}
-func (SplitFiUser) IsSplitFiUserOrWallet()               {}
-func (SplitFiUser) IsSplitFiUserOrAddress()              {}
-func (SplitFiUser) IsUserByUsernameOrError()             {}
-func (SplitFiUser) IsUserByIDOrError()                   {}
-func (SplitFiUser) IsUserByAddressOrError()              {}
-func (SplitFiUser) IsAddRolesToUserPayloadOrError()      {}
-func (SplitFiUser) IsRevokeRolesFromUserPayloadOrError() {}
 
 type SplitPositionInput struct {
 	SplitID  persist.DBID `json:"splitId"`
@@ -840,7 +840,7 @@ type UpsertSplitPayload struct {
 func (UpsertSplitPayload) IsUpsertSplitPayloadOrError() {}
 
 type UserEdge struct {
-	Node   *SplitFiUser `json:"node"`
+	Node   *MutualsUser `json:"node"`
 	Cursor *string      `json:"cursor"`
 }
 
@@ -856,7 +856,7 @@ type UserExperience struct {
 }
 
 type UserSearchResult struct {
-	User *SplitFiUser `json:"user"`
+	User *MutualsUser `json:"user"`
 }
 
 type UsersConnection struct {
@@ -886,7 +886,7 @@ func (VerifyEmailPayload) IsVerifyEmailPayloadOrError() {}
 
 type Viewer struct {
 	HelperViewerData
-	User         *SplitFiUser   `json:"user"`
+	User         *MutualsUser   `json:"user"`
 	ViewerSplits []*ViewerSplit `json:"viewerSplits"`
 	Email        *UserEmail     `json:"email"`
 	// Returns a list of notifications in reverse chronological order.
@@ -914,7 +914,7 @@ type Wallet struct {
 }
 
 func (Wallet) IsNode()                {}
-func (Wallet) IsSplitFiUserOrWallet() {}
+func (Wallet) IsMutualsUserOrWallet() {}
 
 type EmailUnsubscriptionType string
 

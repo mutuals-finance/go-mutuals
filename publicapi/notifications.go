@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/graphql/dataloader"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/go-playground/validator/v10"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/graphql/dataloader"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/validate"
 )
 
 type NotificationsAPI struct {

@@ -3,8 +3,8 @@ package retry
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/util"
 	"math/rand"
 	"net/http"
 	"strings"

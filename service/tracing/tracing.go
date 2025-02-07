@@ -3,8 +3,8 @@ package tracing
 import (
 	"context"
 
-	"github.com/SplitFi/go-splitfi/service/logger"
 	"github.com/getsentry/sentry-go"
+	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/sirupsen/logrus"
 )
 

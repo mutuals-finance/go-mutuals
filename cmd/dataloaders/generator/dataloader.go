@@ -2,7 +2,7 @@ package generator
 
 import (
 	"context"
-	"github.com/SplitFi/go-splitfi/util/batch"
+	"github.com/mutuals/go-mutuals/util/batch"
 	"time"
 )
 

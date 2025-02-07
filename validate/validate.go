@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/go-playground/validator/v10"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 var bannedUsernames = map[string]bool{

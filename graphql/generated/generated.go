@@ -16,9 +16,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
-	"github.com/SplitFi/go-splitfi/graphql/model"
-	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/graphql/model"
+	"github.com/mutuals/go-mutuals/service/auth/basicauth"
+	"github.com/mutuals/go-mutuals/service/persist"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -47,9 +47,9 @@ type ResolverRoot interface {
 	AllocationAggregation() AllocationAggregationResolver
 	Asset() AssetResolver
 	Mutation() MutationResolver
+	MutualsUser() MutualsUserResolver
 	Query() QueryResolver
 	Split() SplitResolver
-	SplitFiUser() SplitFiUserResolver
 	Subscription() SubscriptionResolver
 	UserEmail() UserEmailResolver
 	Viewer() ViewerResolver
@@ -272,6 +272,19 @@ type ComplexityRoot struct {
 		VerifyEmailMagicLink            func(childComplexity int, input model.VerifyEmailMagicLinkInput) int
 	}
 
+	MutualsUser struct {
+		Dbid                func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		IsAuthenticatedUser func(childComplexity int) int
+		PrimaryWallet       func(childComplexity int) int
+		Roles               func(childComplexity int) int
+		Splits              func(childComplexity int) int
+		SplitsByChain       func(childComplexity int, chain persist.Chain) int
+		Universal           func(childComplexity int) int
+		Username            func(childComplexity int) int
+		Wallets             func(childComplexity int) int
+	}
+
 	NotificationEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
@@ -362,19 +375,6 @@ type ComplexityRoot struct {
 		OwnerAddress          func(childComplexity int) int
 		Status                func(childComplexity int) int
 		Version               func(childComplexity int) int
-	}
-
-	SplitFiUser struct {
-		Dbid                func(childComplexity int) int
-		ID                  func(childComplexity int) int
-		IsAuthenticatedUser func(childComplexity int) int
-		PrimaryWallet       func(childComplexity int) int
-		Roles               func(childComplexity int) int
-		Splits              func(childComplexity int) int
-		SplitsByChain       func(childComplexity int, chain persist.Chain) int
-		Universal           func(childComplexity int) int
-		Username            func(childComplexity int) int
-		Wallets             func(childComplexity int) int
 	}
 
 	SplitSearchResult struct {
@@ -556,6 +556,13 @@ type MutationResolver interface {
 	UpdatePrimaryWallet(ctx context.Context, walletID persist.DBID) (model.UpdatePrimaryWalletPayloadOrError, error)
 	UpdateUserExperience(ctx context.Context, input model.UpdateUserExperienceInput) (model.UpdateUserExperiencePayloadOrError, error)
 }
+type MutualsUserResolver interface {
+	Roles(ctx context.Context, obj *model.MutualsUser) ([]*persist.Role, error)
+	Wallets(ctx context.Context, obj *model.MutualsUser) ([]*model.Wallet, error)
+	PrimaryWallet(ctx context.Context, obj *model.MutualsUser) (*model.Wallet, error)
+	Splits(ctx context.Context, obj *model.MutualsUser) ([]*model.Split, error)
+	SplitsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainSplits, error)
+}
 type QueryResolver interface {
 	Node(ctx context.Context, id model.GqlID) (model.Node, error)
 	Viewer(ctx context.Context) (model.ViewerOrError, error)
@@ -574,13 +581,6 @@ type SplitResolver interface {
 	Allocations(ctx context.Context, obj *model.Split) ([]*model.Allocation, error)
 	Assets(ctx context.Context, obj *model.Split, limit *int) ([]*model.Asset, error)
 }
-type SplitFiUserResolver interface {
-	Roles(ctx context.Context, obj *model.SplitFiUser) ([]*persist.Role, error)
-	Wallets(ctx context.Context, obj *model.SplitFiUser) ([]*model.Wallet, error)
-	PrimaryWallet(ctx context.Context, obj *model.SplitFiUser) (*model.Wallet, error)
-	Splits(ctx context.Context, obj *model.SplitFiUser) ([]*model.Split, error)
-	SplitsByChain(ctx context.Context, obj *model.SplitFiUser, chain persist.Chain) (*model.ChainSplits, error)
-}
 type SubscriptionResolver interface {
 	NewNotification(ctx context.Context) (<-chan model.Notification, error)
 	NotificationUpdated(ctx context.Context) (<-chan model.Notification, error)
@@ -589,7 +589,7 @@ type UserEmailResolver interface {
 	EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error)
 }
 type ViewerResolver interface {
-	User(ctx context.Context, obj *model.Viewer) (*model.SplitFiUser, error)
+	User(ctx context.Context, obj *model.Viewer) (*model.MutualsUser, error)
 	ViewerSplits(ctx context.Context, obj *model.Viewer) ([]*model.ViewerSplit, error)
 	Email(ctx context.Context, obj *model.Viewer) (*model.UserEmail, error)
 	Notifications(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error)
@@ -1452,6 +1452,81 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.VerifyEmailMagicLink(childComplexity, args["input"].(model.VerifyEmailMagicLinkInput)), true
 
+	case "MutualsUser.dbid":
+		if e.complexity.MutualsUser.Dbid == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.Dbid(childComplexity), true
+
+	case "MutualsUser.id":
+		if e.complexity.MutualsUser.ID == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.ID(childComplexity), true
+
+	case "MutualsUser.isAuthenticatedUser":
+		if e.complexity.MutualsUser.IsAuthenticatedUser == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.IsAuthenticatedUser(childComplexity), true
+
+	case "MutualsUser.primaryWallet":
+		if e.complexity.MutualsUser.PrimaryWallet == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.PrimaryWallet(childComplexity), true
+
+	case "MutualsUser.roles":
+		if e.complexity.MutualsUser.Roles == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.Roles(childComplexity), true
+
+	case "MutualsUser.splits":
+		if e.complexity.MutualsUser.Splits == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.Splits(childComplexity), true
+
+	case "MutualsUser.splitsByChain":
+		if e.complexity.MutualsUser.SplitsByChain == nil {
+			break
+		}
+
+		args, err := ec.field_MutualsUser_splitsByChain_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.MutualsUser.SplitsByChain(childComplexity, args["chain"].(persist.Chain)), true
+
+	case "MutualsUser.universal":
+		if e.complexity.MutualsUser.Universal == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.Universal(childComplexity), true
+
+	case "MutualsUser.username":
+		if e.complexity.MutualsUser.Username == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.Username(childComplexity), true
+
+	case "MutualsUser.wallets":
+		if e.complexity.MutualsUser.Wallets == nil {
+			break
+		}
+
+		return e.complexity.MutualsUser.Wallets(childComplexity), true
+
 	case "NotificationEdge.cursor":
 		if e.complexity.NotificationEdge.Cursor == nil {
 			break
@@ -1835,81 +1910,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Split.Version(childComplexity), true
-
-	case "SplitFiUser.dbid":
-		if e.complexity.SplitFiUser.Dbid == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Dbid(childComplexity), true
-
-	case "SplitFiUser.id":
-		if e.complexity.SplitFiUser.ID == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.ID(childComplexity), true
-
-	case "SplitFiUser.isAuthenticatedUser":
-		if e.complexity.SplitFiUser.IsAuthenticatedUser == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.IsAuthenticatedUser(childComplexity), true
-
-	case "SplitFiUser.primaryWallet":
-		if e.complexity.SplitFiUser.PrimaryWallet == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.PrimaryWallet(childComplexity), true
-
-	case "SplitFiUser.roles":
-		if e.complexity.SplitFiUser.Roles == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Roles(childComplexity), true
-
-	case "SplitFiUser.splits":
-		if e.complexity.SplitFiUser.Splits == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Splits(childComplexity), true
-
-	case "SplitFiUser.splitsByChain":
-		if e.complexity.SplitFiUser.SplitsByChain == nil {
-			break
-		}
-
-		args, err := ec.field_SplitFiUser_splitsByChain_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.SplitFiUser.SplitsByChain(childComplexity, args["chain"].(persist.Chain)), true
-
-	case "SplitFiUser.universal":
-		if e.complexity.SplitFiUser.Universal == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Universal(childComplexity), true
-
-	case "SplitFiUser.username":
-		if e.complexity.SplitFiUser.Username == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Username(childComplexity), true
-
-	case "SplitFiUser.wallets":
-		if e.complexity.SplitFiUser.Wallets == nil {
-			break
-		}
-
-		return e.complexity.SplitFiUser.Wallets(childComplexity), true
 
 	case "SplitSearchResult.split":
 		if e.complexity.SplitSearchResult.Split == nil {
@@ -2320,8 +2320,8 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 }
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
-	rc := graphql.GetOperationContext(ctx)
-	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
+	opCtx := graphql.GetOperationContext(ctx)
+	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAdminAddWalletInput,
 		ec.unmarshalInputAuthMechanism,
@@ -2356,7 +2356,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	)
 	first := true
 
-	switch rc.Operation.Operation {
+	switch opCtx.Operation.Operation {
 	case ast.Query:
 		return func(ctx context.Context) *graphql.Response {
 			var response graphql.Response
@@ -2364,7 +2364,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			if first {
 				first = false
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-				data = ec._Query(ctx, rc.Operation.SelectionSet)
+				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
 				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
 					result := <-ec.deferredResults
@@ -2394,7 +2394,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 			first = false
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 
@@ -2403,7 +2403,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 		}
 	case ast.Subscription:
-		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+		next := ec._Subscription(ctx, opCtx.Operation.SelectionSet)
 
 		var buf bytes.Buffer
 		return func(ctx context.Context) *graphql.Response {
@@ -2545,7 +2545,7 @@ interface Error {
   message: String!
 }
 
-type SplitFiUser implements Node @goEmbedHelper {
+type MutualsUser implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
   username: String
@@ -2595,9 +2595,9 @@ input ChainPubKeyInput {
   chain: Chain! @goField(forceResolver: true)
 }
 
-union SplitFiUserOrWallet = SplitFiUser | Wallet
+union MutualsUserOrWallet = MutualsUser | Wallet
 
-union SplitFiUserOrAddress = SplitFiUser | ChainAddress
+union MutualsUserOrAddress = MutualsUser | ChainAddress
 
 enum TokenType {
   ERC20
@@ -2711,7 +2711,7 @@ type NotificationsConnection @goEmbedHelper {
 
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
-  user: SplitFiUser @goField(forceResolver: true)
+  user: MutualsUser @goField(forceResolver: true)
   viewerSplits: [ViewerSplit] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
@@ -2780,11 +2780,11 @@ type UserExperience {
   experienced: Boolean!
 }
 
-union UserByUsernameOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
+union UserByUsernameOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
 
-union UserByIdOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
+union UserByIdOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
 
-union UserByAddressOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
+union UserByAddressOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
 
 union ViewerOrError = Viewer | ErrNotAuthorized
 
@@ -2807,7 +2807,7 @@ type PageInfo {
 }
 
 type UserEdge {
-  node: SplitFiUser
+  node: MutualsUser
   cursor: String
 }
 
@@ -2836,7 +2836,7 @@ enum ReportWindow {
 }
 
 type UserSearchResult {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 type SearchUsersPayload {
@@ -3124,7 +3124,7 @@ interface GroupedNotification implements Notification & Node {
 }
 
 type GroupNotificationUserEdge {
-  node: SplitFiUser
+  node: MutualsUser
   cursor: String
 }
 
@@ -3209,15 +3209,15 @@ type UnsubscribeFromEmailTypePayload {
 
 union UnsubscribeFromEmailTypePayloadOrError = UnsubscribeFromEmailTypePayload | ErrInvalidInput
 
-union AddRolesToUserPayloadOrError = SplitFiUser | ErrNotAuthorized
-union RevokeRolesFromUserPayloadOrError = SplitFiUser | ErrNotAuthorized
+union AddRolesToUserPayloadOrError = MutualsUser | ErrNotAuthorized
+union RevokeRolesFromUserPayloadOrError = MutualsUser | ErrNotAuthorized
 
 type OptInForRolesPayload {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 type OptOutForRolesPayload {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 union OptInForRolesPayloadOrError = OptInForRolesPayload | ErrNotAuthorized | ErrInvalidInput
@@ -3366,7 +3366,7 @@ input AdminAddWalletInput {
 }
 
 type AdminAddWalletPayload {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 union AdminAddWalletPayloadOrError =
@@ -3441,7 +3441,7 @@ type Mutation {
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
     @basicAuth(allowed: [Retool])
 
-  # SplitFi Frontend Deploy Persisted Queries
+  # Mutuals Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
     @frontendBuildAuth
 
@@ -3476,7 +3476,7 @@ type Subscription {
 	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
 	directive @override(from: String!, label: String) on FIELD_DEFINITION
-	directive @policy(policies: [[federation__Policy!]!]!) on 
+	directive @policy(policies: [[federation__Policy!]!]!) on
 	  | FIELD_DEFINITION
 	  | OBJECT
 	  | INTERFACE
@@ -3484,7 +3484,7 @@ type Subscription {
 	  | ENUM
 	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
-	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
+	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on
 	  | FIELD_DEFINITION
 	  | OBJECT
 	  | INTERFACE
@@ -3526,850 +3526,1937 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) dir_basicAuth_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []basicauth.AuthTokenType
-	if tmp, ok := rawArgs["allowed"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowed"))
-		arg0, err = ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.dir_basicAuth_argsAllowed(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["allowed"] = arg0
 	return args, nil
+}
+func (ec *executionContext) dir_basicAuth_argsAllowed(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]basicauth.AuthTokenType, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["allowed"]
+	if !ok {
+		var zeroVal []basicauth.AuthTokenType
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("allowed"))
+	if tmp, ok := rawArgs["allowed"]; ok {
+		return ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, tmp)
+	}
+
+	var zeroVal []basicauth.AuthTokenType
+	return zeroVal, nil
 }
 
 func (ec *executionContext) dir_restrictEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []string
-	if tmp, ok := rawArgs["allowed"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowed"))
-		arg0, err = ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.dir_restrictEnvironment_argsAllowed(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["allowed"] = arg0
 	return args, nil
+}
+func (ec *executionContext) dir_restrictEnvironment_argsAllowed(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["allowed"]
+	if !ok {
+		var zeroVal []string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("allowed"))
+	if tmp, ok := rawArgs["allowed"]; ok {
+		return ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_addRolesToUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["username"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_addRolesToUser_argsUsername(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["username"] = arg0
-	var arg1 []*persist.Role
-	if tmp, ok := rawArgs["roles"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
-		arg1, err = ec.unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_addRolesToUser_argsRoles(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["roles"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_addRolesToUser_argsUsername(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["username"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+	if tmp, ok := rawArgs["username"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_addRolesToUser_argsRoles(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*persist.Role, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["roles"]
+	if !ok {
+		var zeroVal []*persist.Role
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+	if tmp, ok := rawArgs["roles"]; ok {
+		return ec.unmarshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, tmp)
+	}
+
+	var zeroVal []*persist.Role
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_addUserWallet_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.ChainAddress
-	if tmp, ok := rawArgs["chainAddress"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_addUserWallet_argsChainAddress(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["chainAddress"] = arg0
-	var arg1 model.AuthMechanism
-	if tmp, ok := rawArgs["authMechanism"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-		arg1, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_addUserWallet_argsAuthMechanism(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["authMechanism"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_addUserWallet_argsChainAddress(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.ChainAddress, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["chainAddress"]
+	if !ok {
+		var zeroVal persist.ChainAddress
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
+	if tmp, ok := rawArgs["chainAddress"]; ok {
+		return ec.unmarshalNChainAddressInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
+	}
+
+	var zeroVal persist.ChainAddress
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_addUserWallet_argsAuthMechanism(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.AuthMechanism, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["authMechanism"]
+	if !ok {
+		var zeroVal model.AuthMechanism
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
+	if tmp, ok := rawArgs["authMechanism"]; ok {
+		return ec.unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
+	}
+
+	var zeroVal model.AuthMechanism
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_addWalletToUserUnchecked_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.AdminAddWalletInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAdminAddWalletInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_addWalletToUserUnchecked_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_addWalletToUserUnchecked_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.AdminAddWalletInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.AdminAddWalletInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNAdminAddWalletInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx, tmp)
+	}
+
+	var zeroVal model.AdminAddWalletInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_createSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.CreateSplitInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_createSplit_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_createSplit_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.CreateSplitInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.CreateSplitInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitInput(ctx, tmp)
+	}
+
+	var zeroVal model.CreateSplitInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.AuthMechanism
-	if tmp, ok := rawArgs["authMechanism"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-		arg0, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_createUser_argsAuthMechanism(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["authMechanism"] = arg0
-	var arg1 model.CreateUserInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNCreateUserInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_createUser_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_createUser_argsAuthMechanism(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.AuthMechanism, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["authMechanism"]
+	if !ok {
+		var zeroVal model.AuthMechanism
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
+	if tmp, ok := rawArgs["authMechanism"]; ok {
+		return ec.unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
+	}
+
+	var zeroVal model.AuthMechanism
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createUser_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.CreateUserInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.CreateUserInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateUserInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateUserInput(ctx, tmp)
+	}
+
+	var zeroVal model.CreateUserInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_deleteSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["splitId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_deleteSplit_argsSplitID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["splitId"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteSplit_argsSplitID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["splitId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
+	if tmp, ok := rawArgs["splitId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.AuthMechanism
-	if tmp, ok := rawArgs["authMechanism"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-		arg0, err = ec.unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_login_argsAuthMechanism(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["authMechanism"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_login_argsAuthMechanism(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.AuthMechanism, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["authMechanism"]
+	if !ok {
+		var zeroVal model.AuthMechanism
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
+	if tmp, ok := rawArgs["authMechanism"]; ok {
+		return ec.unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
+	}
+
+	var zeroVal model.AuthMechanism
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_logout_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["pushTokenToUnregister"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pushTokenToUnregister"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_logout_argsPushTokenToUnregister(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pushTokenToUnregister"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_logout_argsPushTokenToUnregister(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pushTokenToUnregister"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pushTokenToUnregister"))
+	if tmp, ok := rawArgs["pushTokenToUnregister"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_optInForRoles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []persist.Role
-	if tmp, ok := rawArgs["roles"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
-		arg0, err = ec.unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_optInForRoles_argsRoles(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["roles"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_optInForRoles_argsRoles(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]persist.Role, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["roles"]
+	if !ok {
+		var zeroVal []persist.Role
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+	if tmp, ok := rawArgs["roles"]; ok {
+		return ec.unmarshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx, tmp)
+	}
+
+	var zeroVal []persist.Role
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_optOutForRoles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []persist.Role
-	if tmp, ok := rawArgs["roles"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
-		arg0, err = ec.unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_optOutForRoles_argsRoles(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["roles"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_optOutForRoles_argsRoles(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]persist.Role, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["roles"]
+	if !ok {
+		var zeroVal []persist.Role
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+	if tmp, ok := rawArgs["roles"]; ok {
+		return ec.unmarshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx, tmp)
+	}
+
+	var zeroVal []persist.Role
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_preverifyEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.PreverifyEmailInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPreverifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_preverifyEmail_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_preverifyEmail_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.PreverifyEmailInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.PreverifyEmailInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNPreverifyEmailInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx, tmp)
+	}
+
+	var zeroVal model.PreverifyEmailInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_publishSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.PublishSplitInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPublishSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_publishSplit_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_publishSplit_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.PublishSplitInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.PublishSplitInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNPublishSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitInput(ctx, tmp)
+	}
+
+	var zeroVal model.PublishSplitInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_registerUserPushToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["pushToken"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pushToken"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_registerUserPushToken_argsPushToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pushToken"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_registerUserPushToken_argsPushToken(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pushToken"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pushToken"))
+	if tmp, ok := rawArgs["pushToken"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_removeUserWallets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []persist.DBID
-	if tmp, ok := rawArgs["walletIds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletIds"))
-		arg0, err = ec.unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_removeUserWallets_argsWalletIds(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["walletIds"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_removeUserWallets_argsWalletIds(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["walletIds"]
+	if !ok {
+		var zeroVal []persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("walletIds"))
+	if tmp, ok := rawArgs["walletIds"]; ok {
+		return ec.unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
+	}
+
+	var zeroVal []persist.DBID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_revokeRolesFromUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["username"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_revokeRolesFromUser_argsUsername(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["username"] = arg0
-	var arg1 []*persist.Role
-	if tmp, ok := rawArgs["roles"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
-		arg1, err = ec.unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Mutation_revokeRolesFromUser_argsRoles(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["roles"] = arg1
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_revokeRolesFromUser_argsUsername(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["username"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+	if tmp, ok := rawArgs["username"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_revokeRolesFromUser_argsRoles(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*persist.Role, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["roles"]
+	if !ok {
+		var zeroVal []*persist.Role
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+	if tmp, ok := rawArgs["roles"]; ok {
+		return ec.unmarshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, tmp)
+	}
+
+	var zeroVal []*persist.Role
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_unregisterUserPushToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["pushToken"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pushToken"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_unregisterUserPushToken_argsPushToken(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["pushToken"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_unregisterUserPushToken_argsPushToken(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["pushToken"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pushToken"))
+	if tmp, ok := rawArgs["pushToken"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_unsubscribeFromEmailType_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UnsubscribeFromEmailTypeInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_unsubscribeFromEmailType_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_unsubscribeFromEmailType_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UnsubscribeFromEmailTypeInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UnsubscribeFromEmailTypeInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx, tmp)
+	}
+
+	var zeroVal model.UnsubscribeFromEmailTypeInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updateEmailNotificationSettings_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpdateEmailNotificationSettingsInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updateEmailNotificationSettings_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateEmailNotificationSettings_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdateEmailNotificationSettingsInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdateEmailNotificationSettingsInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateEmailNotificationSettingsInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updateEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpdateEmailInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updateEmail_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateEmail_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdateEmailInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdateEmailInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateEmailInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateEmailInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updateNotificationSettings_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.NotificationSettingsInput
-	if tmp, ok := rawArgs["settings"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("settings"))
-		arg0, err = ec.unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updateNotificationSettings_argsSettings(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["settings"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateNotificationSettings_argsSettings(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.NotificationSettingsInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["settings"]
+	if !ok {
+		var zeroVal *model.NotificationSettingsInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("settings"))
+	if tmp, ok := rawArgs["settings"]; ok {
+		return ec.unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx, tmp)
+	}
+
+	var zeroVal *model.NotificationSettingsInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updatePrimaryWallet_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["walletID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletID"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updatePrimaryWallet_argsWalletID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["walletID"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updatePrimaryWallet_argsWalletID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["walletID"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("walletID"))
+	if tmp, ok := rawArgs["walletID"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updateSplitHidden_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpdateSplitHiddenInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updateSplitHidden_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateSplitHidden_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdateSplitHiddenInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdateSplitHiddenInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateSplitHiddenInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updateSplitOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpdateSplitOrderInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateSplitOrderInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updateSplitOrder_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateSplitOrder_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdateSplitOrderInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdateSplitOrderInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateSplitOrderInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updateUserExperience_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpdateUserExperienceInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateUserExperienceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updateUserExperience_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateUserExperience_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdateUserExperienceInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdateUserExperienceInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateUserExperienceInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateUserExperienceInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_updateUserInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpdateUserInfoInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateUserInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_updateUserInfo_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateUserInfo_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpdateUserInfoInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpdateUserInfoInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateUserInfoInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpdateUserInfoInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_uploadPersistedQueries_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.UploadPersistedQueriesInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_uploadPersistedQueries_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_uploadPersistedQueries_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.UploadPersistedQueriesInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal *model.UploadPersistedQueriesInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx, tmp)
+	}
+
+	var zeroVal *model.UploadPersistedQueriesInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_upsertSplit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpsertSplitInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpsertSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_upsertSplit_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_upsertSplit_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UpsertSplitInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UpsertSplitInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpsertSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx, tmp)
+	}
+
+	var zeroVal model.UpsertSplitInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_verifyEmailMagicLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.VerifyEmailMagicLinkInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNVerifyEmailMagicLinkInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_verifyEmailMagicLink_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_verifyEmailMagicLink_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.VerifyEmailMagicLinkInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.VerifyEmailMagicLinkInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNVerifyEmailMagicLinkInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkInput(ctx, tmp)
+	}
+
+	var zeroVal model.VerifyEmailMagicLinkInput
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.VerifyEmailInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNVerifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Mutation_verifyEmail_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Mutation_verifyEmail_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.VerifyEmailInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.VerifyEmailInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNVerifyEmailInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx, tmp)
+	}
+
+	var zeroVal model.VerifyEmailInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_MutualsUser_splitsByChain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_MutualsUser_splitsByChain_argsChain(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["chain"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_MutualsUser_splitsByChain_argsChain(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.Chain, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["chain"]
+	if !ok {
+		var zeroVal persist.Chain
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
+	if tmp, ok := rawArgs["chain"]; ok {
+		return ec.unmarshalNChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, tmp)
+	}
+
+	var zeroVal persist.Chain
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query___type_argsName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["name"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query___type_argsName(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["name"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_isEmailAddressAvailable_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.Email
-	if tmp, ok := rawArgs["emailAddress"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailAddress"))
-		arg0, err = ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_isEmailAddressAvailable_argsEmailAddress(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["emailAddress"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_isEmailAddressAvailable_argsEmailAddress(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.Email, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["emailAddress"]
+	if !ok {
+		var zeroVal persist.Email
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("emailAddress"))
+	if tmp, ok := rawArgs["emailAddress"]; ok {
+		return ec.unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, tmp)
+	}
+
+	var zeroVal persist.Email
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.GqlID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_node_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["id"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_node_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.GqlID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal model.GqlID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
+	}
+
+	var zeroVal model.GqlID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_searchSplits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["query"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_searchSplits_argsQuery(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["query"] = arg0
-	var arg1 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_searchSplits_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["limit"] = arg1
-	var arg2 *float64
-	if tmp, ok := rawArgs["nameWeight"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nameWeight"))
-		arg2, err = ec.unmarshalOFloat2ᚖfloat64(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_searchSplits_argsNameWeight(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["nameWeight"] = arg2
-	var arg3 *float64
-	if tmp, ok := rawArgs["descriptionWeight"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("descriptionWeight"))
-		arg3, err = ec.unmarshalOFloat2ᚖfloat64(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Query_searchSplits_argsDescriptionWeight(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["descriptionWeight"] = arg3
 	return args, nil
+}
+func (ec *executionContext) field_Query_searchSplits_argsQuery(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["query"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+	if tmp, ok := rawArgs["query"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchSplits_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["limit"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchSplits_argsNameWeight(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*float64, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["nameWeight"]
+	if !ok {
+		var zeroVal *float64
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("nameWeight"))
+	if tmp, ok := rawArgs["nameWeight"]; ok {
+		return ec.unmarshalOFloat2ᚖfloat64(ctx, tmp)
+	}
+
+	var zeroVal *float64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchSplits_argsDescriptionWeight(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*float64, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["descriptionWeight"]
+	if !ok {
+		var zeroVal *float64
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("descriptionWeight"))
+	if tmp, ok := rawArgs["descriptionWeight"]; ok {
+		return ec.unmarshalOFloat2ᚖfloat64(ctx, tmp)
+	}
+
+	var zeroVal *float64
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_searchUsers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["query"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_searchUsers_argsQuery(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["query"] = arg0
-	var arg1 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_searchUsers_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["limit"] = arg1
-	var arg2 *float64
-	if tmp, ok := rawArgs["usernameWeight"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usernameWeight"))
-		arg2, err = ec.unmarshalOFloat2ᚖfloat64(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_searchUsers_argsUsernameWeight(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["usernameWeight"] = arg2
 	return args, nil
+}
+func (ec *executionContext) field_Query_searchUsers_argsQuery(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["query"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+	if tmp, ok := rawArgs["query"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchUsers_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["limit"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchUsers_argsUsernameWeight(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*float64, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["usernameWeight"]
+	if !ok {
+		var zeroVal *float64
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("usernameWeight"))
+	if tmp, ok := rawArgs["usernameWeight"]; ok {
+		return ec.unmarshalOFloat2ᚖfloat64(ctx, tmp)
+	}
+
+	var zeroVal *float64
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_splitById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_splitById_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["id"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_splitById_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_userByAddress_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.ChainAddress
-	if tmp, ok := rawArgs["chainAddress"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-		arg0, err = ec.unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_userByAddress_argsChainAddress(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["chainAddress"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_userByAddress_argsChainAddress(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.ChainAddress, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["chainAddress"]
+	if !ok {
+		var zeroVal persist.ChainAddress
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
+	if tmp, ok := rawArgs["chainAddress"]; ok {
+		return ec.unmarshalNChainAddressInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
+	}
+
+	var zeroVal persist.ChainAddress
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_userById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_userById_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["id"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_userById_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_userByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["username"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_userByUsername_argsUsername(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["username"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Query_userByUsername_argsUsername(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["username"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+	if tmp, ok := rawArgs["username"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_usersByRole_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.Role
-	if tmp, ok := rawArgs["role"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-		arg0, err = ec.unmarshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_usersByRole_argsRole(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["role"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Query_usersByRole_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["before"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Query_usersByRole_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["after"] = arg2
-	var arg3 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Query_usersByRole_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["first"] = arg3
-	var arg4 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-		arg4, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg4, err := ec.field_Query_usersByRole_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["last"] = arg4
 	return args, nil
+}
+func (ec *executionContext) field_Query_usersByRole_argsRole(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.Role, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["role"]
+	if !ok {
+		var zeroVal persist.Role
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+	if tmp, ok := rawArgs["role"]; ok {
+		return ec.unmarshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, tmp)
+	}
+
+	var zeroVal persist.Role
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_usersByRole_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["before"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_usersByRole_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_usersByRole_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_usersByRole_argsLast(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["last"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_viewerSplitById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 persist.DBID
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Query_viewerSplitById_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["id"] = arg0
 	return args, nil
 }
-
-func (ec *executionContext) field_SplitFiUser_splitsByChain_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 persist.Chain
-	if tmp, ok := rawArgs["chain"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-		arg0, err = ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+func (ec *executionContext) field_Query_viewerSplitById_argsID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["id"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
 	}
-	args["chain"] = arg0
-	return args, nil
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Split_assets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Split_assets_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["limit"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field_Split_assets_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["limit"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Viewer_notifications_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field_Viewer_notifications_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["before"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg1, err := ec.field_Viewer_notifications_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["after"] = arg1
-	var arg2 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg2, err := ec.field_Viewer_notifications_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["first"] = arg2
-	var arg3 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg3, err := ec.field_Viewer_notifications_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["last"] = arg3
 	return args, nil
+}
+func (ec *executionContext) field_Viewer_notifications_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["before"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_notifications_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_notifications_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_notifications_argsLast(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["last"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 bool
-	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field___Type_enumValues_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field___Type_enumValues_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["includeDeprecated"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
 }
 
 func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 bool
-	if tmp, ok := rawArgs["includeDeprecated"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
-		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
+	arg0, err := ec.field___Type_fields_argsIncludeDeprecated(ctx, rawArgs)
+	if err != nil {
+		return nil, err
 	}
 	args["includeDeprecated"] = arg0
 	return args, nil
+}
+func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (bool, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["includeDeprecated"]
+	if !ok {
+		var zeroVal bool
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
+	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		return ec.unmarshalOBoolean2bool(ctx, tmp)
+	}
+
+	var zeroVal bool
+	return zeroVal, nil
 }
 
 // endregion ***************************** args.gotpl *****************************
@@ -4405,10 +5492,10 @@ func (ec *executionContext) _AddUserWalletPayload_viewer(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AddUserWalletPayload",
 		Field:      field,
@@ -4460,12 +5547,12 @@ func (ec *executionContext) _AdminAddWalletPayload_user(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SplitFiUser)
+	res := resTmp.(*model.MutualsUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AdminAddWalletPayload",
 		Field:      field,
@@ -4474,27 +5561,27 @@ func (ec *executionContext) fieldContext_AdminAddWalletPayload_user(ctx context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
+				return ec.fieldContext_MutualsUser_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+				return ec.fieldContext_MutualsUser_dbid(ctx, field)
 			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
+				return ec.fieldContext_MutualsUser_username(ctx, field)
 			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+				return ec.fieldContext_MutualsUser_universal(ctx, field)
 			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+				return ec.fieldContext_MutualsUser_roles(ctx, field)
 			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
 			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+				return ec.fieldContext_MutualsUser_splits(ctx, field)
 			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
 			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MutualsUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -4528,10 +5615,10 @@ func (ec *executionContext) _Allocation_id(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4572,10 +5659,10 @@ func (ec *executionContext) _Allocation_dbid(ctx context.Context, field graphql.
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4616,7 +5703,7 @@ func (ec *executionContext) _Allocation_version(ctx context.Context, field graph
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4654,10 +5741,10 @@ func (ec *executionContext) _Allocation_recipientAddress(ctx context.Context, fi
 	}
 	res := resTmp.(*persist.Address)
 	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_recipientAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_recipientAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4695,10 +5782,10 @@ func (ec *executionContext) _Allocation_value(ctx context.Context, field graphql
 	}
 	res := resTmp.(*persist.HexString)
 	fc.Result = res
-	return ec.marshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalOHexString2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4739,7 +5826,7 @@ func (ec *executionContext) _Allocation_creationTime(ctx context.Context, field 
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4780,7 +5867,7 @@ func (ec *executionContext) _Allocation_lastUpdated(ctx context.Context, field g
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_lastUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_lastUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4818,10 +5905,10 @@ func (ec *executionContext) _Allocation_split(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Allocation_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Allocation_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Allocation",
 		Field:      field,
@@ -4890,10 +5977,10 @@ func (ec *executionContext) _AllocationAggregation_id(ctx context.Context, field
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -4934,10 +6021,10 @@ func (ec *executionContext) _AllocationAggregation_dbid(ctx context.Context, fie
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -4978,7 +6065,7 @@ func (ec *executionContext) _AllocationAggregation_version(ctx context.Context, 
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -5016,10 +6103,10 @@ func (ec *executionContext) _AllocationAggregation_recipientAddress(ctx context.
 	}
 	res := resTmp.(*persist.Address)
 	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_recipientAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_recipientAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -5060,7 +6147,7 @@ func (ec *executionContext) _AllocationAggregation_expression(ctx context.Contex
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_expression(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_expression(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -5101,7 +6188,7 @@ func (ec *executionContext) _AllocationAggregation_creationTime(ctx context.Cont
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -5142,7 +6229,7 @@ func (ec *executionContext) _AllocationAggregation_lastUpdated(ctx context.Conte
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_lastUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_lastUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -5180,10 +6267,10 @@ func (ec *executionContext) _AllocationAggregation_split(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AllocationAggregation_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AllocationAggregation_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AllocationAggregation",
 		Field:      field,
@@ -5252,10 +6339,10 @@ func (ec *executionContext) _Asset_id(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Asset_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Asset_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
@@ -5296,10 +6383,10 @@ func (ec *executionContext) _Asset_dbid(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Asset_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Asset_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
@@ -5340,7 +6427,7 @@ func (ec *executionContext) _Asset_version(ctx context.Context, field graphql.Co
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Asset_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Asset_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
@@ -5378,10 +6465,10 @@ func (ec *executionContext) _Asset_ownerAddress(ctx context.Context, field graph
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Asset_ownerAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Asset_ownerAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
@@ -5425,10 +6512,10 @@ func (ec *executionContext) _Asset_balance(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*persist.HexString)
 	fc.Result = res
-	return ec.marshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalOHexString2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Asset_balance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Asset_balance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
@@ -5466,10 +6553,10 @@ func (ec *executionContext) _Asset_token(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.Token)
 	fc.Result = res
-	return ec.marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
+	return ec.marshalOToken2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐToken(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Asset_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Asset_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
@@ -5542,7 +6629,7 @@ func (ec *executionContext) _AuthNonce_nonce(ctx context.Context, field graphql.
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AuthNonce_nonce(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AuthNonce_nonce(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AuthNonce",
 		Field:      field,
@@ -5583,7 +6670,7 @@ func (ec *executionContext) _AuthNonce_message(ctx context.Context, field graphq
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AuthNonce_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AuthNonce_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AuthNonce",
 		Field:      field,
@@ -5621,10 +6708,10 @@ func (ec *executionContext) _ChainAddress_address(ctx context.Context, field gra
 	}
 	res := resTmp.(persist.Address)
 	fc.Result = res
-	return ec.marshalOAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ChainAddress_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ChainAddress_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ChainAddress",
 		Field:      field,
@@ -5662,10 +6749,10 @@ func (ec *executionContext) _ChainAddress_chain(ctx context.Context, field graph
 	}
 	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ChainAddress_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ChainAddress_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ChainAddress",
 		Field:      field,
@@ -5703,10 +6790,10 @@ func (ec *executionContext) _ChainPubKey_pubKey(ctx context.Context, field graph
 	}
 	res := resTmp.(persist.PubKey)
 	fc.Result = res
-	return ec.marshalOPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx, field.Selections, res)
+	return ec.marshalOPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ChainPubKey_pubKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ChainPubKey_pubKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ChainPubKey",
 		Field:      field,
@@ -5744,10 +6831,10 @@ func (ec *executionContext) _ChainPubKey_chain(ctx context.Context, field graphq
 	}
 	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ChainPubKey_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ChainPubKey_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ChainPubKey",
 		Field:      field,
@@ -5785,10 +6872,10 @@ func (ec *executionContext) _ChainSplits_chain(ctx context.Context, field graphq
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ChainSplits_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ChainSplits_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ChainSplits",
 		Field:      field,
@@ -5826,10 +6913,10 @@ func (ec *executionContext) _ChainSplits_splits(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ChainSplits_splits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ChainSplits_splits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ChainSplits",
 		Field:      field,
@@ -5895,10 +6982,10 @@ func (ec *executionContext) _ClearAllNotificationsPayload_notifications(ctx cont
 	}
 	res := resTmp.([]model.Notification)
 	fc.Result = res
-	return ec.marshalONotification2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalONotification2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClearAllNotificationsPayload_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClearAllNotificationsPayload_notifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClearAllNotificationsPayload",
 		Field:      field,
@@ -5936,10 +7023,10 @@ func (ec *executionContext) _CreateSplitPayload_split(ctx context.Context, field
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateSplitPayload",
 		Field:      field,
@@ -6005,10 +7092,10 @@ func (ec *executionContext) _CreateUserPayload_viewer(ctx context.Context, field
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateUserPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateUserPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateUserPayload",
 		Field:      field,
@@ -6062,10 +7149,10 @@ func (ec *executionContext) _DeleteSplitPayload_deletedId(ctx context.Context, f
 	}
 	res := resTmp.(*model.DeletedNode)
 	fc.Result = res
-	return ec.marshalODeletedNode2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeletedNode(ctx, field.Selections, res)
+	return ec.marshalODeletedNode2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeletedNode(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteSplitPayload_deletedId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteSplitPayload_deletedId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteSplitPayload",
 		Field:      field,
@@ -6112,10 +7199,10 @@ func (ec *executionContext) _DeletedNode_id(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeletedNode_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeletedNode_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeletedNode",
 		Field:      field,
@@ -6156,10 +7243,10 @@ func (ec *executionContext) _DeletedNode_dbid(ctx context.Context, field graphql
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeletedNode_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeletedNode_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeletedNode",
 		Field:      field,
@@ -6203,7 +7290,7 @@ func (ec *executionContext) _EmailNotificationSettings_unsubscribedFromAll(ctx c
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EmailNotificationSettings_unsubscribedFromAll(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EmailNotificationSettings_unsubscribedFromAll(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EmailNotificationSettings",
 		Field:      field,
@@ -6247,7 +7334,7 @@ func (ec *executionContext) _EmailNotificationSettings_unsubscribedFromNotificat
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EmailNotificationSettings_unsubscribedFromNotifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EmailNotificationSettings_unsubscribedFromNotifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EmailNotificationSettings",
 		Field:      field,
@@ -6291,7 +7378,7 @@ func (ec *executionContext) _ErrAddressOwnedByUser_message(ctx context.Context, 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrAddressOwnedByUser_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrAddressOwnedByUser_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrAddressOwnedByUser",
 		Field:      field,
@@ -6335,7 +7422,7 @@ func (ec *executionContext) _ErrAuthenticationFailed_message(ctx context.Context
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrAuthenticationFailed_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrAuthenticationFailed_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrAuthenticationFailed",
 		Field:      field,
@@ -6379,7 +7466,7 @@ func (ec *executionContext) _ErrCommunityNotFound_message(ctx context.Context, f
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrCommunityNotFound_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrCommunityNotFound_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrCommunityNotFound",
 		Field:      field,
@@ -6423,7 +7510,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken_message(ctx context.Cont
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrDoesNotOwnRequiredToken_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrDoesNotOwnRequiredToken_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrDoesNotOwnRequiredToken",
 		Field:      field,
@@ -6467,7 +7554,7 @@ func (ec *executionContext) _ErrInvalidInput_message(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrInvalidInput_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrInvalidInput_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrInvalidInput",
 		Field:      field,
@@ -6511,7 +7598,7 @@ func (ec *executionContext) _ErrInvalidInput_parameters(ctx context.Context, fie
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrInvalidInput_parameters(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrInvalidInput_parameters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrInvalidInput",
 		Field:      field,
@@ -6555,7 +7642,7 @@ func (ec *executionContext) _ErrInvalidInput_reasons(ctx context.Context, field 
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrInvalidInput_reasons(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrInvalidInput_reasons(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrInvalidInput",
 		Field:      field,
@@ -6599,7 +7686,7 @@ func (ec *executionContext) _ErrInvalidToken_message(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrInvalidToken_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrInvalidToken_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrInvalidToken",
 		Field:      field,
@@ -6643,7 +7730,7 @@ func (ec *executionContext) _ErrNoCookie_message(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrNoCookie_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrNoCookie_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrNoCookie",
 		Field:      field,
@@ -6687,7 +7774,7 @@ func (ec *executionContext) _ErrNotAuthorized_message(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrNotAuthorized_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrNotAuthorized_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrNotAuthorized",
 		Field:      field,
@@ -6728,10 +7815,10 @@ func (ec *executionContext) _ErrNotAuthorized_cause(ctx context.Context, field g
 	}
 	res := resTmp.(model.AuthorizationError)
 	fc.Result = res
-	return ec.marshalNAuthorizationError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthorizationError(ctx, field.Selections, res)
+	return ec.marshalNAuthorizationError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthorizationError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrNotAuthorized_cause(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrNotAuthorized_cause(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrNotAuthorized",
 		Field:      field,
@@ -6775,7 +7862,7 @@ func (ec *executionContext) _ErrPushTokenBelongsToAnotherUser_message(ctx contex
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrPushTokenBelongsToAnotherUser_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrPushTokenBelongsToAnotherUser_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrPushTokenBelongsToAnotherUser",
 		Field:      field,
@@ -6819,7 +7906,7 @@ func (ec *executionContext) _ErrSessionInvalidated_message(ctx context.Context, 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrSessionInvalidated_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrSessionInvalidated_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrSessionInvalidated",
 		Field:      field,
@@ -6863,7 +7950,7 @@ func (ec *executionContext) _ErrSplitNotFound_message(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrSplitNotFound_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrSplitNotFound_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrSplitNotFound",
 		Field:      field,
@@ -6907,7 +7994,7 @@ func (ec *executionContext) _ErrSyncFailed_message(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrSyncFailed_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrSyncFailed_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrSyncFailed",
 		Field:      field,
@@ -6951,7 +8038,7 @@ func (ec *executionContext) _ErrTokenNotFound_message(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrTokenNotFound_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrTokenNotFound_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrTokenNotFound",
 		Field:      field,
@@ -6995,7 +8082,7 @@ func (ec *executionContext) _ErrUserAlreadyExists_message(ctx context.Context, f
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrUserAlreadyExists_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrUserAlreadyExists_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrUserAlreadyExists",
 		Field:      field,
@@ -7039,7 +8126,7 @@ func (ec *executionContext) _ErrUserNotFound_message(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrUserNotFound_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrUserNotFound_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrUserNotFound",
 		Field:      field,
@@ -7083,7 +8170,7 @@ func (ec *executionContext) _ErrUsernameNotAvailable_message(ctx context.Context
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ErrUsernameNotAvailable_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ErrUsernameNotAvailable_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ErrUsernameNotAvailable",
 		Field:      field,
@@ -7119,12 +8206,12 @@ func (ec *executionContext) _GroupNotificationUserEdge_node(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SplitFiUser)
+	res := resTmp.(*model.MutualsUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupNotificationUserEdge",
 		Field:      field,
@@ -7133,27 +8220,27 @@ func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(ctx cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
+				return ec.fieldContext_MutualsUser_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+				return ec.fieldContext_MutualsUser_dbid(ctx, field)
 			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
+				return ec.fieldContext_MutualsUser_username(ctx, field)
 			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+				return ec.fieldContext_MutualsUser_universal(ctx, field)
 			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+				return ec.fieldContext_MutualsUser_roles(ctx, field)
 			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
 			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+				return ec.fieldContext_MutualsUser_splits(ctx, field)
 			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
 			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MutualsUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -7187,7 +8274,7 @@ func (ec *executionContext) _GroupNotificationUserEdge_cursor(ctx context.Contex
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupNotificationUserEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupNotificationUserEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupNotificationUserEdge",
 		Field:      field,
@@ -7225,10 +8312,10 @@ func (ec *executionContext) _GroupNotificationUsersConnection_edges(ctx context.
 	}
 	res := resTmp.([]*model.GroupNotificationUserEdge)
 	fc.Result = res
-	return ec.marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, field.Selections, res)
+	return ec.marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupNotificationUsersConnection",
 		Field:      field,
@@ -7272,10 +8359,10 @@ func (ec *executionContext) _GroupNotificationUsersConnection_pageInfo(ctx conte
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GroupNotificationUsersConnection",
 		Field:      field,
@@ -7327,10 +8414,10 @@ func (ec *executionContext) _LoginPayload_viewer(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LoginPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LoginPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LoginPayload",
 		Field:      field,
@@ -7384,10 +8471,10 @@ func (ec *executionContext) _LogoutPayload_viewer(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LogoutPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LogoutPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LogoutPayload",
 		Field:      field,
@@ -7433,9 +8520,11 @@ func (ec *executionContext) _Mutation_addUserWallet(ctx context.Context, field g
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().AddUserWallet(rctx, fc.Args["chainAddress"].(persist.ChainAddress), fc.Args["authMechanism"].(model.AuthMechanism))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.AddUserWalletPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -7450,7 +8539,7 @@ func (ec *executionContext) _Mutation_addUserWallet(ctx context.Context, field g
 		if data, ok := tmp.(model.AddUserWalletPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.AddUserWalletPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.AddUserWalletPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7461,7 +8550,7 @@ func (ec *executionContext) _Mutation_addUserWallet(ctx context.Context, field g
 	}
 	res := resTmp.(model.AddUserWalletPayloadOrError)
 	fc.Result = res
-	return ec.marshalOAddUserWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOAddUserWalletPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addUserWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7505,9 +8594,11 @@ func (ec *executionContext) _Mutation_removeUserWallets(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().RemoveUserWallets(rctx, fc.Args["walletIds"].([]persist.DBID))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.RemoveUserWalletsPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -7522,7 +8613,7 @@ func (ec *executionContext) _Mutation_removeUserWallets(ctx context.Context, fie
 		if data, ok := tmp.(model.RemoveUserWalletsPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.RemoveUserWalletsPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.RemoveUserWalletsPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7533,7 +8624,7 @@ func (ec *executionContext) _Mutation_removeUserWallets(ctx context.Context, fie
 	}
 	res := resTmp.(model.RemoveUserWalletsPayloadOrError)
 	fc.Result = res
-	return ec.marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_removeUserWallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7577,9 +8668,11 @@ func (ec *executionContext) _Mutation_updateUserInfo(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdateUserInfo(rctx, fc.Args["input"].(model.UpdateUserInfoInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpdateUserInfoPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -7594,7 +8687,7 @@ func (ec *executionContext) _Mutation_updateUserInfo(ctx context.Context, field 
 		if data, ok := tmp.(model.UpdateUserInfoPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateUserInfoPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateUserInfoPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7605,7 +8698,7 @@ func (ec *executionContext) _Mutation_updateUserInfo(ctx context.Context, field 
 	}
 	res := resTmp.(model.UpdateUserInfoPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUserInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7649,9 +8742,11 @@ func (ec *executionContext) _Mutation_registerUserPushToken(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().RegisterUserPushToken(rctx, fc.Args["pushToken"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.RegisterUserPushTokenPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -7666,7 +8761,7 @@ func (ec *executionContext) _Mutation_registerUserPushToken(ctx context.Context,
 		if data, ok := tmp.(model.RegisterUserPushTokenPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.RegisterUserPushTokenPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.RegisterUserPushTokenPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7677,7 +8772,7 @@ func (ec *executionContext) _Mutation_registerUserPushToken(ctx context.Context,
 	}
 	res := resTmp.(model.RegisterUserPushTokenPayloadOrError)
 	fc.Result = res
-	return ec.marshalORegisterUserPushTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRegisterUserPushTokenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORegisterUserPushTokenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRegisterUserPushTokenPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_registerUserPushToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7721,9 +8816,11 @@ func (ec *executionContext) _Mutation_unregisterUserPushToken(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UnregisterUserPushToken(rctx, fc.Args["pushToken"].(string))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UnregisterUserPushTokenPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -7738,7 +8835,7 @@ func (ec *executionContext) _Mutation_unregisterUserPushToken(ctx context.Contex
 		if data, ok := tmp.(model.UnregisterUserPushTokenPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UnregisterUserPushTokenPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UnregisterUserPushTokenPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7749,7 +8846,7 @@ func (ec *executionContext) _Mutation_unregisterUserPushToken(ctx context.Contex
 	}
 	res := resTmp.(model.UnregisterUserPushTokenPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUnregisterUserPushTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnregisterUserPushTokenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUnregisterUserPushTokenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnregisterUserPushTokenPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_unregisterUserPushToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7801,10 +8898,10 @@ func (ec *executionContext) _Mutation_getAuthNonce(ctx context.Context, field gr
 	}
 	res := resTmp.(model.GetAuthNoncePayloadOrError)
 	fc.Result = res
-	return ec.marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_getAuthNonce(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_getAuthNonce(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -7842,7 +8939,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(model.CreateUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalOCreateUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOCreateUserPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7886,9 +8983,11 @@ func (ec *executionContext) _Mutation_updateEmail(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdateEmail(rctx, fc.Args["input"].(model.UpdateEmailInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpdateEmailPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -7903,7 +9002,7 @@ func (ec *executionContext) _Mutation_updateEmail(ctx context.Context, field gra
 		if data, ok := tmp.(model.UpdateEmailPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateEmailPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateEmailPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7914,7 +9013,7 @@ func (ec *executionContext) _Mutation_updateEmail(ctx context.Context, field gra
 	}
 	res := resTmp.(model.UpdateEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7958,9 +9057,11 @@ func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().ResendVerificationEmail(rctx)
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.ResendVerificationEmailPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -7975,7 +9076,7 @@ func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Contex
 		if data, ok := tmp.(model.ResendVerificationEmailPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.ResendVerificationEmailPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.ResendVerificationEmailPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7986,10 +9087,10 @@ func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Contex
 	}
 	res := resTmp.(model.ResendVerificationEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_resendVerificationEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_resendVerificationEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -8019,9 +9120,11 @@ func (ec *executionContext) _Mutation_updateEmailNotificationSettings(ctx contex
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdateEmailNotificationSettings(rctx, fc.Args["input"].(model.UpdateEmailNotificationSettingsInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpdateEmailNotificationSettingsPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8036,7 +9139,7 @@ func (ec *executionContext) _Mutation_updateEmailNotificationSettings(ctx contex
 		if data, ok := tmp.(model.UpdateEmailNotificationSettingsPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateEmailNotificationSettingsPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateEmailNotificationSettingsPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8047,7 +9150,7 @@ func (ec *executionContext) _Mutation_updateEmailNotificationSettings(ctx contex
 	}
 	res := resTmp.(model.UpdateEmailNotificationSettingsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateEmailNotificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8099,7 +9202,7 @@ func (ec *executionContext) _Mutation_unsubscribeFromEmailType(ctx context.Conte
 	}
 	res := resTmp.(model.UnsubscribeFromEmailTypePayloadOrError)
 	fc.Result = res
-	return ec.marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_unsubscribeFromEmailType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8151,7 +9254,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.LoginPayloadOrError)
 	fc.Result = res
-	return ec.marshalOLoginPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOLoginPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8203,7 +9306,7 @@ func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.LogoutPayload)
 	fc.Result = res
-	return ec.marshalOLogoutPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLogoutPayload(ctx, field.Selections, res)
+	return ec.marshalOLogoutPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLogoutPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8251,9 +9354,11 @@ func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpsertSplit(rctx, fc.Args["input"].(model.UpsertSplitInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpsertSplitPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8268,7 +9373,7 @@ func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field gra
 		if data, ok := tmp.(model.UpsertSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpsertSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpsertSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8279,7 +9384,7 @@ func (ec *executionContext) _Mutation_upsertSplit(ctx context.Context, field gra
 	}
 	res := resTmp.(model.UpsertSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpsertSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpsertSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_upsertSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8323,9 +9428,11 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().PublishSplit(rctx, fc.Args["input"].(model.PublishSplitInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.PublishSplitPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8340,7 +9447,7 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 		if data, ok := tmp.(model.PublishSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.PublishSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.PublishSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8351,7 +9458,7 @@ func (ec *executionContext) _Mutation_publishSplit(ctx context.Context, field gr
 	}
 	res := resTmp.(model.PublishSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOPublishSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPublishSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_publishSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8395,9 +9502,11 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().CreateSplit(rctx, fc.Args["input"].(model.CreateSplitInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.CreateSplitPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8412,7 +9521,7 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 		if data, ok := tmp.(model.CreateSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.CreateSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.CreateSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8423,7 +9532,7 @@ func (ec *executionContext) _Mutation_createSplit(ctx context.Context, field gra
 	}
 	res := resTmp.(model.CreateSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalOCreateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOCreateSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8467,9 +9576,11 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdateSplitHidden(rctx, fc.Args["input"].(model.UpdateSplitHiddenInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpdateSplitHiddenPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8484,7 +9595,7 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 		if data, ok := tmp.(model.UpdateSplitHiddenPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitHiddenPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateSplitHiddenPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8495,7 +9606,7 @@ func (ec *executionContext) _Mutation_updateSplitHidden(ctx context.Context, fie
 	}
 	res := resTmp.(model.UpdateSplitHiddenPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSplitHidden(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8539,9 +9650,11 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().DeleteSplit(rctx, fc.Args["splitId"].(persist.DBID))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.DeleteSplitPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8556,7 +9669,7 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 		if data, ok := tmp.(model.DeleteSplitPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.DeleteSplitPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.DeleteSplitPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8567,7 +9680,7 @@ func (ec *executionContext) _Mutation_deleteSplit(ctx context.Context, field gra
 	}
 	res := resTmp.(model.DeleteSplitPayloadOrError)
 	fc.Result = res
-	return ec.marshalODeleteSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalODeleteSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8611,9 +9724,11 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdateSplitOrder(rctx, fc.Args["input"].(model.UpdateSplitOrderInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpdateSplitOrderPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8628,7 +9743,7 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 		if data, ok := tmp.(model.UpdateSplitOrderPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateSplitOrderPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateSplitOrderPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8639,7 +9754,7 @@ func (ec *executionContext) _Mutation_updateSplitOrder(ctx context.Context, fiel
 	}
 	res := resTmp.(model.UpdateSplitOrderPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateSplitOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8683,9 +9798,11 @@ func (ec *executionContext) _Mutation_clearAllNotifications(ctx context.Context,
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().ClearAllNotifications(rctx)
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal *model.ClearAllNotificationsPayload
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8700,7 +9817,7 @@ func (ec *executionContext) _Mutation_clearAllNotifications(ctx context.Context,
 		if data, ok := tmp.(*model.ClearAllNotificationsPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.ClearAllNotificationsPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.ClearAllNotificationsPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8711,10 +9828,10 @@ func (ec *executionContext) _Mutation_clearAllNotifications(ctx context.Context,
 	}
 	res := resTmp.(*model.ClearAllNotificationsPayload)
 	fc.Result = res
-	return ec.marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx, field.Selections, res)
+	return ec.marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_clearAllNotifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_clearAllNotifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -8756,7 +9873,7 @@ func (ec *executionContext) _Mutation_updateNotificationSettings(ctx context.Con
 	}
 	res := resTmp.(*model.NotificationSettings)
 	fc.Result = res
-	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
+	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateNotificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8812,7 +9929,7 @@ func (ec *executionContext) _Mutation_preverifyEmail(ctx context.Context, field 
 	}
 	res := resTmp.(model.PreverifyEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_preverifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8864,7 +9981,7 @@ func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field gra
 	}
 	res := resTmp.(model.VerifyEmailPayloadOrError)
 	fc.Result = res
-	return ec.marshalOVerifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOVerifyEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_verifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8916,7 +10033,7 @@ func (ec *executionContext) _Mutation_verifyEmailMagicLink(ctx context.Context, 
 	}
 	res := resTmp.(model.VerifyEmailMagicLinkPayloadOrError)
 	fc.Result = res
-	return ec.marshalOVerifyEmailMagicLinkPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOVerifyEmailMagicLinkPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_verifyEmailMagicLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8960,9 +10077,11 @@ func (ec *executionContext) _Mutation_optInForRoles(ctx context.Context, field g
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().OptInForRoles(rctx, fc.Args["roles"].([]persist.Role))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.OptInForRolesPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -8977,7 +10096,7 @@ func (ec *executionContext) _Mutation_optInForRoles(ctx context.Context, field g
 		if data, ok := tmp.(model.OptInForRolesPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.OptInForRolesPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.OptInForRolesPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8988,7 +10107,7 @@ func (ec *executionContext) _Mutation_optInForRoles(ctx context.Context, field g
 	}
 	res := resTmp.(model.OptInForRolesPayloadOrError)
 	fc.Result = res
-	return ec.marshalOOptInForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptInForRolesPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOOptInForRolesPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOptInForRolesPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_optInForRoles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9032,9 +10151,11 @@ func (ec *executionContext) _Mutation_optOutForRoles(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().OptOutForRoles(rctx, fc.Args["roles"].([]persist.Role))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.OptOutForRolesPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -9049,7 +10170,7 @@ func (ec *executionContext) _Mutation_optOutForRoles(ctx context.Context, field 
 		if data, ok := tmp.(model.OptOutForRolesPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.OptOutForRolesPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.OptOutForRolesPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9060,7 +10181,7 @@ func (ec *executionContext) _Mutation_optOutForRoles(ctx context.Context, field 
 	}
 	res := resTmp.(model.OptOutForRolesPayloadOrError)
 	fc.Result = res
-	return ec.marshalOOptOutForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptOutForRolesPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOOptOutForRolesPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOptOutForRolesPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_optOutForRoles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9104,13 +10225,16 @@ func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().AddRolesToUser(rctx, fc.Args["username"].(string), fc.Args["roles"].([]*persist.Role))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
 			if err != nil {
-				return nil, err
+				var zeroVal model.AddRolesToUserPayloadOrError
+				return zeroVal, err
 			}
 			if ec.directives.BasicAuth == nil {
-				return nil, errors.New("directive basicAuth is not implemented")
+				var zeroVal model.AddRolesToUserPayloadOrError
+				return zeroVal, errors.New("directive basicAuth is not implemented")
 			}
 			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
@@ -9125,7 +10249,7 @@ func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field 
 		if data, ok := tmp.(model.AddRolesToUserPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.AddRolesToUserPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.AddRolesToUserPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9136,7 +10260,7 @@ func (ec *executionContext) _Mutation_addRolesToUser(ctx context.Context, field 
 	}
 	res := resTmp.(model.AddRolesToUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addRolesToUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9180,13 +10304,16 @@ func (ec *executionContext) _Mutation_addWalletToUserUnchecked(ctx context.Conte
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().AddWalletToUserUnchecked(rctx, fc.Args["input"].(model.AdminAddWalletInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
 			if err != nil {
-				return nil, err
+				var zeroVal model.AdminAddWalletPayloadOrError
+				return zeroVal, err
 			}
 			if ec.directives.BasicAuth == nil {
-				return nil, errors.New("directive basicAuth is not implemented")
+				var zeroVal model.AdminAddWalletPayloadOrError
+				return zeroVal, errors.New("directive basicAuth is not implemented")
 			}
 			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
@@ -9201,7 +10328,7 @@ func (ec *executionContext) _Mutation_addWalletToUserUnchecked(ctx context.Conte
 		if data, ok := tmp.(model.AdminAddWalletPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.AdminAddWalletPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.AdminAddWalletPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9212,7 +10339,7 @@ func (ec *executionContext) _Mutation_addWalletToUserUnchecked(ctx context.Conte
 	}
 	res := resTmp.(model.AdminAddWalletPayloadOrError)
 	fc.Result = res
-	return ec.marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addWalletToUserUnchecked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9256,13 +10383,16 @@ func (ec *executionContext) _Mutation_revokeRolesFromUser(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().RevokeRolesFromUser(rctx, fc.Args["username"].(string), fc.Args["roles"].([]*persist.Role))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
 			if err != nil {
-				return nil, err
+				var zeroVal model.RevokeRolesFromUserPayloadOrError
+				return zeroVal, err
 			}
 			if ec.directives.BasicAuth == nil {
-				return nil, errors.New("directive basicAuth is not implemented")
+				var zeroVal model.RevokeRolesFromUserPayloadOrError
+				return zeroVal, errors.New("directive basicAuth is not implemented")
 			}
 			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
@@ -9277,7 +10407,7 @@ func (ec *executionContext) _Mutation_revokeRolesFromUser(ctx context.Context, f
 		if data, ok := tmp.(model.RevokeRolesFromUserPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.RevokeRolesFromUserPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.RevokeRolesFromUserPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9288,7 +10418,7 @@ func (ec *executionContext) _Mutation_revokeRolesFromUser(ctx context.Context, f
 	}
 	res := resTmp.(model.RevokeRolesFromUserPayloadOrError)
 	fc.Result = res
-	return ec.marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_revokeRolesFromUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9332,9 +10462,11 @@ func (ec *executionContext) _Mutation_uploadPersistedQueries(ctx context.Context
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UploadPersistedQueries(rctx, fc.Args["input"].(*model.UploadPersistedQueriesInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.FrontendBuildAuth == nil {
-				return nil, errors.New("directive frontendBuildAuth is not implemented")
+				var zeroVal model.UploadPersistedQueriesPayloadOrError
+				return zeroVal, errors.New("directive frontendBuildAuth is not implemented")
 			}
 			return ec.directives.FrontendBuildAuth(ctx, nil, directive0)
 		}
@@ -9349,7 +10481,7 @@ func (ec *executionContext) _Mutation_uploadPersistedQueries(ctx context.Context
 		if data, ok := tmp.(model.UploadPersistedQueriesPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UploadPersistedQueriesPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UploadPersistedQueriesPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9360,7 +10492,7 @@ func (ec *executionContext) _Mutation_uploadPersistedQueries(ctx context.Context
 	}
 	res := resTmp.(model.UploadPersistedQueriesPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_uploadPersistedQueries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9404,9 +10536,11 @@ func (ec *executionContext) _Mutation_updatePrimaryWallet(ctx context.Context, f
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdatePrimaryWallet(rctx, fc.Args["walletID"].(persist.DBID))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpdatePrimaryWalletPayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -9421,7 +10555,7 @@ func (ec *executionContext) _Mutation_updatePrimaryWallet(ctx context.Context, f
 		if data, ok := tmp.(model.UpdatePrimaryWalletPayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdatePrimaryWalletPayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdatePrimaryWalletPayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9432,7 +10566,7 @@ func (ec *executionContext) _Mutation_updatePrimaryWallet(ctx context.Context, f
 	}
 	res := resTmp.(model.UpdatePrimaryWalletPayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updatePrimaryWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9476,9 +10610,11 @@ func (ec *executionContext) _Mutation_updateUserExperience(ctx context.Context, 
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().UpdateUserExperience(rctx, fc.Args["input"].(model.UpdateUserExperienceInput))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.UpdateUserExperiencePayloadOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -9493,7 +10629,7 @@ func (ec *executionContext) _Mutation_updateUserExperience(ctx context.Context, 
 		if data, ok := tmp.(model.UpdateUserExperiencePayloadOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.UpdateUserExperiencePayloadOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateUserExperiencePayloadOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9504,7 +10640,7 @@ func (ec *executionContext) _Mutation_updateUserExperience(ctx context.Context, 
 	}
 	res := resTmp.(model.UpdateUserExperiencePayloadOrError)
 	fc.Result = res
-	return ec.marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUserExperience(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9527,6 +10663,495 @@ func (ec *executionContext) fieldContext_Mutation_updateUserExperience(ctx conte
 	if fc.Args, err = ec.field_Mutation_updateUserExperience_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_id(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_dbid(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_dbid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dbid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.DBID)
+	fc.Result = res
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DBID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_username(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_username(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_universal(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_universal(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Universal, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_universal(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_roles(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_roles(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.MutualsUser().Roles(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*persist.Role)
+	fc.Result = res
+	return ec.marshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_roles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Role does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_wallets(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_wallets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.MutualsUser().Wallets(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Wallet)
+	fc.Result = res
+	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_wallets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Wallet_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Wallet_dbid(ctx, field)
+			case "chainAddress":
+				return ec.fieldContext_Wallet_chainAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Wallet_chain(ctx, field)
+			case "walletType":
+				return ec.fieldContext_Wallet_walletType(ctx, field)
+			case "splits":
+				return ec.fieldContext_Wallet_splits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_primaryWallet(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.MutualsUser().PrimaryWallet(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Wallet)
+	fc.Result = res
+	return ec.marshalOWallet2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_primaryWallet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Wallet_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Wallet_dbid(ctx, field)
+			case "chainAddress":
+				return ec.fieldContext_Wallet_chainAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Wallet_chain(ctx, field)
+			case "walletType":
+				return ec.fieldContext_Wallet_walletType(ctx, field)
+			case "splits":
+				return ec.fieldContext_Wallet_splits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_splits(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_splits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.MutualsUser().Splits(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Split)
+	fc.Result = res
+	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_splits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Split_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Split_dbid(ctx, field)
+			case "version":
+				return ec.fieldContext_Split_version(ctx, field)
+			case "status":
+				return ec.fieldContext_Split_status(ctx, field)
+			case "name":
+				return ec.fieldContext_Split_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Split_description(ctx, field)
+			case "address":
+				return ec.fieldContext_Split_address(ctx, field)
+			case "ownerAddress":
+				return ec.fieldContext_Split_ownerAddress(ctx, field)
+			case "creatorAddress":
+				return ec.fieldContext_Split_creatorAddress(ctx, field)
+			case "chain":
+				return ec.fieldContext_Split_chain(ctx, field)
+			case "allocationAggregation":
+				return ec.fieldContext_Split_allocationAggregation(ctx, field)
+			case "allocations":
+				return ec.fieldContext_Split_allocations(ctx, field)
+			case "assets":
+				return ec.fieldContext_Split_assets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_splitsByChain(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.MutualsUser().SplitsByChain(rctx, obj, fc.Args["chain"].(persist.Chain))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ChainSplits)
+	fc.Result = res
+	return ec.marshalOChainSplits2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐChainSplits(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_splitsByChain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "chain":
+				return ec.fieldContext_ChainSplits_chain(ctx, field)
+			case "splits":
+				return ec.fieldContext_ChainSplits_splits(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ChainSplits", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_MutualsUser_splitsByChain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MutualsUser_isAuthenticatedUser(ctx context.Context, field graphql.CollectedField, obj *model.MutualsUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsAuthenticatedUser, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MutualsUser_isAuthenticatedUser(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MutualsUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -9556,10 +11181,10 @@ func (ec *executionContext) _NotificationEdge_node(ctx context.Context, field gr
 	}
 	res := resTmp.(model.Notification)
 	fc.Result = res
-	return ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationEdge",
 		Field:      field,
@@ -9600,7 +11225,7 @@ func (ec *executionContext) _NotificationEdge_cursor(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationEdge",
 		Field:      field,
@@ -9641,7 +11266,7 @@ func (ec *executionContext) _NotificationSettings_someoneViewedYourSplit(ctx con
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationSettings_someoneViewedYourSplit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationSettings_someoneViewedYourSplit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationSettings",
 		Field:      field,
@@ -9679,10 +11304,10 @@ func (ec *executionContext) _NotificationsConnection_edges(ctx context.Context, 
 	}
 	res := resTmp.([]*model.NotificationEdge)
 	fc.Result = res
-	return ec.marshalONotificationEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx, field.Selections, res)
+	return ec.marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationsConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationsConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationsConnection",
 		Field:      field,
@@ -9729,7 +11354,7 @@ func (ec *executionContext) _NotificationsConnection_unseenCount(ctx context.Con
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationsConnection_unseenCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationsConnection_unseenCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationsConnection",
 		Field:      field,
@@ -9767,10 +11392,10 @@ func (ec *executionContext) _NotificationsConnection_pageInfo(ctx context.Contex
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NotificationsConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationsConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NotificationsConnection",
 		Field:      field,
@@ -9820,12 +11445,12 @@ func (ec *executionContext) _OptInForRolesPayload_user(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SplitFiUser)
+	res := resTmp.(*model.MutualsUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OptInForRolesPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OptInForRolesPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OptInForRolesPayload",
 		Field:      field,
@@ -9834,27 +11459,27 @@ func (ec *executionContext) fieldContext_OptInForRolesPayload_user(ctx context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
+				return ec.fieldContext_MutualsUser_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+				return ec.fieldContext_MutualsUser_dbid(ctx, field)
 			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
+				return ec.fieldContext_MutualsUser_username(ctx, field)
 			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+				return ec.fieldContext_MutualsUser_universal(ctx, field)
 			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+				return ec.fieldContext_MutualsUser_roles(ctx, field)
 			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
 			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+				return ec.fieldContext_MutualsUser_splits(ctx, field)
 			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
 			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MutualsUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -9883,12 +11508,12 @@ func (ec *executionContext) _OptOutForRolesPayload_user(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SplitFiUser)
+	res := resTmp.(*model.MutualsUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OptOutForRolesPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OptOutForRolesPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OptOutForRolesPayload",
 		Field:      field,
@@ -9897,27 +11522,27 @@ func (ec *executionContext) fieldContext_OptOutForRolesPayload_user(ctx context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
+				return ec.fieldContext_MutualsUser_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+				return ec.fieldContext_MutualsUser_dbid(ctx, field)
 			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
+				return ec.fieldContext_MutualsUser_username(ctx, field)
 			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+				return ec.fieldContext_MutualsUser_universal(ctx, field)
 			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+				return ec.fieldContext_MutualsUser_roles(ctx, field)
 			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
 			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+				return ec.fieldContext_MutualsUser_splits(ctx, field)
 			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
 			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MutualsUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -9951,7 +11576,7 @@ func (ec *executionContext) _PageInfo_total(ctx context.Context, field graphql.C
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_total(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -9995,7 +11620,7 @@ func (ec *executionContext) _PageInfo_size(ctx context.Context, field graphql.Co
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_size(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -10039,7 +11664,7 @@ func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -10083,7 +11708,7 @@ func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -10127,7 +11752,7 @@ func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_startCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -10171,7 +11796,7 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -10212,10 +11837,10 @@ func (ec *executionContext) _PreverifyEmailPayload_email(ctx context.Context, fi
 	}
 	res := resTmp.(persist.Email)
 	fc.Result = res
-	return ec.marshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
+	return ec.marshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PreverifyEmailPayload_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PreverifyEmailPayload_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PreverifyEmailPayload",
 		Field:      field,
@@ -10256,10 +11881,10 @@ func (ec *executionContext) _PreverifyEmailPayload_result(ctx context.Context, f
 	}
 	res := resTmp.(model.PreverifyEmailResult)
 	fc.Result = res
-	return ec.marshalNPreverifyEmailResult2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx, field.Selections, res)
+	return ec.marshalNPreverifyEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PreverifyEmailPayload_result(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PreverifyEmailPayload_result(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PreverifyEmailPayload",
 		Field:      field,
@@ -10297,10 +11922,10 @@ func (ec *executionContext) _PublishSplitPayload_split(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PublishSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PublishSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PublishSplitPayload",
 		Field:      field,
@@ -10366,7 +11991,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(model.Node)
 	fc.Result = res
-	return ec.marshalONode2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNode(ctx, field.Selections, res)
+	return ec.marshalONode2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10410,9 +12035,11 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().Viewer(rctx)
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				return nil, errors.New("directive authRequired is not implemented")
+				var zeroVal model.ViewerOrError
+				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
 		}
@@ -10427,7 +12054,7 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 		if data, ok := tmp.(model.ViewerOrError); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/SplitFi/go-splitfi/graphql/model.ViewerOrError`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.ViewerOrError`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10438,10 +12065,10 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(model.ViewerOrError)
 	fc.Result = res
-	return ec.marshalOViewerOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerOrError(ctx, field.Selections, res)
+	return ec.marshalOViewerOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerOrError(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -10479,7 +12106,7 @@ func (ec *executionContext) _Query_userByUsername(ctx context.Context, field gra
 	}
 	res := resTmp.(model.UserByUsernameOrError)
 	fc.Result = res
-	return ec.marshalOUserByUsernameOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx, field.Selections, res)
+	return ec.marshalOUserByUsernameOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10531,7 +12158,7 @@ func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.UserByIDOrError)
 	fc.Result = res
-	return ec.marshalOUserByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByIDOrError(ctx, field.Selections, res)
+	return ec.marshalOUserByIdOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserByIDOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10583,7 +12210,7 @@ func (ec *executionContext) _Query_userByAddress(ctx context.Context, field grap
 	}
 	res := resTmp.(model.UserByAddressOrError)
 	fc.Result = res
-	return ec.marshalOUserByAddressOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx, field.Selections, res)
+	return ec.marshalOUserByAddressOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userByAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10635,7 +12262,7 @@ func (ec *executionContext) _Query_splitById(ctx context.Context, field graphql.
 	}
 	res := resTmp.(model.SplitByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_splitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10687,7 +12314,7 @@ func (ec *executionContext) _Query_viewerSplitById(ctx context.Context, field gr
 	}
 	res := resTmp.(model.ViewerSplitByIDPayloadOrError)
 	fc.Result = res
-	return ec.marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_viewerSplitById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10739,7 +12366,7 @@ func (ec *executionContext) _Query_searchUsers(ctx context.Context, field graphq
 	}
 	res := resTmp.(model.SearchUsersPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSearchUsersPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSearchUsersPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10791,7 +12418,7 @@ func (ec *executionContext) _Query_searchSplits(ctx context.Context, field graph
 	}
 	res := resTmp.(model.SearchSplitsPayloadOrError)
 	fc.Result = res
-	return ec.marshalOSearchSplitsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchSplits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10887,13 +12514,16 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Query().UsersByRole(rctx, fc.Args["role"].(persist.Role), fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
 		}
+
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
+			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
 			if err != nil {
-				return nil, err
+				var zeroVal *model.UsersConnection
+				return zeroVal, err
 			}
 			if ec.directives.BasicAuth == nil {
-				return nil, errors.New("directive basicAuth is not implemented")
+				var zeroVal *model.UsersConnection
+				return zeroVal, errors.New("directive basicAuth is not implemented")
 			}
 			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
 		}
@@ -10908,7 +12538,7 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 		if data, ok := tmp.(*model.UsersConnection); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.UsersConnection`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.UsersConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10919,7 +12549,7 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.UsersConnection)
 	fc.Result = res
-	return ec.marshalOUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUsersConnection(ctx, field.Selections, res)
+	return ec.marshalOUsersConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUsersConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_usersByRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10983,7 +12613,7 @@ func (ec *executionContext) _Query__service(ctx context.Context, field graphql.C
 	return ec.marshalN_Service2githubᚗcomᚋ99designsᚋgqlgenᚋpluginᚋfederationᚋfedruntimeᚐService(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query__service(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query__service(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -11102,7 +12732,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -11154,10 +12784,10 @@ func (ec *executionContext) _RegisterUserPushTokenPayload_viewer(ctx context.Con
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RegisterUserPushTokenPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RegisterUserPushTokenPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RegisterUserPushTokenPayload",
 		Field:      field,
@@ -11211,10 +12841,10 @@ func (ec *executionContext) _RemoveUserWalletsPayload_viewer(ctx context.Context
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RemoveUserWalletsPayload",
 		Field:      field,
@@ -11268,10 +12898,10 @@ func (ec *executionContext) _ResendVerificationEmailPayload_viewer(ctx context.C
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ResendVerificationEmailPayload",
 		Field:      field,
@@ -11325,10 +12955,10 @@ func (ec *executionContext) _SearchSplitsPayload_results(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.SplitSearchResult)
 	fc.Result = res
-	return ec.marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchSplitsPayload_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchSplitsPayload_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SearchSplitsPayload",
 		Field:      field,
@@ -11370,10 +13000,10 @@ func (ec *executionContext) _SearchUsersPayload_results(ctx context.Context, fie
 	}
 	res := resTmp.([]*model.UserSearchResult)
 	fc.Result = res
-	return ec.marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchUsersPayload_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchUsersPayload_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SearchUsersPayload",
 		Field:      field,
@@ -11418,10 +13048,10 @@ func (ec *executionContext) _Split_id(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11462,10 +13092,10 @@ func (ec *executionContext) _Split_dbid(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11506,7 +13136,7 @@ func (ec *executionContext) _Split_version(ctx context.Context, field graphql.Co
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11547,10 +13177,10 @@ func (ec *executionContext) _Split_status(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(model.SplitStatus)
 	fc.Result = res
-	return ec.marshalNSplitStatus2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitStatus(ctx, field.Selections, res)
+	return ec.marshalNSplitStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11591,7 +13221,7 @@ func (ec *executionContext) _Split_name(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11632,7 +13262,7 @@ func (ec *executionContext) _Split_description(ctx context.Context, field graphq
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11670,10 +13300,10 @@ func (ec *executionContext) _Split_address(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*persist.Address)
 	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11711,10 +13341,10 @@ func (ec *executionContext) _Split_ownerAddress(ctx context.Context, field graph
 	}
 	res := resTmp.(*persist.Address)
 	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_ownerAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_ownerAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11752,10 +13382,10 @@ func (ec *executionContext) _Split_creatorAddress(ctx context.Context, field gra
 	}
 	res := resTmp.(*persist.Address)
 	fc.Result = res
-	return ec.marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+	return ec.marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_creatorAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_creatorAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11793,10 +13423,10 @@ func (ec *executionContext) _Split_chain(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11834,10 +13464,10 @@ func (ec *executionContext) _Split_allocationAggregation(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.AllocationAggregation)
 	fc.Result = res
-	return ec.marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx, field.Selections, res)
+	return ec.marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_allocationAggregation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_allocationAggregation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11893,10 +13523,10 @@ func (ec *executionContext) _Split_allocations(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Allocation)
 	fc.Result = res
-	return ec.marshalOAllocation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx, field.Selections, res)
+	return ec.marshalOAllocation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocation(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Split_allocations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Split_allocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Split",
 		Field:      field,
@@ -11952,7 +13582,7 @@ func (ec *executionContext) _Split_assets(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model.Asset)
 	fc.Result = res
-	return ec.marshalOAsset2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAsset(ctx, field.Selections, res)
+	return ec.marshalOAsset2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAsset(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Split_assets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11993,495 +13623,6 @@ func (ec *executionContext) fieldContext_Split_assets(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _SplitFiUser_id(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_dbid(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_username(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_username(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Username, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_username(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_universal(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_universal(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Universal, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_universal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_roles(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_roles(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().Roles(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*persist.Role)
-	fc.Result = res
-	return ec.marshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_roles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Role does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_wallets(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_wallets(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().Wallets(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Wallet)
-	fc.Result = res
-	return ec.marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_wallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Wallet_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Wallet_dbid(ctx, field)
-			case "chainAddress":
-				return ec.fieldContext_Wallet_chainAddress(ctx, field)
-			case "chain":
-				return ec.fieldContext_Wallet_chain(ctx, field)
-			case "walletType":
-				return ec.fieldContext_Wallet_walletType(ctx, field)
-			case "splits":
-				return ec.fieldContext_Wallet_splits(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_primaryWallet(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().PrimaryWallet(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Wallet)
-	fc.Result = res
-	return ec.marshalOWallet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_primaryWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Wallet_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Wallet_dbid(ctx, field)
-			case "chainAddress":
-				return ec.fieldContext_Wallet_chainAddress(ctx, field)
-			case "chain":
-				return ec.fieldContext_Wallet_chain(ctx, field)
-			case "walletType":
-				return ec.fieldContext_Wallet_walletType(ctx, field)
-			case "splits":
-				return ec.fieldContext_Wallet_splits(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_splits(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_splits(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().Splits(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Split)
-	fc.Result = res
-	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_splits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Split_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Split_dbid(ctx, field)
-			case "version":
-				return ec.fieldContext_Split_version(ctx, field)
-			case "status":
-				return ec.fieldContext_Split_status(ctx, field)
-			case "name":
-				return ec.fieldContext_Split_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Split_description(ctx, field)
-			case "address":
-				return ec.fieldContext_Split_address(ctx, field)
-			case "ownerAddress":
-				return ec.fieldContext_Split_ownerAddress(ctx, field)
-			case "creatorAddress":
-				return ec.fieldContext_Split_creatorAddress(ctx, field)
-			case "chain":
-				return ec.fieldContext_Split_chain(ctx, field)
-			case "allocationAggregation":
-				return ec.fieldContext_Split_allocationAggregation(ctx, field)
-			case "allocations":
-				return ec.fieldContext_Split_allocations(ctx, field)
-			case "assets":
-				return ec.fieldContext_Split_assets(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Split", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_splitsByChain(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SplitFiUser().SplitsByChain(rctx, obj, fc.Args["chain"].(persist.Chain))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.ChainSplits)
-	fc.Result = res
-	return ec.marshalOChainSplits2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐChainSplits(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_splitsByChain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "chain":
-				return ec.fieldContext_ChainSplits_chain(ctx, field)
-			case "splits":
-				return ec.fieldContext_ChainSplits_splits(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ChainSplits", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_SplitFiUser_splitsByChain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SplitFiUser_isAuthenticatedUser(ctx context.Context, field graphql.CollectedField, obj *model.SplitFiUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsAuthenticatedUser, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SplitFiUser_isAuthenticatedUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SplitFiUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SplitSearchResult_split(ctx context.Context, field graphql.CollectedField, obj *model.SplitSearchResult) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SplitSearchResult_split(ctx, field)
 	if err != nil {
@@ -12507,10 +13648,10 @@ func (ec *executionContext) _SplitSearchResult_split(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SplitSearchResult_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SplitSearchResult_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SplitSearchResult",
 		Field:      field,
@@ -12584,7 +13725,7 @@ func (ec *executionContext) _Subscription_newNotification(ctx context.Context, f
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -12593,7 +13734,7 @@ func (ec *executionContext) _Subscription_newNotification(ctx context.Context, f
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_newNotification(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_newNotification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -12639,7 +13780,7 @@ func (ec *executionContext) _Subscription_notificationUpdated(ctx context.Contex
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -12648,7 +13789,7 @@ func (ec *executionContext) _Subscription_notificationUpdated(ctx context.Contex
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_notificationUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_notificationUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -12689,10 +13830,10 @@ func (ec *executionContext) _Token_id(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -12733,10 +13874,10 @@ func (ec *executionContext) _Token_dbid(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -12777,7 +13918,7 @@ func (ec *executionContext) _Token_version(ctx context.Context, field graphql.Co
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_version(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -12818,7 +13959,7 @@ func (ec *executionContext) _Token_creationTime(ctx context.Context, field graph
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -12859,7 +14000,7 @@ func (ec *executionContext) _Token_lastUpdated(ctx context.Context, field graphq
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_lastUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_lastUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -12897,10 +14038,10 @@ func (ec *executionContext) _Token_tokenType(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.TokenType)
 	fc.Result = res
-	return ec.marshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenType(ctx, field.Selections, res)
+	return ec.marshalOTokenType2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_tokenType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_tokenType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -12938,10 +14079,10 @@ func (ec *executionContext) _Token_chain(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -12982,7 +14123,7 @@ func (ec *executionContext) _Token_name(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13023,7 +14164,7 @@ func (ec *executionContext) _Token_symbol(ctx context.Context, field graphql.Col
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_symbol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_symbol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13064,7 +14205,7 @@ func (ec *executionContext) _Token_decimals(ctx context.Context, field graphql.C
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_decimals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_decimals(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13105,7 +14246,7 @@ func (ec *executionContext) _Token_logo(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_logo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_logo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13146,7 +14287,7 @@ func (ec *executionContext) _Token_totalSupply(ctx context.Context, field graphq
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_totalSupply(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_totalSupply(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13187,7 +14328,7 @@ func (ec *executionContext) _Token_contractAddress(ctx context.Context, field gr
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_contractAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_contractAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13228,7 +14369,7 @@ func (ec *executionContext) _Token_blockNumber(ctx context.Context, field graphq
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_blockNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_blockNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13269,7 +14410,7 @@ func (ec *executionContext) _Token_isSpam(ctx context.Context, field graphql.Col
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_isSpam(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_isSpam(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
@@ -13307,10 +14448,10 @@ func (ec *executionContext) _UnregisterUserPushTokenPayload_viewer(ctx context.C
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UnregisterUserPushTokenPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UnregisterUserPushTokenPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UnregisterUserPushTokenPayload",
 		Field:      field,
@@ -13364,10 +14505,10 @@ func (ec *executionContext) _UnsubscribeFromEmailTypePayload_viewer(ctx context.
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UnsubscribeFromEmailTypePayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UnsubscribeFromEmailTypePayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UnsubscribeFromEmailTypePayload",
 		Field:      field,
@@ -13421,10 +14562,10 @@ func (ec *executionContext) _UpdateEmailNotificationSettingsPayload_viewer(ctx c
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateEmailNotificationSettingsPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateEmailNotificationSettingsPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdateEmailNotificationSettingsPayload",
 		Field:      field,
@@ -13478,10 +14619,10 @@ func (ec *executionContext) _UpdateEmailPayload_viewer(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdateEmailPayload",
 		Field:      field,
@@ -13535,10 +14676,10 @@ func (ec *executionContext) _UpdatePrimaryWalletPayload_viewer(ctx context.Conte
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdatePrimaryWalletPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdatePrimaryWalletPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdatePrimaryWalletPayload",
 		Field:      field,
@@ -13592,10 +14733,10 @@ func (ec *executionContext) _UpdateSplitHiddenPayload_split(ctx context.Context,
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateSplitHiddenPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateSplitHiddenPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdateSplitHiddenPayload",
 		Field:      field,
@@ -13661,10 +14802,10 @@ func (ec *executionContext) _UpdateSplitOrderPayload_viewer(ctx context.Context,
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateSplitOrderPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateSplitOrderPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdateSplitOrderPayload",
 		Field:      field,
@@ -13718,10 +14859,10 @@ func (ec *executionContext) _UpdateSplitPayload_split(ctx context.Context, field
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdateSplitPayload",
 		Field:      field,
@@ -13787,10 +14928,10 @@ func (ec *executionContext) _UpdateUserExperiencePayload_viewer(ctx context.Cont
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateUserExperiencePayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateUserExperiencePayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdateUserExperiencePayload",
 		Field:      field,
@@ -13844,10 +14985,10 @@ func (ec *executionContext) _UpdateUserInfoPayload_viewer(ctx context.Context, f
 	}
 	res := resTmp.(*model.Viewer)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateUserInfoPayload_viewer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateUserInfoPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpdateUserInfoPayload",
 		Field:      field,
@@ -13904,7 +15045,7 @@ func (ec *executionContext) _UploadPersistedQueriesPayload_message(ctx context.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UploadPersistedQueriesPayload_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UploadPersistedQueriesPayload_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UploadPersistedQueriesPayload",
 		Field:      field,
@@ -13942,10 +15083,10 @@ func (ec *executionContext) _UpsertSplitPayload_split(ctx context.Context, field
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpsertSplitPayload_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpsertSplitPayload_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UpsertSplitPayload",
 		Field:      field,
@@ -14009,12 +15150,12 @@ func (ec *executionContext) _UserEdge_node(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SplitFiUser)
+	res := resTmp.(*model.MutualsUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserEdge",
 		Field:      field,
@@ -14023,27 +15164,27 @@ func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
+				return ec.fieldContext_MutualsUser_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+				return ec.fieldContext_MutualsUser_dbid(ctx, field)
 			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
+				return ec.fieldContext_MutualsUser_username(ctx, field)
 			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+				return ec.fieldContext_MutualsUser_universal(ctx, field)
 			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+				return ec.fieldContext_MutualsUser_roles(ctx, field)
 			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
 			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+				return ec.fieldContext_MutualsUser_splits(ctx, field)
 			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
 			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MutualsUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -14077,7 +15218,7 @@ func (ec *executionContext) _UserEdge_cursor(ctx context.Context, field graphql.
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserEdge",
 		Field:      field,
@@ -14115,10 +15256,10 @@ func (ec *executionContext) _UserEmail_email(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*persist.Email)
 	fc.Result = res
-	return ec.marshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
+	return ec.marshalOEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserEmail_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserEmail_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserEmail",
 		Field:      field,
@@ -14156,10 +15297,10 @@ func (ec *executionContext) _UserEmail_verificationStatus(ctx context.Context, f
 	}
 	res := resTmp.(*persist.EmailVerificationStatus)
 	fc.Result = res
-	return ec.marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmailVerificationStatus(ctx, field.Selections, res)
+	return ec.marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmailVerificationStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserEmail_verificationStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserEmail_verificationStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserEmail",
 		Field:      field,
@@ -14197,10 +15338,10 @@ func (ec *executionContext) _UserEmail_emailNotificationSettings(ctx context.Con
 	}
 	res := resTmp.(*model.EmailNotificationSettings)
 	fc.Result = res
-	return ec.marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx, field.Selections, res)
+	return ec.marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserEmail_emailNotificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserEmail_emailNotificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserEmail",
 		Field:      field,
@@ -14247,10 +15388,10 @@ func (ec *executionContext) _UserExperience_type(ctx context.Context, field grap
 	}
 	res := resTmp.(model.UserExperienceType)
 	fc.Result = res
-	return ec.marshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx, field.Selections, res)
+	return ec.marshalNUserExperienceType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperienceType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserExperience_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserExperience_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserExperience",
 		Field:      field,
@@ -14294,7 +15435,7 @@ func (ec *executionContext) _UserExperience_experienced(ctx context.Context, fie
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserExperience_experienced(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserExperience_experienced(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserExperience",
 		Field:      field,
@@ -14330,12 +15471,12 @@ func (ec *executionContext) _UserSearchResult_user(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SplitFiUser)
+	res := resTmp.(*model.MutualsUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserSearchResult_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserSearchResult_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserSearchResult",
 		Field:      field,
@@ -14344,27 +15485,27 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
+				return ec.fieldContext_MutualsUser_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+				return ec.fieldContext_MutualsUser_dbid(ctx, field)
 			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
+				return ec.fieldContext_MutualsUser_username(ctx, field)
 			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+				return ec.fieldContext_MutualsUser_universal(ctx, field)
 			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+				return ec.fieldContext_MutualsUser_roles(ctx, field)
 			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
 			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+				return ec.fieldContext_MutualsUser_splits(ctx, field)
 			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
 			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MutualsUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -14395,10 +15536,10 @@ func (ec *executionContext) _UsersConnection_edges(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.UserEdge)
 	fc.Result = res
-	return ec.marshalOUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx, field.Selections, res)
+	return ec.marshalOUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UsersConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UsersConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UsersConnection",
 		Field:      field,
@@ -14445,10 +15586,10 @@ func (ec *executionContext) _UsersConnection_pageInfo(ctx context.Context, field
 	}
 	res := resTmp.(*model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UsersConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UsersConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UsersConnection",
 		Field:      field,
@@ -14506,7 +15647,7 @@ func (ec *executionContext) _VerifyEmailMagicLinkPayload_canSend(ctx context.Con
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VerifyEmailMagicLinkPayload_canSend(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VerifyEmailMagicLinkPayload_canSend(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VerifyEmailMagicLinkPayload",
 		Field:      field,
@@ -14547,10 +15688,10 @@ func (ec *executionContext) _VerifyEmailPayload_email(ctx context.Context, field
 	}
 	res := resTmp.(persist.Email)
 	fc.Result = res
-	return ec.marshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
+	return ec.marshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VerifyEmailPayload_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VerifyEmailPayload_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VerifyEmailPayload",
 		Field:      field,
@@ -14591,10 +15732,10 @@ func (ec *executionContext) _Viewer_id(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -14630,12 +15771,12 @@ func (ec *executionContext) _Viewer_user(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SplitFiUser)
+	res := resTmp.(*model.MutualsUser)
 	fc.Result = res
-	return ec.marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx, field.Selections, res)
+	return ec.marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -14644,27 +15785,27 @@ func (ec *executionContext) fieldContext_Viewer_user(ctx context.Context, field 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SplitFiUser_id(ctx, field)
+				return ec.fieldContext_MutualsUser_id(ctx, field)
 			case "dbid":
-				return ec.fieldContext_SplitFiUser_dbid(ctx, field)
+				return ec.fieldContext_MutualsUser_dbid(ctx, field)
 			case "username":
-				return ec.fieldContext_SplitFiUser_username(ctx, field)
+				return ec.fieldContext_MutualsUser_username(ctx, field)
 			case "universal":
-				return ec.fieldContext_SplitFiUser_universal(ctx, field)
+				return ec.fieldContext_MutualsUser_universal(ctx, field)
 			case "roles":
-				return ec.fieldContext_SplitFiUser_roles(ctx, field)
+				return ec.fieldContext_MutualsUser_roles(ctx, field)
 			case "wallets":
-				return ec.fieldContext_SplitFiUser_wallets(ctx, field)
+				return ec.fieldContext_MutualsUser_wallets(ctx, field)
 			case "primaryWallet":
-				return ec.fieldContext_SplitFiUser_primaryWallet(ctx, field)
+				return ec.fieldContext_MutualsUser_primaryWallet(ctx, field)
 			case "splits":
-				return ec.fieldContext_SplitFiUser_splits(ctx, field)
+				return ec.fieldContext_MutualsUser_splits(ctx, field)
 			case "splitsByChain":
-				return ec.fieldContext_SplitFiUser_splitsByChain(ctx, field)
+				return ec.fieldContext_MutualsUser_splitsByChain(ctx, field)
 			case "isAuthenticatedUser":
-				return ec.fieldContext_SplitFiUser_isAuthenticatedUser(ctx, field)
+				return ec.fieldContext_MutualsUser_isAuthenticatedUser(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SplitFiUser", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MutualsUser", field.Name)
 		},
 	}
 	return fc, nil
@@ -14695,10 +15836,10 @@ func (ec *executionContext) _Viewer_viewerSplits(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.ViewerSplit)
 	fc.Result = res
-	return ec.marshalOViewerSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx, field.Selections, res)
+	return ec.marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_viewerSplits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_viewerSplits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -14740,10 +15881,10 @@ func (ec *executionContext) _Viewer_email(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.UserEmail)
 	fc.Result = res
-	return ec.marshalOUserEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEmail(ctx, field.Selections, res)
+	return ec.marshalOUserEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEmail(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -14789,7 +15930,7 @@ func (ec *executionContext) _Viewer_notifications(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.NotificationsConnection)
 	fc.Result = res
-	return ec.marshalONotificationsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationsConnection(ctx, field.Selections, res)
+	return ec.marshalONotificationsConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationsConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Viewer_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14849,10 +15990,10 @@ func (ec *executionContext) _Viewer_notificationSettings(ctx context.Context, fi
 	}
 	res := resTmp.(*model.NotificationSettings)
 	fc.Result = res
-	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
+	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_notificationSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_notificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -14894,10 +16035,10 @@ func (ec *executionContext) _Viewer_userExperiences(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.UserExperience)
 	fc.Result = res
-	return ec.marshalOUserExperience2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx, field.Selections, res)
+	return ec.marshalOUserExperience2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Viewer_userExperiences(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Viewer_userExperiences(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Viewer",
 		Field:      field,
@@ -14941,10 +16082,10 @@ func (ec *executionContext) _ViewerSplit_split(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ViewerSplit_split(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ViewerSplit_split(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ViewerSplit",
 		Field:      field,
@@ -15013,10 +16154,10 @@ func (ec *executionContext) _Wallet_id(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.GqlID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Wallet_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Wallet_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Wallet",
 		Field:      field,
@@ -15057,10 +16198,10 @@ func (ec *executionContext) _Wallet_dbid(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(persist.DBID)
 	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Wallet_dbid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Wallet_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Wallet",
 		Field:      field,
@@ -15098,10 +16239,10 @@ func (ec *executionContext) _Wallet_chainAddress(ctx context.Context, field grap
 	}
 	res := resTmp.(*persist.ChainAddress)
 	fc.Result = res
-	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
+	return ec.marshalOChainAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Wallet_chainAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Wallet_chainAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Wallet",
 		Field:      field,
@@ -15145,10 +16286,10 @@ func (ec *executionContext) _Wallet_chain(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*persist.Chain)
 	fc.Result = res
-	return ec.marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Wallet_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Wallet_chain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Wallet",
 		Field:      field,
@@ -15186,10 +16327,10 @@ func (ec *executionContext) _Wallet_walletType(ctx context.Context, field graphq
 	}
 	res := resTmp.(*persist.WalletType)
 	fc.Result = res
-	return ec.marshalOWalletType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx, field.Selections, res)
+	return ec.marshalOWalletType2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐWalletType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Wallet_walletType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Wallet_walletType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Wallet",
 		Field:      field,
@@ -15227,10 +16368,10 @@ func (ec *executionContext) _Wallet_splits(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Split)
 	fc.Result = res
-	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
+	return ec.marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Wallet_splits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Wallet_splits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Wallet",
 		Field:      field,
@@ -15299,7 +16440,7 @@ func (ec *executionContext) __Service_sdl(ctx context.Context, field graphql.Col
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext__Service_sdl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext__Service_sdl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "_Service",
 		Field:      field,
@@ -15343,7 +16484,7 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -15384,7 +16525,7 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -15428,7 +16569,7 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 	return ec.marshalN__DirectiveLocation2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_locations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_locations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -15472,7 +16613,7 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -15526,7 +16667,7 @@ func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -15570,7 +16711,7 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -15611,7 +16752,7 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -15655,7 +16796,7 @@ func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_isDeprecated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -15696,7 +16837,7 @@ func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_deprecationReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -15740,7 +16881,7 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -15781,7 +16922,7 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -15825,7 +16966,7 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -15879,7 +17020,7 @@ func (ec *executionContext) ___Field_type(ctx context.Context, field graphql.Col
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -15945,7 +17086,7 @@ func (ec *executionContext) ___Field_isDeprecated(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_isDeprecated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -15986,7 +17127,7 @@ func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_deprecationReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -16030,7 +17171,7 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -16071,7 +17212,7 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -16115,7 +17256,7 @@ func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphq
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -16178,7 +17319,7 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_defaultValue(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_defaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -16219,7 +17360,7 @@ func (ec *executionContext) ___Schema_description(ctx context.Context, field gra
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -16263,7 +17404,7 @@ func (ec *executionContext) ___Schema_types(ctx context.Context, field graphql.C
 	return ec.marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_types(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -16329,7 +17470,7 @@ func (ec *executionContext) ___Schema_queryType(ctx context.Context, field graph
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_queryType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -16392,7 +17533,7 @@ func (ec *executionContext) ___Schema_mutationType(ctx context.Context, field gr
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_mutationType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -16455,7 +17596,7 @@ func (ec *executionContext) ___Schema_subscriptionType(ctx context.Context, fiel
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_subscriptionType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -16521,7 +17662,7 @@ func (ec *executionContext) ___Schema_directives(ctx context.Context, field grap
 	return ec.marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirectiveᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_directives(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_directives(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -16577,7 +17718,7 @@ func (ec *executionContext) ___Type_kind(ctx context.Context, field graphql.Coll
 	return ec.marshalN__TypeKind2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -16618,7 +17759,7 @@ func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -16659,7 +17800,7 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -16766,7 +17907,7 @@ func (ec *executionContext) ___Type_interfaces(ctx context.Context, field graphq
 	return ec.marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_interfaces(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -16829,7 +17970,7 @@ func (ec *executionContext) ___Type_possibleTypes(ctx context.Context, field gra
 	return ec.marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_possibleTypes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -16954,7 +18095,7 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 	return ec.marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_inputFields(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_inputFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -17005,7 +18146,7 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_ofType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -17068,7 +18209,7 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -17108,14 +18249,14 @@ func (ec *executionContext) unmarshalInputAdminAddWalletInput(ctx context.Contex
 			it.Username = data
 		case "chainAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-			data, err := ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, v)
+			data, err := ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ChainAddress = data
 		case "walletType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletType"))
-			data, err := ec.unmarshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx, v)
+			data, err := ec.unmarshalNWalletType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐWalletType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17142,14 +18283,14 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 		switch k {
 		case "eoa":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eoa"))
-			data, err := ec.unmarshalOEoaAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEoaAuth(ctx, v)
+			data, err := ec.unmarshalOEoaAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEoaAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Eoa = data
 		case "gnosisSafe":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gnosisSafe"))
-			data, err := ec.unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx, v)
+			data, err := ec.unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17157,15 +18298,18 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 		case "debug":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugAuth(ctx, v)
+				return ec.unmarshalODebugAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDebugAuth(ctx, v)
 			}
+
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
 				if err != nil {
-					return nil, err
+					var zeroVal *model.DebugAuth
+					return zeroVal, err
 				}
 				if ec.directives.RestrictEnvironment == nil {
-					return nil, errors.New("directive restrictEnvironment is not implemented")
+					var zeroVal *model.DebugAuth
+					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
 				}
 				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
 			}
@@ -17179,26 +18323,26 @@ func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj
 			} else if tmp == nil {
 				it.Debug = nil
 			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/graphql/model.DebugAuth`, tmp)
+				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.DebugAuth`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "magicLink":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("magicLink"))
-			data, err := ec.unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx, v)
+			data, err := ec.unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.MagicLink = data
 		case "oneTimeLoginToken":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("oneTimeLoginToken"))
-			data, err := ec.unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOneTimeLoginTokenAuth(ctx, v)
+			data, err := ec.unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOneTimeLoginTokenAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.OneTimeLoginToken = data
 		case "privy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privy"))
-			data, err := ec.unmarshalOPrivyAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPrivyAuth(ctx, v)
+			data, err := ec.unmarshalOPrivyAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPrivyAuth(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17225,7 +18369,7 @@ func (ec *executionContext) unmarshalInputChainAddressInput(ctx context.Context,
 		switch k {
 		case "address":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
+			data, err := ec.unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17234,7 +18378,7 @@ func (ec *executionContext) unmarshalInputChainAddressInput(ctx context.Context,
 			}
 		case "chain":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
+			data, err := ec.unmarshalNChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17263,7 +18407,7 @@ func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, 
 		switch k {
 		case "pubKey":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pubKey"))
-			data, err := ec.unmarshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx, v)
+			data, err := ec.unmarshalNPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17272,7 +18416,7 @@ func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, 
 			}
 		case "chain":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-			data, err := ec.unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx, v)
+			data, err := ec.unmarshalNChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17349,7 +18493,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			it.Username = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
+			data, err := ec.unmarshalOEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17377,13 +18521,16 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 		case "asUsername":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("asUsername"))
 			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
+
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
 				if err != nil {
-					return nil, err
+					var zeroVal *string
+					return zeroVal, err
 				}
 				if ec.directives.RestrictEnvironment == nil {
-					return nil, errors.New("directive restrictEnvironment is not implemented")
+					var zeroVal *string
+					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
 				}
 				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
 			}
@@ -17403,15 +18550,18 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 		case "userId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+				return ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			}
+
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
 				if err != nil {
-					return nil, err
+					var zeroVal *persist.DBID
+					return zeroVal, err
 				}
 				if ec.directives.RestrictEnvironment == nil {
-					return nil, errors.New("directive restrictEnvironment is not implemented")
+					var zeroVal *persist.DBID
+					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
 				}
 				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
 			}
@@ -17425,21 +18575,24 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 			} else if tmp == nil {
 				it.UserID = nil
 			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/SplitFi/go-splitfi/service/persist.DBID`, tmp)
+				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/service/persist.DBID`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "chainAddresses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddresses"))
 			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx, v)
+				return ec.unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddressᚄ(ctx, v)
 			}
+
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
 				if err != nil {
-					return nil, err
+					var zeroVal []*persist.ChainAddress
+					return zeroVal, err
 				}
 				if ec.directives.RestrictEnvironment == nil {
-					return nil, errors.New("directive restrictEnvironment is not implemented")
+					var zeroVal []*persist.ChainAddress
+					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
 				}
 				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
 			}
@@ -17453,19 +18606,22 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 			} else if tmp == nil {
 				it.ChainAddresses = nil
 			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be []*github.com/SplitFi/go-splitfi/service/persist.ChainAddress`, tmp)
+				err := fmt.Errorf(`unexpected type %T from directive, should be []*github.com/mutuals/go-mutuals/service/persist.ChainAddress`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "debugToolsPassword":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debugToolsPassword"))
 			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
+
 			directive1 := func(ctx context.Context) (interface{}, error) {
 				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
 				if err != nil {
-					return nil, err
+					var zeroVal *string
+					return zeroVal, err
 				}
 				if ec.directives.RestrictEnvironment == nil {
-					return nil, errors.New("directive restrictEnvironment is not implemented")
+					var zeroVal *string
+					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
 				}
 				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
 			}
@@ -17504,7 +18660,7 @@ func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj inter
 		switch k {
 		case "chainPubKey":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainPubKey"))
-			data, err := ec.unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainPubKey(ctx, v)
+			data, err := ec.unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainPubKey(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17552,7 +18708,7 @@ func (ec *executionContext) unmarshalInputGnosisSafeAuth(ctx context.Context, ob
 		switch k {
 		case "address":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
+			data, err := ec.unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17674,7 +18830,7 @@ func (ec *executionContext) unmarshalInputPreverifyEmailInput(ctx context.Contex
 		switch k {
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
+			data, err := ec.unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17728,7 +18884,7 @@ func (ec *executionContext) unmarshalInputPublishSplitInput(ctx context.Context,
 		switch k {
 		case "splitId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17769,42 +18925,42 @@ func (ec *executionContext) unmarshalInputSplitAllocationInput(ctx context.Conte
 		switch k {
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ID = data
 		case "recipientAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
-			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx, v)
+			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.RecipientAddress = data
 		case "calculationType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("calculationType"))
-			data, err := ec.unmarshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx, v)
+			data, err := ec.unmarshalNCalculationType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.CalculationType = data
 		case "recipientType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientType"))
-			data, err := ec.unmarshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx, v)
+			data, err := ec.unmarshalNRecipientType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.RecipientType = data
 		case "value":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNHexString2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx, v)
+			data, err := ec.unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Value = data
 		case "children":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
-			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
+			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17831,7 +18987,7 @@ func (ec *executionContext) unmarshalInputSplitPositionInput(ctx context.Context
 		switch k {
 		case "splitId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17865,7 +19021,7 @@ func (ec *executionContext) unmarshalInputUnsubscribeFromEmailTypeInput(ctx cont
 		switch k {
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx, v)
+			data, err := ec.unmarshalNEmailUnsubscriptionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17899,14 +19055,14 @@ func (ec *executionContext) unmarshalInputUpdateEmailInput(ctx context.Context, 
 		switch k {
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
+			data, err := ec.unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Email = data
 		case "authMechanism":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-			data, err := ec.unmarshalOAuthMechanism2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx, v)
+			data, err := ec.unmarshalOAuthMechanism2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17967,7 +19123,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitHiddenInput(ctx context.Con
 		switch k {
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18001,7 +19157,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInfoInput(ctx context.Conte
 		switch k {
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18042,7 +19198,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 		switch k {
 		case "splitId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18063,7 +19219,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitInput(ctx context.Context, 
 			it.Description = data
 		case "order":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18097,7 +19253,7 @@ func (ec *executionContext) unmarshalInputUpdateSplitOrderInput(ctx context.Cont
 		switch k {
 		case "positions":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("positions"))
-			data, err := ec.unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx, v)
+			data, err := ec.unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18124,7 +19280,7 @@ func (ec *executionContext) unmarshalInputUpdateUserExperienceInput(ctx context.
 		switch k {
 		case "experienceType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("experienceType"))
-			data, err := ec.unmarshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx, v)
+			data, err := ec.unmarshalNUserExperienceType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperienceType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18212,7 +19368,7 @@ func (ec *executionContext) unmarshalInputUpsertSplitInput(ctx context.Context, 
 		switch k {
 		case "splitId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitId"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18233,7 +19389,7 @@ func (ec *executionContext) unmarshalInputUpsertSplitInput(ctx context.Context, 
 			it.Description = data
 		case "allocations":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocations"))
-			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
+			data, err := ec.unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18287,7 +19443,7 @@ func (ec *executionContext) unmarshalInputVerifyEmailMagicLinkInput(ctx context.
 		switch k {
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx, v)
+			data, err := ec.unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18306,13 +19462,13 @@ func (ec *executionContext) _AddRolesToUserPayloadOrError(ctx context.Context, s
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SplitFiUser(ctx, sel, obj)
+		return ec._MutualsUser(ctx, sel, obj)
 	case model.ErrNotAuthorized:
 		return ec._ErrNotAuthorized(ctx, sel, &obj)
 	case *model.ErrNotAuthorized:
@@ -18737,6 +19893,50 @@ func (ec *executionContext) _LoginPayloadOrError(ctx context.Context, sel ast.Se
 	}
 }
 
+func (ec *executionContext) _MutualsUserOrAddress(ctx context.Context, sel ast.SelectionSet, obj model.MutualsUserOrAddress) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._MutualsUser(ctx, sel, obj)
+	case *persist.ChainAddress:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ChainAddress(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _MutualsUserOrWallet(ctx context.Context, sel ast.SelectionSet, obj model.MutualsUserOrWallet) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._MutualsUser(ctx, sel, obj)
+	case model.Wallet:
+		return ec._Wallet(ctx, sel, &obj)
+	case *model.Wallet:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Wallet(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj model.Node) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -18753,13 +19953,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._DeletedNode(ctx, sel, obj)
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SplitFiUser(ctx, sel, obj)
+		return ec._MutualsUser(ctx, sel, obj)
 	case model.Wallet:
 		return ec._Wallet(ctx, sel, &obj)
 	case *model.Wallet:
@@ -19040,13 +20240,13 @@ func (ec *executionContext) _RevokeRolesFromUserPayloadOrError(ctx context.Conte
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SplitFiUser(ctx, sel, obj)
+		return ec._MutualsUser(ctx, sel, obj)
 	case model.ErrNotAuthorized:
 		return ec._ErrNotAuthorized(ctx, sel, &obj)
 	case *model.ErrNotAuthorized:
@@ -19123,50 +20323,6 @@ func (ec *executionContext) _SplitByIdPayloadOrError(ctx context.Context, sel as
 			return graphql.Null
 		}
 		return ec._ErrSplitNotFound(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _SplitFiUserOrAddress(ctx context.Context, sel ast.SelectionSet, obj model.SplitFiUserOrAddress) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SplitFiUser(ctx, sel, obj)
-	case *persist.ChainAddress:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ChainAddress(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _SplitFiUserOrWallet(ctx context.Context, sel ast.SelectionSet, obj model.SplitFiUserOrWallet) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SplitFiUser(ctx, sel, obj)
-	case model.Wallet:
-		return ec._Wallet(ctx, sel, &obj)
-	case *model.Wallet:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Wallet(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -19522,13 +20678,13 @@ func (ec *executionContext) _UserByAddressOrError(ctx context.Context, sel ast.S
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SplitFiUser(ctx, sel, obj)
+		return ec._MutualsUser(ctx, sel, obj)
 	case model.ErrUserNotFound:
 		return ec._ErrUserNotFound(ctx, sel, &obj)
 	case *model.ErrUserNotFound:
@@ -19552,13 +20708,13 @@ func (ec *executionContext) _UserByIdOrError(ctx context.Context, sel ast.Select
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SplitFiUser(ctx, sel, obj)
+		return ec._MutualsUser(ctx, sel, obj)
 	case model.ErrUserNotFound:
 		return ec._ErrUserNotFound(ctx, sel, &obj)
 	case *model.ErrUserNotFound:
@@ -19582,13 +20738,13 @@ func (ec *executionContext) _UserByUsernameOrError(ctx context.Context, sel ast.
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SplitFiUser:
-		return ec._SplitFiUser(ctx, sel, &obj)
-	case *model.SplitFiUser:
+	case model.MutualsUser:
+		return ec._MutualsUser(ctx, sel, &obj)
+	case *model.MutualsUser:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SplitFiUser(ctx, sel, obj)
+		return ec._MutualsUser(ctx, sel, obj)
 	case model.ErrUserNotFound:
 		return ec._ErrUserNotFound(ctx, sel, &obj)
 	case *model.ErrUserNotFound:
@@ -19810,7 +20966,7 @@ func (ec *executionContext) _Allocation(ctx context.Context, sel ast.SelectionSe
 		case "split":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -19897,7 +21053,7 @@ func (ec *executionContext) _AllocationAggregation(ctx context.Context, sel ast.
 		case "split":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -19980,7 +21136,7 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 		case "token":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -20071,7 +21227,7 @@ func (ec *executionContext) _AuthNonce(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
-var chainAddressImplementors = []string{"ChainAddress", "SplitFiUserOrAddress"}
+var chainAddressImplementors = []string{"ChainAddress", "MutualsUserOrAddress"}
 
 func (ec *executionContext) _ChainAddress(ctx context.Context, sel ast.SelectionSet, obj *persist.ChainAddress) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, chainAddressImplementors)
@@ -21374,6 +22530,221 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var mutualsUserImplementors = []string{"MutualsUser", "Node", "MutualsUserOrWallet", "MutualsUserOrAddress", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError"}
+
+func (ec *executionContext) _MutualsUser(ctx context.Context, sel ast.SelectionSet, obj *model.MutualsUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutualsUserImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MutualsUser")
+		case "id":
+			out.Values[i] = ec._MutualsUser_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dbid":
+			out.Values[i] = ec._MutualsUser_dbid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "username":
+			out.Values[i] = ec._MutualsUser_username(ctx, field, obj)
+		case "universal":
+			out.Values[i] = ec._MutualsUser_universal(ctx, field, obj)
+		case "roles":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MutualsUser_roles(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "wallets":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MutualsUser_wallets(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "primaryWallet":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MutualsUser_primaryWallet(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "splits":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MutualsUser_splits(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "splitsByChain":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MutualsUser_splitsByChain(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "isAuthenticatedUser":
+			out.Values[i] = ec._MutualsUser_isAuthenticatedUser(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var notificationEdgeImplementors = []string{"NotificationEdge"}
 
 func (ec *executionContext) _NotificationEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationEdge) graphql.Marshaler {
@@ -21723,7 +23094,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "node":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21742,7 +23113,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "viewer":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21761,7 +23132,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "userByUsername":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21780,7 +23151,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "userById":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21799,7 +23170,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "userByAddress":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21818,7 +23189,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "splitById":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21837,7 +23208,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "viewerSplitById":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21856,7 +23227,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "searchUsers":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21875,7 +23246,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "searchSplits":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21894,7 +23265,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "isEmailAddressAvailable":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -21913,7 +23284,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "usersByRole":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -22205,7 +23576,7 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 		case "allocationAggregation":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -22238,7 +23609,7 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 		case "allocations":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -22271,7 +23642,7 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 		case "assets":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -22301,221 +23672,6 @@ func (ec *executionContext) _Split(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var splitFiUserImplementors = []string{"SplitFiUser", "Node", "SplitFiUserOrWallet", "SplitFiUserOrAddress", "UserByUsernameOrError", "UserByIdOrError", "UserByAddressOrError", "AddRolesToUserPayloadOrError", "RevokeRolesFromUserPayloadOrError"}
-
-func (ec *executionContext) _SplitFiUser(ctx context.Context, sel ast.SelectionSet, obj *model.SplitFiUser) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, splitFiUserImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SplitFiUser")
-		case "id":
-			out.Values[i] = ec._SplitFiUser_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "dbid":
-			out.Values[i] = ec._SplitFiUser_dbid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "username":
-			out.Values[i] = ec._SplitFiUser_username(ctx, field, obj)
-		case "universal":
-			out.Values[i] = ec._SplitFiUser_universal(ctx, field, obj)
-		case "roles":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SplitFiUser_roles(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "wallets":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SplitFiUser_wallets(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "primaryWallet":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SplitFiUser_primaryWallet(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "splits":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SplitFiUser_splits(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "splitsByChain":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SplitFiUser_splitsByChain(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "isAuthenticatedUser":
-			out.Values[i] = ec._SplitFiUser_isAuthenticatedUser(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23155,7 +24311,7 @@ func (ec *executionContext) _UserEmail(ctx context.Context, sel ast.SelectionSet
 		case "emailNotificationSettings":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -23426,7 +24582,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 		case "user":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -23459,7 +24615,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 		case "viewerSplits":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -23492,7 +24648,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 		case "email":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -23525,7 +24681,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 		case "notifications":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -23558,7 +24714,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 		case "notificationSettings":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -23591,7 +24747,7 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 		case "userExperiences":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -23680,7 +24836,7 @@ func (ec *executionContext) _ViewerSplit(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var walletImplementors = []string{"Wallet", "Node", "SplitFiUserOrWallet"}
+var walletImplementors = []string{"Wallet", "Node", "MutualsUserOrWallet"}
 
 func (ec *executionContext) _Wallet(ctx context.Context, sel ast.SelectionSet, obj *model.Wallet) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, walletImplementors)
@@ -23710,7 +24866,7 @@ func (ec *executionContext) _Wallet(ctx context.Context, sel ast.SelectionSet, o
 		case "splits":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -24125,13 +25281,13 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
+func (ec *executionContext) unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Address(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
+func (ec *executionContext) marshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24141,12 +25297,12 @@ func (ec *executionContext) marshalNAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitf
 	return res
 }
 
-func (ec *executionContext) unmarshalNAdminAddWalletInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx context.Context, v interface{}) (model.AdminAddWalletInput, error) {
+func (ec *executionContext) unmarshalNAdminAddWalletInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAdminAddWalletInput(ctx context.Context, v interface{}) (model.AdminAddWalletInput, error) {
 	res, err := ec.unmarshalInputAdminAddWalletInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAllocationAggregation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregation(ctx context.Context, sel ast.SelectionSet, v *model.AllocationAggregation) graphql.Marshaler {
+func (ec *executionContext) marshalNAllocationAggregation2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocationAggregation(ctx context.Context, sel ast.SelectionSet, v *model.AllocationAggregation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24156,12 +25312,12 @@ func (ec *executionContext) marshalNAllocationAggregation2ᚖgithubᚗcomᚋSpli
 	return ec._AllocationAggregation(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNAuthMechanism2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (model.AuthMechanism, error) {
+func (ec *executionContext) unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (model.AuthMechanism, error) {
 	res, err := ec.unmarshalInputAuthMechanism(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAuthorizationError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthorizationError(ctx context.Context, sel ast.SelectionSet, v model.AuthorizationError) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthorizationError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthorizationError(ctx context.Context, sel ast.SelectionSet, v model.AuthorizationError) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24171,13 +25327,13 @@ func (ec *executionContext) marshalNAuthorizationError2githubᚗcomᚋSplitFiᚋ
 	return ec._AuthorizationError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx context.Context, v interface{}) (basicauth.AuthTokenType, error) {
+func (ec *executionContext) unmarshalNBasicAuthType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx context.Context, v interface{}) (basicauth.AuthTokenType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := basicauth.AuthTokenType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx context.Context, sel ast.SelectionSet, v basicauth.AuthTokenType) graphql.Marshaler {
+func (ec *executionContext) marshalNBasicAuthType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx context.Context, sel ast.SelectionSet, v basicauth.AuthTokenType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24187,7 +25343,7 @@ func (ec *executionContext) marshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑ
 	return res
 }
 
-func (ec *executionContext) unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx context.Context, v interface{}) ([]basicauth.AuthTokenType, error) {
+func (ec *executionContext) unmarshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx context.Context, v interface{}) ([]basicauth.AuthTokenType, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -24196,7 +25352,7 @@ func (ec *executionContext) unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋ
 	res := make([]basicauth.AuthTokenType, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNBasicAuthType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24204,7 +25360,7 @@ func (ec *executionContext) unmarshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋ
 	return res, nil
 }
 
-func (ec *executionContext) marshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []basicauth.AuthTokenType) graphql.Marshaler {
+func (ec *executionContext) marshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []basicauth.AuthTokenType) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24228,7 +25384,7 @@ func (ec *executionContext) marshalNBasicAuthType2ᚕgithubᚗcomᚋSplitFiᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBasicAuthType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx, sel, v[i])
+			ret[i] = ec.marshalNBasicAuthType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenType(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24263,17 +25419,17 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx context.Context, v interface{}) (persist.CalculationType, error) {
+func (ec *executionContext) unmarshalNCalculationType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationType(ctx context.Context, v interface{}) (persist.CalculationType, error) {
 	var res persist.CalculationType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx context.Context, sel ast.SelectionSet, v persist.CalculationType) graphql.Marshaler {
+func (ec *executionContext) marshalNCalculationType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationType(ctx context.Context, sel ast.SelectionSet, v persist.CalculationType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx context.Context, v interface{}) ([]persist.CalculationType, error) {
+func (ec *executionContext) unmarshalNCalculationType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx context.Context, v interface{}) ([]persist.CalculationType, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -24282,7 +25438,7 @@ func (ec *executionContext) unmarshalNCalculationType2ᚕgithubᚗcomᚋSplitFi�
 	res := make([]persist.CalculationType, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNCalculationType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationType(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24290,7 +25446,7 @@ func (ec *executionContext) unmarshalNCalculationType2ᚕgithubᚗcomᚋSplitFi�
 	return res, nil
 }
 
-func (ec *executionContext) marshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.CalculationType) graphql.Marshaler {
+func (ec *executionContext) marshalNCalculationType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.CalculationType) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24314,7 +25470,7 @@ func (ec *executionContext) marshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCalculationType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐCalculationType(ctx, sel, v[i])
+			ret[i] = ec.marshalNCalculationType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCalculationType(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24334,48 +25490,48 @@ func (ec *executionContext) marshalNCalculationType2ᚕgithubᚗcomᚋSplitFiᚋ
 	return ret
 }
 
-func (ec *executionContext) unmarshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
+func (ec *executionContext) unmarshalNChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
 	var res persist.Chain
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalNChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNChainAddressInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (persist.ChainAddress, error) {
+func (ec *executionContext) unmarshalNChainAddressInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (persist.ChainAddress, error) {
 	res, err := ec.unmarshalInputChainAddressInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNChainAddressInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (*persist.ChainAddress, error) {
+func (ec *executionContext) unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (*persist.ChainAddress, error) {
 	res, err := ec.unmarshalInputChainAddressInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainPubKey(ctx context.Context, v interface{}) (*persist.ChainPubKey, error) {
+func (ec *executionContext) unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainPubKey(ctx context.Context, v interface{}) (*persist.ChainPubKey, error) {
 	res, err := ec.unmarshalInputChainPubKeyInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitInput(ctx context.Context, v interface{}) (model.CreateSplitInput, error) {
+func (ec *executionContext) unmarshalNCreateSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitInput(ctx context.Context, v interface{}) (model.CreateSplitInput, error) {
 	res, err := ec.unmarshalInputCreateSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
+func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (persist.DBID, error) {
+func (ec *executionContext) unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (persist.DBID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.DBID(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v persist.DBID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24385,7 +25541,7 @@ func (ec *executionContext) marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfi�
 	return res
 }
 
-func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
+func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -24394,7 +25550,7 @@ func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑspli
 	res := make([]persist.DBID, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24402,10 +25558,10 @@ func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑspli
 	return res, nil
 }
 
-func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
+		ret[i] = ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
 	}
 
 	for _, e := range ret {
@@ -24417,13 +25573,13 @@ func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 	return ret
 }
 
-func (ec *executionContext) unmarshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (persist.Email, error) {
+func (ec *executionContext) unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (persist.Email, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Email(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v persist.Email) graphql.Marshaler {
+func (ec *executionContext) marshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v persist.Email) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24433,13 +25589,13 @@ func (ec *executionContext) marshalNEmail2githubᚗcomᚋSplitFiᚋgoᚑsplitfi�
 	return res
 }
 
-func (ec *executionContext) unmarshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, v interface{}) (model.EmailUnsubscriptionType, error) {
+func (ec *executionContext) unmarshalNEmailUnsubscriptionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, v interface{}) (model.EmailUnsubscriptionType, error) {
 	var res model.EmailUnsubscriptionType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNEmailUnsubscriptionType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, sel ast.SelectionSet, v model.EmailUnsubscriptionType) graphql.Marshaler {
+func (ec *executionContext) marshalNEmailUnsubscriptionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, sel ast.SelectionSet, v model.EmailUnsubscriptionType) graphql.Marshaler {
 	return v
 }
 
@@ -24458,13 +25614,13 @@ func (ec *executionContext) marshalNFieldSet2string(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalNHexString2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (persist.HexString, error) {
+func (ec *executionContext) unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (persist.HexString, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.HexString(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNHexString2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, sel ast.SelectionSet, v persist.HexString) graphql.Marshaler {
+func (ec *executionContext) marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx context.Context, sel ast.SelectionSet, v persist.HexString) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24474,13 +25630,13 @@ func (ec *executionContext) marshalNHexString2githubᚗcomᚋSplitFiᚋgoᚑspli
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
+func (ec *executionContext) unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := model.GqlID(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, sel ast.SelectionSet, v model.GqlID) graphql.Marshaler {
+func (ec *executionContext) marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, sel ast.SelectionSet, v model.GqlID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24505,7 +25661,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24515,28 +25671,28 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsp
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPreverifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx context.Context, v interface{}) (model.PreverifyEmailInput, error) {
+func (ec *executionContext) unmarshalNPreverifyEmailInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailInput(ctx context.Context, v interface{}) (model.PreverifyEmailInput, error) {
 	res, err := ec.unmarshalInputPreverifyEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNPreverifyEmailResult2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, v interface{}) (model.PreverifyEmailResult, error) {
+func (ec *executionContext) unmarshalNPreverifyEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, v interface{}) (model.PreverifyEmailResult, error) {
 	var res model.PreverifyEmailResult
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPreverifyEmailResult2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailResult) graphql.Marshaler {
+func (ec *executionContext) marshalNPreverifyEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailResult) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
+func (ec *executionContext) unmarshalNPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.PubKey(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
+func (ec *executionContext) marshalNPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24546,22 +25702,22 @@ func (ec *executionContext) marshalNPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfi
 	return res
 }
 
-func (ec *executionContext) unmarshalNPublishSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitInput(ctx context.Context, v interface{}) (model.PublishSplitInput, error) {
+func (ec *executionContext) unmarshalNPublishSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitInput(ctx context.Context, v interface{}) (model.PublishSplitInput, error) {
 	res, err := ec.unmarshalInputPublishSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx context.Context, v interface{}) (persist.RecipientType, error) {
+func (ec *executionContext) unmarshalNRecipientType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientType(ctx context.Context, v interface{}) (persist.RecipientType, error) {
 	var res persist.RecipientType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx context.Context, sel ast.SelectionSet, v persist.RecipientType) graphql.Marshaler {
+func (ec *executionContext) marshalNRecipientType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientType(ctx context.Context, sel ast.SelectionSet, v persist.RecipientType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx context.Context, v interface{}) ([]persist.RecipientType, error) {
+func (ec *executionContext) unmarshalNRecipientType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx context.Context, v interface{}) ([]persist.RecipientType, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -24570,7 +25726,7 @@ func (ec *executionContext) unmarshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋ
 	res := make([]persist.RecipientType, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNRecipientType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientType(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24578,7 +25734,7 @@ func (ec *executionContext) unmarshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋ
 	return res, nil
 }
 
-func (ec *executionContext) marshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.RecipientType) graphql.Marshaler {
+func (ec *executionContext) marshalNRecipientType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.RecipientType) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24602,7 +25758,7 @@ func (ec *executionContext) marshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRecipientType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRecipientType(ctx, sel, v[i])
+			ret[i] = ec.marshalNRecipientType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRecipientType(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24622,17 +25778,17 @@ func (ec *executionContext) marshalNRecipientType2ᚕgithubᚗcomᚋSplitFiᚋgo
 	return ret
 }
 
-func (ec *executionContext) unmarshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
+func (ec *executionContext) unmarshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
 	var res persist.Role
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v persist.Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v persist.Role) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, v interface{}) ([]persist.Role, error) {
+func (ec *executionContext) unmarshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, v interface{}) ([]persist.Role, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -24641,7 +25797,7 @@ func (ec *executionContext) unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑspli
 	res := make([]persist.Role, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24649,7 +25805,7 @@ func (ec *executionContext) unmarshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑspli
 	return res, nil
 }
 
-func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Role) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24673,7 +25829,7 @@ func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRole2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
+			ret[i] = ec.marshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24693,12 +25849,12 @@ func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 	return ret
 }
 
-func (ec *executionContext) unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx context.Context, v interface{}) (*model.SplitAllocationInput, error) {
+func (ec *executionContext) unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx context.Context, v interface{}) (*model.SplitAllocationInput, error) {
 	res, err := ec.unmarshalInputSplitAllocationInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
+func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitPositionInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
@@ -24707,7 +25863,7 @@ func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSp
 	res := make([]*model.SplitPositionInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -24715,12 +25871,12 @@ func (ec *executionContext) unmarshalNSplitPositionInput2ᚕᚖgithubᚗcomᚋSp
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitPositionInput(ctx context.Context, v interface{}) (*model.SplitPositionInput, error) {
+func (ec *executionContext) unmarshalNSplitPositionInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitPositionInput(ctx context.Context, v interface{}) (*model.SplitPositionInput, error) {
 	res, err := ec.unmarshalInputSplitPositionInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SplitSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SplitSearchResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24730,13 +25886,13 @@ func (ec *executionContext) marshalNSplitSearchResult2ᚖgithubᚗcomᚋSplitFi�
 	return ec._SplitSearchResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSplitStatus2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, v interface{}) (model.SplitStatus, error) {
+func (ec *executionContext) unmarshalNSplitStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, v interface{}) (model.SplitStatus, error) {
 	var res model.SplitStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSplitStatus2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, sel ast.SelectionSet, v model.SplitStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNSplitStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitStatus(ctx context.Context, sel ast.SelectionSet, v model.SplitStatus) graphql.Marshaler {
 	return v
 }
 
@@ -24787,47 +25943,47 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx context.Context, v interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
+func (ec *executionContext) unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx context.Context, v interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
 	res, err := ec.unmarshalInputUnsubscribeFromEmailTypeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx context.Context, v interface{}) (model.UpdateEmailInput, error) {
+func (ec *executionContext) unmarshalNUpdateEmailInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailInput(ctx context.Context, v interface{}) (model.UpdateEmailInput, error) {
 	res, err := ec.unmarshalInputUpdateEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx context.Context, v interface{}) (model.UpdateEmailNotificationSettingsInput, error) {
+func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx context.Context, v interface{}) (model.UpdateEmailNotificationSettingsInput, error) {
 	res, err := ec.unmarshalInputUpdateEmailNotificationSettingsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx context.Context, v interface{}) (model.UpdateSplitHiddenInput, error) {
+func (ec *executionContext) unmarshalNUpdateSplitHiddenInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenInput(ctx context.Context, v interface{}) (model.UpdateSplitHiddenInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitHiddenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateSplitOrderInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx context.Context, v interface{}) (model.UpdateSplitOrderInput, error) {
+func (ec *executionContext) unmarshalNUpdateSplitOrderInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderInput(ctx context.Context, v interface{}) (model.UpdateSplitOrderInput, error) {
 	res, err := ec.unmarshalInputUpdateSplitOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateUserExperienceInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx context.Context, v interface{}) (model.UpdateUserExperienceInput, error) {
+func (ec *executionContext) unmarshalNUpdateUserExperienceInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserExperienceInput(ctx context.Context, v interface{}) (model.UpdateUserExperienceInput, error) {
 	res, err := ec.unmarshalInputUpdateUserExperienceInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateUserInfoInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx context.Context, v interface{}) (model.UpdateUserInfoInput, error) {
+func (ec *executionContext) unmarshalNUpdateUserInfoInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserInfoInput(ctx context.Context, v interface{}) (model.UpdateUserInfoInput, error) {
 	res, err := ec.unmarshalInputUpdateUserInfoInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpsertSplitInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx context.Context, v interface{}) (model.UpsertSplitInput, error) {
+func (ec *executionContext) unmarshalNUpsertSplitInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitInput(ctx context.Context, v interface{}) (model.UpsertSplitInput, error) {
 	res, err := ec.unmarshalInputUpsertSplitInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUserExperience2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperience(ctx context.Context, sel ast.SelectionSet, v *model.UserExperience) graphql.Marshaler {
+func (ec *executionContext) marshalNUserExperience2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperience(ctx context.Context, sel ast.SelectionSet, v *model.UserExperience) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24837,17 +25993,17 @@ func (ec *executionContext) marshalNUserExperience2ᚖgithubᚗcomᚋSplitFiᚋg
 	return ec._UserExperience(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, v interface{}) (model.UserExperienceType, error) {
+func (ec *executionContext) unmarshalNUserExperienceType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, v interface{}) (model.UserExperienceType, error) {
 	var res model.UserExperienceType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUserExperienceType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, sel ast.SelectionSet, v model.UserExperienceType) graphql.Marshaler {
+func (ec *executionContext) marshalNUserExperienceType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperienceType(ctx context.Context, sel ast.SelectionSet, v model.UserExperienceType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNUserSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.UserSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalNUserSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.UserSearchResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24857,23 +26013,23 @@ func (ec *executionContext) marshalNUserSearchResult2ᚖgithubᚗcomᚋSplitFi�
 	return ec._UserSearchResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVerifyEmailInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx context.Context, v interface{}) (model.VerifyEmailInput, error) {
+func (ec *executionContext) unmarshalNVerifyEmailInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailInput(ctx context.Context, v interface{}) (model.VerifyEmailInput, error) {
 	res, err := ec.unmarshalInputVerifyEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNVerifyEmailMagicLinkInput2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkInput(ctx context.Context, v interface{}) (model.VerifyEmailMagicLinkInput, error) {
+func (ec *executionContext) unmarshalNVerifyEmailMagicLinkInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkInput(ctx context.Context, v interface{}) (model.VerifyEmailMagicLinkInput, error) {
 	res, err := ec.unmarshalInputVerifyEmailMagicLinkInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (persist.WalletType, error) {
+func (ec *executionContext) unmarshalNWalletType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (persist.WalletType, error) {
 	var res persist.WalletType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNWalletType2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v persist.WalletType) graphql.Marshaler {
+func (ec *executionContext) marshalNWalletType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v persist.WalletType) graphql.Marshaler {
 	return v
 }
 
@@ -25292,32 +26448,32 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddRolesToUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOAddRolesToUserPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAddRolesToUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddRolesToUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AddRolesToUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAddUserWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddUserWalletPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOAddUserWalletPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAddUserWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AddUserWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AddUserWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
+func (ec *executionContext) unmarshalOAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Address(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAddress2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
+func (ec *executionContext) marshalOAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (*persist.Address, error) {
+func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (*persist.Address, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25326,7 +26482,7 @@ func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑs
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v *persist.Address) graphql.Marshaler {
+func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v *persist.Address) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25334,14 +26490,14 @@ func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑspl
 	return res
 }
 
-func (ec *executionContext) marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AdminAddWalletPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOAdminAddWalletPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAdminAddWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.AdminAddWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._AdminAddWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAllocation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx context.Context, sel ast.SelectionSet, v []*model.Allocation) graphql.Marshaler {
+func (ec *executionContext) marshalOAllocation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocation(ctx context.Context, sel ast.SelectionSet, v []*model.Allocation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25368,7 +26524,7 @@ func (ec *executionContext) marshalOAllocation2ᚕᚖgithubᚗcomᚋSplitFiᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAllocation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx, sel, v[i])
+			ret[i] = ec.marshalOAllocation2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25382,14 +26538,14 @@ func (ec *executionContext) marshalOAllocation2ᚕᚖgithubᚗcomᚋSplitFiᚋgo
 	return ret
 }
 
-func (ec *executionContext) marshalOAllocation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocation(ctx context.Context, sel ast.SelectionSet, v *model.Allocation) graphql.Marshaler {
+func (ec *executionContext) marshalOAllocation2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocation(ctx context.Context, sel ast.SelectionSet, v *model.Allocation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Allocation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AllocationAggregation) graphql.Marshaler {
+func (ec *executionContext) marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocationAggregationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AllocationAggregation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25416,7 +26572,7 @@ func (ec *executionContext) marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋS
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAllocationAggregation2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAllocationAggregation(ctx, sel, v[i])
+			ret[i] = ec.marshalNAllocationAggregation2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAllocationAggregation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25436,7 +26592,7 @@ func (ec *executionContext) marshalOAllocationAggregation2ᚕᚖgithubᚗcomᚋS
 	return ret
 }
 
-func (ec *executionContext) marshalOAsset2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAsset(ctx context.Context, sel ast.SelectionSet, v []*model.Asset) graphql.Marshaler {
+func (ec *executionContext) marshalOAsset2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAsset(ctx context.Context, sel ast.SelectionSet, v []*model.Asset) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25463,7 +26619,7 @@ func (ec *executionContext) marshalOAsset2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAsset2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAsset(ctx, sel, v[i])
+			ret[i] = ec.marshalOAsset2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAsset(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25477,14 +26633,14 @@ func (ec *executionContext) marshalOAsset2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsp
 	return ret
 }
 
-func (ec *executionContext) marshalOAsset2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAsset(ctx context.Context, sel ast.SelectionSet, v *model.Asset) graphql.Marshaler {
+func (ec *executionContext) marshalOAsset2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAsset(ctx context.Context, sel ast.SelectionSet, v *model.Asset) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Asset(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOAuthMechanism2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (*model.AuthMechanism, error) {
+func (ec *executionContext) unmarshalOAuthMechanism2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (*model.AuthMechanism, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25518,17 +26674,17 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
+func (ec *executionContext) unmarshalOChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
 	var res persist.Chain
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOChain2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalOChain2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (*persist.Chain, error) {
+func (ec *executionContext) unmarshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (*persist.Chain, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25537,21 +26693,21 @@ func (ec *executionContext) unmarshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑspl
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOChain2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v *persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalOChain2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v *persist.Chain) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOChainAddress2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
+func (ec *executionContext) marshalOChainAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx context.Context, sel ast.SelectionSet, v *persist.ChainAddress) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ChainAddress(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, v interface{}) ([]*persist.ChainAddress, error) {
+func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, v interface{}) ([]*persist.ChainAddress, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25563,7 +26719,7 @@ func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋSpl
 	res := make([]*persist.ChainAddress, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐChainAddress(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -25571,35 +26727,35 @@ func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋSpl
 	return res, nil
 }
 
-func (ec *executionContext) marshalOChainSplits2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐChainSplits(ctx context.Context, sel ast.SelectionSet, v *model.ChainSplits) graphql.Marshaler {
+func (ec *executionContext) marshalOChainSplits2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐChainSplits(ctx context.Context, sel ast.SelectionSet, v *model.ChainSplits) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ChainSplits(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v *model.ClearAllNotificationsPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v *model.ClearAllNotificationsPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ClearAllNotificationsPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreateSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCreateSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreateSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreateUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOCreateUserPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐCreateUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.CreateUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreateUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
+func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25611,7 +26767,7 @@ func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑspli
 	res := make([]persist.DBID, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -25619,13 +26775,13 @@ func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑspli
 	return res, nil
 }
 
-func (ec *executionContext) marshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	ret := make(graphql.Array, len(v))
 	for i := range v {
-		ret[i] = ec.marshalNDBID2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
+		ret[i] = ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
 	}
 
 	for _, e := range ret {
@@ -25637,7 +26793,7 @@ func (ec *executionContext) marshalODBID2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 	return ret
 }
 
-func (ec *executionContext) unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (*persist.DBID, error) {
+func (ec *executionContext) unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (*persist.DBID, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25646,7 +26802,7 @@ func (ec *executionContext) unmarshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑspli
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v *persist.DBID) graphql.Marshaler {
+func (ec *executionContext) marshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v *persist.DBID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25654,7 +26810,7 @@ func (ec *executionContext) marshalODBID2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitf
 	return res
 }
 
-func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDebugAuth(ctx context.Context, v interface{}) (*model.DebugAuth, error) {
+func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDebugAuth(ctx context.Context, v interface{}) (*model.DebugAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25662,21 +26818,21 @@ func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋSplitFiᚋgo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODeleteSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalODeleteSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeleteSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.DeleteSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DeleteSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODeletedNode2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐDeletedNode(ctx context.Context, sel ast.SelectionSet, v *model.DeletedNode) graphql.Marshaler {
+func (ec *executionContext) marshalODeletedNode2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeletedNode(ctx context.Context, sel ast.SelectionSet, v *model.DeletedNode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DeletedNode(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (*persist.Email, error) {
+func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (*persist.Email, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25685,7 +26841,7 @@ func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑspl
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v *persist.Email) graphql.Marshaler {
+func (ec *executionContext) marshalOEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v *persist.Email) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25693,14 +26849,14 @@ func (ec *executionContext) marshalOEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplit
 	return res
 }
 
-func (ec *executionContext) marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.EmailNotificationSettings) graphql.Marshaler {
+func (ec *executionContext) marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.EmailNotificationSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._EmailNotificationSettings(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOEmailVerificationStatus2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, v interface{}) (*persist.EmailVerificationStatus, error) {
+func (ec *executionContext) unmarshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, v interface{}) (*persist.EmailVerificationStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25709,14 +26865,14 @@ func (ec *executionContext) unmarshalOEmailVerificationStatus2ᚖgithubᚗcomᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, sel ast.SelectionSet, v *persist.EmailVerificationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, sel ast.SelectionSet, v *persist.EmailVerificationStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOEoaAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐEoaAuth(ctx context.Context, v interface{}) (*model.EoaAuth, error) {
+func (ec *executionContext) unmarshalOEoaAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEoaAuth(ctx context.Context, v interface{}) (*model.EoaAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25740,14 +26896,14 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.GetAuthNoncePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOGetAuthNoncePayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGetAuthNoncePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.GetAuthNoncePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._GetAuthNoncePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx context.Context, v interface{}) (*model.GnosisSafeAuth, error) {
+func (ec *executionContext) unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx context.Context, v interface{}) (*model.GnosisSafeAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25755,7 +26911,7 @@ func (ec *executionContext) unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋSplitFi�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.GroupNotificationUserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.GroupNotificationUserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25782,7 +26938,7 @@ func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcom
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25796,14 +26952,14 @@ func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcom
 	return ret
 }
 
-func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.GroupNotificationUserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.GroupNotificationUserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._GroupNotificationUserEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (*persist.HexString, error) {
+func (ec *executionContext) unmarshalOHexString2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (*persist.HexString, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25812,7 +26968,7 @@ func (ec *executionContext) unmarshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOHexString2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐHexString(ctx context.Context, sel ast.SelectionSet, v *persist.HexString) graphql.Marshaler {
+func (ec *executionContext) marshalOHexString2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx context.Context, sel ast.SelectionSet, v *persist.HexString) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25836,21 +26992,21 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOLoginPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.LoginPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOLoginPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLoginPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.LoginPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._LoginPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOLogoutPayload2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v *model.LogoutPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOLogoutPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v *model.LogoutPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._LogoutPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx context.Context, v interface{}) (*model.MagicLinkAuth, error) {
+func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx context.Context, v interface{}) (*model.MagicLinkAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25858,21 +27014,28 @@ func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋSplitFiᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalONode2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
+func (ec *executionContext) marshalOMutualsUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMutualsUser(ctx context.Context, sel ast.SelectionSet, v *model.MutualsUser) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._MutualsUser(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalONode2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Notification(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []model.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25899,7 +27062,7 @@ func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋSplitFiᚋgo�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONotification2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotification(ctx, sel, v[i])
+			ret[i] = ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25913,7 +27076,7 @@ func (ec *executionContext) marshalONotification2ᚕgithubᚗcomᚋSplitFiᚋgo�
 	return ret
 }
 
-func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationEdge) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -25940,7 +27103,7 @@ func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋSplitF
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONotificationEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalONotificationEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -25954,21 +27117,21 @@ func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋSplitF
 	return ret
 }
 
-func (ec *executionContext) marshalONotificationEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v *model.NotificationEdge) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v *model.NotificationEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NotificationEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotificationSettings2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.NotificationSettings) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.NotificationSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NotificationSettings(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx context.Context, v interface{}) (*model.NotificationSettingsInput, error) {
+func (ec *executionContext) unmarshalONotificationSettingsInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx context.Context, v interface{}) (*model.NotificationSettingsInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25976,14 +27139,14 @@ func (ec *executionContext) unmarshalONotificationSettingsInput2ᚖgithubᚗcom�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalONotificationsConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐNotificationsConnection(ctx context.Context, sel ast.SelectionSet, v *model.NotificationsConnection) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationsConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationsConnection(ctx context.Context, sel ast.SelectionSet, v *model.NotificationsConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._NotificationsConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOneTimeLoginTokenAuth(ctx context.Context, v interface{}) (*model.OneTimeLoginTokenAuth, error) {
+func (ec *executionContext) unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOneTimeLoginTokenAuth(ctx context.Context, v interface{}) (*model.OneTimeLoginTokenAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -25991,35 +27154,35 @@ func (ec *executionContext) unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋSp
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOOptInForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptInForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.OptInForRolesPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOOptInForRolesPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOptInForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.OptInForRolesPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._OptInForRolesPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOOptOutForRolesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐOptOutForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.OptOutForRolesPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOOptOutForRolesPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOptOutForRolesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.OptOutForRolesPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._OptOutForRolesPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPageInfo2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalOPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOPreverifyEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PreverifyEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPrivyAuth2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPrivyAuth(ctx context.Context, v interface{}) (*model.PrivyAuth, error) {
+func (ec *executionContext) unmarshalOPrivyAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPrivyAuth(ctx context.Context, v interface{}) (*model.PrivyAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26027,53 +27190,53 @@ func (ec *executionContext) unmarshalOPrivyAuth2ᚖgithubᚗcomᚋSplitFiᚋgo�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
+func (ec *executionContext) unmarshalOPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.PubKey(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPubKey2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
+func (ec *executionContext) marshalOPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func (ec *executionContext) marshalOPublishSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOPublishSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPublishSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PublishSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PublishSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORegisterUserPushTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRegisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RegisterUserPushTokenPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORegisterUserPushTokenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRegisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RegisterUserPushTokenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RegisterUserPushTokenPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RemoveUserWalletsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORemoveUserWalletsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRemoveUserWalletsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RemoveUserWalletsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RemoveUserWalletsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ResendVerificationEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOResendVerificationEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐResendVerificationEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ResendVerificationEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ResendVerificationEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RevokeRolesFromUserPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalORevokeRolesFromUserPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRevokeRolesFromUserPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.RevokeRolesFromUserPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RevokeRolesFromUserPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) ([]*persist.Role, error) {
+func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) ([]*persist.Role, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26085,7 +27248,7 @@ func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑs
 	res := make([]*persist.Role, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
+		res[i], err = ec.unmarshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -26093,7 +27256,7 @@ func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑs
 	return res, nil
 }
 
-func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v []*persist.Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v []*persist.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26120,7 +27283,7 @@ func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑspl
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
+			ret[i] = ec.marshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26134,7 +27297,7 @@ func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑspl
 	return ret
 }
 
-func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (*persist.Role, error) {
+func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (*persist.Role, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26143,28 +27306,28 @@ func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑspli
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v *persist.Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v *persist.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOSearchSplitsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchSplitsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSearchSplitsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchSplitsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchSplitsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SearchSplitsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchUsersPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSearchUsersPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSearchUsersPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SearchUsersPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SearchUsersPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
+func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v []*model.Split) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26191,7 +27354,7 @@ func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx, sel, v[i])
+			ret[i] = ec.marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26205,14 +27368,14 @@ func (ec *executionContext) marshalOSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsp
 	return ret
 }
 
-func (ec *executionContext) marshalOSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v *model.Split) graphql.Marshaler {
+func (ec *executionContext) marshalOSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplit(ctx context.Context, sel ast.SelectionSet, v *model.Split) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Split(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitAllocationInput, error) {
+func (ec *executionContext) unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInputᚄ(ctx context.Context, v interface{}) ([]*model.SplitAllocationInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26224,7 +27387,7 @@ func (ec *executionContext) unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋ
 	res := make([]*model.SplitAllocationInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNSplitAllocationInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitAllocationInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -26232,21 +27395,14 @@ func (ec *executionContext) unmarshalOSplitAllocationInput2ᚕᚖgithubᚗcomᚋ
 	return res, nil
 }
 
-func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SplitByIDPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.SplitByIDPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SplitByIdPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSplitFiUser2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitFiUser(ctx context.Context, sel ast.SelectionSet, v *model.SplitFiUser) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SplitFiUser(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SplitSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SplitSearchResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26273,7 +27429,7 @@ func (ec *executionContext) marshalOSplitSearchResult2ᚕᚖgithubᚗcomᚋSplit
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSplitSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐSplitSearchResult(ctx, sel, v[i])
+			ret[i] = ec.marshalNSplitSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐSplitSearchResult(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26373,14 +27529,14 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOToken2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v *model.Token) graphql.Marshaler {
+func (ec *executionContext) marshalOToken2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐToken(ctx context.Context, sel ast.SelectionSet, v *model.Token) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Token(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, v interface{}) (*model.TokenType, error) {
+func (ec *executionContext) unmarshalOTokenType2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, v interface{}) (*model.TokenType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26389,77 +27545,77 @@ func (ec *executionContext) unmarshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgo�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOTokenType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, sel ast.SelectionSet, v *model.TokenType) graphql.Marshaler {
+func (ec *executionContext) marshalOTokenType2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, sel ast.SelectionSet, v *model.TokenType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOUnregisterUserPushTokenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnregisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnregisterUserPushTokenPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUnregisterUserPushTokenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnregisterUserPushTokenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnregisterUserPushTokenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UnregisterUserPushTokenPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnsubscribeFromEmailTypePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUnsubscribeFromEmailTypePayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UnsubscribeFromEmailTypePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UnsubscribeFromEmailTypePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailNotificationSettingsPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateEmailNotificationSettingsPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailNotificationSettingsPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateEmailNotificationSettingsPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePrimaryWalletPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdatePrimaryWalletPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdatePrimaryWalletPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdatePrimaryWalletPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdatePrimaryWalletPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSplitHiddenPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitHiddenPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitHiddenPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitHiddenPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateSplitOrderPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateSplitOrderPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateSplitOrderPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateSplitOrderPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserExperiencePayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateUserExperiencePayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserExperiencePayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserExperiencePayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateUserExperiencePayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserInfoPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpdateUserInfoPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateUserInfoPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpdateUserInfoPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpdateUserInfoPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx context.Context, v interface{}) (*model.UploadPersistedQueriesInput, error) {
+func (ec *executionContext) unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUploadPersistedQueriesInput(ctx context.Context, v interface{}) (*model.UploadPersistedQueriesInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26467,42 +27623,42 @@ func (ec *executionContext) unmarshalOUploadPersistedQueriesInput2ᚖgithubᚗco
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UploadPersistedQueriesPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUploadPersistedQueriesPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUploadPersistedQueriesPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UploadPersistedQueriesPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UploadPersistedQueriesPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUpsertSplitPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpsertSplitPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUpsertSplitPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpsertSplitPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.UpsertSplitPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UpsertSplitPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserByAddressOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByAddressOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUserByAddressOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserByAddressOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByAddressOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserByAddressOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserByIdOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByIDOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUserByIdOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserByIDOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByIDOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserByIdOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserByUsernameOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByUsernameOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOUserByUsernameOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserByUsernameOrError(ctx context.Context, sel ast.SelectionSet, v model.UserByUsernameOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserByUsernameOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.UserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.UserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26529,7 +27685,7 @@ func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgo�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalOUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26543,21 +27699,21 @@ func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋSplitFiᚋgo�
 	return ret
 }
 
-func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.UserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.UserEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserEmail2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserEmail(ctx context.Context, sel ast.SelectionSet, v *model.UserEmail) graphql.Marshaler {
+func (ec *executionContext) marshalOUserEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEmail(ctx context.Context, sel ast.SelectionSet, v *model.UserEmail) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserEmail(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserExperience) graphql.Marshaler {
+func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperienceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserExperience) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26584,7 +27740,7 @@ func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋSplitFi�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUserExperience2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserExperience(ctx, sel, v[i])
+			ret[i] = ec.marshalNUserExperience2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserExperience(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26604,7 +27760,7 @@ func (ec *executionContext) marshalOUserExperience2ᚕᚖgithubᚗcomᚋSplitFi�
 	return ret
 }
 
-func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserSearchResult) graphql.Marshaler {
+func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserSearchResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26631,7 +27787,7 @@ func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋSplitF
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUserSearchResult2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUserSearchResult(ctx, sel, v[i])
+			ret[i] = ec.marshalNUserSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResult(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26651,42 +27807,42 @@ func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋSplitF
 	return ret
 }
 
-func (ec *executionContext) marshalOUsersConnection2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐUsersConnection(ctx context.Context, sel ast.SelectionSet, v *model.UsersConnection) graphql.Marshaler {
+func (ec *executionContext) marshalOUsersConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUsersConnection(ctx context.Context, sel ast.SelectionSet, v *model.UsersConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UsersConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOVerifyEmailMagicLinkPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailMagicLinkPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOVerifyEmailMagicLinkPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailMagicLinkPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailMagicLinkPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._VerifyEmailMagicLinkPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOVerifyEmailPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOVerifyEmailPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._VerifyEmailPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {
+func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Viewer(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ViewerOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerSplit) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v []*model.ViewerSplit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26713,7 +27869,7 @@ func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOViewerSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx, sel, v[i])
+			ret[i] = ec.marshalOViewerSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26727,21 +27883,21 @@ func (ec *executionContext) marshalOViewerSplit2ᚕᚖgithubᚗcomᚋSplitFiᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalOViewerSplit2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v *model.ViewerSplit) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplit(ctx context.Context, sel ast.SelectionSet, v *model.ViewerSplit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ViewerSplit(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
+func (ec *executionContext) marshalOViewerSplitByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerSplitByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.ViewerSplitByIDPayloadOrError) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ViewerSplitByIdPayloadOrError(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v []*model.Wallet) graphql.Marshaler {
+func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v []*model.Wallet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26768,7 +27924,7 @@ func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑs
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOWallet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx, sel, v[i])
+			ret[i] = ec.marshalOWallet2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWallet(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26782,14 +27938,14 @@ func (ec *executionContext) marshalOWallet2ᚕᚖgithubᚗcomᚋSplitFiᚋgoᚑs
 	return ret
 }
 
-func (ec *executionContext) marshalOWallet2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v *model.Wallet) graphql.Marshaler {
+func (ec *executionContext) marshalOWallet2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v *model.Wallet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Wallet(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOWalletType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (*persist.WalletType, error) {
+func (ec *executionContext) unmarshalOWalletType2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐWalletType(ctx context.Context, v interface{}) (*persist.WalletType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26798,7 +27954,7 @@ func (ec *executionContext) unmarshalOWalletType2ᚖgithubᚗcomᚋSplitFiᚋgo�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOWalletType2ᚖgithubᚗcomᚋSplitFiᚋgoᚑsplitfiᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v *persist.WalletType) graphql.Marshaler {
+func (ec *executionContext) marshalOWalletType2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐWalletType(ctx context.Context, sel ast.SelectionSet, v *persist.WalletType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

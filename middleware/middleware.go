@@ -3,26 +3,26 @@ package middleware
 import (
 	"context"
 	"fmt"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
-	"github.com/SplitFi/go-splitfi/service/limiters"
-	"github.com/SplitFi/go-splitfi/service/redis"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/auth/basicauth"
+	"github.com/mutuals/go-mutuals/service/limiters"
+	"github.com/mutuals/go-mutuals/service/redis"
 	"google.golang.org/api/idtoken"
 	"io"
 	"net/http"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/logger"
+	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
+	"github.com/mutuals/go-mutuals/service/tracing"
 	"github.com/sirupsen/logrus"
 
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 type errBadTaskRequest struct {

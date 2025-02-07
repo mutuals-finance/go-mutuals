@@ -4,7 +4,7 @@ query userByUsernameQuery($user: String!) {
       __typename
       message
     }
-    ... on SplitFiUser {
+    ... on MutualsUser {
       username
       dbid
     }
@@ -17,7 +17,7 @@ query userByIdQuery($id: DBID!) {
       __typename
       message
     }
-    ... on SplitFiUser {
+    ... on MutualsUser {
       username
       dbid
     }
@@ -30,7 +30,7 @@ query userByAddressQuery($input: ChainAddressInput!) {
       __typename
       message
     }
-    ... on SplitFiUser {
+    ... on MutualsUser {
       username
       dbid
     }

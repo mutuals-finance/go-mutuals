@@ -9,15 +9,15 @@ bindings:
   Email:
     type: string
   DBID:
-    type: github.com/SplitFi/go-splitfi/service/persist.DBID
+    type: github.com/mutuals/go-mutuals/service/persist.DBID
   Address:
-    type: github.com/SplitFi/go-splitfi/service/persist.Address
+    type: github.com/mutuals/go-mutuals/service/persist.Address
   PubKey:
     type: string
   Time:
     type: string
   HexString:
-    type: github.com/SplitFi/go-splitfi/service/persist.HexString
+    type: github.com/mutuals/go-mutuals/service/persist.HexString
 operations:
 - testdata/*.graphql
 generated: generated_test.go

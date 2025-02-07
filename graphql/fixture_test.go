@@ -2,18 +2,18 @@ package graphql_test
 
 import (
 	"context"
-	"github.com/SplitFi/go-splitfi/env"
+	"github.com/mutuals/go-mutuals/env"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 
-	migrate "github.com/SplitFi/go-splitfi/db"
-	"github.com/SplitFi/go-splitfi/docker"
-	"github.com/SplitFi/go-splitfi/server"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/pubsub/gcp"
+	migrate "github.com/mutuals/go-mutuals/db"
+	"github.com/mutuals/go-mutuals/docker"
+	"github.com/mutuals/go-mutuals/server"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/service/pubsub/gcp"
 	"github.com/stretchr/testify/require"
 )
 

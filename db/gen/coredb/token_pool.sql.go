@@ -8,7 +8,7 @@ package coredb
 import (
 	"context"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 const upsertTokenMetadatas = `-- name: UpsertTokenMetadatas :many

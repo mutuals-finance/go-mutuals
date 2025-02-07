@@ -13,9 +13,9 @@ import (
 	"crypto/subtle"
 	"errors"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 const Enabled bool = true

@@ -1,4 +1,4 @@
-SplitFi's dataloader implementation is based on Adam Scarr's original `dataloaden` library:
+Mutuals' dataloader implementation is based on Adam Scarr's original `dataloaden` library:
 
 Copyright (c) 2017 Adam Scarr
 

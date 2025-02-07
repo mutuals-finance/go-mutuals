@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	migrate "github.com/SplitFi/go-splitfi/db"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	migrate "github.com/mutuals/go-mutuals/db"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 )

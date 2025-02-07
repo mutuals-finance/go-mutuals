@@ -2,7 +2,7 @@ package persist
 
 import (
 	"fmt"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/util"
 	"io"
 	"strings"
 )

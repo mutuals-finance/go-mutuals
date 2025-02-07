@@ -14,13 +14,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v4"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -214,7 +214,7 @@ func setDefaults() {
 	viper.SetDefault("ENV", "local")
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
+	viper.SetDefault("POSTGRES_USER", "mutuals_backend")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 	viper.SetDefault("GCLOUD_TOKEN_CONTENT_BUCKET", "dev-token-content")

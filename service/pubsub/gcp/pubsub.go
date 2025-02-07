@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/util"
 
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/option"

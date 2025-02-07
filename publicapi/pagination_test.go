@@ -1,7 +1,7 @@
 package publicapi
 
 import (
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

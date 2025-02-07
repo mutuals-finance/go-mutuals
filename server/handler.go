@@ -2,18 +2,19 @@ package server
 
 import (
 	"context"
-	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/mutuals/go-mutuals/service/task"
+	"github.com/vektah/gqlparser/v2/ast"
 	"net/http"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/graphql/apq"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/graphql/apq"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/redis"
 
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/bsm/redislock"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
 
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -26,22 +27,22 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/event"
-	"github.com/SplitFi/go-splitfi/graphql/generated"
-	graphql "github.com/SplitFi/go-splitfi/graphql/resolver"
-	"github.com/SplitFi/go-splitfi/middleware"
-	"github.com/SplitFi/go-splitfi/publicapi"
-	"github.com/SplitFi/go-splitfi/service/mediamapper"
-	"github.com/SplitFi/go-splitfi/service/notifications"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/service/throttle"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/everFinance/goar"
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	shell "github.com/ipfs/go-ipfs-api"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/event"
+	"github.com/mutuals/go-mutuals/graphql/generated"
+	graphql "github.com/mutuals/go-mutuals/graphql/resolver"
+	"github.com/mutuals/go-mutuals/middleware"
+	"github.com/mutuals/go-mutuals/publicapi"
+	"github.com/mutuals/go-mutuals/service/mediamapper"
+	"github.com/mutuals/go-mutuals/service/notifications"
+	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
+	"github.com/mutuals/go-mutuals/service/throttle"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 func HandlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
@@ -56,7 +57,7 @@ func HandlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.
 }
 
 func GraphqlHandlersInit(router *gin.Engine, queries *db.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, authRefreshCache *redis.Cache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) {
-	graphqlGroup := router.Group("/splitfi/graphql")
+	graphqlGroup := router.Group("/mutuals/graphql")
 	graphqlHandler := GraphQLHandler(queries, taskClient, pub, lock, apqCache, publicapiF)
 	graphqlGroup.Any("/query", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
 	graphqlGroup.Any("/query/:operationName", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
@@ -82,7 +83,7 @@ func GraphQLHandler(queries *db.Queries, taskClient *task.Client, pub *pubsub.Cl
 	h.AddTransport(transport.POST{})
 	h.AddTransport(transport.MultipartForm{})
 
-	h.SetQueryCache(lru.New(1000))
+	h.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 
 	h.Use(extension.Introspection{})
 	h.Use(extension.AutomaticPersistedQuery{
@@ -160,7 +161,7 @@ func GraphQLHandler(queries *db.Queries, taskClient *task.Client, pub *pubsub.Cl
 
 // GraphQL playground GUI for experimenting and debugging
 func graphqlPlaygroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL", "/splitfi/graphql/query")
+	h := playground.Handler("GraphQL", "/mutuals/graphql/query")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)

@@ -10,8 +10,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/rpc/ipfs"
 	"github.com/googleapis/gax-go/v2"
+	"github.com/mutuals/go-mutuals/service/rpc/ipfs"
 	"golang.org/x/image/bmp"
 	"google.golang.org/api/option"
 	htransport "google.golang.org/api/transport/http"
@@ -32,16 +32,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/tracing"
-	"github.com/SplitFi/go-splitfi/util/retry"
 	"github.com/getsentry/sentry-go"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/tracing"
+	"github.com/mutuals/go-mutuals/util/retry"
 
-	"github.com/SplitFi/go-splitfi/contracts"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -52,6 +48,10 @@ import (
 	"github.com/everFinance/goar"
 	goartypes "github.com/everFinance/goar/types"
 	shell "github.com/ipfs/go-ipfs-api"
+	"github.com/mutuals/go-mutuals/contracts"
+	"github.com/mutuals/go-mutuals/service/persist"
+	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 func init() {

@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/SplitFi/go-splitfi/admin"
+	"github.com/mutuals/go-mutuals/admin"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/appengine"
 )

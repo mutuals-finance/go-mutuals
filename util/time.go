@@ -3,7 +3,7 @@ package util
 import (
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/mutuals/go-mutuals/service/logger"
 )
 
 // Track the time it takes to execute a function

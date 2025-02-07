@@ -3,12 +3,12 @@ package emails
 import (
 	"context"
 	"database/sql"
-	migrate "github.com/SplitFi/go-splitfi/db"
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/docker"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	"github.com/jackc/pgx/v4/pgxpool"
+	migrate "github.com/mutuals/go-mutuals/db"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/docker"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -17,13 +17,13 @@ import (
 var testUser = coredb.PiiUserView{
 	Username:           sql.NullString{String: "test1", Valid: true},
 	UsernameIdempotent: sql.NullString{String: "test1", Valid: true},
-	PiiEmailAddress:    persist.Email("bc@splitfi.com"),
+	PiiEmailAddress:    persist.Email("bc@mutuals.com"),
 }
 
 var testUser2 = coredb.PiiUserView{
 	Username:           sql.NullString{String: "test2", Valid: true},
 	UsernameIdempotent: sql.NullString{String: "test2", Valid: true},
-	PiiEmailAddress:    persist.Email("bcc@splitfi.com"),
+	PiiEmailAddress:    persist.Email("bcc@mutuals.com"),
 }
 
 var followNotif coredb.Notification

@@ -1,6 +1,6 @@
 federation_version: 2
 subgraphs:
-  splitfi:
-    routing_url: https://api.dev.splitfi.com/glry/graphql/query
+  mutuals:
+    routing_url: https://api.dev.mutuals.com/glry/graphql/query
     schema:
       file: ./schema.graphql

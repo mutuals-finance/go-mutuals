@@ -1,4 +1,4 @@
-# go-splitfi
+# go-mutuals
 
 ## Pre
 
@@ -9,8 +9,8 @@
 ## Clone and install deps
 
 ```bash
-$ git clone git@github.com:Splitfi/go-splitfi.git
-$ cd go-splitfi
+$ git clone git@github.com:mutuals/go-mutuals.git
+$ cd go-mutuals
 $ go get -u=patch -d ./...
 ```
 
@@ -122,7 +122,7 @@ $ curl localhost:4000/alive
 This is available for live environments:
 
 ```bash
-$ curl api.splitfi.com/alive
+$ curl api.mutuals.com/alive
 ```
 ```
 

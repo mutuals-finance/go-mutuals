@@ -3,9 +3,9 @@ package limiters
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/bsm/redislock"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/redis"
 	"github.com/sirupsen/logrus"
 	"time"
 

@@ -5,8 +5,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type TokenType string
@@ -18,7 +18,7 @@ const (
 	TokenTypeEmailVerification TokenType = "email_verification"
 )
 
-type SplitFiClaims struct {
+type MutualsClaims struct {
 	TokenType TokenType `json:"token_type"`
 	jwt.RegisteredClaims
 }
@@ -28,7 +28,7 @@ type AuthTokenClaims struct {
 	SessionID persist.DBID   `json:"session_id"` // The session this auth token belongs to
 	RefreshID string         `json:"refresh_id"` // The refresh token this auth token was generated from
 	Roles     []persist.Role `json:"roles"`
-	SplitFiClaims
+	MutualsClaims
 }
 
 type RefreshTokenClaims struct {
@@ -36,19 +36,19 @@ type RefreshTokenClaims struct {
 	ParentID  string       `json:"parent_id"` // The parent refresh token this child refresh token was generated from
 	UserID    persist.DBID `json:"user_id"`
 	SessionID persist.DBID `json:"session_id"` // The session this refresh token belongs to
-	SplitFiClaims
+	MutualsClaims
 }
 
 type oneTimeLoginClaims struct {
 	UserID persist.DBID `json:"user_id"`
 	Source string       `json:"source"`
-	SplitFiClaims
+	MutualsClaims
 }
 
 type emailVerificationClaims struct {
 	UserID persist.DBID `json:"user_id"`
 	Email  string       `json:"email"`
-	SplitFiClaims
+	MutualsClaims
 }
 
 func GenerateAuthToken(ctx context.Context, userID persist.DBID, sessionID persist.DBID, refreshID string, roles []persist.Role) (string, error) {
@@ -60,7 +60,7 @@ func GenerateAuthToken(ctx context.Context, userID persist.DBID, sessionID persi
 		SessionID:     sessionID,
 		RefreshID:     refreshID,
 		Roles:         roles,
-		SplitFiClaims: newSplitFiClaims(TokenTypeAuth, validFor),
+		MutualsClaims: newMutualsClaims(TokenTypeAuth, validFor),
 	}
 
 	return generateJWT(claims, secret)
@@ -86,7 +86,7 @@ func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userI
 		ParentID:      parentID,
 		UserID:        userID,
 		SessionID:     sessionID,
-		SplitFiClaims: newSplitFiClaims(TokenTypeRefresh, validFor),
+		MutualsClaims: newMutualsClaims(TokenTypeRefresh, validFor),
 	}
 
 	jwt, err := generateJWT(claims, secret)
@@ -112,7 +112,7 @@ func GenerateOneTimeLoginToken(ctx context.Context, userID persist.DBID, source 
 	claims := oneTimeLoginClaims{
 		UserID:        userID,
 		Source:        source,
-		SplitFiClaims: newSplitFiClaims(TokenTypeOneTimeLogin, validFor),
+		MutualsClaims: newMutualsClaims(TokenTypeOneTimeLogin, validFor),
 	}
 
 	return generateJWT(claims, secret)
@@ -136,7 +136,7 @@ func GenerateEmailVerificationToken(ctx context.Context, userID persist.DBID, em
 	claims := emailVerificationClaims{
 		UserID:        userID,
 		Email:         email,
-		SplitFiClaims: newSplitFiClaims(TokenTypeEmailVerification, validFor),
+		MutualsClaims: newMutualsClaims(TokenTypeEmailVerification, validFor),
 	}
 
 	return generateJWT(claims, secret)
@@ -153,12 +153,12 @@ func ParseEmailVerificationToken(ctx context.Context, token string) (persist.DBI
 	return claims.UserID, claims.Email, nil
 }
 
-func newSplitFiClaims(tokenType TokenType, validFor time.Duration) SplitFiClaims {
-	claims := SplitFiClaims{
+func newMutualsClaims(tokenType TokenType, validFor time.Duration) MutualsClaims {
+	claims := MutualsClaims{
 		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(validFor)),
-			Issuer:    "splitfi",
+			Issuer:    "mutuals",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}

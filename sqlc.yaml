@@ -29,60 +29,60 @@ sql:
           # DB type overrides. These are typically mappings from our own custom Postgres types to our own Go types,
           # which allows us to use standard ::casts to specify query parameter types.
           - db_type: 'dbid'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.DBID'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.DBID'
           - db_type: 'address'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.Address'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.Address'
           - db_type: 'email'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.Email'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.Email'
           - db_type: 'role'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.Role'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.Role'
           - db_type: 'action'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.Action'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.Action'
           - db_type: 'hextokenid'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.HexTokenID'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.HexTokenID'
           - db_type: 'chain'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.Chain'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.Chain'
 
           # Overrides are prioritized from top to bottom, so if we need to override one of the * entries (like *.id),
           # the override should come _before_ the * entry
           # Users (and pii.user_view)
           # "*.user*" wildcards are so these mappings will also apply to the "pii.user_view" view
           - column: "*.user*.wallets"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.WalletList"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.WalletList"
           - column: "*.user*.email_unsubscriptions"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.EmailUnsubscriptions"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.EmailUnsubscriptions"
           - column: "*.user*.notification_settings"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.UserNotificationSettings"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.UserNotificationSettings"
           - column: "*.user*.email_verified"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.EmailVerificationStatus"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.EmailVerificationStatus"
           - column: "*.user*.featured_split"
-            go_type: "*github.com/SplitFi/go-splitfi/service/persist.DBID"
+            go_type: "*github.com/mutuals/go-mutuals/service/persist.DBID"
           - column: "*.user*.pii_socials"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Socials"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Socials"
 
           # Socials
           - column: "pii.socials_auth.provider"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.SocialProvider"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.SocialProvider"
 
           # Wallet
           - column: "wallets.wallet_type"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.WalletType"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.WalletType"
 
           # Pool
           - column: 'split.status'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.SplitStatus'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.SplitStatus'
           - column: 'allocations.recipient_type'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.RecipientType'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.RecipientType'
           - column: 'allocations.calculation_type'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.CalculationType'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.CalculationType'
           - column: 'allocations.value'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.HexString'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.HexString'
 
           # Events
           - column: "events.resource_type_id"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.ResourceType"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.ResourceType"
           - column: "events.data"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.EventData"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.EventData"
           - column: "events.external_id"
             go_type: "database/sql.NullString"
           - column: "events.actor_id"
@@ -92,7 +92,7 @@ sql:
 
           # Notifications
           - column: "notifications.data"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.NotificationData"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.NotificationData"
 
           # pii.AccountCreationInfo
           - column: pii.account_creation_info.ip_address
@@ -102,50 +102,50 @@ sql:
           # Note: to override one of these wildcard entries, add a more specific entry (like some_table.id) above.
           # Format is schema.table.column; where *.*.<column> applies to all schemas and tables.
           - column: "*.*.id"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.DBID"
           - column: "*.*.*_id"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.DBID"
           - column: "*.*.ids"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.DBIDList"
           - column: "*.*.*_ids"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBIDList"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.DBIDList"
           - column: "*.*.email_address"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Email"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Email"
           - column: "*.*.*_email_address"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Email"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Email"
           - column: "*.*.address"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Address"
           - column: "*.*.*_address"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Address"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Address"
           - column: '*.*.l1_chain'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.L1Chain'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.L1Chain'
           - column: '*.*.*_l1_chain'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.L1Chain'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.L1Chain'
           - column: '*.*.chain'
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Chain"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Chain"
           - column: '*.*.*_chain'
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Chain"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Chain"
           - column: "*.*.action"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Action"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Action"
           - column: "*.*.thumbnail_url"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.NullString"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.NullString"
           - column: "*.*.media_url"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.NullString"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.NullString"
           - column: "*.*.email_type"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.EmailType"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.EmailType"
           - column: "*.*.actions"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.ActionList"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.ActionList"
           - column: "*.*.collection_id"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.DBID"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.DBID"
           - column: "*.*.role"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.Role"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.Role"
           - column: "*.*.roles"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.RoleList"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.RoleList"
           - column: "*.*.tokens_hex"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenIDList"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.TokenIDList"
           - column: "*.*.token_hex"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.TokenID"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.TokenID"
           - column: '*.*.balance'
-            go_type: 'github.com/SplitFi/go-splitfi/service/persist.HexString'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.HexString'
           - column: "*.previews"
-            go_type: "github.com/SplitFi/go-splitfi/service/persist.NullString"
+            go_type: "github.com/mutuals/go-mutuals/service/persist.NullString"

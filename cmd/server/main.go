@@ -3,10 +3,10 @@ package main
 import (
 	"net/http"
 
-	"github.com/SplitFi/go-splitfi/service/logger"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
+	"github.com/mutuals/go-mutuals/service/logger"
+	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
 
-	"github.com/SplitFi/go-splitfi/server"
+	"github.com/mutuals/go-mutuals/server"
 	"google.golang.org/appengine"
 )
 

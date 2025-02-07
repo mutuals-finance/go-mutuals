@@ -9,9 +9,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/publicapi"
-	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/publicapi"
+	"github.com/mutuals/go-mutuals/service/redis"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -21,12 +21,12 @@ import (
 
 	genql "github.com/Khan/genqlient/graphql"
 
-	"github.com/SplitFi/go-splitfi/server"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/mutuals/go-mutuals/server"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -108,7 +108,7 @@ func testUserByUsername(t *testing.T) {
 	response, err := userByUsernameQuery(context.Background(), defaultHandlerClient(t), userF.Username)
 
 	require.NoError(t, err)
-	payload, _ := (*response.UserByUsername).(*userByUsernameQueryUserByUsernameSplitFiUser)
+	payload, _ := (*response.UserByUsername).(*userByUsernameQueryUserByUsernameMutualsUser)
 	assert.Equal(t, userF.Username, *payload.Username)
 	assert.Equal(t, userF.ID, payload.Dbid)
 }
@@ -120,7 +120,7 @@ func testUserByAddress(t *testing.T) {
 	response, err := userByAddressQuery(context.Background(), c, chainAddressInput(userF.Wallet.Address))
 
 	require.NoError(t, err)
-	payload, _ := (*response.UserByAddress).(*userByAddressQueryUserByAddressSplitFiUser)
+	payload, _ := (*response.UserByAddress).(*userByAddressQueryUserByAddressMutualsUser)
 	assert.Equal(t, userF.Username, *payload.Username)
 	assert.Equal(t, userF.ID, payload.Dbid)
 }
@@ -130,7 +130,7 @@ func testUserByID(t *testing.T) {
 	response, err := userByIdQuery(context.Background(), defaultHandlerClient(t), userF.ID)
 
 	require.NoError(t, err)
-	payload, _ := (*response.UserById).(*userByIdQueryUserByIdSplitFiUser)
+	payload, _ := (*response.UserById).(*userByIdQueryUserByIdMutualsUser)
 	assert.Equal(t, userF.Username, *payload.Username)
 	assert.Equal(t, userF.ID, payload.Dbid)
 }

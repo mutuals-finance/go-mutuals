@@ -7,21 +7,21 @@ package graphql
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/graphql/model"
-	"github.com/SplitFi/go-splitfi/service/emails"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/notifications"
-	"github.com/SplitFi/go-splitfi/util"
-	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/gammazero/workerpool"
 	"github.com/magiclabs/magic-admin-go/token"
+	"github.com/mutuals/go-mutuals/graphql/model"
+	"github.com/mutuals/go-mutuals/service/emails"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/notifications"
+	"github.com/mutuals/go-mutuals/util"
+	"github.com/mutuals/go-mutuals/validate"
 
-	"github.com/SplitFi/go-splitfi/debugtools"
+	"github.com/mutuals/go-mutuals/debugtools"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/publicapi"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/publicapi"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
@@ -32,7 +32,7 @@ var nodeFetcher = model.NodeFetcher{
 	OnSplit:                 resolveSplitBySplitID,
 	OnAllocation:            resolveAllocationByAllocationID,
 	OnAllocationAggregation: resolveAllocationAggregationByAllocationID,
-	OnSplitFiUser:           resolveSplitFiUserByUserID,
+	OnMutualsUser:           resolveMutualsUserByUserID,
 	OnWallet:                resolveWalletByAddress,
 	OnViewer:                resolveViewerByID,
 	OnDeletedNode:           resolveDeletedNodeByID,
@@ -124,7 +124,7 @@ func (r *Resolver) authMechanismToAuthenticator(ctx context.Context, m model.Aut
 	return nil, errNoAuthMechanismFound
 }
 
-func resolveSplitFiUserByUserID(ctx context.Context, userID persist.DBID) (*model.SplitFiUser, error) {
+func resolveMutualsUserByUserID(ctx context.Context, userID persist.DBID) (*model.MutualsUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserById(ctx, userID)
 
 	if err != nil {
@@ -152,7 +152,7 @@ func resolveAllocationAggregationByAllocationID(ctx context.Context, allocationA
 	return allocationAggregationToModel(ctx, *allocationAggregation), nil
 }
 
-func resolveSplitFiUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.SplitFiUser, error) {
+func resolveMutualsUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.MutualsUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserByAddress(ctx, chainAddress)
 
 	if err != nil {
@@ -162,7 +162,7 @@ func resolveSplitFiUserByAddress(ctx context.Context, chainAddress persist.Chain
 	return userToModel(ctx, *user), nil
 }
 
-func resolveSplitFiUserByUsername(ctx context.Context, username string) (*model.SplitFiUser, error) {
+func resolveMutualsUserByUsername(ctx context.Context, username string) (*model.MutualsUser, error) {
 	user, err := publicapi.For(ctx).User.GetUserByUsername(ctx, username)
 
 	if err != nil {
@@ -648,7 +648,7 @@ func allocationAggregationToModel(ctx context.Context, allocationAggregation db.
 }
 
 // userToModel converts a db.User to a model.User
-func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
+func userToModel(ctx context.Context, user db.User) *model.MutualsUser {
 	userApi := publicapi.For(ctx).User
 	isAuthenticatedUser := userApi.IsUserLoggedIn(ctx) && userApi.GetLoggedInUserId(ctx) == user.ID
 
@@ -657,8 +657,8 @@ func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
 		wallets[i] = walletToModelPersist(ctx, wallet)
 	}
 
-	return &model.SplitFiUser{
-		HelperSplitFiUserData: model.HelperSplitFiUserData{
+	return &model.MutualsUser{
+		HelperMutualsUserData: model.HelperMutualsUserData{
 			UserID: user.ID,
 		},
 		Dbid:      user.ID,
@@ -674,8 +674,8 @@ func userToModel(ctx context.Context, user db.User) *model.SplitFiUser {
 	}
 }
 
-func usersToModels(ctx context.Context, users []db.User) []*model.SplitFiUser {
-	models := make([]*model.SplitFiUser, len(users))
+func usersToModels(ctx context.Context, users []db.User) []*model.MutualsUser {
+	models := make([]*model.MutualsUser, len(users))
 	for i, user := range users {
 		models[i] = userToModel(ctx, user)
 	}

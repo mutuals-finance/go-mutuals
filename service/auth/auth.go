@@ -5,26 +5,26 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/redis"
 	"github.com/jackc/pgx/v4"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/redis"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/env"
 	"github.com/magiclabs/magic-admin-go"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"github.com/magiclabs/magic-admin-go/token"
+	"github.com/mutuals/go-mutuals/env"
 
-	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/mutuals/go-mutuals/service/logger"
 
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 // AuthenticatedAddress contains address information that has been successfully verified
@@ -49,7 +49,7 @@ const (
 const cookieExpires = 1 * time.Hour
 
 // NoncePrepend is prepended to a nonce to make our default signing message
-const NoncePrepend = "SplitFi uses this cryptographic signature in place of a password: "
+const NoncePrepend = "Mutuals uses this cryptographic signature in place of a password: "
 
 // AuthCookieKey is the key used to store the auth token in the cookie
 const AuthCookieKey = "SPLITFI_JWT"
@@ -679,7 +679,7 @@ func getCookie(c *gin.Context, cookieName string) (string, error) {
 
 func setCookie(c *gin.Context, cookieName string, value string) {
 	mode := http.SameSiteStrictMode
-	domain := ".splitfi.com"
+	domain := ".mutuals.com"
 	httpOnly := true
 	secure := true
 
@@ -699,7 +699,7 @@ func setCookie(c *gin.Context, cookieName string, value string) {
 		// cookies for local environments when receiving requests from these platforms.
 
 		// Mobile app
-		if strings.Contains(userAgent, "SplitFiLabs") && strings.Contains(userAgent, "Darwin") {
+		if strings.Contains(userAgent, "MutualsLabs") && strings.Contains(userAgent, "Darwin") {
 			secure = false
 			logger.For(c).Info("Request is from mobile app, setting local auth cookie with secure=false")
 		}

@@ -337,11 +337,11 @@ WITH scrubbed_unverified_email_address AS (SELECT u.id    AS user_id,
                                                 pii.for_users p
                                            WHERE u.id = p.user_id),
 
-     -- <username>@dummy-email.splitfi.com for users who have verified email addresses, null otherwise
+     -- <username>@dummy-email.mutuals.com for users who have verified email addresses, null otherwise
      scrubbed_verified_email_address AS (SELECT u.id    AS user_id,
                                                 CASE
                                                     WHEN p.pii_verified_email_address IS NOT NULL
-                                                        THEN u.username_idempotent || '@dummy-email.splitfi.com'
+                                                        THEN u.username_idempotent || '@dummy-email.mutuals.com'
                                                     END AS scrubbed_address
                                          FROM users u,
                                               pii.for_users p

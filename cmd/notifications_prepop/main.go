@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/spf13/viper"
 )
 
@@ -163,7 +163,7 @@ func actionForNum(num int) persist.Action {
 func setDefaults() {
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
-	viper.SetDefault("POSTGRES_USER", "splitfi_backend")
+	viper.SetDefault("POSTGRES_USER", "mutuals_backend")
 	viper.SetDefault("POSTGRES_PASSWORD", "")
 	viper.SetDefault("POSTGRES_DB", "postgres")
 

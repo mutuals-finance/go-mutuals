@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 var errMustProvideUserIdentifier = fmt.Errorf("must provide either ID or username")

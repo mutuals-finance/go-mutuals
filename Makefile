@@ -94,7 +94,7 @@ $(DEPLOY)-$(PROD)-routing-rules     : SERVICE_FILE := dispatch.yaml
 $(DEPLOY)-$(PROD)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
 
 # Service to Sentry project mapping
-$(DEPLOY)-%-backend               : SENTRY_PROJECT := splitfi-backend
+$(DEPLOY)-%-backend               : SENTRY_PROJECT := mutuals-backend
 $(DEPLOY)-%-pushnotifications     : SENTRY_PROJECT := pushnotifications
 $(DEPLOY)-%-emails                : SENTRY_PROJECT := emails
 # $(DEPLOY)-%-kafka-streamer        : SENTRY_PROJECT := kafka-streamer

@@ -3,23 +3,23 @@ package publicapi
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/redis"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/service/redis"
+	"github.com/mutuals/go-mutuals/util"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"github.com/magiclabs/magic-admin-go/token"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/debugtools"
-	"github.com/SplitFi/go-splitfi/graphql/dataloader"
-	"github.com/SplitFi/go-splitfi/graphql/model"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/debugtools"
+	"github.com/mutuals/go-mutuals/graphql/dataloader"
+	"github.com/mutuals/go-mutuals/graphql/model"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type AuthAPI struct {

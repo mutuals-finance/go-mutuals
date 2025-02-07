@@ -26,7 +26,6 @@ services:
     command: ["-c", "config-file=/etc/postgresql/postgresql.conf"]
   ngrok:
       image: "ngrok/ngrok:latest"
-      restart: unless-stopped
       command:
         - "http"
         - "http://host.docker.internal:4500"
@@ -45,9 +44,9 @@ services:
     command: [
       "-host", "0.0.0.0",
       "-port", "8123",
-      "-queue", "projects/splitfi-local/locations/here/queues/token-processing",
-      "-queue", "projects/splitfi-local/locations/here/queues/indexer-refreshes",
-      "-queue", "projects/splitfi-local/locations/here/queues/wallet-validate",
+      "-queue", "projects/mutuals-local/locations/here/queues/token-processing",
+      "-queue", "projects/mutuals-local/locations/here/queues/indexer-refreshes",
+      "-queue", "projects/mutuals-local/locations/here/queues/wallet-validate",
     ]
   pubsub-emulator:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
@@ -58,7 +57,7 @@ services:
     command: [
       "/bin/bash",
       "-c",
-      "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=splitfi-local"
+      "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=mutuals-local"
     ]
 #  streamer:
 #    build:

@@ -3,8 +3,8 @@ package middleware
 import (
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 func IsOriginAllowed(requestOrigin string) bool {

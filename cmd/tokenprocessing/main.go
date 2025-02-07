@@ -3,9 +3,9 @@ package main
 import (
 	"cloud.google.com/go/profiler"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/tokenprocessing"
+	"github.com/mutuals/go-mutuals/service/logger"
+	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
+	"github.com/mutuals/go-mutuals/tokenprocessing"
 	"google.golang.org/appengine"
 	"net/http"
 	"os"

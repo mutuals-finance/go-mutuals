@@ -1,9 +1,9 @@
 package publicapi
 
 import (
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/graphql/dataloader"
 	"github.com/go-playground/validator/v10"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/graphql/dataloader"
 )
 
 const maxSearchQueryLength = 256

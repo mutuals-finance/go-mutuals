@@ -1,8 +1,8 @@
 package multichain
 
 import (
-	"github.com/SplitFi/go-splitfi/service/multichain/common"
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/multichain/common"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type ProviderLookup map[persist.Chain]any

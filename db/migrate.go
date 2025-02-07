@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/golang-migrate/migrate/v4"
 	pgdriver "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 const sudoFlag = "/* {% require_sudo %} */"
@@ -117,13 +117,13 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 	}
 
 	var superMigrate *migrate.Migrate
-	var splitfiMigrate *migrate.Migrate
+	var mutualsMigrate *migrate.Migrate
 
 	loadMigrate := func() error {
-		if splitfiMigrate != nil {
+		if mutualsMigrate != nil {
 			return nil
 		}
-		splitfiClient, err := postgres.NewClient(postgres.WithUser("postgres"))
+		mutualsClient, err := postgres.NewClient(postgres.WithUser("postgres"))
 		var errNoRole postgres.ErrRoleDoesNotExist
 		if errors.As(err, &errNoRole) {
 			return nil
@@ -131,7 +131,7 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		if err != nil {
 			return err
 		}
-		splitfiMigrate, err = newMigrateInstance(splitfiClient, dir)
+		mutualsMigrate, err = newMigrateInstance(mutualsClient, dir)
 		return err
 	}
 
@@ -145,24 +145,24 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		if err := loadMigrate(); err != nil {
 			return err
 		}
-		if splitfiMigrate != nil {
-			defer splitfiMigrate.Close()
+		if mutualsMigrate != nil {
+			defer mutualsMigrate.Close()
 		}
 	} else {
 		// Apply an up migration since a superuser isn't needed
-		splitfiClient := postgres.MustCreateClient(postgres.WithUser("postgres"))
-		splitfiMigrate, err = newMigrateInstance(splitfiClient, dir)
+		mutualsClient := postgres.MustCreateClient(postgres.WithUser("postgres"))
+		mutualsMigrate, err = newMigrateInstance(mutualsClient, dir)
 		if err != nil {
 			return err
 		}
-		defer splitfiMigrate.Close()
-		return splitfiMigrate.Up()
+		defer mutualsMigrate.Close()
+		return mutualsMigrate.Up()
 	}
 
 	var curVer uint
 
-	if splitfiMigrate != nil {
-		curVer, err = currentVersion(splitfiMigrate)
+	if mutualsMigrate != nil {
+		curVer, err = currentVersion(mutualsMigrate)
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 			superStreak = true
 			// Skip running the migration if its the current version already applied
 			if ver-1 != curVer {
-				if err := splitfiMigrate.Migrate(ver - 1); err != nil {
+				if err := mutualsMigrate.Migrate(ver - 1); err != nil {
 					return err
 				}
 			}
@@ -208,11 +208,11 @@ func RunMigrations(superClient *sql.DB, dir string) error {
 		}
 	}
 
-	if splitfiMigrate == nil {
-		panic("splitfi_migrator client never initted!")
+	if mutualsMigrate == nil {
+		panic("mutuals_migrator client never initted!")
 	}
 
-	err = splitfiMigrate.Up()
+	err = mutualsMigrate.Up()
 
 	if errors.Is(err, migrate.ErrNoChange) {
 		return nil

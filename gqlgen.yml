@@ -35,7 +35,7 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "github.com/SplitFi/go-splitfi/graphql/model"
+  - "github.com/mutuals/go-mutuals/graphql/model"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -45,55 +45,55 @@ autobind:
 models:
   Address:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.Address
+      - github.com/mutuals/go-mutuals/service/persist.Address
   PubKey:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.PubKey
+      - github.com/mutuals/go-mutuals/service/persist.PubKey
   Chain:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.Chain
+      - github.com/mutuals/go-mutuals/service/persist.Chain
   EmailVerificationStatus:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.EmailVerificationStatus
+      - github.com/mutuals/go-mutuals/service/persist.EmailVerificationStatus
   Email:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.Email
+      - github.com/mutuals/go-mutuals/service/persist.Email
   ChainAddress:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.ChainAddress
+      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
   ChainAddressInput:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.ChainAddress
+      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
   ChainPubKey:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.ChainPubKey
+      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
   ChainPubKeyInput:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.ChainPubKey
+      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
   HexString:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.HexString
+      - github.com/mutuals/go-mutuals/service/persist.HexString
   DBID:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.DBID
+      - github.com/mutuals/go-mutuals/service/persist.DBID
   WalletType:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.WalletType
+      - github.com/mutuals/go-mutuals/service/persist.WalletType
   InteractionType:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.InteractionType
+      - github.com/mutuals/go-mutuals/service/persist.InteractionType
   SplitStatusType:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.SplitStatus
+      - github.com/mutuals/go-mutuals/service/persist.SplitStatus
   CalculationType:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.CalculationType
+      - github.com/mutuals/go-mutuals/service/persist.CalculationType
   RecipientType:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.RecipientType
+      - github.com/mutuals/go-mutuals/service/persist.RecipientType
   ID:
     model:
-      - github.com/SplitFi/go-splitfi/graphql/model.GqlID
+      - github.com/mutuals/go-mutuals/graphql/model.GqlID
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
@@ -105,22 +105,22 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Action:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.Action
+      - github.com/mutuals/go-mutuals/service/persist.Action
   Role:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.Role
+      - github.com/mutuals/go-mutuals/service/persist.Role
   ReportWindow:
     model:
-      - github.com/SplitFi/go-splitfi/graphql/model.Window
+      - github.com/mutuals/go-mutuals/graphql/model.Window
   ReportReason:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.ReportReason
+      - github.com/mutuals/go-mutuals/service/persist.ReportReason
   DarkMode:
     model:
-      - github.com/SplitFi/go-splitfi/service/persist.DarkMode
+      - github.com/mutuals/go-mutuals/service/persist.DarkMode
   BasicAuthType:
     model:
-      - github.com/SplitFi/go-splitfi/service/auth/basicauth.AuthTokenType
+      - github.com/mutuals/go-mutuals/service/auth/basicauth.AuthTokenType
 directives:
   goGqlId:
     skip_runtime: true

@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 )
 
 // SplitRepository is the repository for interacting with splits in a postgres database

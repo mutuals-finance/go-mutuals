@@ -2,12 +2,12 @@ package streamer
 
 import (
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/service/task"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/gin-gonic/gin"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/persist"
+	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
+	"github.com/mutuals/go-mutuals/service/task"
+	"github.com/mutuals/go-mutuals/util"
 	"net/http"
 )
 

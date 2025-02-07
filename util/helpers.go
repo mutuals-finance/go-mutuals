@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/logger"
+	"github.com/mutuals/go-mutuals/service/logger"
 	"io"
 	"os"
 	"path/filepath"

@@ -1,9 +1,9 @@
 package dataloader
 
 import (
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/jackc/pgx/v4"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 func (*GetSplitByIdBatch) getNotFoundError(key persist.DBID) error {

@@ -3,14 +3,14 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/util"
 	"strconv"
 	"time"
 
 	"github.com/bsm/redislock"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/tracing"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/tracing"
 
 	"github.com/go-redis/redis/v8"
 )

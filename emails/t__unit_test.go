@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
 )
 
 func TestNotificationTemplating_Success(t *testing.T) {

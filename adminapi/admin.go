@@ -3,18 +3,18 @@ package adminapi
 import (
 	"context"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/auth/basicauth"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/redis"
+	"github.com/mutuals/go-mutuals/service/auth/basicauth"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/redis"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/user"
-	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/go-playground/validator/v10"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/service/user"
+	"github.com/mutuals/go-mutuals/validate"
 )
 
 type AdminAPI struct {

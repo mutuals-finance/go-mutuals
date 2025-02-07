@@ -3,10 +3,10 @@ package streamer
 import (
 	"cloud.google.com/go/storage"
 	"context"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/service/tracing"
 	"github.com/everFinance/goar"
 	shell "github.com/ipfs/go-ipfs-api"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/tracing"
 	"net/http"
 	"os"
 	"time"
@@ -16,15 +16,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/middleware"
-	"github.com/SplitFi/go-splitfi/server"
-	"github.com/SplitFi/go-splitfi/service/auth"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/redis"
-	"github.com/SplitFi/go-splitfi/service/throttle"
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/middleware"
+	"github.com/mutuals/go-mutuals/server"
+	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/redis"
+	"github.com/mutuals/go-mutuals/service/throttle"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 const sentryTokenContextName = "NFT context" // Sentry excludes contexts that contain "token" so we use "NFT" instead
@@ -94,7 +94,7 @@ func newStreamer(queries *db.Queries, httpClient *http.Client, ipfsClient *shell
 }
 
 func setDefaults() {
-	viper.SetDefault("IPFS_URL", "https://splitfi.infura-ipfs.io")
+	viper.SetDefault("IPFS_URL", "https://mutuals.infura-ipfs.io")
 	viper.SetDefault("IPFS_API_URL", "https://ipfs.infura.io:5001")
 	viper.SetDefault("IPFS_PROJECT_ID", "")
 	viper.SetDefault("IPFS_PROJECT_SECRET", "")

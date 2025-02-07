@@ -4,7 +4,7 @@ package auth
 // 	"testing"
 
 // 	"github.com/ethereum/go-ethereum/ethclient"
-// 	"github.com/SplitFi/go-splitfi/service/persist"
+// 	"github.com/mutuals/go-mutuals/service/persist"
 // 	"github.com/spf13/viper"
 // 	"github.com/stretchr/testify/assert"
 // )

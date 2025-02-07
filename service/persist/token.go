@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/util"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 const (

@@ -5,17 +5,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/mutuals/go-mutuals/util"
 	"strings"
 	"time"
 
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/lib/pq"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 // UserRepository represents a user repository in the postgres database

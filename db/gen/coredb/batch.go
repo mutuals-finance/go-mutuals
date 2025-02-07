@@ -10,8 +10,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
 	"github.com/jackc/pgx/v4"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 var (

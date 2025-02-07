@@ -11,7 +11,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/SplitFi/go-splitfi/service/auth"
+	"github.com/mutuals/go-mutuals/service/auth"
 )
 
 const Enabled bool = false

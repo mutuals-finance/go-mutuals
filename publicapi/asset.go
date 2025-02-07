@@ -2,15 +2,15 @@ package publicapi
 
 import (
 	"context"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/graphql/dataloader"
-	"github.com/SplitFi/go-splitfi/service/multichain"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/service/persist/postgres"
-	"github.com/SplitFi/go-splitfi/service/throttle"
-	"github.com/SplitFi/go-splitfi/validate"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/graphql/dataloader"
+	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/service/throttle"
+	"github.com/mutuals/go-mutuals/validate"
 )
 
 type AssetAPI struct {
@@ -23,7 +23,7 @@ type AssetAPI struct {
 	throttler          *throttle.Locker
 }
 
-func (api AssetAPI) GetAssetsByOwnerChainAddressPaginate(ctx context.Context, ownerChainAddress persist.ChainAddress, before, after *string, first, last *int, onlySplitfiUsers bool) ([]any, PageInfo, error) {
+func (api AssetAPI) GetAssetsByOwnerChainAddressPaginate(ctx context.Context, ownerChainAddress persist.ChainAddress, before, after *string, first, last *int, onlyMutualsUsers bool) ([]any, PageInfo, error) {
 
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{

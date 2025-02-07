@@ -5,23 +5,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SplitFi/go-splitfi/service/limiters"
-	"github.com/SplitFi/go-splitfi/service/redis"
-	sentryutil "github.com/SplitFi/go-splitfi/service/sentry"
-	"github.com/SplitFi/go-splitfi/service/task"
+	"github.com/mutuals/go-mutuals/service/limiters"
+	"github.com/mutuals/go-mutuals/service/redis"
+	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
+	"github.com/mutuals/go-mutuals/service/task"
 	"github.com/sourcegraph/conc/pool"
 	"golang.org/x/net/html"
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	db "github.com/SplitFi/go-splitfi/db/gen/coredb"
-	"github.com/SplitFi/go-splitfi/env"
-	"github.com/SplitFi/go-splitfi/service/logger"
-	"github.com/SplitFi/go-splitfi/service/persist"
-	"github.com/SplitFi/go-splitfi/util"
 	"github.com/bsm/redislock"
 	"github.com/gin-gonic/gin"
 	"github.com/googleapis/gax-go/v2/apierror"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/env"
+	"github.com/mutuals/go-mutuals/service/logger"
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 	"google.golang.org/grpc/codes"
 )
 
@@ -562,7 +562,7 @@ func NotificationToUserFacingData(ctx context.Context, queries *db.Queries, n db
 	case persist.ActionTopActivityBadgeReceived:
 		return UserFacingNotificationData{
 			Actor:  "You",
-			Action: "received a new badge for being amongst the top active users on SplitFi this week!",
+			Action: "received a new badge for being amongst the top active users on Mutuals this week!",
 		}, nil
 
 	case persist.ActionAnnouncement:

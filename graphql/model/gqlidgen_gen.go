@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SplitFi/go-splitfi/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 func (r *Allocation) ID() GqlID {
@@ -26,12 +26,12 @@ func (r *DeletedNode) ID() GqlID {
 	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
 }
 
-func (r *Split) ID() GqlID {
-	return GqlID(fmt.Sprintf("Split:%s", r.Dbid))
+func (r *MutualsUser) ID() GqlID {
+	return GqlID(fmt.Sprintf("MutualsUser:%s", r.Dbid))
 }
 
-func (r *SplitFiUser) ID() GqlID {
-	return GqlID(fmt.Sprintf("SplitFiUser:%s", r.Dbid))
+func (r *Split) ID() GqlID {
+	return GqlID(fmt.Sprintf("Split:%s", r.Dbid))
 }
 
 func (r *Token) ID() GqlID {
@@ -60,8 +60,8 @@ type NodeFetcher struct {
 	OnAllocationAggregation func(ctx context.Context, dbid persist.DBID) (*AllocationAggregation, error)
 	OnAsset                 func(ctx context.Context, dbid persist.DBID) (*Asset, error)
 	OnDeletedNode           func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
+	OnMutualsUser           func(ctx context.Context, dbid persist.DBID) (*MutualsUser, error)
 	OnSplit                 func(ctx context.Context, dbid persist.DBID) (*Split, error)
-	OnSplitFiUser           func(ctx context.Context, dbid persist.DBID) (*SplitFiUser, error)
 	OnToken                 func(ctx context.Context, dbid persist.DBID) (*Token, error)
 	OnViewer                func(ctx context.Context, userId string) (*Viewer, error)
 	OnWallet                func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
@@ -97,16 +97,16 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnDeletedNode(ctx, persist.DBID(ids[0]))
+	case "MutualsUser":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MutualsUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnMutualsUser(ctx, persist.DBID(ids[0]))
 	case "Split":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Split' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnSplit(ctx, persist.DBID(ids[0]))
-	case "SplitFiUser":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'SplitFiUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnSplitFiUser(ctx, persist.DBID(ids[0]))
 	case "Token":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Token' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -137,10 +137,10 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAsset")
 	case n.OnDeletedNode == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
+	case n.OnMutualsUser == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMutualsUser")
 	case n.OnSplit == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplit")
-	case n.OnSplitFiUser == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnSplitFiUser")
 	case n.OnToken == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnToken")
 	case n.OnViewer == nil:

@@ -76,7 +76,7 @@ interface Error {
   message: String!
 }
 
-type SplitFiUser implements Node @goEmbedHelper {
+type MutualsUser implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
   username: String
@@ -126,9 +126,9 @@ input ChainPubKeyInput {
   chain: Chain! @goField(forceResolver: true)
 }
 
-union SplitFiUserOrWallet = SplitFiUser | Wallet
+union MutualsUserOrWallet = MutualsUser | Wallet
 
-union SplitFiUserOrAddress = SplitFiUser | ChainAddress
+union MutualsUserOrAddress = MutualsUser | ChainAddress
 
 enum TokenType {
   ERC20
@@ -242,7 +242,7 @@ type NotificationsConnection @goEmbedHelper {
 
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
-  user: SplitFiUser @goField(forceResolver: true)
+  user: MutualsUser @goField(forceResolver: true)
   viewerSplits: [ViewerSplit] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
@@ -311,11 +311,11 @@ type UserExperience {
   experienced: Boolean!
 }
 
-union UserByUsernameOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
+union UserByUsernameOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
 
-union UserByIdOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
+union UserByIdOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
 
-union UserByAddressOrError = SplitFiUser | ErrUserNotFound | ErrInvalidInput
+union UserByAddressOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
 
 union ViewerOrError = Viewer | ErrNotAuthorized
 
@@ -338,7 +338,7 @@ type PageInfo {
 }
 
 type UserEdge {
-  node: SplitFiUser
+  node: MutualsUser
   cursor: String
 }
 
@@ -367,7 +367,7 @@ enum ReportWindow {
 }
 
 type UserSearchResult {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 type SearchUsersPayload {
@@ -655,7 +655,7 @@ interface GroupedNotification implements Notification & Node {
 }
 
 type GroupNotificationUserEdge {
-  node: SplitFiUser
+  node: MutualsUser
   cursor: String
 }
 
@@ -740,15 +740,15 @@ type UnsubscribeFromEmailTypePayload {
 
 union UnsubscribeFromEmailTypePayloadOrError = UnsubscribeFromEmailTypePayload | ErrInvalidInput
 
-union AddRolesToUserPayloadOrError = SplitFiUser | ErrNotAuthorized
-union RevokeRolesFromUserPayloadOrError = SplitFiUser | ErrNotAuthorized
+union AddRolesToUserPayloadOrError = MutualsUser | ErrNotAuthorized
+union RevokeRolesFromUserPayloadOrError = MutualsUser | ErrNotAuthorized
 
 type OptInForRolesPayload {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 type OptOutForRolesPayload {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 union OptInForRolesPayloadOrError = OptInForRolesPayload | ErrNotAuthorized | ErrInvalidInput
@@ -897,7 +897,7 @@ input AdminAddWalletInput {
 }
 
 type AdminAddWalletPayload {
-  user: SplitFiUser
+  user: MutualsUser
 }
 
 union AdminAddWalletPayloadOrError =
@@ -972,7 +972,7 @@ type Mutation {
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
     @basicAuth(allowed: [Retool])
 
-  # SplitFi Frontend Deploy Persisted Queries
+  # Mutuals Frontend Deploy Persisted Queries
   uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
     @frontendBuildAuth
 
