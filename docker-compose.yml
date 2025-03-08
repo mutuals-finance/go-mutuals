@@ -1,4 +1,5 @@
 version: "3.9"
+
 services:
   redis:
     image: "redis:6"
@@ -24,17 +25,65 @@ services:
     volumes:
       - "${PWD}/docker/postgres/postgres.conf:/etc/postgresql/postgresql.conf"
     command: ["-c", "config-file=/etc/postgresql/postgresql.conf"]
-  ngrok:
-      image: "ngrok/ngrok:latest"
-      command:
-        - "http"
-        - "http://host.docker.internal:4500"
-        - "--domain"
-        - "asp-cuddly-ant.ngrok-free.app"
-        - "--authtoken"
-        - "${NGROK_AUTHTOKEN}"
-      ports:
-        - "4040:4040"
+  timescaledb:
+    image: timescale/timescaledb-ha:pg15
+    restart: always
+    ports:
+      - "5433:5433"
+    volumes:
+      - timescaledb:/home/postgres/pgdata/data
+    environment:
+      - POSTGRES_HOST=${TIMESCALE_HOST:-timescale}
+      - POSTGRES_USER=${TIMESCALE_USER:-timescale}
+      - POSTGRES_DB=${TIMESCALE_DB:-timescale}
+      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-''}
+      - PGPORT=5433
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dipdup"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  hasura:
+    image: hasura/graphql-engine:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - timescaledb
+    environment:
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://${TIMESCALE_USER:-timescale}:${TIMESCALE_PASSWORD:-''}@${TIMESCALE_HOST:-timescale}:5433/${TIMESCALE_DB:-timescale}
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_GRAPHQL_ADMIN_SECRET}
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=true
+      - HASURA_GRAPHQL_LOG_LEVEL=info
+      - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
+      - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
+  indexer:
+    build:
+      context: "."
+      dockerfile: "docker/indexer/Dockerfile"
+    environment:
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - ETHERSCAN_URL=${ETHERSCAN_URL}
+      - HASURA_HOST=${HASURA_HOST}
+      - HASURA_SECRET=${HASURA_SECRET}
+      - NODE_URL=${ALCHEMY_API_URL}
+      - NODE_WS_URL=${ALCHEMY_WS_API_URL}
+      - POSTGRES_DB=${TIMESCALE_DB:-timescale}
+      - POSTGRES_HOST=${TIMESCALE_HOST:-timescale}
+      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-''}
+      - POSTGRES_USER=${TIMESCALE_USER:-timescale}
+#      - SENTRY_DSN=${SENTRY_DSN}
+#      - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
+#      - SUBSQUID_URL=${SUBSQUID_URL}
+      - PGPORT=5433
+    ports:
+      - 46339
+      - 9000
+    command: ["-C", "compose", "run"]
+    depends_on:
+      - timescaledb
+      - hasura
   task-emulator:
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
     ports:
@@ -59,26 +108,5 @@ services:
       "-c",
       "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=mutuals-local"
     ]
-#  streamer:
-#    build:
-#      context: "."
-#      dockerfile: "docker/streamer/Dockerfile"
-#    ports:
-#      - "6000:6000"
-#    depends_on:
-#      - postgres
-#      - ngrok
-#      - redis
-  # Uncomment if you want to run tokenprocessing locally as a container
-  # tokenprocessing:
-  #   build:
-  #     context: "."
-  #     dockerfile: "docker/tokenprocessing/Dockerfile"
-  #   ports:
-  #     - "6500:6500"
-  #   volumes:
-  #     - ${PWD}/_local:/app/_local
-  #     - ${PWD}/_deploy:/app/_deploy
-  #   depends_on:
-  #     - postgres
-  #     - redis
+volumes:
+  timescaledb:

@@ -187,27 +187,6 @@ func (api PoolAPI) UpdatePoolInfo(ctx context.Context, poolID persist.DBID, name
 	return nil
 }
 
-/*
-	func (api PoolAPI) UpdatePoolHidden(ctx context.Context, poolID persist.DBID, hidden bool) (db.Pool, error) {
-		// Validate
-		if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-			"poolID": validate.WithTag(poolID, "required"),
-		}); err != nil {
-			return db.Pool{}, err
-		}
-
-		pool, err := api.queries.UpdatePoolHidden(ctx, db.UpdatePoolHiddenParams{
-			ID:     poolID,
-			Hidden: hidden,
-		})
-		if err != nil {
-			return db.Pool{}, err
-		}
-
-		return pool, nil
-	}
-*/
-
 func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) (db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -230,7 +209,7 @@ func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) 
 
 	q := api.queries.WithTx(tx)
 
-	pool, err := api.queries.UpsertPool(ctx, db.UpsertPoolParams{
+	pool, err := q.UpsertPool(ctx, db.UpsertPoolParams{
 		ID:          *poolID,
 		Name:        *input.Name,
 		Description: *input.Description,

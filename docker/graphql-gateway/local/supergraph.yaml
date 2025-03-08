@@ -1,6 +1,6 @@
 federation_version: 2
 subgraphs:
   mutuals:
-    routing_url: http://host.docker.internal:4000/glry/graphql/query
+    routing_url: http://host.docker.internal:4000/mutuals/graphql/query
     schema:
       file: ./schema.graphql
