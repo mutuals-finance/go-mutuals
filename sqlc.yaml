@@ -4,6 +4,34 @@ plugins:
     process:
       cmd: db/bin/sqlc-gen-json
 sql:
+  # Indexer model gen
+  - schema:
+    - 'db/migrations/indexer'
+    codegen:
+      - out: 'db/gen/indexerdb'
+        plugin: jsonb
+        options:
+          indent: "  "
+          filename: 'manifest.json'
+    queries: 'db/queries/indexer'
+    engine: 'postgresql'
+    gen:
+      go:
+        package: 'indexerdb'
+        out: 'db/gen/indexerdb'
+        sql_package: 'pgx/v4'
+        output_db_file_name: 'db_gen.go'
+        output_models_file_name: 'models_gen.go'
+        emit_json_tags: true
+        emit_db_tags: true
+        overrides:
+          # Wildcards
+          # Note: to override one of these wildcard entries, add a more specific entry (like some_table.id) above
+          - column: '*.id'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.DBID'
+          - column: '*.chain'
+            go_type: 'github.com/mutuals/go-mutuals/service/persist.Chain'
+
   # Backend model gen
   - schema:
     - "db/migrations/core"
@@ -14,7 +42,8 @@ sql:
         options:
           indent: "  "
           filename: 'manifest.json'
-    queries: "db/queries/core"
+    queries:
+      - "db/queries/core"
     engine: "postgresql"
     gen:
       go:

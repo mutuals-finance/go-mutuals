@@ -30,10 +30,11 @@ type goType struct {
 }
 
 type templateData struct {
-	Package       string
-	ImportPaths   []string
-	Definitions   []dataloaderDefinition
-	Subscriptions []subscription
+	Package        string
+	QueriesPackage string
+	ImportPaths    []string
+	Definitions    []dataloaderDefinition
+	Subscriptions  []subscription
 }
 
 type dataloaderConfig struct {
@@ -55,6 +56,7 @@ type dataloaderDefinition struct {
 	Embeds           []embedDefinition
 	IsCustomBatch    bool
 	CustomBatching   *customBatchingDefinition
+	QueriesPackage   string
 }
 
 type subscription struct {
@@ -204,7 +206,7 @@ func (*%s) getNotFoundError(key %s) error {
 }
 `
 
-func generateFiles(defs []dataloaderDefinition, outputDir string) error {
+func generateFiles(defs []dataloaderDefinition, queriesPackage string, outputDir string) error {
 	// Delete the old api_gen.go file to ensure that any compiler errors present in the old file
 	// won't stop us from parsing the package and writing a new one
 	apiFile := filepath.Join(outputDir, "api_gen.go")
@@ -216,13 +218,13 @@ func generateFiles(defs []dataloaderDefinition, outputDir string) error {
 	if genPkg == nil {
 		return fmt.Errorf("unable to find package info for " + outputDir)
 	}
-
 	importPaths := getImportPaths(defs)
 
 	data := templateData{
-		Package:     genPkg.Name,
-		ImportPaths: importPaths,
-		Definitions: defs,
+		Package:        genPkg.Name,
+		QueriesPackage: queriesPackage,
+		ImportPaths:    importPaths,
+		Definitions:    defs,
 	}
 
 	dataloadersFile := filepath.Join(outputDir, "dataloaders_gen.go")
@@ -303,13 +305,14 @@ func generateFiles(defs []dataloaderDefinition, outputDir string) error {
 	return nil
 }
 
-func newDataloaderDefinition(name string, keyType types.Type, resultType types.Type, maxBatchSize int, batchTimeout time.Duration, publishResults bool, genPkgPath string) dataloaderDefinition {
+func newDataloaderDefinition(name string, keyType types.Type, resultType types.Type, maxBatchSize int, batchTimeout time.Duration, publishResults bool, genPkgPath string, queriesPackage string) dataloaderDefinition {
 	data := dataloaderDefinition{
 		Name:            name,
 		MaxBatchSize:    maxBatchSize,
 		BatchTimeout:    batchTimeout.Nanoseconds(),
 		PublishResults:  publishResults,
 		KeyIsComparable: types.Comparable(keyType),
+		QueriesPackage:  queriesPackage,
 	}
 
 	var err error
@@ -464,6 +467,8 @@ func Generate(sqlcManifestPath string, outputDir string) {
 
 	dataloaderDefs := make([]dataloaderDefinition, 0)
 
+	queriesPackage := fmt.Sprintf("%s.%s", queriesType.Obj().Pkg().Name(), queriesType.Obj().Name())
+
 	// Loop through all methods on the Queries type
 	for i := 0; i < queriesType.NumMethods(); i++ {
 		method := queriesType.Method(i)
@@ -498,7 +503,7 @@ func Generate(sqlcManifestPath string, outputDir string) {
 				batchInputType, batchOutputType = getBatchManyTypes(method)
 			}
 
-			def := newDataloaderDefinition(methodName, batchInputType, batchOutputType, config.MaxBatchSize, config.BatchTimeout, config.PublishResults, genPkg.PkgPath)
+			def := newDataloaderDefinition(methodName, batchInputType, batchOutputType, config.MaxBatchSize, config.BatchTimeout, config.PublishResults, genPkg.PkgPath, queriesPackage)
 			if embeds, ok := sqlcEmbeds[methodName]; ok {
 				def.Embeds = getEmbedsForType(batchOutputType, embeds, dbTypesPkg)
 			}
@@ -518,7 +523,7 @@ func Generate(sqlcManifestPath string, outputDir string) {
 				if name == "batch_key_index" {
 					inputType, outputType, customBatchingDef := getCustomBatchTypes(method)
 
-					def := newDataloaderDefinition(methodName, inputType, outputType, config.MaxBatchSize, config.BatchTimeout, config.PublishResults, genPkg.PkgPath)
+					def := newDataloaderDefinition(methodName, inputType, outputType, config.MaxBatchSize, config.BatchTimeout, config.PublishResults, genPkg.PkgPath, queriesPackage)
 
 					// If the return type consists only of batch_key_index and one other field, we hide the batch_key_index
 					// field from callers and just return the other field. When this happens, there are no sqlc.embed fields
@@ -539,7 +544,7 @@ func Generate(sqlcManifestPath string, outputDir string) {
 		}
 	}
 
-	err = generateFiles(dataloaderDefs, outputDir)
+	err = generateFiles(dataloaderDefs, queriesPackage, outputDir)
 	if err != nil {
 		failWithErr(fmt.Errorf("error generating dataloaders: %v", err))
 	}

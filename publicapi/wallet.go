@@ -26,6 +26,7 @@ type WalletAPI struct {
 
 func (api WalletAPI) GetWalletByID(ctx context.Context, walletID persist.DBID) (*db.Wallet, error) {
 	// Validate
+
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"walletID": validate.WithTag(walletID, "required"),
 	}); err != nil {

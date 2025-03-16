@@ -6,4 +6,5 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup indexer indexer_workspace
+
 WORKDIR indexer_workspace

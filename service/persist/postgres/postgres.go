@@ -30,13 +30,36 @@ func (e ErrRoleDoesNotExist) Error() string {
 	return fmt.Sprintf("role '%s' does not exist", e.role)
 }
 
+type envConnectionParams struct {
+	prefix string
+}
+
+type EnvConnectionOption func(params *envConnectionParams)
+
+func WithPrefix(p string) EnvConnectionOption {
+	return func(params *envConnectionParams) {
+		params.prefix = p
+	}
+}
+
+func (params *envConnectionParams) toName(suffix string) string {
+	prefix := params.prefix
+
+	if prefix == "" || suffix == "" {
+		return fmt.Sprintf("%s%s", prefix, suffix)
+	}
+
+	return fmt.Sprintf("%s_%s", prefix, suffix)
+}
+
 type connectionParams struct {
-	user     string
-	password string
-	dbname   string
-	host     string
-	port     int
-	retry    *retry.Retry
+	envParams envConnectionParams
+	user      string
+	password  string
+	dbname    string
+	host      string
+	port      int
+	retry     *retry.Retry
 }
 
 func (c *connectionParams) toConnectionString() string {
@@ -83,20 +106,36 @@ func (c *connectionParams) toConnectionString() string {
 	//panic(fmt.Errorf("POSTGRES_SERVER_CA, POSTGRES_CLIENT_KEY, and POSTGRES_CLIENT_CERT must be set together (all must have values or all must be empty)"))
 }
 
-func newConnectionParamsFromEnv() connectionParams {
-	return connectionParams{
-		user:     env.GetString("POSTGRES_USER"),
-		password: env.GetString("POSTGRES_PASSWORD"),
-		dbname:   env.GetString("POSTGRES_DB"),
-		host:     env.GetString("POSTGRES_HOST"),
-		port:     env.GetInt("POSTGRES_PORT"),
-
-		// Retry connections by default
-		retry: &retry.Retry{MinWait: 2, MaxWait: 4, MaxRetries: 3},
+func newConnectionParamsFromEnv(opts ...ConnectionOption) connectionParams {
+	params := connectionParams{envParams: envConnectionParams{prefix: "POSTGRES"}}
+	for _, opt := range opts {
+		opt(&params)
 	}
+
+	envParams := params.envParams
+
+	params.user = env.GetString(envParams.toName("USER"))
+	params.password = env.GetString(envParams.toName("PASSWORD"))
+	params.dbname = env.GetString(envParams.toName("DB"))
+	params.host = env.GetString(envParams.toName("HOST"))
+	params.port = env.GetInt(envParams.toName("PORT"))
+	params.retry = &retry.Retry{MinWait: 2, MaxWait: 4, MaxRetries: 3}
+
+	return params
 }
 
 type ConnectionOption func(params *connectionParams)
+
+func WithEnvParams(opts ...EnvConnectionOption) ConnectionOption {
+	envParams := envConnectionParams{prefix: "POSTGRES"}
+	for _, opt := range opts {
+		opt(&envParams)
+	}
+
+	return func(params *connectionParams) {
+		params.envParams = envParams
+	}
+}
 
 func WithUser(user string) ConnectionOption {
 	return func(params *connectionParams) {
@@ -155,7 +194,7 @@ func NewClient(opts ...ConnectionOption) (*sql.DB, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 
-	params := newConnectionParamsFromEnv()
+	params := newConnectionParamsFromEnv(opts...)
 	for _, opt := range opts {
 		opt(&params)
 	}

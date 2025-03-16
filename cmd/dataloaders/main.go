@@ -4,4 +4,5 @@ import "github.com/mutuals/go-mutuals/cmd/dataloaders/generator"
 
 func main() {
 	generator.Generate("./db/gen/coredb/manifest.json", "./graphql/dataloader")
+	generator.Generate("./db/gen/indexerdb/manifest.json", "./graphql/dataloader/indexerdb")
 }

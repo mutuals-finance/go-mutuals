@@ -113,7 +113,7 @@ type Loaders struct {
 {{- end}}
 }
 
-func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
+func NewLoaders(ctx context.Context, q *{{.QueriesPackage}}, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
 	loaders := &Loaders{}
 
 	{{range .Definitions}}
@@ -154,7 +154,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 
 {{range .Definitions}}
 {{ if .IsCustomBatch }}
-func load{{.Name}}(q *coredb.Queries) func(context.Context, *{{.Name}}, []{{.KeyType.String}}) ([]{{.CustomBatching.LoaderResultType.String}}, []error) {
+func load{{.Name}}(q *{{.QueriesPackage}}) func(context.Context, *{{.Name}}, []{{.KeyType.String}}) ([]{{.CustomBatching.LoaderResultType.String}}, []error) {
 	return func(ctx context.Context, d *{{.Name}}, params []{{.KeyType.String}}) ([]{{.CustomBatching.LoaderResultType.String}}, []error) {
 		queryResults, err := q.{{.Name}}(ctx, params)
 
@@ -187,7 +187,7 @@ func load{{.Name}}(q *coredb.Queries) func(context.Context, *{{.Name}}, []{{.Key
 	}
 }
 {{ else }}
-func load{{.Name}}(q *coredb.Queries) func(context.Context, *{{.Name}}, []{{.KeyType.String}}) ([]{{.ResultType.String}}, []error) {
+func load{{.Name}}(q *{{.QueriesPackage}}) func(context.Context, *{{.Name}}, []{{.KeyType.String}}) ([]{{.ResultType.String}}, []error) {
 	return func(ctx context.Context, d *{{.Name}}, params []{{.KeyType.String}}) ([]{{.ResultType.String}}, []error) {
 		results := make([]{{.ResultType.String}}, len(params))
 		errors := make([]error, len(params))

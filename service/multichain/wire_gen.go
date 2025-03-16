@@ -10,6 +10,7 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/service/eth"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
@@ -19,7 +20,7 @@ import (
 
 // Injectors from inject.go:
 
-func NewMultichainProvider(contextContext context.Context, repositories *postgres.Repositories, queries *coredb.Queries, client *ethclient.Client, taskClient *task.Client) *Provider {
+func NewMultichainProvider(contextContext context.Context, repositories *postgres.Repositories, queries *coredb.Queries, indexerdbQueries *indexerdb.Queries, client *ethclient.Client, taskClient *task.Client) *Provider {
 	httpClient := _wireClientValue
 	ethereumProvider := ethInjector(contextContext, httpClient, client)
 	optimismProvider := optimismInjector(contextContext, httpClient, client)
@@ -33,7 +34,7 @@ func NewMultichainProvider(contextContext context.Context, repositories *postgre
 		Base:     baseProvider,
 		Polygon:  polygonProvider,
 	}
-	provider := multichainProviderInjector(contextContext, repositories, queries, chainProvider)
+	provider := multichainProviderInjector(contextContext, repositories, queries, indexerdbQueries, chainProvider)
 	return provider
 }
 
@@ -41,11 +42,11 @@ var (
 	_wireClientValue = http.DefaultClient
 )
 
-func multichainProviderInjector(ctx context.Context, repos *postgres.Repositories, q *coredb.Queries, chainProvider *ChainProvider) *Provider {
+func multichainProviderInjector(ctx context.Context, repos *postgres.Repositories, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, chainProvider *ChainProvider) *Provider {
 	providerLookup := newProviderLookup(chainProvider)
 	provider := &Provider{
 		Repos:   repos,
-		Queries: q,
+		Queries: coreQueries,
 		Chains:  providerLookup,
 	}
 	return provider

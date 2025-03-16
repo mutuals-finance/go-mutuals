@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/service/task"
 	"github.com/vektah/gqlparser/v2/ast"
 	"net/http"
@@ -32,7 +33,7 @@ import (
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	shell "github.com/ipfs/go-ipfs-api"
-	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/event"
 	"github.com/mutuals/go-mutuals/graphql/generated"
 	graphql "github.com/mutuals/go-mutuals/graphql/resolver"
@@ -45,26 +46,26 @@ import (
 	"github.com/mutuals/go-mutuals/util"
 )
 
-func HandlersInit(router *gin.Engine, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
+func HandlersInit(router *gin.Engine, repos *postgres.Repositories, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
 	router.GET("/alive", util.HealthCheckHandler())
 	apqCache := &apq.APQCache{Cache: graphqlAPQCache}
 	publicapiF := func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI {
-		api := publicapi.New(ctx, disableDataloaderCaching, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apqCache, authRefreshCache, oneTimeLoginCache, magicClient)
+		api := publicapi.New(ctx, disableDataloaderCaching, repos, coreQueries, indexerQueries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apqCache, authRefreshCache, oneTimeLoginCache, magicClient)
 		return api
 	}
-	GraphqlHandlersInit(router, queries, taskClient, pub, lock, apqCache, authRefreshCache, publicapiF)
+	GraphqlHandlersInit(router, coreQueries, indexerQueries, taskClient, pub, lock, apqCache, authRefreshCache, publicapiF)
 	return router
 }
 
-func GraphqlHandlersInit(router *gin.Engine, queries *db.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, authRefreshCache *redis.Cache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) {
+func GraphqlHandlersInit(router *gin.Engine, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, authRefreshCache *redis.Cache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) {
 	graphqlGroup := router.Group("/mutuals/graphql")
-	graphqlHandler := GraphQLHandler(queries, taskClient, pub, lock, apqCache, publicapiF)
-	graphqlGroup.Any("/query", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
-	graphqlGroup.Any("/query/:operationName", middleware.ContinueSession(queries, authRefreshCache), graphqlHandler)
+	graphqlHandler := GraphQLHandler(coreQueries, taskClient, pub, lock, apqCache, publicapiF)
+	graphqlGroup.Any("/query", middleware.ContinueSession(coreQueries, authRefreshCache), graphqlHandler)
+	graphqlGroup.Any("/query/:operationName", middleware.ContinueSession(coreQueries, authRefreshCache), graphqlHandler)
 	graphqlGroup.GET("/playground", graphqlPlaygroundHandler())
 }
 
-func GraphQLHandler(queries *db.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) gin.HandlerFunc {
+func GraphQLHandler(queries *coredb.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) gin.HandlerFunc {
 	config := generated.Config{Resolvers: &graphql.Resolver{}}
 	config.Directives.AuthRequired = graphql.AuthRequiredDirectiveHandler()
 	config.Directives.RestrictEnvironment = graphql.RestrictEnvironmentDirectiveHandler()

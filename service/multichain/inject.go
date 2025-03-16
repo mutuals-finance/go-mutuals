@@ -11,6 +11,7 @@ import (
 	"github.com/google/wire"
 
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/service/eth"
 	"github.com/mutuals/go-mutuals/service/multichain/common"
 	"github.com/mutuals/go-mutuals/service/persist"
@@ -22,7 +23,7 @@ import (
 // NewMultichainProvider is a wire injector that sets up a multichain provider instance
 // ethClient.Client and task.Client are expensive to initialize, so they're passed as an arg.
 
-func NewMultichainProvider(context.Context, *postgres.Repositories, *db.Queries, *ethclient.Client, *task.Client) *Provider {
+func NewMultichainProvider(context.Context, *postgres.Repositories, *db.Queries, *indexerdb.Queries, *ethclient.Client, *task.Client) *Provider {
 	panic(wire.Build(
 		wire.Value(http.DefaultClient), // HTTP client shared between providers
 		wire.Struct(new(ChainProvider), "*"),
@@ -35,7 +36,7 @@ func NewMultichainProvider(context.Context, *postgres.Repositories, *db.Queries,
 	))
 }
 
-func multichainProviderInjector(ctx context.Context, repos *postgres.Repositories, q *db.Queries, chainProvider *ChainProvider) *Provider {
+func multichainProviderInjector(ctx context.Context, repos *postgres.Repositories, coreQueries *db.Queries, indexerQueries *indexerdb.Queries, chainProvider *ChainProvider) *Provider {
 	panic(wire.Build(
 		wire.Struct(new(Provider), "*"),
 		newProviderLookup,

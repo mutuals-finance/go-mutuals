@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/middleware"
 	"github.com/mutuals/go-mutuals/validate"
 	"github.com/sirupsen/logrus"
@@ -21,7 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	shell "github.com/ipfs/go-ipfs-api"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
-	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/env"
 	"github.com/mutuals/go-mutuals/service/auth"
 	"github.com/mutuals/go-mutuals/service/logger"
@@ -59,7 +60,8 @@ func Init() {
 
 type Clients struct {
 	Repos           *postgres.Repositories
-	Queries         *db.Queries
+	CoreQueries     *coredb.Queries
+	IndexerQueries  *indexerdb.Queries
 	HTTPClient      *http.Client
 	EthClient       *ethclient.Client
 	IPFSClient      *shell.Shell
@@ -78,11 +80,13 @@ func (c *Clients) Close() {
 
 func ClientInit(ctx context.Context) *Clients {
 	pq := postgres.MustCreateClient()
-	pgx := postgres.NewPgxClient()
+	cPgx := postgres.NewPgxClient()
+	iPgx := postgres.NewPgxClient(postgres.WithEnvParams(postgres.WithPrefix("TIMESCALE")))
 
 	return &Clients{
-		Repos:           postgres.NewRepositories(pq, pgx),
-		Queries:         db.New(pgx),
+		Repos:           postgres.NewRepositories(pq, cPgx),
+		CoreQueries:     coredb.New(cPgx),
+		IndexerQueries:  indexerdb.New(iPgx),
 		HTTPClient:      &http.Client{Timeout: 0},
 		EthClient:       rpc.NewEthClient(),
 		IPFSClient:      ipfs.NewShell(),
@@ -94,7 +98,8 @@ func ClientInit(ctx context.Context) *Clients {
 		MagicLinkClient: auth.NewMagicLinkClient(),
 		closeFunc: func() {
 			pq.Close()
-			pgx.Close()
+			cPgx.Close()
+			iPgx.Close()
 		},
 	}
 }
@@ -105,7 +110,7 @@ func CoreInit(ctx context.Context, c *Clients) *gin.Engine {
 	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
 	oneTimeLoginCache := redis.NewCache(redis.OneTimeLoginCache)
 	return CoreInitHandlerF(ctx, func(r *gin.Engine) {
-		HandlersInit(r, c.Repos, c.Queries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, authRefreshCache, oneTimeLoginCache, c.MagicLinkClient)
+		HandlersInit(r, c.Repos, c.CoreQueries, c.IndexerQueries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, authRefreshCache, oneTimeLoginCache, c.MagicLinkClient)
 	})
 }
 
@@ -167,6 +172,11 @@ func SetDefaults() {
 	viper.SetDefault("POSTGRES_USER", "postgres")
 	viper.SetDefault("POSTGRES_PASSWORD", "postgres")
 	viper.SetDefault("POSTGRES_DB", "postgres")
+	viper.SetDefault("TIMESCALE_HOST", "0.0.0.0")
+	viper.SetDefault("TIMESCALE_PORT", 5433)
+	viper.SetDefault("TIMESCALE_USER", "timescale")
+	viper.SetDefault("TIMESCALE_PASSWORD", "timescale")
+	viper.SetDefault("TIMESCALE_DB", "timescale")
 	viper.SetDefault("IPFS_URL", "https://gallery.infura-ipfs.io")
 	viper.SetDefault("FALLBACK_IPFS_URL", "https://ipfs.io")
 	viper.SetDefault("IPFS_API_URL", "https://ipfs.infura.io:5001")

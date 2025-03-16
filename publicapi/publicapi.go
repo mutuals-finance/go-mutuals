@@ -5,6 +5,7 @@ import (
 	"errors"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
 	admin "github.com/mutuals/go-mutuals/adminapi"
+	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/graphql/apq"
 	"github.com/mutuals/go-mutuals/service/task"
 	"github.com/mutuals/go-mutuals/service/tracing"
@@ -37,11 +38,12 @@ var errBadCursorFormat = errors.New("bad cursor format")
 const apiContextKey = "publicapi.api"
 
 type PublicAPI struct {
-	repos     *postgres.Repositories
-	queries   *db.Queries
-	loaders   *dataloader.Loaders
-	validator *validator.Validate
-	APQ       *apq.APQCache
+	repos          *postgres.Repositories
+	coreQueries    *db.Queries
+	indexerQueries *indexerdb.Queries
+	loaders        *dataloader.Loaders
+	validator      *validator.Validate
+	APQ            *apq.APQCache
 
 	Auth          *AuthAPI
 	Pool          *PoolAPI
@@ -53,31 +55,33 @@ type PublicAPI struct {
 	Search        *SearchAPI
 }
 
-func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
-	multichainProvider := multichain.NewMultichainProvider(ctx, repos, queries, ethClient, taskClient)
-	return NewWithMultichainProvider(ctx, disableDataloaderCaching, repos, queries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apq, authRefreshCache, oneTimeLoginCache, magicClient, multichainProvider)
+func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, coreQueries *db.Queries, indexerQueries *indexerdb.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *PublicAPI {
+	multichainProvider := multichain.NewMultichainProvider(ctx, repos, coreQueries, indexerQueries, ethClient, taskClient)
+	return NewWithMultichainProvider(ctx, disableDataloaderCaching, repos, coreQueries, indexerQueries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apq, authRefreshCache, oneTimeLoginCache, magicClient, multichainProvider)
 }
 
-func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, queries *db.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API, multichainProvider *multichain.Provider) *PublicAPI {
-	loaders := dataloader.NewLoaders(ctx, queries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
+func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, coreQueries *db.Queries, indexerQueries *indexerdb.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API, multichainProvider *multichain.Provider) *PublicAPI {
+	loaders := dataloader.NewLoaders(ctx, coreQueries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
+	// indexerLoaders := indexerloader.NewLoaders(ctx, indexerQueries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
 	validator := validate.WithCustomValidators()
 
 	//privyClient := privy.NewPrivyClient(httpClient)
 
 	return &PublicAPI{
-		repos:         repos,
-		queries:       queries,
-		loaders:       loaders,
-		validator:     validator,
-		APQ:           apq,
-		Auth:          &AuthAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multiChainProvider: multichainProvider, magicLinkClient: magicClient, oneTimeLoginCache: oneTimeLoginCache, authRefreshCache: authRefreshCache}, // privyClient: privyClient
-		Pool:          &PoolAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient},
-		User:          &UserAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
-		Asset:         &AssetAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
-		Wallet:        &WalletAPI{repos: repos, queries: queries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
-		Notifications: &NotificationsAPI{queries: queries, loaders: loaders, validator: validator},
-		Admin:         admin.NewAPI(repos, queries, authRefreshCache, validator, multichainProvider),
-		Search:        &SearchAPI{queries: queries, loaders: loaders, validator: validator},
+		repos:          repos,
+		coreQueries:    coreQueries,
+		indexerQueries: indexerQueries,
+		loaders:        loaders,
+		validator:      validator,
+		APQ:            apq,
+		Auth:           &AuthAPI{repos: repos, queries: coreQueries, loaders: loaders, validator: validator, ethClient: ethClient, multiChainProvider: multichainProvider, magicLinkClient: magicClient, oneTimeLoginCache: oneTimeLoginCache, authRefreshCache: authRefreshCache}, // privyClient: privyClient
+		Pool:           &PoolAPI{repos: repos, queries: coreQueries, loaders: loaders, validator: validator, ethClient: ethClient},
+		User:           &UserAPI{repos: repos, queries: coreQueries, loaders: loaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
+		Asset:          &AssetAPI{repos: repos, queries: coreQueries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider, throttler: throttler},
+		Wallet:         &WalletAPI{repos: repos, queries: coreQueries, loaders: loaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
+		Notifications:  &NotificationsAPI{queries: coreQueries, loaders: loaders, validator: validator},
+		Admin:          admin.NewAPI(repos, coreQueries, authRefreshCache, validator, multichainProvider),
+		Search:         &SearchAPI{queries: coreQueries, loaders: loaders, validator: validator},
 	}
 }
 

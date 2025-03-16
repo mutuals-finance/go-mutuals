@@ -1,7 +1,7 @@
 database:
   kind: postgres
   host: ${POSTGRES_HOST:-db}
-  port: ${PGPORT:-5432}
+  port: ${PGPORT:-5433}
   user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD:-dipdup}
   database: ${POSTGRES_DB:-dipdup}
