@@ -1,0 +1,39 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "TokenLibrary",
+  "sourceName": "contracts/pool/types/Token.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "Token_ERC20TransferFailed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Token_InvalidTokenType",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Token_NativeTransferFailed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ADDRESS_ZERO",
+      "outputs": [
+        {
+          "internalType": "Token",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6091610038600b82828239805160001a607314602b57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe730000000000000000000000000000000000000000301460806040526004361060335760003560e01c806366e79509146038575b600080fd5b603f600081565b6040516001600160a01b03909116815260200160405180910390f3fea2646970667358221220f44834a50ae9af6e2ea349b622e1b8526afa8da6499f03f49ae7d6cbd633680964736f6c63430008160033",
+  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040526004361060335760003560e01c806366e79509146038575b600080fd5b603f600081565b6040516001600160a01b03909116815260200160405180910390f3fea2646970667358221220f44834a50ae9af6e2ea349b622e1b8526afa8da6499f03f49ae7d6cbd633680964736f6c63430008160033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

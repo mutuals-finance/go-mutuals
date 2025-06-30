@@ -1,5 +1,7 @@
 spec_version: 3.0
-package: demo_evm_events
+package: mutuals_indexer
+
+logging: INFO
 
 datasources:
   subsquid:
@@ -15,19 +17,91 @@ datasources:
     ws_url: ${NODE_WS_URL:-wss://eth-mainnet.g.alchemy.com/v2}
 
 contracts:
-  eth_usdt:
+  pool_factory:
     kind: evm
-    address: 0xdac17f958d2ee523a2206206994597c13d831ec7
-    typename: eth_usdt
+    address: ${POOL_FACTORY_ADDRESS}
+    typename: pool_factory
+  registry:
+    kind: evm
+    address: ${REGISTRY_ADDRESS}
+    typename: registry
 
 indexes:
-  eth_usdt_events:
+  pool_factory_events:
+    template: pool_factory_events
+    values:
+      contract: pool_factory
+  registry_events:
+    template: registry_events
+    values:
+      contract: registry
+
+templates:
+  pool_factory_events:
     kind: evm.events
+    first_level: ${POOL_FACTORY_FIRST_LEVEL}
     datasources:
       - subsquid
       - etherscan
       - evm_node
     handlers:
-      - callback: on_transfer
-        contract: eth_usdt
-        name: Transfer
+      - callback: on_pool_factory_initialized
+        contract: <contract>
+        name: PoolFactoryInitialized
+      - callback: on_pool_created
+        contract: <contract>
+        name: PoolCreated
+      - callback: on_pool_factory_ownership_transferred
+        contract: <contract>
+        name: OwnershipTransferred
+
+  pool_transactions:
+    kind: evm.transactions
+    first_level: ${POOL_FACTORY_FIRST_LEVEL}
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
+    handlers:
+      - callback: on_pool_deposit
+        to: <contract>
+        method: transfer
+      - callback: on_pool_withdraw
+        from: <contract>
+        method: transfer
+
+  pool_events:
+    kind: evm.events
+    first_level: ${POOL_FACTORY_FIRST_LEVEL}
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
+    handlers:
+      - callback: on_pool_ownership_transferred
+        contract: <contract>
+        name: OwnershipTransferred
+      - callback: on_pool_config_updated
+        contract: <contract>
+        name: ConfigUpdated
+
+  registry_events:
+    kind: evm.events
+    first_level: ${REGISTRY_FIRST_LEVEL}
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
+    handlers:
+      - callback: on_registry_initialized
+        contract: <contract>
+        name: RegistryInitialized
+      - callback: on_extension_registered
+        contract: <contract>
+        name: ExtensionRegistered
+      - callback: on_extension_unregistered
+        contract: <contract>
+        name: ExtensionUnregistered
+      - callback: on_registry_ownership_updated
+        contract: <contract>
+        name: OwnershipTransferred

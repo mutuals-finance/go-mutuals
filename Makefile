@@ -359,6 +359,11 @@ solc:
 	solc --abi ./contracts/sol/Cryptopunks.sol > ./contracts/abi/Cryptopunks.abi
 	solc --abi ./contracts/sol/Zora.sol > ./contracts/abi/Zora.abi
 	solc --abi ./contracts/sol/PremiumCards.sol > ./contracts/abi/PremiumCards.abi
+	# customized
+#	solc --abi ./contracts/sol/registry/Registry.sol > ./contracts/abi/Registry.abi
+#	solc --abi ./contracts/sol/registry/PoolFactory.sol > ./contracts/abi/PoolFactory.abi
+#	solc --abi ./contracts/sol/registry/Pool.sol > ./contracts/abi/Pool.abi
+#	solc --abi ./contracts/sol/extension/BaseExtension.sol > ./contracts/abi/BaseExtension.abi
 	tail -n +4 "./contracts/abi/IERC721.abi" > "./contracts/abi/IERC721.abi.tmp" && mv "./contracts/abi/IERC721.abi.tmp" "./contracts/abi/IERC721.abi"
 	tail -n +4 "./contracts/abi/IERC20.abi" > "./contracts/abi/IERC20.abi.tmp" && mv "./contracts/abi/IERC20.abi.tmp" "./contracts/abi/IERC20.abi"
 	tail -n +4 "./contracts/abi/IERC20Metadata.abi" > "./contracts/abi/IERC20Metadata.abi.tmp" && mv "./contracts/abi/IERC20Metadata.abi.tmp" "./contracts/abi/IERC20Metadata.abi"
@@ -371,6 +376,11 @@ solc:
 	tail -n +4 "./contracts/abi/Cryptopunks.abi" > "./contracts/abi/Cryptopunks.abi.tmp" && mv "./contracts/abi/Cryptopunks.abi.tmp" "./contracts/abi/Cryptopunks.abi"
 	tail -n +4 "./contracts/abi/Zora.abi" > "./contracts/abi/Zora.abi.tmp" && mv "./contracts/abi/Zora.abi.tmp" "./contracts/abi/Zora.abi"
 	tail -n +4 "./contracts/abi/PremiumCards.abi" > "./contracts/abi/PremiumCards.abi.tmp" && mv "./contracts/abi/PremiumCards.abi.tmp" "./contracts/abi/PremiumCards.abi"
+	# customized
+	jq -c '.abi' "./contracts/artifacts/registry/Registry.sol/Registry.json" > "./contracts/abi/Registry.abi"
+	jq -c '.abi' "./contracts/artifacts/factory/PoolFactory.sol/PoolFactory.json" > "./contracts/abi/PoolFactory.abi"
+	jq -c '.abi' "./contracts/artifacts/pool/Pool.sol/Pool.json" > "./contracts/abi/Pool.abi"
+	jq -c '.abi' "./contracts/artifacts/extension/BaseExtension.sol/BaseExtension.json" > "./contracts/abi/BaseExtension.abi"
 
 abi-gen:
 	abigen --abi=./contracts/abi/IERC721.abi --pkg=contracts --type=IERC721 > ./contracts/IERC721.go
@@ -385,6 +395,11 @@ abi-gen:
 	abigen --abi=./contracts/abi/Cryptopunks.abi --pkg=contracts --type=Cryptopunks > ./contracts/Cryptopunks.go
 	abigen --abi=./contracts/abi/Zora.abi --pkg=contracts --type=Zora > ./contracts/Zora.go
 	abigen --abi=./contracts/abi/PremiumCards.abi --pkg=contracts --type=PremiumCards > ./contracts/PremiumCards.go
+	# customized
+	abigen --abi=./contracts/abi/Registry.abi --pkg=contracts --type=Registry > ./contracts/Registry.go
+	abigen --abi=./contracts/abi/PoolFactory.abi --pkg=contracts --type=PoolFactory > ./contracts/PoolFactory.go
+	abigen --abi=./contracts/abi/Pool.abi --pkg=contracts --type=Pool > ./contracts/Pool.go
+	abigen --abi=./contracts/abi/BaseExtension.abi --pkg=contracts --type=BaseExtension > ./contracts/BaseExtension.go
 
 # Miscellaneous stuff
 # Listing targets as dependencies doesn't pull in target-specific secrets, so we need to
@@ -425,6 +440,15 @@ start-dev-graphql-gateway:
 
 start-prod-graphql-gateway:
 	docker-compose -f docker/graphql-gateway/docker-compose.yml up --build -d graphql-gateway-prod
+
+start-local-indexer:
+	docker-compose -f docker/indexer/docker-compose.yml up --build -d indexer-local
+
+start-dev-indexer:
+	docker-compose -f docker/indexer/docker-compose.yml up --build -d indexer-dev
+
+start-prod-indexer:
+	docker-compose -f docker/indexer/docker-compose.yml up --build -d indexer-prod
 
 # Listing targets as dependencies doesn't pull in target-specific secrets, so we need to
 # invoke $(MAKE) here to read appropriate secrets for each target.
@@ -469,6 +493,15 @@ migrate-prod-coredb: start-prod-sql-proxy confirm-prod-migrate
 #	POSTGRES_PASSWORD=$(POSTGRES_MIGRATION_PASSWORD) \
 #	POSTGRES_PORT=6544 \
 #	go run cmd/migrate/main.go mirror
+
+dump-schema-local-indexerdb: start-local-indexer
+	go run cmd/dump/main.go indexer
+
+dump-schema-dev-indexerdb: start-dev-indexer
+	go run cmd/dump/main.go indexer
+
+dump-schema-prod-indexerdb: start-prod-indexer
+	go run cmd/dump/main.go indexer
 
 fix-sops-macs:
 	@cd secrets; ../scripts/fix-sops-macs.sh
