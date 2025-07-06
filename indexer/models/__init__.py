@@ -1,13 +1,9 @@
-from dipdup import fields
-from dipdup.models import CachedModel
+from .token import Token
+from .account import Account
+from .token_balance import TokenBalance
+from .registry import Registry
+from .pool import Pool
+from .pool_factory import PoolFactory
+from .base_extension import BaseExtension
 
-
-class Holder(CachedModel):
-    address = fields.TextField(primary_key=True)
-    balance = fields.DecimalField(decimal_places=6, max_digits=20, default=0)
-    turnover = fields.DecimalField(decimal_places=6, max_digits=20, default=0)
-    tx_count = fields.BigIntField(default=0)
-    last_seen = fields.BigIntField(null=True)
-
-    class Meta:
-        maxsize = 2**18
+__all__ = ['Token', 'Account', 'TokenBalance', 'Registry', 'Pool', 'PoolFactory', 'BaseExtension']

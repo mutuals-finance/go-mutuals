@@ -1,10 +1,10 @@
 database:
   kind: postgres
-  host: ${POSTGRES_HOST:-db}
+  host: ${POSTGRES_HOST:-timescale}
   port: ${PGPORT:-5433}
-  user: ${POSTGRES_USER:-dipdup}
-  password: ${POSTGRES_PASSWORD:-dipdup}
-  database: ${POSTGRES_DB:-dipdup}
+  user: ${POSTGRES_USER:-timescale}
+  password: ${POSTGRES_PASSWORD:-timescale}
+  database: ${POSTGRES_DB:-timescale}
 
 hasura:
   url: http://${HASURA_HOST:-hasura}:8080
@@ -22,3 +22,8 @@ prometheus:
 
 api:
   host: 0.0.0.0
+
+mcp:
+  host: 0.0.0.0
+  port: 9999
+  api_url: http://dipdup:46339

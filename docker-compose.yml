@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   redis:
     image: "redis:6"
@@ -26,38 +24,44 @@ services:
       - "${PWD}/docker/postgres/postgres.conf:/etc/postgresql/postgresql.conf"
     command: ["-c", "config-file=/etc/postgresql/postgresql.conf"]
   timescale:
-    image: timescale/timescaledb-ha:pg15
+    image: timescale/timescaledb:2.11.2-pg15
     restart: always
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
-      - timescale:/home/postgres/pgdata/data
+      - pgdata_timescale:/home/postgres/pgdata/data
     environment:
       - POSTGRES_HOST=${TIMESCALE_HOST:-timescale}
       - POSTGRES_USER=${TIMESCALE_USER:-timescale}
       - POSTGRES_DB=${TIMESCALE_DB:-timescale}
-      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-''}
-      - PGPORT=5433
+      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-timescale}
+     # - PGPORT=5433
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${TIMESCALE_USER:-timescale}"]
       interval: 10s
       timeout: 5s
       retries: 5
   hasura:
-    build:
-      context: "docker/hasura"
-      dockerfile: "Dockerfile"
+    image: hasura/graphql-engine:latest
     ports:
       - "8080:8080"
     depends_on:
       - timescale
+    restart: always
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://${TIMESCALE_USER:-timescale}:${TIMESCALE_PASSWORD:-''}@${TIMESCALE_HOST:-timescale}:5433/${TIMESCALE_DB:-timescale}
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_GRAPHQL_ADMIN_SECRET}
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://${TIMESCALE_USER:-timescale}:${TIMESCALE_PASSWORD:-timescale}@${TIMESCALE_HOST:-timescale}:5432/${TIMESCALE_DB:-timescale}
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_GRAPHQL_ADMIN_SECRET:-hasura}
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=true
+      - HASURA_GRAPHQL_LOG_LEVEL=info
+      - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
+      - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
   indexer:
     build:
       context: "."
       dockerfile: "docker/indexer/Dockerfile"
+    #restart: always
     environment:
       - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
       - ETHERSCAN_URL=${ETHERSCAN_URL}
@@ -69,10 +73,10 @@ services:
       - POSTGRES_HOST=${TIMESCALE_HOST:-timescale}
       - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-timescale}
       - POSTGRES_USER=${TIMESCALE_USER:-timescale}
+      - PGPORT=5432
       # - SENTRY_DSN=${SENTRY_DSN}
       # - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
       - SUBSQUID_URL=https://v2.archive.subsquid.io/network/ethereum-holesky
-      - PGPORT=5433
     ports:
       - 46339
       - 9000
@@ -80,29 +84,29 @@ services:
     depends_on:
       - timescale
       - hasura
-  task-emulator:
-    image: ghcr.io/aertje/cloud-tasks-emulator:latest
-    ports:
-      - "8123:8123"
-    expose:
-      - "8123"
-    command: [
-      "-host", "0.0.0.0",
-      "-port", "8123",
-      "-queue", "projects/mutuals-local/locations/here/queues/token-processing",
-      "-queue", "projects/mutuals-local/locations/here/queues/indexer-refreshes",
-      "-queue", "projects/mutuals-local/locations/here/queues/wallet-validate",
-    ]
-  pubsub-emulator:
-    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
-    expose:
-      - "8085"
-    ports:
-      - "8085:8085"
-    command: [
-      "/bin/bash",
-      "-c",
-      "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=mutuals-local"
-    ]
+#  task-emulator:
+#    image: ghcr.io/aertje/cloud-tasks-emulator:latest
+#    ports:
+#      - "8123:8123"
+#    expose:
+#      - "8123"
+#    command: [
+#      "-host", "0.0.0.0",
+#      "-port", "8123",
+#      "-queue", "projects/mutuals-local/locations/here/queues/token-processing",
+#      "-queue", "projects/mutuals-local/locations/here/queues/indexer-refreshes",
+#      "-queue", "projects/mutuals-local/locations/here/queues/wallet-validate",
+#    ]
+#  pubsub-emulator:
+#    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+#    expose:
+#      - "8085"
+#    ports:
+#      - "8085:8085"
+#    command: [
+#      "/bin/bash",
+#      "-c",
+#      "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=mutuals-local"
+#    ]
 volumes:
-  timescale:
+  pgdata_timescale:
