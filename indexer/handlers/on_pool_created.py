@@ -1,7 +1,9 @@
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
+
 from indexer import models as models
 from indexer.types.pool_factory.evm_events.pool_created import PoolCreatedPayload
+
 
 async def on_pool_created(
     ctx: HandlerContext,
@@ -21,12 +23,12 @@ async def on_pool_created(
     # Create contract and index for the new pool
     contract_name = f'pool_{pool_address[-8:]}'
 
-    #await ctx.add_contract(name=contract_name, kind='evm', address=pool_address, typename='pool')
+    await ctx.add_contract(name=contract_name, kind='evm', address=pool_address, typename='pool')
 
-    #index_events_name = f'{contract_name}_events'
-    #index_transactions_name = f'{contract_name}_transactions'
-    #await ctx.add_index(name=index_events_name, template='pool_events', values={'contract': contract_name})
-    #await ctx.add_index(name=index_transactions_name, template='pool_transactions', values={'contract': contract_name})
+    index_events_name = f'{contract_name}_events'
+    index_transactions_name = f'{contract_name}_transactions'
+    await ctx.add_index(name=index_events_name, template='pool_events', values={'contract': contract_name})
+    await ctx.add_index(name=index_transactions_name, template='pool_transactions', values={'contract': contract_name})
 
     # Get or create the owner account model
     owner, _ = await models.Account.get_or_create(
@@ -47,7 +49,9 @@ async def on_pool_created(
         is_paused=False,
         salt=salt,
         extensions=event.payload.extensions if hasattr(event.payload, 'extensions') else None,
-        initialization_data=event.payload.initialization_data if hasattr(event.payload, 'initialization_data') else None,
+        initialization_data=event.payload.initialization_data
+        if hasattr(event.payload, 'initialization_data')
+        else None,
         created_block=event.data.level,
         created_transaction_hash=event.data.transaction_hash,
     )
@@ -56,6 +60,12 @@ async def on_pool_created(
     await pool_factory.save()
 
     ctx.logger.info(
-        f'Pool created: id={pool_address}, address={pool_address}, owner={owner_address}, factory={factory_address}'
-        f'added for indexing events and transactions as {contract_name}'
+        (
+            'Pool created: id={%s}, address={%s}, owner={%s}, pool_factory={%s}',
+            pool_address,
+            pool_address,
+            owner_address,
+            factory_address,
+        ),
+        ('added for indexing events and transactions as {%s}', contract_name),
     )

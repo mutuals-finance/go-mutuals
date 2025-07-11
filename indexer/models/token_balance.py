@@ -1,7 +1,9 @@
 from dipdup import fields
 from dipdup.models import Model
-from .token import Token
+
 from .account import Account
+from .token import Token
+
 
 class TokenBalance(Model):
     id = fields.CharField(primary_key=True, max_length=128)  # token+account address composite

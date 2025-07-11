@@ -1,7 +1,9 @@
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
+
 from indexer import models as models
 from indexer.types.pool_factory.evm_events.ownership_transferred import OwnershipTransferredPayload
+
 
 async def on_pool_factory_ownership_transferred(
     ctx: HandlerContext,

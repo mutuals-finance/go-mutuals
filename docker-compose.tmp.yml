@@ -27,15 +27,15 @@ services:
     image: timescale/timescaledb:2.11.2-pg15
     restart: always
     ports:
-      - "5433:5432"
+      - "5433:5433"
     volumes:
-      - pgdata_timescale:/home/postgres/pgdata/data
+      - timescale:/home/postgres/pgdata/data
     environment:
       - POSTGRES_HOST=${TIMESCALE_HOST:-timescale}
       - POSTGRES_USER=${TIMESCALE_USER:-timescale}
       - POSTGRES_DB=${TIMESCALE_DB:-timescale}
-      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-timescale}
-     # - PGPORT=5433
+      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-''}
+      - PGPORT=5433
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${TIMESCALE_USER:-timescale}"]
       interval: 10s
@@ -49,10 +49,9 @@ services:
       - "8080:8080"
     depends_on:
       - timescale
-    restart: always
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://${TIMESCALE_USER:-timescale}:${TIMESCALE_PASSWORD:-timescale}@${TIMESCALE_HOST:-timescale}:5432/${TIMESCALE_DB:-timescale}
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_GRAPHQL_ADMIN_SECRET:-hasura}
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://${TIMESCALE_USER:-timescale}:${TIMESCALE_PASSWORD:-''}@${TIMESCALE_HOST:-timescale}:5433/${TIMESCALE_DB:-timescale}
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_GRAPHQL_ADMIN_SECRET}
   indexer:
     build:
       context: "."
@@ -68,10 +67,10 @@ services:
       - POSTGRES_HOST=${TIMESCALE_HOST:-timescale}
       - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-timescale}
       - POSTGRES_USER=${TIMESCALE_USER:-timescale}
-      - PGPORT=5432
       # - SENTRY_DSN=${SENTRY_DSN}
       # - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
       - SUBSQUID_URL=https://v2.archive.subsquid.io/network/ethereum-holesky
+      - PGPORT=5433
     ports:
       - 46339
       - 9000
@@ -104,4 +103,4 @@ services:
 #      "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=mutuals-local"
 #    ]
 volumes:
-  pgdata_timescale:
+  timescale:

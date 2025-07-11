@@ -17,10 +17,18 @@ datasources:
     ws_url: ${NODE_WS_URL:-wss://eth-holesky.g.alchemy.com/v2}
 
 contracts:
+  erc20:
+    kind: evm
+    address: 0x94373a4919B3240D86eA41593D5eBa789FEF3848
+    typename: erc20
   pool_factory:
     kind: evm
     address: '0x0D18C5203c227284cf101d447d4cE90c2ae8b906'
     typename: pool_factory
+  pool:
+    kind: evm
+    address: 0x57b319744d84f08dd17060f471d52FBc657b7e36
+    typename: pool
   registry:
     kind: evm
     address: 0xD0a169764a388941FDbB0E1250543ec05eaD4115
@@ -35,9 +43,9 @@ indexes:
       - etherscan
       - evm_node
     handlers:
-#      - callback: on_pool_factory_initialized
-#        contract: pool_factory
-#        name: PoolFactoryInitialized
+      #      - callback: on_pool_factory_initialized
+      #        contract: pool_factory
+      #        name: PoolFactoryInitialized
       - callback: on_pool_created
         contract: pool_factory
         name: PoolCreated
@@ -52,45 +60,61 @@ indexes:
       - etherscan
       - evm_node
     handlers:
-#      - callback: on_registry_initialized
-#        contract: registry
-#        name: RegistryInitialized
-#      - callback: on_extension_registered
-#        contract: registry
-#        name: ExtensionRegistered
-#      - callback: on_extension_unregistered
-#        contract: registry
-#        name: ExtensionUnregistered
+      #      - callback: on_registry_initialized
+      #        contract: registry
+      #        name: RegistryInitialized
+      #      - callback: on_extension_registered
+      #        contract: registry
+      #        name: ExtensionRegistered
+      #      - callback: on_extension_unregistered
+      #        contract: registry
+      #        name: ExtensionUnregistered
       - callback: on_registry_ownership_transferred
         contract: registry
         name: OwnershipTransferred
+  all_token_transfers:
+    kind: evm.events
+    first_level: 4082934
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
+    handlers:
+      - callback: on_all_token_transfer
 
-#templates:
-#  pool_transactions:
+  # ---- For code generation only ----
+#  token_transfers_init:
+#    template: token_transfers
+#    values:
+#      contract: erc20
+  pool_events_init:
+    template: pool_events
+    values:
+      contract: pool
+
+templates:
+#  token_transfers:
 #    kind: evm.transactions
-##    first_level: 4082934
+#    first_level: 4082934
 #    datasources:
 #      - subsquid
 #      - etherscan
 #      - evm_node
 #    handlers:
-#      - callback: on_pool_deposit
+#      - callback: on_token_transfer
 #        to: <contract>
 #        method: transfer
-#      - callback: on_pool_withdraw
-#        from: <contract>
-#        method: transfer
-#  pool_events:
-#    kind: evm.events
-##    first_level: 4082934
-#    datasources:
-#      - subsquid
-#      - etherscan
-#      - evm_node
-#    handlers:
-#      - callback: on_pool_ownership_transferred
-#        contract: <contract>
-#        name: OwnershipTransferred
+  pool_events:
+    kind: evm.events
+    first_level: 4082934
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
+    handlers:
+      - callback: on_pool_ownership_transferred
+        contract: <contract>
+        name: OwnershipTransferred
 #      - callback: on_pool_config_updated
 #        contract: <contract>
 #        name: ConfigUpdated

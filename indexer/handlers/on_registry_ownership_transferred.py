@@ -1,8 +1,10 @@
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
-from indexer.types.registry.evm_events.ownership_transferred import OwnershipTransferredPayload
+
 from indexer.models import Account
 from indexer.models import Registry
+from indexer.types.registry.evm_events.ownership_transferred import OwnershipTransferredPayload
+
 
 async def on_registry_ownership_transferred(
     ctx: HandlerContext,
@@ -34,12 +36,8 @@ async def on_registry_ownership_transferred(
     )
 
     if created:
-        ctx.logger.info(
-            f'Registry initialized: address={registry_address}, owner={new_owner_address}'
-        )
+        ctx.logger.info(f'Registry initialized: address={registry_address}, owner={new_owner_address}')
     else:
         registry.owner = new_owner
         await registry.save()
-        ctx.logger.warning(
-            f'Registry {registry_address} already exists, updated owner, owner={new_owner_address}'
-        )
+        ctx.logger.warning(f'Registry {registry_address} already exists, updated owner, owner={new_owner_address}')
