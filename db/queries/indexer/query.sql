@@ -1,2 +1,5 @@
--- name: GetHoldersByAddressBatch :batchmany
-SELECT * FROM public.holder WHERE address = $1;
+-- name: GetAccountByID :one
+SELECT * FROM public.account WHERE id = $1;
+
+-- name: GetAccountByIDBatch :batchone
+SELECT * FROM public.account WHERE id = $1;

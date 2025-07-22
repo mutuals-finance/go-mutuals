@@ -8,181 +8,164 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-type Aerich struct {
-	ID      persist.DBID `db:"id" json:"id"`
-	Version string       `db:"version" json:"version"`
-	App     string       `db:"app" json:"app"`
-	Content pgtype.JSONB `db:"content" json:"content"`
+type Account struct {
+	ID                   persist.DBID `db:"id" json:"id"`
+	Address              string       `db:"address" json:"address"`
+	AccountType          string       `db:"account_type" json:"account_type"`
+	CreatedAtBlockNumber int32        `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32        `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
 }
 
-type DipdupContract struct {
-	Name      string         `db:"name" json:"name"`
-	Address   sql.NullString `db:"address" json:"address"`
-	CodeHash  sql.NullInt64  `db:"code_hash" json:"code_hash"`
-	Typename  sql.NullString `db:"typename" json:"typename"`
-	Kind      string         `db:"kind" json:"kind"`
-	CreatedAt time.Time      `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time      `db:"updated_at" json:"updated_at"`
+type Deposit struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	TransactionID        string         `db:"transaction_id" json:"transaction_id"`
+	PoolID               string         `db:"pool_id" json:"pool_id"`
+	TokenID              string         `db:"token_id" json:"token_id"`
+	From                 string         `db:"from" json:"from"`
+	To                   string         `db:"to" json:"to"`
+	Origin               string         `db:"origin" json:"origin"`
+	Amount               pgtype.Numeric `db:"amount" json:"amount"`
+	LogIndex             sql.NullInt32  `db:"log_index" json:"log_index"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
 }
 
-type DipdupContractMetadatum struct {
+type HoleskyProcessorHotBlock struct {
+	Height int32  `db:"height" json:"height"`
+	Hash   string `db:"hash" json:"hash"`
+}
+
+type HoleskyProcessorHotChangeLog struct {
+	BlockHeight int32        `db:"block_height" json:"block_height"`
+	Index       int32        `db:"index" json:"index"`
+	Change      pgtype.JSONB `db:"change" json:"change"`
+}
+
+type HoleskyProcessorStatus struct {
+	ID     int32          `db:"id" json:"id"`
+	Height int32          `db:"height" json:"height"`
+	Hash   sql.NullString `db:"hash" json:"hash"`
+	Nonce  sql.NullInt32  `db:"nonce" json:"nonce"`
+}
+
+type Migration struct {
 	ID        persist.DBID `db:"id" json:"id"`
-	Network   string       `db:"network" json:"network"`
-	Contract  string       `db:"contract" json:"contract"`
-	Metadata  pgtype.JSONB `db:"metadata" json:"metadata"`
-	UpdateID  int32        `db:"update_id" json:"update_id"`
-	CreatedAt time.Time    `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time    `db:"updated_at" json:"updated_at"`
+	Timestamp int64        `db:"timestamp" json:"timestamp"`
+	Name      string       `db:"name" json:"name"`
 }
 
-type DipdupHead struct {
-	Name      string         `db:"name" json:"name"`
-	Level     int32          `db:"level" json:"level"`
-	Hash      sql.NullString `db:"hash" json:"hash"`
-	Timestamp time.Time      `db:"timestamp" json:"timestamp"`
-	CreatedAt time.Time      `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time      `db:"updated_at" json:"updated_at"`
+type Pool struct {
+	ID                   persist.DBID `db:"id" json:"id"`
+	Address              string       `db:"address" json:"address"`
+	ChainID              int32        `db:"chain_id" json:"chain_id"`
+	PoolFactoryID        string       `db:"pool_factory_id" json:"pool_factory_id"`
+	AccountID            string       `db:"account_id" json:"account_id"`
+	Name                 string       `db:"name" json:"name"`
+	Description          string       `db:"description" json:"description"`
+	Logo                 string       `db:"logo" json:"logo"`
+	OwnerID              string       `db:"owner_id" json:"owner_id"`
+	CreatedAtBlockNumber int32        `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32        `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
 }
 
-type DipdupIndex struct {
-	Name           string         `db:"name" json:"name"`
-	Type           string         `db:"type" json:"type"`
-	Status         string         `db:"status" json:"status"`
-	ConfigHash     sql.NullString `db:"config_hash" json:"config_hash"`
-	Template       sql.NullString `db:"template" json:"template"`
-	TemplateValues pgtype.JSONB   `db:"template_values" json:"template_values"`
-	Level          int32          `db:"level" json:"level"`
-	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time      `db:"updated_at" json:"updated_at"`
+type PoolDayBalance struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	Date                 time.Time      `db:"date" json:"date"`
+	PoolID               string         `db:"pool_id" json:"pool_id"`
+	TokenID              string         `db:"token_id" json:"token_id"`
+	Amount               pgtype.Numeric `db:"amount" json:"amount"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
 }
 
-type DipdupMetum struct {
-	Key       string       `db:"key" json:"key"`
-	Value     pgtype.JSONB `db:"value" json:"value"`
-	CreatedAt time.Time    `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time    `db:"updated_at" json:"updated_at"`
+type PoolFactory struct {
+	ID                   persist.DBID `db:"id" json:"id"`
+	Address              string       `db:"address" json:"address"`
+	ChainID              int32        `db:"chain_id" json:"chain_id"`
+	PoolCount            int32        `db:"pool_count" json:"pool_count"`
+	OwnerID              string       `db:"owner_id" json:"owner_id"`
+	CreatedAtBlockNumber int32        `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32        `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
 }
 
-// Model update created within versioned transactions
-type DipdupModelUpdate struct {
-	ID        persist.DBID `db:"id" json:"id"`
-	ModelName string       `db:"model_name" json:"model_name"`
-	ModelPk   string       `db:"model_pk" json:"model_pk"`
-	Level     int32        `db:"level" json:"level"`
-	Index     string       `db:"index" json:"index"`
-	Action    string       `db:"action" json:"action"`
-	Data      pgtype.JSONB `db:"data" json:"data"`
-	CreatedAt time.Time    `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time    `db:"updated_at" json:"updated_at"`
+type PoolHourBalance struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	ChainID              int32          `db:"chain_id" json:"chain_id"`
+	Date                 time.Time      `db:"date" json:"date"`
+	PoolID               string         `db:"pool_id" json:"pool_id"`
+	TokenID              string         `db:"token_id" json:"token_id"`
+	Amount               pgtype.Numeric `db:"amount" json:"amount"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
 }
 
-type DipdupSchema struct {
-	Name      string         `db:"name" json:"name"`
-	Hash      sql.NullString `db:"hash" json:"hash"`
-	Reindex   sql.NullString `db:"reindex" json:"reindex"`
-	CreatedAt time.Time      `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time      `db:"updated_at" json:"updated_at"`
+type Token struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	Address              string         `db:"address" json:"address"`
+	ChainID              int32          `db:"chain_id" json:"chain_id"`
+	Symbol               string         `db:"symbol" json:"symbol"`
+	Name                 string         `db:"name" json:"name"`
+	Decimals             int32          `db:"decimals" json:"decimals"`
+	Logo                 sql.NullString `db:"logo" json:"logo"`
+	Thumbnail            sql.NullString `db:"thumbnail" json:"thumbnail"`
+	PossibleSpam         sql.NullBool   `db:"possible_spam" json:"possible_spam"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
+	Validated            sql.NullInt32  `db:"validated" json:"validated"`
 }
 
-type DipdupTokenMetadatum struct {
-	ID        persist.DBID `db:"id" json:"id"`
-	Network   string       `db:"network" json:"network"`
-	Contract  string       `db:"contract" json:"contract"`
-	TokenID   string       `db:"token_id" json:"token_id"`
-	Metadata  pgtype.JSONB `db:"metadata" json:"metadata"`
-	UpdateID  int32        `db:"update_id" json:"update_id"`
-	CreatedAt time.Time    `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time    `db:"updated_at" json:"updated_at"`
+type TokenBalance struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	ChainID              int32          `db:"chain_id" json:"chain_id"`
+	TokenID              string         `db:"token_id" json:"token_id"`
+	HolderID             string         `db:"holder_id" json:"holder_id"`
+	Amount               pgtype.Numeric `db:"amount" json:"amount"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
 }
 
-type HdbCatalogHdbActionLog struct {
-	ID                 uuid.UUID      `db:"id" json:"id"`
-	ActionName         sql.NullString `db:"action_name" json:"action_name"`
-	InputPayload       pgtype.JSONB   `db:"input_payload" json:"input_payload"`
-	RequestHeaders     pgtype.JSONB   `db:"request_headers" json:"request_headers"`
-	SessionVariables   pgtype.JSONB   `db:"session_variables" json:"session_variables"`
-	ResponsePayload    pgtype.JSONB   `db:"response_payload" json:"response_payload"`
-	Errors             pgtype.JSONB   `db:"errors" json:"errors"`
-	CreatedAt          time.Time      `db:"created_at" json:"created_at"`
-	ResponseReceivedAt sql.NullTime   `db:"response_received_at" json:"response_received_at"`
-	Status             string         `db:"status" json:"status"`
+type Tx struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	GasUsed              pgtype.Numeric `db:"gas_used" json:"gas_used"`
+	GasPrice             pgtype.Numeric `db:"gas_price" json:"gas_price"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
 }
 
-type HdbCatalogHdbCronEvent struct {
-	ID            string       `db:"id" json:"id"`
-	TriggerName   string       `db:"trigger_name" json:"trigger_name"`
-	ScheduledTime time.Time    `db:"scheduled_time" json:"scheduled_time"`
-	Status        string       `db:"status" json:"status"`
-	Tries         int32        `db:"tries" json:"tries"`
-	CreatedAt     sql.NullTime `db:"created_at" json:"created_at"`
-	NextRetryAt   sql.NullTime `db:"next_retry_at" json:"next_retry_at"`
-}
-
-type HdbCatalogHdbCronEventInvocationLog struct {
-	ID        string         `db:"id" json:"id"`
-	EventID   sql.NullString `db:"event_id" json:"event_id"`
-	Status    sql.NullInt32  `db:"status" json:"status"`
-	Request   pgtype.JSON    `db:"request" json:"request"`
-	Response  pgtype.JSON    `db:"response" json:"response"`
-	CreatedAt sql.NullTime   `db:"created_at" json:"created_at"`
-}
-
-type HdbCatalogHdbMetadatum struct {
-	ID              int32       `db:"id" json:"id"`
-	Metadata        pgtype.JSON `db:"metadata" json:"metadata"`
-	ResourceVersion int32       `db:"resource_version" json:"resource_version"`
-}
-
-type HdbCatalogHdbScheduledEvent struct {
-	ID            string         `db:"id" json:"id"`
-	WebhookConf   pgtype.JSON    `db:"webhook_conf" json:"webhook_conf"`
-	ScheduledTime time.Time      `db:"scheduled_time" json:"scheduled_time"`
-	RetryConf     pgtype.JSON    `db:"retry_conf" json:"retry_conf"`
-	Payload       pgtype.JSON    `db:"payload" json:"payload"`
-	HeaderConf    pgtype.JSON    `db:"header_conf" json:"header_conf"`
-	Status        string         `db:"status" json:"status"`
-	Tries         int32          `db:"tries" json:"tries"`
-	CreatedAt     sql.NullTime   `db:"created_at" json:"created_at"`
-	NextRetryAt   sql.NullTime   `db:"next_retry_at" json:"next_retry_at"`
-	Comment       sql.NullString `db:"comment" json:"comment"`
-}
-
-type HdbCatalogHdbScheduledEventInvocationLog struct {
-	ID        string         `db:"id" json:"id"`
-	EventID   sql.NullString `db:"event_id" json:"event_id"`
-	Status    sql.NullInt32  `db:"status" json:"status"`
-	Request   pgtype.JSON    `db:"request" json:"request"`
-	Response  pgtype.JSON    `db:"response" json:"response"`
-	CreatedAt sql.NullTime   `db:"created_at" json:"created_at"`
-}
-
-type HdbCatalogHdbSchemaNotification struct {
-	ID              int32        `db:"id" json:"id"`
-	Notification    pgtype.JSON  `db:"notification" json:"notification"`
-	ResourceVersion int32        `db:"resource_version" json:"resource_version"`
-	InstanceID      uuid.UUID    `db:"instance_id" json:"instance_id"`
-	UpdatedAt       sql.NullTime `db:"updated_at" json:"updated_at"`
-}
-
-type HdbCatalogHdbVersion struct {
-	HasuraUuid     uuid.UUID      `db:"hasura_uuid" json:"hasura_uuid"`
-	Version        string         `db:"version" json:"version"`
-	UpgradedOn     time.Time      `db:"upgraded_on" json:"upgraded_on"`
-	CliState       pgtype.JSONB   `db:"cli_state" json:"cli_state"`
-	ConsoleState   pgtype.JSONB   `db:"console_state" json:"console_state"`
-	EeClientID     sql.NullString `db:"ee_client_id" json:"ee_client_id"`
-	EeClientSecret sql.NullString `db:"ee_client_secret" json:"ee_client_secret"`
-}
-
-type Holder struct {
-	Address  string         `db:"address" json:"address"`
-	Balance  pgtype.Numeric `db:"balance" json:"balance"`
-	Turnover pgtype.Numeric `db:"turnover" json:"turnover"`
-	TxCount  int64          `db:"tx_count" json:"tx_count"`
-	LastSeen sql.NullInt64  `db:"last_seen" json:"last_seen"`
+type Withdrawal struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	TransactionID        string         `db:"transaction_id" json:"transaction_id"`
+	PoolID               string         `db:"pool_id" json:"pool_id"`
+	TokenID              string         `db:"token_id" json:"token_id"`
+	From                 string         `db:"from" json:"from"`
+	To                   string         `db:"to" json:"to"`
+	Origin               string         `db:"origin" json:"origin"`
+	Amount               pgtype.Numeric `db:"amount" json:"amount"`
+	LogIndex             sql.NullInt32  `db:"log_index" json:"log_index"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
 }

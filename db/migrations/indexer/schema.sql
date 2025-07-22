@@ -1,4 +1,10 @@
--- $ pg_dump -s <database> -h <host> -p <port> -U <user>
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 15.13 (Debian 15.13-1.pgdg120+1)
+-- Dumped by pg_dump version 15.13 (Debian 15.13-1.pgdg120+1)
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -11,324 +17,115 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: timescaledb; Type: EXTENSION; Schema: -; Owner: -
+-- Name: holesky_processor; Type: SCHEMA; Schema: -; Owner: postgres
 --
 
-CREATE EXTENSION IF NOT EXISTS timescaledb WITH SCHEMA public;
+CREATE SCHEMA holesky_processor;
 
 
---
--- Name: EXTENSION timescaledb; Type: COMMENT; Schema: -; Owner:
---
-
-COMMENT ON EXTENSION timescaledb IS 'Enables scalable inserts and complex queries for time-series data (Community Edition)';
-
-
---
--- Name: hdb_catalog; Type: SCHEMA; Schema: -; Owner: timescale
---
-
-CREATE SCHEMA hdb_catalog;
-
-
-ALTER SCHEMA hdb_catalog OWNER TO timescale;
-
---
--- Name: timescaledb_toolkit; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit WITH SCHEMA public;
-
-
---
--- Name: EXTENSION timescaledb_toolkit; Type: COMMENT; Schema: -; Owner:
---
-
-COMMENT ON EXTENSION timescaledb_toolkit IS 'Library of analytical hyperfunctions, time-series pipelining, and other SQL utilities';
-
-
---
--- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
-
-
---
--- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner:
---
-
-COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
-
-
---
--- Name: gen_hasura_uuid(); Type: FUNCTION; Schema: hdb_catalog; Owner: timescale
---
-
-CREATE FUNCTION hdb_catalog.gen_hasura_uuid() RETURNS uuid
-    LANGUAGE sql
-AS $$select gen_random_uuid()$$;
-
-
-ALTER FUNCTION hdb_catalog.gen_hasura_uuid() OWNER TO timescale;
-
---
--- Name: dipdup_approve(character varying); Type: FUNCTION; Schema: public; Owner: timescale
---
-
-CREATE FUNCTION public.dipdup_approve(schema_name character varying) RETURNS void
-    LANGUAGE plpgsql
-AS $$
-BEGIN
-    UPDATE dipdup_index SET config_hash = null;
-    UPDATE dipdup_schema SET reindex = null, hash = null;
-    UPDATE dipdup_head SET hash = null;
-    RETURN;
-END;
-$$;
-
-
-ALTER FUNCTION public.dipdup_approve(schema_name character varying) OWNER TO timescale;
-
---
--- Name: dipdup_wipe(character varying); Type: FUNCTION; Schema: public; Owner: timescale
---
-
-CREATE FUNCTION public.dipdup_wipe(schema_name character varying) RETURNS void
-    LANGUAGE plpgsql
-AS $$
-DECLARE
-    rec RECORD;
-BEGIN
-    FOR rec IN SELECT
-                   'DROP SEQUENCE ' || quote_ident(n.nspname) || '.'
-                       || quote_ident(c.relname) || ' CASCADE;' AS name
-               FROM
-                   pg_catalog.pg_class AS c
-                       LEFT JOIN
-                   pg_catalog.pg_namespace AS n
-                   ON
-                       n.oid = c.relnamespace
-               WHERE
-                   relkind = 'S' AND
-                   n.nspname = schema_name AND
-                   pg_catalog.pg_table_is_visible(c.oid)
-        LOOP
-            BEGIN
-                EXECUTE rec.name;
-            EXCEPTION
-                WHEN others THEN END;
-        END LOOP;
-
-    FOR rec IN SELECT
-                   'DROP TABLE ' || quote_ident(n.nspname) || '.'
-                       || quote_ident(c.relname) || ' CASCADE;' AS name
-               FROM
-                   pg_catalog.pg_class AS c
-                       LEFT JOIN
-                   pg_catalog.pg_namespace AS n
-                   ON
-                       n.oid = c.relnamespace WHERE relkind = 'r' AND
-                   n.nspname = schema_name AND
-                   pg_catalog.pg_table_is_visible(c.oid)
-        LOOP
-            BEGIN
-                EXECUTE rec.name;
-            EXCEPTION
-                WHEN others THEN END;
-        END LOOP;
-
-    FOR rec IN SELECT
-                   'DROP FUNCTION ' || quote_ident(ns.nspname) || '.'
-                       || quote_ident(proname) || '(' || oidvectortypes(proargtypes)
-                       || ');' AS name
-               FROM
-                   pg_proc
-                       INNER JOIN
-                   pg_namespace ns
-                   ON
-                       (pg_proc.pronamespace = ns.oid)
-               WHERE
-                   ns.nspname = schema_name AND
-                   pg_catalog.pg_function_is_visible(pg_proc.oid)
-               ORDER BY
-                   proname
-        LOOP
-            BEGIN
-                EXECUTE rec.name;
-            EXCEPTION
-                WHEN others THEN END;
-        END LOOP;
-
-    RETURN;
-END;
-$$;
-
-
-ALTER FUNCTION public.dipdup_wipe(schema_name character varying) OWNER TO timescale;
+ALTER SCHEMA holesky_processor OWNER TO postgres;
 
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: hdb_action_log; Type: TABLE; Schema: hdb_catalog; Owner: timescale
+-- Name: hot_block; Type: TABLE; Schema: holesky_processor; Owner: postgres
 --
 
-CREATE TABLE hdb_catalog.hdb_action_log (
-                                            id uuid DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
-                                            action_name text,
-                                            input_payload jsonb NOT NULL,
-                                            request_headers jsonb NOT NULL,
-                                            session_variables jsonb NOT NULL,
-                                            response_payload jsonb,
-                                            errors jsonb,
-                                            created_at timestamp with time zone DEFAULT now() NOT NULL,
-                                            response_received_at timestamp with time zone,
-                                            status text NOT NULL,
-                                            CONSTRAINT hdb_action_log_status_check CHECK ((status = ANY (ARRAY['created'::text, 'processing'::text, 'completed'::text, 'error'::text])))
+CREATE TABLE holesky_processor.hot_block (
+    height integer NOT NULL,
+    hash text NOT NULL
 );
 
 
-ALTER TABLE hdb_catalog.hdb_action_log OWNER TO timescale;
+ALTER TABLE holesky_processor.hot_block OWNER TO postgres;
 
 --
--- Name: hdb_cron_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: timescale
+-- Name: hot_change_log; Type: TABLE; Schema: holesky_processor; Owner: postgres
 --
 
-CREATE TABLE hdb_catalog.hdb_cron_event_invocation_logs (
-                                                            id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
-                                                            event_id text,
-                                                            status integer,
-                                                            request json,
-                                                            response json,
-                                                            created_at timestamp with time zone DEFAULT now()
+CREATE TABLE holesky_processor.hot_change_log (
+    block_height integer NOT NULL,
+    index integer NOT NULL,
+    change jsonb NOT NULL
 );
 
 
-ALTER TABLE hdb_catalog.hdb_cron_event_invocation_logs OWNER TO timescale;
+ALTER TABLE holesky_processor.hot_change_log OWNER TO postgres;
 
 --
--- Name: hdb_cron_events; Type: TABLE; Schema: hdb_catalog; Owner: timescale
+-- Name: status; Type: TABLE; Schema: holesky_processor; Owner: postgres
 --
 
-CREATE TABLE hdb_catalog.hdb_cron_events (
-                                             id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
-                                             trigger_name text NOT NULL,
-                                             scheduled_time timestamp with time zone NOT NULL,
-                                             status text DEFAULT 'scheduled'::text NOT NULL,
-                                             tries integer DEFAULT 0 NOT NULL,
-                                             created_at timestamp with time zone DEFAULT now(),
-                                             next_retry_at timestamp with time zone,
-                                             CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+CREATE TABLE holesky_processor.status (
+    id integer NOT NULL,
+    height integer NOT NULL,
+    hash text DEFAULT '0x'::text,
+    nonce integer DEFAULT 0
 );
 
 
-ALTER TABLE hdb_catalog.hdb_cron_events OWNER TO timescale;
+ALTER TABLE holesky_processor.status OWNER TO postgres;
 
 --
--- Name: hdb_metadata; Type: TABLE; Schema: hdb_catalog; Owner: timescale
+-- Name: account; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE hdb_catalog.hdb_metadata (
-                                          id integer NOT NULL,
-                                          metadata json NOT NULL,
-                                          resource_version integer DEFAULT 1 NOT NULL
+CREATE TABLE public.account (
+    id character varying NOT NULL,
+    address text NOT NULL,
+    account_type character varying(8) NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE hdb_catalog.hdb_metadata OWNER TO timescale;
+ALTER TABLE public.account OWNER TO postgres;
 
 --
--- Name: hdb_scheduled_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: timescale
+-- Name: deposit; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE hdb_catalog.hdb_scheduled_event_invocation_logs (
-                                                                 id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
-                                                                 event_id text,
-                                                                 status integer,
-                                                                 request json,
-                                                                 response json,
-                                                                 created_at timestamp with time zone DEFAULT now()
+CREATE TABLE public.deposit (
+    id character varying NOT NULL,
+    transaction_id character varying NOT NULL,
+    pool_id character varying NOT NULL,
+    token_id character varying NOT NULL,
+    "from" text NOT NULL,
+    "to" text NOT NULL,
+    origin text NOT NULL,
+    amount numeric NOT NULL,
+    log_index integer,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE hdb_catalog.hdb_scheduled_event_invocation_logs OWNER TO timescale;
+ALTER TABLE public.deposit OWNER TO postgres;
 
 --
--- Name: hdb_scheduled_events; Type: TABLE; Schema: hdb_catalog; Owner: timescale
+-- Name: migrations; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE hdb_catalog.hdb_scheduled_events (
-                                                  id text DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
-                                                  webhook_conf json NOT NULL,
-                                                  scheduled_time timestamp with time zone NOT NULL,
-                                                  retry_conf json,
-                                                  payload json,
-                                                  header_conf json,
-                                                  status text DEFAULT 'scheduled'::text NOT NULL,
-                                                  tries integer DEFAULT 0 NOT NULL,
-                                                  created_at timestamp with time zone DEFAULT now(),
-                                                  next_retry_at timestamp with time zone,
-                                                  comment text,
-                                                  CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+CREATE TABLE public.migrations (
+    id integer NOT NULL,
+    "timestamp" bigint NOT NULL,
+    name character varying NOT NULL
 );
 
 
-ALTER TABLE hdb_catalog.hdb_scheduled_events OWNER TO timescale;
+ALTER TABLE public.migrations OWNER TO postgres;
 
 --
--- Name: hdb_schema_notifications; Type: TABLE; Schema: hdb_catalog; Owner: timescale
+-- Name: migrations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE hdb_catalog.hdb_schema_notifications (
-                                                      id integer NOT NULL,
-                                                      notification json NOT NULL,
-                                                      resource_version integer DEFAULT 1 NOT NULL,
-                                                      instance_id uuid NOT NULL,
-                                                      updated_at timestamp with time zone DEFAULT now(),
-                                                      CONSTRAINT hdb_schema_notifications_id_check CHECK ((id = 1))
-);
-
-
-ALTER TABLE hdb_catalog.hdb_schema_notifications OWNER TO timescale;
-
---
--- Name: hdb_version; Type: TABLE; Schema: hdb_catalog; Owner: timescale
---
-
-CREATE TABLE hdb_catalog.hdb_version (
-                                         hasura_uuid uuid DEFAULT hdb_catalog.gen_hasura_uuid() NOT NULL,
-                                         version text NOT NULL,
-                                         upgraded_on timestamp with time zone NOT NULL,
-                                         cli_state jsonb DEFAULT '{}'::jsonb NOT NULL,
-                                         console_state jsonb DEFAULT '{}'::jsonb NOT NULL,
-                                         ee_client_id text,
-                                         ee_client_secret text
-);
-
-
-ALTER TABLE hdb_catalog.hdb_version OWNER TO timescale;
-
---
--- Name: aerich; Type: TABLE; Schema: public; Owner: timescale
---
-
-CREATE TABLE public.aerich (
-                               id integer NOT NULL,
-                               version character varying(255) NOT NULL,
-                               app character varying(100) NOT NULL,
-                               content jsonb NOT NULL
-);
-
-
-ALTER TABLE public.aerich OWNER TO timescale;
-
---
--- Name: aerich_id_seq; Type: SEQUENCE; Schema: public; Owner: timescale
---
-
-CREATE SEQUENCE public.aerich_id_seq
+CREATE SEQUENCE public.migrations_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -337,531 +134,547 @@ CREATE SEQUENCE public.aerich_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.aerich_id_seq OWNER TO timescale;
+ALTER TABLE public.migrations_id_seq OWNER TO postgres;
 
 --
--- Name: aerich_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: timescale
+-- Name: migrations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public.aerich_id_seq OWNED BY public.aerich.id;
+ALTER SEQUENCE public.migrations_id_seq OWNED BY public.migrations.id;
 
 
 --
--- Name: dipdup_contract; Type: TABLE; Schema: public; Owner: timescale
+-- Name: pool; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.dipdup_contract (
-                                        name text NOT NULL,
-                                        address text,
-                                        code_hash bigint,
-                                        typename text,
-                                        kind text NOT NULL,
-                                        created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                        updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.pool (
+    id character varying NOT NULL,
+    address text NOT NULL,
+    chain_id integer NOT NULL,
+    pool_factory_id character varying NOT NULL,
+    account_id character varying NOT NULL,
+    name text NOT NULL,
+    description text NOT NULL,
+    logo text NOT NULL,
+    owner_id character varying NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE public.dipdup_contract OWNER TO timescale;
+ALTER TABLE public.pool OWNER TO postgres;
 
 --
--- Name: dipdup_contract_metadata; Type: TABLE; Schema: public; Owner: timescale
+-- Name: pool_day_balance; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.dipdup_contract_metadata (
-                                                 id integer NOT NULL,
-                                                 network text NOT NULL,
-                                                 contract text NOT NULL,
-                                                 metadata jsonb,
-                                                 update_id integer NOT NULL,
-                                                 created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                                 updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.pool_day_balance (
+    id character varying NOT NULL,
+    date timestamp with time zone NOT NULL,
+    pool_id character varying NOT NULL,
+    token_id character varying NOT NULL,
+    amount numeric NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE public.dipdup_contract_metadata OWNER TO timescale;
+ALTER TABLE public.pool_day_balance OWNER TO postgres;
 
 --
--- Name: dipdup_contract_metadata_id_seq; Type: SEQUENCE; Schema: public; Owner: timescale
+-- Name: pool_factory; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.dipdup_contract_metadata_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.dipdup_contract_metadata_id_seq OWNER TO timescale;
-
---
--- Name: dipdup_contract_metadata_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: timescale
---
-
-ALTER SEQUENCE public.dipdup_contract_metadata_id_seq OWNED BY public.dipdup_contract_metadata.id;
-
-
---
--- Name: dipdup_head; Type: TABLE; Schema: public; Owner: timescale
---
-
-CREATE TABLE public.dipdup_head (
-                                    name text NOT NULL,
-                                    level integer NOT NULL,
-                                    hash text,
-                                    "timestamp" timestamp with time zone NOT NULL,
-                                    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.pool_factory (
+    id character varying NOT NULL,
+    address text NOT NULL,
+    chain_id integer NOT NULL,
+    pool_count integer NOT NULL,
+    owner_id character varying NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE public.dipdup_head OWNER TO timescale;
+ALTER TABLE public.pool_factory OWNER TO postgres;
 
 --
--- Name: dipdup_index; Type: TABLE; Schema: public; Owner: timescale
+-- Name: pool_hour_balance; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.dipdup_index (
-                                     name text NOT NULL,
-                                     type text NOT NULL,
-                                     status text DEFAULT 'new'::text NOT NULL,
-                                     config_hash text,
-                                     template text,
-                                     template_values jsonb,
-                                     level integer DEFAULT 0 NOT NULL,
-                                     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.pool_hour_balance (
+    id character varying NOT NULL,
+    chain_id integer NOT NULL,
+    date timestamp with time zone NOT NULL,
+    pool_id character varying NOT NULL,
+    token_id character varying NOT NULL,
+    amount numeric NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE public.dipdup_index OWNER TO timescale;
+ALTER TABLE public.pool_hour_balance OWNER TO postgres;
 
 --
--- Name: dipdup_meta; Type: TABLE; Schema: public; Owner: timescale
+-- Name: token; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.dipdup_meta (
-                                    key text NOT NULL,
-                                    value jsonb,
-                                    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.token (
+    id character varying NOT NULL,
+    address text NOT NULL,
+    chain_id integer NOT NULL,
+    symbol text NOT NULL,
+    name text NOT NULL,
+    decimals integer NOT NULL,
+    logo text,
+    thumbnail text,
+    possible_spam boolean,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    validated integer
 );
 
 
-ALTER TABLE public.dipdup_meta OWNER TO timescale;
+ALTER TABLE public.token OWNER TO postgres;
 
 --
--- Name: dipdup_model_update; Type: TABLE; Schema: public; Owner: timescale
+-- Name: token_balance; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.dipdup_model_update (
-                                            id integer NOT NULL,
-                                            model_name text NOT NULL,
-                                            model_pk text NOT NULL,
-                                            level integer NOT NULL,
-                                            index text NOT NULL,
-                                            action text NOT NULL,
-                                            data jsonb,
-                                            created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                            updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.token_balance (
+    id character varying NOT NULL,
+    chain_id integer NOT NULL,
+    token_id character varying NOT NULL,
+    holder_id character varying NOT NULL,
+    amount numeric NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE public.dipdup_model_update OWNER TO timescale;
+ALTER TABLE public.token_balance OWNER TO postgres;
 
 --
--- Name: TABLE dipdup_model_update; Type: COMMENT; Schema: public; Owner: timescale
+-- Name: tx; Type: TABLE; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.dipdup_model_update IS 'Model update created within versioned transactions';
-
-
---
--- Name: dipdup_model_update_id_seq; Type: SEQUENCE; Schema: public; Owner: timescale
---
-
-CREATE SEQUENCE public.dipdup_model_update_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.dipdup_model_update_id_seq OWNER TO timescale;
-
---
--- Name: dipdup_model_update_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: timescale
---
-
-ALTER SEQUENCE public.dipdup_model_update_id_seq OWNED BY public.dipdup_model_update.id;
-
-
---
--- Name: dipdup_schema; Type: TABLE; Schema: public; Owner: timescale
---
-
-CREATE TABLE public.dipdup_schema (
-                                      name text NOT NULL,
-                                      hash text,
-                                      reindex text,
-                                      created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                      updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.tx (
+    id character varying NOT NULL,
+    gas_used numeric NOT NULL,
+    gas_price numeric NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE public.dipdup_schema OWNER TO timescale;
+ALTER TABLE public.tx OWNER TO postgres;
 
 --
--- Name: dipdup_status; Type: VIEW; Schema: public; Owner: timescale
---
-/*
-CREATE VIEW public.dipdup_status AS
-SELECT combined_data.type,
-       combined_data.name,
-       combined_data.level,
-       combined_data.size,
-       combined_data.updated_at
-FROM ( SELECT 'index'::text AS type,
-              dipdup_index.name,
-              dipdup_index.level,
-              0 AS size,
-              dipdup_index.updated_at
-       FROM public.dipdup_index
-       UNION ALL
-       SELECT 'datasource'::text AS type,
-              dipdup_head.name,
-              dipdup_head.level,
-              0 AS size,
-              dipdup_head.updated_at
-       FROM public.dipdup_head
-       UNION ALL
-       SELECT 'queue'::text AS type,
-              queue_subquery.queue_key AS name,
-              0 AS level,
-              queue_subquery.queue_size AS size,
-              queue_subquery.updated_at
-       FROM ( SELECT queue_key.queue_key,
-                     ((((dipdup_meta.value -> 'queues'::text) -> queue_key.queue_key) ->> 'size'::text))::numeric AS queue_size,
-                     dipdup_meta.updated_at
-              FROM public.dipdup_meta,
-                   LATERAL jsonb_object_keys((dipdup_meta.value -> 'queues'::text)) queue_key(queue_key)
-              WHERE (dipdup_meta.key = 'dipdup_metrics'::text)) queue_subquery
-       UNION ALL
-       SELECT 'cache'::text AS type,
-              cache_subquery.cache_key AS name,
-              0 AS level,
-              cache_subquery.cache_size AS size,
-              cache_subquery.updated_at
-       FROM ( SELECT cache_key.cache_key,
-                     ((((dipdup_meta.value -> 'caches'::text) -> cache_key.cache_key) ->> 'size'::text))::numeric AS cache_size,
-                     dipdup_meta.updated_at
-              FROM public.dipdup_meta,
-                   LATERAL jsonb_object_keys((dipdup_meta.value -> 'caches'::text)) cache_key(cache_key)
-              WHERE (dipdup_meta.key = 'dipdup_metrics'::text)) cache_subquery) combined_data;
-
-
-ALTER TABLE public.dipdup_status OWNER TO timescale;*/
-
---
--- Name: dipdup_token_metadata; Type: TABLE; Schema: public; Owner: timescale
+-- Name: withdrawal; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.dipdup_token_metadata (
-                                              id integer NOT NULL,
-                                              network text NOT NULL,
-                                              contract text NOT NULL,
-                                              token_id text NOT NULL,
-                                              metadata jsonb,
-                                              update_id integer NOT NULL,
-                                              created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                                              updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+CREATE TABLE public.withdrawal (
+    id character varying NOT NULL,
+    transaction_id character varying NOT NULL,
+    pool_id character varying NOT NULL,
+    token_id character varying NOT NULL,
+    "from" text NOT NULL,
+    "to" text NOT NULL,
+    origin text NOT NULL,
+    amount numeric NOT NULL,
+    log_index integer,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
 );
 
 
-ALTER TABLE public.dipdup_token_metadata OWNER TO timescale;
+ALTER TABLE public.withdrawal OWNER TO postgres;
 
 --
--- Name: dipdup_token_metadata_id_seq; Type: SEQUENCE; Schema: public; Owner: timescale
+-- Name: migrations id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.dipdup_token_metadata_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.migrations_id_seq'::regclass);
 
 
-ALTER TABLE public.dipdup_token_metadata_id_seq OWNER TO timescale;
+--
+-- Name: hot_block hot_block_pkey; Type: CONSTRAINT; Schema: holesky_processor; Owner: postgres
+--
+
+ALTER TABLE ONLY holesky_processor.hot_block
+    ADD CONSTRAINT hot_block_pkey PRIMARY KEY (height);
+
+
+--
+-- Name: hot_change_log hot_change_log_pkey; Type: CONSTRAINT; Schema: holesky_processor; Owner: postgres
+--
+
+ALTER TABLE ONLY holesky_processor.hot_change_log
+    ADD CONSTRAINT hot_change_log_pkey PRIMARY KEY (block_height, index);
+
+
+--
+-- Name: status status_pkey; Type: CONSTRAINT; Schema: holesky_processor; Owner: postgres
+--
+
+ALTER TABLE ONLY holesky_processor.status
+    ADD CONSTRAINT status_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pool_hour_balance PK_25d3dd1398e1a64cd06e31b49e4; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pool_hour_balance
+    ADD CONSTRAINT "PK_25d3dd1398e1a64cd06e31b49e4" PRIMARY KEY (id);
+
+
+--
+-- Name: tx PK_2e04a1db73a003a59dcd4fe916b; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tx
+    ADD CONSTRAINT "PK_2e04a1db73a003a59dcd4fe916b" PRIMARY KEY (id);
+
+
+--
+-- Name: account PK_54115ee388cdb6d86bb4bf5b2ea; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY (id);
+
+
+--
+-- Name: deposit PK_6654b4be449dadfd9d03a324b61; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.deposit
+    ADD CONSTRAINT "PK_6654b4be449dadfd9d03a324b61" PRIMARY KEY (id);
+
 
 --
--- Name: dipdup_token_metadata_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: timescale
+-- Name: pool_day_balance PK_816bb792bbc9733b342715f9d01; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public.dipdup_token_metadata_id_seq OWNED BY public.dipdup_token_metadata.id;
+ALTER TABLE ONLY public.pool_day_balance
+    ADD CONSTRAINT "PK_816bb792bbc9733b342715f9d01" PRIMARY KEY (id);
 
 
 --
--- Name: holder; Type: TABLE; Schema: public; Owner: timescale
+-- Name: token PK_82fae97f905930df5d62a702fc9; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.holder (
-                               address text NOT NULL,
-                               balance numeric(20,6) DEFAULT 0 NOT NULL,
-                               turnover numeric(20,6) DEFAULT 0 NOT NULL,
-                               tx_count bigint DEFAULT 0 NOT NULL,
-                               last_seen bigint
-);
+ALTER TABLE ONLY public.token
+    ADD CONSTRAINT "PK_82fae97f905930df5d62a702fc9" PRIMARY KEY (id);
+
+
+--
+-- Name: withdrawal PK_840e247aaad3fbd4e18129122a2; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.withdrawal
+    ADD CONSTRAINT "PK_840e247aaad3fbd4e18129122a2" PRIMARY KEY (id);
+
+
+--
+-- Name: migrations PK_8c82d7f526340ab734260ea46be; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.migrations
+    ADD CONSTRAINT "PK_8c82d7f526340ab734260ea46be" PRIMARY KEY (id);
+
+
+--
+-- Name: pool_factory PK_c25b5c35c9b63c7ab8e29f87aa7; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pool_factory
+    ADD CONSTRAINT "PK_c25b5c35c9b63c7ab8e29f87aa7" PRIMARY KEY (id);
+
+
+--
+-- Name: pool PK_db1bfe411e1516c01120b85f8fe; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pool
+    ADD CONSTRAINT "PK_db1bfe411e1516c01120b85f8fe" PRIMARY KEY (id);
+
+
+--
+-- Name: token_balance PK_dc23ea262a0188977523d90ae7f; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.token_balance
+    ADD CONSTRAINT "PK_dc23ea262a0188977523d90ae7f" PRIMARY KEY (id);
+
+
+--
+-- Name: IDX_09699258f368ade88316904e54; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_09699258f368ade88316904e54" ON public.deposit USING btree (token_id);
+
+
+--
+-- Name: IDX_1788fb57e581f3de7f0d498733; Type: INDEX; Schema: public; Owner: postgres
+--
 
+CREATE INDEX "IDX_1788fb57e581f3de7f0d498733" ON public.withdrawal USING btree (pool_id);
 
-ALTER TABLE public.holder OWNER TO timescale;
 
 --
--- Name: aerich id; Type: DEFAULT; Schema: public; Owner: timescale
+-- Name: IDX_2126b5e4c6a411b38e9e049b02; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.aerich ALTER COLUMN id SET DEFAULT nextval('public.aerich_id_seq'::regclass);
+CREATE INDEX "IDX_2126b5e4c6a411b38e9e049b02" ON public.pool USING btree (pool_factory_id);
 
 
 --
--- Name: dipdup_contract_metadata id; Type: DEFAULT; Schema: public; Owner: timescale
+-- Name: IDX_279d6b292f3b5c23337e4eacd3; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_contract_metadata ALTER COLUMN id SET DEFAULT nextval('public.dipdup_contract_metadata_id_seq'::regclass);
+CREATE INDEX "IDX_279d6b292f3b5c23337e4eacd3" ON public.deposit USING btree (transaction_id);
 
 
 --
--- Name: dipdup_model_update id; Type: DEFAULT; Schema: public; Owner: timescale
+-- Name: IDX_37d0c98b2aee82e865df4ca6ed; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_model_update ALTER COLUMN id SET DEFAULT nextval('public.dipdup_model_update_id_seq'::regclass);
+CREATE INDEX "IDX_37d0c98b2aee82e865df4ca6ed" ON public.pool_factory USING btree (owner_id);
 
 
 --
--- Name: dipdup_token_metadata id; Type: DEFAULT; Schema: public; Owner: timescale
+-- Name: IDX_451a971d3d8117f1ce4b158ecb; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_token_metadata ALTER COLUMN id SET DEFAULT nextval('public.dipdup_token_metadata_id_seq'::regclass);
+CREATE INDEX "IDX_451a971d3d8117f1ce4b158ecb" ON public.pool_hour_balance USING btree (token_id);
 
 
 --
--- Name: hdb_action_log hdb_action_log_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_4c7a8844e42c1008fcfed6a74e; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_action_log
-    ADD CONSTRAINT hdb_action_log_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_4c7a8844e42c1008fcfed6a74e" ON public.pool_hour_balance USING btree (pool_id);
 
 
 --
--- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_535d618a629db3b5fc75126395; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
-    ADD CONSTRAINT hdb_cron_event_invocation_logs_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_535d618a629db3b5fc75126395" ON public.token_balance USING btree (holder_id);
 
 
 --
--- Name: hdb_cron_events hdb_cron_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_5813c3040e74c285719679c693; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_cron_events
-    ADD CONSTRAINT hdb_cron_events_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_5813c3040e74c285719679c693" ON public.token_balance USING btree (token_id);
 
 
 --
--- Name: hdb_metadata hdb_metadata_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_5a58952b2666d1900b1bcf1aee; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_metadata
-    ADD CONSTRAINT hdb_metadata_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_5a58952b2666d1900b1bcf1aee" ON public.withdrawal USING btree (token_id);
 
 
 --
--- Name: hdb_metadata hdb_metadata_resource_version_key; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_652bc46dc1f15a99ad2682d0da; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_metadata
-    ADD CONSTRAINT hdb_metadata_resource_version_key UNIQUE (resource_version);
+CREATE INDEX "IDX_652bc46dc1f15a99ad2682d0da" ON public.pool_day_balance USING btree (pool_id);
 
 
 --
--- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_6ee0abc520db0e34d73c5bdd3c; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
-    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_6ee0abc520db0e34d73c5bdd3c" ON public.pool USING btree (owner_id);
 
 
 --
--- Name: hdb_scheduled_events hdb_scheduled_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_7042da86b8de81cc3e9e448f9a; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_scheduled_events
-    ADD CONSTRAINT hdb_scheduled_events_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_7042da86b8de81cc3e9e448f9a" ON public.pool USING btree (account_id);
 
 
 --
--- Name: hdb_schema_notifications hdb_schema_notifications_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_7e08123ddf2be25b7888311d8a; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_schema_notifications
-    ADD CONSTRAINT hdb_schema_notifications_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_7e08123ddf2be25b7888311d8a" ON public.pool_day_balance USING btree (token_id);
 
 
 --
--- Name: hdb_version hdb_version_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: IDX_b87670853acbc9551dccde2d10; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_version
-    ADD CONSTRAINT hdb_version_pkey PRIMARY KEY (hasura_uuid);
+CREATE INDEX "IDX_b87670853acbc9551dccde2d10" ON public.withdrawal USING btree (transaction_id);
 
 
 --
--- Name: aerich aerich_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: IDX_cf0f9c53f39d72f19478aaaee3; Type: INDEX; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.aerich
-    ADD CONSTRAINT aerich_pkey PRIMARY KEY (id);
+CREATE INDEX "IDX_cf0f9c53f39d72f19478aaaee3" ON public.deposit USING btree (pool_id);
 
 
 --
--- Name: dipdup_contract_metadata dipdup_contract_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: hot_change_log hot_change_log_block_height_fkey; Type: FK CONSTRAINT; Schema: holesky_processor; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_contract_metadata
-    ADD CONSTRAINT dipdup_contract_metadata_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY holesky_processor.hot_change_log
+    ADD CONSTRAINT hot_change_log_block_height_fkey FOREIGN KEY (block_height) REFERENCES holesky_processor.hot_block(height) ON DELETE CASCADE;
 
 
 --
--- Name: dipdup_contract dipdup_contract_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: deposit FK_09699258f368ade88316904e54c; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_contract
-    ADD CONSTRAINT dipdup_contract_pkey PRIMARY KEY (name);
+ALTER TABLE ONLY public.deposit
+    ADD CONSTRAINT "FK_09699258f368ade88316904e54c" FOREIGN KEY (token_id) REFERENCES public.token(id);
 
 
 --
--- Name: dipdup_head dipdup_head_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: withdrawal FK_1788fb57e581f3de7f0d4987333; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_head
-    ADD CONSTRAINT dipdup_head_pkey PRIMARY KEY (name);
+ALTER TABLE ONLY public.withdrawal
+    ADD CONSTRAINT "FK_1788fb57e581f3de7f0d4987333" FOREIGN KEY (pool_id) REFERENCES public.pool(id);
 
 
 --
--- Name: dipdup_index dipdup_index_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: pool FK_2126b5e4c6a411b38e9e049b021; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_index
-    ADD CONSTRAINT dipdup_index_pkey PRIMARY KEY (name);
+ALTER TABLE ONLY public.pool
+    ADD CONSTRAINT "FK_2126b5e4c6a411b38e9e049b021" FOREIGN KEY (pool_factory_id) REFERENCES public.pool_factory(id);
 
 
 --
--- Name: dipdup_meta dipdup_meta_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: deposit FK_279d6b292f3b5c23337e4eacd3a; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_meta
-    ADD CONSTRAINT dipdup_meta_pkey PRIMARY KEY (key);
+ALTER TABLE ONLY public.deposit
+    ADD CONSTRAINT "FK_279d6b292f3b5c23337e4eacd3a" FOREIGN KEY (transaction_id) REFERENCES public.tx(id);
 
 
 --
--- Name: dipdup_model_update dipdup_model_update_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: pool_factory FK_37d0c98b2aee82e865df4ca6ed6; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_model_update
-    ADD CONSTRAINT dipdup_model_update_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.pool_factory
+    ADD CONSTRAINT "FK_37d0c98b2aee82e865df4ca6ed6" FOREIGN KEY (owner_id) REFERENCES public.account(id);
 
 
 --
--- Name: dipdup_schema dipdup_schema_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: pool_hour_balance FK_451a971d3d8117f1ce4b158ecb0; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_schema
-    ADD CONSTRAINT dipdup_schema_pkey PRIMARY KEY (name);
+ALTER TABLE ONLY public.pool_hour_balance
+    ADD CONSTRAINT "FK_451a971d3d8117f1ce4b158ecb0" FOREIGN KEY (token_id) REFERENCES public.token(id);
 
 
 --
--- Name: dipdup_token_metadata dipdup_token_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: pool_hour_balance FK_4c7a8844e42c1008fcfed6a74ef; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_token_metadata
-    ADD CONSTRAINT dipdup_token_metadata_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.pool_hour_balance
+    ADD CONSTRAINT "FK_4c7a8844e42c1008fcfed6a74ef" FOREIGN KEY (pool_id) REFERENCES public.pool(id);
 
 
 --
--- Name: holder holder_pkey; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: token_balance FK_535d618a629db3b5fc751263955; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.holder
-    ADD CONSTRAINT holder_pkey PRIMARY KEY (address);
+ALTER TABLE ONLY public.token_balance
+    ADD CONSTRAINT "FK_535d618a629db3b5fc751263955" FOREIGN KEY (holder_id) REFERENCES public.account(id);
 
 
 --
--- Name: dipdup_contract_metadata uid_dipdup_cont_network_1ae32f; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: token_balance FK_5813c3040e74c285719679c6935; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_contract_metadata
-    ADD CONSTRAINT uid_dipdup_cont_network_1ae32f UNIQUE (network, contract);
+ALTER TABLE ONLY public.token_balance
+    ADD CONSTRAINT "FK_5813c3040e74c285719679c6935" FOREIGN KEY (token_id) REFERENCES public.token(id);
 
 
 --
--- Name: dipdup_token_metadata uid_dipdup_toke_network_5d1a25; Type: CONSTRAINT; Schema: public; Owner: timescale
+-- Name: withdrawal FK_5a58952b2666d1900b1bcf1aee0; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.dipdup_token_metadata
-    ADD CONSTRAINT uid_dipdup_toke_network_5d1a25 UNIQUE (network, contract, token_id);
+ALTER TABLE ONLY public.withdrawal
+    ADD CONSTRAINT "FK_5a58952b2666d1900b1bcf1aee0" FOREIGN KEY (token_id) REFERENCES public.token(id);
 
 
 --
--- Name: hdb_cron_event_invocation_event_id; Type: INDEX; Schema: hdb_catalog; Owner: timescale
+-- Name: pool_day_balance FK_652bc46dc1f15a99ad2682d0daf; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE INDEX hdb_cron_event_invocation_event_id ON hdb_catalog.hdb_cron_event_invocation_logs USING btree (event_id);
+ALTER TABLE ONLY public.pool_day_balance
+    ADD CONSTRAINT "FK_652bc46dc1f15a99ad2682d0daf" FOREIGN KEY (pool_id) REFERENCES public.pool(id);
 
 
 --
--- Name: hdb_cron_event_status; Type: INDEX; Schema: hdb_catalog; Owner: timescale
+-- Name: pool FK_6ee0abc520db0e34d73c5bdd3cc; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE INDEX hdb_cron_event_status ON hdb_catalog.hdb_cron_events USING btree (status);
+ALTER TABLE ONLY public.pool
+    ADD CONSTRAINT "FK_6ee0abc520db0e34d73c5bdd3cc" FOREIGN KEY (owner_id) REFERENCES public.account(id);
 
 
 --
--- Name: hdb_cron_events_unique_scheduled; Type: INDEX; Schema: hdb_catalog; Owner: timescale
+-- Name: pool FK_7042da86b8de81cc3e9e448f9a7; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX hdb_cron_events_unique_scheduled ON hdb_catalog.hdb_cron_events USING btree (trigger_name, scheduled_time) WHERE (status = 'scheduled'::text);
+ALTER TABLE ONLY public.pool
+    ADD CONSTRAINT "FK_7042da86b8de81cc3e9e448f9a7" FOREIGN KEY (account_id) REFERENCES public.account(id);
 
 
 --
--- Name: hdb_scheduled_event_status; Type: INDEX; Schema: hdb_catalog; Owner: timescale
+-- Name: pool_day_balance FK_7e08123ddf2be25b7888311d8a6; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE INDEX hdb_scheduled_event_status ON hdb_catalog.hdb_scheduled_events USING btree (status);
+ALTER TABLE ONLY public.pool_day_balance
+    ADD CONSTRAINT "FK_7e08123ddf2be25b7888311d8a6" FOREIGN KEY (token_id) REFERENCES public.token(id);
 
 
 --
--- Name: hdb_version_one_row; Type: INDEX; Schema: hdb_catalog; Owner: timescale
+-- Name: withdrawal FK_b87670853acbc9551dccde2d103; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (((version IS NOT NULL)));
+ALTER TABLE ONLY public.withdrawal
+    ADD CONSTRAINT "FK_b87670853acbc9551dccde2d103" FOREIGN KEY (transaction_id) REFERENCES public.tx(id);
 
 
 --
--- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- Name: deposit FK_cf0f9c53f39d72f19478aaaee35; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
-    ADD CONSTRAINT hdb_cron_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_cron_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.deposit
+    ADD CONSTRAINT "FK_cf0f9c53f39d72f19478aaaee35" FOREIGN KEY (pool_id) REFERENCES public.pool(id);
 
 
 --
--- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: timescale
+-- PostgreSQL database dump complete
 --
 
-ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
-    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_scheduled_events(id) ON UPDATE CASCADE ON DELETE CASCADE;

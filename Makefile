@@ -488,20 +488,11 @@ migrate-prod-coredb: start-prod-sql-proxy confirm-prod-migrate
 	POSTGRES_PORT=6543 \
 	go run cmd/migrate/main.go
 
-#migrate-prod-mirrordb: start-prod-sql-proxy confirm-prod-migrate
-#	@POSTGRES_USER=$(POSTGRES_MIGRATION_USER) \
-#	POSTGRES_PASSWORD=$(POSTGRES_MIGRATION_PASSWORD) \
-#	POSTGRES_PORT=6544 \
-#	go run cmd/migrate/main.go mirror
-
-dump-schema-local-indexerdb: start-local-indexer
-	go run cmd/dump/main.go indexer
-
-dump-schema-dev-indexerdb: start-dev-indexer
-	go run cmd/dump/main.go indexer
-
-dump-schema-prod-indexerdb: start-prod-indexer
-	go run cmd/dump/main.go indexer
+dump-schema-indexerdb: # start-local-indexer
+	docker run --rm --network host \
+	-e PGPASSWORD=postgres \
+	postgres:15 \
+	pg_dump -h localhost -p 23798 -U postgres -d squid -s > db/migrations/indexer/schema.sql
 
 fix-sops-macs:
 	@cd secrets; ../scripts/fix-sops-macs.sh

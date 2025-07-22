@@ -6,31 +6,38 @@ import (
 	"context"
 	"time"
 
+	"github.com/jackc/pgx/v4"
+
+	"github.com/mutuals/go-mutuals/service/persist"
+
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 )
 
 type Loaders struct {
-	GetHoldersByAddressBatch *GetHoldersByAddressBatch
+	GetAccountByIDBatch *GetAccountByIDBatch
 }
 
 func NewLoaders(ctx context.Context, q *indexerdb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
 	loaders := &Loaders{}
 
-	loaders.GetHoldersByAddressBatch = newGetHoldersByAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetHoldersByAddressBatch(q), preFetchHook, postFetchHook)
+	loaders.GetAccountByIDBatch = newGetAccountByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountByIDBatch(q), preFetchHook, postFetchHook)
 
 	return loaders
 }
 
-func loadGetHoldersByAddressBatch(q *indexerdb.Queries) func(context.Context, *GetHoldersByAddressBatch, []string) ([][]indexerdb.Holder, []error) {
-	return func(ctx context.Context, d *GetHoldersByAddressBatch, params []string) ([][]indexerdb.Holder, []error) {
-		results := make([][]indexerdb.Holder, len(params))
+func loadGetAccountByIDBatch(q *indexerdb.Queries) func(context.Context, *GetAccountByIDBatch, []persist.DBID) ([]indexerdb.Account, []error) {
+	return func(ctx context.Context, d *GetAccountByIDBatch, params []persist.DBID) ([]indexerdb.Account, []error) {
+		results := make([]indexerdb.Account, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetHoldersByAddressBatch(ctx, params)
+		b := q.GetAccountByIDBatch(ctx, params)
 		defer b.Close()
 
-		b.Query(func(i int, r []indexerdb.Holder, err error) {
+		b.QueryRow(func(i int, r indexerdb.Account, err error) {
 			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
 		})
 
 		return results, errors

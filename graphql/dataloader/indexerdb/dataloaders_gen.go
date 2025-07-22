@@ -8,6 +8,8 @@ import (
 
 	"github.com/mutuals/go-mutuals/cmd/dataloaders/generator"
 
+	"github.com/mutuals/go-mutuals/service/persist"
+
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 )
 
@@ -26,34 +28,34 @@ type notFoundErrorProvider[TKey any] interface {
 type PreFetchHook func(context.Context, string) context.Context
 type PostFetchHook func(context.Context, string)
 
-// GetHoldersByAddressBatch batches and caches requests
-type GetHoldersByAddressBatch struct {
-	generator.Dataloader[string, []indexerdb.Holder]
+// GetAccountByIDBatch batches and caches requests
+type GetAccountByIDBatch struct {
+	generator.Dataloader[persist.DBID, indexerdb.Account]
 }
 
-// newGetHoldersByAddressBatch creates a new GetHoldersByAddressBatch with the given settings, functions, and options
-func newGetHoldersByAddressBatch(
+// newGetAccountByIDBatch creates a new GetAccountByIDBatch with the given settings, functions, and options
+func newGetAccountByIDBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetHoldersByAddressBatch, []string) ([][]indexerdb.Holder, []error),
+	fetch func(context.Context, *GetAccountByIDBatch, []persist.DBID) ([]indexerdb.Account, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetHoldersByAddressBatch {
-	d := &GetHoldersByAddressBatch{}
+) *GetAccountByIDBatch {
+	d := &GetAccountByIDBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []string) ([][]indexerdb.Holder, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]indexerdb.Account, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetHoldersByAddressBatch")
+			ctx = preFetchHook(ctx, "GetAccountByIDBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetHoldersByAddressBatch")
+			postFetchHook(ctx, "GetAccountByIDBatch")
 		}
 
 		return results, errors
@@ -61,4 +63,8 @@ func newGetHoldersByAddressBatch(
 
 	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
 	return d
+}
+
+func (*GetAccountByIDBatch) getKeyForResult(result indexerdb.Account) persist.DBID {
+	return result.ID
 }

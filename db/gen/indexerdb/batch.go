@@ -10,72 +10,62 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v4"
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const getHoldersByAddressBatch = `-- name: GetHoldersByAddressBatch :batchmany
-SELECT address, balance, turnover, tx_count, last_seen FROM public.holder WHERE address = $1
+const getAccountByIDBatch = `-- name: GetAccountByIDBatch :batchone
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at FROM public.account WHERE id = $1
 `
 
-type GetHoldersByAddressBatchBatchResults struct {
+type GetAccountByIDBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetHoldersByAddressBatch(ctx context.Context, address []string) *GetHoldersByAddressBatchBatchResults {
+func (q *Queries) GetAccountByIDBatch(ctx context.Context, id []persist.DBID) *GetAccountByIDBatchBatchResults {
 	batch := &pgx.Batch{}
-	for _, a := range address {
+	for _, a := range id {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getHoldersByAddressBatch, vals...)
+		batch.Queue(getAccountByIDBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetHoldersByAddressBatchBatchResults{br, len(address), false}
+	return &GetAccountByIDBatchBatchResults{br, len(id), false}
 }
 
-func (b *GetHoldersByAddressBatchBatchResults) Query(f func(int, []Holder, error)) {
+func (b *GetAccountByIDBatchBatchResults) QueryRow(f func(int, Account, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
-		var items []Holder
+		var i Account
 		if b.closed {
 			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
+				f(t, i, ErrBatchAlreadyClosed)
 			}
 			continue
 		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Holder
-				if err := rows.Scan(
-					&i.Address,
-					&i.Balance,
-					&i.Turnover,
-					&i.TxCount,
-					&i.LastSeen,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Address,
+			&i.AccountType,
+			&i.CreatedAtBlockNumber,
+			&i.UpdatedAtBlockNumber,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		)
 		if f != nil {
-			f(t, items, err)
+			f(t, i, err)
 		}
 	}
 }
 
-func (b *GetHoldersByAddressBatchBatchResults) Close() error {
+func (b *GetAccountByIDBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

@@ -5,4 +5,27 @@
 
 package indexerdb
 
-import ()
+import (
+	"context"
+
+	"github.com/mutuals/go-mutuals/service/persist"
+)
+
+const getAccountByID = `-- name: GetAccountByID :one
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at FROM public.account WHERE id = $1
+`
+
+func (q *Queries) GetAccountByID(ctx context.Context, id persist.DBID) (Account, error) {
+	row := q.db.QueryRow(ctx, getAccountByID, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Address,
+		&i.AccountType,
+		&i.CreatedAtBlockNumber,
+		&i.UpdatedAtBlockNumber,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

@@ -305,35 +305,3 @@ func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (a
 
 	return allocationParams, aggregationParams
 }
-
-func (api PoolAPI) GetAllocationById(ctx context.Context, allocationID persist.DBID) (*db.Allocation, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"allocationID": {allocationID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	allocation, err := api.loaders.GetAllocationByIdBatch.Load(allocationID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &allocation, nil
-}
-
-func (api PoolAPI) GetAllocationAggregationById(ctx context.Context, allocationAggregationID persist.DBID) (*db.AllocationAggregation, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"allocationAggregationID": {allocationAggregationID, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	allocationAggregation, err := api.loaders.GetAllocationAggregationByIdBatch.Load(allocationAggregationID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &allocationAggregation, nil
-}
