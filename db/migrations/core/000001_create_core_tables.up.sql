@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS users
     email_unsubscriptions jsonb                              NOT NULL DEFAULT '{
       "all": false
     }'::jsonb,
-    featured_pool        character varying,
-    primary_wallet_id     character varying(255)             ,
+    primary_wallet_id     character varying(255),
     user_experiences      jsonb                              NOT NULL DEFAULT '{}'::jsonb,
     fts_username          tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, ((username)::text ||
                                                                                           CASE
@@ -38,57 +37,18 @@ CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
 CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = FALSE);
 
-CREATE TABLE IF NOT EXISTS tokens
-(
-    id            character varying(255) PRIMARY KEY,
-    deleted       boolean                            NOT NULL DEFAULT false,
-    version       integer                           DEFAULT 0,
-    created_at    timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated  timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    chain         integer,
-    token_address character varying(255),
-    owner_address character varying(255)   NOT NULL,
-    balance       integer                           DEFAULT 0
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS tokens_chain_token_address_owner_address_idx ON tokens (chain, token_address, owner_address);
-CREATE INDEX IF NOT EXISTS tokens_owner_address_idx ON tokens (owner_address);
-CREATE INDEX IF NOT EXISTS tokens_token_address_idx ON tokens (token_address);
-
-CREATE TABLE IF NOT EXISTS token_metadatas
-(
-    id               character varying(255) PRIMARY KEY NOT NULL,
-    deleted          boolean                            NOT NULL DEFAULT false,
-    created_at       timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated     timestamp with time zone           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    symbol           character varying,
-    name             character varying,
-    logo             character varying,
-    thumbnail        character varying,
-    chain            integer,
-    contract_address character varying(255)
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS token_metadatas_chain_contract_address_idx on token_metadatas(chain, contract_address) where not deleted;
-
-CREATE TABLE IF NOT EXISTS pools
+CREATE TABLE IF NOT EXISTS pool_info
 (
     id                      character varying(255) PRIMARY KEY,
-    version                 integer                           DEFAULT 0,
-    last_updated            timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted                 boolean                  NOT NULL DEFAULT FALSE,
     name                    character varying        NOT NULL DEFAULT ''::character varying,
     description             character varying        NOT NULL DEFAULT ''::character varying,
-    status                  integer                  NOT NULL DEFAULT 0,
-    chain                   integer NULL,
-    l1_chain                integer NULL,
-    address                 character varying(255) NULL,
-    owner_address           character varying(255) NULL,
-    creator_address         character varying(255) NULL,
+    logo                    character varying        NOT NULL DEFAULT ''::character varying,
     fts_name                tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
-    fts_description_english tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig, (description)::text)) STORED
+    fts_description_english tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig, (description)::text)) STORED,
 --     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
+    last_updated            timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted                 boolean                  NOT NULL DEFAULT FALSE
 );
 
 CREATE INDEX pools_fts_description_english_idx ON pools USING gin (fts_description_english);
@@ -97,45 +57,26 @@ CREATE INDEX pools_fts_name_idx ON pools USING gin (fts_name);
 
 -- CREATE INDEX pools_fts_address_idx ON pools USING gin (fts_address);
 
-CREATE UNIQUE INDEX pool_address_chain_idx ON pools USING btree (address, chain) WHERE (NOT deleted AND status > 0);
-
-CREATE INDEX pools_l1_chain_idx ON pools (address,chain,l1_chain) WHERE (NOT deleted AND status > 0);
-CREATE UNIQUE INDEX pools_l1_chain_unique_idx ON pools (l1_chain,chain,address) WHERE (NOT deleted AND status > 0);
-
-CREATE TABLE IF NOT EXISTS allocations
+CREATE TABLE IF NOT EXISTS claims
 (
-    id               character varying(255) PRIMARY KEY,
-    version          integer                           DEFAULT 0,
-    pool_id         character varying(255)   NOT NULL REFERENCES pools ON DELETE CASCADE,
+    id                character varying(255) PRIMARY KEY,
+    version           integer                           DEFAULT 0,
+    pool_id           character varying(255)   NOT NULL REFERENCES pools ON DELETE CASCADE,
     recipient_address character varying(255),
-    recipient_type integer   NOT NULL,
-    calculation_type  integer   NOT NULL,
-    value            character varying(255)   NOT NULL,
-    expression       character varying(255)   NOT NULL,
-    label            character varying(255)   NOT NULL,
-    path             ltree                    NULL,
-    deleted          boolean                  NOT NULL DEFAULT FALSE,
-    last_updated     timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at       timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    recipient_type    integer                  NOT NULL,
+    calculation_type  integer                  NOT NULL,
+    value             character varying(255)   NOT NULL,
+    expression        character varying(255)   NOT NULL,
+    label             character varying(255)   NOT NULL,
+    path              ltree                    NULL,
+    deleted           boolean                  NOT NULL DEFAULT FALSE,
+    last_updated      timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at        timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-create index allocation_path_gist_idx on allocations using gist (path);
+CREATE INDEX allocation_path_gist_idx ON claims USING gist (path);
 
-CREATE INDEX allocation_path_idx ON allocations USING btree(path);
-
-CREATE TABLE IF NOT EXISTS allocation_aggregations (
-      id             character varying(255) PRIMARY KEY,
-      pool_id       character varying(255) NOT NULL REFERENCES pools(id) ON DELETE CASCADE,
-      recipient_address character varying(255),
-      expression     character varying(255) NOT NULL,
-      last_updated   timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      created_at     timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      version        integer DEFAULT 0,
-      deleted        boolean NOT NULL DEFAULT FALSE
-);
-
-ALTER TABLE allocation_aggregations
-    ADD CONSTRAINT allocation_aggregations_pool_recipient_address UNIQUE (pool_id,recipient_address);
+CREATE INDEX allocation_path_idx ON claims USING btree (path);
 
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (
@@ -157,7 +98,7 @@ CREATE TABLE IF NOT EXISTS events
     deleted          boolean                            NOT NULL DEFAULT FALSE,
     last_updated     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    pool_id         character varying(255),
+    pool_id          character varying(255),
     external_id      character varying(255),
     caption          character varying,
     group_id         character varying(255)
@@ -166,7 +107,7 @@ CREATE TABLE IF NOT EXISTS events
 CREATE INDEX events_actor_id_action_created_at_idx ON events USING btree (actor_id, action, created_at);
 
 CREATE INDEX events_pool_edit_idx ON events USING btree (created_at, actor_id) WHERE ((action)::text = ANY
-                                                                                       ((ARRAY ['PoolCreated'::character varying, 'PoolInfoUpdated'::character varying])::text[]));
+                                                                                      ((ARRAY ['PoolCreated'::character varying, 'PoolInfoUpdated'::character varying])::text[]));
 
 CREATE INDEX group_id_idx ON events USING btree (group_id);
 
@@ -180,19 +121,6 @@ ALTER TABLE events
 
 ALTER TABLE events
     ADD CONSTRAINT events_user_id_fkey
-        FOREIGN KEY (user_id) REFERENCES users (id);
-
-CREATE TABLE IF NOT EXISTS legacy_views
-(
-    user_id      character varying(255),
-    view_count   integer,
-    last_updated timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                           DEFAULT FALSE
-);
-
-ALTER TABLE legacy_views
-    ADD CONSTRAINT legacy_views_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
 
 CREATE TABLE IF NOT EXISTS nonces
@@ -216,7 +144,7 @@ CREATE TABLE IF NOT EXISTS notifications
     action       character varying(255)             NOT NULL,
     data         jsonb,
     event_ids    character varying(255)[],
-    pool_id     character varying(255),
+    pool_id      character varying(255),
     seen         boolean                            NOT NULL DEFAULT FALSE,
     amount       integer                            NOT NULL DEFAULT 1
 );
@@ -268,30 +196,6 @@ ALTER TABLE user_roles
 ALTER TABLE user_roles
     ADD CONSTRAINT user_roles_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
-
-CREATE TABLE IF NOT EXISTS wallets
-(
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    created_at   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted      boolean                            NOT NULL DEFAULT FALSE,
-    version      integer                                     DEFAULT 0,
-    address      character varying(255),
-    wallet_type  integer,
-    chain        integer,
-    l1_chain     integer,
-    fts_address  tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (address)::text)) STORED
-);
-CREATE UNIQUE INDEX wallet_address_chain_idx ON wallets USING btree (address, chain) WHERE (NOT deleted);
-CREATE INDEX wallets_l1_chain_idx ON wallets (address,chain,l1_chain) WHERE deleted = false;
-CREATE UNIQUE INDEX wallets_l1_chain_unique_idx ON wallets (address,l1_chain) WHERE deleted = false;
-
-CREATE INDEX wallets_fts_address_idx ON wallets USING gin (fts_address);
-
-ALTER TABLE users
-    ADD CONSTRAINT users_primary_wallet_id_fkey
-        FOREIGN KEY (primary_wallet_id) REFERENCES wallets (id);
-
 
 CREATE TABLE IF NOT EXISTS pii.for_users
 (
