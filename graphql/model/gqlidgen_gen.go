@@ -10,32 +10,12 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-func (r *Allocation) ID() GqlID {
-	return GqlID(fmt.Sprintf("Allocation:%s", r.Dbid))
-}
-
-func (r *AllocationAggregation) ID() GqlID {
-	return GqlID(fmt.Sprintf("AllocationAggregation:%s", r.Dbid))
-}
-
-func (r *Asset) ID() GqlID {
-	return GqlID(fmt.Sprintf("Asset:%s", r.Dbid))
-}
-
 func (r *DeletedNode) ID() GqlID {
 	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
 }
 
 func (r *MutualsUser) ID() GqlID {
 	return GqlID(fmt.Sprintf("MutualsUser:%s", r.Dbid))
-}
-
-func (r *Pool) ID() GqlID {
-	return GqlID(fmt.Sprintf("Pool:%s", r.Dbid))
-}
-
-func (r *Token) ID() GqlID {
-	return GqlID(fmt.Sprintf("Token:%s", r.Dbid))
 }
 
 func (r *Viewer) ID() GqlID {
@@ -51,20 +31,10 @@ func (r *Viewer) ID() GqlID {
 	return GqlID(fmt.Sprintf("Viewer:%s", r.GetGqlIDField_UserID()))
 }
 
-func (r *Wallet) ID() GqlID {
-	return GqlID(fmt.Sprintf("Wallet:%s", r.Dbid))
-}
-
 type NodeFetcher struct {
-	OnAllocation            func(ctx context.Context, dbid persist.DBID) (*Allocation, error)
-	OnAllocationAggregation func(ctx context.Context, dbid persist.DBID) (*AllocationAggregation, error)
-	OnAsset                 func(ctx context.Context, dbid persist.DBID) (*Asset, error)
-	OnDeletedNode           func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
-	OnMutualsUser           func(ctx context.Context, dbid persist.DBID) (*MutualsUser, error)
-	OnPool                  func(ctx context.Context, dbid persist.DBID) (*Pool, error)
-	OnToken                 func(ctx context.Context, dbid persist.DBID) (*Token, error)
-	OnViewer                func(ctx context.Context, userId string) (*Viewer, error)
-	OnWallet                func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
+	OnDeletedNode func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
+	OnMutualsUser func(ctx context.Context, dbid persist.DBID) (*MutualsUser, error)
+	OnViewer      func(ctx context.Context, userId string) (*Viewer, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
@@ -77,21 +47,6 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 	ids := parts[1:]
 
 	switch typeName {
-	case "Allocation":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Allocation' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnAllocation(ctx, persist.DBID(ids[0]))
-	case "AllocationAggregation":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'AllocationAggregation' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnAllocationAggregation(ctx, persist.DBID(ids[0]))
-	case "Asset":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Asset' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnAsset(ctx, persist.DBID(ids[0]))
 	case "DeletedNode":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -102,26 +57,11 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MutualsUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnMutualsUser(ctx, persist.DBID(ids[0]))
-	case "Pool":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Pool' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnPool(ctx, persist.DBID(ids[0]))
-	case "Token":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Token' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnToken(ctx, persist.DBID(ids[0]))
 	case "Viewer":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Viewer' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnViewer(ctx, string(ids[0]))
-	case "Wallet":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Wallet' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnWallet(ctx, persist.DBID(ids[0]))
 	}
 
 	return nil, ErrInvalidIDFormat{typeName}
@@ -129,23 +69,11 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 
 func (n *NodeFetcher) ValidateHandlers() {
 	switch {
-	case n.OnAllocation == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAllocation")
-	case n.OnAllocationAggregation == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAllocationAggregation")
-	case n.OnAsset == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnAsset")
 	case n.OnDeletedNode == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
 	case n.OnMutualsUser == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMutualsUser")
-	case n.OnPool == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPool")
-	case n.OnToken == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnToken")
 	case n.OnViewer == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnViewer")
-	case n.OnWallet == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnWallet")
 	}
 }

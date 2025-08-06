@@ -15,6 +15,11 @@ type AddRolesToUserPayloadOrError interface {
 	IsAddRolesToUserPayloadOrError()
 }
 
+// -------------------------------------------------------------------------------
+//
+//	MUTATIONS
+//
+// -------------------------------------------------------------------------------
 type AddUserWalletPayloadOrError interface {
 	IsAddUserWalletPayloadOrError()
 }
@@ -55,14 +60,6 @@ type GroupedNotification interface {
 
 type LoginPayloadOrError interface {
 	IsLoginPayloadOrError()
-}
-
-type MutualsUserOrAddress interface {
-	IsMutualsUserOrAddress()
-}
-
-type MutualsUserOrWallet interface {
-	IsMutualsUserOrWallet()
 }
 
 type Node interface {
@@ -194,6 +191,18 @@ type ViewerPoolByIDPayloadOrError interface {
 	IsViewerPoolByIDPayloadOrError()
 }
 
+type Account struct {
+	Address     persist.Address `json:"address"`
+	AccountType AccountType     `json:"accountType"`
+	SelfPools   []*Pool         `json:"selfPools"`
+	Claims      []*Claim        `json:"claims"`
+	Balances    []*TokenBalance `json:"balances"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
+}
+
+func (Account) IsNode() {}
+
 type AddUserWalletPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
@@ -203,7 +212,7 @@ func (AddUserWalletPayload) IsAddUserWalletPayloadOrError() {}
 type AdminAddWalletInput struct {
 	Username     string                `json:"username"`
 	ChainAddress *persist.ChainAddress `json:"chainAddress"`
-	WalletType   persist.WalletType    `json:"walletType"`
+	WalletType   AccountType           `json:"walletType"`
 }
 
 type AdminAddWalletPayload struct {
@@ -211,40 +220,6 @@ type AdminAddWalletPayload struct {
 }
 
 func (AdminAddWalletPayload) IsAdminAddWalletPayloadOrError() {}
-
-type Allocation struct {
-	Dbid             persist.DBID       `json:"dbid"`
-	Version          *int               `json:"version"`
-	RecipientAddress *persist.Address   `json:"recipientAddress"`
-	Value            *persist.HexString `json:"value"`
-	CreationTime     *time.Time         `json:"creationTime"`
-	LastUpdated      *time.Time         `json:"lastUpdated"`
-	Pool             *Pool              `json:"pool"`
-}
-
-func (Allocation) IsNode() {}
-
-type AllocationAggregation struct {
-	Dbid             persist.DBID     `json:"dbid"`
-	Version          *int             `json:"version"`
-	RecipientAddress *persist.Address `json:"recipientAddress"`
-	Expression       *string          `json:"expression"`
-	CreationTime     *time.Time       `json:"creationTime"`
-	LastUpdated      *time.Time       `json:"lastUpdated"`
-	Pool             *Pool            `json:"pool"`
-}
-
-func (AllocationAggregation) IsNode() {}
-
-type Asset struct {
-	Dbid         persist.DBID          `json:"dbid"`
-	Version      *int                  `json:"version"`
-	OwnerAddress *persist.ChainAddress `json:"ownerAddress"`
-	Balance      *persist.HexString    `json:"balance"`
-	Token        *Token                `json:"token"`
-}
-
-func (Asset) IsNode() {}
 
 type AuthMechanism struct {
 	Eoa               *EoaAuth               `json:"eoa"`
@@ -266,6 +241,19 @@ type ChainPools struct {
 	Chain *persist.Chain `json:"chain"`
 	Pools []*Pool        `json:"pools"`
 }
+
+type Claim struct {
+	Value     persist.HexString `json:"value"`
+	Parent    *Claim            `json:"parent"`
+	Pool      *Pool             `json:"pool"`
+	Recipient *Account          `json:"recipient"`
+	State     *Extension        `json:"state"`
+	Strategy  *Extension        `json:"strategy"`
+	CreatedAt time.Time         `json:"createdAt"`
+	UpdatedAt time.Time         `json:"updatedAt"`
+}
+
+func (Claim) IsNode() {}
 
 type ClearAllNotificationsPayload struct {
 	Notifications []Notification `json:"notifications"`
@@ -312,6 +300,21 @@ type DeletedNode struct {
 }
 
 func (DeletedNode) IsNode() {}
+
+type Deposit struct {
+	Transaction *Tx               `json:"transaction"`
+	Pool        *Pool             `json:"pool"`
+	Token       *Token            `json:"token"`
+	From        persist.Address   `json:"from"`
+	To          persist.Address   `json:"to"`
+	Origin      string            `json:"origin"`
+	Amount      persist.HexString `json:"amount"`
+	LogIndex    *int              `json:"logIndex"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
+}
+
+func (Deposit) IsNode() {}
 
 type EmailNotificationSettings struct {
 	UnsubscribedFromAll           bool `json:"unsubscribedFromAll"`
@@ -440,9 +443,9 @@ type ErrPoolNotFound struct {
 	Message string `json:"message"`
 }
 
+func (ErrPoolNotFound) IsViewerPoolByIDPayloadOrError() {}
 func (ErrPoolNotFound) IsError()                        {}
 func (ErrPoolNotFound) IsPoolByIDPayloadOrError()       {}
-func (ErrPoolNotFound) IsViewerPoolByIDPayloadOrError() {}
 
 type ErrPushTokenBelongsToAnotherUser struct {
 	Message string `json:"message"`
@@ -497,6 +500,33 @@ func (ErrUsernameNotAvailable) IsUpdateUserInfoPayloadOrError() {}
 func (ErrUsernameNotAvailable) IsError()                        {}
 func (ErrUsernameNotAvailable) IsCreateUserPayloadOrError()     {}
 
+type Extension struct {
+	Address           persist.Address    `json:"address"`
+	ChainID           int                `json:"chainId"`
+	ExtensionRegistry *ExtensionRegistry `json:"extensionRegistry"`
+	ExtensionID       string             `json:"extensionId"`
+	ExtensionType     ExtensionType      `json:"extensionType"`
+	Permissions       []string           `json:"permissions"`
+	Data              *string            `json:"data"`
+	Name              string             `json:"name"`
+	Description       string             `json:"description"`
+	CreatedAt         time.Time          `json:"createdAt"`
+	UpdatedAt         time.Time          `json:"updatedAt"`
+}
+
+func (Extension) IsNode() {}
+
+type ExtensionRegistry struct {
+	Address        persist.Address `json:"address"`
+	Chain          persist.Chain   `json:"chain"`
+	ExtensionCount int             `json:"extensionCount"`
+	Owner          *Account        `json:"owner"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+}
+
+func (ExtensionRegistry) IsNode() {}
+
 type GnosisSafeAuth struct {
 	Address persist.Address `json:"address"`
 	Nonce   string          `json:"nonce"`
@@ -534,16 +564,13 @@ type MutualsUser struct {
 	Username            *string         `json:"username"`
 	Universal           *bool           `json:"universal"`
 	Roles               []*persist.Role `json:"roles"`
-	Wallets             []*Wallet       `json:"wallets"`
-	PrimaryWallet       *Wallet         `json:"primaryWallet"`
+	Accounts            []*Account      `json:"accounts"`
+	PrimaryAccount      *Account        `json:"primaryAccount"`
 	Pools               []*Pool         `json:"pools"`
-	PoolsByChain        *ChainPools     `json:"poolsByChain"`
 	IsAuthenticatedUser *bool           `json:"isAuthenticatedUser"`
 }
 
 func (MutualsUser) IsNode()                              {}
-func (MutualsUser) IsMutualsUserOrWallet()               {}
-func (MutualsUser) IsMutualsUserOrAddress()              {}
 func (MutualsUser) IsUserByUsernameOrError()             {}
 func (MutualsUser) IsUserByIDOrError()                   {}
 func (MutualsUser) IsUserByAddressOrError()              {}
@@ -596,31 +623,68 @@ type PageInfo struct {
 }
 
 type Pool struct {
-	Dbid                  persist.DBID             `json:"dbid"`
-	Version               *int                     `json:"version"`
-	Status                PoolStatus               `json:"status"`
-	Name                  *string                  `json:"name"`
-	Description           *string                  `json:"description"`
-	Address               *persist.Address         `json:"address"`
-	OwnerAddress          *persist.Address         `json:"ownerAddress"`
-	CreatorAddress        *persist.Address         `json:"creatorAddress"`
-	Chain                 *persist.Chain           `json:"chain"`
-	AllocationAggregation []*AllocationAggregation `json:"allocationAggregation"`
-	Allocations           []*Allocation            `json:"allocations"`
-	Assets                []*Asset                 `json:"assets"`
+	Address     persist.Address    `json:"address"`
+	Chain       persist.Chain      `json:"chain"`
+	Status      PoolStatus         `json:"status"`
+	PoolFactory *PoolFactory       `json:"poolFactory"`
+	Account     *Account           `json:"account"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Logo        string             `json:"logo"`
+	Owner       *Account           `json:"owner"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+	Claims      []*Claim           `json:"claims"`
+	DayBalance  []*PoolDayBalance  `json:"dayBalance"`
+	HourBalance []*PoolHourBalance `json:"hourBalance"`
+	Deposits    []*Deposit         `json:"deposits"`
+	Withdrawals []*Withdrawal      `json:"withdrawals"`
 }
 
 func (Pool) IsNode()                   {}
 func (Pool) IsPoolByIDPayloadOrError() {}
 
 type PoolAllocationInput struct {
-	ID               *persist.DBID             `json:"id"`
-	RecipientAddress *persist.Address          `json:"recipientAddress"`
-	CalculationType  []persist.CalculationType `json:"calculationType"`
-	RecipientType    []persist.RecipientType   `json:"recipientType"`
-	Value            persist.HexString         `json:"value"`
-	Children         []*PoolAllocationInput    `json:"children"`
+	ID               *persist.DBID          `json:"id"`
+	RecipientAddress *persist.Address       `json:"recipientAddress"`
+	Value            persist.HexString      `json:"value"`
+	Children         []*PoolAllocationInput `json:"children"`
 }
+
+type PoolDayBalance struct {
+	Chain     persist.Chain     `json:"chain"`
+	Date      time.Time         `json:"date"`
+	Pool      *Pool             `json:"pool"`
+	Token     *Token            `json:"token"`
+	Amount    persist.HexString `json:"amount"`
+	CreatedAt time.Time         `json:"createdAt"`
+	UpdatedAt time.Time         `json:"updatedAt"`
+}
+
+func (PoolDayBalance) IsNode() {}
+
+type PoolFactory struct {
+	Address   persist.Address `json:"address"`
+	Chain     persist.Chain   `json:"chain"`
+	PoolCount int             `json:"poolCount"`
+	Owner     *Account        `json:"owner"`
+	CreatedAt time.Time       `json:"createdAt"`
+	UpdatedAt time.Time       `json:"updatedAt"`
+}
+
+func (PoolFactory) IsNode() {}
+
+type PoolHourBalance struct {
+	Chain     persist.Chain     `json:"chain"`
+	Date      time.Time         `json:"date"`
+	Pool      *Pool             `json:"pool"`
+	Token     *Token            `json:"token"`
+	Amount    persist.HexString `json:"amount"`
+	CreatedAt time.Time         `json:"createdAt"`
+	UpdatedAt time.Time         `json:"updatedAt"`
+}
+
+func (PoolHourBalance) IsNode() {}
 
 type PoolPositionInput struct {
 	PoolID   persist.DBID `json:"poolId"`
@@ -689,23 +753,43 @@ type SearchUsersPayload struct {
 func (SearchUsersPayload) IsSearchUsersPayloadOrError() {}
 
 type Token struct {
-	Dbid            persist.DBID   `json:"dbid"`
-	Version         *int           `json:"version"`
-	CreationTime    *time.Time     `json:"creationTime"`
-	LastUpdated     *time.Time     `json:"lastUpdated"`
-	TokenType       *TokenType     `json:"tokenType"`
-	Chain           *persist.Chain `json:"chain"`
-	Name            *string        `json:"name"`
-	Symbol          *string        `json:"symbol"`
-	Decimals        *int           `json:"decimals"`
-	Logo            *string        `json:"logo"`
-	TotalSupply     *int           `json:"totalSupply"`
-	ContractAddress *int           `json:"contractAddress"`
-	BlockNumber     *string        `json:"blockNumber"`
-	IsSpam          *bool          `json:"isSpam"`
+	Address      persist.Address `json:"address"`
+	Chain        persist.Chain   `json:"chain"`
+	TokenType    TokenType       `json:"tokenType"`
+	Symbol       string          `json:"symbol"`
+	Name         string          `json:"name"`
+	Decimals     int             `json:"decimals"`
+	Logo         *string         `json:"logo"`
+	Thumbnail    *string         `json:"thumbnail"`
+	Validated    *int            `json:"validated"`
+	PossibleSpam *bool           `json:"possibleSpam"`
+	CreatedAt    time.Time       `json:"createdAt"`
+	UpdatedAt    time.Time       `json:"updatedAt"`
 }
 
 func (Token) IsNode() {}
+
+type TokenBalance struct {
+	Chain     persist.Chain     `json:"chain"`
+	Token     *Token            `json:"token"`
+	Holder    *Account          `json:"holder"`
+	Amount    persist.HexString `json:"amount"`
+	CreatedAt time.Time         `json:"createdAt"`
+	UpdatedAt time.Time         `json:"updatedAt"`
+}
+
+func (TokenBalance) IsNode() {}
+
+type Tx struct {
+	GasUsed     persist.HexString `json:"gasUsed"`
+	GasPrice    persist.HexString `json:"gasPrice"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
+	Deposits    []*Deposit        `json:"deposits"`
+	Withdrawals []*Withdrawal     `json:"withdrawals"`
+}
+
+func (Tx) IsNode() {}
 
 type UnregisterUserPushTokenPayload struct {
 	Viewer *Viewer `json:"viewer"`
@@ -855,6 +939,11 @@ type UserExperience struct {
 	Experienced bool               `json:"experienced"`
 }
 
+// -------------------------------------------------------------------------------
+//
+//	SEARCH
+//
+// -------------------------------------------------------------------------------
 type UserSearchResult struct {
 	User *MutualsUser `json:"user"`
 }
@@ -896,8 +985,8 @@ type Viewer struct {
 	UserExperiences      []*UserExperience        `json:"userExperiences"`
 }
 
-func (Viewer) IsNode()          {}
 func (Viewer) IsViewerOrError() {}
+func (Viewer) IsNode()          {}
 
 type ViewerPool struct {
 	Pool *Pool `json:"pool"`
@@ -905,16 +994,61 @@ type ViewerPool struct {
 
 func (ViewerPool) IsViewerPoolByIDPayloadOrError() {}
 
-type Wallet struct {
-	Dbid         persist.DBID          `json:"dbid"`
-	ChainAddress *persist.ChainAddress `json:"chainAddress"`
-	Chain        *persist.Chain        `json:"chain"`
-	WalletType   *persist.WalletType   `json:"walletType"`
-	Pools        []*Pool               `json:"pools"`
+type Withdrawal struct {
+	Transaction *Tx               `json:"transaction"`
+	Pool        *Pool             `json:"pool"`
+	Token       *Token            `json:"token"`
+	From        persist.Address   `json:"from"`
+	To          persist.Address   `json:"to"`
+	Origin      string            `json:"origin"`
+	Amount      persist.HexString `json:"amount"`
+	LogIndex    *int              `json:"logIndex"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
 }
 
-func (Wallet) IsNode()                {}
-func (Wallet) IsMutualsUserOrWallet() {}
+func (Withdrawal) IsNode() {}
+
+type AccountType string
+
+const (
+	AccountTypeEoa      AccountType = "EOA"
+	AccountTypeContract AccountType = "Contract"
+)
+
+var AllAccountType = []AccountType{
+	AccountTypeEoa,
+	AccountTypeContract,
+}
+
+func (e AccountType) IsValid() bool {
+	switch e {
+	case AccountTypeEoa, AccountTypeContract:
+		return true
+	}
+	return false
+}
+
+func (e AccountType) String() string {
+	return string(e)
+}
+
+func (e *AccountType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AccountType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AccountType", str)
+	}
+	return nil
+}
+
+func (e AccountType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
 
 type EmailUnsubscriptionType string
 
@@ -954,6 +1088,47 @@ func (e *EmailUnsubscriptionType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e EmailUnsubscriptionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type ExtensionType string
+
+const (
+	ExtensionTypeState    ExtensionType = "State"
+	ExtensionTypeStrategy ExtensionType = "Strategy"
+)
+
+var AllExtensionType = []ExtensionType{
+	ExtensionTypeState,
+	ExtensionTypeStrategy,
+}
+
+func (e ExtensionType) IsValid() bool {
+	switch e {
+	case ExtensionTypeState, ExtensionTypeStrategy:
+		return true
+	}
+	return false
+}
+
+func (e ExtensionType) String() string {
+	return string(e)
+}
+
+func (e *ExtensionType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ExtensionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ExtensionType", str)
+	}
+	return nil
+}
+
+func (e ExtensionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

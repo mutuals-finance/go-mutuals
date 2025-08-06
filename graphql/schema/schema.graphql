@@ -57,6 +57,7 @@ scalar PubKey
 scalar DBID
 scalar Email
 scalar HexString
+scalar JSON
 
 enum BasicAuthType {
   Retool
@@ -74,31 +75,6 @@ type DeletedNode implements Node {
 
 interface Error {
   message: String!
-}
-
-type MutualsUser implements Node @goEmbedHelper {
-  id: ID!
-  dbid: DBID!
-  username: String
-  universal: Boolean
-  roles: [Role] @goField(forceResolver: true)
-  wallets: [Wallet] @goField(forceResolver: true)
-  primaryWallet: Wallet @goField(forceResolver: true)
-  # Returns all pools owned by this user. Useful for retrieving all tokens without any duplicates,
-  # as opposed to retrieving user -> wallets -> pools, which would contain duplicates for any token
-  # that appears in more than one of the user's wallets.
-  pools: [Pool] @goField(forceResolver: true)
-  poolsByChain(chain: Chain!): ChainPools @goField(forceResolver: true)
-  isAuthenticatedUser: Boolean
-}
-
-type Wallet implements Node {
-  id: ID!
-  dbid: DBID!
-  chainAddress: ChainAddress
-  chain: Chain
-  walletType: WalletType
-  pools: [Pool] @goField(forceResolver: true)
 }
 
 type ChainAddress {
@@ -126,14 +102,6 @@ input ChainPubKeyInput {
   chain: Chain! @goField(forceResolver: true)
 }
 
-union MutualsUserOrWallet = MutualsUser | Wallet
-
-union MutualsUserOrAddress = MutualsUser | ChainAddress
-
-enum TokenType {
-  ERC20
-}
-
 enum Chain {
   Ethereum
   Arbitrum
@@ -141,104 +109,135 @@ enum Chain {
   Optimism
 }
 
-enum WalletType {
+#-------------------------------------------------------------------------------
+# PAGINATION
+#-------------------------------------------------------------------------------
+
+type PageInfo {
+  total: Int
+  size: Int!
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+  startCursor: String!
+  endCursor: String!
+}
+
+#-------------------------------------------------------------------------------
+# ACCOUNT AND CONTRACTS
+#-------------------------------------------------------------------------------
+
+enum AccountType {
   EOA
-  GnosisSafe
+  Contract
 }
 
-type Token implements Node {
+type Account implements Node {
+  # account address
+  id: ID!
+  # dbid: DBID!
+  # account address
+  address: Address!
+  # contract or EOA
+  accountType: AccountType!
+  # pools this account represents if account is a pool contract
+  selfPools: [Pool!] @goField(forceResolver: true)
+  # claims where account is a recipient
+  claims: [Claim!] @goField(forceResolver: true)
+  # token balances of the account
+  balances: [TokenBalance!] @goField(forceResolver: true)
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+type PoolFactory implements Node {
+  # { chain id }-{ contract address }
+  id: ID!
+  # dbid: DBID!
+  # contract address
+  address: Address!
+  # chain ID
+  chain: Chain!
+  # amount of pools created
+  poolCount: Int!
+  # current owner of the factory
+  owner: Account!
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+type ExtensionRegistry implements Node {
+  # { chain id }-{ contract address }
+  id: ID!
+  # dbid: DBID!
+  # contract address
+  address: Address!
+  # chain ID
+  chain: Chain!
+  # amount of extensions created
+  extensionCount: Int!
+  # current owner of the registry
+  owner: Account! @goField(forceResolver: true)
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+#-------------------------------------------------------------------------------
+# USER
+#-------------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  BETA_TESTER
+  EARLY_ACCESS
+}
+
+type MutualsUser implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
-  version: Int
-  creationTime: Time
-  lastUpdated: Time
-  tokenType: TokenType
-  chain: Chain
-  name: String
-  symbol: String
-  decimals: Int
-  logo: String
-  totalSupply: Int
-  contractAddress: Int
-  blockNumber: String # source is uint64
-  isSpam: Boolean
+  username: String
+  universal: Boolean
+  roles: [Role] @goField(forceResolver: true)
+  accounts: [Account] @goField(forceResolver: true)
+  primaryAccount: Account @goField(forceResolver: true)
+  # Returns all pools owned by this user. Useful for retrieving all pools without any duplicates,
+  # as opposed to retrieving user -> accounts -> pools, which would contain duplicates for any pool
+  # that appears in more than one of the user's wallets.
+  pools: [Pool] @goField(forceResolver: true)
+  isAuthenticatedUser: Boolean
 }
 
-type Asset implements Node {
-  id: ID!
-  dbid: DBID!
-  version: Int
-  ownerAddress: ChainAddress
-  balance: HexString
-  token: Token @goField(forceResolver: true)
+union UserByUsernameOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
+
+union UserByIdOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
+
+union UserByAddressOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
+
+union ViewerOrError = Viewer | ErrNotAuthorized
+
+# Actions a user can take on a resource
+enum Action {
+  UserCreated
 }
 
-enum CalculationType {
-  Percentage
-  Fixed
-}
-
-enum RecipientType {
-  DefaultItem
-  DefaultGroup
-  PrioritizedGroup
-  TimedGroup
-}
-
-type AllocationAggregation implements Node {
-  id: ID!
-  dbid: DBID!
-  version: Int
-  recipientAddress: Address
-  expression: String
-  creationTime: Time
-  lastUpdated: Time
-  pool: Pool @goField(forceResolver: true)
-}
-
-type Allocation implements Node {
-  id: ID!
-  dbid: DBID!
-  version: Int
-  recipientAddress: Address
-  value: HexString
-  creationTime: Time
-  lastUpdated: Time
-  pool: Pool @goField(forceResolver: true)
-}
-
-type Pool implements Node {
-  id: ID!
-  dbid: DBID!
-  version: Int
-  status: PoolStatus!
-  name: String
-  description: String
-  address: Address
-  ownerAddress: Address
-  creatorAddress: Address
-  chain: Chain
-  allocationAggregation: [AllocationAggregation!] @goField(forceResolver: true)
-  allocations: [Allocation] @goField(forceResolver: true)
-  assets(limit: Int): [Asset] @goField(forceResolver: true)
-}
-
-# We have this extra type in case we need to stick authed data
-# in here one day.
-type ViewerPool {
-  pool: Pool
-}
-
-type NotificationEdge {
-  node: Notification
+type UserEdge {
+  node: MutualsUser
   cursor: String
 }
 
-type NotificationsConnection @goEmbedHelper {
-  edges: [NotificationEdge]
-  unseenCount: Int
-  pageInfo: PageInfo
+type UsersConnection {
+  edges: [UserEdge]
+  pageInfo: PageInfo!
 }
+
+#-------------------------------------------------------------------------------
+# VIEWER
+#-------------------------------------------------------------------------------
 
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
@@ -251,11 +250,240 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   Seen notifications come after unseen notifications
   """
   notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection
-    @goField(forceResolver: true)
+  @goField(forceResolver: true)
 
   notificationSettings: NotificationSettings @goField(forceResolver: true)
 
   userExperiences: [UserExperience!] @goField(forceResolver: true)
+}
+
+# We have this extra type in case we need to stick authed data
+# in here one day.
+type ViewerPool {
+  pool: Pool
+}
+
+union ViewerPoolByIdPayloadOrError = ViewerPool | ErrPoolNotFound
+
+# -------------------------------------------------------------------------------
+# TOKEN
+#-------------------------------------------------------------------------------
+
+enum TokenType {
+  ERC20
+}
+
+type Token implements Node {
+  # { chain id }-{ token address }
+  id: ID!
+  # dbid: DBID!
+  # token address
+  address: Address!
+  # chain
+  chain: Chain!
+  # token type
+  tokenType: TokenType!
+  # token symbol
+  symbol: String!
+  # token name
+  name: String!
+  # token decimals
+  decimals: Int!
+  # token logo
+  logo: String
+  # token thumbnail
+  thumbnail: String
+  # if token details have been validated
+  validated: Int
+  # if possibly a spam token
+  possibleSpam: Boolean
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+type TokenBalance implements Node {
+  # {chain id }-{ holder address }-{ token address }
+  id: ID!
+  # dbid: DBID!
+  # chain
+  chain: Chain!
+  # token
+  token: Token! @goField(forceResolver: true)
+  # token owner
+  holder: Account! @goField(forceResolver: true)
+  # token balance (BigDecimal)
+  amount: HexString!
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+type ErrTokenNotFound implements Error {
+  message: String!
+}
+
+#-------------------------------------------------------------------------------
+# EXTENSION
+#-------------------------------------------------------------------------------
+
+enum ExtensionType {
+  State
+  Strategy
+}
+
+type Extension implements Node{
+  # { chain id }-{ pool address }
+  id: ID!
+  # dbid: DBID!
+  # pool address
+  address: Address!
+  # chain ID
+  chainId: Int!
+  # extension registry that created this pool
+  extensionRegistry: ExtensionRegistry! @goField(forceResolver: true)
+  # extension id of functionality (unspecific of chain)
+  extensionId: String!
+  # type of the extension
+  extensionType: ExtensionType!
+  # array of call signatures that this extension supports
+  permissions: [String!]
+  # JSON data of the extension
+  data: JSON
+  # name
+  name: String!
+  # description
+  description: String!
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+type Claim implements Node {
+  # { claim id }
+  id: ID!
+  # dbid: DBID!
+  # allocated value (BigDecimal)
+  value: HexString!
+  # parent claim
+  parent: Claim @goField(forceResolver: true)
+  # pool
+  pool: Pool! @goField(forceResolver: true)
+  # recipient
+  recipient: Account @goField(forceResolver: true)
+  # state
+  state: Extension! @goField(forceResolver: true)
+  # strategy
+  strategy: Extension! @goField(forceResolver: true)
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+#-------------------------------------------------------------------------------
+# POOL
+#-------------------------------------------------------------------------------
+
+type Pool implements Node {
+  # { chain id }-{ pool address }
+  id: ID!
+  # dbid: DBID!
+  # pool address
+  address: Address!
+  # chain
+  chain: Chain!
+  # status of the pool
+  status: PoolStatus!
+  # pool factory that created this pool
+  poolFactory: PoolFactory! @goField(forceResolver: true)
+  # account of this pool
+  account: Account! @goField(forceResolver: true)
+  # name
+  name: String!
+  # description
+  description: String!
+  # logo
+  logo: String!
+  # current owner of the pool
+  owner: Account! @goField(forceResolver: true)
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+  # pool claims
+  claims: [Claim!] @goField(forceResolver: true)
+  # daily snapshots of pool token balances
+  dayBalance: [PoolDayBalance!]! @goField(forceResolver: true)
+  # hourly snapshots of pool token balances
+  hourBalance: [PoolHourBalance!]! @goField(forceResolver: true)
+  # deposit transactions
+  deposits: [Deposit!]! @goField(forceResolver: true)
+  # withdraw transactions
+  withdrawals: [Withdrawal!]! @goField(forceResolver: true)
+}
+
+type ErrPoolNotFound implements Error {
+  message: String!
+}
+
+union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
+
+type PoolDayBalance implements Node {
+  # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current day) }
+  id: ID!
+  # dbid: DBID!
+  # chain
+  chain: Chain!
+  # timestamp rounded to current day by dividing by 86400
+  date: Time!
+  # pointer to pool
+  pool: Pool! @goField(forceResolver: true)
+  # pointer to token
+  token: Token! @goField(forceResolver: true)
+  # last token balance in token units
+  amount: HexString!
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+type PoolHourBalance implements Node {
+  # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current hour) }
+  id: ID!
+  # chain ID
+  chain: Chain!
+  # timestamp rounded to current hour by dividing by 3600
+  date: Time!
+  # pointer to pool
+  pool: Pool! @goField(forceResolver: true)
+  # pointer to token
+  token: Token! @goField(forceResolver: true)
+  # last token balance in token units
+  amount: HexString!
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+#-------------------------------------------------------------------------------
+# NOTIFICATIONS
+#-------------------------------------------------------------------------------
+
+type NotificationEdge {
+  node: Notification
+  cursor: String
+}
+
+type NotificationsConnection @goEmbedHelper {
+  edges: [NotificationEdge]
+  unseenCount: Int
+  pageInfo: PageInfo
 }
 
 type NotificationSettings {
@@ -265,6 +493,10 @@ type NotificationSettings {
 input NotificationSettingsInput {
   someoneViewedYourPool: Boolean
 }
+
+#-------------------------------------------------------------------------------
+# EMAIL
+#-------------------------------------------------------------------------------
 
 enum EmailVerificationStatus {
   Unverified
@@ -299,6 +531,10 @@ input UnsubscribeFromEmailTypeInput {
   token: String! @scrub
 }
 
+#-------------------------------------------------------------------------------
+# USER EXPERIENCE
+#-------------------------------------------------------------------------------
+
 enum UserExperienceType {
   EmailUpsell
   MaintenanceFeb2023
@@ -311,60 +547,90 @@ type UserExperience {
   experienced: Boolean!
 }
 
-union UserByUsernameOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
-
-union UserByIdOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
-
-union UserByAddressOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
-
-union ViewerOrError = Viewer | ErrNotAuthorized
-
-type ErrTokenNotFound implements Error {
-  message: String!
-}
-
-# Actions a user can take on a resource
-enum Action {
-  UserCreated
-}
-
-type PageInfo {
-  total: Int
-  size: Int!
-  hasPreviousPage: Boolean!
-  hasNextPage: Boolean!
-  startCursor: String!
-  endCursor: String!
-}
-
-type UserEdge {
-  node: MutualsUser
-  cursor: String
-}
-
-type UsersConnection {
-  edges: [UserEdge]
-  pageInfo: PageInfo!
-}
-
-enum Role {
-  ADMIN
-  BETA_TESTER
-  EARLY_ACCESS
-}
-
-type ErrPoolNotFound implements Error {
-  message: String!
-}
-
-union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
-union ViewerPoolByIdPayloadOrError = ViewerPool | ErrPoolNotFound
+#-------------------------------------------------------------------------------
+# EVENT
+#-------------------------------------------------------------------------------
 
 enum ReportWindow {
   LAST_5_DAYS
   LAST_7_DAYS
   ALL_TIME
 }
+
+type Tx implements Node {
+  # txn hash
+  id: ID!
+  # dbid: DBID!
+  # gas used during txn execution
+  gasUsed: HexString!
+  # gas price for txn execution
+  gasPrice: HexString!
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+  # derived values
+  deposits: [Deposit]! @goField(forceResolver: true)
+  withdrawals: [Withdrawal]! @goField(forceResolver: true)
+}
+
+type Deposit implements Node {
+  # { transaction hash }-{ index in deposits transaction array }
+  id: ID!
+  # dbid: DBID!
+  # which txn the mint was included in
+  transaction: Tx! @goField(forceResolver: true)
+  # pool that receives deposit
+  pool: Pool! @goField(forceResolver: true)
+  # allow indexing by tokens
+  token: Token! @goField(forceResolver: true)
+  # the address that deposited the token
+  from: Address!
+  # the address that received the token (the pool)
+  to: Address!
+  # txn origin
+  origin: String! # the EOA that initiated the txn
+  # deposit amount
+  amount: HexString!
+  # order within the txn
+  logIndex: Int
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+type Withdrawal implements Node {
+  # { transaction hash }-{ index in withdrawals transaction array }
+  id: ID!
+  # dbid: DBID!
+  # txn burn was included in
+  transaction: Tx! @goField(forceResolver: true)
+  # pool position is within
+  pool: Pool! @goField(forceResolver: true)
+  # allow indexing by tokens
+  token: Token! @goField(forceResolver: true)
+  # sender of the withdrawal
+  from: Address!
+  # recipient of the withdrawal
+  to: Address!
+  # txn origin
+  origin: String! # the EOA that initiated the txn
+  # withdrawn amount
+  amount: HexString!
+  # position within the transactions
+  logIndex: Int
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
+}
+
+"""
+-------------------------------------------------------------------------------
+ SEARCH
+-------------------------------------------------------------------------------
+"""
 
 type UserSearchResult {
   user: MutualsUser
@@ -425,6 +691,12 @@ type Query {
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
     @basicAuth(allowed: [Retool])
 }
+
+"""
+-------------------------------------------------------------------------------
+ MUTATIONS
+-------------------------------------------------------------------------------
+"""
 
 union AddUserWalletPayloadOrError =
     AddUserWalletPayload
@@ -767,8 +1039,6 @@ type UploadPersistedQueriesPayload {
 input PoolAllocationInput {
   id: DBID
   recipientAddress: Address
-  calculationType: [CalculationType!]!
-  recipientType: [RecipientType!]!
   value: HexString!
   children: [PoolAllocationInput!]
 }
@@ -893,7 +1163,7 @@ union UpdatePrimaryWalletPayloadOrError =
 input AdminAddWalletInput {
   username: String!
   chainAddress: ChainAddressInput!
-  walletType: WalletType!
+  walletType: AccountType!
 }
 
 type AdminAddWalletPayload {

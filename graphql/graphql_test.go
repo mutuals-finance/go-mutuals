@@ -217,7 +217,7 @@ func testUpsertPoolWithPublish(t *testing.T) {
 	c := authedServerClient(t, serverF.URL, userF.ID)
 
 	updateReponse, err := upsertPoolMutation(context.Background(), c, UpsertPoolInput{
-		PoolId: userF.PoolID,
+		PoolId: util.ToPointer(userF.PoolID),
 		Name:   util.ToPointer("newName"),
 	})
 
@@ -231,7 +231,7 @@ func testUpsertPoolWithPublish(t *testing.T) {
 	assert.NotEmpty(t, updatePayload.Pool.Name)
 
 	update2Reponse, err := upsertPoolMutation(context.Background(), c, UpsertPoolInput{
-		PoolId:      userF.PoolID,
+		PoolId:      util.ToPointer(userF.PoolID),
 		Description: util.ToPointer("newDesc"),
 	})
 
@@ -296,7 +296,7 @@ func testUpsertPoolWithNoNameChange(t *testing.T) {
 	c := authedHandlerClient(t, userF.ID)
 
 	response, err := upsertPoolMutation(context.Background(), c, UpsertPoolInput{
-		PoolId: userF.PoolID,
+		PoolId: util.ToPointer(userF.PoolID),
 		Name:   util.ToPointer("newName"),
 	})
 
@@ -309,7 +309,7 @@ func testUpsertPoolWithNoNameChange(t *testing.T) {
 	assert.NotEmpty(t, payload.Pool.Name)
 
 	response, err = upsertPoolMutation(context.Background(), c, UpsertPoolInput{
-		PoolId: userF.PoolID,
+		PoolId: util.ToPointer(userF.PoolID),
 	})
 
 	require.NoError(t, err)
@@ -337,7 +337,7 @@ func authMechanismInput(w wallet, nonce string, message string) AuthMechanism {
 }
 
 func chainAddressInput(address string) ChainAddressInput {
-	return ChainAddressInput{Address: address, Chain: "Ethereum"}
+	return ChainAddressInput{Address: persist.Address(address), Chain: "Ethereum"}
 }
 
 type wallet struct {
@@ -427,7 +427,8 @@ func handlerWithProviders(t *testing.T, p multichain.ProviderLookup) http.Handle
 			ctx,
 			false,
 			c.Repos,
-			c.Queries,
+			c.CoreQueries,
+			c.IndexerQueries,
 			c.HTTPClient,
 			c.EthClient,
 			c.IPFSClient,
@@ -447,7 +448,8 @@ func handlerWithProviders(t *testing.T, p multichain.ProviderLookup) http.Handle
 	handlerInitF := func(r *gin.Engine) {
 		server.GraphqlHandlersInit(
 			r,
-			c.Queries,
+			c.CoreQueries,
+			c.IndexerQueries,
 			c.TaskClient,
 			c.PubSubClient,
 			lock,             // redislock
@@ -464,7 +466,7 @@ func handlerWithProviders(t *testing.T, p multichain.ProviderLookup) http.Handle
 func newMultichainProvider(c *server.Clients, p multichain.ProviderLookup) multichain.Provider {
 	return multichain.Provider{
 		Repos:   c.Repos,
-		Queries: c.Queries,
+		Queries: c.CoreQueries,
 		Chains:  p,
 	}
 }

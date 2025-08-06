@@ -86,6 +86,27 @@ CREATE TABLE public.account (
 ALTER TABLE public.account OWNER TO postgres;
 
 --
+-- Name: claim; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.claim (
+    id character varying NOT NULL,
+    value numeric NOT NULL,
+    parent_id character varying,
+    pool_id character varying NOT NULL,
+    recipient_id character varying,
+    state_id character varying NOT NULL,
+    strategy_id character varying NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.claim OWNER TO postgres;
+
+--
 -- Name: deposit; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -107,6 +128,49 @@ CREATE TABLE public.deposit (
 
 
 ALTER TABLE public.deposit OWNER TO postgres;
+
+--
+-- Name: extension; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.extension (
+    id character varying NOT NULL,
+    address text NOT NULL,
+    chain_id integer NOT NULL,
+    extension_registry_id character varying NOT NULL,
+    extension_id text NOT NULL,
+    extension_type character varying(8) NOT NULL,
+    permissions text[],
+    data jsonb,
+    name text NOT NULL,
+    description text NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.extension OWNER TO postgres;
+
+--
+-- Name: extension_registry; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.extension_registry (
+    id character varying NOT NULL,
+    address text NOT NULL,
+    chain_id integer NOT NULL,
+    extension_count integer NOT NULL,
+    owner_id character varying NOT NULL,
+    created_at_block_number integer NOT NULL,
+    updated_at_block_number integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.extension_registry OWNER TO postgres;
 
 --
 -- Name: migrations; Type: TABLE; Schema: public; Owner: postgres
@@ -237,12 +301,12 @@ CREATE TABLE public.token (
     decimals integer NOT NULL,
     logo text,
     thumbnail text,
+    validated integer,
     possible_spam boolean,
     created_at_block_number integer NOT NULL,
     updated_at_block_number integer NOT NULL,
     created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL,
-    validated integer
+    updated_at timestamp with time zone NOT NULL
 );
 
 
@@ -355,6 +419,14 @@ ALTER TABLE ONLY public.tx
 
 
 --
+-- Name: claim PK_466b305cc2e591047fa1ce58f81; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.claim
+    ADD CONSTRAINT "PK_466b305cc2e591047fa1ce58f81" PRIMARY KEY (id);
+
+
+--
 -- Name: account PK_54115ee388cdb6d86bb4bf5b2ea; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -427,6 +499,22 @@ ALTER TABLE ONLY public.token_balance
 
 
 --
+-- Name: extension PK_e9e7da4f1cfc826aba870c20589; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.extension
+    ADD CONSTRAINT "PK_e9e7da4f1cfc826aba870c20589" PRIMARY KEY (id);
+
+
+--
+-- Name: extension_registry PK_f5394f62a41c12489d2930fb43a; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.extension_registry
+    ADD CONSTRAINT "PK_f5394f62a41c12489d2930fb43a" PRIMARY KEY (id);
+
+
+--
 -- Name: IDX_09699258f368ade88316904e54; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -441,10 +529,24 @@ CREATE INDEX "IDX_1788fb57e581f3de7f0d498733" ON public.withdrawal USING btree (
 
 
 --
+-- Name: IDX_1be67f374e054c831d78dc0488; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_1be67f374e054c831d78dc0488" ON public.claim USING btree (parent_id);
+
+
+--
 -- Name: IDX_2126b5e4c6a411b38e9e049b02; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX "IDX_2126b5e4c6a411b38e9e049b02" ON public.pool USING btree (pool_factory_id);
+
+
+--
+-- Name: IDX_23035bc1fa4a5b221389e13d92; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_23035bc1fa4a5b221389e13d92" ON public.extension_registry USING btree (owner_id);
 
 
 --
@@ -476,10 +578,24 @@ CREATE INDEX "IDX_4c7a8844e42c1008fcfed6a74e" ON public.pool_hour_balance USING 
 
 
 --
+-- Name: IDX_4fa8a234dee5be6b41e76819d2; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_4fa8a234dee5be6b41e76819d2" ON public.claim USING btree (pool_id);
+
+
+--
 -- Name: IDX_535d618a629db3b5fc75126395; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX "IDX_535d618a629db3b5fc75126395" ON public.token_balance USING btree (holder_id);
+
+
+--
+-- Name: IDX_57ccff353e966f42ce075c9840; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_57ccff353e966f42ce075c9840" ON public.extension USING btree (extension_registry_id);
 
 
 --
@@ -525,6 +641,13 @@ CREATE INDEX "IDX_7e08123ddf2be25b7888311d8a" ON public.pool_day_balance USING b
 
 
 --
+-- Name: IDX_964f2b34087ff0363398bfcba6; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_964f2b34087ff0363398bfcba6" ON public.claim USING btree (state_id);
+
+
+--
 -- Name: IDX_b87670853acbc9551dccde2d10; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -532,10 +655,24 @@ CREATE INDEX "IDX_b87670853acbc9551dccde2d10" ON public.withdrawal USING btree (
 
 
 --
+-- Name: IDX_c9c7ae261e98272b62051f3b1b; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_c9c7ae261e98272b62051f3b1b" ON public.claim USING btree (strategy_id);
+
+
+--
 -- Name: IDX_cf0f9c53f39d72f19478aaaee3; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX "IDX_cf0f9c53f39d72f19478aaaee3" ON public.deposit USING btree (pool_id);
+
+
+--
+-- Name: IDX_fbd012a2329b07b1687c321385; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IDX_fbd012a2329b07b1687c321385" ON public.claim USING btree (recipient_id);
 
 
 --
@@ -563,11 +700,27 @@ ALTER TABLE ONLY public.withdrawal
 
 
 --
+-- Name: claim FK_1be67f374e054c831d78dc04888; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.claim
+    ADD CONSTRAINT "FK_1be67f374e054c831d78dc04888" FOREIGN KEY (parent_id) REFERENCES public.claim(id);
+
+
+--
 -- Name: pool FK_2126b5e4c6a411b38e9e049b021; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pool
     ADD CONSTRAINT "FK_2126b5e4c6a411b38e9e049b021" FOREIGN KEY (pool_factory_id) REFERENCES public.pool_factory(id);
+
+
+--
+-- Name: extension_registry FK_23035bc1fa4a5b221389e13d92f; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.extension_registry
+    ADD CONSTRAINT "FK_23035bc1fa4a5b221389e13d92f" FOREIGN KEY (owner_id) REFERENCES public.account(id);
 
 
 --
@@ -603,11 +756,27 @@ ALTER TABLE ONLY public.pool_hour_balance
 
 
 --
+-- Name: claim FK_4fa8a234dee5be6b41e76819d25; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.claim
+    ADD CONSTRAINT "FK_4fa8a234dee5be6b41e76819d25" FOREIGN KEY (pool_id) REFERENCES public.pool(id);
+
+
+--
 -- Name: token_balance FK_535d618a629db3b5fc751263955; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.token_balance
     ADD CONSTRAINT "FK_535d618a629db3b5fc751263955" FOREIGN KEY (holder_id) REFERENCES public.account(id);
+
+
+--
+-- Name: extension FK_57ccff353e966f42ce075c9840d; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.extension
+    ADD CONSTRAINT "FK_57ccff353e966f42ce075c9840d" FOREIGN KEY (extension_registry_id) REFERENCES public.extension_registry(id);
 
 
 --
@@ -659,6 +828,14 @@ ALTER TABLE ONLY public.pool_day_balance
 
 
 --
+-- Name: claim FK_964f2b34087ff0363398bfcba68; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.claim
+    ADD CONSTRAINT "FK_964f2b34087ff0363398bfcba68" FOREIGN KEY (state_id) REFERENCES public.extension(id);
+
+
+--
 -- Name: withdrawal FK_b87670853acbc9551dccde2d103; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -667,11 +844,27 @@ ALTER TABLE ONLY public.withdrawal
 
 
 --
+-- Name: claim FK_c9c7ae261e98272b62051f3b1ba; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.claim
+    ADD CONSTRAINT "FK_c9c7ae261e98272b62051f3b1ba" FOREIGN KEY (strategy_id) REFERENCES public.extension(id);
+
+
+--
 -- Name: deposit FK_cf0f9c53f39d72f19478aaaee35; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.deposit
     ADD CONSTRAINT "FK_cf0f9c53f39d72f19478aaaee35" FOREIGN KEY (pool_id) REFERENCES public.pool(id);
+
+
+--
+-- Name: claim FK_fbd012a2329b07b1687c321385f; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.claim
+    ADD CONSTRAINT "FK_fbd012a2329b07b1687c321385f" FOREIGN KEY (recipient_id) REFERENCES public.account(id);
 
 
 --

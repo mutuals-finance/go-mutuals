@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"context"
+	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/mutuals/go-mutuals/validate"
@@ -24,7 +25,7 @@ type WalletAPI struct {
 	multichainProvider *multichain.Provider
 }
 
-func (api WalletAPI) GetWalletByID(ctx context.Context, walletID persist.DBID) (*db.Wallet, error) {
+func (api WalletAPI) GetWalletByID(ctx context.Context, walletID persist.DBID) (*indexerdb.Account, error) {
 	// Validate
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -33,15 +34,15 @@ func (api WalletAPI) GetWalletByID(ctx context.Context, walletID persist.DBID) (
 		return nil, err
 	}
 
-	address, err := api.loaders.GetWalletByIDBatch.Load(walletID)
+	account, err := api.loaders.GetWalletByIDBatch.Load(walletID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &address, nil
+	return &account, nil
 }
 
-func (api WalletAPI) GetWalletsByUserID(ctx context.Context, userID persist.DBID) ([]db.Wallet, error) {
+func (api WalletAPI) GetWalletsByUserID(ctx context.Context, userID persist.DBID) ([]indexerdb.Account, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),

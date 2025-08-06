@@ -17,19 +17,69 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-// Pool is the resolver for the pool field.
-func (r *allocationResolver) Pool(ctx context.Context, obj *model.Allocation) (*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pool - pool"))
+// SelfPools is the resolver for the selfPools field.
+func (r *accountResolver) SelfPools(ctx context.Context, obj *model.Account) ([]*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: SelfPools - selfPools"))
+}
+
+// Claims is the resolver for the claims field.
+func (r *accountResolver) Claims(ctx context.Context, obj *model.Account) ([]*model.Claim, error) {
+	panic(fmt.Errorf("not implemented: Claims - claims"))
+}
+
+// Balances is the resolver for the balances field.
+func (r *accountResolver) Balances(ctx context.Context, obj *model.Account) ([]*model.TokenBalance, error) {
+	panic(fmt.Errorf("not implemented: Balances - balances"))
+}
+
+// Parent is the resolver for the parent field.
+func (r *claimResolver) Parent(ctx context.Context, obj *model.Claim) (*model.Claim, error) {
+	panic(fmt.Errorf("not implemented: Parent - parent"))
 }
 
 // Pool is the resolver for the pool field.
-func (r *allocationAggregationResolver) Pool(ctx context.Context, obj *model.AllocationAggregation) (*model.Pool, error) {
+func (r *claimResolver) Pool(ctx context.Context, obj *model.Claim) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
+}
+
+// Recipient is the resolver for the recipient field.
+func (r *claimResolver) Recipient(ctx context.Context, obj *model.Claim) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Recipient - recipient"))
+}
+
+// State is the resolver for the state field.
+func (r *claimResolver) State(ctx context.Context, obj *model.Claim) (*model.Extension, error) {
+	panic(fmt.Errorf("not implemented: State - state"))
+}
+
+// Strategy is the resolver for the strategy field.
+func (r *claimResolver) Strategy(ctx context.Context, obj *model.Claim) (*model.Extension, error) {
+	panic(fmt.Errorf("not implemented: Strategy - strategy"))
+}
+
+// Transaction is the resolver for the transaction field.
+func (r *depositResolver) Transaction(ctx context.Context, obj *model.Deposit) (*model.Tx, error) {
+	panic(fmt.Errorf("not implemented: Transaction - transaction"))
+}
+
+// Pool is the resolver for the pool field.
+func (r *depositResolver) Pool(ctx context.Context, obj *model.Deposit) (*model.Pool, error) {
 	panic(fmt.Errorf("not implemented: Pool - pool"))
 }
 
 // Token is the resolver for the token field.
-func (r *assetResolver) Token(ctx context.Context, obj *model.Asset) (*model.Token, error) {
+func (r *depositResolver) Token(ctx context.Context, obj *model.Deposit) (*model.Token, error) {
 	panic(fmt.Errorf("not implemented: Token - token"))
+}
+
+// ExtensionRegistry is the resolver for the extensionRegistry field.
+func (r *extensionResolver) ExtensionRegistry(ctx context.Context, obj *model.Extension) (*model.ExtensionRegistry, error) {
+	panic(fmt.Errorf("not implemented: ExtensionRegistry - extensionRegistry"))
+}
+
+// Owner is the resolver for the owner field.
+func (r *extensionRegistryResolver) Owner(ctx context.Context, obj *model.ExtensionRegistry) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Owner - owner"))
 }
 
 // AddUserWallet is the resolver for the addUserWallet field.
@@ -466,39 +516,79 @@ func (r *mutualsUserResolver) Roles(ctx context.Context, obj *model.MutualsUser)
 	return roles, nil
 }
 
-// Wallets is the resolver for the wallets field.
-func (r *mutualsUserResolver) Wallets(ctx context.Context, obj *model.MutualsUser) ([]*model.Wallet, error) {
+// Accounts is the resolver for the accounts field.
+func (r *mutualsUserResolver) Accounts(ctx context.Context, obj *model.MutualsUser) ([]*model.Account, error) {
 	return resolveWalletsByUserID(ctx, obj.Dbid)
 }
 
-// PrimaryWallet is the resolver for the primaryWallet field.
-func (r *mutualsUserResolver) PrimaryWallet(ctx context.Context, obj *model.MutualsUser) (*model.Wallet, error) {
+// PrimaryAccount is the resolver for the primaryAccount field.
+func (r *mutualsUserResolver) PrimaryAccount(ctx context.Context, obj *model.MutualsUser) (*model.Account, error) {
 	return resolvePrimaryWalletByUserID(ctx, obj.HelperMutualsUserData.UserID)
 }
 
 // Pools is the resolver for the pools field.
 func (r *mutualsUserResolver) Pools(ctx context.Context, obj *model.MutualsUser) ([]*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pools - pools"))
+	return resolvePoolsByUserID(ctx, obj.HelperMutualsUserData.UserID)
 }
 
-// PoolsByChain is the resolver for the poolsByChain field.
-func (r *mutualsUserResolver) PoolsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainPools, error) {
-	panic(fmt.Errorf("not implemented: PoolsByChain - poolsByChain"))
+// PoolFactory is the resolver for the poolFactory field.
+func (r *poolResolver) PoolFactory(ctx context.Context, obj *model.Pool) (*model.PoolFactory, error) {
+	panic(fmt.Errorf("not implemented: PoolFactory - poolFactory"))
 }
 
-// AllocationAggregation is the resolver for the allocationAggregation field.
-func (r *poolResolver) AllocationAggregation(ctx context.Context, obj *model.Pool) ([]*model.AllocationAggregation, error) {
-	panic(fmt.Errorf("not implemented: AllocationAggregation - allocationAggregation"))
+// Account is the resolver for the account field.
+func (r *poolResolver) Account(ctx context.Context, obj *model.Pool) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Account - account"))
 }
 
-// Allocations is the resolver for the allocations field.
-func (r *poolResolver) Allocations(ctx context.Context, obj *model.Pool) ([]*model.Allocation, error) {
-	panic(fmt.Errorf("not implemented: Allocations - allocations"))
+// Owner is the resolver for the owner field.
+func (r *poolResolver) Owner(ctx context.Context, obj *model.Pool) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Owner - owner"))
 }
 
-// Assets is the resolver for the assets field.
-func (r *poolResolver) Assets(ctx context.Context, obj *model.Pool, limit *int) ([]*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
+// Claims is the resolver for the claims field.
+func (r *poolResolver) Claims(ctx context.Context, obj *model.Pool) ([]*model.Claim, error) {
+	panic(fmt.Errorf("not implemented: Claims - claims"))
+}
+
+// DayBalance is the resolver for the dayBalance field.
+func (r *poolResolver) DayBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolDayBalance, error) {
+	panic(fmt.Errorf("not implemented: DayBalance - dayBalance"))
+}
+
+// HourBalance is the resolver for the hourBalance field.
+func (r *poolResolver) HourBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolHourBalance, error) {
+	panic(fmt.Errorf("not implemented: HourBalance - hourBalance"))
+}
+
+// Deposits is the resolver for the deposits field.
+func (r *poolResolver) Deposits(ctx context.Context, obj *model.Pool) ([]*model.Deposit, error) {
+	panic(fmt.Errorf("not implemented: Deposits - deposits"))
+}
+
+// Withdrawals is the resolver for the withdrawals field.
+func (r *poolResolver) Withdrawals(ctx context.Context, obj *model.Pool) ([]*model.Withdrawal, error) {
+	panic(fmt.Errorf("not implemented: Withdrawals - withdrawals"))
+}
+
+// Pool is the resolver for the pool field.
+func (r *poolDayBalanceResolver) Pool(ctx context.Context, obj *model.PoolDayBalance) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
+}
+
+// Token is the resolver for the token field.
+func (r *poolDayBalanceResolver) Token(ctx context.Context, obj *model.PoolDayBalance) (*model.Token, error) {
+	panic(fmt.Errorf("not implemented: Token - token"))
+}
+
+// Pool is the resolver for the pool field.
+func (r *poolHourBalanceResolver) Pool(ctx context.Context, obj *model.PoolHourBalance) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
+}
+
+// Token is the resolver for the token field.
+func (r *poolHourBalanceResolver) Token(ctx context.Context, obj *model.PoolHourBalance) (*model.Token, error) {
+	panic(fmt.Errorf("not implemented: Token - token"))
 }
 
 // Node is the resolver for the node field.
@@ -592,6 +682,26 @@ func (r *subscriptionResolver) NotificationUpdated(ctx context.Context) (<-chan 
 	return resolveUpdatedNotificationSubscription(ctx), nil
 }
 
+// Token is the resolver for the token field.
+func (r *tokenBalanceResolver) Token(ctx context.Context, obj *model.TokenBalance) (*model.Token, error) {
+	panic(fmt.Errorf("not implemented: Token - token"))
+}
+
+// Holder is the resolver for the holder field.
+func (r *tokenBalanceResolver) Holder(ctx context.Context, obj *model.TokenBalance) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Holder - holder"))
+}
+
+// Deposits is the resolver for the deposits field.
+func (r *txResolver) Deposits(ctx context.Context, obj *model.Tx) ([]*model.Deposit, error) {
+	panic(fmt.Errorf("not implemented: Deposits - deposits"))
+}
+
+// Withdrawals is the resolver for the withdrawals field.
+func (r *txResolver) Withdrawals(ctx context.Context, obj *model.Tx) ([]*model.Withdrawal, error) {
+	panic(fmt.Errorf("not implemented: Withdrawals - withdrawals"))
+}
+
 // EmailNotificationSettings is the resolver for the emailNotificationSettings field.
 func (r *userEmailResolver) EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error) {
 	unsubs, err := publicapi.For(ctx).User.GetCurrentUserEmailNotificationSettings(ctx)
@@ -652,9 +762,19 @@ func (r *viewerResolver) UserExperiences(ctx context.Context, obj *model.Viewer)
 	return resolveViewerExperiencesByUserID(ctx, obj.UserId)
 }
 
-// Pools is the resolver for the pools field.
-func (r *walletResolver) Pools(ctx context.Context, obj *model.Wallet) ([]*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pools - pools"))
+// Transaction is the resolver for the transaction field.
+func (r *withdrawalResolver) Transaction(ctx context.Context, obj *model.Withdrawal) (*model.Tx, error) {
+	panic(fmt.Errorf("not implemented: Transaction - transaction"))
+}
+
+// Pool is the resolver for the pool field.
+func (r *withdrawalResolver) Pool(ctx context.Context, obj *model.Withdrawal) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
+}
+
+// Token is the resolver for the token field.
+func (r *withdrawalResolver) Token(ctx context.Context, obj *model.Withdrawal) (*model.Token, error) {
+	panic(fmt.Errorf("not implemented: Token - token"))
 }
 
 // Address is the resolver for the address field.
@@ -677,16 +797,22 @@ func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.Chain
 	return obj.GQLSetChainFromResolver(data)
 }
 
-// Allocation returns generated.AllocationResolver implementation.
-func (r *Resolver) Allocation() generated.AllocationResolver { return &allocationResolver{r} }
+// Account returns generated.AccountResolver implementation.
+func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
 
-// AllocationAggregation returns generated.AllocationAggregationResolver implementation.
-func (r *Resolver) AllocationAggregation() generated.AllocationAggregationResolver {
-	return &allocationAggregationResolver{r}
+// Claim returns generated.ClaimResolver implementation.
+func (r *Resolver) Claim() generated.ClaimResolver { return &claimResolver{r} }
+
+// Deposit returns generated.DepositResolver implementation.
+func (r *Resolver) Deposit() generated.DepositResolver { return &depositResolver{r} }
+
+// Extension returns generated.ExtensionResolver implementation.
+func (r *Resolver) Extension() generated.ExtensionResolver { return &extensionResolver{r} }
+
+// ExtensionRegistry returns generated.ExtensionRegistryResolver implementation.
+func (r *Resolver) ExtensionRegistry() generated.ExtensionRegistryResolver {
+	return &extensionRegistryResolver{r}
 }
-
-// Asset returns generated.AssetResolver implementation.
-func (r *Resolver) Asset() generated.AssetResolver { return &assetResolver{r} }
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
@@ -697,11 +823,27 @@ func (r *Resolver) MutualsUser() generated.MutualsUserResolver { return &mutuals
 // Pool returns generated.PoolResolver implementation.
 func (r *Resolver) Pool() generated.PoolResolver { return &poolResolver{r} }
 
+// PoolDayBalance returns generated.PoolDayBalanceResolver implementation.
+func (r *Resolver) PoolDayBalance() generated.PoolDayBalanceResolver {
+	return &poolDayBalanceResolver{r}
+}
+
+// PoolHourBalance returns generated.PoolHourBalanceResolver implementation.
+func (r *Resolver) PoolHourBalance() generated.PoolHourBalanceResolver {
+	return &poolHourBalanceResolver{r}
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
+// TokenBalance returns generated.TokenBalanceResolver implementation.
+func (r *Resolver) TokenBalance() generated.TokenBalanceResolver { return &tokenBalanceResolver{r} }
+
+// Tx returns generated.TxResolver implementation.
+func (r *Resolver) Tx() generated.TxResolver { return &txResolver{r} }
 
 // UserEmail returns generated.UserEmailResolver implementation.
 func (r *Resolver) UserEmail() generated.UserEmailResolver { return &userEmailResolver{r} }
@@ -709,8 +851,8 @@ func (r *Resolver) UserEmail() generated.UserEmailResolver { return &userEmailRe
 // Viewer returns generated.ViewerResolver implementation.
 func (r *Resolver) Viewer() generated.ViewerResolver { return &viewerResolver{r} }
 
-// Wallet returns generated.WalletResolver implementation.
-func (r *Resolver) Wallet() generated.WalletResolver { return &walletResolver{r} }
+// Withdrawal returns generated.WithdrawalResolver implementation.
+func (r *Resolver) Withdrawal() generated.WithdrawalResolver { return &withdrawalResolver{r} }
 
 // ChainAddressInput returns generated.ChainAddressInputResolver implementation.
 func (r *Resolver) ChainAddressInput() generated.ChainAddressInputResolver {
@@ -722,16 +864,72 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 	return &chainPubKeyInputResolver{r}
 }
 
-type allocationResolver struct{ *Resolver }
-type allocationAggregationResolver struct{ *Resolver }
-type assetResolver struct{ *Resolver }
+type accountResolver struct{ *Resolver }
+type claimResolver struct{ *Resolver }
+type depositResolver struct{ *Resolver }
+type extensionResolver struct{ *Resolver }
+type extensionRegistryResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type mutualsUserResolver struct{ *Resolver }
 type poolResolver struct{ *Resolver }
+type poolDayBalanceResolver struct{ *Resolver }
+type poolHourBalanceResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+type tokenBalanceResolver struct{ *Resolver }
+type txResolver struct{ *Resolver }
 type userEmailResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
-type walletResolver struct{ *Resolver }
+type withdrawalResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *allocationResolver) Pool(ctx context.Context, obj *model.Allocation) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
+}
+func (r *allocationAggregationResolver) Pool(ctx context.Context, obj *model.AllocationAggregation) (*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pool - pool"))
+}
+func (r *assetResolver) Token(ctx context.Context, obj *model.Asset) (*model.Token, error) {
+	panic(fmt.Errorf("not implemented: Token - token"))
+}
+func (r *mutualsUserResolver) Wallets(ctx context.Context, obj *model.MutualsUser) ([]*model.Wallet, error) {
+	return resolveWalletsByUserID(ctx, obj.Dbid)
+}
+func (r *mutualsUserResolver) PrimaryWallet(ctx context.Context, obj *model.MutualsUser) (*model.Wallet, error) {
+	return resolvePrimaryWalletByUserID(ctx, obj.HelperMutualsUserData.UserID)
+}
+func (r *mutualsUserResolver) PoolsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainPools, error) {
+	panic(fmt.Errorf("not implemented: PoolsByChain - poolsByChain"))
+}
+func (r *poolResolver) AllocationAggregation(ctx context.Context, obj *model.Pool) ([]*model.AllocationAggregation, error) {
+	panic(fmt.Errorf("not implemented: AllocationAggregation - allocationAggregation"))
+}
+func (r *poolResolver) Allocations(ctx context.Context, obj *model.Pool) ([]*model.Allocation, error) {
+	panic(fmt.Errorf("not implemented: Allocations - allocations"))
+}
+func (r *poolResolver) Assets(ctx context.Context, obj *model.Pool, limit *int) ([]*model.Asset, error) {
+	panic(fmt.Errorf("not implemented: Assets - assets"))
+}
+func (r *walletResolver) Pools(ctx context.Context, obj *model.Wallet) ([]*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pools - pools"))
+}
+func (r *Resolver) Allocation() generated.AllocationResolver { return &allocationResolver{r} }
+func (r *Resolver) AllocationAggregation() generated.AllocationAggregationResolver {
+	return &allocationAggregationResolver{r}
+}
+
+func (r *Resolver) Asset() generated.AssetResolver { return &assetResolver{r} }
+func (r *Resolver) Wallet() generated.WalletResolver { return &walletResolver{r} }
+type allocationResolver struct{ *Resolver }
+type allocationAggregationResolver struct{ *Resolver }
+type assetResolver struct{ *Resolver }
+type walletResolver struct{ *Resolver }
+*/

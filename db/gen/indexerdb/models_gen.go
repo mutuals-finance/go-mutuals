@@ -22,6 +22,20 @@ type Account struct {
 	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
 }
 
+type Claim struct {
+	ID                   persist.DBID   `db:"id" json:"id"`
+	Value                pgtype.Numeric `db:"value" json:"value"`
+	ParentID             sql.NullString `db:"parent_id" json:"parent_id"`
+	PoolID               string         `db:"pool_id" json:"pool_id"`
+	RecipientID          sql.NullString `db:"recipient_id" json:"recipient_id"`
+	StateID              string         `db:"state_id" json:"state_id"`
+	StrategyID           string         `db:"strategy_id" json:"strategy_id"`
+	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
+}
+
 type Deposit struct {
 	ID                   persist.DBID   `db:"id" json:"id"`
 	TransactionID        string         `db:"transaction_id" json:"transaction_id"`
@@ -36,6 +50,35 @@ type Deposit struct {
 	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
 	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
+}
+
+type Extension struct {
+	ID                   persist.DBID `db:"id" json:"id"`
+	Address              string       `db:"address" json:"address"`
+	ChainID              int32        `db:"chain_id" json:"chain_id"`
+	ExtensionRegistryID  string       `db:"extension_registry_id" json:"extension_registry_id"`
+	ExtensionID          string       `db:"extension_id" json:"extension_id"`
+	ExtensionType        string       `db:"extension_type" json:"extension_type"`
+	Permissions          []string     `db:"permissions" json:"permissions"`
+	Data                 pgtype.JSONB `db:"data" json:"data"`
+	Name                 string       `db:"name" json:"name"`
+	Description          string       `db:"description" json:"description"`
+	CreatedAtBlockNumber int32        `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32        `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
+}
+
+type ExtensionRegistry struct {
+	ID                   persist.DBID `db:"id" json:"id"`
+	Address              string       `db:"address" json:"address"`
+	ChainID              int32        `db:"chain_id" json:"chain_id"`
+	ExtensionCount       int32        `db:"extension_count" json:"extension_count"`
+	OwnerID              string       `db:"owner_id" json:"owner_id"`
+	CreatedAtBlockNumber int32        `db:"created_at_block_number" json:"created_at_block_number"`
+	UpdatedAtBlockNumber int32        `db:"updated_at_block_number" json:"updated_at_block_number"`
+	CreatedAt            time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
 }
 
 type HoleskyProcessorHotBlock struct {
@@ -124,12 +167,12 @@ type Token struct {
 	Decimals             int32          `db:"decimals" json:"decimals"`
 	Logo                 sql.NullString `db:"logo" json:"logo"`
 	Thumbnail            sql.NullString `db:"thumbnail" json:"thumbnail"`
+	Validated            sql.NullInt32  `db:"validated" json:"validated"`
 	PossibleSpam         sql.NullBool   `db:"possible_spam" json:"possible_spam"`
 	CreatedAtBlockNumber int32          `db:"created_at_block_number" json:"created_at_block_number"`
 	UpdatedAtBlockNumber int32          `db:"updated_at_block_number" json:"updated_at_block_number"`
 	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt            time.Time      `db:"updated_at" json:"updated_at"`
-	Validated            sql.NullInt32  `db:"validated" json:"validated"`
 }
 
 type TokenBalance struct {

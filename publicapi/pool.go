@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/service/persist"
@@ -26,7 +27,7 @@ func (api PoolAPI) CreatePool(ctx context.Context, name, description, logoUrl *s
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"name":        {name, "max=200"},
 		"description": {description, "max=600"},
-		"logoUrl":     {logoUrl, "max=200"},
+		"logo":        {logoUrl, "max=200"},
 	}); err != nil {
 		return db.Pool{}, err
 	}
@@ -60,7 +61,7 @@ func (api PoolAPI) PublishPool(ctx context.Context, update model.PublishPoolInpu
 	return nil
 }
 
-func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
+func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*indexerdb.Pool, error) {
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID": validate.WithTag(poolID, "required"),
@@ -85,7 +86,7 @@ func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (
 	return &pool, nil
 }
 
-func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([]db.Pool, error) {
+func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([]indexerdb.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),
@@ -101,7 +102,7 @@ func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([
 	return pools, nil
 }
 
-func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
+func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*indexerdb.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID": {poolID, "required"},

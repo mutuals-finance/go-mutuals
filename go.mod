@@ -11,7 +11,7 @@ require (
 	cloud.google.com/go/secretmanager v1.9.0
 	cloud.google.com/go/storage v1.27.0
 	github.com/99designs/gqlgen v0.17.57
-	github.com/Khan/genqlient v0.8.0
+	github.com/Khan/genqlient v0.8.1
 	github.com/asottile/dockerfile v3.1.0+incompatible
 	github.com/benny-conn/limiters v0.0.2
 	github.com/bsm/redislock v0.7.2
@@ -58,7 +58,6 @@ require (
 require (
 	buf.build/gen/go/sqlc/sqlc/protocolbuffers/go v1.30.0-20230621221448-196413f69ab3.1
 	github.com/golang-jwt/jwt/v4 v4.3.0
-	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/sourcegraph/conc v0.3.0
@@ -135,6 +134,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20220412212628-83db2b799d1f // indirect
 	github.com/google/subcommands v1.0.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
