@@ -2,7 +2,7 @@
 WITH token_metadatas_insert AS (
     INSERT INTO token_metadatas
         (
-         id, created_at, last_updated, deleted, name, symbol, chain, logo, thumbnail, contract_address
+         id, created_at, updated_at, deleted, name, symbol, chain, logo, thumbnail, contract_address
             ) (SELECT UNNEST(@dbid::varchar[])             AS id
                     , NOW()
                     , NOW()
@@ -15,7 +15,7 @@ WITH token_metadatas_insert AS (
                     , UNNEST(@contract_address::address[]) AS contract_address)
         ON CONFLICT (chain, contract_address) WHERE deleted = FALSE
             DO UPDATE SET
-                last_updated = excluded.last_updated
+                updated_at = excluded.updated_at
                 , name = COALESCE(NULLIF(excluded.name, ''), NULLIF(token_metadatas.name, ''))
                 , symbol = COALESCE(NULLIF(excluded.symbol, ''), NULLIF(token_metadatas.symbol, ''))
                 , logo = COALESCE(NULLIF(excluded.logo, ''), NULLIF(token_metadatas.logo, ''))
@@ -32,7 +32,7 @@ FROM token_metadatas_insert token_metadatas
 WITH tokens_insert AS (
     INSERT INTO tokens
         (
-         id, deleted, version, created_at, last_updated, chain, token_address, owner_address,
+         id, deleted, version, created_at, updated_at, chain, token_address, owner_address,
          balance) (SELECT bulk_upsert.id
                         , FALSE
                         , bulk_upsert.version
@@ -52,7 +52,7 @@ WITH tokens_insert AS (
             DO UPDATE SET
                 balance = excluded.quantity
                 , version = excluded.version
-                , last_updated = excluded.last_updated RETURNING *)
+                , updated_at = excluded.updated_at RETURNING *)
 SELECT sqlc.embed(tokens), sqlc.embed(token_metadatas)
 FROM tokens_insert tokens
          JOIN token_metadatas

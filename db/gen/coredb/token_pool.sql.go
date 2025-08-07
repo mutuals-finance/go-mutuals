@@ -15,7 +15,7 @@ const upsertTokenMetadatas = `-- name: UpsertTokenMetadatas :many
 WITH token_metadatas_insert AS (
     INSERT INTO token_metadatas
         (
-         id, created_at, last_updated, deleted, name, symbol, chain, logo, thumbnail, contract_address
+         id, created_at, updated_at, deleted, name, symbol, chain, logo, thumbnail, contract_address
             ) (SELECT UNNEST($1::varchar[])             AS id
                     , NOW()
                     , NOW()
@@ -28,13 +28,13 @@ WITH token_metadatas_insert AS (
                     , UNNEST($7::address[]) AS contract_address)
         ON CONFLICT (chain, contract_address) WHERE deleted = FALSE
             DO UPDATE SET
-                last_updated = excluded.last_updated
+                updated_at = excluded.updated_at
                 , name = COALESCE(NULLIF(excluded.name, ''), NULLIF(token_metadatas.name, ''))
                 , symbol = COALESCE(NULLIF(excluded.symbol, ''), NULLIF(token_metadatas.symbol, ''))
                 , logo = COALESCE(NULLIF(excluded.logo, ''), NULLIF(token_metadatas.logo, ''))
                 , thumbnail = COALESCE(NULLIF(excluded.thumbnail, ''), NULLIF(token_metadatas.thumbnail, ''))
-        RETURNING id, deleted, created_at, last_updated, symbol, name, logo, thumbnail, chain, contract_address)
-SELECT token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.last_updated, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address, (prior_state.id IS NULL)::bool is_new_metadata
+        RETURNING id, deleted, created_at, updated_at, symbol, name, logo, thumbnail, chain, contract_address)
+SELECT token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.updated_at, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address, (prior_state.id IS NULL)::bool is_new_metadata
 FROM token_metadatas_insert token_metadatas
          LEFT JOIN token_metadatas prior_state ON token_metadatas.chain = prior_state.chain AND
                                                   token_metadatas.contract_address = prior_state.contract_address AND
@@ -78,7 +78,7 @@ func (q *Queries) UpsertTokenMetadatas(ctx context.Context, arg UpsertTokenMetad
 			&i.TokenMetadata.ID,
 			&i.TokenMetadata.Deleted,
 			&i.TokenMetadata.CreatedAt,
-			&i.TokenMetadata.LastUpdated,
+			&i.TokenMetadata.UpdatedAt,
 			&i.TokenMetadata.Symbol,
 			&i.TokenMetadata.Name,
 			&i.TokenMetadata.Logo,
@@ -101,7 +101,7 @@ const upsertTokens = `-- name: UpsertTokens :many
 WITH tokens_insert AS (
     INSERT INTO tokens
         (
-         id, deleted, version, created_at, last_updated, chain, token_address, owner_address,
+         id, deleted, version, created_at, updated_at, chain, token_address, owner_address,
          balance) (SELECT bulk_upsert.id
                         , FALSE
                         , bulk_upsert.version
@@ -121,8 +121,8 @@ WITH tokens_insert AS (
             DO UPDATE SET
                 balance = excluded.quantity
                 , version = excluded.version
-                , last_updated = excluded.last_updated RETURNING id, deleted, version, created_at, last_updated, chain, token_address, owner_address, balance)
-SELECT tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.last_updated, tokens.chain, tokens.token_address, tokens.owner_address, tokens.balance, token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.last_updated, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address
+                , updated_at = excluded.updated_at RETURNING id, deleted, version, created_at, updated_at, chain, token_address, owner_address, balance)
+SELECT tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.updated_at, tokens.chain, tokens.token_address, tokens.owner_address, tokens.balance, token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.updated_at, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address
 FROM tokens_insert tokens
          JOIN token_metadatas
               ON tokens.token_address = token_metadatas.contract_address AND tokens.chain = token_metadatas.chain AND
@@ -170,7 +170,7 @@ func (q *Queries) UpsertTokens(ctx context.Context, arg UpsertTokensParams) ([]U
 			&i.Token.Deleted,
 			&i.Token.Version,
 			&i.Token.CreatedAt,
-			&i.Token.LastUpdated,
+			&i.Token.UpdatedAt,
 			&i.Token.Chain,
 			&i.Token.TokenAddress,
 			&i.Token.OwnerAddress,
@@ -178,7 +178,7 @@ func (q *Queries) UpsertTokens(ctx context.Context, arg UpsertTokensParams) ([]U
 			&i.TokenMetadata.ID,
 			&i.TokenMetadata.Deleted,
 			&i.TokenMetadata.CreatedAt,
-			&i.TokenMetadata.LastUpdated,
+			&i.TokenMetadata.UpdatedAt,
 			&i.TokenMetadata.Symbol,
 			&i.TokenMetadata.Name,
 			&i.TokenMetadata.Logo,

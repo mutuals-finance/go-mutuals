@@ -19,7 +19,7 @@ var (
 )
 
 const getAllocationAggregationByIdBatch = `-- name: GetAllocationAggregationByIdBatch :batchone
-SELECT id, pool_id, recipient_address, expression, last_updated, created_at, version, deleted
+SELECT id, pool_id, recipient_address, expression, updated_at, created_at, version, deleted
 FROM allocation_aggregations
 WHERE id = $1
   AND deleted = FALSE
@@ -59,7 +59,7 @@ func (b *GetAllocationAggregationByIdBatchBatchResults) QueryRow(f func(int, All
 			&i.PoolID,
 			&i.RecipientAddress,
 			&i.Expression,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Version,
 			&i.Deleted,
@@ -76,7 +76,7 @@ func (b *GetAllocationAggregationByIdBatchBatchResults) Close() error {
 }
 
 const getAllocationByIdBatch = `-- name: GetAllocationByIdBatch :batchone
-SELECT id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, last_updated, created_at
+SELECT id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, updated_at, created_at
 FROM allocations
 WHERE id = $1
   AND deleted = FALSE
@@ -123,7 +123,7 @@ func (b *GetAllocationByIdBatchBatchResults) QueryRow(f func(int, Allocation, er
 			&i.Label,
 			&i.Path,
 			&i.Deleted,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 		)
 		if f != nil {
@@ -138,7 +138,7 @@ func (b *GetAllocationByIdBatchBatchResults) Close() error {
 }
 
 const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
 `
 
 type GetNotificationByIDBatchBatchResults struct {
@@ -175,7 +175,7 @@ func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
@@ -196,7 +196,7 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 }
 
 const getPoolByChainAddressBatch = `-- name: GetPoolByChainAddressBatch :batchone
-SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false
+SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false
 `
 
 type GetPoolByChainAddressBatchBatchResults struct {
@@ -237,7 +237,7 @@ func (b *GetPoolByChainAddressBatchBatchResults) QueryRow(f func(int, Pool, erro
 		err := row.Scan(
 			&i.ID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Name,
@@ -261,7 +261,7 @@ func (b *GetPoolByChainAddressBatchBatchResults) Close() error {
 }
 
 const getPoolByIdBatch = `-- name: GetPoolByIdBatch :batchone
-SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false
+SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false
 `
 
 type GetPoolByIdBatchBatchResults struct {
@@ -296,7 +296,7 @@ func (b *GetPoolByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
 		err := row.Scan(
 			&i.ID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Name,
@@ -320,7 +320,7 @@ func (b *GetPoolByIdBatchBatchResults) Close() error {
 }
 
 const getPoolsByUserIDBatch = `-- name: GetPoolsByUserIDBatch :batchmany
-select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address
+select s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address
 from users u, pools s, wallets w, allocation_aggregations a
 where u.id = $1
   and w.id = any(u.wallets)
@@ -372,7 +372,7 @@ func (b *GetPoolsByUserIDBatchBatchResults) Query(f func(int, []Pool, error)) {
 				if err := rows.Scan(
 					&i.ID,
 					&i.Version,
-					&i.LastUpdated,
+					&i.UpdatedAt,
 					&i.CreatedAt,
 					&i.Deleted,
 					&i.Name,
@@ -402,7 +402,7 @@ func (b *GetPoolsByUserIDBatchBatchResults) Close() error {
 }
 
 const getUserByAddressAndL1Batch = `-- name: GetUserByAddressAndL1Batch :batchone
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences
+select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
   and wallets.l1_chain = $2
@@ -450,7 +450,7 @@ func (b *GetUserByAddressAndL1BatchBatchResults) QueryRow(f func(int, User, erro
 			&i.ID,
 			&i.Deleted,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
@@ -474,7 +474,7 @@ func (b *GetUserByAddressAndL1BatchBatchResults) Close() error {
 }
 
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
 type GetUserByIdBatchBatchResults struct {
@@ -510,7 +510,7 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 			&i.ID,
 			&i.Deleted,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
@@ -534,7 +534,7 @@ func (b *GetUserByIdBatchBatchResults) Close() error {
 }
 
 const getUserByUsernameBatch = `-- name: GetUserByUsernameBatch :batchone
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 type GetUserByUsernameBatchBatchResults struct {
@@ -570,7 +570,7 @@ func (b *GetUserByUsernameBatchBatchResults) QueryRow(f func(int, User, error)) 
 			&i.ID,
 			&i.Deleted,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
@@ -594,7 +594,7 @@ func (b *GetUserByUsernameBatchBatchResults) Close() error {
 }
 
 const getUserNotificationsBatch = `-- name: GetUserNotificationsBatch :batchmany
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
                               AND (created_at, id) < ($2, $3)
                               AND (created_at, id) > ($4, $5)
 ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
@@ -659,7 +659,7 @@ func (b *GetUserNotificationsBatchBatchResults) Query(f func(int, []Notification
 					&i.Deleted,
 					&i.OwnerID,
 					&i.Version,
-					&i.LastUpdated,
+					&i.UpdatedAt,
 					&i.CreatedAt,
 					&i.Action,
 					&i.Data,
@@ -686,7 +686,7 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal and t.pos > $2::int and t.pos < $3::int
@@ -741,7 +741,7 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Query(f func(int, []User, 
 					&i.ID,
 					&i.Deleted,
 					&i.Version,
-					&i.LastUpdated,
+					&i.UpdatedAt,
 					&i.CreatedAt,
 					&i.Username,
 					&i.UsernameIdempotent,
@@ -771,7 +771,7 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal
@@ -819,7 +819,7 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 					&i.ID,
 					&i.Deleted,
 					&i.Version,
-					&i.LastUpdated,
+					&i.UpdatedAt,
 					&i.CreatedAt,
 					&i.Username,
 					&i.UsernameIdempotent,
@@ -849,7 +849,7 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Close() error {
 }
 
 const getWalletByIDBatch = `-- name: GetWalletByIDBatch :batchone
-SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
+SELECT id, created_at, updated_at, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
 `
 
 type GetWalletByIDBatchBatchResults struct {
@@ -884,7 +884,7 @@ func (b *GetWalletByIDBatchBatchResults) QueryRow(f func(int, Wallet, error)) {
 		err := row.Scan(
 			&i.ID,
 			&i.CreatedAt,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.Deleted,
 			&i.Version,
 			&i.Address,
@@ -904,7 +904,7 @@ func (b *GetWalletByIDBatchBatchResults) Close() error {
 }
 
 const getWalletsByUserIDBatch = `-- name: GetWalletsByUserIDBatch :batchmany
-SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
+SELECT w.id, w.created_at, w.updated_at, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
 `
 
 type GetWalletsByUserIDBatchBatchResults struct {
@@ -946,7 +946,7 @@ func (b *GetWalletsByUserIDBatchBatchResults) Query(f func(int, []Wallet, error)
 				if err := rows.Scan(
 					&i.ID,
 					&i.CreatedAt,
-					&i.LastUpdated,
+					&i.UpdatedAt,
 					&i.Deleted,
 					&i.Version,
 					&i.Address,

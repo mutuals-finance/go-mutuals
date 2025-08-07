@@ -12,9 +12,9 @@ import (
 )
 
 const createPool = `-- name: CreatePool :one
-INSERT INTO pools (id, chain, address, name, description, created_at, last_updated)
+INSERT INTO pools (id, chain, address, name, description, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-RETURNING id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
+RETURNING id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
 `
 
 type CreatePoolParams struct {
@@ -37,7 +37,7 @@ func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, e
 	err := row.Scan(
 		&i.ID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Name,
@@ -55,11 +55,11 @@ func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, e
 const upsertPool = `-- name: UpsertPool :one
 /*
 // name: UpdatePoolHidden :one
-update pools set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
+update pools set hidden = @hidden, updated_at = now() where id = @id and deleted = false returning *;
 */
 
 INSERT INTO pools (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,
-                    last_updated, created_at)
+                    updated_at, created_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
 ON CONFLICT (id)
 WHERE deleted = FALSE
@@ -73,8 +73,8 @@ SET name            = EXCLUDED.name,
     address         = EXCLUDED.address,
     owner_address   = EXCLUDED.owner_address,
     creator_address = EXCLUDED.creator_address,
-    last_updated    = NOW()
-RETURNING id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
+    updated_at    = NOW()
+RETURNING id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
 `
 
 type UpsertPoolParams struct {
@@ -105,7 +105,7 @@ func (q *Queries) UpsertPool(ctx context.Context, arg UpsertPoolParams) (Pool, e
 	err := row.Scan(
 		&i.ID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Name,
@@ -126,7 +126,7 @@ WITH updates AS (SELECT UNNEST($1::text[])                AS id,
                         UNNEST($3::text[]) AS recipient_address,
                         UNNEST($4::text[])        AS expression)
 INSERT
-INTO allocation_aggregations (id, pool_id, recipient_address, expression, last_updated, created_at, deleted)
+INTO allocation_aggregations (id, pool_id, recipient_address, expression, updated_at, created_at, deleted)
 SELECT id, pool_id, recipient_address, expression, NOW(), NOW(), FALSE
 FROM updates
 ON CONFLICT (id)
@@ -135,8 +135,8 @@ UPDATE
 SET pool_id          = EXCLUDED.pool_id,
     recipient_address = EXCLUDED.recipient_address,
     expression        = EXCLUDED.expression,
-    last_updated      = NOW()
-RETURNING id, pool_id, recipient_address, expression, last_updated, created_at, version, deleted
+    updated_at      = NOW()
+RETURNING id, pool_id, recipient_address, expression, updated_at, created_at, version, deleted
 `
 
 type UpsertPoolAggregatedAllocationsParams struct {
@@ -165,7 +165,7 @@ func (q *Queries) UpsertPoolAggregatedAllocations(ctx context.Context, arg Upser
 			&i.PoolID,
 			&i.RecipientAddress,
 			&i.Expression,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Version,
 			&i.Deleted,
@@ -192,7 +192,7 @@ WITH updates AS (SELECT UNNEST($1::text[])               AS id,
                         UNNEST($9::ltree[])             AS path)
 INSERT
 INTO allocations (id, pool_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,
-                  last_updated, created_at, deleted)
+                  updated_at, created_at, deleted)
 SELECT id,
        pool_id,
        recipient_address,
@@ -217,8 +217,8 @@ SET recipient_address = EXCLUDED.recipient_address,
     value             = EXCLUDED.value,
     label             = EXCLUDED.label,
     path              = EXCLUDED.path,
-    last_updated      = NOW()
-RETURNING id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, last_updated, created_at
+    updated_at      = NOW()
+RETURNING id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, updated_at, created_at
 `
 
 type UpsertPoolAllocationsParams struct {
@@ -264,7 +264,7 @@ func (q *Queries) UpsertPoolAllocations(ctx context.Context, arg UpsertPoolAlloc
 			&i.Label,
 			&i.Path,
 			&i.Deleted,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

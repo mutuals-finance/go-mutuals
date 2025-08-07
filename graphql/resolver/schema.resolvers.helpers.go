@@ -573,7 +573,7 @@ func unsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEm
 
 }
 
-func poolToModel(ctx context.Context, pool indexerdb.Pool) *model.Pool {
+func poolToModel(ctx context.Context, pool db.Pool) *model.Pool {
 	return &model.Pool{
 		Address:     "",               // TODO pool.Address,
 		Chain:       persist.ChainETH, // TODO pool.Chain,
@@ -655,7 +655,7 @@ func walletToModelPersist(ctx context.Context, account persist.Wallet) *model.Ac
 		Address:     account.Address,
 		AccountType: "",                   // TODO account.AccountType
 		CreatedAt:   account.CreationTime, // TODO account.CreatedAt
-		UpdatedAt:   account.LastUpdated,  // TODO account.UpdatedAt
+		UpdatedAt:   account.UpdatedAt,    // TODO account.UpdatedAt
 		SelfPools:   nil,                  // handled by dedicated resolver
 		Claims:      nil,                  // handled by dedicated resolver
 		Balances:    nil,                  // handled by dedicated resolver

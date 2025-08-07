@@ -1,16 +1,16 @@
 -- name: CreatePool :one
-INSERT INTO pools (id, chain, address, name, description, created_at, last_updated)
+INSERT INTO pools (id, chain, address, name, description, created_at, updated_at)
 VALUES (@id, @chain, @address, @name, @description, NOW(), NOW())
 RETURNING *;
 
 /*
 // name: UpdatePoolHidden :one
-update pools set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;
+update pools set hidden = @hidden, updated_at = now() where id = @id and deleted = false returning *;
 */
 
 -- name: UpsertPool :one
 INSERT INTO pools (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,
-                    last_updated, created_at)
+                    updated_at, created_at)
 VALUES (@id, @name, @description, @status, @chain, @l1_chain, @address, @owner_address, @creator_address, NOW(), NOW())
 ON CONFLICT (id)
 WHERE deleted = FALSE
@@ -24,7 +24,7 @@ SET name            = EXCLUDED.name,
     address         = EXCLUDED.address,
     owner_address   = EXCLUDED.owner_address,
     creator_address = EXCLUDED.creator_address,
-    last_updated    = NOW()
+    updated_at    = NOW()
 RETURNING *;
 
 -- name: GetAllocationByIdBatch :batchone
@@ -51,7 +51,7 @@ WITH updates AS (SELECT UNNEST(@ids::text[])               AS id,
                         UNNEST(@path::ltree[])             AS path)
 INSERT
 INTO allocations (id, pool_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,
-                  last_updated, created_at, deleted)
+                  updated_at, created_at, deleted)
 SELECT id,
        pool_id,
        recipient_address,
@@ -76,7 +76,7 @@ SET recipient_address = EXCLUDED.recipient_address,
     value             = EXCLUDED.value,
     label             = EXCLUDED.label,
     path              = EXCLUDED.path,
-    last_updated      = NOW()
+    updated_at      = NOW()
 RETURNING *;
 
 -- name: UpsertPoolAggregatedAllocations :many
@@ -85,7 +85,7 @@ WITH updates AS (SELECT UNNEST(@id::text[])                AS id,
                         UNNEST(@recipient_address::text[]) AS recipient_address,
                         UNNEST(@expression::text[])        AS expression)
 INSERT
-INTO allocation_aggregations (id, pool_id, recipient_address, expression, last_updated, created_at, deleted)
+INTO allocation_aggregations (id, pool_id, recipient_address, expression, updated_at, created_at, deleted)
 SELECT id, pool_id, recipient_address, expression, NOW(), NOW(), FALSE
 FROM updates
 ON CONFLICT (id)
@@ -94,5 +94,5 @@ UPDATE
 SET pool_id          = EXCLUDED.pool_id,
     recipient_address = EXCLUDED.recipient_address,
     expression        = EXCLUDED.expression,
-    last_updated      = NOW()
+    updated_at      = NOW()
 RETURNING *;

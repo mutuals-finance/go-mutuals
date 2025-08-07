@@ -19,7 +19,7 @@ type Wallet struct {
 	Version      NullInt64 `json:"version"`
 	CreationTime time.Time `json:"created_at"`
 	Deleted      NullBool  `json:"-"`
-	LastUpdated  time.Time `json:"last_updated"`
+	UpdatedAt    time.Time `json:"updated_at"`
 
 	Address    Address    `json:"address"`
 	Chain      Chain      `json:"chain"`

@@ -33,13 +33,13 @@ func newStatements(db *sql.DB) *statements {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	getUserByIDStmt, err := db.PrepareContext(ctx, `SELECT ID, ADDRESSES, BIO, USERNAME, USERNAME_IDEMPOTENT, LAST_UPDATED, CREATED_AT FROM USERS WHERE ID = $1 AND DELETED = FALSE;`)
+	getUserByIDStmt, err := db.PrepareContext(ctx, `SELECT ID, ADDRESSES, BIO, USERNAME, USERNAME_IDEMPOTENT, UPDATED_AT, CREATED_AT FROM USERS WHERE ID = $1 AND DELETED = FALSE;`)
 	checkNoErr(err)
 
-	getUserByUsernameStmt, err := db.PrepareContext(ctx, `SELECT ID, ADDRESSES, BIO, USERNAME, USERNAME_IDEMPOTENT, LAST_UPDATED, CREATED_AT FROM USERS WHERE USERNAME_IDEMPOTENT = $1 AND DELETED = FALSE;`)
+	getUserByUsernameStmt, err := db.PrepareContext(ctx, `SELECT ID, ADDRESSES, BIO, USERNAME, USERNAME_IDEMPOTENT, UPDATED_AT, CREATED_AT FROM USERS WHERE USERNAME_IDEMPOTENT = $1 AND DELETED = FALSE;`)
 	checkNoErr(err)
 
-	getUserByAddressStmt, err := db.PrepareContext(ctx, `SELECT ID, ADDRESSES, BIO, USERNAME, USERNAME_IDEMPOTENT, LAST_UPDATED, CREATED_AT FROM users WHERE ADDRESSES @> ARRAY[$1]:: varchar[] AND DELETED = FALSE;`)
+	getUserByAddressStmt, err := db.PrepareContext(ctx, `SELECT ID, ADDRESSES, BIO, USERNAME, USERNAME_IDEMPOTENT, UPDATED_AT, CREATED_AT FROM users WHERE ADDRESSES @> ARRAY[$1]:: varchar[] AND DELETED = FALSE;`)
 
 	deleteUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
@@ -53,10 +53,10 @@ func newStatements(db *sql.DB) *statements {
 	deleteCollectionStmt, err := db.PrepareContext(ctx, `UPDATE collections SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
 
-	updateUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET ADDRESSES = $1, BIO = $2, USERNAME = $3, USERNAME_IDEMPOTENT = $4, LAST_UPDATED = $5 WHERE ID = $6;`)
+	updateUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET ADDRESSES = $1, BIO = $2, USERNAME = $3, USERNAME_IDEMPOTENT = $4, UPDATED_AT = $5 WHERE ID = $6;`)
 	checkNoErr(err)
 
-	updatePoolStmt, err := db.PrepareContext(ctx, `UPDATE pools SET COLLECTIONS = $1, LAST_UPDATED = $2 WHERE ID = $3;`)
+	updatePoolStmt, err := db.PrepareContext(ctx, `UPDATE pools SET COLLECTIONS = $1, UPDATED_AT = $2 WHERE ID = $3;`)
 	checkNoErr(err)
 
 	createUserStmt, err := db.PrepareContext(ctx, `INSERT INTO users (ID, ADDRESSES, USERNAME, USERNAME_IDEMPOTENT, BIO) VALUES ($1, $2, $3, $4, $5) RETURNING ID;`)

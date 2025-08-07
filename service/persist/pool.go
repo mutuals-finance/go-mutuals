@@ -23,7 +23,7 @@ type Recipient struct {
 	Version      NullInt32 `json:"version"` // schema version for this model
 	ID           DBID      `json:"id" binding:"required"`
 	CreationTime time.Time `json:"created_at"`
-	LastUpdated  time.Time `json:"last_updated"`
+	UpdatedAt    time.Time `json:"updated_at"`
 
 	PoolID    DBID      `json:"pool_id"`
 	Address   Address   `json:"recipient_address"`
@@ -38,7 +38,7 @@ type PoolDB struct {
 	ID             DBID           `json:"id" binding:"required"`
 	Version        NullInt32      `json:"version"` // schema version for this model
 	CreationTime   time.Time      `json:"created_at"`
-	LastUpdated    time.Time      `json:"last_updated"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 	Deleted        NullBool       `json:"-"`
 	Chain          Chain          `json:"chain"`
 	Address        Address        `json:"address"`
@@ -60,7 +60,7 @@ type Pool struct {
 	ID             DBID        `json:"id" binding:"required"`
 	Version        NullInt32   `json:"version"` // schema version for this model
 	CreationTime   time.Time   `json:"created_at"`
-	LastUpdated    time.Time   `json:"last_updated"`
+	UpdatedAt      time.Time   `json:"updated_at"`
 	Deleted        NullBool    `json:"-"`
 	Chain          Chain       `json:"chain"`
 	Address        Address     `json:"address"`
@@ -85,7 +85,7 @@ type PoolRepository interface {
 
 // PoolTokenUpdateInput represents a struct that is used to update a pools list of collections in the databse
 type PoolTokenUpdateInput struct {
-	LastUpdated time.Time `json:"last_updated"`
+	UpdatedAt time.Time `json:"updated_at"`
 
 	Assets []DBID `json:"assets"`
 }

@@ -113,7 +113,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -513,7 +513,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -731,7 +731,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -975,7 +975,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -1557,7 +1557,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -1723,7 +1723,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -2159,7 +2159,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -2377,7 +2377,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -2683,7 +2683,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -3223,7 +3223,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -3311,7 +3311,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -3555,7 +3555,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -4033,7 +4033,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -69475,7 +69475,7 @@
                 "array_dims": 0
               },
               {
-                "name": "last_updated",
+                "name": "updated_at",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -70356,7 +70356,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO pools (id, chain, address, name, description, created_at, last_updated)\nVALUES ($1, $2, $3, $4, $5, NOW(), NOW())\nRETURNING id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address",
+      "text": "INSERT INTO pools (id, chain, address, name, description, created_at, updated_at)\nVALUES ($1, $2, $3, $4, $5, NOW(), NOW())\nRETURNING id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address",
       "name": "CreatePool",
       "cmd": ":one",
       "columns": [
@@ -70413,7 +70413,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -70855,7 +70855,7 @@
       }
     },
     {
-      "text": "/*\n// name: UpdatePoolHidden :one\nupdate pools set hidden = @hidden, last_updated = now() where id = @id and deleted = false returning *;\n*/\n\nINSERT INTO pools (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,\n                    last_updated, created_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())\nON CONFLICT (id)\nWHERE deleted = FALSE\n    DO\nUPDATE\nSET name            = EXCLUDED.name,\n    description     = EXCLUDED.description,\n    status          = EXCLUDED.status,\n    chain           = EXCLUDED.chain,\n    l1_chain        = EXCLUDED.l1_chain,\n    address         = EXCLUDED.address,\n    owner_address   = EXCLUDED.owner_address,\n    creator_address = EXCLUDED.creator_address,\n    last_updated    = NOW()\nRETURNING id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address",
+      "text": "/*\n// name: UpdatePoolHidden :one\nupdate pools set hidden = @hidden, updated_at = now() where id = @id and deleted = false returning *;\n*/\n\nINSERT INTO pools (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,\n                    updated_at, created_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())\nON CONFLICT (id)\nWHERE deleted = FALSE\n    DO\nUPDATE\nSET name            = EXCLUDED.name,\n    description     = EXCLUDED.description,\n    status          = EXCLUDED.status,\n    chain           = EXCLUDED.chain,\n    l1_chain        = EXCLUDED.l1_chain,\n    address         = EXCLUDED.address,\n    owner_address   = EXCLUDED.owner_address,\n    creator_address = EXCLUDED.creator_address,\n    updated_at    = NOW()\nRETURNING id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address",
       "name": "UpsertPool",
       "cmd": ":one",
       "columns": [
@@ -70912,7 +70912,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -71470,7 +71470,7 @@
       }
     },
     {
-      "text": "SELECT id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, last_updated, created_at\nFROM allocations\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "SELECT id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, updated_at, created_at\nFROM allocations\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetAllocationByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -71761,7 +71761,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -71849,7 +71849,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, pool_id, recipient_address, expression, last_updated, created_at, version, deleted\nFROM allocation_aggregations\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "SELECT id, pool_id, recipient_address, expression, updated_at, created_at, version, deleted\nFROM allocation_aggregations\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetAllocationAggregationByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -71958,7 +71958,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -72098,7 +72098,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH updates AS (SELECT UNNEST($1::text[])               AS id,\n                        $2                          AS pool_id,\n                        UNNEST($3::text[]) AS recipient_address,\n                        UNNEST($4::int[])     AS recipient_type,\n                        UNNEST($5::int[])   AS calculation_type,\n                        UNNEST($6::text[])             AS value,\n                        UNNEST($7::text[])        AS expression,\n                        UNNEST($8::text[])             AS label,\n                        UNNEST($9::ltree[])             AS path)\nINSERT\nINTO allocations (id, pool_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,\n                  last_updated, created_at, deleted)\nSELECT id,\n       pool_id,\n       recipient_address,\n       expression,\n       recipient_type,\n       calculation_type,\n       value,\n       label,\n       path,\n       NOW(),\n       NOW(),\n       FALSE\nFROM updates\nON CONFLICT (id)\nWHERE deleted = FALSE\n    DO\nUPDATE\nSET recipient_address = EXCLUDED.recipient_address,\n    expression        = EXCLUDED.expression,\n    recipient_type    = EXCLUDED.recipient_type,\n    calculation_type  = EXCLUDED.calculation_type,\n    value             = EXCLUDED.value,\n    label             = EXCLUDED.label,\n    path              = EXCLUDED.path,\n    last_updated      = NOW()\nRETURNING id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, last_updated, created_at",
+      "text": "WITH updates AS (SELECT UNNEST($1::text[])               AS id,\n                        $2                          AS pool_id,\n                        UNNEST($3::text[]) AS recipient_address,\n                        UNNEST($4::int[])     AS recipient_type,\n                        UNNEST($5::int[])   AS calculation_type,\n                        UNNEST($6::text[])             AS value,\n                        UNNEST($7::text[])        AS expression,\n                        UNNEST($8::text[])             AS label,\n                        UNNEST($9::ltree[])             AS path)\nINSERT\nINTO allocations (id, pool_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,\n                  updated_at, created_at, deleted)\nSELECT id,\n       pool_id,\n       recipient_address,\n       expression,\n       recipient_type,\n       calculation_type,\n       value,\n       label,\n       path,\n       NOW(),\n       NOW(),\n       FALSE\nFROM updates\nON CONFLICT (id)\nWHERE deleted = FALSE\n    DO\nUPDATE\nSET recipient_address = EXCLUDED.recipient_address,\n    expression        = EXCLUDED.expression,\n    recipient_type    = EXCLUDED.recipient_type,\n    calculation_type  = EXCLUDED.calculation_type,\n    value             = EXCLUDED.value,\n    label             = EXCLUDED.label,\n    path              = EXCLUDED.path,\n    updated_at      = NOW()\nRETURNING id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, updated_at, created_at",
       "name": "UpsertPoolAllocations",
       "cmd": ":many",
       "columns": [
@@ -72389,7 +72389,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -72681,7 +72681,7 @@
       }
     },
     {
-      "text": "WITH updates AS (SELECT UNNEST($1::text[])                AS id,\n                        $2                          AS pool_id,\n                        UNNEST($3::text[]) AS recipient_address,\n                        UNNEST($4::text[])        AS expression)\nINSERT\nINTO allocation_aggregations (id, pool_id, recipient_address, expression, last_updated, created_at, deleted)\nSELECT id, pool_id, recipient_address, expression, NOW(), NOW(), FALSE\nFROM updates\nON CONFLICT (id)\nWHERE deleted = FALSE DO\nUPDATE\nSET pool_id          = EXCLUDED.pool_id,\n    recipient_address = EXCLUDED.recipient_address,\n    expression        = EXCLUDED.expression,\n    last_updated      = NOW()\nRETURNING id, pool_id, recipient_address, expression, last_updated, created_at, version, deleted",
+      "text": "WITH updates AS (SELECT UNNEST($1::text[])                AS id,\n                        $2                          AS pool_id,\n                        UNNEST($3::text[]) AS recipient_address,\n                        UNNEST($4::text[])        AS expression)\nINSERT\nINTO allocation_aggregations (id, pool_id, recipient_address, expression, updated_at, created_at, deleted)\nSELECT id, pool_id, recipient_address, expression, NOW(), NOW(), FALSE\nFROM updates\nON CONFLICT (id)\nWHERE deleted = FALSE DO\nUPDATE\nSET pool_id          = EXCLUDED.pool_id,\n    recipient_address = EXCLUDED.recipient_address,\n    expression        = EXCLUDED.expression,\n    updated_at      = NOW()\nRETURNING id, pool_id, recipient_address, expression, updated_at, created_at, version, deleted",
       "name": "UpsertPoolAggregatedAllocations",
       "cmd": ":many",
       "columns": [
@@ -72790,7 +72790,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -73009,7 +73009,7 @@
       }
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
       "name": "GetUserById",
       "cmd": ":one",
       "columns": [
@@ -73092,7 +73092,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -73414,7 +73414,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false",
+      "text": "select id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false",
       "name": "GetUserWithPIIByID",
       "cmd": ":one",
       "columns": [
@@ -73497,7 +73497,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -73871,7 +73871,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false",
       "name": "GetUserByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -73954,7 +73954,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -74276,7 +74276,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false\n                      AND (created_at, id) \u003c ($3, $4)\n                      AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false\n                      AND (created_at, id) \u003c ($3, $4)\n                      AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
       "name": "GetUsersByIDs",
       "cmd": ":many",
       "columns": [
@@ -74359,7 +74359,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -74847,7 +74847,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
       "name": "GetUserByUsername",
       "cmd": ":one",
       "columns": [
@@ -74930,7 +74930,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -75248,7 +75248,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
       "name": "GetUserByUsernameBatch",
       "cmd": ":batchone",
       "columns": [
@@ -75331,7 +75331,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -75649,7 +75649,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id\nwhere p.pii_verified_email_address = lower($1)\n  and p.deleted = false\n  and u.deleted = false",
+      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id\nwhere p.pii_verified_email_address = lower($1)\n  and p.deleted = false\n  and u.deleted = false",
       "name": "GetUserByVerifiedEmailAddress",
       "cmd": ":one",
       "columns": [
@@ -75732,7 +75732,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -76050,7 +76050,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.l1_chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
+      "text": "select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.l1_chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
       "name": "GetUserByAddressAndL1",
       "cmd": ":one",
       "columns": [
@@ -76133,7 +76133,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -76484,7 +76484,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.l1_chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
+      "text": "select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences\nfrom users, wallets\nwhere wallets.address = $1\n  and wallets.l1_chain = $2\n  and array[wallets.id] \u003c@ users.wallets\n  and wallets.deleted = false\n  and users.deleted = false",
       "name": "GetUserByAddressAndL1Batch",
       "cmd": ":batchone",
       "columns": [
@@ -76567,7 +76567,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -76918,7 +76918,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false",
       "name": "GetPoolById",
       "cmd": ":one",
       "columns": [
@@ -76975,7 +76975,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -77297,7 +77297,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM users u, unnest(u.wallets)\n    WITH ORDINALITY AS a(wallet_id, wallet_ord)\n    INNER JOIN wallets w on w.id = a.wallet_id\n    INNER JOIN allocations a ON a.address = w.address\n    INNER JOIN pools s ON s.id = a.pool_id\n    WHERE u.id = $1 AND s.id = $2 AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false",
+      "text": "SELECT s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM users u, unnest(u.wallets)\n    WITH ORDINALITY AS a(wallet_id, wallet_ord)\n    INNER JOIN wallets w on w.id = a.wallet_id\n    INNER JOIN allocations a ON a.address = w.address\n    INNER JOIN pools s ON s.id = a.pool_id\n    WHERE u.id = $1 AND s.id = $2 AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false",
       "name": "GetPoolByUserID",
       "cmd": ":one",
       "columns": [
@@ -77354,7 +77354,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -77705,7 +77705,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address\nfrom users u, pools s, wallets w, allocation_aggregations a\nwhere u.id = $1\n  and w.id = any(u.wallets)\n  and a.recipient_address = w.address\n  and s.id = a.pool_id\n  and s.l1_chain = w.l1_chain\n  and u.deleted = false\n  and w.deleted = false\n  and a.deleted = false\n  and s.deleted = false",
+      "text": "select s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address\nfrom users u, pools s, wallets w, allocation_aggregations a\nwhere u.id = $1\n  and w.id = any(u.wallets)\n  and a.recipient_address = w.address\n  and s.id = a.pool_id\n  and s.l1_chain = w.l1_chain\n  and u.deleted = false\n  and w.deleted = false\n  and a.deleted = false\n  and s.deleted = false",
       "name": "GetPoolsByUserIDBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -77762,7 +77762,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -78084,7 +78084,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false",
       "name": "GetPoolByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -78141,7 +78141,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -78463,7 +78463,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false",
+      "text": "SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false",
       "name": "GetPoolByChainAddress",
       "cmd": ":one",
       "columns": [
@@ -78520,7 +78520,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -78871,7 +78871,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false",
+      "text": "SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false",
       "name": "GetPoolByChainAddressBatch",
       "cmd": ":batchone",
       "columns": [
@@ -78928,7 +78928,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -79279,7 +79279,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false",
+      "text": "SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false",
       "name": "GetPoolsByChainsAndAddresses",
       "cmd": ":many",
       "columns": [
@@ -79336,7 +79336,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -79679,7 +79679,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM allocations a\n                    JOIN pools s ON s.id = a.pool_id\nWHERE a.recipient_address = $1 AND s.deleted = false",
+      "text": "SELECT s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM allocations a\n                    JOIN pools s ON s.id = a.pool_id\nWHERE a.recipient_address = $1 AND s.deleted = false",
       "name": "GetPoolsByRecipientAddress",
       "cmd": ":many",
       "columns": [
@@ -79736,7 +79736,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80058,7 +80058,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, created_at, updated_at, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false",
       "name": "GetWalletByID",
       "cmd": ":one",
       "columns": [
@@ -80115,7 +80115,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80333,7 +80333,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, created_at, updated_at, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false",
       "name": "GetWalletByIDBatch",
       "cmd": ":batchone",
       "columns": [
@@ -80390,7 +80390,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80608,7 +80608,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain, wallets.l1_chain FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false",
+      "text": "SELECT wallets.id, wallets.created_at, wallets.updated_at, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain, wallets.l1_chain FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false",
       "name": "GetWalletByAddressAndL1Chain",
       "cmd": ":one",
       "columns": [
@@ -80665,7 +80665,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80912,7 +80912,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
+      "text": "SELECT w.id, w.created_at, w.updated_at, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
       "name": "GetWalletsByUserID",
       "cmd": ":many",
       "columns": [
@@ -80969,7 +80969,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -81187,7 +81187,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
+      "text": "SELECT w.id, w.created_at, w.updated_at, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord",
       "name": "GetWalletsByUserIDBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -81244,7 +81244,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -81462,7 +81462,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with params as (\n    select unnest($1::address[]) as pool_address, unnest($2::address[]) as token_address, unnest($3::chain[]) as chain\n)\nSELECT t.id, t.deleted, t.version, t.created_at, t.last_updated, t.chain, t.token_address, t.owner_address, t.balance\nfrom pools s\n         left join tokens t on s.address = t.owner_address\n         join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain\nwhere s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false",
+      "text": "with params as (\n    select unnest($1::address[]) as pool_address, unnest($2::address[]) as token_address, unnest($3::chain[]) as chain\n)\nSELECT t.id, t.deleted, t.version, t.created_at, t.updated_at, t.chain, t.token_address, t.owner_address, t.balance\nfrom pools s\n         left join tokens t on s.address = t.owner_address\n         join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain\nwhere s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false",
       "name": "GetPoolTokensByTokenIdentifiers",
       "cmd": ":many",
       "columns": [
@@ -81571,7 +81571,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -81783,7 +81783,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with params as (\n    select unnest($1::address[]) as contract_address, unnest($2::chain[]) as chain\n)\nselect m.id, m.deleted, m.created_at, m.last_updated, m.symbol, m.name, m.logo, m.thumbnail, m.chain, m.contract_address from params p\n         join token_metadatas m on p.contract_address = m.contract_address and p.chain = m.chain\n         where m.deleted = false",
+      "text": "with params as (\n    select unnest($1::address[]) as contract_address, unnest($2::chain[]) as chain\n)\nselect m.id, m.deleted, m.created_at, m.updated_at, m.symbol, m.name, m.logo, m.thumbnail, m.chain, m.contract_address from params p\n         join token_metadatas m on p.contract_address = m.contract_address and p.chain = m.chain\n         where m.deleted = false",
       "name": "GetTokenMetadatasByTokenIdentifiers",
       "cmd": ":many",
       "columns": [
@@ -81866,7 +81866,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -82105,7 +82105,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id",
+      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id",
       "name": "CreateUserEvent",
       "cmd": ":one",
       "columns": [
@@ -82344,7 +82344,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -82743,7 +82743,7 @@
       }
     },
     {
-      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id",
+      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id",
       "name": "CreatePoolEvent",
       "cmd": ":one",
       "columns": [
@@ -82982,7 +82982,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -83410,7 +83410,7 @@
       }
     },
     {
-      "text": "SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false",
       "name": "GetEvent",
       "cmd": ":one",
       "columns": [
@@ -83649,7 +83649,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -83841,7 +83841,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with recursive activity as (\n    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false\n    union\n    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a\n    where e.actor_id = a.actor_id\n      and e.action = any($3)\n      and e.created_at \u003c a.created_at\n      and e.created_at \u003e= a.created_at - make_interval(secs =\u003e $2)\n      and e.deleted = false\n      and e.caption is null\n      and (not $4::bool or e.subject_id = a.subject_id)\n)\nselect id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc",
+      "text": "with recursive activity as (\n    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false\n    union\n    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.updated_at, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a\n    where e.actor_id = a.actor_id\n      and e.action = any($3)\n      and e.created_at \u003c a.created_at\n      and e.created_at \u003e= a.created_at - make_interval(secs =\u003e $2)\n      and e.deleted = false\n      and e.caption is null\n      and (not $4::bool or e.subject_id = a.subject_id)\n)\nselect id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc",
       "name": "GetEventsInWindow",
       "cmd": ":many",
       "columns": [
@@ -84080,7 +84080,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -84351,7 +84351,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with recursive activity as (\n    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false\n    union\n    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a\n    where e.actor_id = a.actor_id\n      and e.action = any($3)\n      and e.pool_id = $4\n      and e.created_at \u003c a.created_at\n      and e.created_at \u003e= a.created_at - make_interval(secs =\u003e $2)\n      and e.deleted = false\n      and e.caption is null\n      and (not $5::bool or e.subject_id = a.subject_id)\n)\nselect id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc",
+      "text": "with recursive activity as (\n    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false\n    union\n    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.updated_at, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a\n    where e.actor_id = a.actor_id\n      and e.action = any($3)\n      and e.pool_id = $4\n      and e.created_at \u003c a.created_at\n      and e.created_at \u003e= a.created_at - make_interval(secs =\u003e $2)\n      and e.deleted = false\n      and e.caption is null\n      and (not $5::bool or e.subject_id = a.subject_id)\n)\nselect id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc",
       "name": "GetPoolEventsInWindow",
       "cmd": ":many",
       "columns": [
@@ -84590,7 +84590,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -84890,7 +84890,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where group_id = $1 and deleted = false order by(created_at, id) asc",
+      "text": "select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where group_id = $1 and deleted = false order by(created_at, id) asc",
       "name": "GetEventsInGroup",
       "cmd": ":many",
       "columns": [
@@ -85129,7 +85129,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -86109,7 +86109,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false\n                              AND (created_at, id) \u003c ($3, $4)\n                              AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
+      "text": "SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false\n                              AND (created_at, id) \u003c ($3, $4)\n                              AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
       "name": "GetUserNotifications",
       "cmd": ":many",
       "columns": [
@@ -86218,7 +86218,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -86628,7 +86628,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false\n                              AND (created_at, id) \u003c ($3, $4)\n                              AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
+      "text": "SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false\n                              AND (created_at, id) \u003c ($3, $4)\n                              AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
       "name": "GetUserUnseenNotifications",
       "cmd": ":many",
       "columns": [
@@ -86737,7 +86737,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -87147,7 +87147,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at \u003e $2 order by created_at desc limit $3",
+      "text": "SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at \u003e $2 order by created_at desc limit $3",
       "name": "GetRecentUnseenNotifications",
       "cmd": ":many",
       "columns": [
@@ -87256,7 +87256,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -87554,7 +87554,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false\n                              AND (created_at, id) \u003c ($2, $3)\n                              AND (created_at, id) \u003e ($4, $5)\nORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC\nLIMIT $7",
+      "text": "SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false\n                              AND (created_at, id) \u003c ($2, $3)\n                              AND (created_at, id) \u003e ($4, $5)\nORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC\nLIMIT $7",
       "name": "GetUserNotificationsBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -87663,7 +87663,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -88199,7 +88199,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false",
       "name": "GetNotificationByID",
       "cmd": ":one",
       "columns": [
@@ -88308,7 +88308,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -88552,7 +88552,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false",
       "name": "GetNotificationByIDBatch",
       "cmd": ":batchone",
       "columns": [
@@ -88661,7 +88661,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -88905,7 +88905,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount from notifications\nwhere owner_id = $1\n  and action = $2\n  and deleted = false\norder by created_at desc\nlimit 1",
+      "text": "select id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount from notifications\nwhere owner_id = $1\n  and action = $2\n  and deleted = false\norder by created_at desc\nlimit 1",
       "name": "GetMostRecentNotificationByOwnerIDForAction",
       "cmd": ":one",
       "columns": [
@@ -89014,7 +89014,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -89287,7 +89287,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications\nWHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at \u003e $3\nORDER BY created_at DESC",
+      "text": "SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications\nWHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at \u003e $3\nORDER BY created_at DESC",
       "name": "GetNotificationsByOwnerIDForActionAfter",
       "cmd": ":many",
       "columns": [
@@ -89396,7 +89396,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -89698,7 +89698,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH\n    id_with_row_number AS (\n        SELECT unnest($5::varchar(255)[]) AS id, row_number() OVER (ORDER BY unnest($5::varchar(255)[])) AS rn\n    ),\n    user_with_row_number AS (\n        SELECT id AS user_id, row_number() OVER () AS rn\n        FROM users\n        WHERE deleted = false AND universal = false\n    )\nINSERT INTO notifications (id, owner_id, action, data, event_ids)\nSELECT\n    i.id,\n    u.user_id,\n    $1,\n    $2,\n    $3\nFROM\n    id_with_row_number i\n        JOIN\n    user_with_row_number u ON i.rn = u.rn\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM notifications n\n    WHERE n.owner_id = u.user_id\n      AND n.data -\u003e\u003e 'internal_id' = $4::varchar\n)\nRETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount",
+      "text": "WITH\n    id_with_row_number AS (\n        SELECT unnest($5::varchar(255)[]) AS id, row_number() OVER (ORDER BY unnest($5::varchar(255)[])) AS rn\n    ),\n    user_with_row_number AS (\n        SELECT id AS user_id, row_number() OVER () AS rn\n        FROM users\n        WHERE deleted = false AND universal = false\n    )\nINSERT INTO notifications (id, owner_id, action, data, event_ids)\nSELECT\n    i.id,\n    u.user_id,\n    $1,\n    $2,\n    $3\nFROM\n    id_with_row_number i\n        JOIN\n    user_with_row_number u ON i.rn = u.rn\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM notifications n\n    WHERE n.owner_id = u.user_id\n      AND n.data -\u003e\u003e 'internal_id' = $4::varchar\n)\nRETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount",
       "name": "CreateAnnouncementNotifications",
       "cmd": ":many",
       "columns": [
@@ -89807,7 +89807,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -90201,7 +90201,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount",
+      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount",
       "name": "CreateSimpleNotification",
       "cmd": ":one",
       "columns": [
@@ -90310,7 +90310,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -90674,7 +90674,7 @@
       }
     },
     {
-      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount",
+      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount",
       "name": "CreateViewPoolNotification",
       "cmd": ":one",
       "columns": [
@@ -90783,7 +90783,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -91176,7 +91176,7 @@
       }
     },
     {
-      "text": "UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4",
+      "text": "UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, updated_at = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4",
       "name": "UpdateNotification",
       "cmd": ":exec",
       "columns": [],
@@ -91372,7 +91372,7 @@
       "insert_into_table": null
     },
     {
-      "text": "UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount",
+      "text": "UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount",
       "name": "ClearNotificationsForUser",
       "cmd": ":many",
       "columns": [
@@ -91481,7 +91481,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -91725,7 +91725,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u\n                    left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false\nwhere (u.email_unsubscriptions-\u003e\u003e'all' = 'false' or u.email_unsubscriptions-\u003e\u003e'all' is null)\n  and (u.email_unsubscriptions-\u003e\u003e$2::varchar = 'false' or u.email_unsubscriptions-\u003e\u003e$2::varchar is null)\n  and u.deleted = false and u.pii_verified_email_address is not null\n  and (u.created_at, u.id) \u003c ($3, $4::dbid)\n  and (u.created_at, u.id) \u003e ($5, $6::dbid)\n  and ($7::bool = false or r.user_id is not null)\norder by case when $8::bool then (u.created_at, u.id) end asc,\n         case when not $8::bool then (u.created_at, u.id) end desc\nlimit $1",
+      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u\n                    left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false\nwhere (u.email_unsubscriptions-\u003e\u003e'all' = 'false' or u.email_unsubscriptions-\u003e\u003e'all' is null)\n  and (u.email_unsubscriptions-\u003e\u003e$2::varchar = 'false' or u.email_unsubscriptions-\u003e\u003e$2::varchar is null)\n  and u.deleted = false and u.pii_verified_email_address is not null\n  and (u.created_at, u.id) \u003c ($3, $4::dbid)\n  and (u.created_at, u.id) \u003e ($5, $6::dbid)\n  and ($7::bool = false or r.user_id is not null)\norder by case when $8::bool then (u.created_at, u.id) end asc,\n         case when not $8::bool then (u.created_at, u.id) end desc\nlimit $1",
       "name": "GetUsersWithEmailNotificationsOnForEmailType",
       "cmd": ":many",
       "columns": [
@@ -91808,7 +91808,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -92363,7 +92363,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false\n                                         and u.id = ur.user_id and ur.role = $2\n                                         and (u.username_idempotent, u.id) \u003c ($3::varchar, $4::dbid)\n                                         and (u.username_idempotent, u.id) \u003e ($5::varchar, $6::dbid)\norder by case when $7::bool then (u.username_idempotent, u.id) end asc,\n         case when not $7::bool then (u.username_idempotent, u.id) end desc\nlimit $1",
+      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false\n                                         and u.id = ur.user_id and ur.role = $2\n                                         and (u.username_idempotent, u.id) \u003c ($3::varchar, $4::dbid)\n                                         and (u.username_idempotent, u.id) \u003e ($5::varchar, $6::dbid)\norder by case when $7::bool then (u.username_idempotent, u.id) end asc,\n         case when not $7::bool then (u.username_idempotent, u.id) end desc\nlimit $1",
       "name": "GetUsersWithRolePaginate",
       "cmd": ":many",
       "columns": [
@@ -92446,7 +92446,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -92918,7 +92918,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal and t.pos \u003e $2::int and t.pos \u003c $3::int\norder by t.pos asc",
+      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal and t.pos \u003e $2::int and t.pos \u003c $3::int\norder by t.pos asc",
       "name": "GetUsersByPositionPaginateBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -93001,7 +93001,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -93369,7 +93369,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal\norder by t.pos\nlimit 100",
+      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal\norder by t.pos\nlimit 100",
       "name": "GetUsersByPositionPersonalizedBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -93452,7 +93452,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -94054,7 +94054,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.l1_chain = $2 AND ARRAY[wallets.id] \u003c@ users.wallets AND users.deleted = false AND wallets.deleted = false",
+      "text": "select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.l1_chain = $2 AND ARRAY[wallets.id] \u003c@ users.wallets AND users.deleted = false AND wallets.deleted = false",
       "name": "GetUsersByChainAddresses",
       "cmd": ":many",
       "columns": [
@@ -94137,7 +94137,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -94510,7 +94510,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into user_roles (id, user_id, role, created_at, last_updated)\nselect unnest($2::varchar[]), $1, unnest($3::varchar[]), now(), now()\non conflict (user_id, role) do update set deleted = false, last_updated = now()",
+      "text": "insert into user_roles (id, user_id, role, created_at, updated_at)\nselect unnest($2::varchar[]), $1, unnest($3::varchar[]), now(), now()\non conflict (user_id, role) do update set deleted = false, updated_at = now()",
       "name": "AddUserRoles",
       "cmd": ":exec",
       "columns": [],
@@ -94604,7 +94604,7 @@
       }
     },
     {
-      "text": "update user_roles set deleted = true, last_updated = now() where user_id = $1 and role = any($2)",
+      "text": "update user_roles set deleted = true, updated_at = now() where user_id = $1 and role = any($2)",
       "name": "DeleteUserRoles",
       "cmd": ":exec",
       "columns": [],
@@ -95018,7 +95018,7 @@
       }
     },
     {
-      "text": "select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] \u003c@ wallets and deleted = false",
+      "text": "select id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] \u003c@ wallets and deleted = false",
       "name": "GetUserByWalletID",
       "cmd": ":one",
       "columns": [
@@ -95101,7 +95101,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -95644,7 +95644,7 @@
       "insert_into_table": null
     },
     {
-      "text": "update wallets set deleted = true, last_updated = now() where id = $1",
+      "text": "update wallets set deleted = true, updated_at = now() where id = $1",
       "name": "DeleteWalletByID",
       "cmd": ":exec",
       "columns": [],
@@ -95871,7 +95871,7 @@
       }
     },
     {
-      "text": "insert into sessions (id, user_id,\n                      created_at, created_with_user_agent, created_with_platform, created_with_os,\n                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted)\nvalues ($1, $2, now(), $3, $4, $5, now(), $3, $4, $5, $6, $7, false, now(), false)\non conflict (id) where deleted = false do update set\n                                                     last_refreshed = case when sessions.invalidated then sessions.last_refreshed else excluded.last_refreshed end,\n                                                     last_user_agent = case when sessions.invalidated then sessions.last_user_agent else excluded.last_user_agent end,\n                                                     last_platform = case when sessions.invalidated then sessions.last_platform else excluded.last_platform end,\n                                                     last_os = case when sessions.invalidated then sessions.last_os else excluded.last_os end,\n                                                     current_refresh_id = case when sessions.invalidated then sessions.current_refresh_id else excluded.current_refresh_id end,\n                                                     last_updated = case when sessions.invalidated then sessions.last_updated else excluded.last_updated end,\n                                                     active_until = case when sessions.invalidated then sessions.active_until else greatest(sessions.active_until, excluded.active_until) end\nreturning id, user_id, created_at, created_with_user_agent, created_with_platform, created_with_os, last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted",
+      "text": "insert into sessions (id, user_id,\n                      created_at, created_with_user_agent, created_with_platform, created_with_os,\n                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted)\nvalues ($1, $2, now(), $3, $4, $5, now(), $3, $4, $5, $6, $7, false, now(), false)\non conflict (id) where deleted = false do update set\n                                                     last_refreshed = case when sessions.invalidated then sessions.last_refreshed else excluded.last_refreshed end,\n                                                     last_user_agent = case when sessions.invalidated then sessions.last_user_agent else excluded.last_user_agent end,\n                                                     last_platform = case when sessions.invalidated then sessions.last_platform else excluded.last_platform end,\n                                                     last_os = case when sessions.invalidated then sessions.last_os else excluded.last_os end,\n                                                     current_refresh_id = case when sessions.invalidated then sessions.current_refresh_id else excluded.current_refresh_id end,\n                                                     updated_at = case when sessions.invalidated then sessions.updated_at else excluded.updated_at end,\n                                                     active_until = case when sessions.invalidated then sessions.active_until else greatest(sessions.active_until, excluded.active_until) end\nreturning id, user_id, created_at, created_with_user_agent, created_with_platform, created_with_os, last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted",
       "name": "UpsertSession",
       "cmd": ":one",
       "columns": [
@@ -96214,7 +96214,7 @@
           "array_dims": 0
         },
         {
-          "name": "last_updated",
+          "name": "updated_at",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -96480,7 +96480,7 @@
       }
     },
     {
-      "text": "update sessions set invalidated = true, active_until = least(active_until, now()), last_updated = now() where id = $1 and deleted = false and invalidated = false",
+      "text": "update sessions set invalidated = true, active_until = least(active_until, now()), updated_at = now() where id = $1 and deleted = false and invalidated = false",
       "name": "InvalidateSession",
       "cmd": ":exec",
       "columns": [],
@@ -97780,7 +97780,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with user_to_block as (select id from users where users.id = $3 and not deleted and not universal)\ninsert into user_blocklist (id, user_id, blocked_user_id, active) (select $1, $2, user_to_block.id, true from user_to_block)\non conflict(user_id, blocked_user_id) where not deleted do update set active = true, last_updated = now() returning id",
+      "text": "with user_to_block as (select id from users where users.id = $3 and not deleted and not universal)\ninsert into user_blocklist (id, user_id, blocked_user_id, active) (select $1, $2, user_to_block.id, true from user_to_block)\non conflict(user_id, blocked_user_id) where not deleted do update set active = true, updated_at = now() returning id",
       "name": "BlockUser",
       "cmd": ":one",
       "columns": [
@@ -97909,7 +97909,7 @@
       }
     },
     {
-      "text": "update user_blocklist set active = false, last_updated = now() where user_id = $1 and blocked_user_id = $2 and not deleted",
+      "text": "update user_blocklist set active = false, updated_at = now() where user_id = $1 and blocked_user_id = $2 and not deleted",
       "name": "UnblockUser",
       "cmd": ":exec",
       "columns": [],
@@ -97978,7 +97978,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH token_metadatas_insert AS (\n    INSERT INTO token_metadatas\n        (\n         id, created_at, last_updated, deleted, name, symbol, chain, logo, thumbnail, contract_address\n            ) (SELECT UNNEST($1::varchar[])             AS id\n                    , NOW()\n                    , NOW()\n                    , FALSE\n                    , UNNEST($2::varchar[])             AS name\n                    , UNNEST($3::varchar[])           AS symbol\n                    , UNNEST($4::chain[])              AS chain\n                    , UNNEST($5::varchar[])             AS logo\n                    , UNNEST($6::varchar[])        AS thumbnail\n                    , UNNEST($7::address[]) AS contract_address)\n        ON CONFLICT (chain, contract_address) WHERE deleted = FALSE\n            DO UPDATE SET\n                last_updated = excluded.last_updated\n                , name = COALESCE(NULLIF(excluded.name, ''), NULLIF(token_metadatas.name, ''))\n                , symbol = COALESCE(NULLIF(excluded.symbol, ''), NULLIF(token_metadatas.symbol, ''))\n                , logo = COALESCE(NULLIF(excluded.logo, ''), NULLIF(token_metadatas.logo, ''))\n                , thumbnail = COALESCE(NULLIF(excluded.thumbnail, ''), NULLIF(token_metadatas.thumbnail, ''))\n        RETURNING id, deleted, created_at, last_updated, symbol, name, logo, thumbnail, chain, contract_address)\nSELECT token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.last_updated, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address, (prior_state.id IS NULL)::bool is_new_metadata\nFROM token_metadatas_insert token_metadatas\n         LEFT JOIN token_metadatas prior_state ON token_metadatas.chain = prior_state.chain AND\n                                                  token_metadatas.contract_address = prior_state.contract_address AND\n                                                  NOT prior_state.deleted",
+      "text": "WITH token_metadatas_insert AS (\n    INSERT INTO token_metadatas\n        (\n         id, created_at, updated_at, deleted, name, symbol, chain, logo, thumbnail, contract_address\n            ) (SELECT UNNEST($1::varchar[])             AS id\n                    , NOW()\n                    , NOW()\n                    , FALSE\n                    , UNNEST($2::varchar[])             AS name\n                    , UNNEST($3::varchar[])           AS symbol\n                    , UNNEST($4::chain[])              AS chain\n                    , UNNEST($5::varchar[])             AS logo\n                    , UNNEST($6::varchar[])        AS thumbnail\n                    , UNNEST($7::address[]) AS contract_address)\n        ON CONFLICT (chain, contract_address) WHERE deleted = FALSE\n            DO UPDATE SET\n                updated_at = excluded.updated_at\n                , name = COALESCE(NULLIF(excluded.name, ''), NULLIF(token_metadatas.name, ''))\n                , symbol = COALESCE(NULLIF(excluded.symbol, ''), NULLIF(token_metadatas.symbol, ''))\n                , logo = COALESCE(NULLIF(excluded.logo, ''), NULLIF(token_metadatas.logo, ''))\n                , thumbnail = COALESCE(NULLIF(excluded.thumbnail, ''), NULLIF(token_metadatas.thumbnail, ''))\n        RETURNING id, deleted, created_at, updated_at, symbol, name, logo, thumbnail, chain, contract_address)\nSELECT token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.updated_at, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address, (prior_state.id IS NULL)::bool is_new_metadata\nFROM token_metadatas_insert token_metadatas\n         LEFT JOIN token_metadatas prior_state ON token_metadatas.chain = prior_state.chain AND\n                                                  token_metadatas.contract_address = prior_state.contract_address AND\n                                                  NOT prior_state.deleted",
       "name": "UpsertTokenMetadatas",
       "cmd": ":many",
       "columns": [
@@ -98215,7 +98215,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH tokens_insert AS (\n    INSERT INTO tokens\n        (\n         id, deleted, version, created_at, last_updated, chain, token_address, owner_address,\n         balance) (SELECT bulk_upsert.id\n                        , FALSE\n                        , bulk_upsert.version\n                        , NOW()\n                        , NOW()\n                        , bulk_upsert.chain\n                        , bulk_upsert.token_address\n                        , bulk_upsert.owner_address\n                        , bulk_upsert.balance\n                   FROM (SELECT UNNEST($1::dbid[])             AS id\n                              , UNNEST($2::int[])           AS version\n                              , UNNEST($3::chain[])           AS chain\n                              , UNNEST($4::address[]) AS token_address\n                              , UNNEST($5::address[]) AS owner_address\n                              , UNNEST($6::varchar[])       AS balance) bulk_upsert)\n        ON CONFLICT (owner_address, token_address, chain) WHERE deleted = FALSE\n            DO UPDATE SET\n                balance = excluded.quantity\n                , version = excluded.version\n                , last_updated = excluded.last_updated RETURNING id, deleted, version, created_at, last_updated, chain, token_address, owner_address, balance)\nSELECT tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.last_updated, tokens.chain, tokens.token_address, tokens.owner_address, tokens.balance, token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.last_updated, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address\nFROM tokens_insert tokens\n         JOIN token_metadatas\n              ON tokens.token_address = token_metadatas.contract_address AND tokens.chain = token_metadatas.chain AND\n                 NOT token_metadatas.deleted\n         LEFT JOIN tokens prior_state ON tokens.owner_address = prior_state.owner_address AND\n                                         tokens.token_address = prior_state.token_address AND\n                                         tokens.chain = prior_state.chain AND\n                                         NOT prior_state.deleted\nWHERE prior_state.id IS NULL",
+      "text": "WITH tokens_insert AS (\n    INSERT INTO tokens\n        (\n         id, deleted, version, created_at, updated_at, chain, token_address, owner_address,\n         balance) (SELECT bulk_upsert.id\n                        , FALSE\n                        , bulk_upsert.version\n                        , NOW()\n                        , NOW()\n                        , bulk_upsert.chain\n                        , bulk_upsert.token_address\n                        , bulk_upsert.owner_address\n                        , bulk_upsert.balance\n                   FROM (SELECT UNNEST($1::dbid[])             AS id\n                              , UNNEST($2::int[])           AS version\n                              , UNNEST($3::chain[])           AS chain\n                              , UNNEST($4::address[]) AS token_address\n                              , UNNEST($5::address[]) AS owner_address\n                              , UNNEST($6::varchar[])       AS balance) bulk_upsert)\n        ON CONFLICT (owner_address, token_address, chain) WHERE deleted = FALSE\n            DO UPDATE SET\n                balance = excluded.quantity\n                , version = excluded.version\n                , updated_at = excluded.updated_at RETURNING id, deleted, version, created_at, updated_at, chain, token_address, owner_address, balance)\nSELECT tokens.id, tokens.deleted, tokens.version, tokens.created_at, tokens.updated_at, tokens.chain, tokens.token_address, tokens.owner_address, tokens.balance, token_metadatas.id, token_metadatas.deleted, token_metadatas.created_at, token_metadatas.updated_at, token_metadatas.symbol, token_metadatas.name, token_metadatas.logo, token_metadatas.thumbnail, token_metadatas.chain, token_metadatas.contract_address\nFROM tokens_insert tokens\n         JOIN token_metadatas\n              ON tokens.token_address = token_metadatas.contract_address AND tokens.chain = token_metadatas.chain AND\n                 NOT token_metadatas.deleted\n         LEFT JOIN tokens prior_state ON tokens.owner_address = prior_state.owner_address AND\n                                         tokens.token_address = prior_state.token_address AND\n                                         tokens.chain = prior_state.chain AND\n                                         NOT prior_state.deleted\nWHERE prior_state.id IS NULL",
       "name": "UpsertTokens",
       "cmd": ":many",
       "columns": [

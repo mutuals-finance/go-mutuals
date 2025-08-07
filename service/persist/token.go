@@ -421,7 +421,7 @@ type Token struct {
 	ID           DBID      `json:"id" binding:"required"`
 	CreationTime time.Time `json:"created_at"`
 	Deleted      NullBool  `json:"-"`
-	LastUpdated  time.Time `json:"last_updated"`
+	UpdatedAt    time.Time `json:"updated_at"`
 
 	TokenType TokenType `json:"token_type"`
 

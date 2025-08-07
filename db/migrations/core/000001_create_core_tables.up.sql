@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users
     id                    character varying(255) PRIMARY KEY NOT NULL,
     deleted               boolean                            NOT NULL DEFAULT FALSE,
     version               integer                                     DEFAULT 0,
-    last_updated          timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     username              character varying(255),
     username_idempotent   character varying(255),
@@ -37,7 +37,8 @@ CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
 CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = FALSE);
 
-CREATE TABLE IF NOT EXISTS pool_info
+
+CREATE TABLE IF NOT EXISTS pool
 (
     id                      character varying(255) PRIMARY KEY,
     name                    character varying        NOT NULL DEFAULT ''::character varying,
@@ -45,8 +46,8 @@ CREATE TABLE IF NOT EXISTS pool_info
     logo                    character varying        NOT NULL DEFAULT ''::character varying,
     fts_name                tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
     fts_description_english tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig, (description)::text)) STORED,
---     fts_address             tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, (name)::text)) STORED
-    last_updated            timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    contract                character varying        NOT NULL DEFAULT ''::character varying,
+    updated_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted                 boolean                  NOT NULL DEFAULT FALSE
 );
@@ -70,7 +71,7 @@ CREATE TABLE IF NOT EXISTS claims
     label             character varying(255)   NOT NULL,
     path              ltree                    NULL,
     deleted           boolean                  NOT NULL DEFAULT FALSE,
-    last_updated      timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at        timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -96,7 +97,7 @@ CREATE TABLE IF NOT EXISTS events
     action           character varying(255)             NOT NULL,
     data             jsonb,
     deleted          boolean                            NOT NULL DEFAULT FALSE,
-    last_updated     timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     pool_id          character varying(255),
     external_id      character varying(255),
@@ -135,18 +136,18 @@ CREATE UNIQUE INDEX nonces_value_idx ON nonces (value);
 
 CREATE TABLE IF NOT EXISTS notifications
 (
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    deleted      boolean                            NOT NULL DEFAULT FALSE,
-    owner_id     character varying(255),
-    version      integer                                     DEFAULT 0,
-    last_updated timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    action       character varying(255)             NOT NULL,
-    data         jsonb,
-    event_ids    character varying(255)[],
-    pool_id      character varying(255),
-    seen         boolean                            NOT NULL DEFAULT FALSE,
-    amount       integer                            NOT NULL DEFAULT 1
+    id         character varying(255) PRIMARY KEY NOT NULL,
+    deleted    boolean                            NOT NULL DEFAULT FALSE,
+    owner_id   character varying(255),
+    version    integer                                     DEFAULT 0,
+    action     character varying(255)             NOT NULL,
+    data       jsonb,
+    event_ids  character varying(255)[],
+    pool_id    character varying(255),
+    seen       boolean                            NOT NULL DEFAULT FALSE,
+    amount     integer                            NOT NULL DEFAULT 1,
+    updated_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX notification_created_at_id_idx ON notifications USING btree (created_at, id);
@@ -178,13 +179,13 @@ ALTER TABLE spam_user_scores
 
 CREATE TABLE IF NOT EXISTS user_roles
 (
-    id           character varying(255) PRIMARY KEY NOT NULL,
-    user_id      character varying(255)             NOT NULL,
-    role         character varying(64)              NOT NULL,
-    version      integer                            NOT NULL DEFAULT 0,
-    deleted      boolean                            NOT NULL DEFAULT FALSE,
-    created_at   timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id         character varying(255) PRIMARY KEY NOT NULL,
+    user_id    character varying(255)             NOT NULL,
+    role       character varying(64)              NOT NULL,
+    version    integer                            NOT NULL DEFAULT 0,
+    deleted    boolean                            NOT NULL DEFAULT FALSE,
+    created_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX user_roles_role_idx ON user_roles USING btree (role) WHERE (deleted = FALSE);
@@ -211,7 +212,7 @@ CREATE VIEW pii.user_view AS
 SELECT users.id,
        users.deleted,
        users.version,
-       users.last_updated,
+       users.updated_at,
        users.created_at,
        users.username,
        users.username_idempotent,
@@ -219,7 +220,6 @@ SELECT users.id,
        users.universal,
        users.notification_settings,
        users.email_unsubscriptions,
-       users.featured_pool,
        users.primary_wallet_id,
        users.user_experiences,
        for_users.pii_unverified_email_address,
@@ -282,7 +282,7 @@ CREATE TABLE IF NOT EXISTS user_blocklist
 (
     id              character varying(255) PRIMARY KEY,
     created_at      timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_updated    timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted         boolean                  NOT NULL DEFAULT FALSE,
     user_id         character varying(255) REFERENCES users (id),
     blocked_user_id character varying(255) REFERENCES users (id),
@@ -305,7 +305,7 @@ CREATE TABLE IF NOT EXISTS sessions
     current_refresh_id      varchar(255) NOT NULL,
     active_until            timestamptz  NOT NULL,
     invalidated             bool         NOT NULL,
-    last_updated            timestamptz  NOT NULL,
+    updated_at              timestamptz  NOT NULL,
     deleted                 bool         NOT NULL
 );
 

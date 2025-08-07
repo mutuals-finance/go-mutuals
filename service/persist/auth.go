@@ -18,7 +18,7 @@ type UserNonce struct {
 	ID           DBID       `json:"id"`
 	CreationTime time.Time  `json:"created_at"`
 	Deleted      NullBool   `json:"-"`
-	LastUpdated  time.Time  `json:"last_updated"`
+	UpdatedAt    time.Time  `json:"updated_at"`
 	Value        NullString `json:"value"`
 	Address      Address    `json:"address"`
 	Chain        Chain      `json:"chain"`

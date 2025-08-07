@@ -21,7 +21,7 @@ type AssetDB struct {
 	Chain        Chain       `json:"chain"`
 	Balance      HexString   `json:"balance"`
 	BlockNumber  BlockNumber `json:"block_number"`
-	LastUpdated  time.Time   `json:"last_updated"`
+	UpdatedAt    time.Time   `json:"updated_at"`
 	CreationTime time.Time   `json:"created_at"`
 }
 
@@ -29,7 +29,7 @@ type AssetDB struct {
 type Asset struct {
 	ID           DBID        `json:"id" binding:"required"`
 	Version      NullInt32   `json:"version"` // schema version for this model
-	LastUpdated  time.Time   `json:"last_updated"`
+	UpdatedAt    time.Time   `json:"updated_at"`
 	CreationTime time.Time   `json:"created_at"`
 	OwnerAddress Address     `json:"owner_address"`
 	Token        Token       `json:"token"`

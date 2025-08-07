@@ -30,9 +30,9 @@ func (q *Queries) AddPiiAccountCreationInfo(ctx context.Context, arg AddPiiAccou
 }
 
 const addUserRoles = `-- name: AddUserRoles :exec
-insert into user_roles (id, user_id, role, created_at, last_updated)
+insert into user_roles (id, user_id, role, created_at, updated_at)
 select unnest($2::varchar[]), $1, unnest($3::varchar[]), now(), now()
-on conflict (user_id, role) do update set deleted = false, last_updated = now()
+on conflict (user_id, role) do update set deleted = false, updated_at = now()
 `
 
 type AddUserRolesParams struct {
@@ -49,7 +49,7 @@ func (q *Queries) AddUserRoles(ctx context.Context, arg AddUserRolesParams) erro
 const blockUser = `-- name: BlockUser :one
 with user_to_block as (select id from users where users.id = $3 and not deleted and not universal)
 insert into user_blocklist (id, user_id, blocked_user_id, active) (select $1, $2, user_to_block.id, true from user_to_block)
-on conflict(user_id, blocked_user_id) where not deleted do update set active = true, last_updated = now() returning id
+on conflict(user_id, blocked_user_id) where not deleted do update set active = true, updated_at = now() returning id
 `
 
 type BlockUserParams struct {
@@ -66,7 +66,7 @@ func (q *Queries) BlockUser(ctx context.Context, arg BlockUserParams) (persist.D
 }
 
 const clearNotificationsForUser = `-- name: ClearNotificationsForUser :many
-UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount
+UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
 `
 
 func (q *Queries) ClearNotificationsForUser(ctx context.Context, ownerID persist.DBID) ([]Notification, error) {
@@ -83,7 +83,7 @@ func (q *Queries) ClearNotificationsForUser(ctx context.Context, ownerID persist
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
@@ -162,7 +162,7 @@ WHERE NOT EXISTS (
     WHERE n.owner_id = u.user_id
       AND n.data ->> 'internal_id' = $4::varchar
 )
-RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount
+RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
 `
 
 type CreateAnnouncementNotificationsParams struct {
@@ -197,7 +197,7 @@ func (q *Queries) CreateAnnouncementNotifications(ctx context.Context, arg Creat
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
@@ -217,7 +217,7 @@ func (q *Queries) CreateAnnouncementNotifications(ctx context.Context, arg Creat
 }
 
 const createPoolEvent = `-- name: CreatePoolEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id
+INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id
 `
 
 type CreatePoolEventParams struct {
@@ -255,7 +255,7 @@ func (q *Queries) CreatePoolEvent(ctx context.Context, arg CreatePoolEventParams
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.PoolID,
 		&i.ExternalID,
@@ -314,7 +314,7 @@ func (q *Queries) CreatePushTokenForUser(ctx context.Context, arg CreatePushToke
 }
 
 const createSimpleNotification = `-- name: CreateSimpleNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount
+INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
 `
 
 type CreateSimpleNotificationParams struct {
@@ -339,7 +339,7 @@ func (q *Queries) CreateSimpleNotification(ctx context.Context, arg CreateSimple
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
@@ -352,7 +352,7 @@ func (q *Queries) CreateSimpleNotification(ctx context.Context, arg CreateSimple
 }
 
 const createUserEvent = `-- name: CreateUserEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id
+INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id
 `
 
 type CreateUserEventParams struct {
@@ -388,7 +388,7 @@ func (q *Queries) CreateUserEvent(ctx context.Context, arg CreateUserEventParams
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.PoolID,
 		&i.ExternalID,
@@ -399,7 +399,7 @@ func (q *Queries) CreateUserEvent(ctx context.Context, arg CreateUserEventParams
 }
 
 const createViewPoolNotification = `-- name: CreateViewPoolNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount
+INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
 `
 
 type CreateViewPoolNotificationParams struct {
@@ -426,7 +426,7 @@ func (q *Queries) CreateViewPoolNotification(ctx context.Context, arg CreateView
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
@@ -457,7 +457,7 @@ func (q *Queries) DeleteUserByID(ctx context.Context, id persist.DBID) error {
 }
 
 const deleteUserRoles = `-- name: DeleteUserRoles :exec
-update user_roles set deleted = true, last_updated = now() where user_id = $1 and role = any($2)
+update user_roles set deleted = true, updated_at = now() where user_id = $1 and role = any($2)
 `
 
 type DeleteUserRolesParams struct {
@@ -471,7 +471,7 @@ func (q *Queries) DeleteUserRoles(ctx context.Context, arg DeleteUserRolesParams
 }
 
 const deleteWalletByID = `-- name: DeleteWalletByID :exec
-update wallets set deleted = true, last_updated = now() where id = $1
+update wallets set deleted = true, updated_at = now() where id = $1
 `
 
 func (q *Queries) DeleteWalletByID(ctx context.Context, id persist.DBID) error {
@@ -534,7 +534,7 @@ func (q *Queries) GetCurrentTime(ctx context.Context) (time.Time, error) {
 }
 
 const getEvent = `-- name: GetEvent :one
-SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false
+SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) {
@@ -550,7 +550,7 @@ func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) 
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.PoolID,
 		&i.ExternalID,
@@ -561,7 +561,7 @@ func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) 
 }
 
 const getEventsInGroup = `-- name: GetEventsInGroup :many
-select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where group_id = $1 and deleted = false order by(created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where group_id = $1 and deleted = false order by(created_at, id) asc
 `
 
 func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) ([]Event, error) {
@@ -583,7 +583,7 @@ func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) 
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.PoolID,
 			&i.ExternalID,
@@ -602,9 +602,9 @@ func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) 
 
 const getEventsInWindow = `-- name: GetEventsInWindow :many
 with recursive activity as (
-    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
+    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
     union
-    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a
+    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.updated_at, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a
     where e.actor_id = a.actor_id
       and e.action = any($3)
       and e.created_at < a.created_at
@@ -613,7 +613,7 @@ with recursive activity as (
       and e.caption is null
       and (not $4::bool or e.subject_id = a.subject_id)
 )
-select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
 `
 
 type GetEventsInWindowParams struct {
@@ -647,7 +647,7 @@ func (q *Queries) GetEventsInWindow(ctx context.Context, arg GetEventsInWindowPa
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.PoolID,
 			&i.ExternalID,
@@ -665,7 +665,7 @@ func (q *Queries) GetEventsInWindow(ctx context.Context, arg GetEventsInWindowPa
 }
 
 const getMostRecentNotificationByOwnerIDForAction = `-- name: GetMostRecentNotificationByOwnerIDForAction :one
-select id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount from notifications
+select id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount from notifications
 where owner_id = $1
   and action = $2
   and deleted = false
@@ -686,7 +686,7 @@ func (q *Queries) GetMostRecentNotificationByOwnerIDForAction(ctx context.Contex
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
@@ -699,7 +699,7 @@ func (q *Queries) GetMostRecentNotificationByOwnerIDForAction(ctx context.Contex
 }
 
 const getNotificationByID = `-- name: GetNotificationByID :one
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Notification, error) {
@@ -710,7 +710,7 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Not
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
@@ -723,7 +723,7 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Not
 }
 
 const getNotificationsByOwnerIDForActionAfter = `-- name: GetNotificationsByOwnerIDForActionAfter :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications
+SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications
 WHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at > $3
 ORDER BY created_at DESC
 `
@@ -748,7 +748,7 @@ func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, a
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
@@ -768,7 +768,7 @@ func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, a
 }
 
 const getPoolByChainAddress = `-- name: GetPoolByChainAddress :one
-SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false
+SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false
 `
 
 type GetPoolByChainAddressParams struct {
@@ -782,7 +782,7 @@ func (q *Queries) GetPoolByChainAddress(ctx context.Context, arg GetPoolByChainA
 	err := row.Scan(
 		&i.ID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Name,
@@ -798,7 +798,7 @@ func (q *Queries) GetPoolByChainAddress(ctx context.Context, arg GetPoolByChainA
 }
 
 const getPoolById = `-- name: GetPoolById :one
-SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false
+SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error) {
@@ -807,7 +807,7 @@ func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error
 	err := row.Scan(
 		&i.ID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Name,
@@ -823,7 +823,7 @@ func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error
 }
 
 const getPoolByUserID = `-- name: GetPoolByUserID :one
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM users u, unnest(u.wallets)
+SELECT s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM users u, unnest(u.wallets)
     WITH ORDINALITY AS a(wallet_id, wallet_ord)
     INNER JOIN wallets w on w.id = a.wallet_id
     INNER JOIN allocations a ON a.address = w.address
@@ -842,7 +842,7 @@ func (q *Queries) GetPoolByUserID(ctx context.Context, arg GetPoolByUserIDParams
 	err := row.Scan(
 		&i.ID,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Deleted,
 		&i.Name,
@@ -859,9 +859,9 @@ func (q *Queries) GetPoolByUserID(ctx context.Context, arg GetPoolByUserIDParams
 
 const getPoolEventsInWindow = `-- name: GetPoolEventsInWindow :many
 with recursive activity as (
-    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
+    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
     union
-    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.last_updated, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a
+    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.updated_at, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a
     where e.actor_id = a.actor_id
       and e.action = any($3)
       and e.pool_id = $4
@@ -871,7 +871,7 @@ with recursive activity as (
       and e.caption is null
       and (not $5::bool or e.subject_id = a.subject_id)
 )
-select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, last_updated, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
 `
 
 type GetPoolEventsInWindowParams struct {
@@ -907,7 +907,7 @@ func (q *Queries) GetPoolEventsInWindow(ctx context.Context, arg GetPoolEventsIn
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.PoolID,
 			&i.ExternalID,
@@ -928,7 +928,7 @@ const getPoolTokensByTokenIdentifiers = `-- name: GetPoolTokensByTokenIdentifier
 with params as (
     select unnest($1::address[]) as pool_address, unnest($2::address[]) as token_address, unnest($3::chain[]) as chain
 )
-SELECT t.id, t.deleted, t.version, t.created_at, t.last_updated, t.chain, t.token_address, t.owner_address, t.balance
+SELECT t.id, t.deleted, t.version, t.created_at, t.updated_at, t.chain, t.token_address, t.owner_address, t.balance
 from pools s
          left join tokens t on s.address = t.owner_address
          join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain
@@ -946,7 +946,7 @@ type GetPoolTokensByTokenIdentifiersRow struct {
 	Deleted      sql.NullBool      `db:"deleted" json:"deleted"`
 	Version      sql.NullInt32     `db:"version" json:"version"`
 	CreatedAt    sql.NullTime      `db:"created_at" json:"created_at"`
-	LastUpdated  sql.NullTime      `db:"last_updated" json:"last_updated"`
+	UpdatedAt  sql.NullTime      `db:"updated_at" json:"updated_at"`
 	Chain        persist.Chain     `db:"chain" json:"chain"`
 	TokenAddress persist.Address   `db:"token_address" json:"token_address"`
 	OwnerAddress persist.Address   `db:"owner_address" json:"owner_address"`
@@ -967,7 +967,7 @@ func (q *Queries) GetPoolTokensByTokenIdentifiers(ctx context.Context, arg GetPo
 			&i.Deleted,
 			&i.Version,
 			&i.CreatedAt,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.Chain,
 			&i.TokenAddress,
 			&i.OwnerAddress,
@@ -984,7 +984,7 @@ func (q *Queries) GetPoolTokensByTokenIdentifiers(ctx context.Context, arg GetPo
 }
 
 const getPoolsByChainsAndAddresses = `-- name: GetPoolsByChainsAndAddresses :many
-SELECT id, version, last_updated, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
+SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
 `
 
 type GetPoolsByChainsAndAddressesParams struct {
@@ -1004,7 +1004,7 @@ func (q *Queries) GetPoolsByChainsAndAddresses(ctx context.Context, arg GetPools
 		if err := rows.Scan(
 			&i.ID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Name,
@@ -1027,7 +1027,7 @@ func (q *Queries) GetPoolsByChainsAndAddresses(ctx context.Context, arg GetPools
 }
 
 const getPoolsByRecipientAddress = `-- name: GetPoolsByRecipientAddress :many
-SELECT s.id, s.version, s.last_updated, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM allocations a
+SELECT s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM allocations a
                     JOIN pools s ON s.id = a.pool_id
 WHERE a.recipient_address = $1 AND s.deleted = false
 `
@@ -1044,7 +1044,7 @@ func (q *Queries) GetPoolsByRecipientAddress(ctx context.Context, recipientAddre
 		if err := rows.Scan(
 			&i.ID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Deleted,
 			&i.Name,
@@ -1149,7 +1149,7 @@ func (q *Queries) GetPushTokensByUserID(ctx context.Context, userID persist.DBID
 }
 
 const getRecentUnseenNotifications = `-- name: GetRecentUnseenNotifications :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at > $2 order by created_at desc limit $3
+SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at > $2 order by created_at desc limit $3
 `
 
 type GetRecentUnseenNotificationsParams struct {
@@ -1172,7 +1172,7 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
@@ -1195,7 +1195,7 @@ const getTokenMetadatasByTokenIdentifiers = `-- name: GetTokenMetadatasByTokenId
 with params as (
     select unnest($1::address[]) as contract_address, unnest($2::chain[]) as chain
 )
-select m.id, m.deleted, m.created_at, m.last_updated, m.symbol, m.name, m.logo, m.thumbnail, m.chain, m.contract_address from params p
+select m.id, m.deleted, m.created_at, m.updated_at, m.symbol, m.name, m.logo, m.thumbnail, m.chain, m.contract_address from params p
          join token_metadatas m on p.contract_address = m.contract_address and p.chain = m.chain
          where m.deleted = false
 `
@@ -1218,7 +1218,7 @@ func (q *Queries) GetTokenMetadatasByTokenIdentifiers(ctx context.Context, arg G
 			&i.ID,
 			&i.Deleted,
 			&i.CreatedAt,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.Symbol,
 			&i.Name,
 			&i.Logo,
@@ -1237,7 +1237,7 @@ func (q *Queries) GetTokenMetadatasByTokenIdentifiers(ctx context.Context, arg G
 }
 
 const getUserByAddressAndL1 = `-- name: GetUserByAddressAndL1 :one
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences
+select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences
 from users, wallets
 where wallets.address = $1
   and wallets.l1_chain = $2
@@ -1258,7 +1258,7 @@ func (q *Queries) GetUserByAddressAndL1(ctx context.Context, arg GetUserByAddres
 		&i.ID,
 		&i.Deleted,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
@@ -1274,7 +1274,7 @@ func (q *Queries) GetUserByAddressAndL1(ctx context.Context, arg GetUserByAddres
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error) {
@@ -1284,7 +1284,7 @@ func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error
 		&i.ID,
 		&i.Deleted,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
@@ -1300,7 +1300,7 @@ func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -1310,7 +1310,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.ID,
 		&i.Deleted,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
@@ -1326,7 +1326,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 }
 
 const getUserByVerifiedEmailAddress = `-- name: GetUserByVerifiedEmailAddress :one
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
 where p.pii_verified_email_address = lower($1)
   and p.deleted = false
   and u.deleted = false
@@ -1339,7 +1339,7 @@ func (q *Queries) GetUserByVerifiedEmailAddress(ctx context.Context, lower strin
 		&i.ID,
 		&i.Deleted,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
@@ -1355,7 +1355,7 @@ func (q *Queries) GetUserByVerifiedEmailAddress(ctx context.Context, lower strin
 }
 
 const getUserByWalletID = `-- name: GetUserByWalletID :one
-select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] <@ wallets and deleted = false
+select id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] <@ wallets and deleted = false
 `
 
 func (q *Queries) GetUserByWalletID(ctx context.Context, wallet string) (User, error) {
@@ -1365,7 +1365,7 @@ func (q *Queries) GetUserByWalletID(ctx context.Context, wallet string) (User, e
 		&i.ID,
 		&i.Deleted,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
@@ -1392,7 +1392,7 @@ func (q *Queries) GetUserExperiencesByUserID(ctx context.Context, id persist.DBI
 }
 
 const getUserNotifications = `-- name: GetUserNotifications :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
                               AND (created_at, id) < ($3, $4)
                               AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1432,7 +1432,7 @@ func (q *Queries) GetUserNotifications(ctx context.Context, arg GetUserNotificat
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
@@ -1476,7 +1476,7 @@ func (q *Queries) GetUserRolesByUserId(ctx context.Context, userID persist.DBID)
 }
 
 const getUserUnseenNotifications = `-- name: GetUserUnseenNotifications :many
-SELECT id, deleted, owner_id, version, last_updated, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false
+SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false
                               AND (created_at, id) < ($3, $4)
                               AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1516,7 +1516,7 @@ func (q *Queries) GetUserUnseenNotifications(ctx context.Context, arg GetUserUns
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
@@ -1536,7 +1536,7 @@ func (q *Queries) GetUserUnseenNotifications(ctx context.Context, arg GetUserUns
 }
 
 const getUserWithPIIByID = `-- name: GetUserWithPIIByID :one
-select id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false
+select id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false
 `
 
 func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (PiiUserView, error) {
@@ -1546,7 +1546,7 @@ func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (
 		&i.ID,
 		&i.Deleted,
 		&i.Version,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
@@ -1564,7 +1564,7 @@ func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (
 }
 
 const getUsersByChainAddresses = `-- name: GetUsersByChainAddresses :many
-select users.id, users.deleted, users.version, users.last_updated, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.l1_chain = $2 AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false
+select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.l1_chain = $2 AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false
 `
 
 type GetUsersByChainAddressesParams struct {
@@ -1576,7 +1576,7 @@ type GetUsersByChainAddressesRow struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
 	Deleted              bool                             `db:"deleted" json:"deleted"`
 	Version              sql.NullInt32                    `db:"version" json:"version"`
-	LastUpdated          time.Time                        `db:"last_updated" json:"last_updated"`
+	LastUpdated          time.Time                        `db:"updated_at" json:"updated_at"`
 	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
 	Username             sql.NullString                   `db:"username" json:"username"`
 	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
@@ -1627,7 +1627,7 @@ func (q *Queries) GetUsersByChainAddresses(ctx context.Context, arg GetUsersByCh
 }
 
 const getUsersByIDs = `-- name: GetUsersByIDs :many
-SELECT id, deleted, version, last_updated, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false
                       AND (created_at, id) < ($3, $4)
                       AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1689,7 +1689,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 }
 
 const getUsersWithEmailNotificationsOnForEmailType = `-- name: GetUsersWithEmailNotificationsOnForEmailType :many
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u
                     left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false
 where (u.email_unsubscriptions->>'all' = 'false' or u.email_unsubscriptions->>'all' is null)
   and (u.email_unsubscriptions->>$2::varchar = 'false' or u.email_unsubscriptions->>$2::varchar is null)
@@ -1761,7 +1761,7 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 }
 
 const getUsersWithRolePaginate = `-- name: GetUsersWithRolePaginate :many
-select u.id, u.deleted, u.version, u.last_updated, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false
                                          and u.id = ur.user_id and ur.role = $2
                                          and (u.username_idempotent, u.id) < ($3::varchar, $4::dbid)
                                          and (u.username_idempotent, u.id) > ($5::varchar, $6::dbid)
@@ -1824,7 +1824,7 @@ func (q *Queries) GetUsersWithRolePaginate(ctx context.Context, arg GetUsersWith
 }
 
 const getWalletByAddressAndL1Chain = `-- name: GetWalletByAddressAndL1Chain :one
-SELECT wallets.id, wallets.created_at, wallets.last_updated, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain, wallets.l1_chain FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false
+SELECT wallets.id, wallets.created_at, wallets.updated_at, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain, wallets.l1_chain FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false
 `
 
 type GetWalletByAddressAndL1ChainParams struct {
@@ -1850,7 +1850,7 @@ func (q *Queries) GetWalletByAddressAndL1Chain(ctx context.Context, arg GetWalle
 }
 
 const getWalletByID = `-- name: GetWalletByID :one
-SELECT id, created_at, last_updated, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
+SELECT id, created_at, updated_at, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetWalletByID(ctx context.Context, id persist.DBID) (Wallet, error) {
@@ -1871,7 +1871,7 @@ func (q *Queries) GetWalletByID(ctx context.Context, id persist.DBID) (Wallet, e
 }
 
 const getWalletsByUserID = `-- name: GetWalletsByUserID :many
-SELECT w.id, w.created_at, w.last_updated, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
+SELECT w.id, w.created_at, w.updated_at, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
 `
 
 func (q *Queries) GetWalletsByUserID(ctx context.Context, id persist.DBID) ([]Wallet, error) {
@@ -1980,7 +1980,7 @@ func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) erro
 }
 
 const invalidateSession = `-- name: InvalidateSession :exec
-update sessions set invalidated = true, active_until = least(active_until, now()), last_updated = now() where id = $1 and deleted = false and invalidated = false
+update sessions set invalidated = true, active_until = least(active_until, now()), updated_at = now() where id = $1 and deleted = false and invalidated = false
 `
 
 func (q *Queries) InvalidateSession(ctx context.Context, id persist.DBID) error {
@@ -2104,7 +2104,7 @@ func (q *Queries) IsActorSubjectActive(ctx context.Context, arg IsActorSubjectAc
 }
 
 const unblockUser = `-- name: UnblockUser :exec
-update user_blocklist set active = false, last_updated = now() where user_id = $1 and blocked_user_id = $2 and not deleted
+update user_blocklist set active = false, updated_at = now() where user_id = $1 and blocked_user_id = $2 and not deleted
 `
 
 type UnblockUserParams struct {
@@ -2132,7 +2132,7 @@ func (q *Queries) UpdateEventCaptionByGroup(ctx context.Context, arg UpdateEvent
 }
 
 const updateNotification = `-- name: UpdateNotification :exec
-UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4
+UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, updated_at = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4
 `
 
 type UpdateNotificationParams struct {
@@ -2273,7 +2273,7 @@ func (q *Queries) UpdateUserVerifiedEmail(ctx context.Context, arg UpdateUserVer
 const upsertSession = `-- name: UpsertSession :one
 insert into sessions (id, user_id,
                       created_at, created_with_user_agent, created_with_platform, created_with_os,
-                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted)
+                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted)
 values ($1, $2, now(), $3, $4, $5, now(), $3, $4, $5, $6, $7, false, now(), false)
 on conflict (id) where deleted = false do update set
                                                      last_refreshed = case when sessions.invalidated then sessions.last_refreshed else excluded.last_refreshed end,
@@ -2281,9 +2281,9 @@ on conflict (id) where deleted = false do update set
                                                      last_platform = case when sessions.invalidated then sessions.last_platform else excluded.last_platform end,
                                                      last_os = case when sessions.invalidated then sessions.last_os else excluded.last_os end,
                                                      current_refresh_id = case when sessions.invalidated then sessions.current_refresh_id else excluded.current_refresh_id end,
-                                                     last_updated = case when sessions.invalidated then sessions.last_updated else excluded.last_updated end,
+                                                     updated_at = case when sessions.invalidated then sessions.updated_at else excluded.updated_at end,
                                                      active_until = case when sessions.invalidated then sessions.active_until else greatest(sessions.active_until, excluded.active_until) end
-returning id, user_id, created_at, created_with_user_agent, created_with_platform, created_with_os, last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted
+returning id, user_id, created_at, created_with_user_agent, created_with_platform, created_with_os, last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted
 `
 
 type UpsertSessionParams struct {

@@ -32,6 +32,16 @@ func (r *accountResolver) Balances(ctx context.Context, obj *model.Account) ([]*
 	panic(fmt.Errorf("not implemented: Balances - balances"))
 }
 
+// ChainID is the resolver for the chainId field.
+func (r *chainAddressResolver) ChainID(ctx context.Context, obj *persist.ChainAddress) (*int, error) {
+	panic(fmt.Errorf("not implemented: ChainID - chainId"))
+}
+
+// ChainID is the resolver for the chainId field.
+func (r *chainPubKeyResolver) ChainID(ctx context.Context, obj *persist.ChainPubKey) (*int, error) {
+	panic(fmt.Errorf("not implemented: ChainID - chainId"))
+}
+
 // Parent is the resolver for the parent field.
 func (r *claimResolver) Parent(ctx context.Context, obj *model.Claim) (*model.Claim, error) {
 	panic(fmt.Errorf("not implemented: Parent - parent"))
@@ -43,7 +53,7 @@ func (r *claimResolver) Pool(ctx context.Context, obj *model.Claim) (*model.Pool
 }
 
 // Recipient is the resolver for the recipient field.
-func (r *claimResolver) Recipient(ctx context.Context, obj *model.Claim) (*model.Account, error) {
+func (r *claimResolver) Recipient(ctx context.Context, obj *model.Claim) (model.PoolOrMutualsUserOrAccount, error) {
 	panic(fmt.Errorf("not implemented: Recipient - recipient"))
 }
 
@@ -531,19 +541,14 @@ func (r *mutualsUserResolver) Pools(ctx context.Context, obj *model.MutualsUser)
 	return resolvePoolsByUserID(ctx, obj.HelperMutualsUserData.UserID)
 }
 
-// PoolFactory is the resolver for the poolFactory field.
-func (r *poolResolver) PoolFactory(ctx context.Context, obj *model.Pool) (*model.PoolFactory, error) {
-	panic(fmt.Errorf("not implemented: PoolFactory - poolFactory"))
-}
-
-// Account is the resolver for the account field.
-func (r *poolResolver) Account(ctx context.Context, obj *model.Pool) (*model.Account, error) {
-	panic(fmt.Errorf("not implemented: Account - account"))
-}
-
 // Owner is the resolver for the owner field.
-func (r *poolResolver) Owner(ctx context.Context, obj *model.Pool) (*model.Account, error) {
+func (r *poolResolver) Owner(ctx context.Context, obj *model.Pool) (model.MutualsUserOrAccount, error) {
 	panic(fmt.Errorf("not implemented: Owner - owner"))
+}
+
+// Contract is the resolver for the contract field.
+func (r *poolResolver) Contract(ctx context.Context, obj *model.Pool) (*model.PoolContract, error) {
+	panic(fmt.Errorf("not implemented: Contract - contract"))
 }
 
 // Claims is the resolver for the claims field.
@@ -551,23 +556,38 @@ func (r *poolResolver) Claims(ctx context.Context, obj *model.Pool) ([]*model.Cl
 	panic(fmt.Errorf("not implemented: Claims - claims"))
 }
 
+// PoolFactory is the resolver for the poolFactory field.
+func (r *poolContractResolver) PoolFactory(ctx context.Context, obj *model.PoolContract) (*model.PoolFactory, error) {
+	panic(fmt.Errorf("not implemented: PoolFactory - poolFactory"))
+}
+
+// Account is the resolver for the account field.
+func (r *poolContractResolver) Account(ctx context.Context, obj *model.PoolContract) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Account - account"))
+}
+
+// Owner is the resolver for the owner field.
+func (r *poolContractResolver) Owner(ctx context.Context, obj *model.PoolContract) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Owner - owner"))
+}
+
 // DayBalance is the resolver for the dayBalance field.
-func (r *poolResolver) DayBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolDayBalance, error) {
+func (r *poolContractResolver) DayBalance(ctx context.Context, obj *model.PoolContract) ([]*model.PoolDayBalance, error) {
 	panic(fmt.Errorf("not implemented: DayBalance - dayBalance"))
 }
 
 // HourBalance is the resolver for the hourBalance field.
-func (r *poolResolver) HourBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolHourBalance, error) {
+func (r *poolContractResolver) HourBalance(ctx context.Context, obj *model.PoolContract) ([]*model.PoolHourBalance, error) {
 	panic(fmt.Errorf("not implemented: HourBalance - hourBalance"))
 }
 
 // Deposits is the resolver for the deposits field.
-func (r *poolResolver) Deposits(ctx context.Context, obj *model.Pool) ([]*model.Deposit, error) {
+func (r *poolContractResolver) Deposits(ctx context.Context, obj *model.PoolContract) ([]*model.Deposit, error) {
 	panic(fmt.Errorf("not implemented: Deposits - deposits"))
 }
 
 // Withdrawals is the resolver for the withdrawals field.
-func (r *poolResolver) Withdrawals(ctx context.Context, obj *model.Pool) ([]*model.Withdrawal, error) {
+func (r *poolContractResolver) Withdrawals(ctx context.Context, obj *model.PoolContract) ([]*model.Withdrawal, error) {
 	panic(fmt.Errorf("not implemented: Withdrawals - withdrawals"))
 }
 
@@ -688,7 +708,7 @@ func (r *tokenBalanceResolver) Token(ctx context.Context, obj *model.TokenBalanc
 }
 
 // Holder is the resolver for the holder field.
-func (r *tokenBalanceResolver) Holder(ctx context.Context, obj *model.TokenBalance) (*model.Account, error) {
+func (r *tokenBalanceResolver) Holder(ctx context.Context, obj *model.TokenBalance) (model.PoolOrMutualsUserOrAccount, error) {
 	panic(fmt.Errorf("not implemented: Holder - holder"))
 }
 
@@ -782,9 +802,9 @@ func (r *chainAddressInputResolver) Address(ctx context.Context, obj *persist.Ch
 	return obj.GQLSetAddressFromResolver(data)
 }
 
-// Chain is the resolver for the chain field.
-func (r *chainAddressInputResolver) Chain(ctx context.Context, obj *persist.ChainAddress, data persist.Chain) error {
-	return obj.GQLSetChainFromResolver(data)
+// ChainID is the resolver for the chainId field.
+func (r *chainAddressInputResolver) ChainID(ctx context.Context, obj *persist.ChainAddress, data int) error {
+	panic(fmt.Errorf("not implemented: ChainID - chainId"))
 }
 
 // PubKey is the resolver for the pubKey field.
@@ -792,13 +812,19 @@ func (r *chainPubKeyInputResolver) PubKey(ctx context.Context, obj *persist.Chai
 	return obj.GQLSetPubKeyFromResolver(data)
 }
 
-// Chain is the resolver for the chain field.
-func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.ChainPubKey, data persist.Chain) error {
-	return obj.GQLSetChainFromResolver(data)
+// ChainID is the resolver for the chainId field.
+func (r *chainPubKeyInputResolver) ChainID(ctx context.Context, obj *persist.ChainPubKey, data int) error {
+	panic(fmt.Errorf("not implemented: ChainID - chainId"))
 }
 
 // Account returns generated.AccountResolver implementation.
 func (r *Resolver) Account() generated.AccountResolver { return &accountResolver{r} }
+
+// ChainAddress returns generated.ChainAddressResolver implementation.
+func (r *Resolver) ChainAddress() generated.ChainAddressResolver { return &chainAddressResolver{r} }
+
+// ChainPubKey returns generated.ChainPubKeyResolver implementation.
+func (r *Resolver) ChainPubKey() generated.ChainPubKeyResolver { return &chainPubKeyResolver{r} }
 
 // Claim returns generated.ClaimResolver implementation.
 func (r *Resolver) Claim() generated.ClaimResolver { return &claimResolver{r} }
@@ -822,6 +848,9 @@ func (r *Resolver) MutualsUser() generated.MutualsUserResolver { return &mutuals
 
 // Pool returns generated.PoolResolver implementation.
 func (r *Resolver) Pool() generated.PoolResolver { return &poolResolver{r} }
+
+// PoolContract returns generated.PoolContractResolver implementation.
+func (r *Resolver) PoolContract() generated.PoolContractResolver { return &poolContractResolver{r} }
 
 // PoolDayBalance returns generated.PoolDayBalanceResolver implementation.
 func (r *Resolver) PoolDayBalance() generated.PoolDayBalanceResolver {
@@ -865,6 +894,8 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 }
 
 type accountResolver struct{ *Resolver }
+type chainAddressResolver struct{ *Resolver }
+type chainPubKeyResolver struct{ *Resolver }
 type claimResolver struct{ *Resolver }
 type depositResolver struct{ *Resolver }
 type extensionResolver struct{ *Resolver }
@@ -872,6 +903,7 @@ type extensionRegistryResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type mutualsUserResolver struct{ *Resolver }
 type poolResolver struct{ *Resolver }
+type poolContractResolver struct{ *Resolver }
 type poolDayBalanceResolver struct{ *Resolver }
 type poolHourBalanceResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
@@ -891,45 +923,28 @@ type chainPubKeyInputResolver struct{ *Resolver }
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
 /*
-	func (r *allocationResolver) Pool(ctx context.Context, obj *model.Allocation) (*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pool - pool"))
+	func (r *poolResolver) PoolFactory(ctx context.Context, obj *model.Pool) (*model.PoolFactory, error) {
+	panic(fmt.Errorf("not implemented: PoolFactory - poolFactory"))
 }
-func (r *allocationAggregationResolver) Pool(ctx context.Context, obj *model.AllocationAggregation) (*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pool - pool"))
+func (r *poolResolver) Account(ctx context.Context, obj *model.Pool) (*model.Account, error) {
+	panic(fmt.Errorf("not implemented: Account - account"))
 }
-func (r *assetResolver) Token(ctx context.Context, obj *model.Asset) (*model.Token, error) {
-	panic(fmt.Errorf("not implemented: Token - token"))
+func (r *poolResolver) DayBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolDayBalance, error) {
+	panic(fmt.Errorf("not implemented: DayBalance - dayBalance"))
 }
-func (r *mutualsUserResolver) Wallets(ctx context.Context, obj *model.MutualsUser) ([]*model.Wallet, error) {
-	return resolveWalletsByUserID(ctx, obj.Dbid)
+func (r *poolResolver) HourBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolHourBalance, error) {
+	panic(fmt.Errorf("not implemented: HourBalance - hourBalance"))
 }
-func (r *mutualsUserResolver) PrimaryWallet(ctx context.Context, obj *model.MutualsUser) (*model.Wallet, error) {
-	return resolvePrimaryWalletByUserID(ctx, obj.HelperMutualsUserData.UserID)
+func (r *poolResolver) Deposits(ctx context.Context, obj *model.Pool) ([]*model.Deposit, error) {
+	panic(fmt.Errorf("not implemented: Deposits - deposits"))
 }
-func (r *mutualsUserResolver) PoolsByChain(ctx context.Context, obj *model.MutualsUser, chain persist.Chain) (*model.ChainPools, error) {
-	panic(fmt.Errorf("not implemented: PoolsByChain - poolsByChain"))
+func (r *poolResolver) Withdrawals(ctx context.Context, obj *model.Pool) ([]*model.Withdrawal, error) {
+	panic(fmt.Errorf("not implemented: Withdrawals - withdrawals"))
 }
-func (r *poolResolver) AllocationAggregation(ctx context.Context, obj *model.Pool) ([]*model.AllocationAggregation, error) {
-	panic(fmt.Errorf("not implemented: AllocationAggregation - allocationAggregation"))
+func (r *chainAddressInputResolver) Chain(ctx context.Context, obj *persist.ChainAddress, data persist.Chain) error {
+	return obj.GQLSetChainFromResolver(data)
 }
-func (r *poolResolver) Allocations(ctx context.Context, obj *model.Pool) ([]*model.Allocation, error) {
-	panic(fmt.Errorf("not implemented: Allocations - allocations"))
+func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.ChainPubKey, data persist.Chain) error {
+	return obj.GQLSetChainFromResolver(data)
 }
-func (r *poolResolver) Assets(ctx context.Context, obj *model.Pool, limit *int) ([]*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
-}
-func (r *walletResolver) Pools(ctx context.Context, obj *model.Wallet) ([]*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pools - pools"))
-}
-func (r *Resolver) Allocation() generated.AllocationResolver { return &allocationResolver{r} }
-func (r *Resolver) AllocationAggregation() generated.AllocationAggregationResolver {
-	return &allocationAggregationResolver{r}
-}
-
-func (r *Resolver) Asset() generated.AssetResolver { return &assetResolver{r} }
-func (r *Resolver) Wallet() generated.WalletResolver { return &walletResolver{r} }
-type allocationResolver struct{ *Resolver }
-type allocationAggregationResolver struct{ *Resolver }
-type assetResolver struct{ *Resolver }
-type walletResolver struct{ *Resolver }
 */

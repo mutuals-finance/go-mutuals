@@ -79,35 +79,40 @@ interface Error {
 
 type ChainAddress {
   address: Address
-  chain: Chain
+  chainId: Int
 }
 
 type ChainPubKey {
   pubKey: PubKey
-  chain: Chain
+  chainId: Int
 }
 
 type ChainPools {
-  chain: Chain
+  chainId: Int
   pools: [Pool]
 }
 
 input ChainAddressInput {
   address: Address! @goField(forceResolver: true)
-  chain: Chain! @goField(forceResolver: true)
+  chainId: Int! @goField(forceResolver: true)
 }
 
 input ChainPubKeyInput {
   pubKey: PubKey! @goField(forceResolver: true)
-  chain: Chain! @goField(forceResolver: true)
+  chainId: Int! @goField(forceResolver: true)
 }
 
-enum Chain {
-  Ethereum
-  Arbitrum
-  Polygon
-  Optimism
-}
+#enum Chain {
+#  Ethereum
+#  Holesky
+#  PolygonAmoy
+#  Arbitrum
+#  Polygon
+#  Optimism
+#  Base
+#  Localhost
+#  Hardhat
+#}
 
 #-------------------------------------------------------------------------------
 # PAGINATION
@@ -158,7 +163,7 @@ type PoolFactory implements Node {
   # contract address
   address: Address!
   # chain ID
-  chain: Chain!
+  chainId: Int!
   # amount of pools created
   poolCount: Int!
   # current owner of the factory
@@ -176,7 +181,7 @@ type ExtensionRegistry implements Node {
   # contract address
   address: Address!
   # chain ID
-  chain: Chain!
+  chainId: Int!
   # amount of extensions created
   extensionCount: Int!
   # current owner of the registry
@@ -211,6 +216,8 @@ type MutualsUser implements Node @goEmbedHelper {
   pools: [Pool] @goField(forceResolver: true)
   isAuthenticatedUser: Boolean
 }
+
+union MutualsUserOrAccount = MutualsUser | Account
 
 union UserByUsernameOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
 
@@ -280,7 +287,7 @@ type Token implements Node {
   # token address
   address: Address!
   # chain
-  chain: Chain!
+  chainId: Int!
   # token type
   tokenType: TokenType!
   # token symbol
@@ -308,11 +315,11 @@ type TokenBalance implements Node {
   id: ID!
   # dbid: DBID!
   # chain
-  chain: Chain!
+  chainId: Int!
   # token
   token: Token! @goField(forceResolver: true)
   # token owner
-  holder: Account! @goField(forceResolver: true)
+  holder: PoolOrMutualsUserOrAccount! @goField(forceResolver: true)
   # token balance (BigDecimal)
   amount: HexString!
   # creation timestamp
@@ -334,7 +341,7 @@ enum ExtensionType {
   Strategy
 }
 
-type Extension implements Node{
+type Extension implements Node {
   # { chain id }-{ pool address }
   id: ID!
   # dbid: DBID!
@@ -365,7 +372,6 @@ type Extension implements Node{
 type Claim implements Node {
   # { claim id }
   id: ID!
-  # dbid: DBID!
   # allocated value (BigDecimal)
   value: HexString!
   # parent claim
@@ -373,7 +379,7 @@ type Claim implements Node {
   # pool
   pool: Pool! @goField(forceResolver: true)
   # recipient
-  recipient: Account @goField(forceResolver: true)
+  recipient: PoolOrMutualsUserOrAccount @goField(forceResolver: true)
   # state
   state: Extension! @goField(forceResolver: true)
   # strategy
@@ -389,33 +395,55 @@ type Claim implements Node {
 #-------------------------------------------------------------------------------
 
 type Pool implements Node {
-  # { chain id }-{ pool address }
+  # id of the pool composed of type name - dbid
   id: ID!
-  # dbid: DBID!
-  # pool address
-  address: Address!
-  # chain
-  chain: Chain!
-  # status of the pool
-  status: PoolStatus!
-  # pool factory that created this pool
-  poolFactory: PoolFactory! @goField(forceResolver: true)
-  # account of this pool
-  account: Account! @goField(forceResolver: true)
+  # dbid of the pool
+  dbid: DBID!
   # name
   name: String!
   # description
   description: String!
   # logo
   logo: String!
-  # current owner of the pool
-  owner: Account! @goField(forceResolver: true)
+  # slug
+  slug: String!
+  # status of the pool
+  status: PoolStatus!
+  # owner of the pool
+  owner: MutualsUserOrAccount! @goField(forceResolver: true)
+  # pool contract
+  contract: PoolContract @goField(forceResolver: true)
+  # pool claims
+  claims: [Claim!] @goField(forceResolver: true)
   # creation timestamp
   createdAt: Time!
   # update timestamp
   updatedAt: Time!
-  # pool claims
-  claims: [Claim!] @goField(forceResolver: true)
+}
+
+type ErrPoolNotFound implements Error {
+  message: String!
+}
+
+union PoolOrMutualsUserOrAccount = Pool | MutualsUser | Account
+
+union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
+
+type PoolContract implements Node {
+  # { chain id }-{ pool address }
+  id: ID!
+  # pool contract address
+  address: Address!
+  # chain id
+  chainId: Int!
+  # status of the pool
+  status: PoolStatus!
+  # pool factory that created this pool
+  poolFactory: PoolFactory! @goField(forceResolver: true)
+  # account of this pool
+  account: Account! @goField(forceResolver: true)
+  # current owner of the pool
+  owner: Account! @goField(forceResolver: true)
   # daily snapshots of pool token balances
   dayBalance: [PoolDayBalance!]! @goField(forceResolver: true)
   # hourly snapshots of pool token balances
@@ -424,20 +452,18 @@ type Pool implements Node {
   deposits: [Deposit!]! @goField(forceResolver: true)
   # withdraw transactions
   withdrawals: [Withdrawal!]! @goField(forceResolver: true)
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
 }
-
-type ErrPoolNotFound implements Error {
-  message: String!
-}
-
-union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
 
 type PoolDayBalance implements Node {
   # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current day) }
   id: ID!
   # dbid: DBID!
   # chain
-  chain: Chain!
+  chainId: Int!
   # timestamp rounded to current day by dividing by 86400
   date: Time!
   # pointer to pool
@@ -456,7 +482,7 @@ type PoolHourBalance implements Node {
   # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current hour) }
   id: ID!
   # chain ID
-  chain: Chain!
+  chainId: Int!
   # timestamp rounded to current hour by dividing by 3600
   date: Time!
   # pointer to pool

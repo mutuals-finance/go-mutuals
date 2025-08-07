@@ -24,7 +24,7 @@ type Allocation struct {
 	Label            string                  `db:"label" json:"label"`
 	Path             sql.NullString          `db:"path" json:"path"`
 	Deleted          bool                    `db:"deleted" json:"deleted"`
-	LastUpdated      time.Time               `db:"last_updated" json:"last_updated"`
+	UpdatedAt      time.Time               `db:"updated_at" json:"updated_at"`
 	CreatedAt        time.Time               `db:"created_at" json:"created_at"`
 }
 
@@ -33,7 +33,7 @@ type AllocationAggregation struct {
 	PoolID           persist.DBID    `db:"pool_id" json:"pool_id"`
 	RecipientAddress persist.Address `db:"recipient_address" json:"recipient_address"`
 	Expression       string          `db:"expression" json:"expression"`
-	LastUpdated      time.Time       `db:"last_updated" json:"last_updated"`
+	UpdatedAt      time.Time       `db:"updated_at" json:"updated_at"`
 	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
 	Version          sql.NullInt32   `db:"version" json:"version"`
 	Deleted          bool            `db:"deleted" json:"deleted"`
@@ -55,7 +55,7 @@ type Event struct {
 	Action         persist.Action       `db:"action" json:"action"`
 	Data           persist.EventData    `db:"data" json:"data"`
 	Deleted        bool                 `db:"deleted" json:"deleted"`
-	LastUpdated    time.Time            `db:"last_updated" json:"last_updated"`
+	UpdatedAt    time.Time            `db:"updated_at" json:"updated_at"`
 	CreatedAt      time.Time            `db:"created_at" json:"created_at"`
 	PoolID         persist.DBID         `db:"pool_id" json:"pool_id"`
 	ExternalID     sql.NullString       `db:"external_id" json:"external_id"`
@@ -66,7 +66,7 @@ type Event struct {
 type LegacyView struct {
 	UserID      persist.DBID  `db:"user_id" json:"user_id"`
 	ViewCount   sql.NullInt32 `db:"view_count" json:"view_count"`
-	LastUpdated time.Time     `db:"last_updated" json:"last_updated"`
+	UpdatedAt time.Time     `db:"updated_at" json:"updated_at"`
 	CreatedAt   time.Time     `db:"created_at" json:"created_at"`
 	Deleted     sql.NullBool  `db:"deleted" json:"deleted"`
 }
@@ -83,7 +83,7 @@ type Notification struct {
 	Deleted     bool                     `db:"deleted" json:"deleted"`
 	OwnerID     persist.DBID             `db:"owner_id" json:"owner_id"`
 	Version     sql.NullInt32            `db:"version" json:"version"`
-	LastUpdated time.Time                `db:"last_updated" json:"last_updated"`
+	UpdatedAt time.Time                `db:"updated_at" json:"updated_at"`
 	CreatedAt   time.Time                `db:"created_at" json:"created_at"`
 	Action      persist.Action           `db:"action" json:"action"`
 	Data        persist.NotificationData `db:"data" json:"data"`
@@ -110,7 +110,7 @@ type PiiUserView struct {
 	ID                        persist.DBID                     `db:"id" json:"id"`
 	Deleted                   bool                             `db:"deleted" json:"deleted"`
 	Version                   sql.NullInt32                    `db:"version" json:"version"`
-	LastUpdated               time.Time                        `db:"last_updated" json:"last_updated"`
+	UpdatedAt               time.Time                        `db:"updated_at" json:"updated_at"`
 	CreatedAt                 time.Time                        `db:"created_at" json:"created_at"`
 	Username                  sql.NullString                   `db:"username" json:"username"`
 	UsernameIdempotent        sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
@@ -128,7 +128,7 @@ type PiiUserView struct {
 type Pool struct {
 	ID             persist.DBID    `db:"id" json:"id"`
 	Version        sql.NullInt32   `db:"version" json:"version"`
-	LastUpdated    time.Time       `db:"last_updated" json:"last_updated"`
+	UpdatedAt    time.Time       `db:"updated_at" json:"updated_at"`
 	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
 	Deleted        bool            `db:"deleted" json:"deleted"`
 	Name           string          `db:"name" json:"name"`
@@ -180,7 +180,7 @@ type Session struct {
 	CurrentRefreshID     persist.DBID `db:"current_refresh_id" json:"current_refresh_id"`
 	ActiveUntil          time.Time    `db:"active_until" json:"active_until"`
 	Invalidated          bool         `db:"invalidated" json:"invalidated"`
-	LastUpdated          time.Time    `db:"last_updated" json:"last_updated"`
+	UpdatedAt          time.Time    `db:"updated_at" json:"updated_at"`
 	Deleted              bool         `db:"deleted" json:"deleted"`
 }
 
@@ -198,7 +198,7 @@ type Token struct {
 	Deleted      bool              `db:"deleted" json:"deleted"`
 	Version      sql.NullInt32     `db:"version" json:"version"`
 	CreatedAt    time.Time         `db:"created_at" json:"created_at"`
-	LastUpdated  time.Time         `db:"last_updated" json:"last_updated"`
+	UpdatedAt  time.Time         `db:"updated_at" json:"updated_at"`
 	Chain        persist.Chain     `db:"chain" json:"chain"`
 	TokenAddress persist.Address   `db:"token_address" json:"token_address"`
 	OwnerAddress persist.Address   `db:"owner_address" json:"owner_address"`
@@ -209,7 +209,7 @@ type TokenMetadata struct {
 	ID              persist.DBID    `db:"id" json:"id"`
 	Deleted         bool            `db:"deleted" json:"deleted"`
 	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
-	LastUpdated     time.Time       `db:"last_updated" json:"last_updated"`
+	UpdatedAt     time.Time       `db:"updated_at" json:"updated_at"`
 	Symbol          sql.NullString  `db:"symbol" json:"symbol"`
 	Name            sql.NullString  `db:"name" json:"name"`
 	Logo            sql.NullString  `db:"logo" json:"logo"`
@@ -222,7 +222,7 @@ type User struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
 	Deleted              bool                             `db:"deleted" json:"deleted"`
 	Version              sql.NullInt32                    `db:"version" json:"version"`
-	LastUpdated          time.Time                        `db:"last_updated" json:"last_updated"`
+	UpdatedAt          time.Time                        `db:"updated_at" json:"updated_at"`
 	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
 	Username             sql.NullString                   `db:"username" json:"username"`
 	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
@@ -238,7 +238,7 @@ type User struct {
 type UserBlocklist struct {
 	ID            persist.DBID `db:"id" json:"id"`
 	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
-	LastUpdated   time.Time    `db:"last_updated" json:"last_updated"`
+	UpdatedAt   time.Time    `db:"updated_at" json:"updated_at"`
 	Deleted       bool         `db:"deleted" json:"deleted"`
 	UserID        persist.DBID `db:"user_id" json:"user_id"`
 	BlockedUserID persist.DBID `db:"blocked_user_id" json:"blocked_user_id"`
@@ -252,13 +252,13 @@ type UserRole struct {
 	Version     int32        `db:"version" json:"version"`
 	Deleted     bool         `db:"deleted" json:"deleted"`
 	CreatedAt   time.Time    `db:"created_at" json:"created_at"`
-	LastUpdated time.Time    `db:"last_updated" json:"last_updated"`
+	UpdatedAt time.Time    `db:"updated_at" json:"updated_at"`
 }
 
 type Wallet struct {
 	ID          persist.DBID       `db:"id" json:"id"`
 	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
-	LastUpdated time.Time          `db:"last_updated" json:"last_updated"`
+	UpdatedAt time.Time          `db:"updated_at" json:"updated_at"`
 	Deleted     bool               `db:"deleted" json:"deleted"`
 	Version     sql.NullInt32      `db:"version" json:"version"`
 	Address     persist.Address    `db:"address" json:"address"`

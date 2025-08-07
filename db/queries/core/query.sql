@@ -301,7 +301,7 @@ INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2
 INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- name: UpdateNotification :exec
-UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, last_updated = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4;
+UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, updated_at = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4;
 
 -- name: UpdateNotificationSettingsByID :exec
 UPDATE users SET notification_settings = $2 WHERE id = $1;
@@ -371,12 +371,12 @@ where users.id = @user_id and wallets.id = @wallet_id
 select users.*,wallets.address from users, wallets where wallets.address = ANY(@addresses::varchar[]) AND wallets.l1_chain = @l1_chain AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false;
 
 -- name: AddUserRoles :exec
-insert into user_roles (id, user_id, role, created_at, last_updated)
+insert into user_roles (id, user_id, role, created_at, updated_at)
 select unnest(@ids::varchar[]), $1, unnest(@roles::varchar[]), now(), now()
-on conflict (user_id, role) do update set deleted = false, last_updated = now();
+on conflict (user_id, role) do update set deleted = false, updated_at = now();
 
 -- name: DeleteUserRoles :exec
-update user_roles set deleted = true, last_updated = now() where user_id = $1 and role = any(@roles);
+update user_roles set deleted = true, updated_at = now() where user_id = $1 and role = any(@roles);
 
 -- name: GetUserRolesByUserId :many
 select role from user_roles where user_id = $1 and deleted = false;
@@ -409,7 +409,7 @@ from new_wallet
 where users.id = @user_id and not users.deleted;
 
 -- name: DeleteWalletByID :exec
-update wallets set deleted = true, last_updated = now() where id = $1;
+update wallets set deleted = true, updated_at = now() where id = $1;
 
 -- name: InsertUser :one
 insert into users (id, username, username_idempotent, universal, email_unsubscriptions) values ($1, $2, $3, $4, $5) returning id;
@@ -417,7 +417,7 @@ insert into users (id, username, username_idempotent, universal, email_unsubscri
 -- name: UpsertSession :one
 insert into sessions (id, user_id,
                       created_at, created_with_user_agent, created_with_platform, created_with_os,
-                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, last_updated, deleted)
+                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted)
 values (@id, @user_id, now(), @user_agent, @platform, @os, now(), @user_agent, @platform, @os, @current_refresh_id, @active_until, false, now(), false)
 on conflict (id) where deleted = false do update set
                                                      last_refreshed = case when sessions.invalidated then sessions.last_refreshed else excluded.last_refreshed end,
@@ -425,12 +425,12 @@ on conflict (id) where deleted = false do update set
                                                      last_platform = case when sessions.invalidated then sessions.last_platform else excluded.last_platform end,
                                                      last_os = case when sessions.invalidated then sessions.last_os else excluded.last_os end,
                                                      current_refresh_id = case when sessions.invalidated then sessions.current_refresh_id else excluded.current_refresh_id end,
-                                                     last_updated = case when sessions.invalidated then sessions.last_updated else excluded.last_updated end,
+                                                     updated_at = case when sessions.invalidated then sessions.updated_at else excluded.updated_at end,
                                                      active_until = case when sessions.invalidated then sessions.active_until else greatest(sessions.active_until, excluded.active_until) end
 returning *;
 
 -- name: InvalidateSession :exec
-update sessions set invalidated = true, active_until = least(active_until, now()), last_updated = now() where id = @id and deleted = false and invalidated = false;
+update sessions set invalidated = true, active_until = least(active_until, now()), updated_at = now() where id = @id and deleted = false and invalidated = false;
 
 -- name: GetPushTokenByPushToken :one
 select * from push_notification_tokens where push_token = @push_token and deleted = false;
@@ -480,7 +480,7 @@ select now()::timestamptz;
 -- name: BlockUser :one
 with user_to_block as (select id from users where users.id = @blocked_user_id and not deleted and not universal)
 insert into user_blocklist (id, user_id, blocked_user_id, active) (select @id, @user_id, user_to_block.id, true from user_to_block)
-on conflict(user_id, blocked_user_id) where not deleted do update set active = true, last_updated = now() returning id;
+on conflict(user_id, blocked_user_id) where not deleted do update set active = true, updated_at = now() returning id;
 
 -- name: UnblockUser :exec
-update user_blocklist set active = false, last_updated = now() where user_id = @user_id and blocked_user_id = @blocked_user_id and not deleted;
+update user_blocklist set active = false, updated_at = now() where user_id = @user_id and blocked_user_id = @blocked_user_id and not deleted;

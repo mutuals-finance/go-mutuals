@@ -18,6 +18,10 @@ func (r *MutualsUser) ID() GqlID {
 	return GqlID(fmt.Sprintf("MutualsUser:%s", r.Dbid))
 }
 
+func (r *Pool) ID() GqlID {
+	return GqlID(fmt.Sprintf("Pool:%s", r.Dbid))
+}
+
 func (r *Viewer) ID() GqlID {
 	//-----------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------
@@ -34,6 +38,7 @@ func (r *Viewer) ID() GqlID {
 type NodeFetcher struct {
 	OnDeletedNode func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
 	OnMutualsUser func(ctx context.Context, dbid persist.DBID) (*MutualsUser, error)
+	OnPool        func(ctx context.Context, dbid persist.DBID) (*Pool, error)
 	OnViewer      func(ctx context.Context, userId string) (*Viewer, error)
 }
 
@@ -57,6 +62,11 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'MutualsUser' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnMutualsUser(ctx, persist.DBID(ids[0]))
+	case "Pool":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Pool' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnPool(ctx, persist.DBID(ids[0]))
 	case "Viewer":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Viewer' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -73,6 +83,8 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
 	case n.OnMutualsUser == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnMutualsUser")
+	case n.OnPool == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPool")
 	case n.OnViewer == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnViewer")
 	}

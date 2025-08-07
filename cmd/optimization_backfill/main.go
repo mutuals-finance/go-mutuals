@@ -71,12 +71,12 @@ func main() {
 
 		logrus.Infof("jobIndex: %d, jobCount: %d, totalTokenCount: %d, limit: %d, offset: %d", jobIndex, jobCount, totalTokenCount, limit, offset)
 
-		rows, err = pg.Query(ctx, `select tokens.id, tokens.media from tokens join contracts on contracts.id = tokens.contract where tokens.deleted = false and tokens.media is not null and not tokens.media->>'media_type' = '' and not tokens.media->>'media_url' = '' and not tokens.media->>'media_type' = 'unknown' and not tokens.media->>'media_type' = 'invalid' order by tokens.last_updated desc limit $1 offset $2;`, limit, offset)
+		rows, err = pg.Query(ctx, `select tokens.id, tokens.media from tokens join contracts on contracts.id = tokens.contract where tokens.deleted = false and tokens.media is not null and not tokens.media->>'media_type' = '' and not tokens.media->>'media_url' = '' and not tokens.media->>'media_type' = 'unknown' and not tokens.media->>'media_type' = 'invalid' order by tokens.updated_at desc limit $1 offset $2;`, limit, offset)
 	} else {
 		logrus.Infof("running as local job")
 		limit = 1000
 		offset = 120000
-		rows, err = pg.Query(ctx, `select tokens.id, tokens.media from tokens join contracts on contracts.id = tokens.contract where tokens.deleted = false and tokens.media is not null and not tokens.media->>'media_type' = '' and not tokens.media->>'media_url' = '' and not tokens.media->>'media_type' = 'unknown' and not tokens.media->>'media_type' = 'invalid' order by tokens.last_updated desc limit $1 offset $2;`, limit, offset)
+		rows, err = pg.Query(ctx, `select tokens.id, tokens.media from tokens join contracts on contracts.id = tokens.contract where tokens.deleted = false and tokens.media is not null and not tokens.media->>'media_type' = '' and not tokens.media->>'media_url' = '' and not tokens.media->>'media_type' = 'unknown' and not tokens.media->>'media_type' = 'invalid' order by tokens.updated_at desc limit $1 offset $2;`, limit, offset)
 	}
 
 	logrus.Info("querying for tokens...")

@@ -53,6 +53,11 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
+	"MutualsUserOrAccount": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(MutualsUserOrAccount)
+		return obj, ok
+	},
+
 	"Node": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(Node)
 		return obj, ok
@@ -75,6 +80,11 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"PoolByIdPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(PoolByIDPayloadOrError)
+		return obj, ok
+	},
+
+	"PoolOrMutualsUserOrAccount": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PoolOrMutualsUserOrAccount)
 		return obj, ok
 	},
 

@@ -49,7 +49,7 @@ type User struct {
 	ID                 DBID       `json:"id" binding:"required"`
 	CreationTime       time.Time  `json:"created_at"`
 	Deleted            NullBool   `json:"-"`
-	LastUpdated        time.Time  `json:"last_updated"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 	Username           NullString `json:"username"` // mutable
 	UsernameIdempotent NullString `json:"username_idempotent"`
 	Wallets            []Wallet   `json:"wallets"`
@@ -61,7 +61,7 @@ type User struct {
 
 // UserUpdateInfoInput represents the data to be updated when updating a user
 type UserUpdateInfoInput struct {
-	LastUpdated        time.Time  `json:"last_updated"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 	Username           NullString `json:"username"`
 	UsernameIdempotent NullString `json:"username_idempotent"`
 	Bio                NullString `json:"bio"`
@@ -69,7 +69,7 @@ type UserUpdateInfoInput struct {
 
 // UserUpdateNotificationSettings represents the data to be updated when updating a user's notification settings
 type UserUpdateNotificationSettings struct {
-	LastUpdated          time.Time                `json:"last_updated"`
+	UpdatedAt            time.Time                `json:"updated_at"`
 	NotificationSettings UserNotificationSettings `json:"notification_settings"`
 }
 
