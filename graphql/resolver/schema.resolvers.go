@@ -915,36 +915,3 @@ type viewerResolver struct{ *Resolver }
 type withdrawalResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *poolResolver) PoolFactory(ctx context.Context, obj *model.Pool) (*model.PoolFactory, error) {
-	panic(fmt.Errorf("not implemented: PoolFactory - poolFactory"))
-}
-func (r *poolResolver) Account(ctx context.Context, obj *model.Pool) (*model.Account, error) {
-	panic(fmt.Errorf("not implemented: Account - account"))
-}
-func (r *poolResolver) DayBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolDayBalance, error) {
-	panic(fmt.Errorf("not implemented: DayBalance - dayBalance"))
-}
-func (r *poolResolver) HourBalance(ctx context.Context, obj *model.Pool) ([]*model.PoolHourBalance, error) {
-	panic(fmt.Errorf("not implemented: HourBalance - hourBalance"))
-}
-func (r *poolResolver) Deposits(ctx context.Context, obj *model.Pool) ([]*model.Deposit, error) {
-	panic(fmt.Errorf("not implemented: Deposits - deposits"))
-}
-func (r *poolResolver) Withdrawals(ctx context.Context, obj *model.Pool) ([]*model.Withdrawal, error) {
-	panic(fmt.Errorf("not implemented: Withdrawals - withdrawals"))
-}
-func (r *chainAddressInputResolver) Chain(ctx context.Context, obj *persist.ChainAddress, data persist.Chain) error {
-	return obj.GQLSetChainFromResolver(data)
-}
-func (r *chainPubKeyInputResolver) Chain(ctx context.Context, obj *persist.ChainPubKey, data persist.Chain) error {
-	return obj.GQLSetChainFromResolver(data)
-}
-*/

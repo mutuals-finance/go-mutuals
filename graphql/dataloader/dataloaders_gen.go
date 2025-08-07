@@ -28,34 +28,34 @@ type notFoundErrorProvider[TKey any] interface {
 type PreFetchHook func(context.Context, string) context.Context
 type PostFetchHook func(context.Context, string)
 
-// GetAllocationAggregationByIdBatch batches and caches requests
-type GetAllocationAggregationByIdBatch struct {
-	generator.Dataloader[persist.DBID, coredb.AllocationAggregation]
+// GetClaimsByPoolIdBatch batches and caches requests
+type GetClaimsByPoolIdBatch struct {
+	generator.Dataloader[persist.DBID, []coredb.Claim]
 }
 
-// newGetAllocationAggregationByIdBatch creates a new GetAllocationAggregationByIdBatch with the given settings, functions, and options
-func newGetAllocationAggregationByIdBatch(
+// newGetClaimsByPoolIdBatch creates a new GetClaimsByPoolIdBatch with the given settings, functions, and options
+func newGetClaimsByPoolIdBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetAllocationAggregationByIdBatch, []persist.DBID) ([]coredb.AllocationAggregation, []error),
+	fetch func(context.Context, *GetClaimsByPoolIdBatch, []persist.DBID) ([][]coredb.Claim, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetAllocationAggregationByIdBatch {
-	d := &GetAllocationAggregationByIdBatch{}
+) *GetClaimsByPoolIdBatch {
+	d := &GetClaimsByPoolIdBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.AllocationAggregation, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]coredb.Claim, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetAllocationAggregationByIdBatch")
+			ctx = preFetchHook(ctx, "GetClaimsByPoolIdBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetAllocationAggregationByIdBatch")
+			postFetchHook(ctx, "GetClaimsByPoolIdBatch")
 		}
 
 		return results, errors
@@ -63,51 +63,6 @@ func newGetAllocationAggregationByIdBatch(
 
 	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
 	return d
-}
-
-func (*GetAllocationAggregationByIdBatch) getKeyForResult(result coredb.AllocationAggregation) persist.DBID {
-	return result.ID
-}
-
-// GetAllocationByIdBatch batches and caches requests
-type GetAllocationByIdBatch struct {
-	generator.Dataloader[persist.DBID, coredb.Allocation]
-}
-
-// newGetAllocationByIdBatch creates a new GetAllocationByIdBatch with the given settings, functions, and options
-func newGetAllocationByIdBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetAllocationByIdBatch, []persist.DBID) ([]coredb.Allocation, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetAllocationByIdBatch {
-	d := &GetAllocationByIdBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Allocation, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetAllocationByIdBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetAllocationByIdBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-func (*GetAllocationByIdBatch) getKeyForResult(result coredb.Allocation) persist.DBID {
-	return result.ID
 }
 
 // GetNotificationByIDBatch batches and caches requests
@@ -149,43 +104,6 @@ func newGetNotificationByIDBatch(
 
 func (*GetNotificationByIDBatch) getKeyForResult(result coredb.Notification) persist.DBID {
 	return result.ID
-}
-
-// GetPoolByChainAddressBatch batches and caches requests
-type GetPoolByChainAddressBatch struct {
-	generator.Dataloader[coredb.GetPoolByChainAddressBatchParams, coredb.Pool]
-}
-
-// newGetPoolByChainAddressBatch creates a new GetPoolByChainAddressBatch with the given settings, functions, and options
-func newGetPoolByChainAddressBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetPoolByChainAddressBatch, []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetPoolByChainAddressBatch {
-	d := &GetPoolByChainAddressBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetPoolByChainAddressBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetPoolByChainAddressBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
 }
 
 // GetPoolByIdBatch batches and caches requests
@@ -257,43 +175,6 @@ func newGetPoolsByUserIDBatch(
 
 		if postFetchHook != nil {
 			postFetchHook(ctx, "GetPoolsByUserIDBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-// GetUserByAddressAndL1Batch batches and caches requests
-type GetUserByAddressAndL1Batch struct {
-	generator.Dataloader[coredb.GetUserByAddressAndL1BatchParams, coredb.User]
-}
-
-// newGetUserByAddressAndL1Batch creates a new GetUserByAddressAndL1Batch with the given settings, functions, and options
-func newGetUserByAddressAndL1Batch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetUserByAddressAndL1Batch, []coredb.GetUserByAddressAndL1BatchParams) ([]coredb.User, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetUserByAddressAndL1Batch {
-	d := &GetUserByAddressAndL1Batch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []coredb.GetUserByAddressAndL1BatchParams) ([]coredb.User, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetUserByAddressAndL1Batch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetUserByAddressAndL1Batch")
 		}
 
 		return results, errors
@@ -489,83 +370,5 @@ func newGetUsersByPositionPersonalizedBatch(
 	}
 
 	d.Dataloader = *generator.NewDataloaderWithNonComparableKey(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-// GetWalletByIDBatch batches and caches requests
-type GetWalletByIDBatch struct {
-	generator.Dataloader[persist.DBID, coredb.Wallet]
-}
-
-// newGetWalletByIDBatch creates a new GetWalletByIDBatch with the given settings, functions, and options
-func newGetWalletByIDBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetWalletByIDBatch, []persist.DBID) ([]coredb.Wallet, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetWalletByIDBatch {
-	d := &GetWalletByIDBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Wallet, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetWalletByIDBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetWalletByIDBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-func (*GetWalletByIDBatch) getKeyForResult(result coredb.Wallet) persist.DBID {
-	return result.ID
-}
-
-// GetWalletsByUserIDBatch batches and caches requests
-type GetWalletsByUserIDBatch struct {
-	generator.Dataloader[persist.DBID, []coredb.Wallet]
-}
-
-// newGetWalletsByUserIDBatch creates a new GetWalletsByUserIDBatch with the given settings, functions, and options
-func newGetWalletsByUserIDBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetWalletsByUserIDBatch, []persist.DBID) ([][]coredb.Wallet, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetWalletsByUserIDBatch {
-	d := &GetWalletsByUserIDBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]coredb.Wallet, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetWalletsByUserIDBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetWalletsByUserIDBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
 	return d
 }

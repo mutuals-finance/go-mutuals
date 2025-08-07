@@ -18,127 +18,83 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const getAllocationAggregationByIdBatch = `-- name: GetAllocationAggregationByIdBatch :batchone
-SELECT id, pool_id, recipient_address, expression, updated_at, created_at, version, deleted
-FROM allocation_aggregations
-WHERE id = $1
-  AND deleted = FALSE
+const getClaimsByPoolIdBatch = `-- name: GetClaimsByPoolIdBatch :batchmany
+SELECT c.id, c.pool_id, c.recipient_address, c.value, c.state_id, c.strategy_id, c.label, c.path, c.deleted, c.updated_at, c.created_at
+FROM pools p
+         INNER JOIN claims c ON c.pool_id = p.id
+WHERE p.id = $1
+  AND c.deleted = FALSE
+  AND p.deleted = FALSE
 `
 
-type GetAllocationAggregationByIdBatchBatchResults struct {
+type GetClaimsByPoolIdBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetAllocationAggregationByIdBatch(ctx context.Context, id []persist.DBID) *GetAllocationAggregationByIdBatchBatchResults {
+func (q *Queries) GetClaimsByPoolIdBatch(ctx context.Context, id []persist.DBID) *GetClaimsByPoolIdBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range id {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getAllocationAggregationByIdBatch, vals...)
+		batch.Queue(getClaimsByPoolIdBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetAllocationAggregationByIdBatchBatchResults{br, len(id), false}
+	return &GetClaimsByPoolIdBatchBatchResults{br, len(id), false}
 }
 
-func (b *GetAllocationAggregationByIdBatchBatchResults) QueryRow(f func(int, AllocationAggregation, error)) {
+func (b *GetClaimsByPoolIdBatchBatchResults) Query(f func(int, []Claim, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
-		var i AllocationAggregation
+		var items []Claim
 		if b.closed {
 			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
+				f(t, items, ErrBatchAlreadyClosed)
 			}
 			continue
 		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.PoolID,
-			&i.RecipientAddress,
-			&i.Expression,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Version,
-			&i.Deleted,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetAllocationAggregationByIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getAllocationByIdBatch = `-- name: GetAllocationByIdBatch :batchone
-SELECT id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, updated_at, created_at
-FROM allocations
-WHERE id = $1
-  AND deleted = FALSE
-`
-
-type GetAllocationByIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetAllocationByIdBatch(ctx context.Context, id []persist.DBID) *GetAllocationByIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getAllocationByIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetAllocationByIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetAllocationByIdBatchBatchResults) QueryRow(f func(int, Allocation, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Allocation
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
 			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Version,
-			&i.PoolID,
-			&i.RecipientAddress,
-			&i.RecipientType,
-			&i.CalculationType,
-			&i.Value,
-			&i.Expression,
-			&i.Label,
-			&i.Path,
-			&i.Deleted,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-		)
+			for rows.Next() {
+				var i Claim
+				if err := rows.Scan(
+					&i.ID,
+					&i.PoolID,
+					&i.RecipientAddress,
+					&i.Value,
+					&i.StateID,
+					&i.StrategyID,
+					&i.Label,
+					&i.Path,
+					&i.Deleted,
+					&i.UpdatedAt,
+					&i.CreatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
 		if f != nil {
-			f(t, i, err)
+			f(t, items, err)
 		}
 	}
 }
 
-func (b *GetAllocationByIdBatchBatchResults) Close() error {
+func (b *GetClaimsByPoolIdBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
 
 const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
-SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE id = $1 AND deleted = false
 `
 
 type GetNotificationByIDBatchBatchResults struct {
@@ -175,14 +131,14 @@ func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
 			&i.PoolID,
 			&i.Seen,
 			&i.Amount,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -195,73 +151,8 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getPoolByChainAddressBatch = `-- name: GetPoolByChainAddressBatch :batchone
-SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false
-`
-
-type GetPoolByChainAddressBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetPoolByChainAddressBatchParams struct {
-	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetPoolByChainAddressBatch(ctx context.Context, arg []GetPoolByChainAddressBatchParams) *GetPoolByChainAddressBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.Address,
-			a.Chain,
-		}
-		batch.Queue(getPoolByChainAddressBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetPoolByChainAddressBatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetPoolByChainAddressBatchBatchResults) QueryRow(f func(int, Pool, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Pool
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Deleted,
-			&i.Name,
-			&i.Description,
-			&i.Status,
-			&i.Chain,
-			&i.L1Chain,
-			&i.Address,
-			&i.OwnerAddress,
-			&i.CreatorAddress,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetPoolByChainAddressBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
 const getPoolByIdBatch = `-- name: GetPoolByIdBatch :batchone
-SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false
+SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at FROM pools WHERE id = $1 AND deleted = false
 `
 
 type GetPoolByIdBatchBatchResults struct {
@@ -295,18 +186,15 @@ func (b *GetPoolByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
 		row := b.br.QueryRow()
 		err := row.Scan(
 			&i.ID,
-			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Deleted,
 			&i.Name,
 			&i.Description,
-			&i.Status,
-			&i.Chain,
-			&i.L1Chain,
-			&i.Address,
-			&i.OwnerAddress,
-			&i.CreatorAddress,
+			&i.Logo,
+			&i.Slug,
+			&i.OwnerID,
+			&i.ContractID,
+			&i.Deleted,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -320,17 +208,16 @@ func (b *GetPoolByIdBatchBatchResults) Close() error {
 }
 
 const getPoolsByUserIDBatch = `-- name: GetPoolsByUserIDBatch :batchmany
-select s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address
-from users u, pools s, wallets w, allocation_aggregations a
-where u.id = $1
-  and w.id = any(u.wallets)
-  and a.recipient_address = w.address
-  and s.id = a.pool_id
-  and s.l1_chain = w.l1_chain
-  and u.deleted = false
-  and w.deleted = false
-  and a.deleted = false
-  and s.deleted = false
+SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
+FROM users u
+         INNER JOIN user_accounts ua ON u.id = ua.user_id
+         INNER JOIN claims c ON c.recipient_address = ua.address
+         INNER JOIN pools p ON p.id = c.pool_id
+WHERE u.id = $1
+  AND u.deleted = false
+  AND ua.deleted = false
+  AND c.deleted = false
+  AND p.deleted = false
 `
 
 type GetPoolsByUserIDBatchBatchResults struct {
@@ -371,18 +258,15 @@ func (b *GetPoolsByUserIDBatchBatchResults) Query(f func(int, []Pool, error)) {
 				var i Pool
 				if err := rows.Scan(
 					&i.ID,
-					&i.Version,
-					&i.UpdatedAt,
-					&i.CreatedAt,
-					&i.Deleted,
 					&i.Name,
 					&i.Description,
-					&i.Status,
-					&i.Chain,
-					&i.L1Chain,
-					&i.Address,
-					&i.OwnerAddress,
-					&i.CreatorAddress,
+					&i.Logo,
+					&i.Slug,
+					&i.OwnerID,
+					&i.ContractID,
+					&i.Deleted,
+					&i.UpdatedAt,
+					&i.CreatedAt,
 				); err != nil {
 					return err
 				}
@@ -401,80 +285,8 @@ func (b *GetPoolsByUserIDBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getUserByAddressAndL1Batch = `-- name: GetUserByAddressAndL1Batch :batchone
-select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences
-from users, wallets
-where wallets.address = $1
-  and wallets.l1_chain = $2
-  and array[wallets.id] <@ users.wallets
-  and wallets.deleted = false
-  and users.deleted = false
-`
-
-type GetUserByAddressAndL1BatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type GetUserByAddressAndL1BatchParams struct {
-	Address persist.Address `db:"address" json:"address"`
-	L1Chain persist.L1Chain `db:"l1_chain" json:"l1_chain"`
-}
-
-func (q *Queries) GetUserByAddressAndL1Batch(ctx context.Context, arg []GetUserByAddressAndL1BatchParams) *GetUserByAddressAndL1BatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.Address,
-			a.L1Chain,
-		}
-		batch.Queue(getUserByAddressAndL1Batch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetUserByAddressAndL1BatchBatchResults{br, len(arg), false}
-}
-
-func (b *GetUserByAddressAndL1BatchBatchResults) QueryRow(f func(int, User, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i User
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Username,
-			&i.UsernameIdempotent,
-			&i.Wallets,
-			&i.Universal,
-			&i.NotificationSettings,
-			&i.EmailUnsubscriptions,
-			&i.FeaturedPool,
-			&i.PrimaryWalletID,
-			&i.UserExperiences,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetUserByAddressAndL1BatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
 type GetUserByIdBatchBatchResults struct {
@@ -514,12 +326,10 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
-			&i.Wallets,
+			&i.PrimaryAccountID,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedPool,
-			&i.PrimaryWalletID,
 			&i.UserExperiences,
 		)
 		if f != nil {
@@ -534,7 +344,7 @@ func (b *GetUserByIdBatchBatchResults) Close() error {
 }
 
 const getUserByUsernameBatch = `-- name: GetUserByUsernameBatch :batchone
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 type GetUserByUsernameBatchBatchResults struct {
@@ -574,12 +384,10 @@ func (b *GetUserByUsernameBatchBatchResults) QueryRow(f func(int, User, error)) 
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
-			&i.Wallets,
+			&i.PrimaryAccountID,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedPool,
-			&i.PrimaryWalletID,
 			&i.UserExperiences,
 		)
 		if f != nil {
@@ -594,7 +402,7 @@ func (b *GetUserByUsernameBatchBatchResults) Close() error {
 }
 
 const getUserNotificationsBatch = `-- name: GetUserNotificationsBatch :batchmany
-SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false
                               AND (created_at, id) < ($2, $3)
                               AND (created_at, id) > ($4, $5)
 ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
@@ -659,14 +467,14 @@ func (b *GetUserNotificationsBatchBatchResults) Query(f func(int, []Notification
 					&i.Deleted,
 					&i.OwnerID,
 					&i.Version,
-					&i.UpdatedAt,
-					&i.CreatedAt,
 					&i.Action,
 					&i.Data,
 					&i.EventIds,
 					&i.PoolID,
 					&i.Seen,
 					&i.Amount,
+					&i.UpdatedAt,
+					&i.CreatedAt,
 				); err != nil {
 					return err
 				}
@@ -686,7 +494,7 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
-select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal and t.pos > $2::int and t.pos < $3::int
@@ -745,12 +553,10 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Query(f func(int, []User, 
 					&i.CreatedAt,
 					&i.Username,
 					&i.UsernameIdempotent,
-					&i.Wallets,
+					&i.PrimaryAccountID,
 					&i.Universal,
 					&i.NotificationSettings,
 					&i.EmailUnsubscriptions,
-					&i.FeaturedPool,
-					&i.PrimaryWalletID,
 					&i.UserExperiences,
 				); err != nil {
 					return err
@@ -771,7 +577,7 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
-select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
 from users u
          join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
 where not u.deleted and not u.universal
@@ -823,12 +629,10 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 					&i.CreatedAt,
 					&i.Username,
 					&i.UsernameIdempotent,
-					&i.Wallets,
+					&i.PrimaryAccountID,
 					&i.Universal,
 					&i.NotificationSettings,
 					&i.EmailUnsubscriptions,
-					&i.FeaturedPool,
-					&i.PrimaryWalletID,
 					&i.UserExperiences,
 				); err != nil {
 					return err
@@ -844,129 +648,6 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 }
 
 func (b *GetUsersByPositionPersonalizedBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getWalletByIDBatch = `-- name: GetWalletByIDBatch :batchone
-SELECT id, created_at, updated_at, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
-`
-
-type GetWalletByIDBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetWalletByIDBatch(ctx context.Context, id []persist.DBID) *GetWalletByIDBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getWalletByIDBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetWalletByIDBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetWalletByIDBatchBatchResults) QueryRow(f func(int, Wallet, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i Wallet
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Deleted,
-			&i.Version,
-			&i.Address,
-			&i.WalletType,
-			&i.Chain,
-			&i.L1Chain,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetWalletByIDBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getWalletsByUserIDBatch = `-- name: GetWalletsByUserIDBatch :batchmany
-SELECT w.id, w.created_at, w.updated_at, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
-`
-
-type GetWalletsByUserIDBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetWalletsByUserIDBatch(ctx context.Context, id []persist.DBID) *GetWalletsByUserIDBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getWalletsByUserIDBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetWalletsByUserIDBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetWalletsByUserIDBatchBatchResults) Query(f func(int, []Wallet, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Wallet
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Wallet
-				if err := rows.Scan(
-					&i.ID,
-					&i.CreatedAt,
-					&i.UpdatedAt,
-					&i.Deleted,
-					&i.Version,
-					&i.Address,
-					&i.WalletType,
-					&i.Chain,
-					&i.L1Chain,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetWalletsByUserIDBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

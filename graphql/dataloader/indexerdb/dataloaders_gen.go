@@ -28,34 +28,34 @@ type notFoundErrorProvider[TKey any] interface {
 type PreFetchHook func(context.Context, string) context.Context
 type PostFetchHook func(context.Context, string)
 
-// GetAccountByIDBatch batches and caches requests
-type GetAccountByIDBatch struct {
+// GetAccountByIdBatch batches and caches requests
+type GetAccountByIdBatch struct {
 	generator.Dataloader[persist.DBID, indexerdb.Account]
 }
 
-// newGetAccountByIDBatch creates a new GetAccountByIDBatch with the given settings, functions, and options
-func newGetAccountByIDBatch(
+// newGetAccountByIdBatch creates a new GetAccountByIdBatch with the given settings, functions, and options
+func newGetAccountByIdBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetAccountByIDBatch, []persist.DBID) ([]indexerdb.Account, []error),
+	fetch func(context.Context, *GetAccountByIdBatch, []persist.DBID) ([]indexerdb.Account, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetAccountByIDBatch {
-	d := &GetAccountByIDBatch{}
+) *GetAccountByIdBatch {
+	d := &GetAccountByIdBatch{}
 
 	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]indexerdb.Account, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetAccountByIDBatch")
+			ctx = preFetchHook(ctx, "GetAccountByIdBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetAccountByIDBatch")
+			postFetchHook(ctx, "GetAccountByIdBatch")
 		}
 
 		return results, errors
@@ -65,6 +65,347 @@ func newGetAccountByIDBatch(
 	return d
 }
 
-func (*GetAccountByIDBatch) getKeyForResult(result indexerdb.Account) persist.DBID {
+func (*GetAccountByIdBatch) getKeyForResult(result indexerdb.Account) persist.DBID {
 	return result.ID
+}
+
+// GetAccountsByIdsBatch batches and caches requests
+type GetAccountsByIdsBatch struct {
+	generator.Dataloader[indexerdb.GetAccountsByIdsBatchParams, []indexerdb.Account]
+}
+
+// newGetAccountsByIdsBatch creates a new GetAccountsByIdsBatch with the given settings, functions, and options
+func newGetAccountsByIdsBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetAccountsByIdsBatch, []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetAccountsByIdsBatch {
+	d := &GetAccountsByIdsBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetAccountsByIdsBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetAccountsByIdsBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetPoolContractByIdBatch batches and caches requests
+type GetPoolContractByIdBatch struct {
+	generator.Dataloader[persist.DBID, indexerdb.Pool]
+}
+
+// newGetPoolContractByIdBatch creates a new GetPoolContractByIdBatch with the given settings, functions, and options
+func newGetPoolContractByIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetPoolContractByIdBatch, []persist.DBID) ([]indexerdb.Pool, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetPoolContractByIdBatch {
+	d := &GetPoolContractByIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]indexerdb.Pool, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetPoolContractByIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetPoolContractByIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+func (*GetPoolContractByIdBatch) getKeyForResult(result indexerdb.Pool) persist.DBID {
+	return result.ID
+}
+
+// GetPoolContractsByAccountAddressBatch batches and caches requests
+type GetPoolContractsByAccountAddressBatch struct {
+	generator.Dataloader[string, []indexerdb.Pool]
+}
+
+// newGetPoolContractsByAccountAddressBatch creates a new GetPoolContractsByAccountAddressBatch with the given settings, functions, and options
+func newGetPoolContractsByAccountAddressBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetPoolContractsByAccountAddressBatch, []string) ([][]indexerdb.Pool, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetPoolContractsByAccountAddressBatch {
+	d := &GetPoolContractsByAccountAddressBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []string) ([][]indexerdb.Pool, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetPoolContractsByAccountAddressBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetPoolContractsByAccountAddressBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetPoolContractsByAccountAddressesBatch batches and caches requests
+type GetPoolContractsByAccountAddressesBatch struct {
+	generator.Dataloader[string, []indexerdb.Pool]
+}
+
+// newGetPoolContractsByAccountAddressesBatch creates a new GetPoolContractsByAccountAddressesBatch with the given settings, functions, and options
+func newGetPoolContractsByAccountAddressesBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetPoolContractsByAccountAddressesBatch, []string) ([][]indexerdb.Pool, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetPoolContractsByAccountAddressesBatch {
+	d := &GetPoolContractsByAccountAddressesBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []string) ([][]indexerdb.Pool, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetPoolContractsByAccountAddressesBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetPoolContractsByAccountAddressesBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetPoolContractsByIdsBatch batches and caches requests
+type GetPoolContractsByIdsBatch struct {
+	generator.Dataloader[persist.DBID, []indexerdb.Pool]
+}
+
+// newGetPoolContractsByIdsBatch creates a new GetPoolContractsByIdsBatch with the given settings, functions, and options
+func newGetPoolContractsByIdsBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetPoolContractsByIdsBatch, []persist.DBID) ([][]indexerdb.Pool, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetPoolContractsByIdsBatch {
+	d := &GetPoolContractsByIdsBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]indexerdb.Pool, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetPoolContractsByIdsBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetPoolContractsByIdsBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetTokenBalancesByPoolIdBatch batches and caches requests
+type GetTokenBalancesByPoolIdBatch struct {
+	generator.Dataloader[persist.DBID, []indexerdb.TokenBalance]
+}
+
+// newGetTokenBalancesByPoolIdBatch creates a new GetTokenBalancesByPoolIdBatch with the given settings, functions, and options
+func newGetTokenBalancesByPoolIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetTokenBalancesByPoolIdBatch, []persist.DBID) ([][]indexerdb.TokenBalance, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetTokenBalancesByPoolIdBatch {
+	d := &GetTokenBalancesByPoolIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]indexerdb.TokenBalance, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetTokenBalancesByPoolIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetTokenBalancesByPoolIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetTokenBalancesByPoolIdsBatch batches and caches requests
+type GetTokenBalancesByPoolIdsBatch struct {
+	generator.Dataloader[persist.DBID, []indexerdb.TokenBalance]
+}
+
+// newGetTokenBalancesByPoolIdsBatch creates a new GetTokenBalancesByPoolIdsBatch with the given settings, functions, and options
+func newGetTokenBalancesByPoolIdsBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetTokenBalancesByPoolIdsBatch, []persist.DBID) ([][]indexerdb.TokenBalance, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetTokenBalancesByPoolIdsBatch {
+	d := &GetTokenBalancesByPoolIdsBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]indexerdb.TokenBalance, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetTokenBalancesByPoolIdsBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetTokenBalancesByPoolIdsBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetTokenByIdBatch batches and caches requests
+type GetTokenByIdBatch struct {
+	generator.Dataloader[persist.DBID, indexerdb.Token]
+}
+
+// newGetTokenByIdBatch creates a new GetTokenByIdBatch with the given settings, functions, and options
+func newGetTokenByIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetTokenByIdBatch, []persist.DBID) ([]indexerdb.Token, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetTokenByIdBatch {
+	d := &GetTokenByIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]indexerdb.Token, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetTokenByIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetTokenByIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+func (*GetTokenByIdBatch) getKeyForResult(result indexerdb.Token) persist.DBID {
+	return result.ID
+}
+
+// GetTokensByIdsBatch batches and caches requests
+type GetTokensByIdsBatch struct {
+	generator.Dataloader[persist.DBID, []indexerdb.Token]
+}
+
+// newGetTokensByIdsBatch creates a new GetTokensByIdsBatch with the given settings, functions, and options
+func newGetTokensByIdsBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetTokensByIdsBatch, []persist.DBID) ([][]indexerdb.Token, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetTokensByIdsBatch {
+	d := &GetTokensByIdsBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]indexerdb.Token, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetTokensByIdsBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetTokensByIdsBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
 }

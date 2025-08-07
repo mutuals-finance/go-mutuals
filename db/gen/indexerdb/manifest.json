@@ -68953,9 +68953,9 @@
   },
   "queries": [
     {
-      "text": "SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at FROM public.account WHERE id = $1",
-      "name": "GetAccountByID",
-      "cmd": ":one",
+      "text": "\nSELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.account\nWHERE id = $1",
+      "name": "GetAccountByIdBatch",
+      "cmd": ":batchone",
       "columns": [
         {
           "name": "id",
@@ -69171,14 +69171,18 @@
           }
         }
       ],
-      "comments": [],
+      "comments": [
+        " -----------------------------------------------------------------------------",
+        " ACCOUNT",
+        " -----------------------------------------------------------------------------"
+      ],
       "filename": "query.sql",
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at FROM public.account WHERE id = $1",
-      "name": "GetAccountByIDBatch",
-      "cmd": ":batchone",
+      "text": "SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.account\nWHERE id = ANY ($1)\n  AND (created_at, id) \u003c ($2, $3)\n  AND (created_at, id) \u003e ($4, $5)\nORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC\nLIMIT $7",
+      "name": "GetAccountsByIdsBatch",
+      "cmd": ":batchmany",
       "columns": [
         {
           "name": "id",
@@ -69367,6 +69371,551 @@
         {
           "number": 1,
           "column": {
+            "name": "account_ids",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "account"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 2,
+          "column": {
+            "name": "cur_before_time",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "account"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.timestamptz"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 3,
+          "column": {
+            "name": "cur_before_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "account"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.timestamptz"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 4,
+          "column": {
+            "name": "cur_after_time",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "account"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.timestamptz"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 5,
+          "column": {
+            "name": "cur_after_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "account"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.timestamptz"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 6,
+          "column": {
+            "name": "paging_forward",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "bool"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 7,
+          "column": {
+            "name": "limit",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": true,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "integer"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "\nSELECT id, address, chain_id, pool_factory_id, account_id, name, description, logo, owner_id, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.pool\nWHERE id = $1",
+      "name": "GetPoolContractById",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "pool_factory_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "account_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "description",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "owner_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
             "name": "id",
             "not_null": true,
             "is_array": false,
@@ -69378,7 +69927,3296 @@
             "table": {
               "catalog": "",
               "schema": "public",
+              "name": "pool"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [
+        " -----------------------------------------------------------------------------",
+        " POOL CONTRACT",
+        " -----------------------------------------------------------------------------"
+      ],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, address, chain_id, pool_factory_id, account_id, name, description, logo, owner_id, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.pool\nWHERE id = $1",
+      "name": "GetPoolContractByIdBatch",
+      "cmd": ":batchone",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "pool_factory_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "account_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "description",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "owner_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "pool"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, address, chain_id, pool_factory_id, account_id, name, description, logo, owner_id, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.pool\nWHERE id = ANY ($1)",
+      "name": "GetPoolContractsByIdsBatch",
+      "cmd": ":batchmany",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "pool_factory_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "account_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "description",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "owner_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "pool"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT p.id, p.address, p.chain_id, p.pool_factory_id, p.account_id, p.name, p.description, p.logo, p.owner_id, p.created_at_block_number, p.updated_at_block_number, p.created_at, p.updated_at\nFROM public.account a,\n     public.pool p\n         INNER JOIN public.claim c ON c.recipient_id = a.id\nWHERE a.address = $1\n  AND p.id = c.pool_id",
+      "name": "GetPoolContractsByAccountAddressBatch",
+      "cmd": ":batchmany",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "pool_factory_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "account_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "description",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "owner_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "address",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
               "name": "account"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "text"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT p.id, p.address, p.chain_id, p.pool_factory_id, p.account_id, p.name, p.description, p.logo, p.owner_id, p.created_at_block_number, p.updated_at_block_number, p.created_at, p.updated_at\nFROM public.account a,\n     public.pool p\n         INNER JOIN public.claim c ON c.recipient_id = a.id\nWHERE a.address = ANY ($1)\n  AND p.id = c.pool_id",
+      "name": "GetPoolContractsByAccountAddressesBatch",
+      "cmd": ":batchmany",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "pool_factory_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "account_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "description",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "owner_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "pool"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "address",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "account"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "text"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "\n/*\nname: GetPoolTokensByTokenIdentifiers :many\n\nwith params as (\n    select unnest(@pool_addresses::address[]) as pool_address, unnest(@token_addresses::address[]) as token_address, unnest(@chains::chain[]) as chain\n)\nSELECT t.*\nfrom pools s\n         left join tokens t on s.address = t.owner_address\n         join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain\nwhere s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false;\n*/\n\nSELECT id, address, chain_id, symbol, name, decimals, logo, thumbnail, validated, possible_spam, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.token\nWHERE id = $1",
+      "name": "GetTokenById",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "symbol",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "decimals",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "thumbnail",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "validated",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "possible_spam",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "token"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [
+        " -----------------------------------------------------------------------------",
+        " TOKEN",
+        " -----------------------------------------------------------------------------"
+      ],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, address, chain_id, symbol, name, decimals, logo, thumbnail, validated, possible_spam, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.token\nWHERE id = $1",
+      "name": "GetTokenByIdBatch",
+      "cmd": ":batchone",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "symbol",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "decimals",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "thumbnail",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "validated",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "possible_spam",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "token"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, address, chain_id, symbol, name, decimals, logo, thumbnail, validated, possible_spam, created_at_block_number, updated_at_block_number, created_at, updated_at\nFROM public.token\nWHERE id = ANY ($1)",
+      "name": "GetTokensByIdsBatch",
+      "cmd": ":batchmany",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "symbol",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "decimals",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "logo",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "thumbnail",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "text"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "validated",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "possible_spam",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "token"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT b.id, b.chain_id, b.token_id, b.holder_id, b.amount, b.created_at_block_number, b.updated_at_block_number, b.created_at, b.updated_at\nFROM public.token_balance b,\n     public.pool p\nWHERE p.id = $1\n  AND b.holder_id = p.account_id",
+      "name": "GetTokenBalancesByPoolIdBatch",
+      "cmd": ":batchmany",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "token_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "holder_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "amount",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "numeric"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "pool"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT b.id, b.chain_id, b.token_id, b.holder_id, b.amount, b.created_at_block_number, b.updated_at_block_number, b.created_at, b.updated_at\nFROM public.token_balance b,\n     public.pool p\nWHERE p.id = ANY ($1)\n  AND b.holder_id = p.account_id",
+      "name": "GetTokenBalancesByPoolIdsBatch",
+      "cmd": ":batchmany",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "chain_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "token_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "holder_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "amount",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "numeric"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at_block_number",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "public",
+            "name": "token_balance"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "pool"
             },
             "table_alias": "",
             "type": {

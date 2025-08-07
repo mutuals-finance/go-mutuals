@@ -66,7 +66,7 @@ func (q *Queries) BlockUser(ctx context.Context, arg BlockUserParams) (persist.D
 }
 
 const clearNotificationsForUser = `-- name: ClearNotificationsForUser :many
-UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
+UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 `
 
 func (q *Queries) ClearNotificationsForUser(ctx context.Context, ownerID persist.DBID) ([]Notification, error) {
@@ -83,14 +83,14 @@ func (q *Queries) ClearNotificationsForUser(ctx context.Context, ownerID persist
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
 			&i.PoolID,
 			&i.Seen,
 			&i.Amount,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -162,7 +162,7 @@ WHERE NOT EXISTS (
     WHERE n.owner_id = u.user_id
       AND n.data ->> 'internal_id' = $4::varchar
 )
-RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
+RETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 `
 
 type CreateAnnouncementNotificationsParams struct {
@@ -197,14 +197,14 @@ func (q *Queries) CreateAnnouncementNotifications(ctx context.Context, arg Creat
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
 			&i.PoolID,
 			&i.Seen,
 			&i.Amount,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -217,7 +217,7 @@ func (q *Queries) CreateAnnouncementNotifications(ctx context.Context, arg Creat
 }
 
 const createPoolEvent = `-- name: CreatePoolEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id
+INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at
 `
 
 type CreatePoolEventParams struct {
@@ -255,12 +255,12 @@ func (q *Queries) CreatePoolEvent(ctx context.Context, arg CreatePoolEventParams
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 		&i.PoolID,
 		&i.ExternalID,
 		&i.Caption,
 		&i.GroupID,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -314,7 +314,7 @@ func (q *Queries) CreatePushTokenForUser(ctx context.Context, arg CreatePushToke
 }
 
 const createSimpleNotification = `-- name: CreateSimpleNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
+INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 `
 
 type CreateSimpleNotificationParams struct {
@@ -339,20 +339,20 @@ func (q *Queries) CreateSimpleNotification(ctx context.Context, arg CreateSimple
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
 		&i.EventIds,
 		&i.PoolID,
 		&i.Seen,
 		&i.Amount,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const createUserEvent = `-- name: CreateUserEvent :one
-INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id
+INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at
 `
 
 type CreateUserEventParams struct {
@@ -388,18 +388,18 @@ func (q *Queries) CreateUserEvent(ctx context.Context, arg CreateUserEventParams
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 		&i.PoolID,
 		&i.ExternalID,
 		&i.Caption,
 		&i.GroupID,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const createViewPoolNotification = `-- name: CreateViewPoolNotification :one
-INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount
+INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 `
 
 type CreateViewPoolNotificationParams struct {
@@ -426,14 +426,14 @@ func (q *Queries) CreateViewPoolNotification(ctx context.Context, arg CreateView
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
 		&i.EventIds,
 		&i.PoolID,
 		&i.Seen,
 		&i.Amount,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -470,12 +470,21 @@ func (q *Queries) DeleteUserRoles(ctx context.Context, arg DeleteUserRolesParams
 	return err
 }
 
-const deleteWalletByID = `-- name: DeleteWalletByID :exec
-update wallets set deleted = true, updated_at = now() where id = $1
+const deleteWalletById = `-- name: DeleteWalletById :exec
+UPDATE user_accounts ua
+SET ua.deleted = TRUE, ua.updated_at = now()
+WHERE ua.id = $1
+  AND ua.user_id = $2
+  AND ua.id != COALESCE((SELECT primary_account_id FROM users u WHERE u.id = $2), '')
 `
 
-func (q *Queries) DeleteWalletByID(ctx context.Context, id persist.DBID) error {
-	_, err := q.db.Exec(ctx, deleteWalletByID, id)
+type DeleteWalletByIdParams struct {
+	ID     persist.DBID `db:"id" json:"id"`
+	UserID persist.DBID `db:"user_id" json:"user_id"`
+}
+
+func (q *Queries) DeleteWalletById(ctx context.Context, arg DeleteWalletByIdParams) error {
+	_, err := q.db.Exec(ctx, deleteWalletById, arg.ID, arg.UserID)
 	return err
 }
 
@@ -534,7 +543,7 @@ func (q *Queries) GetCurrentTime(ctx context.Context) (time.Time, error) {
 }
 
 const getEvent = `-- name: GetEvent :one
-SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id FROM events WHERE id = $1 AND deleted = false
+SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at FROM events WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) {
@@ -550,18 +559,18 @@ func (q *Queries) GetEvent(ctx context.Context, id persist.DBID) (Event, error) 
 		&i.Action,
 		&i.Data,
 		&i.Deleted,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 		&i.PoolID,
 		&i.ExternalID,
 		&i.Caption,
 		&i.GroupID,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getEventsInGroup = `-- name: GetEventsInGroup :many
-select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where group_id = $1 and deleted = false order by(created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where group_id = $1 and deleted = false order by(created_at, id) asc
 `
 
 func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) ([]Event, error) {
@@ -583,12 +592,12 @@ func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) 
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.PoolID,
 			&i.ExternalID,
 			&i.Caption,
 			&i.GroupID,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -602,9 +611,9 @@ func (q *Queries) GetEventsInGroup(ctx context.Context, groupID sql.NullString) 
 
 const getEventsInWindow = `-- name: GetEventsInWindow :many
 with recursive activity as (
-    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
+    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where events.id = $1 and deleted = false
     union
-    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.updated_at, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a
+    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.pool_id, e.external_id, e.caption, e.group_id, e.updated_at, e.created_at from events e, activity a
     where e.actor_id = a.actor_id
       and e.action = any($3)
       and e.created_at < a.created_at
@@ -613,7 +622,7 @@ with recursive activity as (
       and e.caption is null
       and (not $4::bool or e.subject_id = a.subject_id)
 )
-select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where id = any(select id from activity) order by (created_at, id) asc
 `
 
 type GetEventsInWindowParams struct {
@@ -647,12 +656,12 @@ func (q *Queries) GetEventsInWindow(ctx context.Context, arg GetEventsInWindowPa
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.PoolID,
 			&i.ExternalID,
 			&i.Caption,
 			&i.GroupID,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -665,7 +674,7 @@ func (q *Queries) GetEventsInWindow(ctx context.Context, arg GetEventsInWindowPa
 }
 
 const getMostRecentNotificationByOwnerIDForAction = `-- name: GetMostRecentNotificationByOwnerIDForAction :one
-select id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount from notifications
+select id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at from notifications
 where owner_id = $1
   and action = $2
   and deleted = false
@@ -686,20 +695,20 @@ func (q *Queries) GetMostRecentNotificationByOwnerIDForAction(ctx context.Contex
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
 		&i.EventIds,
 		&i.PoolID,
 		&i.Seen,
 		&i.Amount,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getNotificationByID = `-- name: GetNotificationByID :one
-SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE id = $1 AND deleted = false
 `
 
 func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Notification, error) {
@@ -710,20 +719,20 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Not
 		&i.Deleted,
 		&i.OwnerID,
 		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 		&i.Action,
 		&i.Data,
 		&i.EventIds,
 		&i.PoolID,
 		&i.Seen,
 		&i.Amount,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getNotificationsByOwnerIDForActionAfter = `-- name: GetNotificationsByOwnerIDForActionAfter :many
-SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications
 WHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at > $3
 ORDER BY created_at DESC
 `
@@ -748,14 +757,14 @@ func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, a
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
 			&i.PoolID,
 			&i.Seen,
 			&i.Amount,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -767,68 +776,43 @@ func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, a
 	return items, nil
 }
 
-const getPoolByChainAddress = `-- name: GetPoolByChainAddress :one
-SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE address = $1 AND chain = $2 AND deleted = false
-`
-
-type GetPoolByChainAddressParams struct {
-	Address persist.Address `db:"address" json:"address"`
-	Chain   persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetPoolByChainAddress(ctx context.Context, arg GetPoolByChainAddressParams) (Pool, error) {
-	row := q.db.QueryRow(ctx, getPoolByChainAddress, arg.Address, arg.Chain)
-	var i Pool
-	err := row.Scan(
-		&i.ID,
-		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.Deleted,
-		&i.Name,
-		&i.Description,
-		&i.Status,
-		&i.Chain,
-		&i.L1Chain,
-		&i.Address,
-		&i.OwnerAddress,
-		&i.CreatorAddress,
-	)
-	return i, err
-}
-
 const getPoolById = `-- name: GetPoolById :one
-SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE id = $1 AND deleted = false
+
+SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at FROM pools WHERE id = $1 AND deleted = false
 `
 
+// -----------------------------------------------------------------------------
+// POOL
+// -----------------------------------------------------------------------------
 func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error) {
 	row := q.db.QueryRow(ctx, getPoolById, id)
 	var i Pool
 	err := row.Scan(
 		&i.ID,
-		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.Deleted,
 		&i.Name,
 		&i.Description,
-		&i.Status,
-		&i.Chain,
-		&i.L1Chain,
-		&i.Address,
-		&i.OwnerAddress,
-		&i.CreatorAddress,
+		&i.Logo,
+		&i.Slug,
+		&i.OwnerID,
+		&i.ContractID,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getPoolByUserID = `-- name: GetPoolByUserID :one
-SELECT s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM users u, unnest(u.wallets)
-    WITH ORDINALITY AS a(wallet_id, wallet_ord)
-    INNER JOIN wallets w on w.id = a.wallet_id
-    INNER JOIN allocations a ON a.address = w.address
-    INNER JOIN pools s ON s.id = a.pool_id
-    WHERE u.id = $1 AND s.id = $2 AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false
+SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at FROM users u
+                    INNER JOIN user_accounts ua ON u.id = ua.user_id
+                    INNER JOIN claims c ON c.recipient_address = ua.address
+                    INNER JOIN pools p ON p.id = c.pool_id
+WHERE u.id = $1
+  AND p.id = $2
+  AND u.deleted = false
+  AND ua.deleted = false
+  AND c.deleted = false
+  AND p.deleted = false
 `
 
 type GetPoolByUserIDParams struct {
@@ -841,27 +825,24 @@ func (q *Queries) GetPoolByUserID(ctx context.Context, arg GetPoolByUserIDParams
 	var i Pool
 	err := row.Scan(
 		&i.ID,
-		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.Deleted,
 		&i.Name,
 		&i.Description,
-		&i.Status,
-		&i.Chain,
-		&i.L1Chain,
-		&i.Address,
-		&i.OwnerAddress,
-		&i.CreatorAddress,
+		&i.Logo,
+		&i.Slug,
+		&i.OwnerID,
+		&i.ContractID,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getPoolEventsInWindow = `-- name: GetPoolEventsInWindow :many
 with recursive activity as (
-    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where events.id = $1 and deleted = false
+    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where events.id = $1 and deleted = false
     union
-    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.updated_at, e.created_at, e.pool_id, e.external_id, e.caption, e.group_id from events e, activity a
+    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.pool_id, e.external_id, e.caption, e.group_id, e.updated_at, e.created_at from events e, activity a
     where e.actor_id = a.actor_id
       and e.action = any($3)
       and e.pool_id = $4
@@ -871,7 +852,7 @@ with recursive activity as (
       and e.caption is null
       and (not $5::bool or e.subject_id = a.subject_id)
 )
-select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, updated_at, created_at, pool_id, external_id, caption, group_id from events where id = any(select id from activity) order by (created_at, id) asc
+select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where id = any(select id from activity) order by (created_at, id) asc
 `
 
 type GetPoolEventsInWindowParams struct {
@@ -907,154 +888,12 @@ func (q *Queries) GetPoolEventsInWindow(ctx context.Context, arg GetPoolEventsIn
 			&i.Action,
 			&i.Data,
 			&i.Deleted,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.PoolID,
 			&i.ExternalID,
 			&i.Caption,
 			&i.GroupID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPoolTokensByTokenIdentifiers = `-- name: GetPoolTokensByTokenIdentifiers :many
-with params as (
-    select unnest($1::address[]) as pool_address, unnest($2::address[]) as token_address, unnest($3::chain[]) as chain
-)
-SELECT t.id, t.deleted, t.version, t.created_at, t.updated_at, t.chain, t.token_address, t.owner_address, t.balance
-from pools s
-         left join tokens t on s.address = t.owner_address
-         join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain
-where s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false
-`
-
-type GetPoolTokensByTokenIdentifiersParams struct {
-	PoolAddresses  []persist.Address `db:"pool_addresses" json:"pool_addresses"`
-	TokenAddresses []persist.Address `db:"token_addresses" json:"token_addresses"`
-	Chains         []persist.Chain   `db:"chains" json:"chains"`
-}
-
-type GetPoolTokensByTokenIdentifiersRow struct {
-	ID           persist.DBID      `db:"id" json:"id"`
-	Deleted      sql.NullBool      `db:"deleted" json:"deleted"`
-	Version      sql.NullInt32     `db:"version" json:"version"`
-	CreatedAt    sql.NullTime      `db:"created_at" json:"created_at"`
-	UpdatedAt  sql.NullTime      `db:"updated_at" json:"updated_at"`
-	Chain        persist.Chain     `db:"chain" json:"chain"`
-	TokenAddress persist.Address   `db:"token_address" json:"token_address"`
-	OwnerAddress persist.Address   `db:"owner_address" json:"owner_address"`
-	Balance      persist.HexString `db:"balance" json:"balance"`
-}
-
-func (q *Queries) GetPoolTokensByTokenIdentifiers(ctx context.Context, arg GetPoolTokensByTokenIdentifiersParams) ([]GetPoolTokensByTokenIdentifiersRow, error) {
-	rows, err := q.db.Query(ctx, getPoolTokensByTokenIdentifiers, arg.PoolAddresses, arg.TokenAddresses, arg.Chains)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetPoolTokensByTokenIdentifiersRow
-	for rows.Next() {
-		var i GetPoolTokensByTokenIdentifiersRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Chain,
-			&i.TokenAddress,
-			&i.OwnerAddress,
-			&i.Balance,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPoolsByChainsAndAddresses = `-- name: GetPoolsByChainsAndAddresses :many
-SELECT id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address FROM pools WHERE chain = any($1::int[]) OR contract_address = any($2::varchar[]) AND deleted = false
-`
-
-type GetPoolsByChainsAndAddressesParams struct {
-	Chains    []int32  `db:"chains" json:"chains"`
-	Addresses []string `db:"addresses" json:"addresses"`
-}
-
-func (q *Queries) GetPoolsByChainsAndAddresses(ctx context.Context, arg GetPoolsByChainsAndAddressesParams) ([]Pool, error) {
-	rows, err := q.db.Query(ctx, getPoolsByChainsAndAddresses, arg.Chains, arg.Addresses)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Pool
-	for rows.Next() {
-		var i Pool
-		if err := rows.Scan(
-			&i.ID,
-			&i.Version,
 			&i.UpdatedAt,
 			&i.CreatedAt,
-			&i.Deleted,
-			&i.Name,
-			&i.Description,
-			&i.Status,
-			&i.Chain,
-			&i.L1Chain,
-			&i.Address,
-			&i.OwnerAddress,
-			&i.CreatorAddress,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPoolsByRecipientAddress = `-- name: GetPoolsByRecipientAddress :many
-SELECT s.id, s.version, s.updated_at, s.created_at, s.deleted, s.name, s.description, s.status, s.chain, s.l1_chain, s.address, s.owner_address, s.creator_address FROM allocations a
-                    JOIN pools s ON s.id = a.pool_id
-WHERE a.recipient_address = $1 AND s.deleted = false
-`
-
-func (q *Queries) GetPoolsByRecipientAddress(ctx context.Context, recipientAddress persist.Address) ([]Pool, error) {
-	rows, err := q.db.Query(ctx, getPoolsByRecipientAddress, recipientAddress)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Pool
-	for rows.Next() {
-		var i Pool
-		if err := rows.Scan(
-			&i.ID,
-			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Deleted,
-			&i.Name,
-			&i.Description,
-			&i.Status,
-			&i.Chain,
-			&i.L1Chain,
-			&i.Address,
-			&i.OwnerAddress,
-			&i.CreatorAddress,
 		); err != nil {
 			return nil, err
 		}
@@ -1149,7 +988,7 @@ func (q *Queries) GetPushTokensByUserID(ctx context.Context, userID persist.DBID
 }
 
 const getRecentUnseenNotifications = `-- name: GetRecentUnseenNotifications :many
-SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at > $2 order by created_at desc limit $3
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at > $2 order by created_at desc limit $3
 `
 
 type GetRecentUnseenNotificationsParams struct {
@@ -1172,59 +1011,14 @@ func (q *Queries) GetRecentUnseenNotifications(ctx context.Context, arg GetRecen
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
 			&i.PoolID,
 			&i.Seen,
 			&i.Amount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getTokenMetadatasByTokenIdentifiers = `-- name: GetTokenMetadatasByTokenIdentifiers :many
-with params as (
-    select unnest($1::address[]) as contract_address, unnest($2::chain[]) as chain
-)
-select m.id, m.deleted, m.created_at, m.updated_at, m.symbol, m.name, m.logo, m.thumbnail, m.chain, m.contract_address from params p
-         join token_metadatas m on p.contract_address = m.contract_address and p.chain = m.chain
-         where m.deleted = false
-`
-
-type GetTokenMetadatasByTokenIdentifiersParams struct {
-	ContractAddress []persist.Address `db:"contract_address" json:"contract_address"`
-	Chain           []persist.Chain   `db:"chain" json:"chain"`
-}
-
-func (q *Queries) GetTokenMetadatasByTokenIdentifiers(ctx context.Context, arg GetTokenMetadatasByTokenIdentifiersParams) ([]TokenMetadata, error) {
-	rows, err := q.db.Query(ctx, getTokenMetadatasByTokenIdentifiers, arg.ContractAddress, arg.Chain)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []TokenMetadata
-	for rows.Next() {
-		var i TokenMetadata
-		if err := rows.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Symbol,
-			&i.Name,
-			&i.Logo,
-			&i.Thumbnail,
-			&i.Chain,
-			&i.ContractAddress,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1236,23 +1030,16 @@ func (q *Queries) GetTokenMetadatasByTokenIdentifiers(ctx context.Context, arg G
 	return items, nil
 }
 
-const getUserByAddressAndL1 = `-- name: GetUserByAddressAndL1 :one
-select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences
-from users, wallets
-where wallets.address = $1
-  and wallets.l1_chain = $2
-  and array[wallets.id] <@ users.wallets
-  and wallets.deleted = false
-  and users.deleted = false
+const getUserByAccountID = `-- name: GetUserByAccountID :one
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences FROM users u
+INNER JOIN user_accounts ua ON u.id = ua.user_id
+WHERE ua.id = $1
+  AND u.deleted = false
+  AND ua.deleted = false
 `
 
-type GetUserByAddressAndL1Params struct {
-	Address persist.Address `db:"address" json:"address"`
-	L1Chain persist.L1Chain `db:"l1_chain" json:"l1_chain"`
-}
-
-func (q *Queries) GetUserByAddressAndL1(ctx context.Context, arg GetUserByAddressAndL1Params) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByAddressAndL1, arg.Address, arg.L1Chain)
+func (q *Queries) GetUserByAccountID(ctx context.Context, accountID persist.DBID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByAccountID, accountID)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -1262,21 +1049,23 @@ func (q *Queries) GetUserByAddressAndL1(ctx context.Context, arg GetUserByAddres
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
-		&i.Wallets,
+		&i.PrimaryAccountID,
 		&i.Universal,
 		&i.NotificationSettings,
 		&i.EmailUnsubscriptions,
-		&i.FeaturedPool,
-		&i.PrimaryWalletID,
 		&i.UserExperiences,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = $1 AND deleted = false
+
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE id = $1 AND deleted = false
 `
 
+// -----------------------------------------------------------------------------
+// USER
+// -----------------------------------------------------------------------------
 func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error) {
 	row := q.db.QueryRow(ctx, getUserById, id)
 	var i User
@@ -1288,19 +1077,17 @@ func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
-		&i.Wallets,
+		&i.PrimaryAccountID,
 		&i.Universal,
 		&i.NotificationSettings,
 		&i.EmailUnsubscriptions,
-		&i.FeaturedPool,
-		&i.PrimaryWalletID,
 		&i.UserExperiences,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -1314,19 +1101,17 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
-		&i.Wallets,
+		&i.PrimaryAccountID,
 		&i.Universal,
 		&i.NotificationSettings,
 		&i.EmailUnsubscriptions,
-		&i.FeaturedPool,
-		&i.PrimaryWalletID,
 		&i.UserExperiences,
 	)
 	return i, err
 }
 
 const getUserByVerifiedEmailAddress = `-- name: GetUserByVerifiedEmailAddress :one
-select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences from users u join pii.for_users p on u.id = p.user_id
 where p.pii_verified_email_address = lower($1)
   and p.deleted = false
   and u.deleted = false
@@ -1343,22 +1128,24 @@ func (q *Queries) GetUserByVerifiedEmailAddress(ctx context.Context, lower strin
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
-		&i.Wallets,
+		&i.PrimaryAccountID,
 		&i.Universal,
 		&i.NotificationSettings,
 		&i.EmailUnsubscriptions,
-		&i.FeaturedPool,
-		&i.PrimaryWalletID,
 		&i.UserExperiences,
 	)
 	return i, err
 }
 
 const getUserByWalletID = `-- name: GetUserByWalletID :one
-select id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences from users where array[$1::varchar]::varchar[] <@ wallets and deleted = false
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences FROM users u
+                    INNER JOIN user_accounts ua ON u.id = ua.user_id
+WHERE ua.address = $1
+  AND u.deleted = false
+  AND ua.deleted = false
 `
 
-func (q *Queries) GetUserByWalletID(ctx context.Context, wallet string) (User, error) {
+func (q *Queries) GetUserByWalletID(ctx context.Context, wallet sql.NullString) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByWalletID, wallet)
 	var i User
 	err := row.Scan(
@@ -1369,12 +1156,10 @@ func (q *Queries) GetUserByWalletID(ctx context.Context, wallet string) (User, e
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
-		&i.Wallets,
+		&i.PrimaryAccountID,
 		&i.Universal,
 		&i.NotificationSettings,
 		&i.EmailUnsubscriptions,
-		&i.FeaturedPool,
-		&i.PrimaryWalletID,
 		&i.UserExperiences,
 	)
 	return i, err
@@ -1392,7 +1177,7 @@ func (q *Queries) GetUserExperiencesByUserID(ctx context.Context, id persist.DBI
 }
 
 const getUserNotifications = `-- name: GetUserNotifications :many
-SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false
                               AND (created_at, id) < ($3, $4)
                               AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1432,14 +1217,14 @@ func (q *Queries) GetUserNotifications(ctx context.Context, arg GetUserNotificat
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
 			&i.PoolID,
 			&i.Seen,
 			&i.Amount,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1476,7 +1261,7 @@ func (q *Queries) GetUserRolesByUserId(ctx context.Context, userID persist.DBID)
 }
 
 const getUserUnseenNotifications = `-- name: GetUserUnseenNotifications :many
-SELECT id, deleted, owner_id, version, updated_at, created_at, action, data, event_ids, pool_id, seen, amount FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false
                               AND (created_at, id) < ($3, $4)
                               AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1516,14 +1301,14 @@ func (q *Queries) GetUserUnseenNotifications(ctx context.Context, arg GetUserUns
 			&i.Deleted,
 			&i.OwnerID,
 			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
 			&i.Action,
 			&i.Data,
 			&i.EventIds,
 			&i.PoolID,
 			&i.Seen,
 			&i.Amount,
+			&i.UpdatedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1536,7 +1321,7 @@ func (q *Queries) GetUserUnseenNotifications(ctx context.Context, arg GetUserUns
 }
 
 const getUserWithPIIByID = `-- name: GetUserWithPIIByID :one
-select id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false
+select id, deleted, version, updated_at, created_at, username, username_idempotent, universal, notification_settings, email_unsubscriptions, primary_account_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false
 `
 
 func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (PiiUserView, error) {
@@ -1550,12 +1335,10 @@ func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (
 		&i.CreatedAt,
 		&i.Username,
 		&i.UsernameIdempotent,
-		&i.Wallets,
 		&i.Universal,
 		&i.NotificationSettings,
 		&i.EmailUnsubscriptions,
-		&i.FeaturedPool,
-		&i.PrimaryWalletID,
+		&i.PrimaryAccountID,
 		&i.UserExperiences,
 		&i.PiiUnverifiedEmailAddress,
 		&i.PiiVerifiedEmailAddress,
@@ -1563,71 +1346,8 @@ func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (
 	return i, err
 }
 
-const getUsersByChainAddresses = `-- name: GetUsersByChainAddresses :many
-select users.id, users.deleted, users.version, users.updated_at, users.created_at, users.username, users.username_idempotent, users.wallets, users.universal, users.notification_settings, users.email_unsubscriptions, users.featured_pool, users.primary_wallet_id, users.user_experiences,wallets.address from users, wallets where wallets.address = ANY($1::varchar[]) AND wallets.l1_chain = $2 AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false
-`
-
-type GetUsersByChainAddressesParams struct {
-	Addresses []string        `db:"addresses" json:"addresses"`
-	L1Chain   persist.L1Chain `db:"l1_chain" json:"l1_chain"`
-}
-
-type GetUsersByChainAddressesRow struct {
-	ID                   persist.DBID                     `db:"id" json:"id"`
-	Deleted              bool                             `db:"deleted" json:"deleted"`
-	Version              sql.NullInt32                    `db:"version" json:"version"`
-	LastUpdated          time.Time                        `db:"updated_at" json:"updated_at"`
-	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
-	Username             sql.NullString                   `db:"username" json:"username"`
-	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
-	Wallets              persist.WalletList               `db:"wallets" json:"wallets"`
-	Universal            bool                             `db:"universal" json:"universal"`
-	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
-	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	FeaturedPool         *persist.DBID                    `db:"featured_pool" json:"featured_pool"`
-	PrimaryWalletID      persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
-	UserExperiences      pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
-	Address              persist.Address                  `db:"address" json:"address"`
-}
-
-func (q *Queries) GetUsersByChainAddresses(ctx context.Context, arg GetUsersByChainAddressesParams) ([]GetUsersByChainAddressesRow, error) {
-	rows, err := q.db.Query(ctx, getUsersByChainAddresses, arg.Addresses, arg.L1Chain)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetUsersByChainAddressesRow
-	for rows.Next() {
-		var i GetUsersByChainAddressesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.LastUpdated,
-			&i.CreatedAt,
-			&i.Username,
-			&i.UsernameIdempotent,
-			&i.Wallets,
-			&i.Universal,
-			&i.NotificationSettings,
-			&i.EmailUnsubscriptions,
-			&i.FeaturedPool,
-			&i.PrimaryWalletID,
-			&i.UserExperiences,
-			&i.Address,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getUsersByIDs = `-- name: GetUsersByIDs :many
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, wallets, universal, notification_settings, email_unsubscriptions, featured_pool, primary_wallet_id, user_experiences FROM users WHERE id = ANY($2) AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE id = ANY($2) AND deleted = false
                       AND (created_at, id) < ($3, $4)
                       AND (created_at, id) > ($5, $6)
 ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
@@ -1666,16 +1386,56 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 			&i.ID,
 			&i.Deleted,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
-			&i.Wallets,
+			&i.PrimaryAccountID,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedPool,
-			&i.PrimaryWalletID,
+			&i.UserExperiences,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersByWallets = `-- name: GetUsersByWallets :many
+SELECT DISTINCT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
+FROM users u
+         INNER JOIN user_accounts ua ON u.id = ua.user_id
+WHERE ua.address = ANY($1::varchar[])
+  AND u.deleted = false
+  AND ua.deleted = false
+`
+
+func (q *Queries) GetUsersByWallets(ctx context.Context, dollar_1 []string) ([]User, error) {
+	rows, err := q.db.Query(ctx, getUsersByWallets, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Deleted,
+			&i.Version,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+			&i.Username,
+			&i.UsernameIdempotent,
+			&i.PrimaryAccountID,
+			&i.Universal,
+			&i.NotificationSettings,
+			&i.EmailUnsubscriptions,
 			&i.UserExperiences,
 		); err != nil {
 			return nil, err
@@ -1689,7 +1449,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 }
 
 const getUsersWithEmailNotificationsOnForEmailType = `-- name: GetUsersWithEmailNotificationsOnForEmailType :many
-select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.universal, u.notification_settings, u.email_unsubscriptions, u.primary_account_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u
                     left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false
 where (u.email_unsubscriptions->>'all' = 'false' or u.email_unsubscriptions->>'all' is null)
   and (u.email_unsubscriptions->>$2::varchar = 'false' or u.email_unsubscriptions->>$2::varchar is null)
@@ -1736,16 +1496,14 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 			&i.ID,
 			&i.Deleted,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
-			&i.Wallets,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedPool,
-			&i.PrimaryWalletID,
+			&i.PrimaryAccountID,
 			&i.UserExperiences,
 			&i.PiiUnverifiedEmailAddress,
 			&i.PiiVerifiedEmailAddress,
@@ -1761,7 +1519,7 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 }
 
 const getUsersWithRolePaginate = `-- name: GetUsersWithRolePaginate :many
-select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.wallets, u.universal, u.notification_settings, u.email_unsubscriptions, u.featured_pool, u.primary_wallet_id, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false
+select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false
                                          and u.id = ur.user_id and ur.role = $2
                                          and (u.username_idempotent, u.id) < ($3::varchar, $4::dbid)
                                          and (u.username_idempotent, u.id) > ($5::varchar, $6::dbid)
@@ -1801,98 +1559,15 @@ func (q *Queries) GetUsersWithRolePaginate(ctx context.Context, arg GetUsersWith
 			&i.ID,
 			&i.Deleted,
 			&i.Version,
-			&i.LastUpdated,
+			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Username,
 			&i.UsernameIdempotent,
-			&i.Wallets,
+			&i.PrimaryAccountID,
 			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
-			&i.FeaturedPool,
-			&i.PrimaryWalletID,
 			&i.UserExperiences,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getWalletByAddressAndL1Chain = `-- name: GetWalletByAddressAndL1Chain :one
-SELECT wallets.id, wallets.created_at, wallets.updated_at, wallets.deleted, wallets.version, wallets.address, wallets.wallet_type, wallets.chain, wallets.l1_chain FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false
-`
-
-type GetWalletByAddressAndL1ChainParams struct {
-	Address persist.Address `db:"address" json:"address"`
-	L1Chain persist.L1Chain `db:"l1_chain" json:"l1_chain"`
-}
-
-func (q *Queries) GetWalletByAddressAndL1Chain(ctx context.Context, arg GetWalletByAddressAndL1ChainParams) (Wallet, error) {
-	row := q.db.QueryRow(ctx, getWalletByAddressAndL1Chain, arg.Address, arg.L1Chain)
-	var i Wallet
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.Deleted,
-		&i.Version,
-		&i.Address,
-		&i.WalletType,
-		&i.Chain,
-		&i.L1Chain,
-	)
-	return i, err
-}
-
-const getWalletByID = `-- name: GetWalletByID :one
-SELECT id, created_at, updated_at, deleted, version, address, wallet_type, chain, l1_chain FROM wallets WHERE id = $1 AND deleted = false
-`
-
-func (q *Queries) GetWalletByID(ctx context.Context, id persist.DBID) (Wallet, error) {
-	row := q.db.QueryRow(ctx, getWalletByID, id)
-	var i Wallet
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.LastUpdated,
-		&i.Deleted,
-		&i.Version,
-		&i.Address,
-		&i.WalletType,
-		&i.Chain,
-		&i.L1Chain,
-	)
-	return i, err
-}
-
-const getWalletsByUserID = `-- name: GetWalletsByUserID :many
-SELECT w.id, w.created_at, w.updated_at, w.deleted, w.version, w.address, w.wallet_type, w.chain, w.l1_chain FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord
-`
-
-func (q *Queries) GetWalletsByUserID(ctx context.Context, id persist.DBID) ([]Wallet, error) {
-	rows, err := q.db.Query(ctx, getWalletsByUserID, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Wallet
-	for rows.Next() {
-		var i Wallet
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.LastUpdated,
-			&i.Deleted,
-			&i.Version,
-			&i.Address,
-			&i.WalletType,
-			&i.Chain,
-			&i.L1Chain,
 		); err != nil {
 			return nil, err
 		}
@@ -1950,31 +1625,27 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (persist
 }
 
 const insertWallet = `-- name: InsertWallet :exec
-with new_wallet as (insert into wallets(id, address, chain, l1_chain, wallet_type) values ($1, $2, $3, $4, $5) returning id)
-update users set
-                 primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),
-                 wallets = array_append(users.wallets, new_wallet.id)
-from new_wallet
-where users.id = $6 and not users.deleted
+WITH new_account AS (INSERT INTO user_accounts(id, user_id, name, address) VALUES ($1, $2, $3, $4) RETURNING id)
+UPDATE users SET
+    primary_account_id = COALESCE(users.primary_account_id, new_account.id),
+    updated_at = now()
+FROM new_account
+WHERE users.id = $2 AND NOT users.deleted
 `
 
 type InsertWalletParams struct {
-	ID         persist.DBID       `db:"id" json:"id"`
-	Address    persist.Address    `db:"address" json:"address"`
-	Chain      persist.Chain      `db:"chain" json:"chain"`
-	L1Chain    persist.L1Chain    `db:"l1_chain" json:"l1_chain"`
-	WalletType persist.WalletType `db:"wallet_type" json:"wallet_type"`
-	UserID     persist.DBID       `db:"user_id" json:"user_id"`
+	ID      persist.DBID    `db:"id" json:"id"`
+	ID_2    persist.DBID    `db:"id_2" json:"id_2"`
+	Name    string          `db:"name" json:"name"`
+	Address persist.Address `db:"address" json:"address"`
 }
 
 func (q *Queries) InsertWallet(ctx context.Context, arg InsertWalletParams) error {
 	_, err := q.db.Exec(ctx, insertWallet,
 		arg.ID,
+		arg.ID_2,
+		arg.Name,
 		arg.Address,
-		arg.Chain,
-		arg.L1Chain,
-		arg.WalletType,
-		arg.UserID,
 	)
 	return err
 }
@@ -2221,9 +1892,10 @@ func (q *Queries) UpdateUserExperience(ctx context.Context, arg UpdateUserExperi
 }
 
 const updateUserPrimaryWallet = `-- name: UpdateUserPrimaryWallet :exec
-update users set primary_wallet_id = $1 from wallets
-where users.id = $2 and wallets.id = $1
-  and wallets.id = any(users.wallets) and wallets.deleted = false
+update users set primary_account_id = $1,
+                 updated_at = now()
+where users.id = $2
+  AND NOT users.deleted
 `
 
 type UpdateUserPrimaryWalletParams struct {
@@ -2321,7 +1993,7 @@ func (q *Queries) UpsertSession(ctx context.Context, arg UpsertSessionParams) (S
 		&i.CurrentRefreshID,
 		&i.ActiveUntil,
 		&i.Invalidated,
-		&i.LastUpdated,
+		&i.UpdatedAt,
 		&i.Deleted,
 	)
 	return i, err

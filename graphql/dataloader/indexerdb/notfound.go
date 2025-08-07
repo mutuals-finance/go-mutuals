@@ -1,7 +1,18 @@
 package indexerdb
 
-import "github.com/mutuals/go-mutuals/service/persist"
+import (
+	"github.com/jackc/pgx/v4"
+	"github.com/mutuals/go-mutuals/service/persist"
+)
 
-func (*GetAccountByIDBatch) getNotFoundError(key persist.DBID) error {
+func (*GetAccountByIdBatch) getNotFoundError(key persist.DBID) error {
 	return persist.ErrAccountNotFound{ID: key}
+}
+
+func (*GetPoolContractByIdBatch) getNotFoundError(key persist.DBID) error {
+	return persist.ErrPoolNotFound{ID: key}
+}
+
+func (*GetTokenByIdBatch) getNotFoundError(key persist.DBID) error {
+	return pgx.ErrNoRows
 }

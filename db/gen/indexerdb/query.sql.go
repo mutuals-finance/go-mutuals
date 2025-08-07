@@ -11,17 +11,74 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at FROM public.account WHERE id = $1
+const getPoolContractById = `-- name: GetPoolContractById :one
+
+SELECT id, address, chain_id, pool_factory_id, account_id, name, description, logo, owner_id, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.pool
+WHERE id = $1
 `
 
-func (q *Queries) GetAccountByID(ctx context.Context, id persist.DBID) (Account, error) {
-	row := q.db.QueryRow(ctx, getAccountByID, id)
-	var i Account
+// -----------------------------------------------------------------------------
+// POOL CONTRACT
+// -----------------------------------------------------------------------------
+func (q *Queries) GetPoolContractById(ctx context.Context, id persist.DBID) (Pool, error) {
+	row := q.db.QueryRow(ctx, getPoolContractById, id)
+	var i Pool
 	err := row.Scan(
 		&i.ID,
 		&i.Address,
-		&i.AccountType,
+		&i.ChainID,
+		&i.PoolFactoryID,
+		&i.AccountID,
+		&i.Name,
+		&i.Description,
+		&i.Logo,
+		&i.OwnerID,
+		&i.CreatedAtBlockNumber,
+		&i.UpdatedAtBlockNumber,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getTokenById = `-- name: GetTokenById :one
+
+/*
+name: GetPoolTokensByTokenIdentifiers :many
+
+with params as (
+    select unnest(@pool_addresses::address[]) as pool_address, unnest(@token_addresses::address[]) as token_address, unnest(@chains::chain[]) as chain
+)
+SELECT t.*
+from pools s
+         left join tokens t on s.address = t.owner_address
+         join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain
+where s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false;
+*/
+
+SELECT id, address, chain_id, symbol, name, decimals, logo, thumbnail, validated, possible_spam, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.token
+WHERE id = $1
+`
+
+// -----------------------------------------------------------------------------
+// TOKEN
+// -----------------------------------------------------------------------------
+func (q *Queries) GetTokenById(ctx context.Context, id persist.DBID) (Token, error) {
+	row := q.db.QueryRow(ctx, getTokenById, id)
+	var i Token
+	err := row.Scan(
+		&i.ID,
+		&i.Address,
+		&i.ChainID,
+		&i.Symbol,
+		&i.Name,
+		&i.Decimals,
+		&i.Logo,
+		&i.Thumbnail,
+		&i.Validated,
+		&i.PossibleSpam,
 		&i.CreatedAtBlockNumber,
 		&i.UpdatedAtBlockNumber,
 		&i.CreatedAt,

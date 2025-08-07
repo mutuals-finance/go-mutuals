@@ -253,7 +253,10 @@ type ChainPools struct {
 }
 
 type Claim struct {
+	Dbid      persist.DBID               `json:"dbid"`
 	Value     persist.HexString          `json:"value"`
+	Label     string                     `json:"label"`
+	Path      []*string                  `json:"path"`
 	Parent    *Claim                     `json:"parent"`
 	Pool      *Pool                      `json:"pool"`
 	Recipient PoolOrMutualsUserOrAccount `json:"recipient"`
@@ -660,6 +663,7 @@ type PoolAllocationInput struct {
 }
 
 type PoolContract struct {
+	ID          GqlID              `json:"id"`
 	Address     persist.Address    `json:"address"`
 	ChainID     int                `json:"chainId"`
 	Status      PoolStatus         `json:"status"`
@@ -674,9 +678,8 @@ type PoolContract struct {
 	UpdatedAt   time.Time          `json:"updatedAt"`
 }
 
-func (PoolContract) IsNode() {}
-
 type PoolDayBalance struct {
+	ID        GqlID             `json:"id"`
 	ChainID   int               `json:"chainId"`
 	Date      time.Time         `json:"date"`
 	Pool      *Pool             `json:"pool"`
@@ -685,8 +688,6 @@ type PoolDayBalance struct {
 	CreatedAt time.Time         `json:"createdAt"`
 	UpdatedAt time.Time         `json:"updatedAt"`
 }
-
-func (PoolDayBalance) IsNode() {}
 
 type PoolFactory struct {
 	Address   persist.Address `json:"address"`
@@ -700,6 +701,7 @@ type PoolFactory struct {
 func (PoolFactory) IsNode() {}
 
 type PoolHourBalance struct {
+	ID        GqlID             `json:"id"`
 	ChainID   int               `json:"chainId"`
 	Date      time.Time         `json:"date"`
 	Pool      *Pool             `json:"pool"`
@@ -708,8 +710,6 @@ type PoolHourBalance struct {
 	CreatedAt time.Time         `json:"createdAt"`
 	UpdatedAt time.Time         `json:"updatedAt"`
 }
-
-func (PoolHourBalance) IsNode() {}
 
 type PoolPositionInput struct {
 	PoolID   persist.DBID `json:"poolId"`

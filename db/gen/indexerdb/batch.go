@@ -8,6 +8,7 @@ package indexerdb
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/mutuals/go-mutuals/service/persist"
@@ -17,29 +18,35 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const getAccountByIDBatch = `-- name: GetAccountByIDBatch :batchone
-SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at FROM public.account WHERE id = $1
+const getAccountByIdBatch = `-- name: GetAccountByIdBatch :batchone
+
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.account
+WHERE id = $1
 `
 
-type GetAccountByIDBatchBatchResults struct {
+type GetAccountByIdBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetAccountByIDBatch(ctx context.Context, id []persist.DBID) *GetAccountByIDBatchBatchResults {
+// -----------------------------------------------------------------------------
+// ACCOUNT
+// -----------------------------------------------------------------------------
+func (q *Queries) GetAccountByIdBatch(ctx context.Context, id []persist.DBID) *GetAccountByIdBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range id {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getAccountByIDBatch, vals...)
+		batch.Queue(getAccountByIdBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetAccountByIDBatchBatchResults{br, len(id), false}
+	return &GetAccountByIdBatchBatchResults{br, len(id), false}
 }
 
-func (b *GetAccountByIDBatchBatchResults) QueryRow(f func(int, Account, error)) {
+func (b *GetAccountByIdBatchBatchResults) QueryRow(f func(int, Account, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var i Account
@@ -65,7 +72,666 @@ func (b *GetAccountByIDBatchBatchResults) QueryRow(f func(int, Account, error)) 
 	}
 }
 
-func (b *GetAccountByIDBatchBatchResults) Close() error {
+func (b *GetAccountByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getAccountsByIdsBatch = `-- name: GetAccountsByIdsBatch :batchmany
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.account
+WHERE id = ANY ($1)
+  AND (created_at, id) < ($2, $3)
+  AND (created_at, id) > ($4, $5)
+ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
+         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC
+LIMIT $7
+`
+
+type GetAccountsByIdsBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type GetAccountsByIdsBatchParams struct {
+	AccountIds    string    `db:"account_ids" json:"account_ids"`
+	CurBeforeTime time.Time `db:"cur_before_time" json:"cur_before_time"`
+	CurBeforeID   time.Time `db:"cur_before_id" json:"cur_before_id"`
+	CurAfterTime  time.Time `db:"cur_after_time" json:"cur_after_time"`
+	CurAfterID    time.Time `db:"cur_after_id" json:"cur_after_id"`
+	PagingForward bool      `db:"paging_forward" json:"paging_forward"`
+	Limit         int32     `db:"limit" json:"limit"`
+}
+
+func (q *Queries) GetAccountsByIdsBatch(ctx context.Context, arg []GetAccountsByIdsBatchParams) *GetAccountsByIdsBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.AccountIds,
+			a.CurBeforeTime,
+			a.CurBeforeID,
+			a.CurAfterTime,
+			a.CurAfterID,
+			a.PagingForward,
+			a.Limit,
+		}
+		batch.Queue(getAccountsByIdsBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetAccountsByIdsBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetAccountsByIdsBatchBatchResults) Query(f func(int, []Account, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Account
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Account
+				if err := rows.Scan(
+					&i.ID,
+					&i.Address,
+					&i.AccountType,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetAccountsByIdsBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getPoolContractByIdBatch = `-- name: GetPoolContractByIdBatch :batchone
+SELECT id, address, chain_id, pool_factory_id, account_id, name, description, logo, owner_id, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.pool
+WHERE id = $1
+`
+
+type GetPoolContractByIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetPoolContractByIdBatch(ctx context.Context, id []persist.DBID) *GetPoolContractByIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getPoolContractByIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetPoolContractByIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetPoolContractByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Pool
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Address,
+			&i.ChainID,
+			&i.PoolFactoryID,
+			&i.AccountID,
+			&i.Name,
+			&i.Description,
+			&i.Logo,
+			&i.OwnerID,
+			&i.CreatedAtBlockNumber,
+			&i.UpdatedAtBlockNumber,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetPoolContractByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getPoolContractsByAccountAddressBatch = `-- name: GetPoolContractsByAccountAddressBatch :batchmany
+SELECT p.id, p.address, p.chain_id, p.pool_factory_id, p.account_id, p.name, p.description, p.logo, p.owner_id, p.created_at_block_number, p.updated_at_block_number, p.created_at, p.updated_at
+FROM public.account a,
+     public.pool p
+         INNER JOIN public.claim c ON c.recipient_id = a.id
+WHERE a.address = $1
+  AND p.id = c.pool_id
+`
+
+type GetPoolContractsByAccountAddressBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetPoolContractsByAccountAddressBatch(ctx context.Context, address []string) *GetPoolContractsByAccountAddressBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range address {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getPoolContractsByAccountAddressBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetPoolContractsByAccountAddressBatchBatchResults{br, len(address), false}
+}
+
+func (b *GetPoolContractsByAccountAddressBatchBatchResults) Query(f func(int, []Pool, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Pool
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Pool
+				if err := rows.Scan(
+					&i.ID,
+					&i.Address,
+					&i.ChainID,
+					&i.PoolFactoryID,
+					&i.AccountID,
+					&i.Name,
+					&i.Description,
+					&i.Logo,
+					&i.OwnerID,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetPoolContractsByAccountAddressBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getPoolContractsByAccountAddressesBatch = `-- name: GetPoolContractsByAccountAddressesBatch :batchmany
+SELECT p.id, p.address, p.chain_id, p.pool_factory_id, p.account_id, p.name, p.description, p.logo, p.owner_id, p.created_at_block_number, p.updated_at_block_number, p.created_at, p.updated_at
+FROM public.account a,
+     public.pool p
+         INNER JOIN public.claim c ON c.recipient_id = a.id
+WHERE a.address = ANY ($1)
+  AND p.id = c.pool_id
+`
+
+type GetPoolContractsByAccountAddressesBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetPoolContractsByAccountAddressesBatch(ctx context.Context, address []string) *GetPoolContractsByAccountAddressesBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range address {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getPoolContractsByAccountAddressesBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetPoolContractsByAccountAddressesBatchBatchResults{br, len(address), false}
+}
+
+func (b *GetPoolContractsByAccountAddressesBatchBatchResults) Query(f func(int, []Pool, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Pool
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Pool
+				if err := rows.Scan(
+					&i.ID,
+					&i.Address,
+					&i.ChainID,
+					&i.PoolFactoryID,
+					&i.AccountID,
+					&i.Name,
+					&i.Description,
+					&i.Logo,
+					&i.OwnerID,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetPoolContractsByAccountAddressesBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getPoolContractsByIdsBatch = `-- name: GetPoolContractsByIdsBatch :batchmany
+SELECT id, address, chain_id, pool_factory_id, account_id, name, description, logo, owner_id, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.pool
+WHERE id = ANY ($1)
+`
+
+type GetPoolContractsByIdsBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetPoolContractsByIdsBatch(ctx context.Context, id []persist.DBID) *GetPoolContractsByIdsBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getPoolContractsByIdsBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetPoolContractsByIdsBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetPoolContractsByIdsBatchBatchResults) Query(f func(int, []Pool, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Pool
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Pool
+				if err := rows.Scan(
+					&i.ID,
+					&i.Address,
+					&i.ChainID,
+					&i.PoolFactoryID,
+					&i.AccountID,
+					&i.Name,
+					&i.Description,
+					&i.Logo,
+					&i.OwnerID,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetPoolContractsByIdsBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getTokenBalancesByPoolIdBatch = `-- name: GetTokenBalancesByPoolIdBatch :batchmany
+SELECT b.id, b.chain_id, b.token_id, b.holder_id, b.amount, b.created_at_block_number, b.updated_at_block_number, b.created_at, b.updated_at
+FROM public.token_balance b,
+     public.pool p
+WHERE p.id = $1
+  AND b.holder_id = p.account_id
+`
+
+type GetTokenBalancesByPoolIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetTokenBalancesByPoolIdBatch(ctx context.Context, id []persist.DBID) *GetTokenBalancesByPoolIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getTokenBalancesByPoolIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetTokenBalancesByPoolIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetTokenBalancesByPoolIdBatchBatchResults) Query(f func(int, []TokenBalance, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []TokenBalance
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i TokenBalance
+				if err := rows.Scan(
+					&i.ID,
+					&i.ChainID,
+					&i.TokenID,
+					&i.HolderID,
+					&i.Amount,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetTokenBalancesByPoolIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getTokenBalancesByPoolIdsBatch = `-- name: GetTokenBalancesByPoolIdsBatch :batchmany
+SELECT b.id, b.chain_id, b.token_id, b.holder_id, b.amount, b.created_at_block_number, b.updated_at_block_number, b.created_at, b.updated_at
+FROM public.token_balance b,
+     public.pool p
+WHERE p.id = ANY ($1)
+  AND b.holder_id = p.account_id
+`
+
+type GetTokenBalancesByPoolIdsBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetTokenBalancesByPoolIdsBatch(ctx context.Context, id []persist.DBID) *GetTokenBalancesByPoolIdsBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getTokenBalancesByPoolIdsBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetTokenBalancesByPoolIdsBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetTokenBalancesByPoolIdsBatchBatchResults) Query(f func(int, []TokenBalance, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []TokenBalance
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i TokenBalance
+				if err := rows.Scan(
+					&i.ID,
+					&i.ChainID,
+					&i.TokenID,
+					&i.HolderID,
+					&i.Amount,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetTokenBalancesByPoolIdsBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getTokenByIdBatch = `-- name: GetTokenByIdBatch :batchone
+SELECT id, address, chain_id, symbol, name, decimals, logo, thumbnail, validated, possible_spam, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.token
+WHERE id = $1
+`
+
+type GetTokenByIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetTokenByIdBatch(ctx context.Context, id []persist.DBID) *GetTokenByIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getTokenByIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetTokenByIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetTokenByIdBatchBatchResults) QueryRow(f func(int, Token, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Token
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Address,
+			&i.ChainID,
+			&i.Symbol,
+			&i.Name,
+			&i.Decimals,
+			&i.Logo,
+			&i.Thumbnail,
+			&i.Validated,
+			&i.PossibleSpam,
+			&i.CreatedAtBlockNumber,
+			&i.UpdatedAtBlockNumber,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetTokenByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getTokensByIdsBatch = `-- name: GetTokensByIdsBatch :batchmany
+SELECT id, address, chain_id, symbol, name, decimals, logo, thumbnail, validated, possible_spam, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.token
+WHERE id = ANY ($1)
+`
+
+type GetTokensByIdsBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetTokensByIdsBatch(ctx context.Context, id []persist.DBID) *GetTokensByIdsBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getTokensByIdsBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetTokensByIdsBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetTokensByIdsBatchBatchResults) Query(f func(int, []Token, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Token
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Token
+				if err := rows.Scan(
+					&i.ID,
+					&i.Address,
+					&i.ChainID,
+					&i.Symbol,
+					&i.Name,
+					&i.Decimals,
+					&i.Logo,
+					&i.Thumbnail,
+					&i.Validated,
+					&i.PossibleSpam,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetTokensByIdsBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

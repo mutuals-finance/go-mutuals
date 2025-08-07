@@ -10,6 +10,10 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
+func (r *Claim) ID() GqlID {
+	return GqlID(fmt.Sprintf("Claim:%s", r.Dbid))
+}
+
 func (r *DeletedNode) ID() GqlID {
 	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
 }
@@ -36,6 +40,7 @@ func (r *Viewer) ID() GqlID {
 }
 
 type NodeFetcher struct {
+	OnClaim       func(ctx context.Context, dbid persist.DBID) (*Claim, error)
 	OnDeletedNode func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
 	OnMutualsUser func(ctx context.Context, dbid persist.DBID) (*MutualsUser, error)
 	OnPool        func(ctx context.Context, dbid persist.DBID) (*Pool, error)
@@ -52,6 +57,11 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 	ids := parts[1:]
 
 	switch typeName {
+	case "Claim":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Claim' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnClaim(ctx, persist.DBID(ids[0]))
 	case "DeletedNode":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -79,6 +89,8 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 
 func (n *NodeFetcher) ValidateHandlers() {
 	switch {
+	case n.OnClaim == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnClaim")
 	case n.OnDeletedNode == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
 	case n.OnMutualsUser == nil:

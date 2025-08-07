@@ -11,256 +11,81 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-const createPool = `-- name: CreatePool :one
-INSERT INTO pools (id, chain, address, name, description, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-RETURNING id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
-`
-
-type CreatePoolParams struct {
-	ID          persist.DBID    `db:"id" json:"id"`
-	Chain       persist.Chain   `db:"chain" json:"chain"`
-	Address     persist.Address `db:"address" json:"address"`
-	Name        string          `db:"name" json:"name"`
-	Description string          `db:"description" json:"description"`
-}
-
-func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, error) {
-	row := q.db.QueryRow(ctx, createPool,
-		arg.ID,
-		arg.Chain,
-		arg.Address,
-		arg.Name,
-		arg.Description,
-	)
-	var i Pool
-	err := row.Scan(
-		&i.ID,
-		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.Deleted,
-		&i.Name,
-		&i.Description,
-		&i.Status,
-		&i.Chain,
-		&i.L1Chain,
-		&i.Address,
-		&i.OwnerAddress,
-		&i.CreatorAddress,
-	)
-	return i, err
-}
-
-const upsertPool = `-- name: UpsertPool :one
-/*
-// name: UpdatePoolHidden :one
-update pools set hidden = @hidden, updated_at = now() where id = @id and deleted = false returning *;
-*/
-
-INSERT INTO pools (id, name, description, status, chain, l1_chain, address, owner_address, creator_address,
-                    updated_at, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-ON CONFLICT (id)
-WHERE deleted = FALSE
-    DO
-UPDATE
-SET name            = EXCLUDED.name,
-    description     = EXCLUDED.description,
-    status          = EXCLUDED.status,
-    chain           = EXCLUDED.chain,
-    l1_chain        = EXCLUDED.l1_chain,
-    address         = EXCLUDED.address,
-    owner_address   = EXCLUDED.owner_address,
-    creator_address = EXCLUDED.creator_address,
-    updated_at    = NOW()
-RETURNING id, version, updated_at, created_at, deleted, name, description, status, chain, l1_chain, address, owner_address, creator_address
-`
-
-type UpsertPoolParams struct {
-	ID             persist.DBID    `db:"id" json:"id"`
-	Name           string          `db:"name" json:"name"`
-	Description    string          `db:"description" json:"description"`
-	Status         int32           `db:"status" json:"status"`
-	Chain          persist.Chain   `db:"chain" json:"chain"`
-	L1Chain        persist.L1Chain `db:"l1_chain" json:"l1_chain"`
-	Address        persist.Address `db:"address" json:"address"`
-	OwnerAddress   persist.Address `db:"owner_address" json:"owner_address"`
-	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
-}
-
-func (q *Queries) UpsertPool(ctx context.Context, arg UpsertPoolParams) (Pool, error) {
-	row := q.db.QueryRow(ctx, upsertPool,
-		arg.ID,
-		arg.Name,
-		arg.Description,
-		arg.Status,
-		arg.Chain,
-		arg.L1Chain,
-		arg.Address,
-		arg.OwnerAddress,
-		arg.CreatorAddress,
-	)
-	var i Pool
-	err := row.Scan(
-		&i.ID,
-		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.Deleted,
-		&i.Name,
-		&i.Description,
-		&i.Status,
-		&i.Chain,
-		&i.L1Chain,
-		&i.Address,
-		&i.OwnerAddress,
-		&i.CreatorAddress,
-	)
-	return i, err
-}
-
-const upsertPoolAggregatedAllocations = `-- name: UpsertPoolAggregatedAllocations :many
+const upsertClaims = `-- name: UpsertClaims :many
 WITH updates AS (SELECT UNNEST($1::text[])                AS id,
-                        $2                          AS pool_id,
+                        $2                           AS pool_id,
                         UNNEST($3::text[]) AS recipient_address,
-                        UNNEST($4::text[])        AS expression)
+                        UNNEST($4::text[])             AS value,
+                        UNNEST($5::text[])          AS state_id,
+                        UNNEST($6::text[])       AS strategy_id,
+                        UNNEST($7::text[])             AS label,
+                        UNNEST($8::ltree[])             AS path,
+                        UNNEST($9::boolean[])        AS deleted)
 INSERT
-INTO allocation_aggregations (id, pool_id, recipient_address, expression, updated_at, created_at, deleted)
-SELECT id, pool_id, recipient_address, expression, NOW(), NOW(), FALSE
-FROM updates
-ON CONFLICT (id)
-WHERE deleted = FALSE DO
-UPDATE
-SET pool_id          = EXCLUDED.pool_id,
-    recipient_address = EXCLUDED.recipient_address,
-    expression        = EXCLUDED.expression,
-    updated_at      = NOW()
-RETURNING id, pool_id, recipient_address, expression, updated_at, created_at, version, deleted
-`
-
-type UpsertPoolAggregatedAllocationsParams struct {
-	ID               []string     `db:"id" json:"id"`
-	PoolID           persist.DBID `db:"pool_id" json:"pool_id"`
-	RecipientAddress []string     `db:"recipient_address" json:"recipient_address"`
-	Expression       []string     `db:"expression" json:"expression"`
-}
-
-func (q *Queries) UpsertPoolAggregatedAllocations(ctx context.Context, arg UpsertPoolAggregatedAllocationsParams) ([]AllocationAggregation, error) {
-	rows, err := q.db.Query(ctx, upsertPoolAggregatedAllocations,
-		arg.ID,
-		arg.PoolID,
-		arg.RecipientAddress,
-		arg.Expression,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []AllocationAggregation
-	for rows.Next() {
-		var i AllocationAggregation
-		if err := rows.Scan(
-			&i.ID,
-			&i.PoolID,
-			&i.RecipientAddress,
-			&i.Expression,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Version,
-			&i.Deleted,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const upsertPoolAllocations = `-- name: UpsertPoolAllocations :many
-WITH updates AS (SELECT UNNEST($1::text[])               AS id,
-                        $2                          AS pool_id,
-                        UNNEST($3::text[]) AS recipient_address,
-                        UNNEST($4::int[])     AS recipient_type,
-                        UNNEST($5::int[])   AS calculation_type,
-                        UNNEST($6::text[])             AS value,
-                        UNNEST($7::text[])        AS expression,
-                        UNNEST($8::text[])             AS label,
-                        UNNEST($9::ltree[])             AS path)
-INSERT
-INTO allocations (id, pool_id, recipient_address, expression, recipient_type, calculation_type, value, label, path,
-                  updated_at, created_at, deleted)
+INTO claims (id, pool_id, recipient_address, value, state_id, strategy_id, label, path, deleted)
 SELECT id,
        pool_id,
        recipient_address,
-       expression,
-       recipient_type,
-       calculation_type,
        value,
+       state_id,
+       strategy_id,
        label,
        path,
-       NOW(),
-       NOW(),
-       FALSE
+       deleted
 FROM updates
 ON CONFLICT (id)
 WHERE deleted = FALSE
     DO
 UPDATE
 SET recipient_address = EXCLUDED.recipient_address,
-    expression        = EXCLUDED.expression,
-    recipient_type    = EXCLUDED.recipient_type,
-    calculation_type  = EXCLUDED.calculation_type,
     value             = EXCLUDED.value,
+    state_id          = EXCLUDED.state_id,
+    strategy_id       = EXCLUDED.strategy_id,
     label             = EXCLUDED.label,
     path              = EXCLUDED.path,
-    updated_at      = NOW()
-RETURNING id, version, pool_id, recipient_address, recipient_type, calculation_type, value, expression, label, path, deleted, updated_at, created_at
+    deleted           = EXCLUDED.deleted,
+    updated_at        = NOW()
+RETURNING id, pool_id, recipient_address, value, state_id, strategy_id, label, path, deleted, updated_at, created_at
 `
 
-type UpsertPoolAllocationsParams struct {
-	Ids              []string     `db:"ids" json:"ids"`
+type UpsertClaimsParams struct {
+	ID               []string     `db:"id" json:"id"`
 	PoolID           persist.DBID `db:"pool_id" json:"pool_id"`
 	RecipientAddress []string     `db:"recipient_address" json:"recipient_address"`
-	RecipientType    []int32      `db:"recipient_type" json:"recipient_type"`
-	CalculationType  []int32      `db:"calculation_type" json:"calculation_type"`
 	Value            []string     `db:"value" json:"value"`
-	Expression       []string     `db:"expression" json:"expression"`
+	StateID          []string     `db:"state_id" json:"state_id"`
+	StrategyID       []string     `db:"strategy_id" json:"strategy_id"`
 	Label            []string     `db:"label" json:"label"`
 	Path             []string     `db:"path" json:"path"`
+	Deleted          []bool       `db:"deleted" json:"deleted"`
 }
 
-func (q *Queries) UpsertPoolAllocations(ctx context.Context, arg UpsertPoolAllocationsParams) ([]Allocation, error) {
-	rows, err := q.db.Query(ctx, upsertPoolAllocations,
-		arg.Ids,
+func (q *Queries) UpsertClaims(ctx context.Context, arg UpsertClaimsParams) ([]Claim, error) {
+	rows, err := q.db.Query(ctx, upsertClaims,
+		arg.ID,
 		arg.PoolID,
 		arg.RecipientAddress,
-		arg.RecipientType,
-		arg.CalculationType,
 		arg.Value,
-		arg.Expression,
+		arg.StateID,
+		arg.StrategyID,
 		arg.Label,
 		arg.Path,
+		arg.Deleted,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Allocation
+	var items []Claim
 	for rows.Next() {
-		var i Allocation
+		var i Claim
 		if err := rows.Scan(
 			&i.ID,
-			&i.Version,
 			&i.PoolID,
 			&i.RecipientAddress,
-			&i.RecipientType,
-			&i.CalculationType,
 			&i.Value,
-			&i.Expression,
+			&i.StateID,
+			&i.StrategyID,
 			&i.Label,
 			&i.Path,
 			&i.Deleted,
@@ -275,4 +100,55 @@ func (q *Queries) UpsertPoolAllocations(ctx context.Context, arg UpsertPoolAlloc
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertPool = `-- name: UpsertPool :one
+INSERT INTO pools (id, name, description, logo, slug, owner_id, contract_id, updated_at, created_at)
+VALUES ($1, $2, $3, $3, $4, $5, $6, NOW(), NOW())
+ON CONFLICT (id)
+WHERE deleted = FALSE
+    DO
+UPDATE
+SET name        = EXCLUDED.name,
+    description = EXCLUDED.description,
+    logo        = EXCLUDED.logo,
+    slug        = EXCLUDED.slug,
+    owner_id    = EXCLUDED.owner_id,
+    contract_id = EXCLUDED.contract_id,
+    updated_at  = NOW()
+RETURNING id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at
+`
+
+type UpsertPoolParams struct {
+	ID          persist.DBID `db:"id" json:"id"`
+	Name        string       `db:"name" json:"name"`
+	Description string       `db:"description" json:"description"`
+	Logo        string       `db:"logo" json:"logo"`
+	OwnerID     persist.DBID `db:"owner_id" json:"owner_id"`
+	ContractID  persist.DBID `db:"contract_id" json:"contract_id"`
+}
+
+func (q *Queries) UpsertPool(ctx context.Context, arg UpsertPoolParams) (Pool, error) {
+	row := q.db.QueryRow(ctx, upsertPool,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.Logo,
+		arg.OwnerID,
+		arg.ContractID,
+	)
+	var i Pool
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Logo,
+		&i.Slug,
+		&i.OwnerID,
+		&i.ContractID,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
 }

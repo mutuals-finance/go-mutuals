@@ -372,8 +372,14 @@ type Extension implements Node {
 type Claim implements Node {
   # { claim id }
   id: ID!
+  # { claim id }
+  dbid: DBID!
   # allocated value (BigDecimal)
   value: HexString!
+  # label
+  label: String!
+  # path
+  path: [String]!
   # parent claim
   parent: Claim @goField(forceResolver: true)
   # pool
@@ -429,7 +435,7 @@ union PoolOrMutualsUserOrAccount = Pool | MutualsUser | Account
 
 union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
 
-type PoolContract implements Node {
+type PoolContract {
   # { chain id }-{ pool address }
   id: ID!
   # pool contract address
@@ -458,7 +464,7 @@ type PoolContract implements Node {
   updatedAt: Time!
 }
 
-type PoolDayBalance implements Node {
+type PoolDayBalance {
   # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current day) }
   id: ID!
   # dbid: DBID!
@@ -478,7 +484,7 @@ type PoolDayBalance implements Node {
   updatedAt: Time!
 }
 
-type PoolHourBalance implements Node {
+type PoolHourBalance {
   # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current hour) }
   id: ID!
   # chain ID

@@ -12,31 +12,18 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-type Allocation struct {
-	ID               persist.DBID            `db:"id" json:"id"`
-	Version          sql.NullInt32           `db:"version" json:"version"`
-	PoolID           persist.DBID            `db:"pool_id" json:"pool_id"`
-	RecipientAddress persist.Address         `db:"recipient_address" json:"recipient_address"`
-	RecipientType    persist.RecipientType   `db:"recipient_type" json:"recipient_type"`
-	CalculationType  persist.CalculationType `db:"calculation_type" json:"calculation_type"`
-	Value            persist.HexString       `db:"value" json:"value"`
-	Expression       string                  `db:"expression" json:"expression"`
-	Label            string                  `db:"label" json:"label"`
-	Path             sql.NullString          `db:"path" json:"path"`
-	Deleted          bool                    `db:"deleted" json:"deleted"`
-	UpdatedAt      time.Time               `db:"updated_at" json:"updated_at"`
-	CreatedAt        time.Time               `db:"created_at" json:"created_at"`
-}
-
-type AllocationAggregation struct {
+type Claim struct {
 	ID               persist.DBID    `db:"id" json:"id"`
 	PoolID           persist.DBID    `db:"pool_id" json:"pool_id"`
 	RecipientAddress persist.Address `db:"recipient_address" json:"recipient_address"`
-	Expression       string          `db:"expression" json:"expression"`
-	UpdatedAt      time.Time       `db:"updated_at" json:"updated_at"`
-	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
-	Version          sql.NullInt32   `db:"version" json:"version"`
+	Value            string          `db:"value" json:"value"`
+	StateID          persist.DBID    `db:"state_id" json:"state_id"`
+	StrategyID       persist.DBID    `db:"strategy_id" json:"strategy_id"`
+	Label            string          `db:"label" json:"label"`
+	Path             sql.NullString  `db:"path" json:"path"`
 	Deleted          bool            `db:"deleted" json:"deleted"`
+	UpdatedAt        time.Time       `db:"updated_at" json:"updated_at"`
+	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
 }
 
 type DevMetadataUser struct {
@@ -55,20 +42,12 @@ type Event struct {
 	Action         persist.Action       `db:"action" json:"action"`
 	Data           persist.EventData    `db:"data" json:"data"`
 	Deleted        bool                 `db:"deleted" json:"deleted"`
-	UpdatedAt    time.Time            `db:"updated_at" json:"updated_at"`
-	CreatedAt      time.Time            `db:"created_at" json:"created_at"`
 	PoolID         persist.DBID         `db:"pool_id" json:"pool_id"`
 	ExternalID     sql.NullString       `db:"external_id" json:"external_id"`
 	Caption        sql.NullString       `db:"caption" json:"caption"`
 	GroupID        sql.NullString       `db:"group_id" json:"group_id"`
-}
-
-type LegacyView struct {
-	UserID      persist.DBID  `db:"user_id" json:"user_id"`
-	ViewCount   sql.NullInt32 `db:"view_count" json:"view_count"`
-	UpdatedAt time.Time     `db:"updated_at" json:"updated_at"`
-	CreatedAt   time.Time     `db:"created_at" json:"created_at"`
-	Deleted     sql.NullBool  `db:"deleted" json:"deleted"`
+	UpdatedAt      time.Time            `db:"updated_at" json:"updated_at"`
+	CreatedAt      time.Time            `db:"created_at" json:"created_at"`
 }
 
 type Nonce struct {
@@ -79,18 +58,18 @@ type Nonce struct {
 }
 
 type Notification struct {
-	ID          persist.DBID             `db:"id" json:"id"`
-	Deleted     bool                     `db:"deleted" json:"deleted"`
-	OwnerID     persist.DBID             `db:"owner_id" json:"owner_id"`
-	Version     sql.NullInt32            `db:"version" json:"version"`
+	ID        persist.DBID             `db:"id" json:"id"`
+	Deleted   bool                     `db:"deleted" json:"deleted"`
+	OwnerID   persist.DBID             `db:"owner_id" json:"owner_id"`
+	Version   sql.NullInt32            `db:"version" json:"version"`
+	Action    persist.Action           `db:"action" json:"action"`
+	Data      persist.NotificationData `db:"data" json:"data"`
+	EventIds  persist.DBIDList         `db:"event_ids" json:"event_ids"`
+	PoolID    persist.DBID             `db:"pool_id" json:"pool_id"`
+	Seen      bool                     `db:"seen" json:"seen"`
+	Amount    int32                    `db:"amount" json:"amount"`
 	UpdatedAt time.Time                `db:"updated_at" json:"updated_at"`
-	CreatedAt   time.Time                `db:"created_at" json:"created_at"`
-	Action      persist.Action           `db:"action" json:"action"`
-	Data        persist.NotificationData `db:"data" json:"data"`
-	EventIds    persist.DBIDList         `db:"event_ids" json:"event_ids"`
-	PoolID      persist.DBID             `db:"pool_id" json:"pool_id"`
-	Seen        bool                     `db:"seen" json:"seen"`
-	Amount      int32                    `db:"amount" json:"amount"`
+	CreatedAt time.Time                `db:"created_at" json:"created_at"`
 }
 
 type PiiAccountCreationInfo struct {
@@ -110,35 +89,30 @@ type PiiUserView struct {
 	ID                        persist.DBID                     `db:"id" json:"id"`
 	Deleted                   bool                             `db:"deleted" json:"deleted"`
 	Version                   sql.NullInt32                    `db:"version" json:"version"`
-	UpdatedAt               time.Time                        `db:"updated_at" json:"updated_at"`
+	UpdatedAt                 time.Time                        `db:"updated_at" json:"updated_at"`
 	CreatedAt                 time.Time                        `db:"created_at" json:"created_at"`
 	Username                  sql.NullString                   `db:"username" json:"username"`
 	UsernameIdempotent        sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
-	Wallets                   persist.WalletList               `db:"wallets" json:"wallets"`
 	Universal                 bool                             `db:"universal" json:"universal"`
 	NotificationSettings      persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions      persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	FeaturedPool              *persist.DBID                    `db:"featured_pool" json:"featured_pool"`
-	PrimaryWalletID           persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
+	PrimaryAccountID          persist.DBID                     `db:"primary_account_id" json:"primary_account_id"`
 	UserExperiences           pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
 	PiiUnverifiedEmailAddress persist.Email                    `db:"pii_unverified_email_address" json:"pii_unverified_email_address"`
 	PiiVerifiedEmailAddress   persist.Email                    `db:"pii_verified_email_address" json:"pii_verified_email_address"`
 }
 
 type Pool struct {
-	ID             persist.DBID    `db:"id" json:"id"`
-	Version        sql.NullInt32   `db:"version" json:"version"`
-	UpdatedAt    time.Time       `db:"updated_at" json:"updated_at"`
-	CreatedAt      time.Time       `db:"created_at" json:"created_at"`
-	Deleted        bool            `db:"deleted" json:"deleted"`
-	Name           string          `db:"name" json:"name"`
-	Description    string          `db:"description" json:"description"`
-	Status         int32           `db:"status" json:"status"`
-	Chain          persist.Chain   `db:"chain" json:"chain"`
-	L1Chain        persist.L1Chain `db:"l1_chain" json:"l1_chain"`
-	Address        persist.Address `db:"address" json:"address"`
-	OwnerAddress   persist.Address `db:"owner_address" json:"owner_address"`
-	CreatorAddress persist.Address `db:"creator_address" json:"creator_address"`
+	ID          persist.DBID `db:"id" json:"id"`
+	Name        string       `db:"name" json:"name"`
+	Description string       `db:"description" json:"description"`
+	Logo        string       `db:"logo" json:"logo"`
+	Slug        string       `db:"slug" json:"slug"`
+	OwnerID     persist.DBID `db:"owner_id" json:"owner_id"`
+	ContractID  persist.DBID `db:"contract_id" json:"contract_id"`
+	Deleted     bool         `db:"deleted" json:"deleted"`
+	UpdatedAt   time.Time    `db:"updated_at" json:"updated_at"`
+	CreatedAt   time.Time    `db:"created_at" json:"created_at"`
 }
 
 type PushNotificationTicket struct {
@@ -180,7 +154,7 @@ type Session struct {
 	CurrentRefreshID     persist.DBID `db:"current_refresh_id" json:"current_refresh_id"`
 	ActiveUntil          time.Time    `db:"active_until" json:"active_until"`
 	Invalidated          bool         `db:"invalidated" json:"invalidated"`
-	UpdatedAt          time.Time    `db:"updated_at" json:"updated_at"`
+	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
 	Deleted              bool         `db:"deleted" json:"deleted"`
 }
 
@@ -193,52 +167,37 @@ type SpamUserScore struct {
 	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
 }
 
-type Token struct {
-	ID           persist.DBID      `db:"id" json:"id"`
-	Deleted      bool              `db:"deleted" json:"deleted"`
-	Version      sql.NullInt32     `db:"version" json:"version"`
-	CreatedAt    time.Time         `db:"created_at" json:"created_at"`
-	UpdatedAt  time.Time         `db:"updated_at" json:"updated_at"`
-	Chain        persist.Chain     `db:"chain" json:"chain"`
-	TokenAddress persist.Address   `db:"token_address" json:"token_address"`
-	OwnerAddress persist.Address   `db:"owner_address" json:"owner_address"`
-	Balance      persist.HexString `db:"balance" json:"balance"`
-}
-
-type TokenMetadata struct {
-	ID              persist.DBID    `db:"id" json:"id"`
-	Deleted         bool            `db:"deleted" json:"deleted"`
-	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
-	UpdatedAt     time.Time       `db:"updated_at" json:"updated_at"`
-	Symbol          sql.NullString  `db:"symbol" json:"symbol"`
-	Name            sql.NullString  `db:"name" json:"name"`
-	Logo            sql.NullString  `db:"logo" json:"logo"`
-	Thumbnail       sql.NullString  `db:"thumbnail" json:"thumbnail"`
-	Chain           persist.Chain   `db:"chain" json:"chain"`
-	ContractAddress persist.Address `db:"contract_address" json:"contract_address"`
-}
-
 type User struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
 	Deleted              bool                             `db:"deleted" json:"deleted"`
 	Version              sql.NullInt32                    `db:"version" json:"version"`
-	UpdatedAt          time.Time                        `db:"updated_at" json:"updated_at"`
+	UpdatedAt            time.Time                        `db:"updated_at" json:"updated_at"`
 	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
 	Username             sql.NullString                   `db:"username" json:"username"`
 	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
-	Wallets              persist.WalletList               `db:"wallets" json:"wallets"`
+	PrimaryAccountID     persist.DBID                     `db:"primary_account_id" json:"primary_account_id"`
 	Universal            bool                             `db:"universal" json:"universal"`
 	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	FeaturedPool         *persist.DBID                    `db:"featured_pool" json:"featured_pool"`
-	PrimaryWalletID      persist.DBID                     `db:"primary_wallet_id" json:"primary_wallet_id"`
 	UserExperiences      pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
+}
+
+type UserAccount struct {
+	ID         persist.DBID    `db:"id" json:"id"`
+	UserID     persist.DBID    `db:"user_id" json:"user_id"`
+	Name       string          `db:"name" json:"name"`
+	FtsName    interface{}     `db:"fts_name" json:"fts_name"`
+	Address    persist.Address `db:"address" json:"address"`
+	FtsAddress persist.Address `db:"fts_address" json:"fts_address"`
+	CreatedAt  time.Time       `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time       `db:"updated_at" json:"updated_at"`
+	Deleted    bool            `db:"deleted" json:"deleted"`
 }
 
 type UserBlocklist struct {
 	ID            persist.DBID `db:"id" json:"id"`
 	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
-	UpdatedAt   time.Time    `db:"updated_at" json:"updated_at"`
+	UpdatedAt     time.Time    `db:"updated_at" json:"updated_at"`
 	Deleted       bool         `db:"deleted" json:"deleted"`
 	UserID        persist.DBID `db:"user_id" json:"user_id"`
 	BlockedUserID persist.DBID `db:"blocked_user_id" json:"blocked_user_id"`
@@ -246,23 +205,11 @@ type UserBlocklist struct {
 }
 
 type UserRole struct {
-	ID          persist.DBID `db:"id" json:"id"`
-	UserID      persist.DBID `db:"user_id" json:"user_id"`
-	Role        persist.Role `db:"role" json:"role"`
-	Version     int32        `db:"version" json:"version"`
-	Deleted     bool         `db:"deleted" json:"deleted"`
-	CreatedAt   time.Time    `db:"created_at" json:"created_at"`
+	ID        persist.DBID `db:"id" json:"id"`
+	UserID    persist.DBID `db:"user_id" json:"user_id"`
+	Role      persist.Role `db:"role" json:"role"`
+	Version   int32        `db:"version" json:"version"`
+	Deleted   bool         `db:"deleted" json:"deleted"`
+	CreatedAt time.Time    `db:"created_at" json:"created_at"`
 	UpdatedAt time.Time    `db:"updated_at" json:"updated_at"`
-}
-
-type Wallet struct {
-	ID          persist.DBID       `db:"id" json:"id"`
-	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time          `db:"updated_at" json:"updated_at"`
-	Deleted     bool               `db:"deleted" json:"deleted"`
-	Version     sql.NullInt32      `db:"version" json:"version"`
-	Address     persist.Address    `db:"address" json:"address"`
-	WalletType  persist.WalletType `db:"wallet_type" json:"wallet_type"`
-	Chain       persist.Chain      `db:"chain" json:"chain"`
-	L1Chain     persist.L1Chain    `db:"l1_chain" json:"l1_chain"`
 }

@@ -12,13 +12,12 @@ CREATE TABLE IF NOT EXISTS users
     created_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     username              character varying(255),
     username_idempotent   character varying(255),
-    wallets               character varying(255)[],
+    primary_account_id    character varying(255),
     universal             boolean                            NOT NULL DEFAULT FALSE,
     notification_settings jsonb,
     email_unsubscriptions jsonb                              NOT NULL DEFAULT '{
       "all": false
     }'::jsonb,
-    primary_wallet_id     character varying(255),
     user_experiences      jsonb                              NOT NULL DEFAULT '{}'::jsonb,
     fts_username          tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, ((username)::text ||
                                                                                           CASE
@@ -35,21 +34,42 @@ CREATE TABLE IF NOT EXISTS users
 
 CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 
-CREATE INDEX users_wallets_idx ON users USING gin (wallets) WHERE (deleted = FALSE);
+CREATE TABLE IF NOT EXISTS user_accounts
+(
+    id          character varying(255) PRIMARY KEY NOT NULL,
+    user_id     character varying(255)             NOT NULL REFERENCES users (id),
+    name        character varying                  NOT NULL DEFAULT ''::character varying,
+    fts_name    tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
+    address     character varying(255),
+    fts_address tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (address)::text)) STORED,
+    created_at  timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted     boolean                            NOT NULL DEFAULT FALSE
+);
 
+CREATE INDEX user_accounts_user_id_idx ON user_accounts (user_id);
+CREATE INDEX user_accounts_address_idx ON user_accounts (address);
+CREATE INDEX user_accounts_fts_name_idx ON user_accounts USING gin (fts_name);
+CREATE INDEX user_accounts_fts_address_idx ON user_accounts USING gin (fts_address);
 
-CREATE TABLE IF NOT EXISTS pool
+ALTER TABLE users
+    ADD CONSTRAINT users_primary_account_id_fkey
+        FOREIGN KEY (primary_account_id) REFERENCES user_accounts(id);
+
+CREATE TABLE IF NOT EXISTS pools
 (
     id                      character varying(255) PRIMARY KEY,
     name                    character varying        NOT NULL DEFAULT ''::character varying,
-    description             character varying        NOT NULL DEFAULT ''::character varying,
-    logo                    character varying        NOT NULL DEFAULT ''::character varying,
     fts_name                tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
+    description             character varying        NOT NULL DEFAULT ''::character varying,
     fts_description_english tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig, (description)::text)) STORED,
-    contract                character varying        NOT NULL DEFAULT ''::character varying,
+    logo                    character varying        NOT NULL DEFAULT ''::character varying,
+    slug                    character varying        NOT NULL DEFAULT ''::character varying,
+    owner_id                character varying(255)   NOT NULL REFERENCES users,
+    contract_id             character varying                 DEFAULT NULL,
+    deleted                 boolean                  NOT NULL DEFAULT FALSE,
     updated_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted                 boolean                  NOT NULL DEFAULT FALSE
+    created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX pools_fts_description_english_idx ON pools USING gin (fts_description_english);
@@ -61,13 +81,11 @@ CREATE INDEX pools_fts_name_idx ON pools USING gin (fts_name);
 CREATE TABLE IF NOT EXISTS claims
 (
     id                character varying(255) PRIMARY KEY,
-    version           integer                           DEFAULT 0,
     pool_id           character varying(255)   NOT NULL REFERENCES pools ON DELETE CASCADE,
     recipient_address character varying(255),
-    recipient_type    integer                  NOT NULL,
-    calculation_type  integer                  NOT NULL,
     value             character varying(255)   NOT NULL,
-    expression        character varying(255)   NOT NULL,
+    state_id          character varying(255)   NOT NULL,
+    strategy_id       character varying(255)   NOT NULL,
     label             character varying(255)   NOT NULL,
     path              ltree                    NULL,
     deleted           boolean                  NOT NULL DEFAULT FALSE,
@@ -75,9 +93,9 @@ CREATE TABLE IF NOT EXISTS claims
     created_at        timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX allocation_path_gist_idx ON claims USING gist (path);
+CREATE INDEX claim_path_gist_idx ON claims USING gist (path);
 
-CREATE INDEX allocation_path_idx ON claims USING btree (path);
+CREATE INDEX claim_path_idx ON claims USING btree (path);
 
 CREATE TABLE IF NOT EXISTS dev_metadata_users
 (
@@ -97,12 +115,12 @@ CREATE TABLE IF NOT EXISTS events
     action           character varying(255)             NOT NULL,
     data             jsonb,
     deleted          boolean                            NOT NULL DEFAULT FALSE,
-    updated_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     pool_id          character varying(255),
     external_id      character varying(255),
     caption          character varying,
-    group_id         character varying(255)
+    group_id         character varying(255),
+    updated_at       TIMESTAMP WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at       timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX events_actor_id_action_created_at_idx ON events USING btree (actor_id, action, created_at);
@@ -216,11 +234,10 @@ SELECT users.id,
        users.created_at,
        users.username,
        users.username_idempotent,
-       users.wallets,
        users.universal,
        users.notification_settings,
        users.email_unsubscriptions,
-       users.primary_wallet_id,
+       users.primary_account_id,
        users.user_experiences,
        for_users.pii_unverified_email_address,
        for_users.pii_verified_email_address

@@ -14,23 +14,67 @@ import (
 )
 
 type Loaders struct {
-	GetAccountByIDBatch *GetAccountByIDBatch
+	GetAccountByIdBatch                     *GetAccountByIdBatch
+	GetAccountsByIdsBatch                   *GetAccountsByIdsBatch
+	GetPoolContractByIdBatch                *GetPoolContractByIdBatch
+	GetPoolContractsByAccountAddressBatch   *GetPoolContractsByAccountAddressBatch
+	GetPoolContractsByAccountAddressesBatch *GetPoolContractsByAccountAddressesBatch
+	GetPoolContractsByIdsBatch              *GetPoolContractsByIdsBatch
+	GetTokenBalancesByPoolIdBatch           *GetTokenBalancesByPoolIdBatch
+	GetTokenBalancesByPoolIdsBatch          *GetTokenBalancesByPoolIdsBatch
+	GetTokenByIdBatch                       *GetTokenByIdBatch
+	GetTokensByIdsBatch                     *GetTokensByIdsBatch
 }
 
 func NewLoaders(ctx context.Context, q *indexerdb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
 	loaders := &Loaders{}
 
-	loaders.GetAccountByIDBatch = newGetAccountByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountByIDBatch(q), preFetchHook, postFetchHook)
+	loaders.GetAccountByIdBatch = newGetAccountByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetAccountsByIdsBatch = newGetAccountsByIdsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountsByIdsBatch(q), preFetchHook, postFetchHook)
+	loaders.GetPoolContractByIdBatch = newGetPoolContractByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolContractByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetPoolContractsByAccountAddressBatch = newGetPoolContractsByAccountAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolContractsByAccountAddressBatch(q), preFetchHook, postFetchHook)
+	loaders.GetPoolContractsByAccountAddressesBatch = newGetPoolContractsByAccountAddressesBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolContractsByAccountAddressesBatch(q), preFetchHook, postFetchHook)
+	loaders.GetPoolContractsByIdsBatch = newGetPoolContractsByIdsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolContractsByIdsBatch(q), preFetchHook, postFetchHook)
+	loaders.GetTokenBalancesByPoolIdBatch = newGetTokenBalancesByPoolIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokenBalancesByPoolIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetTokenBalancesByPoolIdsBatch = newGetTokenBalancesByPoolIdsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokenBalancesByPoolIdsBatch(q), preFetchHook, postFetchHook)
+	loaders.GetTokenByIdBatch = newGetTokenByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokenByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetTokensByIdsBatch = newGetTokensByIdsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokensByIdsBatch(q), preFetchHook, postFetchHook)
+
+	loaders.GetAccountsByIdsBatch.RegisterResultSubscriber(func(result []indexerdb.Account) {
+		for _, entry := range result {
+			loaders.GetAccountByIdBatch.Prime(loaders.GetAccountByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
+	loaders.GetPoolContractsByAccountAddressBatch.RegisterResultSubscriber(func(result []indexerdb.Pool) {
+		for _, entry := range result {
+			loaders.GetPoolContractByIdBatch.Prime(loaders.GetPoolContractByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
+	loaders.GetPoolContractsByAccountAddressesBatch.RegisterResultSubscriber(func(result []indexerdb.Pool) {
+		for _, entry := range result {
+			loaders.GetPoolContractByIdBatch.Prime(loaders.GetPoolContractByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
+	loaders.GetPoolContractsByIdsBatch.RegisterResultSubscriber(func(result []indexerdb.Pool) {
+		for _, entry := range result {
+			loaders.GetPoolContractByIdBatch.Prime(loaders.GetPoolContractByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
+	loaders.GetTokensByIdsBatch.RegisterResultSubscriber(func(result []indexerdb.Token) {
+		for _, entry := range result {
+			loaders.GetTokenByIdBatch.Prime(loaders.GetTokenByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
 
 	return loaders
 }
 
-func loadGetAccountByIDBatch(q *indexerdb.Queries) func(context.Context, *GetAccountByIDBatch, []persist.DBID) ([]indexerdb.Account, []error) {
-	return func(ctx context.Context, d *GetAccountByIDBatch, params []persist.DBID) ([]indexerdb.Account, []error) {
+func loadGetAccountByIdBatch(q *indexerdb.Queries) func(context.Context, *GetAccountByIdBatch, []persist.DBID) ([]indexerdb.Account, []error) {
+	return func(ctx context.Context, d *GetAccountByIdBatch, params []persist.DBID) ([]indexerdb.Account, []error) {
 		results := make([]indexerdb.Account, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetAccountByIDBatch(ctx, params)
+		b := q.GetAccountByIdBatch(ctx, params)
 		defer b.Close()
 
 		b.QueryRow(func(i int, r indexerdb.Account, err error) {
@@ -38,6 +82,156 @@ func loadGetAccountByIDBatch(q *indexerdb.Queries) func(context.Context, *GetAcc
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = d.getNotFoundError(params[i])
 			}
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetAccountsByIdsBatch(q *indexerdb.Queries) func(context.Context, *GetAccountsByIdsBatch, []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error) {
+	return func(ctx context.Context, d *GetAccountsByIdsBatch, params []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error) {
+		results := make([][]indexerdb.Account, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetAccountsByIdsBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.Account, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetPoolContractByIdBatch(q *indexerdb.Queries) func(context.Context, *GetPoolContractByIdBatch, []persist.DBID) ([]indexerdb.Pool, []error) {
+	return func(ctx context.Context, d *GetPoolContractByIdBatch, params []persist.DBID) ([]indexerdb.Pool, []error) {
+		results := make([]indexerdb.Pool, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetPoolContractByIdBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r indexerdb.Pool, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetPoolContractsByAccountAddressBatch(q *indexerdb.Queries) func(context.Context, *GetPoolContractsByAccountAddressBatch, []string) ([][]indexerdb.Pool, []error) {
+	return func(ctx context.Context, d *GetPoolContractsByAccountAddressBatch, params []string) ([][]indexerdb.Pool, []error) {
+		results := make([][]indexerdb.Pool, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetPoolContractsByAccountAddressBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.Pool, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetPoolContractsByAccountAddressesBatch(q *indexerdb.Queries) func(context.Context, *GetPoolContractsByAccountAddressesBatch, []string) ([][]indexerdb.Pool, []error) {
+	return func(ctx context.Context, d *GetPoolContractsByAccountAddressesBatch, params []string) ([][]indexerdb.Pool, []error) {
+		results := make([][]indexerdb.Pool, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetPoolContractsByAccountAddressesBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.Pool, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetPoolContractsByIdsBatch(q *indexerdb.Queries) func(context.Context, *GetPoolContractsByIdsBatch, []persist.DBID) ([][]indexerdb.Pool, []error) {
+	return func(ctx context.Context, d *GetPoolContractsByIdsBatch, params []persist.DBID) ([][]indexerdb.Pool, []error) {
+		results := make([][]indexerdb.Pool, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetPoolContractsByIdsBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.Pool, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetTokenBalancesByPoolIdBatch(q *indexerdb.Queries) func(context.Context, *GetTokenBalancesByPoolIdBatch, []persist.DBID) ([][]indexerdb.TokenBalance, []error) {
+	return func(ctx context.Context, d *GetTokenBalancesByPoolIdBatch, params []persist.DBID) ([][]indexerdb.TokenBalance, []error) {
+		results := make([][]indexerdb.TokenBalance, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetTokenBalancesByPoolIdBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.TokenBalance, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetTokenBalancesByPoolIdsBatch(q *indexerdb.Queries) func(context.Context, *GetTokenBalancesByPoolIdsBatch, []persist.DBID) ([][]indexerdb.TokenBalance, []error) {
+	return func(ctx context.Context, d *GetTokenBalancesByPoolIdsBatch, params []persist.DBID) ([][]indexerdb.TokenBalance, []error) {
+		results := make([][]indexerdb.TokenBalance, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetTokenBalancesByPoolIdsBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.TokenBalance, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetTokenByIdBatch(q *indexerdb.Queries) func(context.Context, *GetTokenByIdBatch, []persist.DBID) ([]indexerdb.Token, []error) {
+	return func(ctx context.Context, d *GetTokenByIdBatch, params []persist.DBID) ([]indexerdb.Token, []error) {
+		results := make([]indexerdb.Token, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetTokenByIdBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r indexerdb.Token, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetTokensByIdsBatch(q *indexerdb.Queries) func(context.Context, *GetTokensByIdsBatch, []persist.DBID) ([][]indexerdb.Token, []error) {
+	return func(ctx context.Context, d *GetTokensByIdsBatch, params []persist.DBID) ([][]indexerdb.Token, []error) {
+		results := make([][]indexerdb.Token, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetTokensByIdsBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.Token, err error) {
+			results[i], errors[i] = r, err
 		})
 
 		return results, errors

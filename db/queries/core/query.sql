@@ -1,3 +1,7 @@
+-- -----------------------------------------------------------------------------
+-- USER
+-- -----------------------------------------------------------------------------
+
 -- name: GetUserById :one
 SELECT * FROM users WHERE id = $1 AND deleted = false;
 
@@ -27,97 +31,46 @@ where p.pii_verified_email_address = lower($1)
   and p.deleted = false
   and u.deleted = false;
 
--- name: GetUserByAddressAndL1 :one
-select users.*
-from users, wallets
-where wallets.address = sqlc.arg('address')
-  and wallets.l1_chain = sqlc.arg('l1_chain')
-  and array[wallets.id] <@ users.wallets
-  and wallets.deleted = false
-  and users.deleted = false;
+-- name: GetUserByAccountID :one
+SELECT u.* FROM users u
+INNER JOIN user_accounts ua ON u.id = ua.user_id
+WHERE ua.id = sqlc.arg('account_id')
+  AND u.deleted = false
+  AND ua.deleted = false;
 
--- name: GetUserByAddressAndL1Batch :batchone
-select users.*
-from users, wallets
-where wallets.address = sqlc.arg('address')
-  and wallets.l1_chain = sqlc.arg('l1_chain')
-  and array[wallets.id] <@ users.wallets
-  and wallets.deleted = false
-  and users.deleted = false;
+-- -----------------------------------------------------------------------------
+-- POOL
+-- -----------------------------------------------------------------------------
 
 -- name: GetPoolById :one
 SELECT * FROM pools WHERE id = $1 AND deleted = false;
 
--- name: GetPoolByUserID :one
-SELECT s.* FROM users u, unnest(u.wallets)
-    WITH ORDINALITY AS a(wallet_id, wallet_ord)
-    INNER JOIN wallets w on w.id = a.wallet_id
-    INNER JOIN allocations a ON a.address = w.address
-    INNER JOIN pools s ON s.id = a.pool_id
-    WHERE u.id = @user_id AND s.id = @pool_id AND u.deleted = false AND w.deleted = false AND a.deleted = false AND s.deleted = false;
-
--- name: GetPoolsByUserIDBatch :batchmany
-select s.*
-from users u, pools s, wallets w, allocation_aggregations a
-where u.id = $1
-  and w.id = any(u.wallets)
-  and a.recipient_address = w.address
-  and s.id = a.pool_id
-  and s.l1_chain = w.l1_chain
-  and u.deleted = false
-  and w.deleted = false
-  and a.deleted = false
-  and s.deleted = false;
-
 -- name: GetPoolByIdBatch :batchone
 SELECT * FROM pools WHERE id = $1 AND deleted = false;
 
--- name: GetPoolByChainAddress :one
-SELECT * FROM pools WHERE address = $1 AND chain = $2 AND deleted = false;
+-- name: GetPoolByUserID :one
+SELECT p.* FROM users u
+                    INNER JOIN user_accounts ua ON u.id = ua.user_id
+                    INNER JOIN claims c ON c.recipient_address = ua.address
+                    INNER JOIN pools p ON p.id = c.pool_id
+WHERE u.id = sqlc.arg('user_id')
+  AND p.id = sqlc.arg('pool_id')
+  AND u.deleted = false
+  AND ua.deleted = false
+  AND c.deleted = false
+  AND p.deleted = false;
 
--- name: GetPoolByChainAddressBatch :batchone
-SELECT * FROM pools WHERE address = $1 AND chain = $2 AND deleted = false;
-
--- name: GetPoolsByChainsAndAddresses :many
-SELECT * FROM pools WHERE chain = any(@chains::int[]) OR contract_address = any(@addresses::varchar[]) AND deleted = false;
-
--- name: GetPoolsByRecipientAddress :many
-SELECT s.* FROM allocations a
-                    JOIN pools s ON s.id = a.pool_id
-WHERE a.recipient_address = $1 AND s.deleted = false;
-
--- name: GetWalletByID :one
-SELECT * FROM wallets WHERE id = $1 AND deleted = false;
-
--- name: GetWalletByIDBatch :batchone
-SELECT * FROM wallets WHERE id = $1 AND deleted = false;
-
--- name: GetWalletByAddressAndL1Chain :one
-SELECT wallets.* FROM wallets WHERE address = $1 AND l1_chain = $2 AND deleted = false;
-
--- name: GetWalletsByUserID :many
-SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord)INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
-
--- name: GetWalletsByUserIDBatch :batchmany
-SELECT w.* FROM users u, unnest(u.wallets) WITH ORDINALITY AS a(wallet_id, wallet_ord) INNER JOIN wallets w on w.id = a.wallet_id WHERE u.id = $1 AND u.deleted = false AND w.deleted = false ORDER BY a.wallet_ord;
-
--- name: GetPoolTokensByTokenIdentifiers :many
-with params as (
-    select unnest(@pool_addresses::address[]) as pool_address, unnest(@token_addresses::address[]) as token_address, unnest(@chains::chain[]) as chain
-)
-SELECT t.*
-from pools s
-         left join tokens t on s.address = t.owner_address
-         join token_metadatas m on t.token_address = m.contract_address AND t.chain = m.chain
-where s.address = params.pool_address and (t.token_address, t.chain) in (params.token_address, params.chain) and s.deleted = false and m.deleted = false and t.deleted = false;
-
--- name: GetTokenMetadatasByTokenIdentifiers :many
-with params as (
-    select unnest(@contract_address::address[]) as contract_address, unnest(@chain::chain[]) as chain
-)
-select m.* from params p
-         join token_metadatas m on p.contract_address = m.contract_address and p.chain = m.chain
-         where m.deleted = false;
+-- name: GetPoolsByUserIDBatch :batchmany
+SELECT p.*
+FROM users u
+         INNER JOIN user_accounts ua ON u.id = ua.user_id
+         INNER JOIN claims c ON c.recipient_address = ua.address
+         INNER JOIN pools p ON p.id = c.pool_id
+WHERE u.id = $1
+  AND u.deleted = false
+  AND ua.deleted = false
+  AND c.deleted = false
+  AND p.deleted = false;
 
 -- name: CreateUserEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING *;
@@ -363,12 +316,18 @@ on conflict (user_id) do update
 UPDATE users SET email_unsubscriptions = $2 WHERE id = $1;
 
 -- name: UpdateUserPrimaryWallet :exec
-update users set primary_wallet_id = @wallet_id from wallets
-where users.id = @user_id and wallets.id = @wallet_id
-  and wallets.id = any(users.wallets) and wallets.deleted = false;
+update users set primary_account_id = @wallet_id,
+                 updated_at = now()
+where users.id = @user_id
+  AND NOT users.deleted;
 
--- name: GetUsersByChainAddresses :many
-select users.*,wallets.address from users, wallets where wallets.address = ANY(@addresses::varchar[]) AND wallets.l1_chain = @l1_chain AND ARRAY[wallets.id] <@ users.wallets AND users.deleted = false AND wallets.deleted = false;
+-- name: GetUsersByWallets :many
+SELECT DISTINCT u.*
+FROM users u
+         INNER JOIN user_accounts ua ON u.id = ua.user_id
+WHERE ua.address = ANY($1::varchar[])
+  AND u.deleted = false
+  AND ua.deleted = false;
 
 -- name: AddUserRoles :exec
 insert into user_roles (id, user_id, role, created_at, updated_at)
@@ -395,21 +354,29 @@ insert into pii.account_creation_info (user_id, ip_address, created_at) values (
 on conflict do nothing;
 
 -- name: GetUserByWalletID :one
-select * from users where array[@wallet::varchar]::varchar[] <@ wallets and deleted = false;
+SELECT u.* FROM users u
+                    INNER JOIN user_accounts ua ON u.id = ua.user_id
+WHERE ua.address = @wallet
+  AND u.deleted = false
+  AND ua.deleted = false;
 
 -- name: DeleteUserByID :exec
 update users set deleted = true where id = $1;
 
 -- name: InsertWallet :exec
-with new_wallet as (insert into wallets(id, address, chain, l1_chain, wallet_type) values ($1, $2, $3, $4, $5) returning id)
-update users set
-                 primary_wallet_id = coalesce(users.primary_wallet_id, new_wallet.id),
-                 wallets = array_append(users.wallets, new_wallet.id)
-from new_wallet
-where users.id = @user_id and not users.deleted;
+WITH new_account AS (INSERT INTO user_accounts(id, user_id, name, address) VALUES ($1, $2, $3, $4) RETURNING id)
+UPDATE users SET
+    primary_account_id = COALESCE(users.primary_account_id, new_account.id),
+    updated_at = now()
+FROM new_account
+WHERE users.id = $2 AND NOT users.deleted;
 
--- name: DeleteWalletByID :exec
-update wallets set deleted = true, updated_at = now() where id = $1;
+-- name: DeleteWalletById :exec
+UPDATE user_accounts ua
+SET ua.deleted = TRUE, ua.updated_at = now()
+WHERE ua.id = $1
+  AND ua.user_id = $2
+  AND ua.id != COALESCE((SELECT primary_account_id FROM users u WHERE u.id = $2), '');
 
 -- name: InsertUser :one
 insert into users (id, username, username_idempotent, universal, email_unsubscriptions) values ($1, $2, $3, $4, $5) returning id;

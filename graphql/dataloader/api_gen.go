@@ -14,55 +14,39 @@ import (
 )
 
 type Loaders struct {
-	GetAllocationAggregationByIdBatch   *GetAllocationAggregationByIdBatch
-	GetAllocationByIdBatch              *GetAllocationByIdBatch
+	GetClaimsByPoolIdBatch              *GetClaimsByPoolIdBatch
 	GetNotificationByIDBatch            *GetNotificationByIDBatch
-	GetPoolByChainAddressBatch          *GetPoolByChainAddressBatch
 	GetPoolByIdBatch                    *GetPoolByIdBatch
 	GetPoolsByUserIDBatch               *GetPoolsByUserIDBatch
-	GetUserByAddressAndL1Batch          *GetUserByAddressAndL1Batch
 	GetUserByIdBatch                    *GetUserByIdBatch
 	GetUserByUsernameBatch              *GetUserByUsernameBatch
 	GetUserNotificationsBatch           *GetUserNotificationsBatch
 	GetUsersByPositionPaginateBatch     *GetUsersByPositionPaginateBatch
 	GetUsersByPositionPersonalizedBatch *GetUsersByPositionPersonalizedBatch
-	GetWalletByIDBatch                  *GetWalletByIDBatch
-	GetWalletsByUserIDBatch             *GetWalletsByUserIDBatch
 }
 
 func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
 	loaders := &Loaders{}
 
-	loaders.GetAllocationAggregationByIdBatch = newGetAllocationAggregationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAllocationAggregationByIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetAllocationByIdBatch = newGetAllocationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAllocationByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetClaimsByPoolIdBatch = newGetClaimsByPoolIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimsByPoolIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
-	loaders.GetPoolByChainAddressBatch = newGetPoolByChainAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolByChainAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolByIdBatch = newGetPoolByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolsByUserIDBatch = newGetPoolsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolsByUserIDBatch(q), preFetchHook, postFetchHook)
-	loaders.GetUserByAddressAndL1Batch = newGetUserByAddressAndL1Batch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByAddressAndL1Batch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByUsernameBatch = newGetUserByUsernameBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByUsernameBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserNotificationsBatch = newGetUserNotificationsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserNotificationsBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersByPositionPaginateBatch = newGetUsersByPositionPaginateBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPaginateBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersByPositionPersonalizedBatch = newGetUsersByPositionPersonalizedBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPersonalizedBatch(q), preFetchHook, postFetchHook)
-	loaders.GetWalletByIDBatch = newGetWalletByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetWalletByIDBatch(q), preFetchHook, postFetchHook)
-	loaders.GetWalletsByUserIDBatch = newGetWalletsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetWalletsByUserIDBatch(q), preFetchHook, postFetchHook)
 
 	loaders.GetUserNotificationsBatch.RegisterResultSubscriber(func(result []coredb.Notification) {
 		for _, entry := range result {
 			loaders.GetNotificationByIDBatch.Prime(loaders.GetNotificationByIDBatch.getKeyForResult(entry), entry)
 		}
 	})
-	loaders.GetPoolByChainAddressBatch.RegisterResultSubscriber(func(result coredb.Pool) {
-		loaders.GetPoolByIdBatch.Prime(loaders.GetPoolByIdBatch.getKeyForResult(result), result)
-	})
 	loaders.GetPoolsByUserIDBatch.RegisterResultSubscriber(func(result []coredb.Pool) {
 		for _, entry := range result {
 			loaders.GetPoolByIdBatch.Prime(loaders.GetPoolByIdBatch.getKeyForResult(entry), entry)
 		}
-	})
-	loaders.GetUserByAddressAndL1Batch.RegisterResultSubscriber(func(result coredb.User) {
-		loaders.GetUserByIdBatch.Prime(loaders.GetUserByIdBatch.getKeyForResult(result), result)
 	})
 	loaders.GetUserByUsernameBatch.RegisterResultSubscriber(func(result coredb.User) {
 		loaders.GetUserByIdBatch.Prime(loaders.GetUserByIdBatch.getKeyForResult(result), result)
@@ -77,9 +61,6 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 			loaders.GetUserByIdBatch.Prime(loaders.GetUserByIdBatch.getKeyForResult(entry), entry)
 		}
 	})
-	loaders.GetUserByAddressAndL1Batch.RegisterResultSubscriber(func(result coredb.User) {
-		loaders.GetUserByUsernameBatch.Prime(loaders.GetUserByUsernameBatch.getKeyForResult(result), result)
-	})
 	loaders.GetUserByIdBatch.RegisterResultSubscriber(func(result coredb.User) {
 		loaders.GetUserByUsernameBatch.Prime(loaders.GetUserByUsernameBatch.getKeyForResult(result), result)
 	})
@@ -93,47 +74,20 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 			loaders.GetUserByUsernameBatch.Prime(loaders.GetUserByUsernameBatch.getKeyForResult(entry), entry)
 		}
 	})
-	loaders.GetWalletsByUserIDBatch.RegisterResultSubscriber(func(result []coredb.Wallet) {
-		for _, entry := range result {
-			loaders.GetWalletByIDBatch.Prime(loaders.GetWalletByIDBatch.getKeyForResult(entry), entry)
-		}
-	})
 
 	return loaders
 }
 
-func loadGetAllocationAggregationByIdBatch(q *coredb.Queries) func(context.Context, *GetAllocationAggregationByIdBatch, []persist.DBID) ([]coredb.AllocationAggregation, []error) {
-	return func(ctx context.Context, d *GetAllocationAggregationByIdBatch, params []persist.DBID) ([]coredb.AllocationAggregation, []error) {
-		results := make([]coredb.AllocationAggregation, len(params))
+func loadGetClaimsByPoolIdBatch(q *coredb.Queries) func(context.Context, *GetClaimsByPoolIdBatch, []persist.DBID) ([][]coredb.Claim, []error) {
+	return func(ctx context.Context, d *GetClaimsByPoolIdBatch, params []persist.DBID) ([][]coredb.Claim, []error) {
+		results := make([][]coredb.Claim, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetAllocationAggregationByIdBatch(ctx, params)
+		b := q.GetClaimsByPoolIdBatch(ctx, params)
 		defer b.Close()
 
-		b.QueryRow(func(i int, r coredb.AllocationAggregation, err error) {
+		b.Query(func(i int, r []coredb.Claim, err error) {
 			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetAllocationByIdBatch(q *coredb.Queries) func(context.Context, *GetAllocationByIdBatch, []persist.DBID) ([]coredb.Allocation, []error) {
-	return func(ctx context.Context, d *GetAllocationByIdBatch, params []persist.DBID) ([]coredb.Allocation, []error) {
-		results := make([]coredb.Allocation, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetAllocationByIdBatch(ctx, params)
-		defer b.Close()
-
-		b.QueryRow(func(i int, r coredb.Allocation, err error) {
-			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
 		})
 
 		return results, errors
@@ -149,25 +103,6 @@ func loadGetNotificationByIDBatch(q *coredb.Queries) func(context.Context, *GetN
 		defer b.Close()
 
 		b.QueryRow(func(i int, r coredb.Notification, err error) {
-			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetPoolByChainAddressBatch(q *coredb.Queries) func(context.Context, *GetPoolByChainAddressBatch, []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error) {
-	return func(ctx context.Context, d *GetPoolByChainAddressBatch, params []coredb.GetPoolByChainAddressBatchParams) ([]coredb.Pool, []error) {
-		results := make([]coredb.Pool, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetPoolByChainAddressBatch(ctx, params)
-		defer b.Close()
-
-		b.QueryRow(func(i int, r coredb.Pool, err error) {
 			results[i], errors[i] = r, err
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = d.getNotFoundError(params[i])
@@ -207,25 +142,6 @@ func loadGetPoolsByUserIDBatch(q *coredb.Queries) func(context.Context, *GetPool
 
 		b.Query(func(i int, r []coredb.Pool, err error) {
 			results[i], errors[i] = r, err
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetUserByAddressAndL1Batch(q *coredb.Queries) func(context.Context, *GetUserByAddressAndL1Batch, []coredb.GetUserByAddressAndL1BatchParams) ([]coredb.User, []error) {
-	return func(ctx context.Context, d *GetUserByAddressAndL1Batch, params []coredb.GetUserByAddressAndL1BatchParams) ([]coredb.User, []error) {
-		results := make([]coredb.User, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetUserByAddressAndL1Batch(ctx, params)
-		defer b.Close()
-
-		b.QueryRow(func(i int, r coredb.User, err error) {
-			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
 		})
 
 		return results, errors
@@ -311,41 +227,6 @@ func loadGetUsersByPositionPersonalizedBatch(q *coredb.Queries) func(context.Con
 		defer b.Close()
 
 		b.Query(func(i int, r []coredb.User, err error) {
-			results[i], errors[i] = r, err
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetWalletByIDBatch(q *coredb.Queries) func(context.Context, *GetWalletByIDBatch, []persist.DBID) ([]coredb.Wallet, []error) {
-	return func(ctx context.Context, d *GetWalletByIDBatch, params []persist.DBID) ([]coredb.Wallet, []error) {
-		results := make([]coredb.Wallet, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetWalletByIDBatch(ctx, params)
-		defer b.Close()
-
-		b.QueryRow(func(i int, r coredb.Wallet, err error) {
-			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetWalletsByUserIDBatch(q *coredb.Queries) func(context.Context, *GetWalletsByUserIDBatch, []persist.DBID) ([][]coredb.Wallet, []error) {
-	return func(ctx context.Context, d *GetWalletsByUserIDBatch, params []persist.DBID) ([][]coredb.Wallet, []error) {
-		results := make([][]coredb.Wallet, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetWalletsByUserIDBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, r []coredb.Wallet, err error) {
 			results[i], errors[i] = r, err
 		})
 
