@@ -11,6 +11,52 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
+const getAccountByAddress = `-- name: GetAccountByAddress :one
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.account
+WHERE address = $1
+`
+
+func (q *Queries) GetAccountByAddress(ctx context.Context, address string) (Account, error) {
+	row := q.db.QueryRow(ctx, getAccountByAddress, address)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Address,
+		&i.AccountType,
+		&i.CreatedAtBlockNumber,
+		&i.UpdatedAtBlockNumber,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getAccountById = `-- name: GetAccountById :one
+
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.account
+WHERE id = $1
+`
+
+// -----------------------------------------------------------------------------
+// ACCOUNT
+// -----------------------------------------------------------------------------
+func (q *Queries) GetAccountById(ctx context.Context, id persist.DBID) (Account, error) {
+	row := q.db.QueryRow(ctx, getAccountById, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Address,
+		&i.AccountType,
+		&i.CreatedAtBlockNumber,
+		&i.UpdatedAtBlockNumber,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getPoolContractById = `-- name: GetPoolContractById :one
 
 SELECT id, address, chain_id, pool_factory_id, account_id, name, description, logo, owner_id, created_at_block_number, updated_at_block_number, created_at, updated_at

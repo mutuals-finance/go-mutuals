@@ -3,8 +3,9 @@ package user
 import (
 	"context"
 	"errors"
-	"fmt"
+	"github.com/jackc/pgx/v4"
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/logger"
 	"strings"
 	"time"
 
@@ -81,12 +82,71 @@ type MergeUsersInput struct {
 }
 
 // CreateUser creates a new user
-func CreateUser(ctx context.Context, createUserParams persist.CreateUserInput, userRepo *postgres.UserRepository, queries *coredb.Queries) (userID persist.DBID, err error) {
+func CreateUser(ctx context.Context, pUser persist.CreateUserInput, userRepo *postgres.UserRepository, queries *coredb.Queries) (userID persist.DBID, err error) {
 	gc := util.MustGetGinContext(ctx)
 
-	userID, err = userRepo.Create(ctx, createUserParams, queries)
-	if err != nil {
-		return "", err
+	if pUser.Username != "" {
+		user, err := queries.GetUserByUsername(ctx, strings.ToLower(pUser.Username))
+		if err == nil && user.ID != "" {
+			return "", persist.ErrUsernameNotAvailable{Username: pUser.Username}
+		}
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return "", err
+		}
+	}
+
+	userID, err = queries.InsertUser(ctx, coredb.InsertUserParams{
+		ID:                   persist.GenerateID(),
+		Username:             util.ToNullString(pUser.Username, true),
+		UsernameIdempotent:   util.ToNullString(strings.ToLower(pUser.Username), true),
+		Universal:            pUser.Universal,
+		EmailUnsubscriptions: pUser.EmailNotificationsSettings,
+	})
+
+	/* TODO privy
+	   if pUser.PrivyDID != nil {
+	   		err := queries.SetPrivyDIDForUser(pCtx, db.SetPrivyDIDForUserParams{
+	   			ID:       persist.GenerateID(),
+	   			UserID:   userID,
+	   			PrivyDid: *pUser.PrivyDID,
+	   		})
+	   		if err != nil {
+	   			return "", err
+	   		}
+	   	}
+	*/
+
+	if pUser.ChainAddress.Address() != "" {
+		err := queries.InsertWallet(ctx, coredb.InsertWalletParams{
+			ID:      persist.GenerateID(),
+			UserID:  userID,
+			Name:    pUser.Username,
+			Address: pUser.ChainAddress.Address(),
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if pUser.Email != nil {
+		if pUser.EmailStatus == persist.EmailVerificationStatusVerified {
+			err := queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
+				UserID:       userID,
+				EmailAddress: *pUser.Email,
+			})
+			if err != nil {
+				logger.For(ctx).Errorf("failed to insert verified email address when creating new user with userID=%s\n", userID)
+			}
+		} else if pUser.EmailStatus == persist.EmailVerificationStatusUnverified {
+			err := queries.UpdateUserUnverifiedEmail(ctx, coredb.UpdateUserUnverifiedEmailParams{
+				UserID:       userID,
+				EmailAddress: *pUser.Email,
+			})
+			if err != nil {
+				logger.For(ctx).Errorf("failed to insert unverified email address when creating new user with userID=%s\n", userID)
+			}
+		}
+
 	}
 
 	err = auth.StartSession(gc, queries, userID)
@@ -155,66 +215,6 @@ func AddWalletToUser(pCtx context.Context, pUserID persist.DBID, pChainAddress p
 	return nil
 }
 
-// RemoveAddressesFromUserToken removes any amount of addresses from a user in the DB
-func RemoveAddressesFromUserToken(pCtx context.Context, pUserID persist.DBID, pInput RemoveUserAddressesInput,
-	userRepo postgres.UserRepository) error {
-
-	user, err := userRepo.GetByID(pCtx, pUserID)
-	if err != nil {
-		return err
-	}
-
-	if len(user.Wallets) <= len(pInput.Addresses) {
-		return errUserCannotRemoveAllWallets
-	}
-
-	return nil
-}
-
-// GetUser returns a user by ID or address or username
-func GetUser(pCtx context.Context, pInput GetUserInput, userRepo postgres.UserRepository) (GetUserOutput, error) {
-
-	//------------------
-
-	var user persist.User
-	var err error
-	chainAddress := persist.NewL1ChainAddress(pInput.Address, pInput.Chain)
-	switch {
-	case pInput.UserID != "":
-		user, err = userRepo.GetByID(pCtx, pInput.UserID)
-		if err != nil {
-			return GetUserOutput{}, err
-		}
-		break
-	case pInput.Username != "":
-		user, err = userRepo.GetByUsername(pCtx, pInput.Username)
-		if err != nil {
-			return GetUserOutput{}, err
-		}
-		break
-	case pInput.Address.String() != "":
-		user, err = userRepo.GetByChainAddress(pCtx, chainAddress)
-		if err != nil {
-			return GetUserOutput{}, err
-		}
-		break
-	}
-
-	if user.ID == "" {
-		return GetUserOutput{}, persist.ErrUserNotFound{UserID: pInput.UserID, L1ChainAddress: chainAddress, Username: pInput.Username}
-	}
-
-	output := GetUserOutput{
-		UserID:    user.ID,
-		Username:  user.Username.String(),
-		BioStr:    user.Bio.String(),
-		CreatedAt: user.CreationTime,
-		Addresses: user.Wallets,
-	}
-
-	return output, nil
-}
-
 // UpdateUserInfo updates a user by ID and ensures that if they are using an ENS name as a username that their address resolves to that ENS
 func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, userRepository *postgres.UserRepository, ethClient *ethclient.Client) error {
 	if strings.HasSuffix(strings.ToLower(username), ".eth") {
@@ -246,102 +246,4 @@ func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, 
 		return err
 	}
 	return nil
-}
-
-// Not in use
-// // MergeUsers merges two users together
-// func MergeUsers(pCtx context.Context, userRepo postgres.UserRepository, nonceRepo postgres.NonceRepository, walletRepo postgres.WalletRepository, pUserID persist.DBID, pInput MergeUsersInput, multichainProvider *multichain.Provider) error {
-// 	chainAddress := persist.NewChainAddress(pInput.Address, pInput.Chain)
-// 	nonce, id, _ := auth.GetUserWithNonce(pCtx, chainAddress, userRepo, nonceRepo, walletRepo)
-// 	if nonce == "" {
-// 		return auth.ErrNonceNotFound{ChainAddress: chainAddress}
-// 	}
-// 	if id != pInput.SecondUserID {
-// 		return fmt.Errorf("wrong nonce: user %s is not the second user", pInput.SecondUserID)
-// 	}
-
-// 	if pInput.WalletType != persist.WalletTypeEOA {
-// 		if auth.NewNoncePrepend+nonce != pInput.Nonce && auth.NoncePrepend+nonce != pInput.Nonce {
-// 			return auth.ErrNonceMismatch
-// 		}
-// 	}
-
-// 	sigValidBool, err := multichainProvider.VerifySignature(pCtx, pInput.Signature, nonce, chainAddress, pInput.WalletType)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if !sigValidBool {
-// 		return fmt.Errorf("signature is invalid for address %s", pInput.Address)
-// 	}
-
-// 	return userRepo.MergeUsers(pCtx, pUserID, pInput.SecondUserID)
-
-// }
-
-// DoesUserOwnWallets checks if a user owns any wallets
-func DoesUserOwnWallets(pCtx context.Context, userID persist.DBID, walletAddresses []persist.DBID, userRepo postgres.UserRepository) (bool, error) {
-	user, err := userRepo.GetByID(pCtx, userID)
-	if err != nil {
-		return false, err
-	}
-	walletIDs := make([]persist.DBID, len(user.Wallets))
-	for i, wallet := range user.Wallets {
-		walletIDs[i] = wallet.ID
-	}
-	for _, walletAddress := range walletAddresses {
-		if !persist.ContainsDBID(walletAddresses, walletAddress) {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
-// ContainsWallets checks if an array of wallets contains another wallet
-func ContainsWallets(a []persist.Wallet, b persist.Wallet) bool {
-	for _, v := range a {
-		if v.Address == b.Address {
-			return true
-		}
-	}
-
-	return false
-}
-
-type ErrDoesNotOwnWallets struct {
-	ID        persist.DBID
-	Addresses []persist.Wallet
-}
-
-func (e ErrDoesNotOwnWallets) Error() string {
-	return fmt.Sprintf("user with ID %s does not own all wallets: %+v", e.ID, e.Addresses)
-}
-
-type ErrUserAlreadyExists struct {
-	Address       persist.Address
-	Chain         persist.Chain
-	Authenticator string
-}
-
-func (e ErrUserAlreadyExists) Error() string {
-	return fmt.Sprintf("user already exists: address: %s, authenticator: %s", e.Address, e.Authenticator)
-}
-
-func (e errCouldNotEnsureMediaForAddress) Error() string {
-	return fmt.Sprintf("could not ensure media for wallet: %s", e.address.Address)
-}
-
-type errCouldNotEnsureMediaForAddress struct {
-	address persist.Wallet
-}
-
-// containsWallet checks whether an address exists in a slice
-func containsWallet(a []persist.Wallet, b persist.Wallet) bool {
-	for _, v := range a {
-		if v == b {
-			return true
-		}
-	}
-
-	return false
 }

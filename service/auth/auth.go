@@ -199,10 +199,8 @@ func (e NonceAuthenticator) Authenticate(ctx context.Context) (*AuthResult, erro
 	}
 
 	var user *db.User
-	u, err := e.Queries.GetUserByAddressAndL1(ctx, db.GetUserByAddressAndL1Params{
-		Address: asL1.Address(),
-		L1Chain: asL1.L1Chain(),
-	})
+	// TODO allow multiple addresses per user (?) and check in query if matches
+	u, err := e.Queries.GetUserByAccountAddress(ctx, asL1.Address())
 
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {

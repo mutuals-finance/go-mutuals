@@ -8,14 +8,16 @@ import (
 
 	"github.com/jackc/pgx/v4"
 
-	"github.com/mutuals/go-mutuals/service/persist"
-
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
+
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type Loaders struct {
+	GetAccountByAddressBatch                *GetAccountByAddressBatch
 	GetAccountByIdBatch                     *GetAccountByIdBatch
-	GetAccountsByIdsBatch                   *GetAccountsByIdsBatch
+	GetAccountsByAddressesBatch             *GetAccountsByAddressesBatch
+	GetAccountsByAddressesPaginateBatch     *GetAccountsByAddressesPaginateBatch
 	GetPoolContractByIdBatch                *GetPoolContractByIdBatch
 	GetPoolContractsByAccountAddressBatch   *GetPoolContractsByAccountAddressBatch
 	GetPoolContractsByAccountAddressesBatch *GetPoolContractsByAccountAddressesBatch
@@ -29,8 +31,10 @@ type Loaders struct {
 func NewLoaders(ctx context.Context, q *indexerdb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
 	loaders := &Loaders{}
 
+	loaders.GetAccountByAddressBatch = newGetAccountByAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountByAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetAccountByIdBatch = newGetAccountByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountByIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetAccountsByIdsBatch = newGetAccountsByIdsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountsByIdsBatch(q), preFetchHook, postFetchHook)
+	loaders.GetAccountsByAddressesBatch = newGetAccountsByAddressesBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountsByAddressesBatch(q), preFetchHook, postFetchHook)
+	loaders.GetAccountsByAddressesPaginateBatch = newGetAccountsByAddressesPaginateBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetAccountsByAddressesPaginateBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolContractByIdBatch = newGetPoolContractByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolContractByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolContractsByAccountAddressBatch = newGetPoolContractsByAccountAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolContractsByAccountAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolContractsByAccountAddressesBatch = newGetPoolContractsByAccountAddressesBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolContractsByAccountAddressesBatch(q), preFetchHook, postFetchHook)
@@ -40,7 +44,15 @@ func NewLoaders(ctx context.Context, q *indexerdb.Queries, disableCaching bool, 
 	loaders.GetTokenByIdBatch = newGetTokenByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokenByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetTokensByIdsBatch = newGetTokensByIdsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetTokensByIdsBatch(q), preFetchHook, postFetchHook)
 
-	loaders.GetAccountsByIdsBatch.RegisterResultSubscriber(func(result []indexerdb.Account) {
+	loaders.GetAccountByAddressBatch.RegisterResultSubscriber(func(result indexerdb.Account) {
+		loaders.GetAccountByIdBatch.Prime(loaders.GetAccountByIdBatch.getKeyForResult(result), result)
+	})
+	loaders.GetAccountsByAddressesBatch.RegisterResultSubscriber(func(result []indexerdb.Account) {
+		for _, entry := range result {
+			loaders.GetAccountByIdBatch.Prime(loaders.GetAccountByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
+	loaders.GetAccountsByAddressesPaginateBatch.RegisterResultSubscriber(func(result []indexerdb.Account) {
 		for _, entry := range result {
 			loaders.GetAccountByIdBatch.Prime(loaders.GetAccountByIdBatch.getKeyForResult(entry), entry)
 		}
@@ -69,6 +81,25 @@ func NewLoaders(ctx context.Context, q *indexerdb.Queries, disableCaching bool, 
 	return loaders
 }
 
+func loadGetAccountByAddressBatch(q *indexerdb.Queries) func(context.Context, *GetAccountByAddressBatch, []string) ([]indexerdb.Account, []error) {
+	return func(ctx context.Context, d *GetAccountByAddressBatch, params []string) ([]indexerdb.Account, []error) {
+		results := make([]indexerdb.Account, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetAccountByAddressBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r indexerdb.Account, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
+}
+
 func loadGetAccountByIdBatch(q *indexerdb.Queries) func(context.Context, *GetAccountByIdBatch, []persist.DBID) ([]indexerdb.Account, []error) {
 	return func(ctx context.Context, d *GetAccountByIdBatch, params []persist.DBID) ([]indexerdb.Account, []error) {
 		results := make([]indexerdb.Account, len(params))
@@ -88,12 +119,28 @@ func loadGetAccountByIdBatch(q *indexerdb.Queries) func(context.Context, *GetAcc
 	}
 }
 
-func loadGetAccountsByIdsBatch(q *indexerdb.Queries) func(context.Context, *GetAccountsByIdsBatch, []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error) {
-	return func(ctx context.Context, d *GetAccountsByIdsBatch, params []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error) {
+func loadGetAccountsByAddressesBatch(q *indexerdb.Queries) func(context.Context, *GetAccountsByAddressesBatch, [][]string) ([][]indexerdb.Account, []error) {
+	return func(ctx context.Context, d *GetAccountsByAddressesBatch, params [][]string) ([][]indexerdb.Account, []error) {
 		results := make([][]indexerdb.Account, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetAccountsByIdsBatch(ctx, params)
+		b := q.GetAccountsByAddressesBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []indexerdb.Account, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetAccountsByAddressesPaginateBatch(q *indexerdb.Queries) func(context.Context, *GetAccountsByAddressesPaginateBatch, []indexerdb.GetAccountsByAddressesPaginateBatchParams) ([][]indexerdb.Account, []error) {
+	return func(ctx context.Context, d *GetAccountsByAddressesPaginateBatch, params []indexerdb.GetAccountsByAddressesPaginateBatchParams) ([][]indexerdb.Account, []error) {
+		results := make([][]indexerdb.Account, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetAccountsByAddressesPaginateBatch(ctx, params)
 		defer b.Close()
 
 		b.Query(func(i int, r []indexerdb.Account, err error) {

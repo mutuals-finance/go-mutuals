@@ -70558,7 +70558,7 @@
       }
     },
     {
-      "text": "\nSELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE id = $1 AND deleted = false",
+      "text": "\nSELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences\nFROM users\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetUserById",
       "cmd": ":one",
       "columns": [
@@ -70915,7 +70915,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, deleted, version, updated_at, created_at, username, username_idempotent, universal, notification_settings, email_unsubscriptions, primary_account_id, user_experiences, pii_unverified_email_address, pii_verified_email_address from pii.user_view where id = $1 and deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, universal, notification_settings, email_unsubscriptions, primary_account_id, user_experiences, pii_unverified_email_address, pii_verified_email_address\nFROM pii.user_view\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetUserWithPIIByID",
       "cmd": ":one",
       "columns": [
@@ -71320,7 +71320,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences\nFROM users\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetUserByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -71673,7 +71673,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE id = ANY($2) AND deleted = false\n                      AND (created_at, id) \u003c ($3, $4)\n                      AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences\nFROM users\nWHERE id = ANY ($2)\n  AND deleted = FALSE\n  AND (created_at, id) \u003c ($3, $4)\n  AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
       "name": "GetUsersByIDs",
       "cmd": ":many",
       "columns": [
@@ -72192,7 +72192,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences\nFROM users\nWHERE username_idempotent = LOWER($1)\n  AND deleted = FALSE",
       "name": "GetUserByUsername",
       "cmd": ":one",
       "columns": [
@@ -72541,7 +72541,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false",
+      "text": "SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences\nFROM users\nWHERE username_idempotent = LOWER($1)\n  AND deleted = FALSE",
       "name": "GetUserByUsernameBatch",
       "cmd": ":batchone",
       "columns": [
@@ -72890,7 +72890,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences from users u join pii.for_users p on u.id = p.user_id\nwhere p.pii_verified_email_address = lower($1)\n  and p.deleted = false\n  and u.deleted = false",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         JOIN pii.for_users p ON u.id = p.user_id\nWHERE p.pii_verified_email_address = LOWER($1)\n  AND p.deleted = FALSE\n  AND u.deleted = FALSE",
       "name": "GetUserByVerifiedEmailAddress",
       "cmd": ":one",
       "columns": [
@@ -73239,8 +73239,8 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences FROM users u\nINNER JOIN user_accounts ua ON u.id = ua.user_id\nWHERE ua.id = $1\n  AND u.deleted = false\n  AND ua.deleted = false",
-      "name": "GetUserByAccountID",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\nWHERE ua.id = $1\n  AND u.deleted = FALSE\n  AND ua.deleted = FALSE",
+      "name": "GetUserByUserAccountId",
       "cmd": ":one",
       "columns": [
         {
@@ -73560,12 +73560,12 @@
         {
           "number": 1,
           "column": {
-            "name": "account_id",
+            "name": "id",
             "not_null": true,
             "is_array": false,
             "comment": "",
             "length": -1,
-            "is_named_param": true,
+            "is_named_param": false,
             "is_func_call": false,
             "scope": "",
             "table": {
@@ -73592,7 +73592,1739 @@
       "insert_into_table": null
     },
     {
-      "text": "\nSELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at FROM pools WHERE id = $1 AND deleted = false",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\nWHERE ua.address = $1\n  AND u.deleted = FALSE\n  AND ua.deleted = FALSE",
+      "name": "GetUserByAccountAddress",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "version",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "int4"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "username",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "username_idempotent",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "primary_account_id",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "universal",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "notification_settings",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "email_unsubscriptions",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "user_experiences",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "users"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "address",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "user_accounts"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "\nSELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted\nFROM user_accounts\nWHERE id = $1\n  AND deleted = FALSE",
+      "name": "GetUserAccountById",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "user_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_name",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "user_accounts"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [
+        " -----------------------------------------------------------------------------",
+        " USER ACCOUNT",
+        " -----------------------------------------------------------------------------"
+      ],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted\nFROM user_accounts\nWHERE id = $1\n  AND deleted = FALSE",
+      "name": "GetUserAccountByIdBatch",
+      "cmd": ":batchone",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "user_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_name",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "user_accounts"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted\nFROM user_accounts\nWHERE address = $1\n  AND deleted = FALSE",
+      "name": "GetUserAccountByAddress",
+      "cmd": ":one",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "user_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_name",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "address",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "user_accounts"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted\nFROM user_accounts\nWHERE address = $1\n  AND deleted = FALSE",
+      "name": "GetUserAccountByAddressBatch",
+      "cmd": ":batchone",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "user_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_name",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "address",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "user_accounts"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted\nFROM user_accounts\nWHERE user_id = $1\n  AND deleted = FALSE",
+      "name": "GetUserAccountsByUserIdBatch",
+      "cmd": ":batchmany",
+      "columns": [
+        {
+          "name": "id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "user_id",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "name",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_name",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "varchar"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "fts_address",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "tsvector"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "created_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "updated_at",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "timestamptz"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
+          "name": "deleted",
+          "not_null": true,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "user_accounts"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "pg_catalog",
+            "name": "bool"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        }
+      ],
+      "params": [
+        {
+          "number": 1,
+          "column": {
+            "name": "user_id",
+            "not_null": true,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "",
+              "name": "user_accounts"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "pg_catalog.varchar"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        }
+      ],
+      "comments": [],
+      "filename": "query.sql",
+      "insert_into_table": null
+    },
+    {
+      "text": "\nSELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetPoolById",
       "cmd": ":one",
       "columns": [
@@ -73897,7 +75629,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at FROM pools WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetPoolByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -74198,7 +75930,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at FROM users u\n                    INNER JOIN user_accounts ua ON u.id = ua.user_id\n                    INNER JOIN claims c ON c.recipient_address = ua.address\n                    INNER JOIN pools p ON p.id = c.pool_id\nWHERE u.id = $1\n  AND p.id = $2\n  AND u.deleted = false\n  AND ua.deleted = false\n  AND c.deleted = false\n  AND p.deleted = false",
+      "text": "SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\n         INNER JOIN claims c ON c.recipient_address = ua.address\n         INNER JOIN pools p ON p.id = c.pool_id\nWHERE u.id = $1\n  AND p.id = $2\n  AND u.deleted = FALSE\n  AND ua.deleted = FALSE\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
       "name": "GetPoolByUserID",
       "cmd": ":one",
       "columns": [
@@ -74528,7 +76260,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\n         INNER JOIN claims c ON c.recipient_address = ua.address\n         INNER JOIN pools p ON p.id = c.pool_id\nWHERE u.id = $1\n  AND u.deleted = false\n  AND ua.deleted = false\n  AND c.deleted = false\n  AND p.deleted = false",
+      "text": "SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\n         INNER JOIN claims c ON c.recipient_address = ua.address\n         INNER JOIN pools p ON p.id = c.pool_id\nWHERE u.id = $1\n  AND u.deleted = FALSE\n  AND ua.deleted = FALSE\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
       "name": "GetPoolsByUserIDBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -74829,7 +76561,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at",
+      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption)\nVALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8)\nRETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at",
       "name": "CreateUserEvent",
       "cmd": ":one",
       "columns": [
@@ -75467,7 +77199,7 @@
       }
     },
     {
-      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption) VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9) RETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at",
+      "text": "INSERT INTO events (id, actor_id, action, resource_type_id, pool_id, subject_id, data, external_id, group_id, caption)\nVALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, $9)\nRETURNING id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at",
       "name": "CreatePoolEvent",
       "cmd": ":one",
       "columns": [
@@ -76134,7 +77866,7 @@
       }
     },
     {
-      "text": "SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at FROM events WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at\nFROM events\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetEvent",
       "cmd": ":one",
       "columns": [
@@ -76565,7 +78297,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with recursive activity as (\n    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where events.id = $1 and deleted = false\n    union\n    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.pool_id, e.external_id, e.caption, e.group_id, e.updated_at, e.created_at from events e, activity a\n    where e.actor_id = a.actor_id\n      and e.action = any($3)\n      and e.created_at \u003c a.created_at\n      and e.created_at \u003e= a.created_at - make_interval(secs =\u003e $2)\n      and e.deleted = false\n      and e.caption is null\n      and (not $4::bool or e.subject_id = a.subject_id)\n)\nselect id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where id = any(select id from activity) order by (created_at, id) asc",
+      "text": "WITH RECURSIVE activity AS (SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at\n                            FROM events\n                            WHERE events.id = $1\n                              AND deleted = FALSE\n                            UNION\n                            SELECT e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.pool_id, e.external_id, e.caption, e.group_id, e.updated_at, e.created_at\n                            FROM events e,\n                                 activity a\n                            WHERE e.actor_id = a.actor_id\n                              AND e.action = ANY ($3)\n                              AND e.created_at \u003c a.created_at\n                              AND e.created_at \u003e= a.created_at - MAKE_INTERVAL(secs =\u003e $2)\n                              AND e.deleted = FALSE\n                              AND e.caption IS NULL\n                              AND (NOT $4::bool OR e.subject_id = a.subject_id))\nSELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at\nFROM events\nWHERE id = ANY (SELECT id FROM activity)\nORDER BY (created_at, id) ASC",
       "name": "GetEventsInWindow",
       "cmd": ":many",
       "columns": [
@@ -77075,7 +78807,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with recursive activity as (\n    select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where events.id = $1 and deleted = false\n    union\n    select e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.pool_id, e.external_id, e.caption, e.group_id, e.updated_at, e.created_at from events e, activity a\n    where e.actor_id = a.actor_id\n      and e.action = any($3)\n      and e.pool_id = $4\n      and e.created_at \u003c a.created_at\n      and e.created_at \u003e= a.created_at - make_interval(secs =\u003e $2)\n      and e.deleted = false\n      and e.caption is null\n      and (not $5::bool or e.subject_id = a.subject_id)\n)\nselect id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where id = any(select id from activity) order by (created_at, id) asc",
+      "text": "WITH RECURSIVE activity AS (SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at\n                            FROM events\n                            WHERE events.id = $1\n                              AND deleted = FALSE\n                            UNION\n                            SELECT e.id, e.version, e.actor_id, e.resource_type_id, e.subject_id, e.user_id, e.action, e.data, e.deleted, e.pool_id, e.external_id, e.caption, e.group_id, e.updated_at, e.created_at\n                            FROM events e,\n                                 activity a\n                            WHERE e.actor_id = a.actor_id\n                              AND e.action = ANY ($3)\n                              AND e.pool_id = $4\n                              AND e.created_at \u003c a.created_at\n                              AND e.created_at \u003e= a.created_at - MAKE_INTERVAL(secs =\u003e $2)\n                              AND e.deleted = FALSE\n                              AND e.caption IS NULL\n                              AND (NOT $5::bool OR e.subject_id = a.subject_id))\nSELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at\nFROM events\nWHERE id = ANY (SELECT id FROM activity)\nORDER BY (created_at, id) ASC",
       "name": "GetPoolEventsInWindow",
       "cmd": ":many",
       "columns": [
@@ -77614,7 +79346,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at from events where group_id = $1 and deleted = false order by(created_at, id) asc",
+      "text": "SELECT id, version, actor_id, resource_type_id, subject_id, user_id, action, data, deleted, pool_id, external_id, caption, group_id, updated_at, created_at\nFROM events\nWHERE group_id = $1\n  AND deleted = FALSE\nORDER BY(created_at, id) ASC",
       "name": "GetEventsInGroup",
       "cmd": ":many",
       "columns": [
@@ -78045,7 +79777,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select actor_id from events where group_id = $1 and deleted = false order by(created_at, id) asc limit 1",
+      "text": "SELECT actor_id\nFROM events\nWHERE group_id = $1\n  AND deleted = FALSE\nORDER BY(created_at, id) ASC\nLIMIT 1",
       "name": "GetActorForGroup",
       "cmd": ":one",
       "columns": [
@@ -78112,7 +79844,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select exists(\n    select 1 from events where deleted = false\n                           and group_id = $1\n                           and id \u003e $2\n)",
+      "text": "SELECT EXISTS(SELECT 1\n              FROM events\n              WHERE deleted = FALSE\n                AND group_id = $1\n                AND id \u003e $2)",
       "name": "HasLaterGroupedEvent",
       "cmd": ":one",
       "columns": [
@@ -78204,7 +79936,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select exists(\n    select 1 from events where deleted = false\n                           and actor_id = $1\n                           and action = any($2)\n                           and created_at \u003e $3 and created_at \u003c= $4\n)",
+      "text": "SELECT EXISTS(SELECT 1\n              FROM events\n              WHERE deleted = FALSE\n                AND actor_id = $1\n                AND action = ANY ($2)\n                AND created_at \u003e $3\n                AND created_at \u003c= $4)",
       "name": "IsActorActionActive",
       "cmd": ":one",
       "columns": [
@@ -78354,7 +80086,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select exists(\n    select 1 from events where deleted = false\n                           and actor_id = $1\n                           and subject_id = $2\n                           and created_at \u003e $3 and created_at \u003c= $4\n)",
+      "text": "SELECT EXISTS(SELECT 1\n              FROM events\n              WHERE deleted = FALSE\n                AND actor_id = $1\n                AND subject_id = $2\n                AND created_at \u003e $3\n                AND created_at \u003c= $4)",
       "name": "IsActorSubjectActive",
       "cmd": ":one",
       "columns": [
@@ -78504,7 +80236,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select exists(\n    select 1 from events where deleted = false\n                           and actor_id = $1\n                           and pool_id = $2\n                           and created_at \u003e $3 and created_at \u003c= $4\n)",
+      "text": "SELECT EXISTS(SELECT 1\n              FROM events\n              WHERE deleted = FALSE\n                AND actor_id = $1\n                AND pool_id = $2\n                AND created_at \u003e $3\n                AND created_at \u003c= $4)",
       "name": "IsActorPoolActive",
       "cmd": ":one",
       "columns": [
@@ -78654,7 +80386,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select exists(\n    select 1 from events where deleted = false\n                           and actor_id = $1\n                           and subject_id = $2\n                           and action = any($3)\n                           and created_at \u003e $4 and created_at \u003c= $5\n)",
+      "text": "SELECT EXISTS(SELECT 1\n              FROM events\n              WHERE deleted = FALSE\n                AND actor_id = $1\n                AND subject_id = $2\n                AND action = ANY ($3)\n                AND created_at \u003e $4\n                AND created_at \u003c= $5)",
       "name": "IsActorSubjectActionActive",
       "cmd": ":one",
       "columns": [
@@ -78833,7 +80565,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false\n                              AND (created_at, id) \u003c ($3, $4)\n                              AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND deleted = FALSE\n  AND (created_at, id) \u003c ($3, $4)\n  AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
       "name": "GetUserNotifications",
       "cmd": ":many",
       "columns": [
@@ -79352,7 +81084,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false\n                              AND (created_at, id) \u003c ($3, $4)\n                              AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND deleted = FALSE\n  AND seen = FALSE\n  AND (created_at, id) \u003c ($3, $4)\n  AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $2",
       "name": "GetUserUnseenNotifications",
       "cmd": ":many",
       "columns": [
@@ -79871,7 +81603,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false and created_at \u003e $2 order by created_at desc limit $3",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND deleted = FALSE\n  AND seen = FALSE\n  AND created_at \u003e $2\nORDER BY created_at DESC\nLIMIT $3",
       "name": "GetRecentUnseenNotifications",
       "cmd": ":many",
       "columns": [
@@ -80278,7 +82010,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false\n                              AND (created_at, id) \u003c ($2, $3)\n                              AND (created_at, id) \u003e ($4, $5)\nORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC\nLIMIT $7",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND deleted = FALSE\n  AND (created_at, id) \u003c ($2, $3)\n  AND (created_at, id) \u003e ($4, $5)\nORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC\nLIMIT $7",
       "name": "GetUserNotificationsBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -80797,7 +82529,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT count(*) FROM notifications WHERE owner_id = $1 AND deleted = false",
+      "text": "SELECT COUNT(*)\nFROM notifications\nWHERE owner_id = $1\n  AND deleted = FALSE",
       "name": "CountUserNotifications",
       "cmd": ":one",
       "columns": [
@@ -80860,7 +82592,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT count(*) FROM notifications WHERE owner_id = $1 AND deleted = false AND seen = false",
+      "text": "SELECT COUNT(*)\nFROM notifications\nWHERE owner_id = $1\n  AND deleted = FALSE\n  AND seen = FALSE",
       "name": "CountUserUnseenNotifications",
       "cmd": ":one",
       "columns": [
@@ -80923,7 +82655,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetNotificationByID",
       "cmd": ":one",
       "columns": [
@@ -81276,7 +83008,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE id = $1 AND deleted = false",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetNotificationByIDBatch",
       "cmd": ":batchone",
       "columns": [
@@ -81629,7 +83361,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at from notifications\nwhere owner_id = $1\n  and action = $2\n  and deleted = false\norder by created_at desc\nlimit 1",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND action = $2\n  AND deleted = FALSE\nORDER BY created_at DESC\nLIMIT 1",
       "name": "GetMostRecentNotificationByOwnerIDForAction",
       "cmd": ":one",
       "columns": [
@@ -82011,7 +83743,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications\nWHERE owner_id = $1 AND action = $2 AND deleted = false AND created_at \u003e $3\nORDER BY created_at DESC",
+      "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND action = $2\n  AND deleted = FALSE\n  AND created_at \u003e $3\nORDER BY created_at DESC",
       "name": "GetNotificationsByOwnerIDForActionAfter",
       "cmd": ":many",
       "columns": [
@@ -82422,7 +84154,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH\n    id_with_row_number AS (\n        SELECT unnest($5::varchar(255)[]) AS id, row_number() OVER (ORDER BY unnest($5::varchar(255)[])) AS rn\n    ),\n    user_with_row_number AS (\n        SELECT id AS user_id, row_number() OVER () AS rn\n        FROM users\n        WHERE deleted = false AND universal = false\n    )\nINSERT INTO notifications (id, owner_id, action, data, event_ids)\nSELECT\n    i.id,\n    u.user_id,\n    $1,\n    $2,\n    $3\nFROM\n    id_with_row_number i\n        JOIN\n    user_with_row_number u ON i.rn = u.rn\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM notifications n\n    WHERE n.owner_id = u.user_id\n      AND n.data -\u003e\u003e 'internal_id' = $4::varchar\n)\nRETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
+      "text": "WITH id_with_row_number AS (SELECT UNNEST($5::varchar(255)[])                              AS id,\n                                   ROW_NUMBER() OVER (ORDER BY UNNEST($5::varchar(255)[])) AS rn),\n     user_with_row_number AS (SELECT id AS user_id, ROW_NUMBER() OVER () AS rn\n                              FROM users\n                              WHERE deleted = FALSE\n                                AND universal = FALSE)\nINSERT\nINTO notifications (id, owner_id, action, data, event_ids)\nSELECT i.id,\n       u.user_id,\n       $1,\n       $2,\n       $3\nFROM id_with_row_number i\n         JOIN\n     user_with_row_number u ON i.rn = u.rn\nWHERE NOT EXISTS (SELECT 1\n                  FROM notifications n\n                  WHERE n.owner_id = u.user_id\n                    AND n.data -\u003e\u003e 'internal_id' = $4::varchar)\nRETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
       "name": "CreateAnnouncementNotifications",
       "cmd": ":many",
       "columns": [
@@ -82892,7 +84624,7 @@
       }
     },
     {
-      "text": "SELECT count(*) FROM users WHERE deleted = false and universal = false",
+      "text": "SELECT COUNT(*)\nFROM users\nWHERE deleted = FALSE\n  AND universal = FALSE",
       "name": "CountAllUsers",
       "cmd": ":one",
       "columns": [
@@ -82925,7 +84657,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
+      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids)\nVALUES ($1, $2, $3, $4, $5)\nRETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
       "name": "CreateSimpleNotification",
       "cmd": ":one",
       "columns": [
@@ -83398,7 +85130,7 @@
       }
     },
     {
-      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
+      "text": "INSERT INTO notifications (id, owner_id, action, data, event_ids, pool_id)\nVALUES ($1, $2, $3, $4, $5, $6)\nRETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
       "name": "CreateViewPoolNotification",
       "cmd": ":one",
       "columns": [
@@ -83900,7 +85632,7 @@
       }
     },
     {
-      "text": "UPDATE notifications SET data = $2, event_ids = event_ids || $3, amount = $4, updated_at = now(), seen = false WHERE id = $1 AND deleted = false AND NOT amount = $4",
+      "text": "UPDATE notifications\nSET data       = $2,\n    event_ids  = event_ids || $3,\n    amount     = $4,\n    updated_at = NOW(),\n    seen       = FALSE\nWHERE id = $1\n  AND deleted = FALSE\n  AND NOT amount = $4",
       "name": "UpdateNotification",
       "cmd": ":exec",
       "columns": [],
@@ -84027,7 +85759,7 @@
       "insert_into_table": null
     },
     {
-      "text": "UPDATE users SET notification_settings = $2 WHERE id = $1",
+      "text": "UPDATE users\nSET notification_settings = $2\nWHERE id = $1",
       "name": "UpdateNotificationSettingsByID",
       "cmd": ":exec",
       "columns": [],
@@ -84096,7 +85828,7 @@
       "insert_into_table": null
     },
     {
-      "text": "UPDATE notifications SET seen = true WHERE owner_id = $1 AND seen = false RETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
+      "text": "UPDATE notifications\nSET seen = TRUE\nWHERE owner_id = $1\n  AND seen = FALSE\nRETURNING id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at",
       "name": "ClearNotificationsForUser",
       "cmd": ":many",
       "columns": [
@@ -84449,7 +86181,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.universal, u.notification_settings, u.email_unsubscriptions, u.primary_account_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address from pii.user_view u\n                    left join user_roles r on r.user_id = u.id and r.role = 'EMAIL_TESTER' and r.deleted = false\nwhere (u.email_unsubscriptions-\u003e\u003e'all' = 'false' or u.email_unsubscriptions-\u003e\u003e'all' is null)\n  and (u.email_unsubscriptions-\u003e\u003e$2::varchar = 'false' or u.email_unsubscriptions-\u003e\u003e$2::varchar is null)\n  and u.deleted = false and u.pii_verified_email_address is not null\n  and (u.created_at, u.id) \u003c ($3, $4::dbid)\n  and (u.created_at, u.id) \u003e ($5, $6::dbid)\n  and ($7::bool = false or r.user_id is not null)\norder by case when $8::bool then (u.created_at, u.id) end asc,\n         case when not $8::bool then (u.created_at, u.id) end desc\nlimit $1",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.universal, u.notification_settings, u.email_unsubscriptions, u.primary_account_id, u.user_experiences, u.pii_unverified_email_address, u.pii_verified_email_address\nFROM pii.user_view u\n         LEFT JOIN user_roles r ON r.user_id = u.id AND r.role = 'EMAIL_TESTER' AND r.deleted = FALSE\nWHERE (u.email_unsubscriptions -\u003e\u003e 'all' = 'false' OR u.email_unsubscriptions -\u003e\u003e 'all' IS NULL)\n  AND (u.email_unsubscriptions -\u003e\u003e $2::varchar = 'false' OR\n       u.email_unsubscriptions -\u003e\u003e $2::varchar IS NULL)\n  AND u.deleted = FALSE\n  AND u.pii_verified_email_address IS NOT NULL\n  AND (u.created_at, u.id) \u003c ($3, $4::dbid)\n  AND (u.created_at, u.id) \u003e ($5, $6::dbid)\n  AND ($7::bool = FALSE OR r.user_id IS NOT NULL)\nORDER BY CASE WHEN $8::bool THEN (u.created_at, u.id) END ASC,\n         CASE WHEN NOT $8::bool THEN (u.created_at, u.id) END DESC\nLIMIT $1",
       "name": "GetUsersWithEmailNotificationsOnForEmailType",
       "cmd": ":many",
       "columns": [
@@ -85035,7 +86767,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences from users u, user_roles ur where u.deleted = false and ur.deleted = false\n                                         and u.id = ur.user_id and ur.role = $2\n                                         and (u.username_idempotent, u.id) \u003c ($3::varchar, $4::dbid)\n                                         and (u.username_idempotent, u.id) \u003e ($5::varchar, $6::dbid)\norder by case when $7::bool then (u.username_idempotent, u.id) end asc,\n         case when not $7::bool then (u.username_idempotent, u.id) end desc\nlimit $1",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u,\n     user_roles ur\nWHERE u.deleted = FALSE\n  AND ur.deleted = FALSE\n  AND u.id = ur.user_id\n  AND ur.role = $2\n  AND (u.username_idempotent, u.id) \u003c ($3::varchar, $4::dbid)\n  AND (u.username_idempotent, u.id) \u003e ($5::varchar, $6::dbid)\nORDER BY CASE WHEN $7::bool THEN (u.username_idempotent, u.id) END ASC,\n         CASE WHEN NOT $7::bool THEN (u.username_idempotent, u.id) END DESC\nLIMIT $1",
       "name": "GetUsersWithRolePaginate",
       "cmd": ":many",
       "columns": [
@@ -85538,7 +87270,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal and t.pos \u003e $2::int and t.pos \u003c $3::int\norder by t.pos asc",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)\nWHERE NOT u.deleted\n  AND NOT u.universal\n  AND t.pos \u003e $2::int\n  AND t.pos \u003c $3::int\nORDER BY t.pos ASC",
       "name": "GetUsersByPositionPaginateBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -85937,7 +87669,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nfrom users u\n         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)\nwhere not u.deleted and not u.universal\norder by t.pos\nlimit 100",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)\nWHERE NOT u.deleted\n  AND NOT u.universal\nORDER BY t.pos\nLIMIT 100",
       "name": "GetUsersByPositionPersonalizedBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -86286,7 +88018,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values ($1, null, $2)\non conflict (user_id) do update\n    set pii_verified_email_address = excluded.pii_verified_email_address,\n        pii_unverified_email_address = excluded.pii_unverified_email_address",
+      "text": "INSERT INTO pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address)\nVALUES ($1, NULL, $2)\nON CONFLICT (user_id) DO UPDATE\n    SET pii_verified_email_address   = excluded.pii_verified_email_address,\n        pii_unverified_email_address = excluded.pii_unverified_email_address",
       "name": "UpdateUserVerifiedEmail",
       "cmd": ":exec",
       "columns": [],
@@ -86359,7 +88091,7 @@
       }
     },
     {
-      "text": "insert into pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address) values ($1, $2, null)\non conflict (user_id) do update\n    set pii_unverified_email_address = excluded.pii_unverified_email_address,\n        pii_verified_email_address = excluded.pii_verified_email_address",
+      "text": "INSERT INTO pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address)\nVALUES ($1, $2, NULL)\nON CONFLICT (user_id) DO UPDATE\n    SET pii_unverified_email_address = excluded.pii_unverified_email_address,\n        pii_verified_email_address   = excluded.pii_verified_email_address",
       "name": "UpdateUserUnverifiedEmail",
       "cmd": ":exec",
       "columns": [],
@@ -86432,7 +88164,7 @@
       }
     },
     {
-      "text": "UPDATE users SET email_unsubscriptions = $2 WHERE id = $1",
+      "text": "UPDATE users\nSET email_unsubscriptions = $2\nWHERE id = $1",
       "name": "UpdateUserEmailUnsubscriptions",
       "cmd": ":exec",
       "columns": [],
@@ -86501,7 +88233,7 @@
       "insert_into_table": null
     },
     {
-      "text": "update users set primary_account_id = $1,\n                 updated_at = now()\nwhere users.id = $2\n  AND NOT users.deleted",
+      "text": "UPDATE users\nSET primary_account_id = $1,\n    updated_at         = NOW()\nWHERE users.id = $2\n  AND NOT users.deleted",
       "name": "UpdateUserPrimaryWallet",
       "cmd": ":exec",
       "columns": [],
@@ -86570,7 +88302,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT DISTINCT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\nWHERE ua.address = ANY($1::varchar[])\n  AND u.deleted = false\n  AND ua.deleted = false",
+      "text": "SELECT DISTINCT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\nWHERE ua.address = ANY ($1::varchar[])\n  AND u.deleted = FALSE\n  AND ua.deleted = FALSE",
       "name": "GetUsersByWallets",
       "cmd": ":many",
       "columns": [
@@ -86919,7 +88651,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into user_roles (id, user_id, role, created_at, updated_at)\nselect unnest($2::varchar[]), $1, unnest($3::varchar[]), now(), now()\non conflict (user_id, role) do update set deleted = false, updated_at = now()",
+      "text": "INSERT INTO user_roles (id, user_id, role, created_at, updated_at)\nSELECT UNNEST($2::varchar[]), $1, UNNEST($3::varchar[]), NOW(), NOW()\nON CONFLICT (user_id, role) DO UPDATE SET deleted    = FALSE,\n                                          updated_at = NOW()",
       "name": "AddUserRoles",
       "cmd": ":exec",
       "columns": [],
@@ -87013,7 +88745,7 @@
       }
     },
     {
-      "text": "update user_roles set deleted = true, updated_at = now() where user_id = $1 and role = any($2)",
+      "text": "UPDATE user_roles\nSET deleted    = TRUE,\n    updated_at = NOW()\nWHERE user_id = $1\n  AND role = ANY ($2)",
       "name": "DeleteUserRoles",
       "cmd": ":exec",
       "columns": [],
@@ -87082,7 +88814,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select role from user_roles where user_id = $1 and deleted = false",
+      "text": "SELECT role\nFROM user_roles\nWHERE user_id = $1\n  AND deleted = FALSE",
       "name": "GetUserRolesByUserId",
       "cmd": ":many",
       "columns": [
@@ -87149,7 +88881,7 @@
       "insert_into_table": null
     },
     {
-      "text": "update users set user_experiences = user_experiences || $1 where id = $2",
+      "text": "UPDATE users\nSET user_experiences = user_experiences || $1\nWHERE id = $2",
       "name": "UpdateUserExperience",
       "cmd": ":exec",
       "columns": [],
@@ -87218,7 +88950,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select user_experiences from users where id = $1",
+      "text": "SELECT user_experiences\nFROM users\nWHERE id = $1",
       "name": "GetUserExperiencesByUserID",
       "cmd": ":one",
       "columns": [
@@ -87285,7 +89017,7 @@
       "insert_into_table": null
     },
     {
-      "text": "update events set caption = $1 where group_id = $2 and deleted = false",
+      "text": "UPDATE events\nSET caption = $1\nWHERE group_id = $2\n  AND deleted = FALSE",
       "name": "UpdateEventCaptionByGroup",
       "cmd": ":exec",
       "columns": [],
@@ -87354,7 +89086,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into pii.account_creation_info (user_id, ip_address, created_at) values ($1, $2, now())\non conflict do nothing",
+      "text": "INSERT INTO pii.account_creation_info (user_id, ip_address, created_at)\nVALUES ($1, $2, NOW())\nON CONFLICT DO NOTHING",
       "name": "AddPiiAccountCreationInfo",
       "cmd": ":exec",
       "columns": [],
@@ -87427,7 +89159,7 @@
       }
     },
     {
-      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences FROM users u\n                    INNER JOIN user_accounts ua ON u.id = ua.user_id\nWHERE ua.address = $1\n  AND u.deleted = false\n  AND ua.deleted = false",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences\nFROM users u\n         INNER JOIN user_accounts ua ON u.id = ua.user_id\nWHERE ua.address = $1\n  AND u.deleted = FALSE\n  AND ua.deleted = FALSE",
       "name": "GetUserByWalletID",
       "cmd": ":one",
       "columns": [
@@ -87780,7 +89512,7 @@
       "insert_into_table": null
     },
     {
-      "text": "update users set deleted = true where id = $1",
+      "text": "UPDATE users\nSET deleted = TRUE\nWHERE id = $1",
       "name": "DeleteUserByID",
       "cmd": ":exec",
       "columns": [],
@@ -87820,7 +89552,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH new_account AS (INSERT INTO user_accounts(id, user_id, name, address) VALUES ($1, $2, $3, $4) RETURNING id)\nUPDATE users SET\n    primary_account_id = COALESCE(users.primary_account_id, new_account.id),\n    updated_at = now()\nFROM new_account\nWHERE users.id = $2 AND NOT users.deleted",
+      "text": "WITH new_account AS (INSERT INTO user_accounts (id, user_id, name, address) VALUES ($2, $1,\n                                                                                    $3,\n                                                                                    $4) RETURNING id)\nUPDATE users\nSET primary_account_id = COALESCE(users.primary_account_id, new_account.id),\n    updated_at         = NOW()\nFROM new_account\nWHERE users.id = $1\n  AND NOT users.deleted",
       "name": "InsertWallet",
       "cmd": ":exec",
       "columns": [],
@@ -87828,18 +89560,18 @@
         {
           "number": 1,
           "column": {
-            "name": "id",
+            "name": "user_id",
             "not_null": true,
             "is_array": false,
             "comment": "",
             "length": -1,
-            "is_named_param": false,
+            "is_named_param": true,
             "is_func_call": false,
             "scope": "",
             "table": {
               "catalog": "",
-              "schema": "public",
-              "name": "user_accounts"
+              "schema": "",
+              "name": "users"
             },
             "table_alias": "",
             "type": {
@@ -87862,13 +89594,13 @@
             "is_array": false,
             "comment": "",
             "length": -1,
-            "is_named_param": false,
+            "is_named_param": true,
             "is_func_call": false,
             "scope": "",
             "table": {
               "catalog": "",
-              "schema": "",
-              "name": "users"
+              "schema": "public",
+              "name": "user_accounts"
             },
             "table_alias": "",
             "type": {
@@ -87891,7 +89623,7 @@
             "is_array": false,
             "comment": "",
             "length": -1,
-            "is_named_param": false,
+            "is_named_param": true,
             "is_func_call": false,
             "scope": "",
             "table": {
@@ -87920,7 +89652,7 @@
             "is_array": false,
             "comment": "",
             "length": -1,
-            "is_named_param": false,
+            "is_named_param": true,
             "is_func_call": false,
             "scope": "",
             "table": {
@@ -87947,7 +89679,7 @@
       "insert_into_table": null
     },
     {
-      "text": "UPDATE user_accounts ua\nSET ua.deleted = TRUE, ua.updated_at = now()\nWHERE ua.id = $1\n  AND ua.user_id = $2\n  AND ua.id != COALESCE((SELECT primary_account_id FROM users u WHERE u.id = $2), '')",
+      "text": "UPDATE user_accounts ua\nSET ua.deleted    = TRUE,\n    ua.updated_at = NOW()\nWHERE ua.id = $1\n  AND ua.user_id = $2\n  AND ua.id != COALESCE((SELECT primary_account_id FROM users u WHERE u.id = $2), '')",
       "name": "DeleteWalletById",
       "cmd": ":exec",
       "columns": [],
@@ -88016,7 +89748,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into users (id, username, username_idempotent, universal, email_unsubscriptions) values ($1, $2, $3, $4, $5) returning id",
+      "text": "INSERT INTO users (id, username, username_idempotent, universal, email_unsubscriptions)\nVALUES ($1, $2, $3, $4, $5)\nRETURNING id",
       "name": "InsertUser",
       "cmd": ":one",
       "columns": [
@@ -88203,7 +89935,7 @@
       }
     },
     {
-      "text": "insert into sessions (id, user_id,\n                      created_at, created_with_user_agent, created_with_platform, created_with_os,\n                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted)\nvalues ($1, $2, now(), $3, $4, $5, now(), $3, $4, $5, $6, $7, false, now(), false)\non conflict (id) where deleted = false do update set\n                                                     last_refreshed = case when sessions.invalidated then sessions.last_refreshed else excluded.last_refreshed end,\n                                                     last_user_agent = case when sessions.invalidated then sessions.last_user_agent else excluded.last_user_agent end,\n                                                     last_platform = case when sessions.invalidated then sessions.last_platform else excluded.last_platform end,\n                                                     last_os = case when sessions.invalidated then sessions.last_os else excluded.last_os end,\n                                                     current_refresh_id = case when sessions.invalidated then sessions.current_refresh_id else excluded.current_refresh_id end,\n                                                     updated_at = case when sessions.invalidated then sessions.updated_at else excluded.updated_at end,\n                                                     active_until = case when sessions.invalidated then sessions.active_until else greatest(sessions.active_until, excluded.active_until) end\nreturning id, user_id, created_at, created_with_user_agent, created_with_platform, created_with_os, last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted",
+      "text": "INSERT INTO sessions (id, user_id,\n                      created_at, created_with_user_agent, created_with_platform, created_with_os,\n                      last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until,\n                      invalidated, updated_at, deleted)\nVALUES ($1, $2, NOW(), $3, $4, $5, NOW(), $3, $4, $5, $6,\n        $7, FALSE, NOW(), FALSE)\nON CONFLICT (id)\nWHERE deleted = FALSE DO\nUPDATE\nSET last_refreshed     = CASE WHEN sessions.invalidated THEN sessions.last_refreshed ELSE excluded.last_refreshed END,\n    last_user_agent    = CASE WHEN sessions.invalidated THEN sessions.last_user_agent ELSE excluded.last_user_agent END,\n    last_platform      = CASE WHEN sessions.invalidated THEN sessions.last_platform ELSE excluded.last_platform END,\n    last_os            = CASE WHEN sessions.invalidated THEN sessions.last_os ELSE excluded.last_os END,\n    current_refresh_id = CASE\n                             WHEN sessions.invalidated THEN sessions.current_refresh_id\n                             ELSE excluded.current_refresh_id END,\n    updated_at         = CASE WHEN sessions.invalidated THEN sessions.updated_at ELSE excluded.updated_at END,\n    active_until       = CASE\n                             WHEN sessions.invalidated THEN sessions.active_until\n                             ELSE GREATEST(sessions.active_until, excluded.active_until) END\nRETURNING id, user_id, created_at, created_with_user_agent, created_with_platform, created_with_os, last_refreshed, last_user_agent, last_platform, last_os, current_refresh_id, active_until, invalidated, updated_at, deleted",
       "name": "UpsertSession",
       "cmd": ":one",
       "columns": [
@@ -88812,7 +90544,7 @@
       }
     },
     {
-      "text": "update sessions set invalidated = true, active_until = least(active_until, now()), updated_at = now() where id = $1 and deleted = false and invalidated = false",
+      "text": "UPDATE sessions\nSET invalidated  = TRUE,\n    active_until = LEAST(active_until, NOW()),\n    updated_at   = NOW()\nWHERE id = $1\n  AND deleted = FALSE\n  AND invalidated = FALSE",
       "name": "InvalidateSession",
       "cmd": ":exec",
       "columns": [],
@@ -88852,7 +90584,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, user_id, push_token, created_at, deleted from push_notification_tokens where push_token = $1 and deleted = false",
+      "text": "SELECT id, user_id, push_token, created_at, deleted\nFROM push_notification_tokens\nWHERE push_token = $1\n  AND deleted = FALSE",
       "name": "GetPushTokenByPushToken",
       "cmd": ":one",
       "columns": [
@@ -89023,7 +90755,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into push_notification_tokens (id, user_id, push_token, created_at, deleted) values ($1, $2, $3, now(), false) returning id, user_id, push_token, created_at, deleted",
+      "text": "INSERT INTO push_notification_tokens (id, user_id, push_token, created_at, deleted)\nVALUES ($1, $2, $3, NOW(), FALSE)\nRETURNING id, user_id, push_token, created_at, deleted",
       "name": "CreatePushTokenForUser",
       "cmd": ":one",
       "columns": [
@@ -89256,7 +90988,7 @@
       }
     },
     {
-      "text": "update push_notification_tokens set deleted = true where id = any($1) and deleted = false",
+      "text": "UPDATE push_notification_tokens\nSET deleted = TRUE\nWHERE id = ANY ($1)\n  AND deleted = FALSE",
       "name": "DeletePushTokensByIDs",
       "cmd": ":exec",
       "columns": [],
@@ -89296,7 +91028,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, user_id, push_token, created_at, deleted from push_notification_tokens where user_id = $1 and deleted = false",
+      "text": "SELECT id, user_id, push_token, created_at, deleted\nFROM push_notification_tokens\nWHERE user_id = $1\n  AND deleted = FALSE",
       "name": "GetPushTokensByUserID",
       "cmd": ":many",
       "columns": [
@@ -89467,7 +91199,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with keys as (\n    select unnest ($1::text[]) as id\n         , generate_subscripts($1::text[], 1) as index\n)\nselect t.id, t.user_id, t.push_token, t.created_at, t.deleted from keys k join push_notification_tokens t on t.id = k.id and t.deleted = false\norder by k.index",
+      "text": "WITH keys AS (SELECT UNNEST($1::text[])                 AS id\n                   , GENERATE_SUBSCRIPTS($1::text[], 1) AS index)\nSELECT t.id, t.user_id, t.push_token, t.created_at, t.deleted\nFROM keys k\n         JOIN push_notification_tokens t ON t.id = k.id AND t.deleted = FALSE\nORDER BY k.index",
       "name": "GetPushTokensByIDs",
       "cmd": ":many",
       "columns": [
@@ -89634,7 +91366,7 @@
       "insert_into_table": null
     },
     {
-      "text": "insert into push_notification_tickets (id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, status, deleted) values\n    (\n        unnest($1::text[]),\n        unnest($2::text[]),\n        unnest($3::text[]),\n        now(),\n        now() + interval '15 minutes',\n        0,\n        'pending',\n        false\n    )",
+      "text": "INSERT INTO push_notification_tickets (id, push_token_id, ticket_id, created_at, check_after, num_check_attempts,\n                                       status, deleted)\nVALUES (UNNEST($1::text[]),\n        UNNEST($2::text[]),\n        UNNEST($3::text[]),\n        NOW(),\n        NOW() + INTERVAL '15 minutes',\n        0,\n        'pending',\n        FALSE)",
       "name": "CreatePushTickets",
       "cmd": ":exec",
       "columns": [],
@@ -89724,7 +91456,7 @@
       }
     },
     {
-      "text": "with updates as (\n    select unnest($1::text[]) as id, unnest($2::timestamptz[]) as check_after, unnest($3::int[]) as num_check_attempts, unnest($4::text[]) as status, unnest($5::bool[]) as deleted\n)\nupdate push_notification_tickets t set check_after = updates.check_after, num_check_attempts = updates.num_check_attempts, status = updates.status, deleted = updates.deleted from updates where t.id = updates.id and t.deleted = false",
+      "text": "WITH updates AS (SELECT UNNEST($1::text[])                AS id,\n                        UNNEST($2::timestamptz[]) AS check_after,\n                        UNNEST($3::int[])  AS num_check_attempts,\n                        UNNEST($4::text[])             AS status,\n                        UNNEST($5::bool[])            AS deleted)\nUPDATE push_notification_tickets t\nSET check_after        = updates.check_after,\n    num_check_attempts = updates.num_check_attempts,\n    status             = updates.status,\n    deleted            = updates.deleted\nFROM updates\nWHERE t.id = updates.id\n  AND t.deleted = FALSE",
       "name": "UpdatePushTickets",
       "cmd": ":exec",
       "columns": [],
@@ -89860,7 +91592,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, deleted from push_notification_tickets where check_after \u003c= now() and deleted = false limit $1",
+      "text": "SELECT id, push_token_id, ticket_id, created_at, check_after, num_check_attempts, deleted\nFROM push_notification_tickets\nWHERE check_after \u003c= NOW()\n  AND deleted = FALSE\nLIMIT $1",
       "name": "GetCheckablePushTickets",
       "cmd": ":many",
       "columns": [
@@ -90079,7 +91811,7 @@
       "insert_into_table": null
     },
     {
-      "text": "select now()::timestamptz",
+      "text": "SELECT NOW()::timestamptz",
       "name": "GetCurrentTime",
       "cmd": ":one",
       "columns": [
@@ -90112,7 +91844,7 @@
       "insert_into_table": null
     },
     {
-      "text": "with user_to_block as (select id from users where users.id = $3 and not deleted and not universal)\ninsert into user_blocklist (id, user_id, blocked_user_id, active) (select $1, $2, user_to_block.id, true from user_to_block)\non conflict(user_id, blocked_user_id) where not deleted do update set active = true, updated_at = now() returning id",
+      "text": "WITH user_to_block AS (SELECT id FROM users WHERE users.id = $3 AND NOT deleted AND NOT universal)\nINSERT\nINTO user_blocklist (id, user_id, blocked_user_id, active) (SELECT $1, $2, user_to_block.id, TRUE FROM user_to_block)\nON CONFLICT(user_id, blocked_user_id)\nWHERE NOT deleted DO\nUPDATE\nSET active     = TRUE,\n    updated_at = NOW()\nRETURNING id",
       "name": "BlockUser",
       "cmd": ":one",
       "columns": [
@@ -90241,7 +91973,7 @@
       }
     },
     {
-      "text": "update user_blocklist set active = false, updated_at = now() where user_id = $1 and blocked_user_id = $2 and not deleted",
+      "text": "UPDATE user_blocklist\nSET active     = FALSE,\n    updated_at = NOW()\nWHERE user_id = $1\n  AND blocked_user_id = $2\n  AND NOT deleted",
       "name": "UnblockUser",
       "cmd": ":exec",
       "columns": [],

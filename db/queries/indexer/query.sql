@@ -2,15 +2,35 @@
 -- ACCOUNT
 -- -----------------------------------------------------------------------------
 
+-- name: GetAccountById :one
+SELECT *
+FROM public.account
+WHERE id = $1;
+
 -- name: GetAccountByIdBatch :batchone
 SELECT *
 FROM public.account
 WHERE id = $1;
 
--- name: GetAccountsByIdsBatch :batchmany
+-- name: GetAccountByAddress :one
 SELECT *
 FROM public.account
-WHERE id = ANY (sqlc.arg('account_ids'))
+WHERE address = $1;
+
+-- name: GetAccountByAddressBatch :batchone
+SELECT *
+FROM public.account
+WHERE address = $1;
+
+-- name: GetAccountsByAddressesBatch :batchmany
+SELECT *
+FROM public.account
+WHERE address = any($1::varchar[]);
+
+-- name: GetAccountsByAddressesPaginateBatch :batchmany
+SELECT *
+FROM public.account
+WHERE address = ANY (sqlc.arg('addresses'))
   AND (created_at, id) < (sqlc.arg('cur_before_time'), sqlc.arg('cur_before_id'))
   AND (created_at, id) > (sqlc.arg('cur_after_time'), sqlc.arg('cur_after_id'))
 ORDER BY CASE WHEN sqlc.arg('paging_forward')::bool THEN (created_at, id) END ASC,

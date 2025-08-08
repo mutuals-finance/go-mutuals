@@ -94,7 +94,10 @@ func (b *GetClaimsByPoolIdBatchBatchResults) Close() error {
 }
 
 const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
-SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE id = $1 AND deleted = false
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
+FROM notifications
+WHERE id = $1
+  AND deleted = FALSE
 `
 
 type GetNotificationByIDBatchBatchResults struct {
@@ -152,7 +155,10 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 }
 
 const getPoolByIdBatch = `-- name: GetPoolByIdBatch :batchone
-SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at FROM pools WHERE id = $1 AND deleted = false
+SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at
+FROM pools
+WHERE id = $1
+  AND deleted = FALSE
 `
 
 type GetPoolByIdBatchBatchResults struct {
@@ -214,10 +220,10 @@ FROM users u
          INNER JOIN claims c ON c.recipient_address = ua.address
          INNER JOIN pools p ON p.id = c.pool_id
 WHERE u.id = $1
-  AND u.deleted = false
-  AND ua.deleted = false
-  AND c.deleted = false
-  AND p.deleted = false
+  AND u.deleted = FALSE
+  AND ua.deleted = FALSE
+  AND c.deleted = FALSE
+  AND p.deleted = FALSE
 `
 
 type GetPoolsByUserIDBatchBatchResults struct {
@@ -285,8 +291,198 @@ func (b *GetPoolsByUserIDBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
+const getUserAccountByAddressBatch = `-- name: GetUserAccountByAddressBatch :batchone
+SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted
+FROM user_accounts
+WHERE address = $1
+  AND deleted = FALSE
+`
+
+type GetUserAccountByAddressBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetUserAccountByAddressBatch(ctx context.Context, address []persist.Address) *GetUserAccountByAddressBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range address {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getUserAccountByAddressBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetUserAccountByAddressBatchBatchResults{br, len(address), false}
+}
+
+func (b *GetUserAccountByAddressBatchBatchResults) QueryRow(f func(int, UserAccount, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i UserAccount
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.FtsName,
+			&i.Address,
+			&i.FtsAddress,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Deleted,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetUserAccountByAddressBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getUserAccountByIdBatch = `-- name: GetUserAccountByIdBatch :batchone
+SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted
+FROM user_accounts
+WHERE id = $1
+  AND deleted = FALSE
+`
+
+type GetUserAccountByIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetUserAccountByIdBatch(ctx context.Context, id []persist.DBID) *GetUserAccountByIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getUserAccountByIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetUserAccountByIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetUserAccountByIdBatchBatchResults) QueryRow(f func(int, UserAccount, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i UserAccount
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.FtsName,
+			&i.Address,
+			&i.FtsAddress,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Deleted,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetUserAccountByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getUserAccountsByUserIdBatch = `-- name: GetUserAccountsByUserIdBatch :batchmany
+SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted
+FROM user_accounts
+WHERE user_id = $1
+  AND deleted = FALSE
+`
+
+type GetUserAccountsByUserIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetUserAccountsByUserIdBatch(ctx context.Context, userID []persist.DBID) *GetUserAccountsByUserIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range userID {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getUserAccountsByUserIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetUserAccountsByUserIdBatchBatchResults{br, len(userID), false}
+}
+
+func (b *GetUserAccountsByUserIdBatchBatchResults) Query(f func(int, []UserAccount, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []UserAccount
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i UserAccount
+				if err := rows.Scan(
+					&i.ID,
+					&i.UserID,
+					&i.Name,
+					&i.FtsName,
+					&i.Address,
+					&i.FtsAddress,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+					&i.Deleted,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetUserAccountsByUserIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE id = $1 AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences
+FROM users
+WHERE id = $1
+  AND deleted = FALSE
 `
 
 type GetUserByIdBatchBatchResults struct {
@@ -344,7 +540,10 @@ func (b *GetUserByIdBatchBatchResults) Close() error {
 }
 
 const getUserByUsernameBatch = `-- name: GetUserByUsernameBatch :batchone
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences FROM users WHERE username_idempotent = lower($1) AND deleted = false
+SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences
+FROM users
+WHERE username_idempotent = LOWER($1)
+  AND deleted = FALSE
 `
 
 type GetUserByUsernameBatchBatchResults struct {
@@ -402,9 +601,12 @@ func (b *GetUserByUsernameBatchBatchResults) Close() error {
 }
 
 const getUserNotificationsBatch = `-- name: GetUserNotificationsBatch :batchmany
-SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at FROM notifications WHERE owner_id = $1 AND deleted = false
-                              AND (created_at, id) < ($2, $3)
-                              AND (created_at, id) > ($4, $5)
+SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
+FROM notifications
+WHERE owner_id = $1
+  AND deleted = FALSE
+  AND (created_at, id) < ($2, $3)
+  AND (created_at, id) > ($4, $5)
 ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
          CASE WHEN NOT $6::bool THEN (created_at, id) END DESC
 LIMIT $7
@@ -494,11 +696,14 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
-select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
-from users u
-         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
-where not u.deleted and not u.universal and t.pos > $2::int and t.pos < $3::int
-order by t.pos asc
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
+FROM users u
+         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)
+WHERE NOT u.deleted
+  AND NOT u.universal
+  AND t.pos > $2::int
+  AND t.pos < $3::int
+ORDER BY t.pos ASC
 `
 
 type GetUsersByPositionPaginateBatchBatchResults struct {
@@ -577,12 +782,13 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
-select u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
-from users u
-         join unnest($1::varchar[]) with ordinality t(id, pos) using(id)
-where not u.deleted and not u.universal
-order by t.pos
-limit 100
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
+FROM users u
+         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)
+WHERE NOT u.deleted
+  AND NOT u.universal
+ORDER BY t.pos
+LIMIT 100
 `
 
 type GetUsersByPositionPersonalizedBatchBatchResults struct {

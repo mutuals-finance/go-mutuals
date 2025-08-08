@@ -239,16 +239,12 @@ func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.Ch
 		return nil, err
 	}
 
-	chain := chainAddress.Chain()
-	user, err := api.loaders.GetUserByAddressAndL1Batch.Load(db.GetUserByAddressAndL1BatchParams{
-		L1Chain: chain.L1Chain(),
-		Address: persist.Address(chain.NormalizeAddress(chainAddress.Address())),
-	})
+	dbUser, err := api.queries.GetUserByAccountAddress(ctx, chainAddress.Address())
 	if err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return &dbUser, nil
 }
 
 func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*db.User, error) {
@@ -328,7 +324,6 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 		Roles:  roles,
 		UserID: userID,
 	})
-
 	if err != nil {
 		return nil, err
 	}

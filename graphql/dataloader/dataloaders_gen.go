@@ -184,6 +184,121 @@ func newGetPoolsByUserIDBatch(
 	return d
 }
 
+// GetUserAccountByAddressBatch batches and caches requests
+type GetUserAccountByAddressBatch struct {
+	generator.Dataloader[persist.Address, coredb.UserAccount]
+}
+
+// newGetUserAccountByAddressBatch creates a new GetUserAccountByAddressBatch with the given settings, functions, and options
+func newGetUserAccountByAddressBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetUserAccountByAddressBatch, []persist.Address) ([]coredb.UserAccount, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetUserAccountByAddressBatch {
+	d := &GetUserAccountByAddressBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.Address) ([]coredb.UserAccount, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetUserAccountByAddressBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetUserAccountByAddressBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetUserAccountByIdBatch batches and caches requests
+type GetUserAccountByIdBatch struct {
+	generator.Dataloader[persist.DBID, coredb.UserAccount]
+}
+
+// newGetUserAccountByIdBatch creates a new GetUserAccountByIdBatch with the given settings, functions, and options
+func newGetUserAccountByIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetUserAccountByIdBatch, []persist.DBID) ([]coredb.UserAccount, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetUserAccountByIdBatch {
+	d := &GetUserAccountByIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.UserAccount, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetUserAccountByIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetUserAccountByIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+func (*GetUserAccountByIdBatch) getKeyForResult(result coredb.UserAccount) persist.DBID {
+	return result.ID
+}
+
+// GetUserAccountsByUserIdBatch batches and caches requests
+type GetUserAccountsByUserIdBatch struct {
+	generator.Dataloader[persist.DBID, []coredb.UserAccount]
+}
+
+// newGetUserAccountsByUserIdBatch creates a new GetUserAccountsByUserIdBatch with the given settings, functions, and options
+func newGetUserAccountsByUserIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetUserAccountsByUserIdBatch, []persist.DBID) ([][]coredb.UserAccount, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetUserAccountsByUserIdBatch {
+	d := &GetUserAccountsByUserIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]coredb.UserAccount, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetUserAccountsByUserIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetUserAccountsByUserIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
 // GetUserByIdBatch batches and caches requests
 type GetUserByIdBatch struct {
 	generator.Dataloader[persist.DBID, coredb.User]

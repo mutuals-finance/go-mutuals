@@ -15,7 +15,9 @@ import (
 	"github.com/mutuals/go-mutuals/service/emails"
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/notifications"
+	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
+	"time"
 
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/publicapi"
@@ -146,27 +148,33 @@ func resolveMutualsUserByUsername(ctx context.Context, username string) (*model.
 }
 
 func resolvePoolByPoolID(ctx context.Context, poolID persist.DBID) (*model.Pool, error) {
-	dbPool, err := publicapi.For(ctx).Pool.GetPoolById(ctx, poolID)
+	pool, err := publicapi.For(ctx).Pool.GetPoolById(ctx, poolID)
 	if err != nil {
 		return nil, err
 	}
-	pool := &model.Pool{
-		Address:     "",               // TODO dbPool.Address,
-		Chain:       persist.ChainETH, // TODO dbPool.Chain,
-		Status:      "",               // TODO dbPool.Status
-		Name:        dbPool.Name,
-		Description: dbPool.Description,
-		Logo:        dbPool.Logo,
-		CreatedAt:   dbPool.CreatedAt,
-		UpdatedAt:   dbPool.UpdatedAt,
-		Owner:       nil, // handled by dedicated resolver
+
+	return poolToModel(ctx, *pool), nil
+}
+
+func resolvePoolContractByPoolContractID(ctx context.Context, contractID persist.DBID) (*model.PoolContract, error) {
+	//dbPool, err := publicapi.For(ctx).Pool.GetPoolById(ctx, contractID)
+	//if err != nil {
+	//	return nil, err
+	//}
+	pool := &model.PoolContract{
+		ID:          "",
+		Address:     "",
+		ChainID:     0,
+		Status:      "",
 		PoolFactory: nil, // handled by dedicated resolver
 		Account:     nil, // handled by dedicated resolver
-		Claims:      nil, // handled by dedicated resolver
+		Owner:       nil, // handled by dedicated resolver
 		DayBalance:  nil, // handled by dedicated resolver
 		HourBalance: nil, // handled by dedicated resolver
 		Deposits:    nil, // handled by dedicated resolver
 		Withdrawals: nil, // handled by dedicated resolver
+		CreatedAt:   time.Time{},
+		UpdatedAt:   time.Time{},
 	}
 
 	return pool, nil
@@ -192,6 +200,16 @@ func resolvePoolsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Po
 	}
 
 	return poolsToModels(ctx, pools), nil
+}
+
+func resolveClaimsByPoolID(ctx context.Context, poolID persist.DBID) ([]*model.Claim, error) {
+	claims, err := publicapi.For(ctx).Claim.GetClaimsByPoolID(ctx, poolID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return claimsToModels(ctx, claims), nil
 }
 
 func resolveViewerExperiencesByUserID(ctx context.Context, userID persist.DBID) ([]*model.UserExperience, error) {
@@ -278,19 +296,21 @@ func userWithPIIToEmailModel(user *db.PiiUserView) *model.UserEmail {
 }
 
 func resolveWalletsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Account, error) {
-	accounts, err := publicapi.For(ctx).Wallet.GetWalletsByUserID(ctx, userID)
-
+	userAccounts, err := publicapi.For(ctx).Wallet.GetUserAccountsByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	output := make([]*model.Account, 0, len(accounts))
+	addresses := util.MapWithoutError(userAccounts, func(wallet db.UserAccount) string {
+		return wallet.Address.String()
+	})
 
-	for _, account := range accounts {
-		output = append(output, walletToModelSqlc(ctx, account))
+	accounts, err := publicapi.For(ctx).Wallet.GetAccountsByAddresses(ctx, addresses)
+	if err != nil {
+		return nil, err
 	}
 
-	return output, nil
+	return walletsToModels(ctx, accounts), nil
 }
 
 func resolvePrimaryWalletByUserID(ctx context.Context, userID persist.DBID) (*model.Account, error) {
@@ -300,12 +320,17 @@ func resolvePrimaryWalletByUserID(ctx context.Context, userID persist.DBID) (*mo
 		return nil, err
 	}
 
-	account, err := publicapi.For(ctx).Wallet.GetWalletByID(ctx, user.PrimaryWalletID)
+	userAccount, err := publicapi.For(ctx).Wallet.GetUserAccountByID(ctx, user.PrimaryAccountID)
 	if err != nil {
 		return nil, err
 	}
 
-	return walletToModelSqlc(ctx, *account), nil
+	account, err := publicapi.For(ctx).Wallet.GetAccountByAddress(ctx, userAccount.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	return walletToModel(ctx, *account), nil
 }
 
 func resolveViewerNotifications(ctx context.Context, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error) {
@@ -575,29 +600,49 @@ func unsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEm
 
 func poolToModel(ctx context.Context, pool db.Pool) *model.Pool {
 	return &model.Pool{
-		Address:     "",               // TODO pool.Address,
-		Chain:       persist.ChainETH, // TODO pool.Chain,
-		Status:      "",               // TODO pool.Status
+		Dbid:        pool.ID,
 		Name:        pool.Name,
 		Description: pool.Description,
 		Logo:        pool.Logo,
+		Slug:        "", // TODO pool.Slug
+		Status:      "", // TODO pool.Status
 		CreatedAt:   pool.CreatedAt,
 		UpdatedAt:   pool.UpdatedAt,
 		Owner:       nil, // handled by dedicated resolver
-		PoolFactory: nil, // handled by dedicated resolver
-		Account:     nil, // handled by dedicated resolver
+		Contract:    nil, // handled by dedicated resolver
 		Claims:      nil, // handled by dedicated resolver
-		DayBalance:  nil, // handled by dedicated resolver
-		HourBalance: nil, // handled by dedicated resolver
-		Deposits:    nil, // handled by dedicated resolver
-		Withdrawals: nil, // handled by dedicated resolver
 	}
 }
 
-func poolsToModels(ctx context.Context, pools []indexerdb.Pool) []*model.Pool {
+func poolsToModels(ctx context.Context, pools []db.Pool) []*model.Pool {
 	models := make([]*model.Pool, len(pools))
 	for i, pool := range pools {
 		models[i] = poolToModel(ctx, pool)
+	}
+
+	return models
+}
+
+func claimToModel(ctx context.Context, claim db.Claim) *model.Claim {
+	return &model.Claim{
+		Dbid:      claim.ID,
+		Value:     persist.HexString(claim.Value), // TODO claim.Value as HexString
+		Label:     claim.Label,
+		Path:      persist.NullStrToStr(claim.Path),
+		CreatedAt: claim.CreatedAt,
+		UpdatedAt: claim.UpdatedAt,
+		Parent:    nil, // handled by dedicated resolver
+		Pool:      nil, // handled by dedicated resolver
+		Recipient: nil, // handled by dedicated resolver
+		State:     nil, // handled by dedicated resolver
+		Strategy:  nil, // handled by dedicated resolver
+	}
+}
+
+func claimsToModels(ctx context.Context, claims []db.Claim) []*model.Claim {
+	models := make([]*model.Claim, len(claims))
+	for i, claim := range claims {
+		models[i] = claimToModel(ctx, claim)
 	}
 
 	return models
@@ -608,18 +653,12 @@ func userToModel(ctx context.Context, user db.User) *model.MutualsUser {
 	userApi := publicapi.For(ctx).User
 	isAuthenticatedUser := userApi.IsUserLoggedIn(ctx) && userApi.GetLoggedInUserId(ctx) == user.ID
 
-	accounts := make([]*model.Account, len(user.Wallets))
-	for i, account := range user.Wallets {
-		accounts[i] = walletToModelPersist(ctx, account)
-	}
-
 	return &model.MutualsUser{
 		HelperMutualsUserData: model.HelperMutualsUserData{
 			UserID: user.ID,
 		},
 		Dbid:      user.ID,
 		Username:  &user.Username.String,
-		Accounts:  accounts,
 		Universal: &user.Universal,
 
 		// each handled by dedicated resolver
@@ -650,28 +689,23 @@ func usersToEdges(ctx context.Context, users []db.User) []*model.UserEdge {
 	return edges
 }
 
-func walletToModelPersist(ctx context.Context, account persist.Wallet) *model.Account {
+func walletToModel(ctx context.Context, account indexerdb.Account) *model.Account {
 	return &model.Account{
-		Address:     account.Address,
-		AccountType: "",                   // TODO account.AccountType
-		CreatedAt:   account.CreationTime, // TODO account.CreatedAt
-		UpdatedAt:   account.UpdatedAt,    // TODO account.UpdatedAt
-		SelfPools:   nil,                  // handled by dedicated resolver
-		Claims:      nil,                  // handled by dedicated resolver
-		Balances:    nil,                  // handled by dedicated resolver
-	}
-}
-
-func walletToModelSqlc(ctx context.Context, account indexerdb.Account) *model.Account {
-	return &model.Account{
-		Address:     "", // TODO account.Address
-		AccountType: "", // TODO account.AccountType
+		Address:     persist.Address(account.Address),       // TODO account.Address
+		AccountType: model.AccountType(account.AccountType), // TODO account.AccountType
 		CreatedAt:   account.CreatedAt,
 		UpdatedAt:   account.UpdatedAt,
 		SelfPools:   nil, // handled by dedicated resolver
-		Claims:      nil, // handled by dedicated resolver
 		Balances:    nil, // handled by dedicated resolver
 	}
+}
+
+func walletsToModels(ctx context.Context, wallets []indexerdb.Account) []*model.Account {
+	models := make([]*model.Account, len(wallets))
+	for i, wallet := range wallets {
+		models[i] = walletToModel(ctx, wallet)
+	}
+	return models
 }
 
 func pageInfoToModel(ctx context.Context, pageInfo publicapi.PageInfo) *model.PageInfo {

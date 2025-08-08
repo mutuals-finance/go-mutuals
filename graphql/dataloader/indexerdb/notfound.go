@@ -16,3 +16,8 @@ func (*GetPoolContractByIdBatch) getNotFoundError(key persist.DBID) error {
 func (*GetTokenByIdBatch) getNotFoundError(key persist.DBID) error {
 	return pgx.ErrNoRows
 }
+
+func (*GetAccountByAddressBatch) getNotFoundError(key string) error {
+	// TODO: Return a specific error type, not pgx.ErrNoRows
+	return pgx.ErrNoRows
+}

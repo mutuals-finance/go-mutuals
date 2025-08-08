@@ -136,18 +136,15 @@ enum AccountType {
   Contract
 }
 
-type Account implements Node {
+type Account {
   # account address
   id: ID!
-  # dbid: DBID!
   # account address
   address: Address!
   # contract or EOA
   accountType: AccountType!
   # pools this account represents if account is a pool contract
   selfPools: [Pool!] @goField(forceResolver: true)
-  # claims where account is a recipient
-  claims: [Claim!] @goField(forceResolver: true)
   # token balances of the account
   balances: [TokenBalance!] @goField(forceResolver: true)
   # creation timestamp
@@ -156,7 +153,7 @@ type Account implements Node {
   updatedAt: Time!
 }
 
-type PoolFactory implements Node {
+type PoolFactory {
   # { chain id }-{ contract address }
   id: ID!
   # dbid: DBID!
@@ -174,7 +171,7 @@ type PoolFactory implements Node {
   updatedAt: Time!
 }
 
-type ExtensionRegistry implements Node {
+type ExtensionRegistry {
   # { chain id }-{ contract address }
   id: ID!
   # dbid: DBID!
@@ -280,7 +277,7 @@ enum TokenType {
   ERC20
 }
 
-type Token implements Node {
+type Token {
   # { chain id }-{ token address }
   id: ID!
   # dbid: DBID!
@@ -310,10 +307,9 @@ type Token implements Node {
   updatedAt: Time!
 }
 
-type TokenBalance implements Node {
+type TokenBalance {
   # {chain id }-{ holder address }-{ token address }
   id: ID!
-  # dbid: DBID!
   # chain
   chainId: Int!
   # token
@@ -341,7 +337,7 @@ enum ExtensionType {
   Strategy
 }
 
-type Extension implements Node {
+type Extension {
   # { chain id }-{ pool address }
   id: ID!
   # dbid: DBID!
@@ -379,7 +375,7 @@ type Claim implements Node {
   # label
   label: String!
   # path
-  path: [String]!
+  path: String!
   # parent claim
   parent: Claim @goField(forceResolver: true)
   # pool
@@ -589,10 +585,9 @@ enum ReportWindow {
   ALL_TIME
 }
 
-type Tx implements Node {
+type Tx {
   # txn hash
   id: ID!
-  # dbid: DBID!
   # gas used during txn execution
   gasUsed: HexString!
   # gas price for txn execution
@@ -606,10 +601,9 @@ type Tx implements Node {
   withdrawals: [Withdrawal]! @goField(forceResolver: true)
 }
 
-type Deposit implements Node {
+type Deposit {
   # { transaction hash }-{ index in deposits transaction array }
   id: ID!
-  # dbid: DBID!
   # which txn the mint was included in
   transaction: Tx! @goField(forceResolver: true)
   # pool that receives deposit
@@ -632,10 +626,9 @@ type Deposit implements Node {
   updatedAt: Time!
 }
 
-type Withdrawal implements Node {
+type Withdrawal {
   # { transaction hash }-{ index in withdrawals transaction array }
   id: ID!
-  # dbid: DBID!
   # txn burn was included in
   transaction: Tx! @goField(forceResolver: true)
   # pool position is within

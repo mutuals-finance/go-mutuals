@@ -118,7 +118,7 @@ func (a authenticator) Authenticate(ctx context.Context) (*auth.AuthResult, erro
 	return a.authMethod(ctx)
 }
 
-func (api *AdminAPI) AddWalletToUserUnchecked(ctx context.Context, username string, chainAddress persist.ChainAddress, walletType persist.WalletType) error {
+func (api *AdminAPI) AddWalletByUsernameUnchecked(ctx context.Context, username string, chainAddress persist.ChainAddress) error {
 	requireRetoolAuthorized(ctx)
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -136,7 +136,6 @@ func (api *AdminAPI) AddWalletToUserUnchecked(ctx context.Context, username stri
 	authMethod := func(ctx context.Context) (*auth.AuthResult, error) {
 		authedAddress := auth.AuthenticatedAddress{
 			ChainAddress: chainAddress,
-			WalletType:   walletType,
 		}
 
 		return &auth.AuthResult{

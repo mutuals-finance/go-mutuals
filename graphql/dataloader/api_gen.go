@@ -18,6 +18,9 @@ type Loaders struct {
 	GetNotificationByIDBatch            *GetNotificationByIDBatch
 	GetPoolByIdBatch                    *GetPoolByIdBatch
 	GetPoolsByUserIDBatch               *GetPoolsByUserIDBatch
+	GetUserAccountByAddressBatch        *GetUserAccountByAddressBatch
+	GetUserAccountByIdBatch             *GetUserAccountByIdBatch
+	GetUserAccountsByUserIdBatch        *GetUserAccountsByUserIdBatch
 	GetUserByIdBatch                    *GetUserByIdBatch
 	GetUserByUsernameBatch              *GetUserByUsernameBatch
 	GetUserNotificationsBatch           *GetUserNotificationsBatch
@@ -32,6 +35,9 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolByIdBatch = newGetPoolByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolsByUserIDBatch = newGetPoolsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolsByUserIDBatch(q), preFetchHook, postFetchHook)
+	loaders.GetUserAccountByAddressBatch = newGetUserAccountByAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserAccountByAddressBatch(q), preFetchHook, postFetchHook)
+	loaders.GetUserAccountByIdBatch = newGetUserAccountByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserAccountByIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetUserAccountsByUserIdBatch = newGetUserAccountsByUserIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserAccountsByUserIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByUsernameBatch = newGetUserByUsernameBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByUsernameBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserNotificationsBatch = newGetUserNotificationsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserNotificationsBatch(q), preFetchHook, postFetchHook)
@@ -46,6 +52,14 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetPoolsByUserIDBatch.RegisterResultSubscriber(func(result []coredb.Pool) {
 		for _, entry := range result {
 			loaders.GetPoolByIdBatch.Prime(loaders.GetPoolByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
+	loaders.GetUserAccountByAddressBatch.RegisterResultSubscriber(func(result coredb.UserAccount) {
+		loaders.GetUserAccountByIdBatch.Prime(loaders.GetUserAccountByIdBatch.getKeyForResult(result), result)
+	})
+	loaders.GetUserAccountsByUserIdBatch.RegisterResultSubscriber(func(result []coredb.UserAccount) {
+		for _, entry := range result {
+			loaders.GetUserAccountByIdBatch.Prime(loaders.GetUserAccountByIdBatch.getKeyForResult(entry), entry)
 		}
 	})
 	loaders.GetUserByUsernameBatch.RegisterResultSubscriber(func(result coredb.User) {
@@ -141,6 +155,60 @@ func loadGetPoolsByUserIDBatch(q *coredb.Queries) func(context.Context, *GetPool
 		defer b.Close()
 
 		b.Query(func(i int, r []coredb.Pool, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetUserAccountByAddressBatch(q *coredb.Queries) func(context.Context, *GetUserAccountByAddressBatch, []persist.Address) ([]coredb.UserAccount, []error) {
+	return func(ctx context.Context, d *GetUserAccountByAddressBatch, params []persist.Address) ([]coredb.UserAccount, []error) {
+		results := make([]coredb.UserAccount, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetUserAccountByAddressBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r coredb.UserAccount, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetUserAccountByIdBatch(q *coredb.Queries) func(context.Context, *GetUserAccountByIdBatch, []persist.DBID) ([]coredb.UserAccount, []error) {
+	return func(ctx context.Context, d *GetUserAccountByIdBatch, params []persist.DBID) ([]coredb.UserAccount, []error) {
+		results := make([]coredb.UserAccount, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetUserAccountByIdBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r coredb.UserAccount, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetUserAccountsByUserIdBatch(q *coredb.Queries) func(context.Context, *GetUserAccountsByUserIdBatch, []persist.DBID) ([][]coredb.UserAccount, []error) {
+	return func(ctx context.Context, d *GetUserAccountsByUserIdBatch, params []persist.DBID) ([][]coredb.UserAccount, []error) {
+		results := make([][]coredb.UserAccount, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetUserAccountsByUserIdBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []coredb.UserAccount, err error) {
 			results[i], errors[i] = r, err
 		})
 

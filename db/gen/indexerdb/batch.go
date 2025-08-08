@@ -18,8 +18,62 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const getAccountByIdBatch = `-- name: GetAccountByIdBatch :batchone
+const getAccountByAddressBatch = `-- name: GetAccountByAddressBatch :batchone
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.account
+WHERE address = $1
+`
 
+type GetAccountByAddressBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetAccountByAddressBatch(ctx context.Context, address []string) *GetAccountByAddressBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range address {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getAccountByAddressBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetAccountByAddressBatchBatchResults{br, len(address), false}
+}
+
+func (b *GetAccountByAddressBatchBatchResults) QueryRow(f func(int, Account, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Account
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.Address,
+			&i.AccountType,
+			&i.CreatedAtBlockNumber,
+			&i.UpdatedAtBlockNumber,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetAccountByAddressBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getAccountByIdBatch = `-- name: GetAccountByIdBatch :batchone
 SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
 FROM public.account
 WHERE id = $1
@@ -31,9 +85,6 @@ type GetAccountByIdBatchBatchResults struct {
 	closed bool
 }
 
-// -----------------------------------------------------------------------------
-// ACCOUNT
-// -----------------------------------------------------------------------------
 func (q *Queries) GetAccountByIdBatch(ctx context.Context, id []persist.DBID) *GetAccountByIdBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range id {
@@ -77,52 +128,31 @@ func (b *GetAccountByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getAccountsByIdsBatch = `-- name: GetAccountsByIdsBatch :batchmany
+const getAccountsByAddressesBatch = `-- name: GetAccountsByAddressesBatch :batchmany
 SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
 FROM public.account
-WHERE id = ANY ($1)
-  AND (created_at, id) < ($2, $3)
-  AND (created_at, id) > ($4, $5)
-ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
-         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC
-LIMIT $7
+WHERE address = any($1::varchar[])
 `
 
-type GetAccountsByIdsBatchBatchResults struct {
+type GetAccountsByAddressesBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-type GetAccountsByIdsBatchParams struct {
-	AccountIds    string    `db:"account_ids" json:"account_ids"`
-	CurBeforeTime time.Time `db:"cur_before_time" json:"cur_before_time"`
-	CurBeforeID   time.Time `db:"cur_before_id" json:"cur_before_id"`
-	CurAfterTime  time.Time `db:"cur_after_time" json:"cur_after_time"`
-	CurAfterID    time.Time `db:"cur_after_id" json:"cur_after_id"`
-	PagingForward bool      `db:"paging_forward" json:"paging_forward"`
-	Limit         int32     `db:"limit" json:"limit"`
-}
-
-func (q *Queries) GetAccountsByIdsBatch(ctx context.Context, arg []GetAccountsByIdsBatchParams) *GetAccountsByIdsBatchBatchResults {
+func (q *Queries) GetAccountsByAddressesBatch(ctx context.Context, dollar_1 [][]string) *GetAccountsByAddressesBatchBatchResults {
 	batch := &pgx.Batch{}
-	for _, a := range arg {
+	for _, a := range dollar_1 {
 		vals := []interface{}{
-			a.AccountIds,
-			a.CurBeforeTime,
-			a.CurBeforeID,
-			a.CurAfterTime,
-			a.CurAfterID,
-			a.PagingForward,
-			a.Limit,
+			a,
 		}
-		batch.Queue(getAccountsByIdsBatch, vals...)
+		batch.Queue(getAccountsByAddressesBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetAccountsByIdsBatchBatchResults{br, len(arg), false}
+	return &GetAccountsByAddressesBatchBatchResults{br, len(dollar_1), false}
 }
 
-func (b *GetAccountsByIdsBatchBatchResults) Query(f func(int, []Account, error)) {
+func (b *GetAccountsByAddressesBatchBatchResults) Query(f func(int, []Account, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var items []Account
@@ -161,7 +191,96 @@ func (b *GetAccountsByIdsBatchBatchResults) Query(f func(int, []Account, error))
 	}
 }
 
-func (b *GetAccountsByIdsBatchBatchResults) Close() error {
+func (b *GetAccountsByAddressesBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getAccountsByAddressesPaginateBatch = `-- name: GetAccountsByAddressesPaginateBatch :batchmany
+SELECT id, address, account_type, created_at_block_number, updated_at_block_number, created_at, updated_at
+FROM public.account
+WHERE address = ANY ($1)
+  AND (created_at, id) < ($2, $3)
+  AND (created_at, id) > ($4, $5)
+ORDER BY CASE WHEN $6::bool THEN (created_at, id) END ASC,
+         CASE WHEN NOT $6::bool THEN (created_at, id) END DESC
+LIMIT $7
+`
+
+type GetAccountsByAddressesPaginateBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type GetAccountsByAddressesPaginateBatchParams struct {
+	Addresses     string    `db:"addresses" json:"addresses"`
+	CurBeforeTime time.Time `db:"cur_before_time" json:"cur_before_time"`
+	CurBeforeID   time.Time `db:"cur_before_id" json:"cur_before_id"`
+	CurAfterTime  time.Time `db:"cur_after_time" json:"cur_after_time"`
+	CurAfterID    time.Time `db:"cur_after_id" json:"cur_after_id"`
+	PagingForward bool      `db:"paging_forward" json:"paging_forward"`
+	Limit         int32     `db:"limit" json:"limit"`
+}
+
+func (q *Queries) GetAccountsByAddressesPaginateBatch(ctx context.Context, arg []GetAccountsByAddressesPaginateBatchParams) *GetAccountsByAddressesPaginateBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.Addresses,
+			a.CurBeforeTime,
+			a.CurBeforeID,
+			a.CurAfterTime,
+			a.CurAfterID,
+			a.PagingForward,
+			a.Limit,
+		}
+		batch.Queue(getAccountsByAddressesPaginateBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetAccountsByAddressesPaginateBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetAccountsByAddressesPaginateBatchBatchResults) Query(f func(int, []Account, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Account
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Account
+				if err := rows.Scan(
+					&i.ID,
+					&i.Address,
+					&i.AccountType,
+					&i.CreatedAtBlockNumber,
+					&i.UpdatedAtBlockNumber,
+					&i.CreatedAt,
+					&i.UpdatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetAccountsByAddressesPaginateBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

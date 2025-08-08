@@ -37,7 +37,7 @@ CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
 CREATE TABLE IF NOT EXISTS user_accounts
 (
     id          character varying(255) PRIMARY KEY NOT NULL,
-    user_id     character varying(255)             NOT NULL REFERENCES users (id),
+    user_id     character varying(255)             NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     name        character varying                  NOT NULL DEFAULT ''::character varying,
     fts_name    tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
     address     character varying(255),
@@ -51,6 +51,9 @@ CREATE INDEX user_accounts_user_id_idx ON user_accounts (user_id);
 CREATE INDEX user_accounts_address_idx ON user_accounts (address);
 CREATE INDEX user_accounts_fts_name_idx ON user_accounts USING gin (fts_name);
 CREATE INDEX user_accounts_fts_address_idx ON user_accounts USING gin (fts_address);
+CREATE UNIQUE INDEX IF NOT EXISTS user_accounts_unique_active_address_idx
+    ON user_accounts (address)
+    WHERE deleted = FALSE;
 
 ALTER TABLE users
     ADD CONSTRAINT users_primary_account_id_fkey

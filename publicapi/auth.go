@@ -88,14 +88,15 @@ func (api AuthAPI) NewDebugAuthenticator(ctx context.Context, debugParams model.
 		return nil, fmt.Errorf("debug auth failed for user '%s': %w", username, err)
 	}
 
-	wallets, err := api.queries.GetWalletsByUserID(ctx, user.ID)
+	userAccounts, err := api.loaders.GetUserAccountsByUserIdBatch.Load(user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("debug auth failed for user '%s': %w", username, err)
 	}
 
 	var addresses []persist.ChainAddress
-	for _, wallet := range wallets {
-		addresses = append(addresses, persist.NewChainAddress(wallet.Address, wallet.Chain))
+	for _, userAccount := range userAccounts {
+		// TODO fix chain
+		addresses = append(addresses, persist.NewChainAddress(userAccount.Address, persist.ChainETH))
 	}
 
 	return debugtools.NewDebugAuthenticator(&user, addresses, password), nil

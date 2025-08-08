@@ -20,3 +20,13 @@ func (*GetUserByIdBatch) getNotFoundError(key persist.DBID) error {
 func (*GetUserByUsernameBatch) getNotFoundError(key string) error {
 	return persist.ErrUserNotFound{Username: key}
 }
+
+func (*GetUserAccountByAddressBatch) getNotFoundError(key persist.Address) error {
+	// TODO: Return a specific error type, not pgx.ErrNoRows
+	return pgx.ErrNoRows
+}
+
+func (*GetUserAccountByIdBatch) getNotFoundError(key persist.DBID) error {
+	// TODO: Return a specific error type, not pgx.ErrNoRows
+	return pgx.ErrNoRows
+}

@@ -1,16 +1,6 @@
 package operation
 
-import (
-	"context"
-	"github.com/jackc/pgtype"
-	db "github.com/mutuals/go-mutuals/db/gen/coredb"
-	"github.com/mutuals/go-mutuals/service/logger"
-	"github.com/mutuals/go-mutuals/service/persist"
-	"github.com/mutuals/go-mutuals/util"
-	"sort"
-)
-
-type TokenFullDetails struct {
+/*type TokenFullDetails struct {
 	Instance db.Token
 	Metadata db.TokenMetadata
 }
@@ -146,3 +136,4 @@ func appendDBIDList(dest *[]string, src []persist.DBID, startIndices, endIndices
 	}
 	appendIndices(startIndices, endIndices, len(src))
 }
+*/

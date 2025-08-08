@@ -5,7 +5,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
-	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/service/persist"
@@ -20,28 +19,6 @@ type PoolAPI struct {
 	loaders   *dataloader.Loaders
 	validator *validator.Validate
 	ethClient *ethclient.Client
-}
-
-func (api PoolAPI) CreatePool(ctx context.Context, name, description, logoUrl *string) (db.Pool, error) {
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"name":        {name, "max=200"},
-		"description": {description, "max=600"},
-		"logo":        {logoUrl, "max=200"},
-	}); err != nil {
-		return db.Pool{}, err
-	}
-
-	pool, err := api.queries.CreatePool(ctx, db.CreatePoolParams{
-		ID:          persist.GenerateID(),
-		Name:        util.FromPointer(name),
-		Description: util.FromPointer(description),
-	})
-	if err != nil {
-		return db.Pool{}, err
-	}
-
-	return pool, nil
 }
 
 func (api PoolAPI) PublishPool(ctx context.Context, update model.PublishPoolInput) error {
@@ -61,7 +38,7 @@ func (api PoolAPI) PublishPool(ctx context.Context, update model.PublishPoolInpu
 	return nil
 }
 
-func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*indexerdb.Pool, error) {
+func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
 
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID": validate.WithTag(poolID, "required"),
@@ -86,7 +63,7 @@ func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (
 	return &pool, nil
 }
 
-func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([]indexerdb.Pool, error) {
+func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([]db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),
@@ -102,7 +79,7 @@ func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([
 	return pools, nil
 }
 
-func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*indexerdb.Pool, error) {
+func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID": {poolID, "required"},
@@ -155,25 +132,6 @@ func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([
 	return pools, errors
 }
 
-func (api PoolAPI) GetPoolByChainAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.Pool, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"chainAddress": {chainAddress, "required"},
-	}); err != nil {
-		return nil, err
-	}
-
-	pool, err := api.loaders.GetPoolByChainAddressBatch.Load(db.GetPoolByChainAddressBatchParams{
-		Address: chainAddress.Address(),
-		Chain:   chainAddress.Chain(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &pool, nil
-}
-
 func (api PoolAPI) UpdatePoolInfo(ctx context.Context, poolID persist.DBID, name, description, logoUrl *string) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -214,7 +172,9 @@ func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) 
 		ID:          *poolID,
 		Name:        *input.Name,
 		Description: *input.Description,
-		Status:      int32(persist.PoolStatusDraft),
+		Logo:        "", // TODO *input.Logo
+		OwnerID:     "", // TODO *input.OwnerID
+		ContractID:  "", //  TODO *input.ContractID
 	})
 
 	if err != nil {
@@ -222,14 +182,9 @@ func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) 
 	}
 
 	if len(input.Allocations) > 0 {
-		allocationParams, aggregationParams := processAllocations(poolID, input.Allocations)
+		allocationParams := processAllocations(poolID, input.Allocations)
 
-		_, err = q.UpsertPoolAllocations(ctx, allocationParams)
-		if err != nil {
-			return db.Pool{}, err
-		}
-
-		_, err = q.UpsertPoolAggregatedAllocations(ctx, aggregationParams)
+		_, err = q.UpsertClaims(ctx, allocationParams)
 		if err != nil {
 			return db.Pool{}, err
 		}
@@ -243,11 +198,8 @@ func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) 
 	return pool, nil
 }
 
-func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (allocationParams db.UpsertPoolAllocationsParams, aggregationParams db.UpsertPoolAggregatedAllocationsParams) {
-	recipientToAllocations := make(map[persist.Address][]*model.PoolAllocationInput)
-
+func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (allocationParams db.UpsertClaimsParams) {
 	allocationParams.PoolID = *poolID
-	aggregationParams.PoolID = *poolID
 
 	var traverse func(node *model.PoolAllocationInput, path string)
 	traverse = func(node *model.PoolAllocationInput, parentPath string) {
@@ -269,18 +221,14 @@ func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (a
 			path = parentPath + "." + label
 		}
 
-		allocationParams.Ids = append(allocationParams.Ids, id.String())
+		allocationParams.ID = append(allocationParams.ID, id.String())
 		allocationParams.RecipientAddress = append(allocationParams.RecipientAddress, node.RecipientAddress.String())
-		allocationParams.RecipientType = append(allocationParams.RecipientType, int32(node.RecipientType[0]))
-		allocationParams.CalculationType = append(allocationParams.CalculationType, int32(node.CalculationType[0]))
+		allocationParams.StrategyID = append(allocationParams.StrategyID, "") // TODO
+		allocationParams.StateID = append(allocationParams.StrategyID, "")    // TODO
+		allocationParams.Deleted = append(allocationParams.Deleted, false)    // TODO
 		allocationParams.Value = append(allocationParams.Value, persist.MustHexString(node.Value.String()).String())
-		allocationParams.Expression = append(allocationParams.Expression, "")
 		allocationParams.Label = append(allocationParams.Label, label)
 		allocationParams.Path = append(allocationParams.Path, path)
-
-		if node.RecipientType[0] == persist.RecipientTypeDefaultItem && node.RecipientAddress != nil {
-			recipientToAllocations[*node.RecipientAddress] = append(recipientToAllocations[*node.RecipientAddress], node)
-		}
 
 		// Recursively process children
 		for _, child := range node.Children {
@@ -293,16 +241,5 @@ func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (a
 		traverse(allocation, "")
 	}
 
-	// Calculate aggregation
-	for recipient, inputs := range recipientToAllocations {
-		expression := ""
-		for _, input := range inputs {
-			expression = expression + input.Value.String()
-		}
-		aggregationParams.ID = append(aggregationParams.RecipientAddress, persist.GenerateID().String())
-		aggregationParams.RecipientAddress = append(aggregationParams.RecipientAddress, recipient.String())
-		aggregationParams.Expression = append(aggregationParams.Expression, expression)
-	}
-
-	return allocationParams, aggregationParams
+	return allocationParams
 }

@@ -15,16 +15,12 @@ import (
 	"github.com/mutuals/go-mutuals/service/emails"
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 // SelfPools is the resolver for the selfPools field.
 func (r *accountResolver) SelfPools(ctx context.Context, obj *model.Account) ([]*model.Pool, error) {
 	panic(fmt.Errorf("not implemented: SelfPools - selfPools"))
-}
-
-// Claims is the resolver for the claims field.
-func (r *accountResolver) Claims(ctx context.Context, obj *model.Account) ([]*model.Claim, error) {
-	panic(fmt.Errorf("not implemented: Claims - claims"))
 }
 
 // Balances is the resolver for the balances field.
@@ -310,7 +306,13 @@ func (r *mutationResolver) PublishPool(ctx context.Context, input model.PublishP
 
 // CreatePool is the resolver for the createPool field.
 func (r *mutationResolver) CreatePool(ctx context.Context, input model.CreatePoolInput) (model.CreatePoolPayloadOrError, error) {
-	pool, err := publicapi.For(ctx).Pool.CreatePool(ctx, input.Name, input.Description, input.Logo)
+	pool, err := publicapi.For(ctx).Pool.UpsertPool(ctx, model.UpsertPoolInput{
+		PoolID:      util.ToPointer(persist.GenerateID()),
+		Name:        input.Name,
+		Description: input.Description,
+		// TODO Logo: input.Logo
+		Allocations: nil, // TODO
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +453,7 @@ func (r *mutationResolver) AddRolesToUser(ctx context.Context, username string, 
 
 // AddWalletToUserUnchecked is the resolver for the addWalletToUserUnchecked field.
 func (r *mutationResolver) AddWalletToUserUnchecked(ctx context.Context, input model.AdminAddWalletInput) (model.AdminAddWalletPayloadOrError, error) {
-	err := publicapi.For(ctx).Admin.AddWalletToUserUnchecked(ctx, input.Username, *input.ChainAddress, input.WalletType)
+	err := publicapi.For(ctx).Admin.AddWalletByUsernameUnchecked(ctx, input.Username, *input.ChainAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -553,7 +555,7 @@ func (r *poolResolver) Contract(ctx context.Context, obj *model.Pool) (*model.Po
 
 // Claims is the resolver for the claims field.
 func (r *poolResolver) Claims(ctx context.Context, obj *model.Pool) ([]*model.Claim, error) {
-	panic(fmt.Errorf("not implemented: Claims - claims"))
+	return resolveClaimsByPoolID(ctx, obj.Dbid)
 }
 
 // PoolFactory is the resolver for the poolFactory field.

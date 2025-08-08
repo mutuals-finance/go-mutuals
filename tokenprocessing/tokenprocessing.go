@@ -36,7 +36,7 @@ func InitServer() {
 	setDefaults()
 	ctx := context.Background()
 	c := server.ClientInit(ctx)
-	mc := multichain.NewMultichainProvider(ctx, c.Repos, c.Queries, c.EthClient, c.TaskClient)
+	mc := multichain.NewMultichainProvider(ctx, c.Repos, c.CoreQueries, c.IndexerQueries, c.EthClient, c.TaskClient)
 	router := CoreInitServer(ctx, c, mc)
 	logger.For(nil).Info("Starting tokenprocessing server...")
 	http.Handle("/", router)
@@ -50,10 +50,10 @@ func CoreInitServer(ctx context.Context, clients *server.Clients, mc *multichain
 
 	router.Use(middleware.GinContextToContext(), middleware.Sentry(true), middleware.Tracing(), middleware.HandleCORS(), middleware.ErrLogger())
 
-	notificationsHandler := notifications.New(clients.Queries, clients.PubSubClient, clients.TaskClient, redis.NewLockClient(redis.NewCache(redis.NotificationLockCache)), false)
+	notificationsHandler := notifications.New(clients.CoreQueries, clients.PubSubClient, clients.TaskClient, redis.NewLockClient(redis.NewCache(redis.NotificationLockCache)), false)
 
 	router.Use(func(c *gin.Context) {
-		event.AddTo(c, false, notificationsHandler, clients.Queries, clients.TaskClient)
+		event.AddTo(c, false, notificationsHandler, clients.CoreQueries, clients.TaskClient)
 	})
 
 	if env.GetString("ENV") != "production" {
@@ -77,7 +77,7 @@ func CoreInitServer(ctx context.Context, clients *server.Clients, mc *multichain
 		(*t).DisableKeepAlives = true
 	}
 
-	tp := NewTokenProcessor(clients.Queries, http.DefaultClient, clients.IPFSClient, clients.ArweaveClient, clients.StorageClient, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"))
+	tp := NewTokenProcessor(clients.CoreQueries, http.DefaultClient, clients.IPFSClient, clients.ArweaveClient, clients.StorageClient, env.GetString("GCLOUD_TOKEN_CONTENT_BUCKET"))
 
 	return handlersInitServer(ctx, router, tp, mc, clients.Repos, t, clients.TaskClient)
 }

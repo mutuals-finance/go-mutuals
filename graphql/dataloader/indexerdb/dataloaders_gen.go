@@ -8,9 +8,9 @@ import (
 
 	"github.com/mutuals/go-mutuals/cmd/dataloaders/generator"
 
-	"github.com/mutuals/go-mutuals/service/persist"
-
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
+
+	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 type autoCacheWithKey[TKey any, TResult any] interface {
@@ -27,6 +27,43 @@ type notFoundErrorProvider[TKey any] interface {
 
 type PreFetchHook func(context.Context, string) context.Context
 type PostFetchHook func(context.Context, string)
+
+// GetAccountByAddressBatch batches and caches requests
+type GetAccountByAddressBatch struct {
+	generator.Dataloader[string, indexerdb.Account]
+}
+
+// newGetAccountByAddressBatch creates a new GetAccountByAddressBatch with the given settings, functions, and options
+func newGetAccountByAddressBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetAccountByAddressBatch, []string) ([]indexerdb.Account, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetAccountByAddressBatch {
+	d := &GetAccountByAddressBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []string) ([]indexerdb.Account, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetAccountByAddressBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetAccountByAddressBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
 
 // GetAccountByIdBatch batches and caches requests
 type GetAccountByIdBatch struct {
@@ -69,34 +106,71 @@ func (*GetAccountByIdBatch) getKeyForResult(result indexerdb.Account) persist.DB
 	return result.ID
 }
 
-// GetAccountsByIdsBatch batches and caches requests
-type GetAccountsByIdsBatch struct {
-	generator.Dataloader[indexerdb.GetAccountsByIdsBatchParams, []indexerdb.Account]
+// GetAccountsByAddressesBatch batches and caches requests
+type GetAccountsByAddressesBatch struct {
+	generator.Dataloader[[]string, []indexerdb.Account]
 }
 
-// newGetAccountsByIdsBatch creates a new GetAccountsByIdsBatch with the given settings, functions, and options
-func newGetAccountsByIdsBatch(
+// newGetAccountsByAddressesBatch creates a new GetAccountsByAddressesBatch with the given settings, functions, and options
+func newGetAccountsByAddressesBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetAccountsByIdsBatch, []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error),
+	fetch func(context.Context, *GetAccountsByAddressesBatch, [][]string) ([][]indexerdb.Account, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetAccountsByIdsBatch {
-	d := &GetAccountsByIdsBatch{}
+) *GetAccountsByAddressesBatch {
+	d := &GetAccountsByAddressesBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []indexerdb.GetAccountsByIdsBatchParams) ([][]indexerdb.Account, []error) {
+	fetchWithHooks := func(ctx context.Context, keys [][]string) ([][]indexerdb.Account, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetAccountsByIdsBatch")
+			ctx = preFetchHook(ctx, "GetAccountsByAddressesBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetAccountsByIdsBatch")
+			postFetchHook(ctx, "GetAccountsByAddressesBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloaderWithNonComparableKey(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetAccountsByAddressesPaginateBatch batches and caches requests
+type GetAccountsByAddressesPaginateBatch struct {
+	generator.Dataloader[indexerdb.GetAccountsByAddressesPaginateBatchParams, []indexerdb.Account]
+}
+
+// newGetAccountsByAddressesPaginateBatch creates a new GetAccountsByAddressesPaginateBatch with the given settings, functions, and options
+func newGetAccountsByAddressesPaginateBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetAccountsByAddressesPaginateBatch, []indexerdb.GetAccountsByAddressesPaginateBatchParams) ([][]indexerdb.Account, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetAccountsByAddressesPaginateBatch {
+	d := &GetAccountsByAddressesPaginateBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []indexerdb.GetAccountsByAddressesPaginateBatchParams) ([][]indexerdb.Account, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetAccountsByAddressesPaginateBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetAccountsByAddressesPaginateBatch")
 		}
 
 		return results, errors
