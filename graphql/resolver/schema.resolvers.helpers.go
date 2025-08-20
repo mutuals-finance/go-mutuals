@@ -657,15 +657,14 @@ func userToModel(ctx context.Context, user db.User) *model.MutualsUser {
 		HelperMutualsUserData: model.HelperMutualsUserData{
 			UserID: user.ID,
 		},
-		Dbid:      user.ID,
-		Username:  &user.Username.String,
-		Universal: &user.Universal,
-
-		// each handled by dedicated resolver
-		Pools: nil,
-		Roles: nil,
-
+		Dbid:                user.ID,
+		Username:            &user.Username.String,
+		Universal:           &user.Universal,
 		IsAuthenticatedUser: &isAuthenticatedUser,
+		PrimaryAccount:      nil, // handled by dedicated resolver
+		Accounts:            nil, // handled by dedicated resolver
+		Pools:               nil, // handled by dedicated resolver
+		Roles:               nil, // handled by dedicated resolver
 	}
 }
 

@@ -28,6 +28,47 @@ type notFoundErrorProvider[TKey any] interface {
 type PreFetchHook func(context.Context, string) context.Context
 type PostFetchHook func(context.Context, string)
 
+// GetClaimByIdBatch batches and caches requests
+type GetClaimByIdBatch struct {
+	generator.Dataloader[persist.DBID, coredb.Claim]
+}
+
+// newGetClaimByIdBatch creates a new GetClaimByIdBatch with the given settings, functions, and options
+func newGetClaimByIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetClaimByIdBatch, []persist.DBID) ([]coredb.Claim, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetClaimByIdBatch {
+	d := &GetClaimByIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Claim, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetClaimByIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetClaimByIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+func (*GetClaimByIdBatch) getKeyForResult(result coredb.Claim) persist.DBID {
+	return result.ID
+}
+
 // GetClaimsByPoolIdBatch batches and caches requests
 type GetClaimsByPoolIdBatch struct {
 	generator.Dataloader[persist.DBID, []coredb.Claim]
@@ -56,6 +97,43 @@ func newGetClaimsByPoolIdBatch(
 
 		if postFetchHook != nil {
 			postFetchHook(ctx, "GetClaimsByPoolIdBatch")
+		}
+
+		return results, errors
+	}
+
+	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	return d
+}
+
+// GetClaimsByUserIdBatch batches and caches requests
+type GetClaimsByUserIdBatch struct {
+	generator.Dataloader[persist.DBID, []coredb.Claim]
+}
+
+// newGetClaimsByUserIdBatch creates a new GetClaimsByUserIdBatch with the given settings, functions, and options
+func newGetClaimsByUserIdBatch(
+	ctx context.Context,
+	maxBatchSize int,
+	batchTimeout time.Duration,
+	cacheResults bool,
+	publishResults bool,
+	fetch func(context.Context, *GetClaimsByUserIdBatch, []persist.DBID) ([][]coredb.Claim, []error),
+	preFetchHook PreFetchHook,
+	postFetchHook PostFetchHook,
+) *GetClaimsByUserIdBatch {
+	d := &GetClaimsByUserIdBatch{}
+
+	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([][]coredb.Claim, []error) {
+		// Allow the preFetchHook to modify and return a new context
+		if preFetchHook != nil {
+			ctx = preFetchHook(ctx, "GetClaimsByUserIdBatch")
+		}
+
+		results, errors := fetch(ctx, d, keys)
+
+		if postFetchHook != nil {
+			postFetchHook(ctx, "GetClaimsByUserIdBatch")
 		}
 
 		return results, errors

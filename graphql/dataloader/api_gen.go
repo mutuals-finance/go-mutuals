@@ -14,7 +14,9 @@ import (
 )
 
 type Loaders struct {
+	GetClaimByIdBatch                   *GetClaimByIdBatch
 	GetClaimsByPoolIdBatch              *GetClaimsByPoolIdBatch
+	GetClaimsByUserIdBatch              *GetClaimsByUserIdBatch
 	GetNotificationByIDBatch            *GetNotificationByIDBatch
 	GetPoolByIdBatch                    *GetPoolByIdBatch
 	GetPoolsByUserIDBatch               *GetPoolsByUserIDBatch
@@ -31,7 +33,9 @@ type Loaders struct {
 func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, preFetchHook PreFetchHook, postFetchHook PostFetchHook) *Loaders {
 	loaders := &Loaders{}
 
+	loaders.GetClaimByIdBatch = newGetClaimByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetClaimsByPoolIdBatch = newGetClaimsByPoolIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimsByPoolIdBatch(q), preFetchHook, postFetchHook)
+	loaders.GetClaimsByUserIdBatch = newGetClaimsByUserIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimsByUserIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolByIdBatch = newGetPoolByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolsByUserIDBatch = newGetPoolsByUserIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolsByUserIDBatch(q), preFetchHook, postFetchHook)
@@ -44,6 +48,16 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetUsersByPositionPaginateBatch = newGetUsersByPositionPaginateBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPaginateBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersByPositionPersonalizedBatch = newGetUsersByPositionPersonalizedBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPersonalizedBatch(q), preFetchHook, postFetchHook)
 
+	loaders.GetClaimsByPoolIdBatch.RegisterResultSubscriber(func(result []coredb.Claim) {
+		for _, entry := range result {
+			loaders.GetClaimByIdBatch.Prime(loaders.GetClaimByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
+	loaders.GetClaimsByUserIdBatch.RegisterResultSubscriber(func(result []coredb.Claim) {
+		for _, entry := range result {
+			loaders.GetClaimByIdBatch.Prime(loaders.GetClaimByIdBatch.getKeyForResult(entry), entry)
+		}
+	})
 	loaders.GetUserNotificationsBatch.RegisterResultSubscriber(func(result []coredb.Notification) {
 		for _, entry := range result {
 			loaders.GetNotificationByIDBatch.Prime(loaders.GetNotificationByIDBatch.getKeyForResult(entry), entry)
@@ -92,12 +106,47 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	return loaders
 }
 
+func loadGetClaimByIdBatch(q *coredb.Queries) func(context.Context, *GetClaimByIdBatch, []persist.DBID) ([]coredb.Claim, []error) {
+	return func(ctx context.Context, d *GetClaimByIdBatch, params []persist.DBID) ([]coredb.Claim, []error) {
+		results := make([]coredb.Claim, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetClaimByIdBatch(ctx, params)
+		defer b.Close()
+
+		b.QueryRow(func(i int, r coredb.Claim, err error) {
+			results[i], errors[i] = r, err
+			if errors[i] == pgx.ErrNoRows {
+				errors[i] = d.getNotFoundError(params[i])
+			}
+		})
+
+		return results, errors
+	}
+}
+
 func loadGetClaimsByPoolIdBatch(q *coredb.Queries) func(context.Context, *GetClaimsByPoolIdBatch, []persist.DBID) ([][]coredb.Claim, []error) {
 	return func(ctx context.Context, d *GetClaimsByPoolIdBatch, params []persist.DBID) ([][]coredb.Claim, []error) {
 		results := make([][]coredb.Claim, len(params))
 		errors := make([]error, len(params))
 
 		b := q.GetClaimsByPoolIdBatch(ctx, params)
+		defer b.Close()
+
+		b.Query(func(i int, r []coredb.Claim, err error) {
+			results[i], errors[i] = r, err
+		})
+
+		return results, errors
+	}
+}
+
+func loadGetClaimsByUserIdBatch(q *coredb.Queries) func(context.Context, *GetClaimsByUserIdBatch, []persist.DBID) ([][]coredb.Claim, []error) {
+	return func(ctx context.Context, d *GetClaimsByUserIdBatch, params []persist.DBID) ([][]coredb.Claim, []error) {
+		results := make([][]coredb.Claim, len(params))
+		errors := make([]error, len(params))
+
+		b := q.GetClaimsByUserIdBatch(ctx, params)
 		defer b.Close()
 
 		b.Query(func(i int, r []coredb.Claim, err error) {

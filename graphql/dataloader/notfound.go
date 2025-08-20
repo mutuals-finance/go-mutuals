@@ -30,3 +30,8 @@ func (*GetUserAccountByIdBatch) getNotFoundError(key persist.DBID) error {
 	// TODO: Return a specific error type, not pgx.ErrNoRows
 	return pgx.ErrNoRows
 }
+
+func (*GetClaimByIdBatch) getNotFoundError(key persist.DBID) error {
+	// TODO: Return a specific error type, not pgx.ErrNoRows
+	return pgx.ErrNoRows
+}

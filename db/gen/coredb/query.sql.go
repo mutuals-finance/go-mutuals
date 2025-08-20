@@ -575,6 +575,36 @@ func (q *Queries) GetCheckablePushTickets(ctx context.Context, limit int32) ([]P
 	return items, nil
 }
 
+const getClaimById = `-- name: GetClaimById :one
+
+SELECT id, pool_id, recipient_address, value, state_id, strategy_id, label, path, deleted, updated_at, created_at
+FROM claims
+WHERE id = $1
+  AND deleted = FALSE
+`
+
+// -----------------------------------------------------------------------------
+// CLAIM
+// -----------------------------------------------------------------------------
+func (q *Queries) GetClaimById(ctx context.Context, id persist.DBID) (Claim, error) {
+	row := q.db.QueryRow(ctx, getClaimById, id)
+	var i Claim
+	err := row.Scan(
+		&i.ID,
+		&i.PoolID,
+		&i.RecipientAddress,
+		&i.Value,
+		&i.StateID,
+		&i.StrategyID,
+		&i.Label,
+		&i.Path,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getCurrentTime = `-- name: GetCurrentTime :one
 SELECT NOW()::timestamptz
 `

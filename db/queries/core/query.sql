@@ -142,6 +142,42 @@ WHERE u.id = $1
   AND c.deleted = FALSE
   AND p.deleted = FALSE;
 
+-- -----------------------------------------------------------------------------
+-- CLAIM
+-- -----------------------------------------------------------------------------
+
+-- name: GetClaimById :one
+SELECT *
+FROM claims
+WHERE id = $1
+  AND deleted = FALSE;
+
+-- name: GetClaimByIdBatch :batchone
+SELECT *
+FROM claims
+WHERE id = $1
+  AND deleted = FALSE;
+
+-- name: GetClaimsByPoolIdBatch :batchmany
+SELECT c.*
+FROM pools p
+         INNER JOIN claims c ON c.pool_id = p.id
+WHERE p.id = $1
+  AND c.deleted = FALSE
+  AND p.deleted = FALSE;
+
+-- name: GetClaimsByUserIdBatch :batchmany
+SELECT c.*
+FROM users u
+         INNER JOIN user_accounts ua ON u.id = ua.user_id
+         INNER JOIN claims c ON c.recipient_address = ua.address
+         INNER JOIN pools p ON p.id = c.pool_id
+WHERE u.id = $1
+  AND u.deleted = FALSE
+  AND ua.deleted = FALSE
+  AND c.deleted = FALSE
+  AND p.deleted = FALSE;
+
 -- name: CreateUserEvent :one
 INSERT INTO events (id, actor_id, action, resource_type_id, user_id, subject_id, data, group_id, caption)
 VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8)

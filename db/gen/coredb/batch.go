@@ -18,6 +18,66 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
+const getClaimByIdBatch = `-- name: GetClaimByIdBatch :batchone
+SELECT id, pool_id, recipient_address, value, state_id, strategy_id, label, path, deleted, updated_at, created_at
+FROM claims
+WHERE id = $1
+  AND deleted = FALSE
+`
+
+type GetClaimByIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetClaimByIdBatch(ctx context.Context, id []persist.DBID) *GetClaimByIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getClaimByIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetClaimByIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetClaimByIdBatchBatchResults) QueryRow(f func(int, Claim, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i Claim
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(
+			&i.ID,
+			&i.PoolID,
+			&i.RecipientAddress,
+			&i.Value,
+			&i.StateID,
+			&i.StrategyID,
+			&i.Label,
+			&i.Path,
+			&i.Deleted,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+		)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *GetClaimByIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
 const getClaimsByPoolIdBatch = `-- name: GetClaimsByPoolIdBatch :batchmany
 SELECT c.id, c.pool_id, c.recipient_address, c.value, c.state_id, c.strategy_id, c.label, c.path, c.deleted, c.updated_at, c.created_at
 FROM pools p
@@ -89,6 +149,85 @@ func (b *GetClaimsByPoolIdBatchBatchResults) Query(f func(int, []Claim, error)) 
 }
 
 func (b *GetClaimsByPoolIdBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const getClaimsByUserIdBatch = `-- name: GetClaimsByUserIdBatch :batchmany
+SELECT c.id, c.pool_id, c.recipient_address, c.value, c.state_id, c.strategy_id, c.label, c.path, c.deleted, c.updated_at, c.created_at
+FROM users u
+         INNER JOIN user_accounts ua ON u.id = ua.user_id
+         INNER JOIN claims c ON c.recipient_address = ua.address
+         INNER JOIN pools p ON p.id = c.pool_id
+WHERE u.id = $1
+  AND u.deleted = FALSE
+  AND ua.deleted = FALSE
+  AND c.deleted = FALSE
+  AND p.deleted = FALSE
+`
+
+type GetClaimsByUserIdBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetClaimsByUserIdBatch(ctx context.Context, id []persist.DBID) *GetClaimsByUserIdBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getClaimsByUserIdBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetClaimsByUserIdBatchBatchResults{br, len(id), false}
+}
+
+func (b *GetClaimsByUserIdBatchBatchResults) Query(f func(int, []Claim, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Claim
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Claim
+				if err := rows.Scan(
+					&i.ID,
+					&i.PoolID,
+					&i.RecipientAddress,
+					&i.Value,
+					&i.StateID,
+					&i.StrategyID,
+					&i.Label,
+					&i.Path,
+					&i.Deleted,
+					&i.UpdatedAt,
+					&i.CreatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetClaimsByUserIdBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

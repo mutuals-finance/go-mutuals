@@ -14,14 +14,6 @@ SET name        = EXCLUDED.name,
     updated_at  = NOW()
 RETURNING *;
 
--- name: GetClaimsByPoolIdBatch :batchmany
-SELECT c.*
-FROM pools p
-         INNER JOIN claims c ON c.pool_id = p.id
-WHERE p.id = $1
-  AND c.deleted = FALSE
-  AND p.deleted = FALSE;
-
 -- name: UpsertClaims :many
 WITH updates AS (SELECT UNNEST(@id::text[])                AS id,
                         @pool_id                           AS pool_id,

@@ -59,6 +59,19 @@ scalar Email
 scalar HexString
 scalar JSON
 
+enum ErrorPolicyEnum {
+  """
+  Save what is possible within a single row. If there are errors in an input data row, try to save it partially and skip the invalid part.
+  """
+  IGNORE_FAILED
+
+  """Reject all rows if there is at least one error in any of them."""
+  REJECT_EVERYTHING
+
+  """Reject rows with errors."""
+  REJECT_FAILED_ROWS
+}
+
 enum BasicAuthType {
   Retool
   Monitoring
@@ -131,18 +144,18 @@ type PageInfo {
 # ACCOUNT AND CONTRACTS
 #-------------------------------------------------------------------------------
 
-enum AccountType {
+enum EVMAccountType {
   EOA
   Contract
 }
 
-type Account {
+type EVMAccount {
   # account address
   id: ID!
   # account address
   address: Address!
   # contract or EOA
-  accountType: AccountType!
+  accountType: EVMAccountType!
   # pools this account represents if account is a pool contract
   selfPools: [Pool!] @goField(forceResolver: true)
   # token balances of the account
@@ -164,7 +177,7 @@ type PoolFactory {
   # amount of pools created
   poolCount: Int!
   # current owner of the factory
-  owner: Account!
+  owner: EVMAccount!
   # creation timestamp
   createdAt: Time!
   # update timestamp
@@ -237,6 +250,28 @@ type UserEdge {
 type UsersConnection {
   edges: [UserEdge]
   pageInfo: PageInfo!
+}
+
+#-------------------------------------------------------------------------------
+# WALLET
+#-------------------------------------------------------------------------------
+
+type Wallet implements Node{
+  # wallet id
+  id: ID!
+  dbid: DBID!
+  # wallet name
+  name: String!
+  # primary wallet for user or not
+  primary: Boolean!
+  # account
+  account: Account @goField(forceResolver: true)
+  # user reference
+  user: MutualsUser @goField(forceResolver: true)
+  # creation timestamp
+  createdAt: Time!
+  # update timestamp
+  updatedAt: Time!
 }
 
 #-------------------------------------------------------------------------------
@@ -376,8 +411,12 @@ type Claim implements Node {
   label: String!
   # path
   path: String!
+  # path
+  childrenCount: Int!
   # parent claim
   parent: Claim @goField(forceResolver: true)
+  # children claims
+  children: [Claim!] @goField(forceResolver: true)
   # pool
   pool: Pool! @goField(forceResolver: true)
   # recipient
@@ -1061,11 +1100,251 @@ type UploadPersistedQueriesPayload {
   message: String
 }
 
-input PoolAllocationInput {
-  id: DBID
+"""
+Creates a new wallet.
+"""
+type WalletCreate {
+  errors: [WalletError!]!
+  wallet: Wallet
+}
+
+type WalletError implements Error {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: WalletErrorCode!
+}
+
+enum WalletErrorCode {
+  ALREADY_EXISTS
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
+input WalletCreateInput {
+  """Wallet account address."""
+  address: Address!
+}
+
+"""
+Updates given wallet.
+"""
+type WalletUpdate {
+  errors: [WalletError!]!
+  wallet: Wallet
+}
+
+input WalletUpdateInput {
+  """Wallet account address."""
+  address: Address
+}
+
+"""
+Deletes a wallet.
+"""
+type WalletDelete {
+  errors: [WalletError!]!
+  wallet: Wallet
+}
+
+"""
+Creates a new claim.
+"""
+type ClaimCreate {
+  errors: [ClaimError!]!
+  claim: Claim
+}
+
+type ClaimError implements Error {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: ClaimErrorCode!
+}
+
+enum ClaimErrorCode {
+  ALREADY_EXISTS
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
+input ClaimCreateInput {
+  """Claim recipient address."""
   recipientAddress: Address
+
+  """The allocated value of the claim."""
   value: HexString!
-  children: [PoolAllocationInput!]
+
+  """Parent claim."""
+  parent: DBID
+
+  """Children claims."""
+  children: [DBID!]
+
+  """State id."""
+  stateId: String!
+
+  """Strategy id."""
+  strategyId: String!
+}
+
+"""
+Updates given claim.
+"""
+type ClaimUpdate {
+  errors: [ClaimError!]!
+  claim: Claim
+}
+
+input ClaimUpdateInput {
+  """Claim recipient address."""
+  recipientAddress: Address
+
+  """The allocated value of the claim."""
+  value: HexString!
+
+  """Parent claim."""
+  parent: DBID
+
+  """Children claims."""
+  children: [DBID!]
+
+  """State id."""
+  stateId: String!
+
+  """Strategy id."""
+  strategyId: String!
+}
+
+"""
+Deletes a claim.
+"""
+type ClaimDelete {
+  errors: [ClaimError!]!
+  claim: Claim
+}
+
+"""
+Creates claims.
+"""
+type ClaimBulkCreate {
+  """Returns how many objects were created."""
+  count: Int!
+
+  """List of the created claims."""
+  results: [ClaimBulkResult!]!
+  errors: [ClaimBulkError!]!
+}
+
+type ClaimBulkResult {
+  """Claim data."""
+  claim: Claim
+
+  """List of errors occurred on create attempt."""
+  errors: [ClaimBulkError!]
+}
+
+type ClaimBulkError implements Error {
+  """
+  Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  path: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: ClaimBulkErrorCode!
+}
+
+enum ClaimBulkErrorCode {
+  BLANK
+  MAX_LENGTH
+  DUPLICATED_INPUT_ITEM
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
+input ClaimBulkCreateInput {
+  """Claim recipient address."""
+  recipientAddress: Address
+
+  """The allocated value of the claim."""
+  value: HexString!
+
+  """Parent claim."""
+  parent: DBID
+
+  """Children claims."""
+  children: [DBID!]
+
+  """State id."""
+  stateId: String!
+
+  """Strategy id."""
+  strategyId: String!
+}
+
+"""
+Updates claims.
+"""
+type ClaimBulkUpdate {
+  """Returns how many objects were updated."""
+  count: Int!
+
+  """List of the updated claims."""
+  results: [ClaimBulkResult!]!
+  errors: [ClaimBulkError!]!
+}
+
+input ClaimBulkUpdateInput {
+  """Claim recipient address."""
+  recipientAddress: Address
+
+  """The allocated value of the claim."""
+  value: HexString!
+
+  """Parent claim."""
+  parent: DBID
+
+  """Children claims."""
+  children: [DBID!]
+
+  """State id."""
+  stateId: String!
+
+  """Strategy id."""
+  strategyId: String!
+}
+
+"""
+Deletes claims.
+"""
+type ClaimBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [ClaimError!]!
 }
 
 enum PoolStatus {
@@ -1074,107 +1353,74 @@ enum PoolStatus {
   Paused
 }
 
-input UpsertPoolInput {
-  poolId: DBID
+type PoolCreate {
+  errors: [PoolError!]!
+  pool: Pool
+}
+
+type PoolError implements Error {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+  """The error message."""
+  message: String
+  """The error code."""
+  code: PoolErrorCode!
+}
+
+enum PoolErrorCode {
+  ALREADY_EXISTS
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
+input PoolCreateInput {
+  """Whether a pool is shared with its recipients or not."""
+  private: Boolean
+  """Name of the pool."""
   name: String
+  """Name of the pool."""
   description: String
-  allocations: [PoolAllocationInput!]
+  """Slug of the pool."""
+  slug: String
+  """List of claims to assign to the pool."""
+  addClaims: [DBID!]
 }
 
-input PoolPositionInput {
-  poolId: DBID!
-  position: String!
+"""
+Update a pool.
+"""
+type PoolUpdate implements Error {
+  errors: [PoolError!]!
+  pool: Pool
 }
 
-input UpdatePoolOrderInput {
-  positions: [PoolPositionInput!]!
-}
-
-input UpdatePoolHiddenInput {
-  id: DBID!
-  hidden: Boolean!
-}
-
-input UpdatePoolInfoInput {
-  id: DBID!
+input PoolUpdateInput {
+  """Whether a pool is shared with its recipients or not."""
+  shared: Boolean
+  """Name of the pool."""
   name: String
+  """Name of the pool."""
   description: String
+  """Slug of the pool."""
+  slug: String
+  """List of claims to assign to the pool."""
+  addClaims: [DBID!]
+  """List of claims to remove from the pool."""
+  removeClaims: [DBID!]
 }
 
-input CreatePoolInput {
-  name: String
-  description: String
-  logo: String
-}
-
-type CreatePoolPayload {
+"""
+Update a pool.
+"""
+type PoolDelete implements Error {
+  errors: [PoolError!]!
   pool: Pool
 }
-
-union CreatePoolPayloadOrError = CreatePoolPayload | ErrInvalidInput | ErrNotAuthorized
-
-type UpsertPoolPayload {
-  pool: Pool
-}
-
-union UpsertPoolPayloadOrError =
-  UpsertPoolPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
-type UpdatePoolHiddenPayload {
-  pool: Pool
-}
-
-union UpdatePoolHiddenPayloadOrError =
-    UpdatePoolHiddenPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
-type DeletePoolPayload {
-  deletedId: DeletedNode
-}
-
-union DeletePoolPayloadOrError = DeletePoolPayload | ErrInvalidInput | ErrNotAuthorized
-
-type UpdatePoolOrderPayload {
-  viewer: Viewer
-}
-
-union UpdatePoolOrderPayloadOrError =
-    UpdatePoolOrderPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
-input UpdatePoolInput {
-  poolId: DBID!
-
-  name: String
-  description: String
-
-  order: [DBID!]
-
-  # generated on the frontend
-  editId: String!
-}
-
-type UpdatePoolPayload {
-  pool: Pool
-}
-
-union UpdatePoolPayloadOrError = UpdatePoolPayload | ErrInvalidInput | ErrNotAuthorized
-
-input PublishPoolInput {
-  poolId: DBID!
-  editId: String!
-  caption: String
-}
-
-type PublishPoolPayload {
-  pool: Pool
-}
-
-union PublishPoolPayloadOrError = PublishPoolPayload | ErrInvalidInput | ErrNotAuthorized
 
 type UpdatePrimaryWalletPayload {
   viewer: Viewer
@@ -1216,12 +1462,6 @@ union UpdateUserExperiencePayloadOrError =
   | ErrNotAuthorized
 
 type Mutation {
-  # User Mutations
-  addUserWallet(
-    chainAddress: ChainAddressInput!
-    authMechanism: AuthMechanism!
-  ): AddUserWalletPayloadOrError @authRequired
-  removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsPayloadOrError @authRequired
   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
   registerUserPushToken(pushToken: String!): RegisterUserPushTokenPayloadOrError @authRequired
   unregisterUserPushToken(pushToken: String!): UnregisterUserPushTokenPayloadOrError @authRequired
@@ -1240,15 +1480,119 @@ type Mutation {
   login(authMechanism: AuthMechanism!): LoginPayloadOrError
   logout(pushTokenToUnregister: String): LogoutPayload
 
-  upsertPool(input: UpsertPoolInput!): UpsertPoolPayloadOrError @authRequired
-  publishPool(input: PublishPoolInput!): PublishPoolPayloadOrError @authRequired
+  """
+  Creates a new wallet.
+  """
+  walletCreate(
+    """Fields required to create a wallet."""
+    input: WalletCreateInput!
+  ): WalletCreate @authRequired
 
-  createPool(input: CreatePoolInput!): CreatePoolPayloadOrError @authRequired
-  updatePoolHidden(input: UpdatePoolHiddenInput!): UpdatePoolHiddenPayloadOrError
-    @authRequired
-  deletePool(poolId: DBID!): DeletePoolPayloadOrError @authRequired
-  updatePoolOrder(input: UpdatePoolOrderInput!): UpdatePoolOrderPayloadOrError
-    @authRequired
+  """
+  Updates a new wallet.
+  """
+  walletUpdate(
+    """ID of a wallet to update."""
+    id: DBID!
+
+    """Fields required to update a claim."""
+    input: WalletUpdateInput!
+  ): WalletUpdate @authRequired
+
+  """
+  Deletes a wallet.
+  """
+  walletDelete(
+    """ID of a wallet to delete."""
+    id: DBID!
+  ): WalletDelete @authRequired
+
+  """
+  Creates a new claim.
+  """
+  claimCreate(
+    """Fields required to create a claim."""
+    input: ClaimCreateInput!
+  ): ClaimCreate @authRequired
+
+  """
+  Updates a new claim.
+  """
+  claimUpdate(
+    """ID of a claim to update."""
+    id: DBID!
+
+    """Fields required to update a claim."""
+    input: ClaimUpdateInput!
+  ): ClaimUpdate @authRequired
+
+  """
+  Deletes a claim.
+  """
+  claimDelete(
+    """ID of a claim to delete."""
+    id: DBID!
+  ): ClaimDelete @authRequired
+
+  """
+  Creates claims.
+  """
+  claimBulkCreate(
+    """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
+    errorPolicy: ErrorPolicyEnum
+
+    """Input list of claims to create."""
+    claims: [ClaimBulkCreateInput!]!
+  ): ClaimBulkCreate @authRequired
+
+  """
+  Updates claims.
+  """
+  claimBulkUpdate(
+    """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
+    errorPolicy: ErrorPolicyEnum
+
+    """List of claim IDs to update."""
+    ids: [DBID!]!
+
+    """Input list of claims to update."""
+    claims: [ClaimBulkUpdateInput!]!
+  ): ClaimBulkCreate @authRequired
+
+  """
+  Deletes claims.
+  """
+  claimBulkDelete(
+    """List of claim IDs to delete."""
+    ids: [DBID!]!
+  ): ClaimBulkDelete @authRequired
+
+  """
+  Creates a pool.
+  """
+  poolCreate(
+    """Fields required when creating an invoice."""
+    input: PoolCreateInput!
+  ): PoolCreate @authRequired
+
+  """
+  Updates a pool.
+  """
+  poolUpdate(
+    """ID of a pool to update."""
+    id: DBID!
+
+    """Fields to use when updating a pool."""
+    input: PoolUpdateInput!
+  ): PoolUpdate @authRequired
+
+  """
+  Deletes a pool.
+  """
+  poolDelete(
+    """ID of a pool to delete."""
+    id: DBID!
+  ): PoolDelete @authRequired
 
   clearAllNotifications: ClearAllNotificationsPayload @authRequired
 
@@ -1267,14 +1611,7 @@ type Mutation {
   revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
     @basicAuth(allowed: [Retool])
 
-  # Mutuals Frontend Deploy Persisted Queries
-  uploadPersistedQueries(input: UploadPersistedQueriesInput): UploadPersistedQueriesPayloadOrError
-    @frontendBuildAuth
-
   updatePrimaryWallet(walletID: DBID!): UpdatePrimaryWalletPayloadOrError @authRequired
-
-  updateUserExperience(input: UpdateUserExperienceInput!): UpdateUserExperiencePayloadOrError
-    @authRequired
 }
 
 type Subscription {
