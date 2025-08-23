@@ -26,24 +26,23 @@ type WalletAPI struct {
 	multichainProvider *multichain.Provider
 }
 
-func (api WalletAPI) GetUserAccountByID(ctx context.Context, userAccountID persist.DBID) (*db.UserAccount, error) {
+func (api WalletAPI) GetWalletByID(ctx context.Context, id persist.DBID) (*db.UserAccount, error) {
 	// Validate
-
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userAccountID": validate.WithTag(userAccountID, "required"),
+		"id": validate.WithTag(id, "required"),
 	}); err != nil {
 		return nil, err
 	}
 
-	account, err := api.coreLoaders.GetUserAccountByIdBatch.Load(userAccountID)
+	result, err := api.coreLoaders.GetUserAccountByIdBatch.Load(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &account, nil
+	return &result, nil
 }
 
-func (api WalletAPI) GetUserAccountsByUserID(ctx context.Context, userID persist.DBID) ([]db.UserAccount, error) {
+func (api WalletAPI) GetWalletsByUserID(ctx context.Context, userID persist.DBID) ([]db.UserAccount, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),
@@ -51,13 +50,14 @@ func (api WalletAPI) GetUserAccountsByUserID(ctx context.Context, userID persist
 		return nil, err
 	}
 
-	userAccounts, err := api.coreLoaders.GetUserAccountsByUserIdBatch.Load(userID)
+	result, err := api.coreLoaders.GetUserAccountsByUserIdBatch.Load(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return userAccounts, nil
+	return result, nil
 }
+
 func (api WalletAPI) GetAccountsByAddresses(ctx context.Context, addresses []string) ([]indexerdb.Account, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"addresses": validate.WithTag(addresses, "required"),
@@ -65,34 +65,30 @@ func (api WalletAPI) GetAccountsByAddresses(ctx context.Context, addresses []str
 		return nil, err
 	}
 	// TODO use Address type instead of string
-	accounts, err := api.indexerLoaders.GetAccountsByAddressesBatch.Load(addresses)
+	result, err := api.indexerLoaders.GetAccountsByAddressesBatch.Load(addresses)
 	if err != nil {
 		return nil, err
 	}
 
-	return accounts, nil
+	return result, nil
 }
 
-func (api WalletAPI) GetAccountByID(ctx context.Context, accountID persist.DBID) (*indexerdb.Account, error) {
-	// Validate
-
+func (api WalletAPI) GetAccountByID(ctx context.Context, id persist.DBID) (*indexerdb.Account, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"walletID": validate.WithTag(accountID, "required"),
+		"id": validate.WithTag(id, "required"),
 	}); err != nil {
 		return nil, err
 	}
 
-	account, err := api.indexerLoaders.GetAccountByIdBatch.Load(accountID)
+	result, err := api.indexerLoaders.GetAccountByIdBatch.Load(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &account, nil
+	return &result, nil
 }
 
 func (api WalletAPI) GetAccountByAddress(ctx context.Context, accountAddress persist.Address) (*indexerdb.Account, error) {
-	// Validate
-
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"accountAddress": validate.WithTag(accountAddress, "required"),
 	}); err != nil {

@@ -22,7 +22,7 @@ type HelperGroupNotificationUsersConnectionData struct {
 	UserIDs persist.DBIDList
 }
 
-type HelperMutualsUserData struct {
+type HelperUserData struct {
 	UserID persist.DBID
 }
 

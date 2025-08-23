@@ -6,10 +6,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
-	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
-	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
 )
 
@@ -21,33 +19,34 @@ type ClaimAPI struct {
 	ethClient *ethclient.Client
 }
 
-func (api ClaimAPI) UpsertClaim(ctx context.Context, input model.UpsertPoolInput) ([]db.Claim, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"name":        validate.WithTag(input.Name, "max=200"),
-		"description": validate.WithTag(input.Description, "max=600"),
-	}); err != nil {
-		return nil, err
+/*
+	func (api ClaimAPI) CreateClaimBulk(ctx context.Context, input model.ClaimBulkCreateInput) ([]db.Claim, error) {
+		if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+			"name":        validate.WithTag(input.Name, "max=200"),
+			"description": validate.WithTag(input.Description, "max=600"),
+		}); err != nil {
+			return nil, err
+		}
+
+		claims, err := api.queries.UpsertClaims(ctx, db.UpsertClaimsParams{
+			ID:               nil,
+			PoolID:           util.FromPointer(input.PoolID),
+			RecipientAddress: nil,
+			Value:            nil,
+			StateID:          nil,
+			StrategyID:       nil,
+			Label:            nil,
+			Path:             nil,
+			Deleted:          nil,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return claims, nil
 	}
-
-	claims, err := api.queries.UpsertClaims(ctx, db.UpsertClaimsParams{
-		ID:               nil,
-		PoolID:           util.FromPointer(input.PoolID),
-		RecipientAddress: nil,
-		Value:            nil,
-		StateID:          nil,
-		StrategyID:       nil,
-		Label:            nil,
-		Path:             nil,
-		Deleted:          nil,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return claims, nil
-}
+*/
 
 func (api ClaimAPI) GetClaimsByPoolID(ctx context.Context, poolID persist.DBID) ([]db.Claim, error) {
 	// Validate
@@ -63,6 +62,22 @@ func (api ClaimAPI) GetClaimsByPoolID(ctx context.Context, poolID persist.DBID) 
 	}
 
 	return pools, nil
+}
+
+func (api ClaimAPI) GetClaimByID(ctx context.Context, id persist.DBID) (*db.Claim, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"id": validate.WithTag(id, "required"),
+	}); err != nil {
+		return nil, err
+	}
+
+	claim, err := api.loaders.GetClaimByIdBatch.Load(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &claim, nil
 }
 
 /*func processAllocations(poolID *persist.DBID, a []*model.ClaimAllocationInput) (allocationParams db.UpsertClaimAllocationsParams, aggregationParams db.UpsertClaimAggregatedAllocationsParams) {

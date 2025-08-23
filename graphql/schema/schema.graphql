@@ -195,7 +195,7 @@ type ExtensionRegistry {
   # amount of extensions created
   extensionCount: Int!
   # current owner of the registry
-  owner: Account! @goField(forceResolver: true)
+  owner: EVMAccount! @goField(forceResolver: true)
   # creation timestamp
   createdAt: Time!
   # update timestamp
@@ -212,14 +212,13 @@ enum Role {
   EARLY_ACCESS
 }
 
-type MutualsUser implements Node @goEmbedHelper {
+type User implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
   username: String
-  universal: Boolean
   roles: [Role] @goField(forceResolver: true)
-  accounts: [Account] @goField(forceResolver: true)
-  primaryAccount: Account @goField(forceResolver: true)
+  wallets: [Wallet] @goField(forceResolver: true)
+  primaryWallet: Wallet @goField(forceResolver: true)
   # Returns all pools owned by this user. Useful for retrieving all pools without any duplicates,
   # as opposed to retrieving user -> accounts -> pools, which would contain duplicates for any pool
   # that appears in more than one of the user's wallets.
@@ -227,13 +226,13 @@ type MutualsUser implements Node @goEmbedHelper {
   isAuthenticatedUser: Boolean
 }
 
-union MutualsUserOrAccount = MutualsUser | Account
+union UserOrAccount = User | EVMAccount
 
-union UserByUsernameOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
+union UserByUsernameOrError = User | ErrUserNotFound | ErrInvalidInput
 
-union UserByIdOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
+union UserByIdOrError = User | ErrUserNotFound | ErrInvalidInput
 
-union UserByAddressOrError = MutualsUser | ErrUserNotFound | ErrInvalidInput
+union UserByAddressOrError = User | ErrUserNotFound | ErrInvalidInput
 
 union ViewerOrError = Viewer | ErrNotAuthorized
 
@@ -243,7 +242,7 @@ enum Action {
 }
 
 type UserEdge {
-  node: MutualsUser
+  node: User
   cursor: String
 }
 
@@ -265,9 +264,9 @@ type Wallet implements Node{
   # primary wallet for user or not
   primary: Boolean!
   # account
-  account: Account @goField(forceResolver: true)
+  account: EVMAccount @goField(forceResolver: true)
   # user reference
-  user: MutualsUser @goField(forceResolver: true)
+  user: User @goField(forceResolver: true)
   # creation timestamp
   createdAt: Time!
   # update timestamp
@@ -280,7 +279,7 @@ type Wallet implements Node{
 
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
-  user: MutualsUser @goField(forceResolver: true)
+  user: User @goField(forceResolver: true)
   viewerPools: [ViewerPool] @goField(forceResolver: true)
 
   email: UserEmail @goField(forceResolver: true)
@@ -292,8 +291,6 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   @goField(forceResolver: true)
 
   notificationSettings: NotificationSettings @goField(forceResolver: true)
-
-  userExperiences: [UserExperience!] @goField(forceResolver: true)
 }
 
 # We have this extra type in case we need to stick authed data
@@ -350,7 +347,7 @@ type TokenBalance {
   # token
   token: Token! @goField(forceResolver: true)
   # token owner
-  holder: PoolOrMutualsUserOrAccount! @goField(forceResolver: true)
+  holder: PoolOrUserOrEVMAccount! @goField(forceResolver: true)
   # token balance (BigDecimal)
   amount: HexString!
   # creation timestamp
@@ -420,7 +417,7 @@ type Claim implements Node {
   # pool
   pool: Pool! @goField(forceResolver: true)
   # recipient
-  recipient: PoolOrMutualsUserOrAccount @goField(forceResolver: true)
+  recipient: PoolOrUserOrEVMAccount @goField(forceResolver: true)
   # state
   state: Extension! @goField(forceResolver: true)
   # strategy
@@ -451,7 +448,7 @@ type Pool implements Node {
   # status of the pool
   status: PoolStatus!
   # owner of the pool
-  owner: MutualsUserOrAccount! @goField(forceResolver: true)
+  owner: UserOrAccount! @goField(forceResolver: true)
   # pool contract
   contract: PoolContract @goField(forceResolver: true)
   # pool claims
@@ -466,7 +463,7 @@ type ErrPoolNotFound implements Error {
   message: String!
 }
 
-union PoolOrMutualsUserOrAccount = Pool | MutualsUser | Account
+union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
 
 union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
 
@@ -482,9 +479,9 @@ type PoolContract {
   # pool factory that created this pool
   poolFactory: PoolFactory! @goField(forceResolver: true)
   # account of this pool
-  account: Account! @goField(forceResolver: true)
+  account: EVMAccount! @goField(forceResolver: true)
   # current owner of the pool
-  owner: Account! @goField(forceResolver: true)
+  owner: EVMAccount! @goField(forceResolver: true)
   # daily snapshots of pool token balances
   dayBalance: [PoolDayBalance!]! @goField(forceResolver: true)
   # hourly snapshots of pool token balances
@@ -599,22 +596,6 @@ input UnsubscribeFromEmailTypeInput {
 }
 
 #-------------------------------------------------------------------------------
-# USER EXPERIENCE
-#-------------------------------------------------------------------------------
-
-enum UserExperienceType {
-  EmailUpsell
-  MaintenanceFeb2023
-  TwitterConnectionOnboardingUpsell
-  UpsellMintMemento4
-}
-
-type UserExperience {
-  type: UserExperienceType!
-  experienced: Boolean!
-}
-
-#-------------------------------------------------------------------------------
 # EVENT
 #-------------------------------------------------------------------------------
 
@@ -697,7 +678,7 @@ type Withdrawal {
 """
 
 type UserSearchResult {
-  user: MutualsUser
+  user: User
 }
 
 type SearchUsersPayload {
@@ -795,33 +776,6 @@ union UpdateUserInfoPayloadOrError =
 type UpdateUserInfoPayload {
   viewer: Viewer
 }
-
-union RegisterUserPushTokenPayloadOrError =
-  RegisterUserPushTokenPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-  | ErrPushTokenBelongsToAnotherUser
-
-type RegisterUserPushTokenPayload {
-  viewer: Viewer
-}
-
-union UnregisterUserPushTokenPayloadOrError =
-  UnregisterUserPushTokenPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-  | ErrPushTokenBelongsToAnotherUser
-
-type UnregisterUserPushTokenPayload {
-  viewer: Viewer
-}
-
-type AuthNonce {
-  nonce: String
-  message: String
-}
-
-union GetAuthNoncePayloadOrError = AuthNonce
 
 type ErrAuthenticationFailed implements Error {
   message: String!
@@ -957,10 +911,6 @@ type LoginPayload {
 type LogoutPayload {
   viewer: Viewer
 }
-input CreateUserInput {
-  username: String
-  email: Email
-}
 
 union CreateUserPayloadOrError =
     CreateUserPayload
@@ -991,7 +941,7 @@ interface GroupedNotification implements Notification & Node {
 }
 
 type GroupNotificationUserEdge {
-  node: MutualsUser
+  node: User
   cursor: String
 }
 
@@ -1076,15 +1026,15 @@ type UnsubscribeFromEmailTypePayload {
 
 union UnsubscribeFromEmailTypePayloadOrError = UnsubscribeFromEmailTypePayload | ErrInvalidInput
 
-union AddRolesToUserPayloadOrError = MutualsUser | ErrNotAuthorized
-union RevokeRolesFromUserPayloadOrError = MutualsUser | ErrNotAuthorized
+union AddRolesToUserPayloadOrError = User | ErrNotAuthorized
+union RevokeRolesFromUserPayloadOrError = User | ErrNotAuthorized
 
 type OptInForRolesPayload {
-  user: MutualsUser
+  user: User
 }
 
 type OptOutForRolesPayload {
-  user: MutualsUser
+  user: User
 }
 
 union OptInForRolesPayloadOrError = OptInForRolesPayload | ErrNotAuthorized | ErrInvalidInput
@@ -1101,6 +1051,295 @@ type UploadPersistedQueriesPayload {
 }
 
 """
+Create and get a new nonce and message.
+"""
+type Nonce {
+  nonce: String
+  message: String
+}
+
+"""
+Register a new user.
+"""
+type UserRegister {
+  """Informs whether users need to confirm their email address."""
+  requiresConfirmation: Boolean
+  errors: [UserError!]!
+  user: User
+}
+
+"""Fields required to create a user."""
+input UserRegisterInput {
+  """User name."""
+  username: String
+
+  """The email address of the user."""
+  email: String
+
+  """
+  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+  """
+  redirectUrl: String
+}
+
+"""
+Updates the user of the logged-in user.
+"""
+type UserUpdate {
+  errors: [UserError!]!
+  user: User
+}
+
+"""Represents errors in user mutations."""
+type UserError {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: UserErrorCode!
+}
+
+enum UserErrorCode {
+  ACTIVATE_OWN_ACCOUNT
+  ACTIVATE_SUPERUSER_ACCOUNT
+  DUPLICATED_INPUT_ITEM
+  DEACTIVATE_OWN_ACCOUNT
+  DEACTIVATE_SUPERUSER_ACCOUNT
+  DELETE_NON_STAFF_USER
+  DELETE_OWN_ACCOUNT
+  DELETE_SUPERUSER_ACCOUNT
+  GRAPHQL_ERROR
+  INACTIVE
+  INVALID
+  INVALID_CREDENTIALS
+  NOT_FOUND
+  OUT_OF_SCOPE_ROLE
+  REQUIRED
+  UNIQUE
+  JWT_SIGNATURE_EXPIRED
+  JWT_INVALID_TOKEN
+  JWT_DECODE_ERROR
+  JWT_MISSING_TOKEN
+  JWT_INVALID_CSRF_TOKEN
+  ACCOUNT_NOT_CONFIRMED
+  LOGIN_ATTEMPT_DELAYED
+  UNKNOWN_IP_ADDRESS
+}
+
+"""Fields required to update the user."""
+input UserInput {
+  """Username."""
+  username: String
+}
+
+"""
+Sends an email with the user removal link for the logged-in user.
+"""
+type UserRequestDeletion {
+  errors: [UserError!]!
+}
+
+"""
+Removes a user.
+"""
+type UserDelete {
+  errors: [UserError!]!
+  user: User
+}
+
+"""
+Sends a notification confirmation.
+"""
+type SendConfirmationEmail {
+  errors: [SendConfirmationEmailError!]!
+}
+
+type SendConfirmationEmailError {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: SendConfirmationEmailErrorCode!
+}
+
+enum SendConfirmationEmailErrorCode {
+  INVALID
+  USER_CONFIRMED
+  CONFIRMATION_ALREADY_REQUESTED
+}
+
+"""
+Confirm user account with token sent by email during registration.
+"""
+type ConfirmUser {
+  """An activated user."""
+  user: User
+  errors: [UserError!]!
+}
+
+"""
+Request email change of the logged in user.
+"""
+type RequestEmailChange {
+  """A user instance."""
+  user: User
+  errors: [UserError!]!
+}
+
+"""
+Confirm the email change of the logged-in user.
+"""
+type ConfirmEmailChange {
+  """A user instance with a new email."""
+  user: User
+  errors: [UserError!]!
+}
+
+type PushTokenRegister {
+  """push token."""
+  pushToken: String
+
+  """A user instance."""
+  user: User
+
+  errors: [PushTokenError!]!
+}
+
+type PushTokenError {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: PushTokenErrorCode!
+}
+
+enum PushTokenErrorCode {
+  ALREADY_EXISTS
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+  #| ErrNotAuthorized
+  #| ErrInvalidInput
+  #| ErrPushTokenBelongsToAnotherUser
+}
+
+input PushTokenRegisterInput {
+  """Whether a pool is shared with its recipients or not."""
+  private: Boolean
+
+  """Name of the pool."""
+  name: String
+
+  """Name of the pool."""
+  description: String
+
+  """Slug of the pool."""
+  slug: String
+
+  """List of claims to assign to the pool."""
+  addClaims: [DBID!]
+}
+
+"""
+Update a pool.
+"""
+type PushTokenUnregister {
+  """push token."""
+  pushToken: String
+
+  """A user instance."""
+  user: User
+
+  errors: [PushTokenError!]!
+}
+
+input PushTokenUnregisterInput {
+  """Whether a pool is shared with its recipients or not."""
+  private: Boolean
+
+  """Name of the pool."""
+  name: String
+
+  """Name of the pool."""
+  description: String
+
+  """Slug of the pool."""
+  slug: String
+
+  """List of claims to assign to the pool."""
+  addClaims: [DBID!]
+
+  """List of claims to remove from the pool."""
+  removeClaims: [DBID!]
+}
+
+"""Create JWT token."""
+type CreateToken {
+  """JWT token, required to authenticate."""
+  token: String
+
+  """JWT refresh token, required to re-generate access token."""
+  refreshToken: String
+
+  """CSRF token required to re-generate access token."""
+  csrfToken: String
+
+  """A user instance."""
+  user: User
+  errors: [UserError!]!
+}
+
+
+"""
+Refresh JWT token. Mutation tries to take refreshToken from the input. If it fails it will try to take `refreshToken` from the http-only cookie `refreshToken`. `csrfToken` is required when `refreshToken` is provided as a cookie.
+"""
+type RefreshToken {
+  """JWT token, required to authenticate."""
+  token: String
+
+  """A user instance."""
+  user: User
+  errors: [UserError!]!
+}
+
+"""Verify JWT token."""
+type VerifyToken {
+  """User assigned to token."""
+  user: User
+
+  """Determine if token is valid or not."""
+  isValid: Boolean!
+
+  """JWT payload."""
+  # payload: GenericScalar
+  errors: [UserError!]!
+}
+
+"""
+Deactivate all JWT tokens of the currently authenticated user.
+"""
+type DeactivateAllUserTokens {
+  errors: [UserError!]!
+}
+
+"""
 Creates a new wallet.
 """
 type WalletCreate {
@@ -1108,7 +1347,7 @@ type WalletCreate {
   wallet: Wallet
 }
 
-type WalletError implements Error {
+type WalletError {
   """
   Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
   """
@@ -1156,6 +1395,42 @@ type WalletDelete {
   wallet: Wallet
 }
 
+type RoleError {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String
+
+  """The error code."""
+  code: RoleErrorCode!
+}
+
+enum RoleErrorCode {
+  REQUIRED
+  UNIQUE
+  DUPLICATED_INPUT_ITEM
+  OUT_OF_SCOPE_USER
+}
+
+"""
+Update role.
+"""
+type RoleUpdate {
+  errors: [RoleError!]!
+  role: Role
+}
+
+input RoleUpdateInput {
+  """List of users to assign to a role."""
+  addUsers: [DBID!]
+
+  """List of users to unassign from a role."""
+  removeUsers: [DBID!]
+}
+
 """
 Creates a new claim.
 """
@@ -1164,7 +1439,7 @@ type ClaimCreate {
   claim: Claim
 }
 
-type ClaimError implements Error {
+type ClaimError {
   """
   Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
   """
@@ -1262,7 +1537,7 @@ type ClaimBulkResult {
   errors: [ClaimBulkError!]
 }
 
-type ClaimBulkError implements Error {
+type ClaimBulkError {
   """
   Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
   """
@@ -1358,13 +1633,15 @@ type PoolCreate {
   pool: Pool
 }
 
-type PoolError implements Error {
+type PoolError {
   """
   Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
   """
   field: String
+
   """The error message."""
   message: String
+
   """The error code."""
   code: PoolErrorCode!
 }
@@ -1381,12 +1658,16 @@ enum PoolErrorCode {
 input PoolCreateInput {
   """Whether a pool is shared with its recipients or not."""
   private: Boolean
+
   """Name of the pool."""
   name: String
+
   """Name of the pool."""
   description: String
+
   """Slug of the pool."""
   slug: String
+
   """List of claims to assign to the pool."""
   addClaims: [DBID!]
 }
@@ -1394,22 +1675,27 @@ input PoolCreateInput {
 """
 Update a pool.
 """
-type PoolUpdate implements Error {
+type PoolUpdate {
   errors: [PoolError!]!
   pool: Pool
 }
 
 input PoolUpdateInput {
   """Whether a pool is shared with its recipients or not."""
-  shared: Boolean
+  private: Boolean
+
   """Name of the pool."""
   name: String
+
   """Name of the pool."""
   description: String
+
   """Slug of the pool."""
   slug: String
+
   """List of claims to assign to the pool."""
   addClaims: [DBID!]
+
   """List of claims to remove from the pool."""
   removeClaims: [DBID!]
 }
@@ -1417,68 +1703,185 @@ input PoolUpdateInput {
 """
 Update a pool.
 """
-type PoolDelete implements Error {
+type PoolDelete {
   errors: [PoolError!]!
   pool: Pool
 }
 
-type UpdatePrimaryWalletPayload {
-  viewer: Viewer
-}
-
-union UpdatePrimaryWalletPayloadOrError =
-    UpdatePrimaryWalletPayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
-input AdminAddWalletInput {
-  username: String!
-  chainAddress: ChainAddressInput!
-  walletType: AccountType!
-}
-
-type AdminAddWalletPayload {
-  user: MutualsUser
-}
-
-union AdminAddWalletPayloadOrError =
-    AdminAddWalletPayload
-  | ErrUserNotFound
-  | ErrAddressOwnedByUser
-  | ErrNotAuthorized
-
-input UpdateUserExperienceInput {
-  experienceType: UserExperienceType!
-  experienced: Boolean!
-}
-
-type UpdateUserExperiencePayload {
-  viewer: Viewer
-}
-
-union UpdateUserExperiencePayloadOrError =
-    UpdateUserExperiencePayload
-  | ErrInvalidInput
-  | ErrNotAuthorized
-
 type Mutation {
-  updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
-  registerUserPushToken(pushToken: String!): RegisterUserPushTokenPayloadOrError @authRequired
-  unregisterUserPushToken(pushToken: String!): UnregisterUserPushTokenPayloadOrError @authRequired
 
-  getAuthNonce: GetAuthNoncePayloadOrError
+  """
+  Get a nonce.
+  """
+  nonce: Nonce
 
-  createUser(authMechanism: AuthMechanism!, input: CreateUserInput!): CreateUserPayloadOrError
-  updateEmail(input: UpdateEmailInput!): UpdateEmailPayloadOrError @authRequired
-  resendVerificationEmail: ResendVerificationEmailPayloadOrError @authRequired
-  updateEmailNotificationSettings(
-    input: UpdateEmailNotificationSettingsInput!
-  ): UpdateEmailNotificationSettingsPayloadOrError @authRequired
-  unsubscribeFromEmailType(
-    input: UnsubscribeFromEmailTypeInput!
-  ): UnsubscribeFromEmailTypePayloadOrError
-  login(authMechanism: AuthMechanism!): LoginPayloadOrError
-  logout(pushTokenToUnregister: String): LogoutPayload
+  """
+  Register a new user.
+  """ # prev:  createUser(authMechanism: AuthMechanism!, input: CreateUserInput!): CreateUserPayloadOrError
+  userRegister(
+    authMechanism: AuthMechanism!,
+    """Fields required to create a user."""
+    input: UserRegisterInput!
+  ): UserRegister
+
+  """
+  Updates the user of the logged-in user.
+  """
+  # prev:   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
+  # prev   updatePrimaryWallet(walletID: DBID!): UpdatePrimaryWalletPayloadOrError @authRequired
+  userUpdate(
+    """
+    ID of user the application is impersonating.
+    """
+    userId: DBID
+
+    """Fields required to update the account of the logged-in user."""
+    input: UserInput!
+  ): UserUpdate @authRequired
+
+  """
+  Sends an email with the user removal link for the logged-in user.
+  """
+  userRequestDeletion(
+    """
+    URL of a view where users should be redirected to delete their account. URL in RFC 1808 format.
+    """
+    redirectUrl: String!
+  ): UserRequestDeletion @authRequired
+
+  """
+  Remove user.
+  """
+  userDelete(
+    """
+    A one-time token required to remove account. Sent by email using AccountRequestDeletion mutation.
+    """
+    token: String!
+  ): UserDelete @authRequired
+
+  """Create JWT token.""" # prev: login(authMechanism: AuthMechanism!): LoginPayloadOrError
+  tokenCreate(
+    """
+    The audience that will be included to JWT tokens with prefix `custom:`.
+    """
+    audience: String
+
+    authMechanism: AuthMechanism!
+  ): CreateToken
+
+  """
+  Refresh JWT token. Mutation tries to take refreshToken from the input. If it fails it will try to take `refreshToken` from the http-only cookie `refreshToken`. `csrfToken` is required when `refreshToken` is provided as a cookie.
+  """
+  tokenRefresh(
+    """
+    CSRF token required to refresh token. This argument is required when `refreshToken` is provided as a cookie.
+    """
+    csrfToken: String
+
+    """Refresh token."""
+    refreshToken: String
+  ): RefreshToken @authRequired
+
+  """Verify JWT token."""
+  tokenVerify(
+    """JWT token to validate."""
+    token: String!
+  ): VerifyToken @authRequired
+
+  """
+  Deactivate all JWT tokens of the currently authenticated user.
+
+  Requires one of the following permissions: AUTHENTICATED_USER.
+  """
+  # prev: logout(pushTokenToUnregister: String): LogoutPayload
+  # prev: preverifyEmail(input: PreverifyEmailInput!): PreverifyEmailPayloadOrError
+  tokensDeactivateAll: DeactivateAllUserTokens @authRequired
+
+  """
+  Sends a notification confirmation.
+  """
+  # prev: resendVerificationEmail: ResendVerificationEmailPayloadOrError @authRequired
+  sendConfirmationEmail(
+    """Base of frontend URL that will be needed to create confirmation URL."""
+    redirectUrl: String!
+  ): SendConfirmationEmail @authRequired
+
+  """
+  Confirm user account with token sent by email during registration.
+  """
+  # prev: verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
+  # prev: verifyEmailMagicLink(input: VerifyEmailMagicLinkInput!): VerifyEmailMagicLinkPayloadOrError
+  confirmUser(
+    """E-mail of the user performing account confirmation."""
+    email: String!
+
+    """A one-time token required to confirm the account."""
+    token: String!
+  ): ConfirmUser @authRequired
+
+  """
+  Request email change of the logged in user.
+  """
+  # prev: updateEmail(input: UpdateEmailInput!): UpdateEmailPayloadOrError @authRequired
+  requestEmailChange(
+    """New user email."""
+    newEmail: String!
+
+    """User password."""
+    password: String!
+
+    """
+    URL of a view where users should be redirected to update the email address. URL in RFC 1808 format.
+    """
+    redirectUrl: String!
+  ): RequestEmailChange @authRequired
+
+  """
+  Confirm the email change of the logged-in user.
+  """
+  confirmEmailChange(
+    """A one-time token required to change the email."""
+    token: String!
+  ): ConfirmEmailChange @authRequired
+
+  """
+  Register a push token.
+  """ # prev: registerUserPushToken(pushToken: String!): RegisterUserPushTokenPayloadOrError
+  pushTokenRegister(
+    """Push token to register."""
+    pushToken: String!
+  ): PushTokenRegister @authRequired
+
+  """
+  Unregister a push token.
+  """ # prev: unregisterUserPushToken(pushToken: String!): UnregisterUserPushTokenPayloadOrError
+  pushTokenUnregister(
+    """Push token to unregister."""
+    pushToken: String!
+  ): PushTokenUnregister @authRequired
+
+  """
+  Updates a users notification settings.
+  """ #prev: updateNotificationSettings(settings: NotificationSettingsInput): NotificationSettings
+  notificationSettingsUpdate(
+    """Fields required to update notification settings."""
+    settings: NotificationSettingsInput!
+  ): NotificationSettings @authRequired
+
+  """
+  Clears a users notifications.
+  """
+  clearNotifications: ClearAllNotificationsPayload @authRequired
+
+  """
+  Updates a users email notification settings.
+  """
+  # prev:   updateEmailNotificationSettings(input: UpdateEmailNotificationSettingsInput!): UpdateEmailNotificationSettingsPayloadOrError
+  # prev: unsubscribeFromEmailType(input: UnsubscribeFromEmailTypeInput!): UnsubscribeFromEmailTypePayloadOrError
+  emailNotificationSettingsUpdate(
+    """Fields required to update notification settings."""
+    settings: UpdateEmailNotificationSettingsInput!
+  ): EmailNotificationSettings @authRequired
 
   """
   Creates a new wallet.
@@ -1594,27 +1997,20 @@ type Mutation {
     id: DBID!
   ): PoolDelete @authRequired
 
-  clearAllNotifications: ClearAllNotificationsPayload @authRequired
-
-  updateNotificationSettings(settings: NotificationSettingsInput): NotificationSettings
-
-  preverifyEmail(input: PreverifyEmailInput!): PreverifyEmailPayloadOrError
-  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
-  verifyEmailMagicLink(input: VerifyEmailMagicLinkInput!): VerifyEmailMagicLinkPayloadOrError
-
-  optInForRoles(roles: [Role!]!): OptInForRolesPayloadOrError @authRequired
-  optOutForRoles(roles: [Role!]!): OptOutForRolesPayloadOrError @authRequired
-
-  # Retool Specific Mutations
-  addRolesToUser(username: String!, roles: [Role]): AddRolesToUserPayloadOrError @basicAuth(allowed: [Retool])
-  addWalletToUserUnchecked(input: AdminAddWalletInput!): AdminAddWalletPayloadOrError @basicAuth(allowed: [Retool])
-  revokeRolesFromUser(username: String!, roles: [Role]): RevokeRolesFromUserPayloadOrError
-    @basicAuth(allowed: [Retool])
-
-  updatePrimaryWallet(walletID: DBID!): UpdatePrimaryWalletPayloadOrError @authRequired
+  """
+  Update a role.
+  """
+  # prev: optInForRoles(roles: [Role!]!): OptInForRolesPayloadOrError @authRequired
+  # prev: optOutForRoles(roles: [Role!]!): OptOutForRolesPayloadOrError @authRequired
+  roleUpdate(
+    """Role to update."""
+    role: Role
+    """Roles to remove from the user."""
+    input: RoleUpdateInput!
+  ): RoleUpdate @authRequired
 }
 
 type Subscription {
-  newNotification: Notification
+  notificationCreated: Notification
   notificationUpdated: Notification
 }

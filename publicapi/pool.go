@@ -9,7 +9,6 @@ import (
 	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
-	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
 )
 
@@ -19,23 +18,6 @@ type PoolAPI struct {
 	loaders   *dataloader.Loaders
 	validator *validator.Validate
 	ethClient *ethclient.Client
-}
-
-func (api PoolAPI) PublishPool(ctx context.Context, update model.PublishPoolInput) error {
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"poolID": {update.PoolID, "required"},
-		"editID": {update.EditID, "required"},
-	}); err != nil {
-		return err
-	}
-
-	//err := publishEventGroup(ctx, update.EditID, persist.ActionPoolUpdated, update.Caption)
-	//if err != nil {
-	//	return err
-	//}
-
-	return nil
 }
 
 func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
@@ -146,18 +128,13 @@ func (api PoolAPI) UpdatePoolInfo(ctx context.Context, poolID persist.DBID, name
 	return nil
 }
 
-func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) (db.Pool, error) {
-	// Validate
+func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (db.Pool, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"id":          validate.WithTag(id, "required"),
 		"name":        validate.WithTag(input.Name, "max=200"),
 		"description": validate.WithTag(input.Description, "max=600"),
 	}); err != nil {
 		return db.Pool{}, err
-	}
-
-	poolID := input.PoolID
-	if poolID == nil {
-		poolID = util.ToPointer(persist.GenerateID())
 	}
 
 	tx, err := api.repos.BeginTx(ctx)
@@ -169,7 +146,7 @@ func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) 
 	q := api.queries.WithTx(tx)
 
 	pool, err := q.UpsertPool(ctx, db.UpsertPoolParams{
-		ID:          *poolID,
+		ID:          id,
 		Name:        *input.Name,
 		Description: *input.Description,
 		Logo:        "", // TODO *input.Logo
@@ -181,13 +158,23 @@ func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) 
 		return db.Pool{}, err
 	}
 
-	if len(input.Allocations) > 0 {
-		allocationParams := processAllocations(poolID, input.Allocations)
+	if len(input.AddClaims) > 0 {
+		/*		allocationParams := processClaims(&id, input.AddClaims)
 
-		_, err = q.UpsertClaims(ctx, allocationParams)
-		if err != nil {
-			return db.Pool{}, err
-		}
+				_, err = q.UpsertClaims(ctx, allocationParams)
+				if err != nil {
+					return db.Pool{}, err
+				}
+		*/
+	}
+	if len(input.RemoveClaims) > 0 {
+		/*		allocationParams := processClaims(&id, input.AddClaims)
+
+				_, err = q.DeleteClaims(ctx, allocationParams)
+				if err != nil {
+					return db.Pool{}, err
+				}
+		*/
 	}
 
 	err = tx.Commit(ctx)
@@ -198,7 +185,7 @@ func (api PoolAPI) UpsertPool(ctx context.Context, input model.UpsertPoolInput) 
 	return pool, nil
 }
 
-func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (allocationParams db.UpsertClaimsParams) {
+/*func processClaims(poolID *persist.DBID, a []*model.PoolAllocationInput) (allocationParams db.UpsertClaimsParams) {
 	allocationParams.PoolID = *poolID
 
 	var traverse func(node *model.PoolAllocationInput, path string)
@@ -243,3 +230,4 @@ func processAllocations(poolID *persist.DBID, a []*model.PoolAllocationInput) (a
 
 	return allocationParams
 }
+*/

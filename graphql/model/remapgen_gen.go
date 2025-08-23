@@ -13,18 +13,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"AdminAddWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(AdminAddWalletPayloadOrError)
-		return obj, ok
-	},
-
 	"AuthorizationError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(AuthorizationError)
-		return obj, ok
-	},
-
-	"CreatePoolPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CreatePoolPayloadOrError)
 		return obj, ok
 	},
 
@@ -33,28 +23,13 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"DeletePoolPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(DeletePoolPayloadOrError)
-		return obj, ok
-	},
-
 	"Error": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(Error)
 		return obj, ok
 	},
 
-	"GetAuthNoncePayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(GetAuthNoncePayloadOrError)
-		return obj, ok
-	},
-
 	"LoginPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(LoginPayloadOrError)
-		return obj, ok
-	},
-
-	"MutualsUserOrAccount": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(MutualsUserOrAccount)
 		return obj, ok
 	},
 
@@ -83,23 +58,13 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"PoolOrMutualsUserOrAccount": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PoolOrMutualsUserOrAccount)
+	"PoolOrUserOrEVMAccount": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PoolOrUserOrEVMAccount)
 		return obj, ok
 	},
 
 	"PreverifyEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(PreverifyEmailPayloadOrError)
-		return obj, ok
-	},
-
-	"PublishPoolPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PublishPoolPayloadOrError)
-		return obj, ok
-	},
-
-	"RegisterUserPushTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RegisterUserPushTokenPayloadOrError)
 		return obj, ok
 	},
 
@@ -128,11 +93,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"UnregisterUserPushTokenPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UnregisterUserPushTokenPayloadOrError)
-		return obj, ok
-	},
-
 	"UnsubscribeFromEmailTypePayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UnsubscribeFromEmailTypePayloadOrError)
 		return obj, ok
@@ -148,31 +108,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"UpdatePoolHiddenPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdatePoolHiddenPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdatePoolOrderPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdatePoolOrderPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdatePoolPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdatePoolPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdatePrimaryWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdatePrimaryWalletPayloadOrError)
-		return obj, ok
-	},
-
-	"UpdateUserExperiencePayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateUserExperiencePayloadOrError)
-		return obj, ok
-	},
-
 	"UpdateUserInfoPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UpdateUserInfoPayloadOrError)
 		return obj, ok
@@ -180,11 +115,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UploadPersistedQueriesPayloadOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UploadPersistedQueriesPayloadOrError)
-		return obj, ok
-	},
-
-	"UpsertPoolPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpsertPoolPayloadOrError)
 		return obj, ok
 	},
 
@@ -200,6 +130,11 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UserByUsernameOrError": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UserByUsernameOrError)
+		return obj, ok
+	},
+
+	"UserOrAccount": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UserOrAccount)
 		return obj, ok
 	},
 
