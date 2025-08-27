@@ -931,15 +931,14 @@ interface Notification implements Node {
   updatedTime: Time
 }
 
-type GroupedNotification implements Notification & Node {
-  id: ID!
-  dbid: DBID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-
-  count: Int
-}
+#interface GroupedNotification implements Notification & Node {
+#  id: ID!
+#  seen: Boolean
+#  creationTime: Time
+#  updatedTime: Time
+#
+#  count: Int
+#}
 
 type GroupNotificationUserEdge {
   node: User

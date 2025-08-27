@@ -586,17 +586,6 @@ type GroupNotificationUsersConnection struct {
 	PageInfo *PageInfo                    `json:"pageInfo"`
 }
 
-type GroupedNotification struct {
-	Dbid         persist.DBID `json:"dbid"`
-	Seen         *bool        `json:"seen"`
-	CreationTime *time.Time   `json:"creationTime"`
-	UpdatedTime  *time.Time   `json:"updatedTime"`
-	Count        *int         `json:"count"`
-}
-
-func (GroupedNotification) IsNotification() {}
-func (GroupedNotification) IsNode()         {}
-
 type LoginPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }

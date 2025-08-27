@@ -14,7 +14,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/eth"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/util"
 )
@@ -163,29 +162,31 @@ func CreateUser(ctx context.Context, pUser persist.CreateUserInput, userRepo *po
 func RemoveWalletsFromUser(pCtx context.Context, pUserID persist.DBID, pWalletIDs []persist.DBID, userRepo *postgres.UserRepository) ([]persist.DBID, error) {
 	removedIDs := make([]persist.DBID, 0, len(pWalletIDs))
 
-	user, err := userRepo.GetByID(pCtx, pUserID)
-	if err != nil {
-		return removedIDs, err
-	}
+	/*	TODO
+		user, err := userRepo.GetByID(pCtx, pUserID)
+				if err != nil {
+					return removedIDs, err
+				}
 
-	for _, walletID := range pWalletIDs {
-		if user.PrimaryWalletID.String() == walletID.String() {
-			return removedIDs, errUserCannotRemovePrimaryWallet
-		}
-	}
+			for _, walletID := range pWalletIDs {
+							if user.PrimaryWalletID.String() == walletID.String() {
+								return removedIDs, errUserCannotRemovePrimaryWallet
+							}
+						}
 
-	if len(user.Wallets) <= len(pWalletIDs) {
-		return removedIDs, errUserCannotRemoveAllWallets
-	}
+					if len(user.Wallets) <= len(pWalletIDs) {
+						return removedIDs, errUserCannotRemoveAllWallets
+					}
 
-	for _, walletID := range pWalletIDs {
-		removed, err := userRepo.RemoveWallet(pCtx, pUserID, walletID)
-		if err != nil {
-			return removedIDs, err
-		} else if removed {
-			removedIDs = append(removedIDs, walletID)
-		}
-	}
+				for _, walletID := range pWalletIDs {
+						removed, err := userRepo.RemoveWallet(pCtx, pUserID, walletID)
+						if err != nil {
+							return removedIDs, err
+						} else if removed {
+							removedIDs = append(removedIDs, walletID)
+						}
+					}
+	*/
 
 	return removedIDs, nil
 }
@@ -218,20 +219,21 @@ func AddWalletToUser(pCtx context.Context, pUserID persist.DBID, pChainAddress p
 // UpdateUserInfo updates a user by ID and ensures that if they are using an ENS name as a username that their address resolves to that ENS
 func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, userRepository *postgres.UserRepository, ethClient *ethclient.Client) error {
 	if strings.HasSuffix(strings.ToLower(username), ".eth") {
-		user, err := userRepository.GetByID(pCtx, userID)
-		if err != nil {
-			return err
-		}
-		can := false
-		for _, addr := range user.Wallets {
-			if resolves, _ := eth.ResolvesENS(pCtx, username, addr.Address, ethClient); resolves {
-				can = true
-				break
-			}
-		}
-		if !can {
-			return errMustResolveENS
-		}
+		/*		user, err := userRepository.GetByID(pCtx, userID)
+				if err != nil {
+					return err
+				}
+				can := false
+				for _, addr := range user.Wallets {
+					if resolves, _ := eth.ResolvesENS(pCtx, username, addr.Address, ethClient); resolves {
+						can = true
+						break
+					}
+				}
+				if !can {
+					return errMustResolveENS
+				}
+		*/
 	}
 
 	err := userRepository.UpdateByID(

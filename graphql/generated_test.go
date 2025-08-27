@@ -1038,32 +1038,9 @@ func (v *clearNotificationsMutationClearNotificationsClearAllNotificationsPayloa
 	return &retval, nil
 }
 
-// clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification includes the requested fields of the GraphQL type GroupedNotification.
-type clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification struct {
-	Typename *string `json:"__typename"`
-	Id       string  `json:"id"`
-	Seen     *bool   `json:"seen"`
-}
-
-// GetTypename returns clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification.Typename, and is useful for accessing the field via an interface.
-func (v *clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification) GetTypename() *string {
-	return v.Typename
-}
-
-// GetId returns clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification.Id, and is useful for accessing the field via an interface.
-func (v *clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification) GetId() string {
-	return v.Id
-}
-
-// GetSeen returns clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification.Seen, and is useful for accessing the field via an interface.
-func (v *clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification) GetSeen() *bool {
-	return v.Seen
-}
-
 // clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsNotification includes the requested fields of the GraphQL interface Notification.
 //
 // clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsNotification is implemented by the following types:
-// clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification
 type clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsNotification interface {
 	implementsGraphQLInterfaceclearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsNotification()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -1072,9 +1049,6 @@ type clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNot
 	GetId() string
 	// GetSeen returns the interface-field "seen" from its implementation.
 	GetSeen() *bool
-}
-
-func (v *clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification) implementsGraphQLInterfaceclearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsNotification() {
 }
 
 func __unmarshalclearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsNotification(b []byte, v *clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsNotification) error {
@@ -1091,9 +1065,6 @@ func __unmarshalclearNotificationsMutationClearNotificationsClearAllNotification
 	}
 
 	switch tn.TypeName {
-	case "GroupedNotification":
-		*v = new(clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification)
-		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
 			"response was missing Notification.__typename")
@@ -1107,14 +1078,6 @@ func __marshalclearNotificationsMutationClearNotificationsClearAllNotificationsP
 
 	var typename string
 	switch v := (*v).(type) {
-	case *clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification:
-		typename = "GroupedNotification"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*clearNotificationsMutationClearNotificationsClearAllNotificationsPayloadNotificationsGroupedNotification
-		}{typename, v}
-		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
@@ -1762,38 +1725,9 @@ func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEd
 	return &retval, nil
 }
 
-// notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification includes the requested fields of the GraphQL type GroupedNotification.
-type notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification struct {
-	Typename     *string `json:"__typename"`
-	Id           string  `json:"id"`
-	Seen         *bool   `json:"seen"`
-	CreationTime *string `json:"creationTime"`
-}
-
-// GetTypename returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification.Typename, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification) GetTypename() *string {
-	return v.Typename
-}
-
-// GetId returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification.Id, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification) GetId() string {
-	return v.Id
-}
-
-// GetSeen returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification.Seen, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification) GetSeen() *bool {
-	return v.Seen
-}
-
-// GetCreationTime returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification.CreationTime, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification) GetCreationTime() *string {
-	return v.CreationTime
-}
-
 // notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification includes the requested fields of the GraphQL interface Notification.
 //
 // notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification is implemented by the following types:
-// notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification
 type notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification interface {
 	implementsGraphQLInterfacenotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
@@ -1804,9 +1738,6 @@ type notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesN
 	GetSeen() *bool
 	// GetCreationTime returns the interface-field "creationTime" from its implementation.
 	GetCreationTime() *string
-}
-
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification) implementsGraphQLInterfacenotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification() {
 }
 
 func __unmarshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(b []byte, v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification) error {
@@ -1823,9 +1754,6 @@ func __unmarshalnotificationsForViewerQueryViewerNotificationsNotificationsConne
 	}
 
 	switch tn.TypeName {
-	case "GroupedNotification":
-		*v = new(notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification)
-		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
 			"response was missing Notification.__typename")
@@ -1839,14 +1767,6 @@ func __marshalnotificationsForViewerQueryViewerNotificationsNotificationsConnect
 
 	var typename string
 	switch v := (*v).(type) {
-	case *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification:
-		typename = "GroupedNotification"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeGroupedNotification
-		}{typename, v}
-		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:

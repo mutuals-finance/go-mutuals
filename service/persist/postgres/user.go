@@ -52,38 +52,38 @@ func NewUserRepository(db *sql.DB, queries *db.Queries, pgx *pgxpool.Pool) *User
 
 	// TODO update sql schema
 	getByIDStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM users WHERE ID = $1 AND DELETED = FALSE;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	// TODO update sql schema
 	getByIDsStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM users WHERE ID = ANY($1) AND DELETED = FALSE;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	// TODO update sql schema
 	getByWalletIDStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM users WHERE ARRAY[$1]::varchar[] <@ WALLETS AND DELETED = FALSE;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	// TODO update sql schema
 	getByUsernameStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM users WHERE USERNAME_IDEMPOTENT = $1 AND DELETED = FALSE;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	// TODO update sql schema
 	getByVerifiedEmailStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM pii.user_view WHERE PII_VERIFIED_EMAIL_ADDRESS = $1 AND DELETED = FALSE;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	deleteStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
 
 	getWalletIDStmt, err := db.PrepareContext(ctx, `SELECT ID FROM wallets WHERE ADDRESS = $1 AND CHAIN = $2 AND DELETED = FALSE;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	getWalletStmt, err := db.PrepareContext(ctx, `SELECT ADDRESS,CHAIN,WALLET_TYPE,VERSION,CREATED_AT,UPDATED_AT FROM wallets WHERE ID = $1 AND DELETED = FALSE;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	removeWalletFromUserStmt, err := db.PrepareContext(ctx, `UPDATE users SET WALLETS = ARRAY_REMOVE(WALLETS, $1) WHERE ID = $2 AND NOT $1 = PRIMARY_WALLET_ID AND $1 = ANY(WALLETS);`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	deleteWalletStmt, err := db.PrepareContext(ctx, `UPDATE wallets SET DELETED = TRUE, UPDATED_AT = NOW() WHERE ID = $1;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	return &UserRepository{
 		db:             db,
@@ -253,18 +253,18 @@ func (u *UserRepository) GetByID(pCtx context.Context, pID persist.DBID) (persis
 
 	user := persist.User{}
 	walletIDs := []persist.DBID{}
-	err := u.getByIDStmt.QueryRowContext(pCtx, pID).Scan(&user.ID, &user.Deleted, &user.Version, &user.Username, &user.UsernameIdempotent, pq.Array(&walletIDs), &user.Universal, &user.PrimaryWalletID, &user.CreationTime, &user.UpdatedAt)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return persist.User{}, persist.ErrUserNotFound{UserID: pID}
+	/*	err := u.getByIDStmt.QueryRowContext(pCtx, pID).Scan(&user.ID, &user.Deleted, &user.Version, &user.Username, &user.UsernameIdempotent, pq.Array(&walletIDs), &user.Universal, &user.PrimaryWalletID, &user.CreationTime, &user.UpdatedAt)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return persist.User{}, persist.ErrUserNotFound{UserID: pID}
+			}
+			return persist.User{}, err
 		}
-		return persist.User{}, err
-	}
-	wallets := make([]persist.Wallet, len(walletIDs))
+	*/wallets := make([]persist.Wallet, len(walletIDs))
 
 	for i, walletID := range walletIDs {
 		wallet := persist.Wallet{ID: walletID}
-		err = u.getWalletStmt.QueryRowContext(pCtx, walletID).Scan(&wallet.Address, &wallet.Chain, &wallet.WalletType, &wallet.Version, &wallet.CreationTime, &wallet.UpdatedAt)
+		err := u.getWalletStmt.QueryRowContext(pCtx, walletID).Scan(&wallet.Address, &wallet.Chain, &wallet.WalletType, &wallet.Version, &wallet.CreationTime, &wallet.UpdatedAt)
 		if err == nil {
 			wallets[i] = wallet
 		}

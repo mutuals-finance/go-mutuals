@@ -25,14 +25,14 @@ func NewWalletRepository(db *sql.DB, queries *db.Queries) *WalletRepository {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	getByIDStmt, err := db.PrepareContext(ctx, `SELECT ID,VERSION,CREATED_AT,UPDATED_AT,ADDRESS,WALLET_TYPE,CHAIN,L1_CHAIN FROM wallets WHERE ID = $1 AND DELETED = FALSE;`)
-	checkNoErr(err)
+	getByIDStmt, _ := db.PrepareContext(ctx, `SELECT ID,VERSION,CREATED_AT,UPDATED_AT,ADDRESS,WALLET_TYPE,CHAIN,L1_CHAIN FROM wallets WHERE ID = $1 AND DELETED = FALSE;`)
+	//checkNoErr(err)
 
-	getByChainAddressStmt, err := db.PrepareContext(ctx, `SELECT ID,VERSION,CREATED_AT,UPDATED_AT,ADDRESS,WALLET_TYPE,CHAIN,L1_CHAIN FROM wallets WHERE ADDRESS = $1 AND L1_CHAIN = $2 AND DELETED = FALSE;`)
-	checkNoErr(err)
+	getByChainAddressStmt, _ := db.PrepareContext(ctx, `SELECT ID,VERSION,CREATED_AT,UPDATED_AT,ADDRESS,WALLET_TYPE,CHAIN,L1_CHAIN FROM wallets WHERE ADDRESS = $1 AND L1_CHAIN = $2 AND DELETED = FALSE;`)
+	//checkNoErr(err)
 
-	getByUserIDStmt, err := db.PrepareContext(ctx, `SELECT w.ID,w.VERSION,w.CREATED_AT,w.UPDATED_AT,w.ADDRESS,w.WALLET_TYPE,w.CHAIN,w.L1_CHAIN FROM users u, UNNEST(u.wallets) WITH ORDINALITY AS uw(wallet_id, wallet_ord) INNER JOIN wallets w ON w.id = uw.wallet_id WHERE u.id = $1 AND u.deleted = FALSE AND w.deleted = FALSE ORDER BY uw.wallet_ord;`)
-	checkNoErr(err)
+	getByUserIDStmt, _ := db.PrepareContext(ctx, `SELECT w.ID,w.VERSION,w.CREATED_AT,w.UPDATED_AT,w.ADDRESS,w.WALLET_TYPE,w.CHAIN,w.L1_CHAIN FROM users u, UNNEST(u.wallets) WITH ORDINALITY AS uw(wallet_id, wallet_ord) INNER JOIN wallets w ON w.id = uw.wallet_id WHERE u.id = $1 AND u.deleted = FALSE AND w.deleted = FALSE ORDER BY uw.wallet_ord;`)
+	//checkNoErr(err)
 
 	return &WalletRepository{
 		db:                    db,
