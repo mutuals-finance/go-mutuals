@@ -249,23 +249,17 @@ func resolveTokenBalanceByTokenBalanceID(ctx context.Context, assetID persist.DB
 	return &model.TokenBalance{}, nil
 }
 
-func resolveViewer(ctx context.Context) *model.Viewer {
+func resolveViewer(ctx context.Context) *model.User {
 
 	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
 		return nil
 	}
 
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	// me := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 
-	viewer := &model.Viewer{
-		HelperViewerData: model.HelperViewerData{
-			UserId: userID,
-		},
-		User:        nil, // handled by dedicated resolver
-		ViewerPools: nil, // handled by dedicated resolver
-	}
+	output := model.User{}
 
-	return viewer
+	return &output
 }
 
 func resolveViewerEmail(ctx context.Context) *model.UserEmail {
@@ -511,61 +505,62 @@ func resolveDeletedNodeByID(ctx context.Context, id persist.DBID) (*model.Delete
 	}, nil
 }
 
-func verifyEmail(ctx context.Context, token string) (*model.VerifyEmailPayload, error) {
-	output, err := emails.VerifyEmail(ctx, token)
+func confirmUser(ctx context.Context, token string) (*model.ConfirmUser, error) {
+	_, err := emails.VerifyEmail(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.VerifyEmailPayload{
-		Email: output.Email,
+	return &model.ConfirmUser{
+		User: nil, // TODO
 	}, nil
 
 }
 
-func updateUserEmail(ctx context.Context, email persist.Email, authenticator *auth.Authenticator) (*model.UpdateEmailPayload, error) {
-	var err error
+/*
+	func updateUserEmail(ctx context.Context, email persist.Email, authenticator *auth.Authenticator) (*model.UpdateEmailPayload, error) {
+		var err error
 
-	if authenticator != nil {
-		err = publicapi.For(ctx).User.UpdateUserEmailWithAuthenticator(ctx, email, *authenticator)
-	} else {
-		err = publicapi.For(ctx).User.UpdateUserEmailWithManualVerification(ctx, email)
-	}
+		if authenticator != nil {
+			err = publicapi.For(ctx).User.UpdateUserEmailWithAuthenticator(ctx, email, *authenticator)
+		} else {
+			err = publicapi.For(ctx).User.UpdateUserEmailWithManualVerification(ctx, email)
+		}
 
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 
-	return &model.UpdateEmailPayload{
-		Viewer: resolveViewer(ctx),
-	}, nil
-
-}
-
-func resendEmailVerification(ctx context.Context) (*model.ResendVerificationEmailPayload, error) {
-	err := publicapi.For(ctx).User.ResendEmailVerification(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.ResendVerificationEmailPayload{
-		Viewer: resolveViewer(ctx),
-	}, nil
+		return &model.UpdateEmailPayload{
+			Viewer: resolveViewer(ctx),
+		}, nil
 
 }
 
-func updateUserEmailNotificationSettings(ctx context.Context, input model.UpdateEmailNotificationSettingsInput) (*model.UpdateEmailNotificationSettingsPayload, error) {
-	err := publicapi.For(ctx).User.UpdateUserEmailNotificationSettings(ctx, persist.EmailUnsubscriptions{
-		All:           persist.NullBool(input.UnsubscribedFromAll),
-		Notifications: persist.NullBool(input.UnsubscribedFromNotifications),
-	})
-	if err != nil {
-		return nil, err
-	}
+	func resendEmailVerification(ctx context.Context) (*model.ResendVerificationEmailPayload, error) {
+		err := publicapi.For(ctx).User.ResendEmailVerification(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	return &model.UpdateEmailNotificationSettingsPayload{
-		Viewer: resolveViewer(ctx),
-	}, nil
+		return &model.ResendVerificationEmailPayload{
+			Viewer: resolveViewer(ctx),
+		}, nil
+
+}
+
+	func updateUserEmailNotificationSettings(ctx context.Context, input model.UpdateEmailNotificationSettingsInput) (*model.UpdateEmailNotificationSettingsPayload, error) {
+		err := publicapi.For(ctx).User.UpdateUserEmailNotificationSettings(ctx, persist.EmailUnsubscriptions{
+			All:           persist.NullBool(input.UnsubscribedFromAll),
+			Notifications: persist.NullBool(input.UnsubscribedFromNotifications),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return &model.UpdateEmailNotificationSettingsPayload{
+			Viewer: resolveViewer(ctx),
+		}, nil
 
 }
 
@@ -580,7 +575,7 @@ func unsubscribeFromEmailType(ctx context.Context, input model.UnsubscribeFromEm
 	}, nil
 
 }
-
+*/
 func poolToModel(ctx context.Context, pool db.Pool) *model.Pool {
 	return &model.Pool{
 		Dbid:        pool.ID,

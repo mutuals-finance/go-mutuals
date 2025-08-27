@@ -36,12 +36,6 @@ type Error interface {
 	IsError()
 }
 
-type GroupedNotification interface {
-	Notification
-	Node
-	IsGroupedNotification()
-}
-
 type LoginPayloadOrError interface {
 	IsLoginPayloadOrError()
 }
@@ -337,8 +331,6 @@ type CreateToken struct {
 	Token *string `json:"token"`
 	// JWT refresh token, required to re-generate access token.
 	RefreshToken *string `json:"refreshToken"`
-	// CSRF token required to re-generate access token.
-	CsrfToken *string `json:"csrfToken"`
 	// A user instance.
 	User   *User        `json:"user"`
 	Errors []*UserError `json:"errors"`
@@ -593,6 +585,17 @@ type GroupNotificationUsersConnection struct {
 	Edges    []*GroupNotificationUserEdge `json:"edges"`
 	PageInfo *PageInfo                    `json:"pageInfo"`
 }
+
+type GroupedNotification struct {
+	Dbid         persist.DBID `json:"dbid"`
+	Seen         *bool        `json:"seen"`
+	CreationTime *time.Time   `json:"creationTime"`
+	UpdatedTime  *time.Time   `json:"updatedTime"`
+	Count        *int         `json:"count"`
+}
+
+func (GroupedNotification) IsNotification() {}
+func (GroupedNotification) IsNode()         {}
 
 type LoginPayload struct {
 	Viewer *Viewer `json:"viewer"`

@@ -144,19 +144,15 @@ func (api AuthAPI) GetAuthNonce(ctx context.Context) (nonce string, message stri
 	return auth.GenerateAuthNonce(ctx, api.queries)
 }
 
-func (api AuthAPI) Login(ctx context.Context, authenticator auth.Authenticator) (persist.DBID, error) {
-	// Nothing to validate
-	return auth.Login(ctx, api.queries, authenticator)
+func (api AuthAPI) CreateToken(ctx context.Context, authenticator auth.Authenticator) (*string, *string, error) {
+	return auth.CreateToken(ctx, api.queries, authenticator)
 }
 
-func (api AuthAPI) Logout(ctx context.Context) {
-	// Nothing to validate
-	auth.Logout(ctx, api.queries, api.authRefreshCache)
+func (api AuthAPI) DeactivateAllTokens(ctx context.Context) {
+	auth.DeactivateAllTokens(ctx, api.queries, api.authRefreshCache)
 }
 
 func (api AuthAPI) GenerateQRCodeLoginToken(ctx context.Context) (string, error) {
-	// Nothing to validate
-
 	userID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return "", err

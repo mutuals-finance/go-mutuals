@@ -83,6 +83,10 @@ func (c *ChainAddress) Chain() Chain {
 	return c.chain
 }
 
+func (c *ChainAddress) ChainId() int {
+	return int(c.chain)
+}
+
 func (c *ChainAddress) updateCasing() {
 	switch c.chain.L1Chain() {
 	// TODO: Add an IsCaseSensitive to the Chain type?
@@ -246,6 +250,10 @@ func (c *ChainPubKey) PubKey() PubKey {
 
 func (c *ChainPubKey) Chain() Chain {
 	return c.chain
+}
+
+func (c *ChainPubKey) ChainId() int {
+	return int(c.chain)
 }
 
 func (c *ChainPubKey) updateCasing() {

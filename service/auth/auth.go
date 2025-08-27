@@ -303,17 +303,17 @@ func (a OneTimeLoginTokenAuthenticator) Authenticate(ctx context.Context) (*Auth
 	return &authResult, nil
 }
 
-// Login logs in a user with a given authentication scheme
-func Login(ctx context.Context, queries *db.Queries, authenticator Authenticator) (persist.DBID, error) {
+// CreateToken creates a token for a user with a given authentication scheme
+func CreateToken(ctx context.Context, queries *db.Queries, authenticator Authenticator) (token *string, refreshToken *string, err error) {
 	gc := util.MustGetGinContext(ctx)
 
 	authResult, err := authenticator.Authenticate(ctx)
 	if err != nil {
-		return "", ErrAuthenticationFailed{WrappedErr: err}
+		return nil, nil, ErrAuthenticationFailed{WrappedErr: err}
 	}
 
 	if authResult.User == nil || authResult.User.Universal {
-		return "", persist.ErrUserNotFound{Authenticator: authenticator.GetDescription()}
+		return nil, nil, persist.ErrUserNotFound{Authenticator: authenticator.GetDescription()}
 	}
 
 	userID := authResult.User.ID
@@ -324,16 +324,18 @@ func Login(ctx context.Context, queries *db.Queries, authenticator Authenticator
 	// Otherwise, this user is already logged in, and we don't need to do
 	// anything here. Their existing session should continue as usual.
 	if !GetUserAuthedFromCtx(gc) || GetUserIDFromCtx(gc) != userID {
-		err = StartSession(gc, queries, userID)
+		authToken, authRefreshToken, err := StartSession(gc, queries, userID)
 		if err != nil {
-			return "", err
+			return nil, nil, err
 		}
+		token = &authToken
+		refreshToken = &authRefreshToken
 	}
 
-	return authResult.User.ID, nil
+	return token, refreshToken, nil
 }
 
-func Logout(ctx context.Context, queries *db.Queries, authRefreshCache *redis.Cache) {
+func DeactivateAllTokens(ctx context.Context, queries *db.Queries, authRefreshCache *redis.Cache) {
 	gc := util.MustGetGinContext(ctx)
 	EndSession(gc, queries, authRefreshCache)
 }
@@ -477,28 +479,28 @@ func mustRefreshAuthToken(ctx context.Context, authRefreshCache *redis.Cache, us
 // StartSession begins a new session for the specified user. After calling StartSession,
 // the current auth state can be queried with functions like GetUserAuthedFromCtx(),
 // GetUserIDFromCtx(), etc.
-func StartSession(c *gin.Context, queries *db.Queries, userID persist.DBID) error {
+func StartSession(c *gin.Context, queries *db.Queries, userID persist.DBID) (string, string, error) {
 	sessionID := persist.GenerateID()
 
 	// These are the first tokens for a new session, so parentRefreshID is an empty string
-	err := issueSessionTokens(c, userID, sessionID, "", queries)
+	token, refreshToken, err := issueSessionTokens(c, userID, sessionID, "", queries)
 	if err != nil {
 		// If we fail to issue tokens to start a new session, the user will need to log in
 		// again (since we were starting a new session and the user doesn't have a valid refresh
 		// token to present during their next request). Clear the session state and cookies.
 		clearSessionStateForCtx(c, err)
 		clearSessionCookies(c)
-		return err
+		return "", "", err
 	}
 
-	return nil
+	return token, refreshToken, nil
 }
 
 // ContinueSession checks the request cookies for an existing auth session and continues
 // it if possible. If the request is for an expired or invalid session, the user will be
 // logged out. After calling ContinueSession, the current auth state can be queried with
 // functions like GetUserAuthedFromCtx(), GetUserIDFromCtx(), etc.
-func ContinueSession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.Cache) error {
+func ContinueSession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.Cache) (string, string, error) {
 	// If the user has a valid auth cookie, we can set their auth state and be done
 	// (unless something like updating roles triggered a forced refresh of the auth token)
 	authClaims, authTokenErr := getAndParseAuthToken(c)
@@ -517,7 +519,7 @@ func ContinueSession(c *gin.Context, queries *db.Queries, authRefreshCache *redi
 		// ----------------------------------------------------------------------------
 		if !mustRefreshAuthToken(c, authRefreshCache, authClaims.UserID, authClaims.IssuedAt.Time) {
 			setSessionStateForCtx(c, authClaims.UserID, authClaims.SessionID, authClaims.Roles)
-			return nil
+			return "", "", nil
 		}
 	}
 
@@ -535,13 +537,13 @@ func ContinueSession(c *gin.Context, queries *db.Queries, authRefreshCache *redi
 			clearSessionCookies(c)
 		}
 
-		return refreshTokenErr
+		return "", "", refreshTokenErr
 	}
 
 	// At this point, the user has a valid refresh cookie, but the auth cookie needs to be reissued
 	// (either because it's invalid or because it's being forced to refresh). Issue new tokens to continue
 	// the existing session.
-	err := issueSessionTokens(c, refreshClaims.UserID, refreshClaims.SessionID, refreshClaims.ID, queries)
+	_, _, err := issueSessionTokens(c, refreshClaims.UserID, refreshClaims.SessionID, refreshClaims.ID, queries)
 	if err != nil {
 		logger.For(c).Errorf("error issuing session tokens (userID=%s, sessionID=%s): %s", refreshClaims.UserID, refreshClaims.SessionID, err)
 
@@ -558,10 +560,10 @@ func ContinueSession(c *gin.Context, queries *db.Queries, authRefreshCache *redi
 			clearSessionCookies(c)
 		}
 
-		return err
+		return "", "", err
 	}
 
-	return nil
+	return "", "", nil
 }
 
 // EndSession invalidates the current session and clears the user's cookies
@@ -586,24 +588,24 @@ func EndSession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.Cac
 // tokens as request cookies and context state. parentRefreshID is the ID of the refresh token used to
 // issue the new tokens; if this is the first set of tokens for a session, it should be an empty string.
 // If an error occurs when issuing new tokens, no changes are made to cookies or context.
-func issueSessionTokens(c *gin.Context, userID persist.DBID, sessionID persist.DBID, parentRefreshID string, queries *db.Queries) error {
+func issueSessionTokens(c *gin.Context, userID persist.DBID, sessionID persist.DBID, parentRefreshID string, queries *db.Queries) (string, string, error) {
 	newRefreshID := persist.GenerateID()
 	newRefreshToken, refreshExpiresAt, err := GenerateRefreshToken(c, newRefreshID.String(), parentRefreshID, userID, sessionID)
 	if err != nil {
 		logger.For(c).Errorf("error generating refresh token for userID=%s, sessionID=%s: %s", userID, sessionID, err)
-		return err
+		return "", "", err
 	}
 
 	roles, err := RolesByUserID(c, queries, userID)
 	if err != nil {
 		logger.For(c).Errorf("error getting roles for userID=%s, sessionID=%s: %s", userID, sessionID, err)
-		return err
+		return "", "", err
 	}
 
 	newAuthToken, err := GenerateAuthToken(c, userID, sessionID, parentRefreshID, roles)
 	if err != nil {
 		logger.For(c).Errorf("error generating auth token for userID=%s, sessionID=%s: %s", userID, sessionID, err)
-		return err
+		return "", "", err
 	}
 
 	session, err := queries.UpsertSession(c, db.UpsertSessionParams{
@@ -618,17 +620,17 @@ func issueSessionTokens(c *gin.Context, userID persist.DBID, sessionID persist.D
 
 	if err != nil {
 		logger.For(c).Errorf("error upserting session data for userID=%s, sessionID=%s: %s", userID, sessionID, err)
-		return err
+		return "", "", err
 	}
 
 	if session.Invalidated {
-		return ErrSessionInvalidated
+		return "", "", ErrSessionInvalidated
 	}
 
 	setSessionStateForCtx(c, userID, sessionID, roles)
 	setSessionCookies(c, newAuthToken, newRefreshToken)
 
-	return nil
+	return newAuthToken, newRefreshToken, nil
 }
 
 func setSessionCookies(c *gin.Context, authToken string, refreshToken string) {

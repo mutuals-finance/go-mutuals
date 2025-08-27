@@ -1,3 +1,4 @@
+# Query operations
 query userByUsernameQuery($user: String!) {
   userByUsername(username: $user) {
     ... on Error {
@@ -52,175 +53,6 @@ query viewerQuery {
   }
 }
 
-mutation createUserMutation($authMechanism: AuthMechanism!, $input: CreateUserInput!) {
-  createUser(authMechanism: $authMechanism, input: $input) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on CreateUserPayload {
-      viewer {
-        user {
-          username
-          dbid
-          pools {
-            id
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation getAuthNonceMutation {
-  getAuthNonce {
-    ... on AuthNonce {
-      nonce
-      message
-    }
-  }
-}
-
-mutation loginMutation($authMechanism: AuthMechanism!) {
-  login(authMechanism: $authMechanism) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on LoginPayload {
-      viewer {
-        user {
-          username
-          dbid
-        }
-      }
-    }
-  }
-}
-
-mutation logoutMutation {
-  logout {
-    viewer {
-      user {
-        username
-        dbid
-      }
-    }
-  }
-}
-
-mutation addUserWalletMutation($chainAddress: ChainAddressInput!, $authMechanism: AuthMechanism!) {
-  addUserWallet(chainAddress: $chainAddress, authMechanism: $authMechanism) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on AddUserWalletPayload {
-      viewer {
-        user {
-          accounts {
-            id
-            address
-            chain
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation removeUserWalletsMutation($walletIds: [DBID!]!) {
-  removeUserWallets(walletIds: $walletIds) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on RemoveUserWalletsPayload {
-      viewer {
-        user {
-          wallets {
-            dbid
-            chainAddress {
-              address
-              chain
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation upsertPoolMutation($input: UpsertPoolInput!) {
-  upsertPool(input: $input) {
-    ... on UpsertPoolPayload {
-      pool {
-        dbid
-        name
-        description
-      }
-    }
-  }
-}
-mutation publishPoolMutation($input: PublishPoolInput!) {
-  publishPool(input: $input) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on PublishPoolPayload {
-      pool {
-        dbid
-      }
-    }
-  }
-}
-
-mutation updateUserExperience($input: UpdateUserExperienceInput!) {
-  updateUserExperience(input: $input) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on UpdateUserExperiencePayload {
-      viewer {
-        userExperiences {
-          type
-          experienced
-        }
-      }
-    }
-  }
-}
-
-mutation createPoolMutation($input: CreatePoolInput!) {
-  createPool(input: $input) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on CreatePoolPayload {
-      pool {
-        dbid
-        name
-        description
-      }
-    }
-  }
-}
-
-mutation registerPushTokenMutation($pushToken: String!) {
-  registerUserPushToken(pushToken: $pushToken) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on RegisterUserPushTokenPayload {
-      __typename
-    }
-  }
-}
-
 query notificationsForViewerQuery {
   viewer {
     ... on Error {
@@ -230,7 +62,339 @@ query notificationsForViewerQuery {
     ... on Viewer {
       notifications(last: 1, before: null) {
         unseenCount
+        edges {
+          node {
+            id
+            seen
+            creationTime
+          }
+        }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
       }
     }
   }
+}
+
+# Mutation operations
+mutation createUserMutation($authMechanism: AuthMechanism!, $input: UserRegisterInput!) {
+  userRegister(authMechanism: $authMechanism, input: $input) {
+    __typename
+    requiresConfirmation
+    user {
+      username
+      dbid
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation getNonceMutation {
+  nonce {
+    nonce
+    message
+  }
+}
+
+mutation loginMutation($authMechanism: AuthMechanism!) {
+  tokenCreate(authMechanism: $authMechanism) {
+    token
+    refreshToken
+    user {
+      username
+      dbid
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation logoutMutation {
+  tokensDeactivateAll {
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation addUserWalletMutation($input: WalletCreateInput!) {
+  walletCreate(input: $input) {
+    wallet {
+      id
+      dbid
+      name
+      account {
+        address
+      }
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation removeUserWalletsMutation($id: DBID!) {
+  walletDelete(id: $id) {
+    wallet {
+      id
+      dbid
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation createPoolMutation($input: PoolCreateInput!) {
+  poolCreate(input: $input) {
+    pool {
+      dbid
+      name
+      description
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation updatePoolMutation($id: DBID!, $input: PoolUpdateInput!) {
+  poolUpdate(id: $id, input: $input) {
+    pool {
+      dbid
+      name
+      description
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation registerPushTokenMutation($pushToken: String!) {
+  pushTokenRegister(pushToken: $pushToken) {
+    pushToken
+    user {
+      username
+      dbid
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation unregisterPushTokenMutation($pushToken: String!) {
+  pushTokenUnregister(pushToken: $pushToken) {
+    pushToken
+    user {
+      username
+      dbid
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation updateUserMutation($input: UserInput!) {
+  userUpdate(input: $input) {
+    user {
+      username
+      dbid
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation clearNotificationsMutation {
+  clearNotifications {
+    notifications {
+      id
+      seen
+    }
+  }
+}
+
+mutation createClaimMutation($input: ClaimCreateInput!) {
+  claimCreate(input: $input) {
+    claim {
+      id
+      dbid
+      value
+      label
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation updateClaimMutation($id: DBID!, $input: ClaimUpdateInput!) {
+  claimUpdate(id: $id, input: $input) {
+    claim {
+      id
+      dbid
+      value
+      label
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation deleteClaimMutation($id: DBID!) {
+  claimDelete(id: $id) {
+    claim {
+      id
+      dbid
+    }
+    errors {
+      field
+      message
+      code
+    }
+  }
+}
+
+mutation bulkCreateClaimsMutation($claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+  claimBulkCreate(claims: $claims, errorPolicy: $errorPolicy) {
+    count
+    results {
+      claim {
+        id
+        dbid
+        value
+        label
+      }
+      errors {
+        path
+        message
+        code
+      }
+    }
+    errors {
+      path
+      message
+      code
+    }
+  }
+}
+
+# Additional useful queries based on the schema
+query poolByIdQuery($id: DBID!) {
+  poolById(id: $id) {
+    ... on Pool {
+      id
+      dbid
+      name
+      description
+      status
+      owner {
+        ... on User {
+          username
+          dbid
+        }
+        ... on EVMAccount {
+          address
+          accountType
+        }
+      }
+    }
+    ... on ErrPoolNotFound {
+      message
+    }
+  }
+}
+
+query viewerPoolByIdQuery($id: DBID!) {
+  viewerPoolById(id: $id) {
+    ... on ViewerPool {
+      pool {
+        id
+        dbid
+        name
+        description
+      }
+    }
+    ... on ErrPoolNotFound {
+      message
+    }
+  }
+}
+
+query searchUsersQuery($query: String!, $limit: Int, $usernameWeight: Float) {
+  searchUsers(query: $query, limit: $limit, usernameWeight: $usernameWeight) {
+    ... on SearchUsersPayload {
+      results {
+        user {
+          username
+          dbid
+        }
+      }
+    }
+    ... on ErrInvalidInput {
+      message
+      parameters
+      reasons
+    }
+  }
+}
+
+query searchPoolsQuery($query: String!, $limit: Int, $nameWeight: Float, $descriptionWeight: Float) {
+  searchPools(query: $query, limit: $limit, nameWeight: $nameWeight, descriptionWeight: $descriptionWeight) {
+    ... on SearchPoolsPayload {
+      results {
+        pool {
+          id
+          dbid
+          name
+          description
+        }
+      }
+    }
+    ... on ErrInvalidInput {
+      message
+      parameters
+      reasons
+    }
+  }
+}
+
+query isEmailAvailableQuery($emailAddress: Email!) {
+  isEmailAddressAvailable(emailAddress: $emailAddress)
 }

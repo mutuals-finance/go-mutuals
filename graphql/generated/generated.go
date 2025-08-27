@@ -43,8 +43,6 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	ChainAddress() ChainAddressResolver
-	ChainPubKey() ChainPubKeyResolver
 	Claim() ClaimResolver
 	Deposit() DepositResolver
 	EVMAccount() EVMAccountResolver
@@ -83,7 +81,7 @@ type ComplexityRoot struct {
 
 	ChainAddress struct {
 		Address func(childComplexity int) int
-		ChainID func(childComplexity int) int
+		ChainId func(childComplexity int) int
 	}
 
 	ChainPools struct {
@@ -92,7 +90,7 @@ type ComplexityRoot struct {
 	}
 
 	ChainPubKey struct {
-		ChainID func(childComplexity int) int
+		ChainId func(childComplexity int) int
 		PubKey  func(childComplexity int) int
 	}
 
@@ -177,7 +175,6 @@ type ComplexityRoot struct {
 	}
 
 	CreateToken struct {
-		CsrfToken    func(childComplexity int) int
 		Errors       func(childComplexity int) int
 		RefreshToken func(childComplexity int) int
 		Token        func(childComplexity int) int
@@ -326,6 +323,15 @@ type ComplexityRoot struct {
 	GroupNotificationUsersConnection struct {
 		Edges    func(childComplexity int) int
 		PageInfo func(childComplexity int) int
+	}
+
+	GroupedNotification struct {
+		Count        func(childComplexity int) int
+		CreationTime func(childComplexity int) int
+		Dbid         func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Seen         func(childComplexity int) int
+		UpdatedTime  func(childComplexity int) int
 	}
 
 	LoginPayload struct {
@@ -777,12 +783,6 @@ type ComplexityRoot struct {
 	}
 }
 
-type ChainAddressResolver interface {
-	ChainID(ctx context.Context, obj *persist.ChainAddress) (*int, error)
-}
-type ChainPubKeyResolver interface {
-	ChainID(ctx context.Context, obj *persist.ChainPubKey) (*int, error)
-}
 type ClaimResolver interface {
 	Parent(ctx context.Context, obj *model.Claim) (*model.Claim, error)
 	Children(ctx context.Context, obj *model.Claim) ([]*model.Claim, error)
@@ -955,11 +955,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.ChainAddress.Address(childComplexity), true
 
 	case "ChainAddress.chainId":
-		if e.complexity.ChainAddress.ChainID == nil {
+		if e.complexity.ChainAddress.ChainId == nil {
 			break
 		}
 
-		return e.complexity.ChainAddress.ChainID(childComplexity), true
+		return e.complexity.ChainAddress.ChainId(childComplexity), true
 
 	case "ChainPools.chainId":
 		if e.complexity.ChainPools.ChainID == nil {
@@ -976,11 +976,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.ChainPools.Pools(childComplexity), true
 
 	case "ChainPubKey.chainId":
-		if e.complexity.ChainPubKey.ChainID == nil {
+		if e.complexity.ChainPubKey.ChainId == nil {
 			break
 		}
 
-		return e.complexity.ChainPubKey.ChainID(childComplexity), true
+		return e.complexity.ChainPubKey.ChainId(childComplexity), true
 
 	case "ChainPubKey.pubKey":
 		if e.complexity.ChainPubKey.PubKey == nil {
@@ -1275,13 +1275,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ConfirmUser.User(childComplexity), true
-
-	case "CreateToken.csrfToken":
-		if e.complexity.CreateToken.CsrfToken == nil {
-			break
-		}
-
-		return e.complexity.CreateToken.CsrfToken(childComplexity), true
 
 	case "CreateToken.errors":
 		if e.complexity.CreateToken.Errors == nil {
@@ -1772,6 +1765,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GroupNotificationUsersConnection.PageInfo(childComplexity), true
+
+	case "GroupedNotification.count":
+		if e.complexity.GroupedNotification.Count == nil {
+			break
+		}
+
+		return e.complexity.GroupedNotification.Count(childComplexity), true
+
+	case "GroupedNotification.creationTime":
+		if e.complexity.GroupedNotification.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.GroupedNotification.CreationTime(childComplexity), true
+
+	case "GroupedNotification.dbid":
+		if e.complexity.GroupedNotification.Dbid == nil {
+			break
+		}
+
+		return e.complexity.GroupedNotification.Dbid(childComplexity), true
+
+	case "GroupedNotification.id":
+		if e.complexity.GroupedNotification.ID == nil {
+			break
+		}
+
+		return e.complexity.GroupedNotification.ID(childComplexity), true
+
+	case "GroupedNotification.seen":
+		if e.complexity.GroupedNotification.Seen == nil {
+			break
+		}
+
+		return e.complexity.GroupedNotification.Seen(childComplexity), true
+
+	case "GroupedNotification.updatedTime":
+		if e.complexity.GroupedNotification.UpdatedTime == nil {
+			break
+		}
+
+		return e.complexity.GroupedNotification.UpdatedTime(childComplexity), true
 
 	case "LoginPayload.viewer":
 		if e.complexity.LoginPayload.Viewer == nil {
@@ -4804,8 +4839,9 @@ interface Notification implements Node {
   updatedTime: Time
 }
 
-interface GroupedNotification implements Notification & Node {
+type GroupedNotification implements Notification & Node {
   id: ID!
+  dbid: DBID!
   seen: Boolean
   creationTime: Time
   updatedTime: Time
@@ -5170,9 +5206,6 @@ type CreateToken {
 
   """JWT refresh token, required to re-generate access token."""
   refreshToken: String
-
-  """CSRF token required to re-generate access token."""
-  csrfToken: String
 
   """A user instance."""
   user: User
@@ -8183,7 +8216,7 @@ func (ec *executionContext) _ChainAddress_chainId(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ChainAddress().ChainID(rctx, obj)
+		return obj.ChainId(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8192,9 +8225,9 @@ func (ec *executionContext) _ChainAddress_chainId(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainAddress_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8202,7 +8235,7 @@ func (ec *executionContext) fieldContext_ChainAddress_chainId(_ context.Context,
 		Object:     "ChainAddress",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
 		},
@@ -8373,7 +8406,7 @@ func (ec *executionContext) _ChainPubKey_chainId(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ChainPubKey().ChainID(rctx, obj)
+		return obj.ChainId(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8382,9 +8415,9 @@ func (ec *executionContext) _ChainPubKey_chainId(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChainPubKey_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8392,7 +8425,7 @@ func (ec *executionContext) fieldContext_ChainPubKey_chainId(_ context.Context, 
 		Object:     "ChainPubKey",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
 		},
@@ -10607,47 +10640,6 @@ func (ec *executionContext) _CreateToken_refreshToken(ctx context.Context, field
 }
 
 func (ec *executionContext) fieldContext_CreateToken_refreshToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateToken",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateToken_csrfToken(ctx context.Context, field graphql.CollectedField, obj *model.CreateToken) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateToken_csrfToken(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CsrfToken, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CreateToken_csrfToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateToken",
 		Field:      field,
@@ -13849,6 +13841,258 @@ func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_pageIn
 	return fc, nil
 }
 
+func (ec *executionContext) _GroupedNotification_id(ctx context.Context, field graphql.CollectedField, obj *model.GroupedNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GroupedNotification_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GroupedNotification_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedNotification",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedNotification_dbid(ctx context.Context, field graphql.CollectedField, obj *model.GroupedNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GroupedNotification_dbid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dbid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.DBID)
+	fc.Result = res
+	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GroupedNotification_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedNotification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DBID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedNotification_seen(ctx context.Context, field graphql.CollectedField, obj *model.GroupedNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GroupedNotification_seen(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Seen, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GroupedNotification_seen(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedNotification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedNotification_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.GroupedNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GroupedNotification_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GroupedNotification_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedNotification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedNotification_updatedTime(ctx context.Context, field graphql.CollectedField, obj *model.GroupedNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GroupedNotification_updatedTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GroupedNotification_updatedTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedNotification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedNotification_count(ctx context.Context, field graphql.CollectedField, obj *model.GroupedNotification) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GroupedNotification_count(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Count, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GroupedNotification_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedNotification",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LoginPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.LoginPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LoginPayload_viewer(ctx, field)
 	if err != nil {
@@ -14344,8 +14588,6 @@ func (ec *executionContext) fieldContext_Mutation_tokenCreate(ctx context.Contex
 				return ec.fieldContext_CreateToken_token(ctx, field)
 			case "refreshToken":
 				return ec.fieldContext_CreateToken_refreshToken(ctx, field)
-			case "csrfToken":
-				return ec.fieldContext_CreateToken_csrfToken(ctx, field)
 			case "user":
 				return ec.fieldContext_CreateToken_user(ctx, field)
 			case "errors":
@@ -30652,15 +30894,6 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 	}
 }
 
-func (ec *executionContext) _GroupedNotification(ctx context.Context, sel ast.SelectionSet, obj model.GroupedNotification) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _LoginPayloadOrError(ctx context.Context, sel ast.SelectionSet, obj model.LoginPayloadOrError) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -30703,6 +30936,8 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 	case nil:
 		return graphql.Null
 	case model.GroupedNotification:
+		return ec._GroupedNotification(ctx, sel, &obj)
+	case *model.GroupedNotification:
 		if obj == nil {
 			return graphql.Null
 		}
@@ -30764,6 +30999,8 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 	case nil:
 		return graphql.Null
 	case model.GroupedNotification:
+		return ec._GroupedNotification(ctx, sel, &obj)
+	case *model.GroupedNotification:
 		if obj == nil {
 			return graphql.Null
 		}
@@ -31419,38 +31656,7 @@ func (ec *executionContext) _ChainAddress(ctx context.Context, sel ast.Selection
 		case "address":
 			out.Values[i] = ec._ChainAddress_address(ctx, field, obj)
 		case "chainId":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ChainAddress_chainId(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			out.Values[i] = ec._ChainAddress_chainId(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -31526,38 +31732,7 @@ func (ec *executionContext) _ChainPubKey(ctx context.Context, sel ast.SelectionS
 		case "pubKey":
 			out.Values[i] = ec._ChainPubKey_pubKey(ctx, field, obj)
 		case "chainId":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ChainPubKey_chainId(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			out.Values[i] = ec._ChainPubKey_chainId(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -32384,8 +32559,6 @@ func (ec *executionContext) _CreateToken(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._CreateToken_token(ctx, field, obj)
 		case "refreshToken":
 			out.Values[i] = ec._CreateToken_refreshToken(ctx, field, obj)
-		case "csrfToken":
-			out.Values[i] = ec._CreateToken_csrfToken(ctx, field, obj)
 		case "user":
 			out.Values[i] = ec._CreateToken_user(ctx, field, obj)
 		case "errors":
@@ -33794,6 +33967,58 @@ func (ec *executionContext) _GroupNotificationUsersConnection(ctx context.Contex
 			out.Values[i] = ec._GroupNotificationUsersConnection_edges(ctx, field, obj)
 		case "pageInfo":
 			out.Values[i] = ec._GroupNotificationUsersConnection_pageInfo(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var groupedNotificationImplementors = []string{"GroupedNotification", "Notification", "Node"}
+
+func (ec *executionContext) _GroupedNotification(ctx context.Context, sel ast.SelectionSet, obj *model.GroupedNotification) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, groupedNotificationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GroupedNotification")
+		case "id":
+			out.Values[i] = ec._GroupedNotification_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dbid":
+			out.Values[i] = ec._GroupedNotification_dbid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "seen":
+			out.Values[i] = ec._GroupedNotification_seen(ctx, field, obj)
+		case "creationTime":
+			out.Values[i] = ec._GroupedNotification_creationTime(ctx, field, obj)
+		case "updatedTime":
+			out.Values[i] = ec._GroupedNotification_updatedTime(ctx, field, obj)
+		case "count":
+			out.Values[i] = ec._GroupedNotification_count(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -40971,6 +41196,16 @@ func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋ
 	return ec._GroupNotificationUserEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -41547,6 +41782,22 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
 	return res
 }
 

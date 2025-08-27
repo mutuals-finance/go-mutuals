@@ -18,6 +18,10 @@ func (r *DeletedNode) ID() GqlID {
 	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
 }
 
+func (r *GroupedNotification) ID() GqlID {
+	return GqlID(fmt.Sprintf("GroupedNotification:%s", r.Dbid))
+}
+
 func (r *Pool) ID() GqlID {
 	return GqlID(fmt.Sprintf("Pool:%s", r.Dbid))
 }
@@ -44,12 +48,13 @@ func (r *Wallet) ID() GqlID {
 }
 
 type NodeFetcher struct {
-	OnClaim       func(ctx context.Context, dbid persist.DBID) (*Claim, error)
-	OnDeletedNode func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
-	OnPool        func(ctx context.Context, dbid persist.DBID) (*Pool, error)
-	OnUser        func(ctx context.Context, dbid persist.DBID) (*User, error)
-	OnViewer      func(ctx context.Context, userId string) (*Viewer, error)
-	OnWallet      func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
+	OnClaim               func(ctx context.Context, dbid persist.DBID) (*Claim, error)
+	OnDeletedNode         func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
+	OnGroupedNotification func(ctx context.Context, dbid persist.DBID) (*GroupedNotification, error)
+	OnPool                func(ctx context.Context, dbid persist.DBID) (*Pool, error)
+	OnUser                func(ctx context.Context, dbid persist.DBID) (*User, error)
+	OnViewer              func(ctx context.Context, userId string) (*Viewer, error)
+	OnWallet              func(ctx context.Context, dbid persist.DBID) (*Wallet, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
@@ -72,6 +77,11 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
 		return n.OnDeletedNode(ctx, persist.DBID(ids[0]))
+	case "GroupedNotification":
+		if len(ids) != 1 {
+			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'GroupedNotification' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
+		}
+		return n.OnGroupedNotification(ctx, persist.DBID(ids[0]))
 	case "Pool":
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Pool' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
@@ -103,6 +113,8 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnClaim")
 	case n.OnDeletedNode == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
+	case n.OnGroupedNotification == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnGroupedNotification")
 	case n.OnPool == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPool")
 	case n.OnUser == nil:

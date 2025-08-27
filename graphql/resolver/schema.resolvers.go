@@ -15,16 +15,6 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-// ChainID is the resolver for the chainId field.
-func (r *chainAddressResolver) ChainID(ctx context.Context, obj *persist.ChainAddress) (*int, error) {
-	panic(fmt.Errorf("not implemented: ChainID - chainId"))
-}
-
-// ChainID is the resolver for the chainId field.
-func (r *chainPubKeyResolver) ChainID(ctx context.Context, obj *persist.ChainPubKey) (*int, error) {
-	panic(fmt.Errorf("not implemented: ChainID - chainId"))
-}
-
 // Parent is the resolver for the parent field.
 func (r *claimResolver) Parent(ctx context.Context, obj *model.Claim) (*model.Claim, error) {
 	panic(fmt.Errorf("not implemented: Parent - parent"))
@@ -107,33 +97,32 @@ func (r *mutationResolver) Nonce(ctx context.Context) (*model.Nonce, error) {
 
 // UserRegister is the resolver for the userRegister field.
 func (r *mutationResolver) UserRegister(ctx context.Context, authMechanism model.AuthMechanism, input model.UserRegisterInput) (*model.UserRegister, error) {
-	panic(fmt.Errorf("not implemented: UserRegister - userRegister"))
-	/*	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
-		if err != nil {
-			return nil, err
-		}
+	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
+	if err != nil {
+		return nil, err
+	}
 
-		userName := ""
-		if input.Username != nil {
-			userName = *input.Username
-		}
+	userName := ""
+	if input.Username != nil {
+		userName = *input.Username
+	}
 
-		var email *persist.Email
-		if input.Email != nil {
-			it := *input.Email
-			email = &it
-		}
+	var email *persist.Email
+	if input.Email != nil {
+		it := persist.Email(*input.Email)
+		email = &it
+	}
 
-		_, err = publicapi.For(ctx).User.CreateUser(ctx, authenticator, userName, email)
-		if err != nil {
-			return nil, err
-		}
+	_, err = publicapi.For(ctx).User.CreateUser(ctx, authenticator, userName, email)
+	if err != nil {
+		return nil, err
+	}
 
-		output := &model.UserRegister{
-			User: resolveViewer(ctx),
-		}
+	output := model.UserRegister{
+		User: resolveViewer(ctx),
+	}
 
-		return output, nil*/
+	return &output, nil
 }
 
 // UserUpdate is the resolver for the userUpdate field.
@@ -185,21 +174,24 @@ func (r *mutationResolver) UserDelete(ctx context.Context, token string) (*model
 
 // TokenCreate is the resolver for the tokenCreate field.
 func (r *mutationResolver) TokenCreate(ctx context.Context, audience *string, authMechanism model.AuthMechanism) (*model.CreateToken, error) {
-	panic(fmt.Errorf("not implemented: TokenCreate - tokenCreate"))
-	/*	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
-		if err != nil {
-			return nil, err
-		}
+	// panic(fmt.Errorf("not implemented: TokenCreate - tokenCreate"))
+	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
+	if err != nil {
+		return nil, err
+	}
 
-		_, err = publicapi.For(ctx).Auth.Login(ctx, authenticator)
-		if err != nil {
-			return nil, err
-		}
+	token, refreshToken, err := publicapi.For(ctx).Auth.CreateToken(ctx, authenticator)
+	if err != nil {
+		return nil, err
+	}
 
-		output := &model.CreateToken{
-			Viewer: resolveViewer(ctx),
-		}
-		return output, nil*/
+	output := &model.CreateToken{
+		Token:        token,
+		RefreshToken: refreshToken,
+		User:         nil, //TODO get(ctx),
+	}
+
+	return output, nil
 }
 
 // TokenRefresh is the resolver for the tokenRefresh field.
@@ -214,14 +206,11 @@ func (r *mutationResolver) TokenVerify(ctx context.Context, token string) (*mode
 
 // TokensDeactivateAll is the resolver for the tokensDeactivateAll field.
 func (r *mutationResolver) TokensDeactivateAll(ctx context.Context) (*model.DeactivateAllUserTokens, error) {
-	panic(fmt.Errorf("not implemented: TokensDeactivateAll - tokensDeactivateAll"))
-	/*	publicapi.For(ctx).Auth.Logout(ctx)
+	publicapi.For(ctx).Auth.DeactivateAllTokens(ctx)
 
-		output := &model.DeactivateAllUserTokens{
-			Viewer: resolveViewer(ctx),
-		}
+	output := model.DeactivateAllUserTokens{}
 
-		return output, nil*/
+	return &output, nil
 }
 
 // SendConfirmationEmail is the resolver for the sendConfirmationEmail field.
@@ -232,9 +221,7 @@ func (r *mutationResolver) SendConfirmationEmail(ctx context.Context, redirectUR
 
 // ConfirmUser is the resolver for the confirmUser field.
 func (r *mutationResolver) ConfirmUser(ctx context.Context, email string, token string) (*model.ConfirmUser, error) {
-	panic(fmt.Errorf("not implemented: ConfirmUser - confirmUser"))
-	/*	return verifyEmail(ctx, token)
-	 */
+	return confirmUser(ctx, token)
 }
 
 // RequestEmailChange is the resolver for the requestEmailChange field.
@@ -528,7 +515,7 @@ func (r *queryResolver) Node(ctx context.Context, id model.GqlID) (model.Node, e
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (model.ViewerOrError, error) {
-	return resolveViewer(ctx), nil
+	return nil, nil
 }
 
 // UserByUsername is the resolver for the userByUsername field.
@@ -769,12 +756,6 @@ func (r *chainPubKeyInputResolver) ChainID(ctx context.Context, obj *persist.Cha
 	panic(fmt.Errorf("not implemented: ChainID - chainId"))
 }
 
-// ChainAddress returns generated.ChainAddressResolver implementation.
-func (r *Resolver) ChainAddress() generated.ChainAddressResolver { return &chainAddressResolver{r} }
-
-// ChainPubKey returns generated.ChainPubKeyResolver implementation.
-func (r *Resolver) ChainPubKey() generated.ChainPubKeyResolver { return &chainPubKeyResolver{r} }
-
 // Claim returns generated.ClaimResolver implementation.
 func (r *Resolver) Claim() generated.ClaimResolver { return &claimResolver{r} }
 
@@ -848,8 +829,6 @@ func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
 	return &chainPubKeyInputResolver{r}
 }
 
-type chainAddressResolver struct{ *Resolver }
-type chainPubKeyResolver struct{ *Resolver }
 type claimResolver struct{ *Resolver }
 type depositResolver struct{ *Resolver }
 type eVMAccountResolver struct{ *Resolver }
@@ -871,3 +850,22 @@ type walletResolver struct{ *Resolver }
 type withdrawalResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *chainAddressResolver) ChainID(ctx context.Context, obj *persist.ChainAddress) (*int, error) {
+	panic(fmt.Errorf("not implemented: ChainID - chainId"))
+}
+func (r *chainPubKeyResolver) ChainID(ctx context.Context, obj *persist.ChainPubKey) (*int, error) {
+	panic(fmt.Errorf("not implemented: ChainID - chainId"))
+}
+func (r *Resolver) ChainAddress() generated.ChainAddressResolver { return &chainAddressResolver{r} }
+func (r *Resolver) ChainPubKey() generated.ChainPubKeyResolver { return &chainPubKeyResolver{r} }
+type chainAddressResolver struct{ *Resolver }
+type chainPubKeyResolver struct{ *Resolver }
+*/
