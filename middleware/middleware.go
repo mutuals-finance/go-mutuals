@@ -117,7 +117,7 @@ func TaskRequired() gin.HandlerFunc {
 // ContinueSession is a middleware that manages session cookies
 func ContinueSession(queries *db.Queries, authRefreshCache *redis.Cache) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := auth.ContinueSession(c, queries, authRefreshCache)
+		_, _, err := auth.ContinueSession(c, queries, authRefreshCache)
 		if err == nil {
 			loggerCtx := logger.NewContextWithFields(c.Request.Context(), logrus.Fields{
 				"authedUserId": auth.GetUserIDFromCtx(c),

@@ -149,7 +149,7 @@ func CreateUser(ctx context.Context, pUser persist.CreateUserInput, userRepo *po
 
 	}
 
-	err = auth.StartSession(gc, queries, userID)
+	_, _, err = auth.StartSession(gc, queries, userID)
 	if err != nil {
 		return "", err
 	}
