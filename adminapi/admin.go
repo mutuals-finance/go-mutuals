@@ -113,7 +113,8 @@ type authenticator struct {
 	authMethod func(context.Context) (*auth.AuthResult, error)
 }
 
-func (a authenticator) GetDescription() string { return "" }
+func (a authenticator) GetDescription() string                           { return "" }
+func (a authenticator) UserRegistered(ctx context.Context) (bool, error) { return false, nil }
 func (a authenticator) Authenticate(ctx context.Context) (*auth.AuthResult, error) {
 	return a.authMethod(ctx)
 }

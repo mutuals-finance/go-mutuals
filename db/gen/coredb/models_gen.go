@@ -16,9 +16,9 @@ type Claim struct {
 	ID               persist.DBID    `db:"id" json:"id"`
 	PoolID           persist.DBID    `db:"pool_id" json:"pool_id"`
 	RecipientAddress persist.Address `db:"recipient_address" json:"recipient_address"`
-	Value            string          `db:"value" json:"value"`
 	StateID          persist.DBID    `db:"state_id" json:"state_id"`
 	StrategyID       persist.DBID    `db:"strategy_id" json:"strategy_id"`
+	Data             pgtype.JSONB    `db:"data" json:"data"`
 	Label            string          `db:"label" json:"label"`
 	Path             sql.NullString  `db:"path" json:"path"`
 	Deleted          bool            `db:"deleted" json:"deleted"`
@@ -104,9 +104,12 @@ type PiiUserView struct {
 
 type Pool struct {
 	ID          persist.DBID `db:"id" json:"id"`
+	Version     int32        `db:"version" json:"version"`
+	Private     bool         `db:"private" json:"private"`
 	Name        string       `db:"name" json:"name"`
 	Description string       `db:"description" json:"description"`
-	Logo        string       `db:"logo" json:"logo"`
+	DonationBps int32        `db:"donation_bps" json:"donation_bps"`
+	Image       string       `db:"image" json:"image"`
 	Slug        string       `db:"slug" json:"slug"`
 	OwnerID     persist.DBID `db:"owner_id" json:"owner_id"`
 	ContractID  persist.DBID `db:"contract_id" json:"contract_id"`

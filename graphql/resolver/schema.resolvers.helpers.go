@@ -581,8 +581,8 @@ func poolToModel(ctx context.Context, pool db.Pool) *model.Pool {
 		Dbid:        pool.ID,
 		Name:        pool.Name,
 		Description: pool.Description,
-		Logo:        pool.Logo,
-		Slug:        "", // TODO pool.Slug
+		Image:       pool.Image,
+		Slug:        pool.Slug,
 		Status:      "", // TODO pool.Status
 		CreatedAt:   pool.CreatedAt,
 		UpdatedAt:   pool.UpdatedAt,
@@ -604,7 +604,7 @@ func poolsToModels(ctx context.Context, pools []db.Pool) []*model.Pool {
 func claimToModel(ctx context.Context, claim db.Claim) *model.Claim {
 	return &model.Claim{
 		Dbid:      claim.ID,
-		Value:     persist.HexString(claim.Value), // TODO claim.Value as HexString
+		Data:      claim.Data.Bytes,
 		Label:     claim.Label,
 		Path:      persist.NullStrToStr(claim.Path),
 		CreatedAt: claim.CreatedAt,

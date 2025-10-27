@@ -89,6 +89,8 @@ type Authenticator interface {
 	GetDescription() string
 
 	Authenticate(context.Context) (*AuthResult, error)
+
+	UserRegistered(context.Context) (bool, error)
 }
 
 type AuthResult struct {
@@ -218,6 +220,20 @@ func (e NonceAuthenticator) Authenticate(ctx context.Context) (*AuthResult, erro
 	return &authResult, nil
 }
 
+func (e NonceAuthenticator) UserRegistered(ctx context.Context) (bool, error) {
+	asChainAddress := e.ChainPubKey.ToChainAddress()
+	asL1 := asChainAddress.ToL1ChainAddress()
+
+	// TODO change to bool query
+	_, err := e.Queries.GetUserByAccountAddress(ctx, asL1.Address())
+
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return false, err
+	}
+
+	return true, nil
+}
+
 type MagicLinkAuthenticator struct {
 	Token       token.Token
 	MagicClient *magicclient.API
@@ -257,6 +273,11 @@ func (e MagicLinkAuthenticator) Authenticate(pCtx context.Context) (*AuthResult,
 	authResult.User = &user
 
 	return &authResult, nil
+}
+
+func (e MagicLinkAuthenticator) UserRegistered(ctx context.Context) (bool, error) {
+	// TODO: implement
+	return false, nil
 }
 
 func NewMagicLinkClient() *magicclient.API {
@@ -301,6 +322,11 @@ func (a OneTimeLoginTokenAuthenticator) Authenticate(ctx context.Context) (*Auth
 	}
 
 	return &authResult, nil
+}
+
+func (a OneTimeLoginTokenAuthenticator) UserRegistered(ctx context.Context) (bool, error) {
+	// TODO: implement
+	return false, nil
 }
 
 // CreateToken creates a token for a user with a given authentication scheme

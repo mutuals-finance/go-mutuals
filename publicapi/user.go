@@ -14,14 +14,14 @@ import (
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/multichain"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
-	"github.com/mutuals/go-mutuals/service/user"
+	userService "github.com/mutuals/go-mutuals/service/user"
 
 	"cloud.google.com/go/storage"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/everFinance/goar"
 	"github.com/go-playground/validator/v10"
 	shell "github.com/ipfs/go-ipfs-api"
-	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/service/auth"
 	"github.com/mutuals/go-mutuals/service/emails"
@@ -32,7 +32,7 @@ import (
 
 type UserAPI struct {
 	repos              *postgres.Repositories
-	queries            *db.Queries
+	queries            *coredb.Queries
 	loaders            *dataloader.Loaders
 	validator          *validator.Validate
 	ethClient          *ethclient.Client
@@ -59,7 +59,7 @@ func (api UserAPI) IsUserLoggedIn(ctx context.Context) bool {
 	return auth.GetUserAuthedFromCtx(gc)
 }
 
-func (api UserAPI) GetUserById(ctx context.Context, userID persist.DBID) (*db.User, error) {
+func (api UserAPI) GetUserById(ctx context.Context, userID persist.DBID) (*coredb.User, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),
@@ -75,7 +75,7 @@ func (api UserAPI) GetUserById(ctx context.Context, userID persist.DBID) (*db.Us
 	return &user, nil
 }
 
-func (api UserAPI) GetUserByVerifiedEmailAddress(ctx context.Context, emailAddress persist.Email) (*db.User, error) {
+func (api UserAPI) GetUserByVerifiedEmailAddress(ctx context.Context, emailAddress persist.Email) (*coredb.User, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"emailAddress": validate.WithTag(emailAddress, "required"),
@@ -122,7 +122,7 @@ func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress 
 }
 
 // GetUserWithPII returns the current user and their associated personally identifiable information
-func (api UserAPI) GetUserWithPII(ctx context.Context) (*db.PiiUserView, error) {
+func (api UserAPI) GetUserWithPII(ctx context.Context) (*coredb.PiiUserView, error) {
 	// Nothing to validate
 
 	userID, err := getAuthenticatedUserID(ctx)
@@ -138,7 +138,7 @@ func (api UserAPI) GetUserWithPII(ctx context.Context) (*db.PiiUserView, error) 
 	return &userWithPII, nil
 }
 
-func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, before, after *string, first, last *int) ([]db.User, PageInfo, error) {
+func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, before, after *string, first, last *int) ([]coredb.User, PageInfo, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userIDs": validate.WithTag(userIDs, "required"),
@@ -150,8 +150,8 @@ func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, be
 		return nil, PageInfo{}, err
 	}
 
-	queryFunc := func(params timeIDPagingParams) ([]db.User, error) {
-		return api.queries.GetUsersByIDs(ctx, db.GetUsersByIDsParams{
+	queryFunc := func(params timeIDPagingParams) ([]coredb.User, error) {
+		return api.queries.GetUsersByIDs(ctx, coredb.GetUsersByIDsParams{
 			Limit:         params.Limit,
 			UserIds:       userIDs,
 			CurBeforeTime: params.CursorBeforeTime,
@@ -166,11 +166,11 @@ func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, be
 		return len(userIDs), nil
 	}
 
-	cursorFunc := func(u db.User) (time.Time, persist.DBID, error) {
+	cursorFunc := func(u coredb.User) (time.Time, persist.DBID, error) {
 		return u.CreatedAt, u.ID, nil
 	}
 
-	paginator := timeIDPaginator[db.User]{
+	paginator := timeIDPaginator[coredb.User]{
 		QueryFunc:  queryFunc,
 		CursorFunc: cursorFunc,
 		CountFunc:  countFunc,
@@ -179,18 +179,18 @@ func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, be
 	return paginator.paginate(before, after, first, last)
 }
 
-func (api UserAPI) paginatorFromCursorStr(ctx context.Context, curStr string) (positionPaginator[db.User], error) {
+func (api UserAPI) paginatorFromCursorStr(ctx context.Context, curStr string) (positionPaginator[coredb.User], error) {
 	cur := cursors.NewPositionCursor()
 	err := cur.Unpack(curStr)
 	if err != nil {
-		return positionPaginator[db.User]{}, err
+		return positionPaginator[coredb.User]{}, err
 	}
 	return api.paginatorFromCursor(ctx, cur), nil
 }
 
-func (api UserAPI) paginatorFromCursor(ctx context.Context, c *positionCursor) positionPaginator[db.User] {
-	return api.paginatorWithQuery(c, func(p positionPagingParams) ([]db.User, error) {
-		params := db.GetUsersByPositionPaginateBatchParams{
+func (api UserAPI) paginatorFromCursor(ctx context.Context, c *positionCursor) positionPaginator[coredb.User] {
+	return api.paginatorWithQuery(c, func(p positionPagingParams) ([]coredb.User, error) {
+		params := coredb.GetUsersByPositionPaginateBatchParams{
 			UserIds: util.MapWithoutError(c.IDs, func(id persist.DBID) string { return id.String() }),
 			// Postgres uses 1-based indexing
 			CurBeforePos: p.CursorBeforePos + 1,
@@ -200,19 +200,19 @@ func (api UserAPI) paginatorFromCursor(ctx context.Context, c *positionCursor) p
 	})
 }
 
-func (api UserAPI) paginatorFromResults(ctx context.Context, c *positionCursor, users []db.User) positionPaginator[db.User] {
-	queryF := func(positionPagingParams) ([]db.User, error) { return users, nil }
+func (api UserAPI) paginatorFromResults(ctx context.Context, c *positionCursor, users []coredb.User) positionPaginator[coredb.User] {
+	queryF := func(positionPagingParams) ([]coredb.User, error) { return users, nil }
 	return api.paginatorWithQuery(c, queryF)
 }
 
-func (api UserAPI) paginatorWithQuery(c *positionCursor, queryF func(positionPagingParams) ([]db.User, error)) positionPaginator[db.User] {
-	var paginator positionPaginator[db.User]
+func (api UserAPI) paginatorWithQuery(c *positionCursor, queryF func(positionPagingParams) ([]coredb.User, error)) positionPaginator[coredb.User] {
+	var paginator positionPaginator[coredb.User]
 	paginator.QueryFunc = queryF
-	paginator.CursorFunc = func(u db.User) (int64, []persist.DBID, error) { return c.Positions[u.ID], c.IDs, nil }
+	paginator.CursorFunc = func(u coredb.User) (int64, []persist.DBID, error) { return c.Positions[u.ID], c.IDs, nil }
 	return paginator
 }
 
-func (api UserAPI) GetUserByUsername(ctx context.Context, username string) (*db.User, error) {
+func (api UserAPI) GetUserByUsername(ctx context.Context, username string) (*coredb.User, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"username": validate.WithTag(username, "required"),
@@ -228,7 +228,7 @@ func (api UserAPI) GetUserByUsername(ctx context.Context, username string) (*db.
 	return &user, nil
 }
 
-func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*db.User, error) {
+func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*coredb.User, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"chainAddress": validate.WithTag(chainAddress, "required"),
@@ -244,7 +244,7 @@ func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.Ch
 	return &dbUser, nil
 }
 
-func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*db.User, error) {
+func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*coredb.User, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"roles": validate.WithTag(roles, "required,min=1,unique,dive,role,opt_in_role"),
 	}); err != nil {
@@ -269,7 +269,7 @@ func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*d
 	newRoles := util.MapWithoutError(roles, func(role persist.Role) string { return string(role) })
 	ids := util.MapWithoutError(roles, func(role persist.Role) string { return persist.GenerateID().String() })
 
-	err = api.queries.AddUserRoles(ctx, db.AddUserRolesParams{
+	err = api.queries.AddUserRoles(ctx, coredb.AddUserRolesParams{
 		UserID: userID,
 		Ids:    ids,
 		Roles:  newRoles,
@@ -295,7 +295,7 @@ func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*d
 	return &user, err
 }
 
-func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*db.User, error) {
+func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*coredb.User, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"roles": validate.WithTag(roles, "required,min=1,unique,dive,role,opt_in_role"),
 	}); err != nil {
@@ -317,7 +317,7 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 		}
 	}
 
-	err = api.queries.DeleteUserRoles(ctx, db.DeleteUserRolesParams{
+	err = api.queries.DeleteUserRoles(ctx, coredb.DeleteUserRolesParams{
 		Roles:  roles,
 		UserID: userID,
 	})
@@ -354,7 +354,7 @@ func (api *UserAPI) UserIsAdmin(ctx context.Context) bool {
 	return false
 }
 
-func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) ([]db.User, PageInfo, error) {
+func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) ([]coredb.User, PageInfo, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"role": validate.WithTag(role, "required,role"),
@@ -366,8 +366,8 @@ func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role,
 		return nil, PageInfo{}, err
 	}
 
-	queryFunc := func(params lexicalPagingParams) ([]db.User, error) {
-		return api.queries.GetUsersWithRolePaginate(ctx, db.GetUsersWithRolePaginateParams{
+	queryFunc := func(params lexicalPagingParams) ([]coredb.User, error) {
+		return api.queries.GetUsersWithRolePaginate(ctx, coredb.GetUsersWithRolePaginateParams{
 			Role:          role,
 			Limit:         params.Limit,
 			CurBeforeKey:  params.CursorBeforeKey,
@@ -378,11 +378,11 @@ func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role,
 		})
 	}
 
-	cursorFunc := func(u db.User) (string, persist.DBID, error) {
+	cursorFunc := func(u coredb.User) (string, persist.DBID, error) {
 		return u.UsernameIdempotent.String, u.ID, nil
 	}
 
-	paginator := lexicalPaginator[db.User]{
+	paginator := lexicalPaginator[coredb.User]{
 		QueryFunc:  queryFunc,
 		CursorFunc: cursorFunc,
 	}
@@ -404,7 +404,7 @@ func (api UserAPI) AddWalletToUser(ctx context.Context, chainAddress persist.Cha
 		return err
 	}
 
-	err = user.AddWalletToUser(ctx, userID, chainAddress, authenticator, api.repos.UserRepository, api.multichainProvider)
+	err = userService.AddWalletToUser(ctx, userID, chainAddress, authenticator, api.repos.UserRepository, api.multichainProvider)
 	if err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func (api UserAPI) RemoveWalletsFromUser(ctx context.Context, walletIDs []persis
 		return err
 	}
 
-	removedIDs, removalErr := user.RemoveWalletsFromUser(ctx, userID, walletIDs, api.repos.UserRepository)
+	removedIDs, removalErr := userService.RemoveWalletsFromUser(ctx, userID, walletIDs, api.repos.UserRepository)
 
 	// If any wallet IDs were successfully removed, we need to process those removals, even if we also
 	// encountered an error.
@@ -446,73 +446,49 @@ func (api UserAPI) RemoveWalletsFromUser(ctx context.Context, walletIDs []persis
 }
 
 func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email) (userID persist.DBID, err error) {
-	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"username": validate.WithTag(username, "username"),
 	}); err != nil {
 		return "", err
 	}
 
-	createUserParams, err := createNewUserParamsWithAuth(ctx, authenticator, username, email)
+	user, err := createUser(ctx, api.repos, api.queries, api.taskClient, authenticator, "", nil)
 	if err != nil {
 		return "", err
 	}
 
-	tx, err := api.repos.BeginTx(ctx)
-	if err != nil {
-		return "", err
-	}
-	queries := api.queries.WithTx(tx)
-	defer tx.Rollback(ctx)
+	return user.ID, nil
+}
 
-	userID, err = user.CreateUser(ctx, createUserParams, api.repos.UserRepository, queries)
-	if err != nil {
-		return "", err
+func (api UserAPI) LoginOrRegisterUser(ctx context.Context, authenticator auth.Authenticator) (user coredb.User, requiresConfirmation bool, token *string, refreshToken *string, err error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{}); err != nil {
+		return coredb.User{}, false, nil, nil, err
 	}
 
-	gc := util.MustGetGinContext(ctx)
-	err = queries.AddPiiAccountCreationInfo(ctx, db.AddPiiAccountCreationInfoParams{
-		UserID:    userID,
-		IpAddress: gc.ClientIP(),
-	})
+	registered, err := authenticator.UserRegistered(ctx)
 	if err != nil {
-		logger.For(ctx).Warnf("failed to get IP address for userID %s: %s\n", userID, err)
+		return coredb.User{}, false, nil, nil, err
 	}
 
-	err = tx.Commit(ctx)
-	if err != nil {
-		return "", err
-	}
+	if registered {
+		result, err := authenticator.Authenticate(ctx)
+		if err != nil {
+			return coredb.User{}, false, nil, nil, err
 
-	if createUserParams.EmailStatus == persist.EmailVerificationStatusUnverified && email != nil {
-		if err := emails.RequestVerificationEmail(ctx, userID); err != nil {
-			// Just the log the error since the user can verify their email later
-			logger.For(ctx).Warnf("failed to send verification email: %s", err)
 		}
-	}
-
-	if createUserParams.EmailStatus == persist.EmailVerificationStatusVerified {
-		if err := api.taskClient.CreateTaskForAddingEmailToMailingList(ctx, task.AddEmailToMailingListMessage{UserID: userID}); err != nil {
-			// Report error to Sentry since there's not another way to subscribe the user to the mailing list
-			sentryutil.ReportError(ctx, err)
-			logger.For(ctx).Warnf("failed to send mailing list subscription task: %s", err)
+		requiresConfirmation = false
+		user = *result.User
+	} else {
+		user, err = createUser(ctx, api.repos, api.queries, api.taskClient, authenticator, "", nil)
+		if err != nil {
+			return coredb.User{}, false, nil, nil, err
 		}
+
+		requiresConfirmation = true
 	}
 
-	// Send event
-	err = event.Dispatch(ctx, db.Event{
-		ActorID:        persist.DBIDToNullStr(userID),
-		Action:         persist.ActionUserCreated,
-		ResourceTypeID: persist.ResourceTypeUser,
-		UserID:         userID,
-		SubjectID:      userID,
-		Data:           persist.EventData{},
-	})
-	if err != nil {
-		logger.For(ctx).Errorf("failed to dispatch event: %s", err)
-	}
-
-	return userID, nil
+	return user, requiresConfirmation, token, refreshToken, nil
 }
 
 func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
@@ -528,7 +504,7 @@ func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
 		return err
 	}
 
-	err = user.UpdateUserInfo(ctx, userID, username, api.repos.UserRepository, api.ethClient)
+	err = userService.UpdateUserInfo(ctx, userID, username, api.repos.UserRepository, api.ethClient)
 	if err != nil {
 		return err
 	}
@@ -549,7 +525,7 @@ func (api UserAPI) UpdateUserPrimaryWallet(ctx context.Context, primaryWalletID 
 		return err
 	}
 
-	err = api.queries.UpdateUserPrimaryWallet(ctx, db.UpdateUserPrimaryWalletParams{WalletID: primaryWalletID, UserID: userID})
+	err = api.queries.UpdateUserPrimaryWallet(ctx, coredb.UpdateUserPrimaryWalletParams{WalletID: primaryWalletID, UserID: userID})
 	if err != nil {
 		return err
 	}
@@ -569,7 +545,7 @@ func (api UserAPI) UpdateUserEmailWithManualVerification(ctx context.Context, em
 	if err != nil {
 		return err
 	}
-	err = api.queries.UpdateUserUnverifiedEmail(ctx, db.UpdateUserUnverifiedEmailParams{
+	err = api.queries.UpdateUserUnverifiedEmail(ctx, coredb.UpdateUserUnverifiedEmailParams{
 		UserID:       userID,
 		EmailAddress: email,
 	})
@@ -611,7 +587,7 @@ func (api UserAPI) UpdateUserEmailWithAuthenticator(ctx context.Context, email p
 		return fmt.Errorf("supplied email address (%s) does not match verified email address from authenticator (%s)", email.String(), authResult.Email.String())
 	}
 
-	err = api.queries.UpdateUserVerifiedEmail(ctx, db.UpdateUserVerifiedEmailParams{
+	err = api.queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
 		UserID:       userID,
 		EmailAddress: email,
 	})
@@ -683,22 +659,22 @@ func (api UserAPI) UpdateUserNotificationSettings(ctx context.Context, notificat
 		return err
 	}
 
-	return api.queries.UpdateNotificationSettingsByID(ctx, db.UpdateNotificationSettingsByIDParams{ID: userID, NotificationSettings: notificationSettings})
+	return api.queries.UpdateNotificationSettingsByID(ctx, coredb.UpdateNotificationSettingsByIDParams{ID: userID, NotificationSettings: notificationSettings})
 }
 
 // CreatePushTokenForUser adds a push token to a user, or returns the existing push token if it's already been
 // added to this user. If the token can't be added because it belongs to another user, an error is returned.
-func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string) (db.PushNotificationToken, error) {
+func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string) (coredb.PushNotificationToken, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"pushToken": validate.WithTag(pushToken, "required,min=1,max=255"),
 	}); err != nil {
-		return db.PushNotificationToken{}, err
+		return coredb.PushNotificationToken{}, err
 	}
 
 	userID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
-		return db.PushNotificationToken{}, err
+		return coredb.PushNotificationToken{}, err
 	}
 
 	// Does the token already exist?
@@ -712,23 +688,23 @@ func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string)
 		}
 
 		// Otherwise, the token belongs to another user. Return an error.
-		return db.PushNotificationToken{}, persist.ErrPushTokenBelongsToAnotherUser{PushToken: pushToken}
+		return coredb.PushNotificationToken{}, persist.ErrPushTokenBelongsToAnotherUser{PushToken: pushToken}
 	}
 
 	// ErrNoRows is expected and means we can continue with creating the token. If we see any other
 	// error, return it.
 	if err != pgx.ErrNoRows {
-		return db.PushNotificationToken{}, err
+		return coredb.PushNotificationToken{}, err
 	}
 
-	token, err = api.queries.CreatePushTokenForUser(ctx, db.CreatePushTokenForUserParams{
+	token, err = api.queries.CreatePushTokenForUser(ctx, coredb.CreatePushTokenForUserParams{
 		ID:        persist.GenerateID(),
 		UserID:    userID,
 		PushToken: pushToken,
 	})
 
 	if err != nil {
-		return db.PushNotificationToken{}, err
+		return coredb.PushNotificationToken{}, err
 	}
 
 	return token, nil
@@ -780,7 +756,7 @@ func (api UserAPI) BlockUser(ctx context.Context, userID persist.DBID) error {
 	}); err != nil {
 		return err
 	}
-	_, err = api.queries.BlockUser(ctx, db.BlockUserParams{
+	_, err = api.queries.BlockUser(ctx, coredb.BlockUserParams{
 		ID:            persist.GenerateID(),
 		UserID:        viewerID,
 		BlockedUserID: userID,
@@ -802,7 +778,70 @@ func (api UserAPI) UnblockUser(ctx context.Context, userID persist.DBID) error {
 	if err != nil {
 		return err
 	}
-	return api.queries.UnblockUser(ctx, db.UnblockUserParams{UserID: viewerID, BlockedUserID: userID})
+	return api.queries.UnblockUser(ctx, coredb.UnblockUserParams{UserID: viewerID, BlockedUserID: userID})
+}
+
+func createUser(ctx context.Context, repos *postgres.Repositories, queries *coredb.Queries, taskClient *task.Client, authenticator auth.Authenticator, username string, email *persist.Email) (user coredb.User, err error) {
+	createUserParams, err := createNewUserParamsWithAuth(ctx, authenticator, username, email)
+	if err != nil {
+		return coredb.User{}, err
+	}
+
+	tx, err := repos.BeginTx(ctx)
+	if err != nil {
+		return coredb.User{}, err
+	}
+	txQueries := queries.WithTx(tx)
+	defer tx.Rollback(ctx)
+
+	user, err = userService.CreateUser(ctx, createUserParams, repos.UserRepository, queries)
+	if err != nil {
+		return coredb.User{}, err
+	}
+
+	gc := util.MustGetGinContext(ctx)
+	err = txQueries.AddPiiAccountCreationInfo(ctx, coredb.AddPiiAccountCreationInfoParams{
+		UserID:    user.ID,
+		IpAddress: gc.ClientIP(),
+	})
+	if err != nil {
+		logger.For(ctx).Warnf("failed to get IP address for userID %s: %s\n", user.ID, err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return coredb.User{}, err
+	}
+
+	if createUserParams.EmailStatus == persist.EmailVerificationStatusUnverified && email != nil {
+		if err := emails.RequestVerificationEmail(ctx, user.ID); err != nil {
+			// Just the log the error since the user can verify their email later
+			logger.For(ctx).Warnf("failed to send verification email: %s", err)
+		}
+	}
+
+	if createUserParams.EmailStatus == persist.EmailVerificationStatusVerified {
+		if err := taskClient.CreateTaskForAddingEmailToMailingList(ctx, task.AddEmailToMailingListMessage{UserID: user.ID}); err != nil {
+			// Report error to Sentry since there's not another way to subscribe the user to the mailing list
+			sentryutil.ReportError(ctx, err)
+			logger.For(ctx).Warnf("failed to send mailing list subscription task: %s", err)
+		}
+	}
+
+	// Send event
+	err = event.Dispatch(ctx, coredb.Event{
+		ActorID:        persist.DBIDToNullStr(user.ID),
+		Action:         persist.ActionUserCreated,
+		ResourceTypeID: persist.ResourceTypeUser,
+		UserID:         user.ID,
+		SubjectID:      user.ID,
+		Data:           persist.EventData{},
+	})
+	if err != nil {
+		logger.For(ctx).Errorf("failed to dispatch event: %s", err)
+	}
+
+	return user, nil
 }
 
 func createNewUserParamsWithAuth(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email) (persist.CreateUserInput, error) {

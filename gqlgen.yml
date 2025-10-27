@@ -46,6 +46,9 @@ models:
   Address:
     model:
       - github.com/mutuals/go-mutuals/service/persist.Address
+  JSON:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.JSON
   PubKey:
     model:
       - github.com/mutuals/go-mutuals/service/persist.PubKey

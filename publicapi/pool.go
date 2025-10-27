@@ -21,7 +21,6 @@ type PoolAPI struct {
 }
 
 func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
-
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID": validate.WithTag(poolID, "required"),
 	}); err != nil {
@@ -29,7 +28,6 @@ func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (
 	}
 
 	userID, err := getAuthenticatedUserID(ctx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +44,6 @@ func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (
 }
 
 func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([]db.Pool, error) {
-	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"userID": validate.WithTag(userID, "required"),
 	}); err != nil {
@@ -62,9 +59,8 @@ func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([
 }
 
 func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
-	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"poolID": {poolID, "required"},
+		"poolID": validate.WithTag(poolID, "required"),
 	}); err != nil {
 		return nil, err
 	}
@@ -80,7 +76,7 @@ func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*db.Po
 func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([]*db.Pool, []error) {
 	poolThunk := func(poolID persist.DBID) func() (db.Pool, error) {
 		if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-			"poolIDs": {poolID, "required"},
+			"poolIDs": validate.WithTag(poolID, "required"),
 		}); err != nil {
 			return func() (db.Pool, error) { return db.Pool{}, err }
 		}
@@ -88,13 +84,7 @@ func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([
 		return api.loaders.GetPoolByIdBatch.LoadThunk(poolID)
 	}
 
-	// A "thunk" will add this request to a batch, and then return a function that will block to fetch
-	// data when called. By creating all of the thunks first (without invoking the functions they return),
-	// we're setting up a batch that will eventually fetch all of these requests at the same time when
-	// their functions are invoked. "LoadAll" would accomplish something similar, but wouldn't let us
-	// validate each poolID parameter first.
 	thunks := make([]func() (db.Pool, error), len(poolIDs))
-
 	for i, poolID := range poolIDs {
 		thunks[i] = poolThunk(poolID)
 	}
@@ -114,29 +104,23 @@ func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([
 	return pools, errors
 }
 
-func (api PoolAPI) UpdatePoolInfo(ctx context.Context, poolID persist.DBID, name, description, logoUrl *string) error {
+// CreatePool creates a new pool with optional claims
+func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) (db.Pool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"poolID":      {poolID, "required"},
-		"name":        {name, "max=200"},
-		"description": {description, "max=600"},
-		"logoUrl":     {logoUrl, "max=200"},
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (db.Pool, error) {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"id":          validate.WithTag(id, "required"),
 		"name":        validate.WithTag(input.Name, "max=200"),
 		"description": validate.WithTag(input.Description, "max=600"),
+		"slug":        validate.WithTag(input.Slug, "max=100"),
 	}); err != nil {
 		return db.Pool{}, err
 	}
 
+	userID, err := getAuthenticatedUserID(ctx)
+	if err != nil {
+		return db.Pool{}, err
+	}
+
+	// Begin transaction
 	tx, err := api.repos.BeginTx(ctx)
 	if err != nil {
 		return db.Pool{}, err
@@ -145,38 +129,45 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 
 	q := api.queries.WithTx(tx)
 
-	pool, err := q.UpsertPool(ctx, db.UpsertPoolParams{
-		ID:          id,
+	poolID := persist.GenerateID()
+
+	private := false
+	if input.Private != nil {
+		private = *input.Private
+	}
+
+	pool, err := q.CreatePool(ctx, db.CreatePoolParams{
+		ID:          poolID,
 		Name:        *input.Name,
 		Description: *input.Description,
-		Logo:        "", // TODO *input.Logo
-		OwnerID:     "", // TODO *input.OwnerID
-		ContractID:  "", //  TODO *input.ContractID
+		Image:       *input.Image,
+		Slug:        *input.Slug,
+		Private:     private,
+		OwnerID:     userID,
 	})
-
 	if err != nil {
 		return db.Pool{}, err
 	}
 
-	if len(input.AddClaims) > 0 {
-		/*		allocationParams := processClaims(&id, input.AddClaims)
-
-				_, err = q.UpsertClaims(ctx, allocationParams)
-				if err != nil {
-					return db.Pool{}, err
-				}
-		*/
+	// Create claims if provided
+	if input.AddClaims != nil && len(input.AddClaims) > 0 {
+		/*	for _, claimInput := range input.AddClaims {
+			_, err := q.CreateClaims(ctx, db.CreateClaimsParams{
+				ID:               persist.GenerateID(),
+				PoolID:           poolID,
+				RecipientAddress: claimInput.RecipientAddress.String(),
+				StateID:          claimInput.StateId,
+				StrategyID:       claimInput.StrategyId,
+				Data:             claimInput.Data,
+				ParentID:         "", // TODO: Handle nested claims if needed
+			})
+			if err != nil {
+				return db.Pool{}, err
+			}
+		}*/
 	}
-	if len(input.RemoveClaims) > 0 {
-		/*		allocationParams := processClaims(&id, input.AddClaims)
 
-				_, err = q.DeleteClaims(ctx, allocationParams)
-				if err != nil {
-					return db.Pool{}, err
-				}
-		*/
-	}
-
+	// Commit transaction
 	err = tx.Commit(ctx)
 	if err != nil {
 		return db.Pool{}, err
@@ -185,49 +176,189 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 	return pool, nil
 }
 
-/*func processClaims(poolID *persist.DBID, a []*model.PoolAllocationInput) (allocationParams db.UpsertClaimsParams) {
-	allocationParams.PoolID = *poolID
-
-	var traverse func(node *model.PoolAllocationInput, path string)
-	traverse = func(node *model.PoolAllocationInput, parentPath string) {
-		id := node.ID
-		if id == nil {
-			id = util.ToPointer(persist.GenerateID())
-		}
-		// Determine the label: use RecipientAddress if not empty, otherwise use id
-		label := node.RecipientAddress.String()
-		if label == "" {
-			label = id.String()
-		}
-
-		// Construct the current path
-		path := parentPath
-		if parentPath == "" {
-			path = label
-		} else {
-			path = parentPath + "." + label
-		}
-
-		allocationParams.ID = append(allocationParams.ID, id.String())
-		allocationParams.RecipientAddress = append(allocationParams.RecipientAddress, node.RecipientAddress.String())
-		allocationParams.StrategyID = append(allocationParams.StrategyID, "") // TODO
-		allocationParams.StateID = append(allocationParams.StrategyID, "")    // TODO
-		allocationParams.Deleted = append(allocationParams.Deleted, false)    // TODO
-		allocationParams.Value = append(allocationParams.Value, persist.MustHexString(node.Value.String()).String())
-		allocationParams.Label = append(allocationParams.Label, label)
-		allocationParams.Path = append(allocationParams.Path, path)
-
-		// Recursively process children
-		for _, child := range node.Children {
-			traverse(child, path)
-		}
+// UpdatePool updates an existing pool and manages claims
+func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (db.Pool, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"id":          validate.WithTag(id, "required"),
+		"name":        validate.WithTag(input.Name, "max=200"),
+		"description": validate.WithTag(input.Description, "max=600"),
+		"slug":        validate.WithTag(input.Slug, "max=100"),
+	}); err != nil {
+		return db.Pool{}, err
 	}
 
-	// Process each top-level node
-	for _, allocation := range a {
-		traverse(allocation, "")
+	userID, err := getAuthenticatedUserID(ctx)
+	if err != nil {
+		return db.Pool{}, err
 	}
 
-	return allocationParams
+	// Verify user owns the pool
+	pool, err := api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
+		UserID: userID,
+		PoolID: id,
+	})
+	if err != nil {
+		return db.Pool{}, err
+	}
+
+	// Begin transaction
+	tx, err := api.repos.BeginTx(ctx)
+	if err != nil {
+		return db.Pool{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	q := api.queries.WithTx(tx)
+
+	// Update pool basic info
+	private := pool.Private
+	if input.Private != nil {
+		private = *input.Private
+	}
+
+	name := pool.Name
+	if input.Name != nil {
+		name = *input.Name
+	}
+
+	description := pool.Description
+	if input.Description != nil {
+		description = *input.Description
+	}
+
+	slug := pool.Slug
+	if input.Slug != nil {
+		slug = *input.Slug
+	}
+
+	image := pool.Image
+	if input.Image != nil {
+		image = *input.Image
+	}
+
+	donationBps := int32(0)
+	if input.DonationBps != nil {
+		donationBps = int32(*input.DonationBps)
+	}
+
+	updatedPool, err := q.UpdatePool(ctx, db.UpdatePoolParams{
+		ID:          id,
+		Name:        name,
+		Description: description,
+		Image:       image,
+		Slug:        slug,
+		Private:     private,
+		DonationBps: donationBps,
+		OwnerID:     userID,
+	})
+	if err != nil {
+		return db.Pool{}, err
+	}
+
+	// Handle add claims
+	if input.AddClaims != nil && len(input.AddClaims) > 0 {
+		/*for _, claimInput := range input.AddClaims {
+				_, err := q.CreateClaims(ctx, db.CreateClaimsParams{
+					ID:               persist.GenerateID(),
+					PoolID:           id,
+					RecipientAddress: claimInput.RecipientAddress.String(),
+					StateID:          claimInput.StateId,
+					StrategyID:       claimInput.StrategyId,
+					Data:             claimInput.Data,
+					ParentID:         "", // TODO: Handle nested claims
+				})
+				if err != nil {
+					return db.Pool{}, err
+				}
+		}*/
+	}
+
+	// Handle update claims
+	if input.UpdateClaims != nil && len(input.UpdateClaims) > 0 {
+		/*		for _, claimInput := range input.UpdateClaims {
+					err := q.UpdateClaims(ctx, db.UpdateClaimsParams{
+						ID:               claimInput.ClaimId,
+						RecipientAddress: claimInput.RecipientAddress.String(),
+						StateID:          claimInput.StateId,
+						StrategyID:       claimInput.StrategyId,
+						Data:             claimInput.Data,
+					})
+					if err != nil {
+						return db.Pool{}, err
+					}
+				}
+		*/
+	}
+
+	if input.RemoveClaims != nil && len(input.RemoveClaims) > 0 {
+		/*		for _, claimID := range input.RemoveClaims {
+					err := q.DeleteClaim(ctx, claimID)
+					if err != nil {
+						return db.Pool{}, err
+					}
+				}
+		*/
+	}
+
+	// Commit transaction
+	err = tx.Commit(ctx)
+	if err != nil {
+		return db.Pool{}, err
+	}
+
+	return updatedPool, nil
 }
-*/
+
+// DeletePool deletes a pool
+func (api PoolAPI) DeletePool(ctx context.Context, poolID persist.DBID) error {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"poolID": validate.WithTag(poolID, "required"),
+	}); err != nil {
+		return err
+	}
+
+	userID, err := getAuthenticatedUserID(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Verify user owns the pool
+	_, err = api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
+		UserID: userID,
+		PoolID: poolID,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Begin transaction
+	tx, err := api.repos.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	/*q := api.queries.WithTx(tx)
+
+	// Delete all claims associated with the pool
+	err = q.DeleteClaimsByPoolID(ctx, poolID)
+	if err != nil {
+		return err
+	}
+
+	// Delete the pool
+	err = q.DeletePool(ctx, poolID)
+	if err != nil {
+		return err
+	}
+	*/
+	// Commit transaction
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

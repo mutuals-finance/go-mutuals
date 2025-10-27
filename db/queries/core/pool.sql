@@ -1,51 +1,64 @@
--- name: UpsertPool :one
-INSERT INTO pools (id, name, description, logo, slug, owner_id, contract_id, updated_at, created_at)
-VALUES (@id, @name, @description, @description, @logo, @owner_id, @contract_id, NOW(), NOW())
-ON CONFLICT (id)
-WHERE deleted = FALSE
-    DO
-UPDATE
-SET name        = EXCLUDED.name,
-    description = EXCLUDED.description,
-    logo        = EXCLUDED.logo,
-    slug        = EXCLUDED.slug,
-    owner_id    = EXCLUDED.owner_id,
-    contract_id = EXCLUDED.contract_id,
-    updated_at  = NOW()
+-- name: CreatePool :one
+INSERT INTO pools (id, name, description, image, slug, owner_id, contract_id, donation_bps, private, deleted,
+                   updated_at, created_at)
+VALUES (@id, @name, @description, @image, @slug, @owner_id, @contract_id, @donation_bps, @private, FALSE, NOW(), NOW())
 RETURNING *;
 
--- name: UpsertClaims :many
+-- name: UpdatePool :one
+UPDATE pools
+SET name         = @name,
+    description  = @description,
+    image        = @image,
+    slug         = @slug,
+    owner_id     = @owner_id,
+    contract_id  = @contract_id,
+    donation_bps = @donation_bps,
+    private      = @private,
+    updated_at   = NOW()
+WHERE id = @id
+  AND deleted = FALSE
+RETURNING *;
+
+-- name: CreateClaims :many
 WITH updates AS (SELECT UNNEST(@id::text[])                AS id,
                         @pool_id                           AS pool_id,
                         UNNEST(@recipient_address::text[]) AS recipient_address,
-                        UNNEST(@value::text[])             AS value,
+                        UNNEST(@state_id::text[])          AS state_id,
+                        UNNEST(@strategy_id::text[])       AS strategy_id,
+                        UNNEST(@label::text[])             AS label,
+                        UNNEST(@path::ltree[])             AS path)
+INSERT
+INTO claims (id, pool_id, recipient_address, state_id, strategy_id, label, path, deleted, updated_at, created_at)
+SELECT id,
+       pool_id,
+       recipient_address,
+       state_id,
+       strategy_id,
+       label,
+       path,
+       FALSE,
+       NOW(),
+       NOW()
+FROM updates
+RETURNING *;
+
+-- name: UpdateClaims :many
+WITH updates AS (SELECT UNNEST(@id::text[])                AS id,
+                        UNNEST(@recipient_address::text[]) AS recipient_address,
                         UNNEST(@state_id::text[])          AS state_id,
                         UNNEST(@strategy_id::text[])       AS strategy_id,
                         UNNEST(@label::text[])             AS label,
                         UNNEST(@path::ltree[])             AS path,
                         UNNEST(@deleted::boolean[])        AS deleted)
-INSERT
-INTO claims (id, pool_id, recipient_address, value, state_id, strategy_id, label, path, deleted)
-SELECT id,
-       pool_id,
-       recipient_address,
-       value,
-       state_id,
-       strategy_id,
-       label,
-       path,
-       deleted
-FROM updates
-ON CONFLICT (id)
-WHERE deleted = FALSE
-    DO
-UPDATE
-SET recipient_address = EXCLUDED.recipient_address,
-    value             = EXCLUDED.value,
-    state_id          = EXCLUDED.state_id,
-    strategy_id       = EXCLUDED.strategy_id,
-    label             = EXCLUDED.label,
-    path              = EXCLUDED.path,
-    deleted           = EXCLUDED.deleted,
+UPDATE claims
+SET recipient_address = updates.recipient_address,
+    state_id          = updates.state_id,
+    strategy_id       = updates.strategy_id,
+    label             = updates.label,
+    path              = updates.path,
+    deleted           = updates.deleted,
     updated_at        = NOW()
-RETURNING *;
+FROM updates
+WHERE claims.id = updates.id
+  AND claims.deleted = FALSE
+RETURNING claims.*;

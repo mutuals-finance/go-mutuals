@@ -81,20 +81,20 @@ type MergeUsersInput struct {
 }
 
 // CreateUser creates a new user
-func CreateUser(ctx context.Context, pUser persist.CreateUserInput, userRepo *postgres.UserRepository, queries *coredb.Queries) (userID persist.DBID, err error) {
+func CreateUser(ctx context.Context, pUser persist.CreateUserInput, userRepo *postgres.UserRepository, queries *coredb.Queries) (user coredb.User, err error) {
 	gc := util.MustGetGinContext(ctx)
 
 	if pUser.Username != "" {
 		user, err := queries.GetUserByUsername(ctx, strings.ToLower(pUser.Username))
 		if err == nil && user.ID != "" {
-			return "", persist.ErrUsernameNotAvailable{Username: pUser.Username}
+			return coredb.User{}, persist.ErrUsernameNotAvailable{Username: pUser.Username}
 		}
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			return "", err
+			return coredb.User{}, err
 		}
 	}
 
-	userID, err = queries.InsertUser(ctx, coredb.InsertUserParams{
+	user, err = queries.CreateUser(ctx, coredb.CreateUserParams{
 		ID:                   persist.GenerateID(),
 		Username:             util.ToNullString(pUser.Username, true),
 		UsernameIdempotent:   util.ToNullString(strings.ToLower(pUser.Username), true),
@@ -118,42 +118,42 @@ func CreateUser(ctx context.Context, pUser persist.CreateUserInput, userRepo *po
 	if pUser.ChainAddress.Address() != "" {
 		err := queries.InsertWallet(ctx, coredb.InsertWalletParams{
 			ID:      persist.GenerateID(),
-			UserID:  userID,
+			UserID:  user.ID,
 			Name:    pUser.Username,
 			Address: pUser.ChainAddress.Address(),
 		})
 		if err != nil {
-			return "", err
+			return coredb.User{}, err
 		}
 	}
 
 	if pUser.Email != nil {
 		if pUser.EmailStatus == persist.EmailVerificationStatusVerified {
 			err := queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
-				UserID:       userID,
+				UserID:       user.ID,
 				EmailAddress: *pUser.Email,
 			})
 			if err != nil {
-				logger.For(ctx).Errorf("failed to insert verified email address when creating new user with userID=%s\n", userID)
+				logger.For(ctx).Errorf("failed to insert verified email address when creating new user with userID=%s\n", user.ID)
 			}
 		} else if pUser.EmailStatus == persist.EmailVerificationStatusUnverified {
 			err := queries.UpdateUserUnverifiedEmail(ctx, coredb.UpdateUserUnverifiedEmailParams{
-				UserID:       userID,
+				UserID:       user.ID,
 				EmailAddress: *pUser.Email,
 			})
 			if err != nil {
-				logger.For(ctx).Errorf("failed to insert unverified email address when creating new user with userID=%s\n", userID)
+				logger.For(ctx).Errorf("failed to insert unverified email address when creating new user with userID=%s\n", user.ID)
 			}
 		}
 
 	}
 
-	_, _, err = auth.StartSession(gc, queries, userID)
+	_, _, err = auth.StartSession(gc, queries, user.ID)
 	if err != nil {
-		return "", err
+		return coredb.User{}, err
 	}
 
-	return userID, nil
+	return user, nil
 }
 
 // RemoveWalletsFromUser removes wallets from a user in the DB, and returns the IDs of the wallets that were removed.

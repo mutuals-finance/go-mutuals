@@ -13,6 +13,7 @@ import (
 	"github.com/mutuals/go-mutuals/publicapi"
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 )
 
 // Parent is the resolver for the parent field.
@@ -174,7 +175,6 @@ func (r *mutationResolver) UserDelete(ctx context.Context, token string) (*model
 
 // TokenCreate is the resolver for the tokenCreate field.
 func (r *mutationResolver) TokenCreate(ctx context.Context, audience *string, authMechanism model.AuthMechanism) (*model.CreateToken, error) {
-	// panic(fmt.Errorf("not implemented: TokenCreate - tokenCreate"))
 	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
 	if err != nil {
 		return nil, err
@@ -192,6 +192,28 @@ func (r *mutationResolver) TokenCreate(ctx context.Context, audience *string, au
 	}
 
 	return output, nil
+}
+
+// UserLoginOrRegister is the resolver for the userLoginOrRegister field.
+func (r *mutationResolver) UserLoginOrRegister(ctx context.Context, authMechanism model.AuthMechanism, input model.UserLoginOrRegisterInput) (*model.UserLoginOrRegister, error) {
+	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
+	if err != nil {
+		return nil, err
+	}
+
+	user, requiresConfirmation, token, refreshToken, err := publicapi.For(ctx).User.LoginOrRegisterUser(ctx, authenticator)
+	if err != nil {
+		return nil, err
+	}
+
+	output := model.UserLoginOrRegister{
+		RequiresConfirmation: util.ToPointer(requiresConfirmation),
+		Token:                token,
+		RefreshToken:         refreshToken,
+		User:                 userToModel(ctx, user),
+	}
+
+	return &output, nil
 }
 
 // TokenRefresh is the resolver for the tokenRefresh field.
@@ -343,55 +365,48 @@ func (r *mutationResolver) WalletDelete(ctx context.Context, id persist.DBID) (*
 		return out, nil*/
 }
 
-// ClaimCreate is the resolver for the claimCreate field.
-func (r *mutationResolver) ClaimCreate(ctx context.Context, input model.ClaimCreateInput) (*model.ClaimCreate, error) {
-	panic(fmt.Errorf("not implemented: ClaimCreate - claimCreate"))
+// PoolClaimCreate is the resolver for the poolClaimCreate field.
+func (r *mutationResolver) PoolClaimCreate(ctx context.Context, poolID persist.DBID, input model.ClaimCreateInput) (*model.ClaimCreate, error) {
+	panic(fmt.Errorf("not implemented: PoolClaimCreate - poolClaimCreate"))
 }
 
-// ClaimUpdate is the resolver for the claimUpdate field.
-func (r *mutationResolver) ClaimUpdate(ctx context.Context, id persist.DBID, input model.ClaimUpdateInput) (*model.ClaimUpdate, error) {
-	panic(fmt.Errorf("not implemented: ClaimUpdate - claimUpdate"))
+// PoolClaimUpdate is the resolver for the poolClaimUpdate field.
+func (r *mutationResolver) PoolClaimUpdate(ctx context.Context, poolID persist.DBID, input model.ClaimUpdateInput) (*model.ClaimUpdate, error) {
+	panic(fmt.Errorf("not implemented: PoolClaimUpdate - poolClaimUpdate"))
 }
 
-// ClaimDelete is the resolver for the claimDelete field.
-func (r *mutationResolver) ClaimDelete(ctx context.Context, id persist.DBID) (*model.ClaimDelete, error) {
-	panic(fmt.Errorf("not implemented: ClaimDelete - claimDelete"))
+// PoolClaimDelete is the resolver for the poolClaimDelete field.
+func (r *mutationResolver) PoolClaimDelete(ctx context.Context, poolID persist.DBID, claimID persist.DBID) (*model.ClaimDelete, error) {
+	panic(fmt.Errorf("not implemented: PoolClaimDelete - poolClaimDelete"))
 }
 
-// ClaimBulkCreate is the resolver for the claimBulkCreate field.
-func (r *mutationResolver) ClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, claims []*model.ClaimBulkCreateInput) (*model.ClaimBulkCreate, error) {
-	panic(fmt.Errorf("not implemented: ClaimBulkCreate - claimBulkCreate"))
+// PoolClaimBulkCreate is the resolver for the poolClaimBulkCreate field.
+func (r *mutationResolver) PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) (*model.ClaimBulkCreate, error) {
+	panic(fmt.Errorf("not implemented: PoolClaimBulkCreate - poolClaimBulkCreate"))
 }
 
-// ClaimBulkUpdate is the resolver for the claimBulkUpdate field.
-func (r *mutationResolver) ClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, ids []persist.DBID, claims []*model.ClaimBulkUpdateInput) (*model.ClaimBulkCreate, error) {
-	panic(fmt.Errorf("not implemented: ClaimBulkUpdate - claimBulkUpdate"))
+// PoolClaimBulkUpdate is the resolver for the poolClaimBulkUpdate field.
+func (r *mutationResolver) PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) (*model.ClaimBulkUpdate, error) {
+	panic(fmt.Errorf("not implemented: PoolClaimBulkUpdate - poolClaimBulkUpdate"))
 }
 
-// ClaimBulkDelete is the resolver for the claimBulkDelete field.
-func (r *mutationResolver) ClaimBulkDelete(ctx context.Context, ids []persist.DBID) (*model.ClaimBulkDelete, error) {
-	panic(fmt.Errorf("not implemented: ClaimBulkDelete - claimBulkDelete"))
+// PoolClaimBulkDelete is the resolver for the poolClaimBulkDelete field.
+func (r *mutationResolver) PoolClaimBulkDelete(ctx context.Context, poolID persist.DBID, claimIds []persist.DBID) (*model.ClaimBulkDelete, error) {
+	panic(fmt.Errorf("not implemented: PoolClaimBulkDelete - poolClaimBulkDelete"))
 }
 
 // PoolCreate is the resolver for the poolCreate field.
 func (r *mutationResolver) PoolCreate(ctx context.Context, input model.PoolCreateInput) (*model.PoolCreate, error) {
-	panic(fmt.Errorf("not implemented: PoolCreate - poolCreate"))
-	/*	pool, err := publicapi.For(ctx).Pool.UpsertPool(ctx, model.PoolCreateInput{
-			PoolID:      util.ToPointer(persist.GenerateID()),
-			Name:        input.Name,
-			Description: input.Description,
-			// TODO Logo: input.Logo
-			Allocations: nil, // TODO
-		})
-		if err != nil {
-			return nil, err
-		}
+	pool, err := publicapi.For(ctx).Pool.CreatePool(ctx, input)
+	if err != nil {
+		return nil, err
+	}
 
-		output := &model.PoolCreate{
-			Pool: poolToModel(ctx, pool),
-		}
+	output := &model.PoolCreate{
+		Pool: poolToModel(ctx, pool),
+	}
 
-		return output, nil*/
+	return output, nil
 }
 
 // PoolUpdate is the resolver for the poolUpdate field.

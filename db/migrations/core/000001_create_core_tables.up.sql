@@ -61,34 +61,38 @@ ALTER TABLE users
 
 CREATE TABLE IF NOT EXISTS pools
 (
-    id                      character varying(255) PRIMARY KEY,
-    name                    character varying        NOT NULL DEFAULT ''::character varying,
+    id                      character varying(255)   PRIMARY KEY,
+    version                 integer                  NOT NULL DEFAULT 0,
+    private                 boolean                  NOT NULL DEFAULT FALSE,
+    name                    character varying(255)   NOT NULL DEFAULT ''::character varying,
     fts_name                tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
-    description             character varying        NOT NULL DEFAULT ''::character varying,
+    description             character varying(5000)  NOT NULL DEFAULT ''::character varying,
     fts_description_english tsvector GENERATED ALWAYS AS (TO_TSVECTOR('english'::regconfig, (description)::text)) STORED,
-    logo                    character varying        NOT NULL DEFAULT ''::character varying,
-    slug                    character varying        NOT NULL DEFAULT ''::character varying,
-    owner_id                character varying(255)   NOT NULL REFERENCES users,
-    contract_id             character varying                 DEFAULT NULL,
+    donation_bps            integer                  NOT NULL DEFAULT 0,
+    image                   character varying(500)   NOT NULL DEFAULT ''::character varying,
+    slug                    character varying(255)   NOT NULL DEFAULT ''::character varying,
+    owner_id                character varying(255)   NOT NULL REFERENCES users ON DELETE CASCADE,
+    contract_id             character varying(255)   DEFAULT NULL,
     deleted                 boolean                  NOT NULL DEFAULT FALSE,
     updated_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX pools_fts_description_english_idx ON pools USING gin (fts_description_english);
-
 CREATE INDEX pools_fts_name_idx ON pools USING gin (fts_name);
-
--- CREATE INDEX pools_fts_address_idx ON pools USING gin (fts_address);
+CREATE INDEX pools_owner_id_idx ON pools (owner_id) WHERE deleted = FALSE;
+CREATE INDEX pools_private_idx ON pools (private) WHERE deleted = FALSE;
+CREATE INDEX pools_created_at_idx ON pools (created_at) WHERE deleted = FALSE;
+CREATE UNIQUE INDEX pools_slug_unique_idx ON pools (slug) WHERE deleted = FALSE;
 
 CREATE TABLE IF NOT EXISTS claims
 (
     id                character varying(255) PRIMARY KEY,
     pool_id           character varying(255)   NOT NULL REFERENCES pools ON DELETE CASCADE,
     recipient_address character varying(255),
-    value             character varying(255)   NOT NULL,
     state_id          character varying(255)   NOT NULL,
     strategy_id       character varying(255)   NOT NULL,
+    data              jsonb                    NULL,
     label             character varying(255)   NOT NULL,
     path              ltree                    NULL,
     deleted           boolean                  NOT NULL DEFAULT FALSE,
@@ -255,17 +259,17 @@ CREATE VIEW scrubbed_pii.for_users AS
 WITH scrubbed_unverified_email_address AS (SELECT u.id    AS user_id,
                                                   CASE
                                                       WHEN p.pii_unverified_email_address IS NOT NULL
-                                                          THEN u.username_idempotent || '-unverified@dummy-email.gallery.so'
+                                                          THEN u.username_idempotent || '-unverified@dummy-email.mutuals.finance'
                                                       END AS scrubbed_address
                                            FROM users u,
                                                 pii.for_users p
                                            WHERE u.id = p.user_id),
 
-     -- <username>@dummy-email.mutuals.com for users who have verified email addresses, null otherwise
+     -- <username>@dummy-email.mutuals.finance for users who have verified email addresses, null otherwise
      scrubbed_verified_email_address AS (SELECT u.id    AS user_id,
                                                 CASE
                                                     WHEN p.pii_verified_email_address IS NOT NULL
-                                                        THEN u.username_idempotent || '@dummy-email.mutuals.com'
+                                                        THEN u.username_idempotent || '@dummy-email.mutuals.finance'
                                                     END AS scrubbed_address
                                          FROM users u,
                                               pii.for_users p

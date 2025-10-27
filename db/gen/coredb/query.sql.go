@@ -577,7 +577,7 @@ func (q *Queries) GetCheckablePushTickets(ctx context.Context, limit int32) ([]P
 
 const getClaimById = `-- name: GetClaimById :one
 
-SELECT id, pool_id, recipient_address, value, state_id, strategy_id, label, path, deleted, updated_at, created_at
+SELECT id, pool_id, recipient_address, state_id, strategy_id, data, label, path, deleted, updated_at, created_at
 FROM claims
 WHERE id = $1
   AND deleted = FALSE
@@ -593,9 +593,9 @@ func (q *Queries) GetClaimById(ctx context.Context, id persist.DBID) (Claim, err
 		&i.ID,
 		&i.PoolID,
 		&i.RecipientAddress,
-		&i.Value,
 		&i.StateID,
 		&i.StrategyID,
+		&i.Data,
 		&i.Label,
 		&i.Path,
 		&i.Deleted,
@@ -873,7 +873,7 @@ func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, a
 
 const getPoolById = `-- name: GetPoolById :one
 
-SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at
+SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
 FROM pools
 WHERE id = $1
   AND deleted = FALSE
@@ -887,9 +887,12 @@ func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error
 	var i Pool
 	err := row.Scan(
 		&i.ID,
+		&i.Version,
+		&i.Private,
 		&i.Name,
 		&i.Description,
-		&i.Logo,
+		&i.DonationBps,
+		&i.Image,
 		&i.Slug,
 		&i.OwnerID,
 		&i.ContractID,
@@ -901,7 +904,7 @@ func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error
 }
 
 const getPoolByUserID = `-- name: GetPoolByUserID :one
-SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
+SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
 FROM users u
          INNER JOIN user_accounts ua ON u.id = ua.user_id
          INNER JOIN claims c ON c.recipient_address = ua.address
@@ -924,9 +927,12 @@ func (q *Queries) GetPoolByUserID(ctx context.Context, arg GetPoolByUserIDParams
 	var i Pool
 	err := row.Scan(
 		&i.ID,
+		&i.Version,
+		&i.Private,
 		&i.Name,
 		&i.Description,
-		&i.Logo,
+		&i.DonationBps,
+		&i.Image,
 		&i.Slug,
 		&i.OwnerID,
 		&i.ContractID,

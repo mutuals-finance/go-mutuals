@@ -47,6 +47,72 @@ type ErrNotFound struct{}
 
 func (e ErrNotFound) Error() string { return "entity not found" }
 
+// JSON represents arbitrary JSON data
+type JSON json.RawMessage
+
+// Scan implements the database/sql Scanner interface for the JSON type
+func (j *JSON) Scan(value interface{}) error {
+	if value == nil {
+		*j = JSON([]byte("null"))
+		return nil
+	}
+
+	switch v := value.(type) {
+	case []byte:
+		*j = JSON(v)
+		return nil
+	case string:
+		*j = JSON(v)
+		return nil
+	case pgtype.JSONB:
+		*j = JSON(v.Bytes)
+		return nil
+	default:
+		return fmt.Errorf("cannot scan type %T into JSON", value)
+	}
+}
+
+// Value implements the database/sql driver Valuer interface for the JSON type
+func (j JSON) Value() (driver.Value, error) {
+	if len(j) == 0 {
+		return nil, nil
+	}
+	return []byte(j), nil
+}
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (j *JSON) UnmarshalGQL(v interface{}) error {
+	switch v := v.(type) {
+	case string:
+		*j = JSON(v)
+		return nil
+	case []byte:
+		*j = JSON(v)
+		return nil
+	case json.RawMessage:
+		*j = JSON(v)
+		return nil
+	case map[string]interface{}, []interface{}:
+		bytes, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		*j = JSON(bytes)
+		return nil
+	default:
+		return fmt.Errorf("unable to unmarshal JSON from type %T", v)
+	}
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (j JSON) MarshalGQL(w io.Writer) {
+	if len(j) == 0 {
+		w.Write([]byte("null"))
+		return
+	}
+	w.Write(j)
+}
+
 // NullString represents a string that may be null in the DB
 type NullString string
 

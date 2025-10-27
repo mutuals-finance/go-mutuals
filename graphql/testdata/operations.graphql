@@ -168,6 +168,10 @@ mutation createPoolMutation($input: PoolCreateInput!) {
       dbid
       name
       description
+      claims {
+        id
+        dbid
+      }
     }
     errors {
       field
@@ -245,13 +249,13 @@ mutation clearNotificationsMutation {
   }
 }
 
-mutation createClaimMutation($input: ClaimCreateInput!) {
-  claimCreate(input: $input) {
+mutation createClaimMutation($poolId: DBID!, $input: ClaimCreateInput!) {
+  poolClaimCreate(poolId: $poolId, input: $input) {
     claim {
       id
       dbid
-      value
       label
+      path
     }
     errors {
       field
@@ -261,13 +265,13 @@ mutation createClaimMutation($input: ClaimCreateInput!) {
   }
 }
 
-mutation updateClaimMutation($id: DBID!, $input: ClaimUpdateInput!) {
-  claimUpdate(id: $id, input: $input) {
+mutation updateClaimMutation($poolId: DBID!, $input: ClaimUpdateInput!) {
+  poolClaimUpdate(poolId: $poolId, input: $input) {
     claim {
       id
       dbid
-      value
       label
+      path
     }
     errors {
       field
@@ -277,8 +281,8 @@ mutation updateClaimMutation($id: DBID!, $input: ClaimUpdateInput!) {
   }
 }
 
-mutation deleteClaimMutation($id: DBID!) {
-  claimDelete(id: $id) {
+mutation deleteClaimMutation($poolId: DBID!, $claimId: DBID!) {
+  poolClaimDelete(poolId: $poolId, claimId: $claimId) {
     claim {
       id
       dbid
@@ -291,15 +295,15 @@ mutation deleteClaimMutation($id: DBID!) {
   }
 }
 
-mutation bulkCreateClaimsMutation($claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
-  claimBulkCreate(claims: $claims, errorPolicy: $errorPolicy) {
+mutation bulkCreateClaimsMutation($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+  poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
     count
     results {
       claim {
         id
         dbid
-        value
         label
+        path
       }
       errors {
         path
@@ -309,6 +313,41 @@ mutation bulkCreateClaimsMutation($claims: [ClaimBulkCreateInput!]!, $errorPolic
     }
     errors {
       path
+      message
+      code
+    }
+  }
+}
+
+mutation bulkUpdateClaimsMutation($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+  poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
+    count
+    results {
+      claim {
+        id
+        dbid
+        label
+        path
+      }
+      errors {
+        path
+        message
+        code
+      }
+    }
+    errors {
+      path
+      message
+      code
+    }
+  }
+}
+
+mutation bulkDeleteClaimsMutation($poolId: DBID!, $claimIds: [DBID!]!) {
+  poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
+    count
+    errors {
+      field
       message
       code
     }

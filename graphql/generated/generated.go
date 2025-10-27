@@ -98,6 +98,7 @@ type ComplexityRoot struct {
 		Children      func(childComplexity int) int
 		ChildrenCount func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
+		Data          func(childComplexity int) int
 		Dbid          func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Label         func(childComplexity int) int
@@ -108,7 +109,6 @@ type ComplexityRoot struct {
 		State         func(childComplexity int) int
 		Strategy      func(childComplexity int) int
 		UpdatedAt     func(childComplexity int) int
-		Value         func(childComplexity int) int
 	}
 
 	ClaimBulkCreate struct {
@@ -334,18 +334,18 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ClaimBulkCreate                 func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, claims []*model.ClaimBulkCreateInput) int
-		ClaimBulkDelete                 func(childComplexity int, ids []persist.DBID) int
-		ClaimBulkUpdate                 func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, ids []persist.DBID, claims []*model.ClaimBulkUpdateInput) int
-		ClaimCreate                     func(childComplexity int, input model.ClaimCreateInput) int
-		ClaimDelete                     func(childComplexity int, id persist.DBID) int
-		ClaimUpdate                     func(childComplexity int, id persist.DBID, input model.ClaimUpdateInput) int
 		ClearNotifications              func(childComplexity int) int
 		ConfirmEmailChange              func(childComplexity int, token string) int
 		ConfirmUser                     func(childComplexity int, email string, token string) int
 		EmailNotificationSettingsUpdate func(childComplexity int, settings model.UpdateEmailNotificationSettingsInput) int
 		Nonce                           func(childComplexity int) int
 		NotificationSettingsUpdate      func(childComplexity int, settings model.NotificationSettingsInput) int
+		PoolClaimBulkCreate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) int
+		PoolClaimBulkDelete             func(childComplexity int, poolID persist.DBID, claimIds []persist.DBID) int
+		PoolClaimBulkUpdate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) int
+		PoolClaimCreate                 func(childComplexity int, poolID persist.DBID, input model.ClaimCreateInput) int
+		PoolClaimDelete                 func(childComplexity int, poolID persist.DBID, claimID persist.DBID) int
+		PoolClaimUpdate                 func(childComplexity int, poolID persist.DBID, input model.ClaimUpdateInput) int
 		PoolCreate                      func(childComplexity int, input model.PoolCreateInput) int
 		PoolDelete                      func(childComplexity int, id persist.DBID) int
 		PoolUpdate                      func(childComplexity int, id persist.DBID, input model.PoolUpdateInput) int
@@ -359,6 +359,7 @@ type ComplexityRoot struct {
 		TokenVerify                     func(childComplexity int, token string) int
 		TokensDeactivateAll             func(childComplexity int) int
 		UserDelete                      func(childComplexity int, token string) int
+		UserLoginOrRegister             func(childComplexity int, authMechanism model.AuthMechanism, input model.UserLoginOrRegisterInput) int
 		UserRegister                    func(childComplexity int, authMechanism model.AuthMechanism, input model.UserRegisterInput) int
 		UserRequestDeletion             func(childComplexity int, redirectURL string) int
 		UserUpdate                      func(childComplexity int, userID *persist.DBID, input model.UserInput) int
@@ -410,8 +411,9 @@ type ComplexityRoot struct {
 		CreatedAt   func(childComplexity int) int
 		Dbid        func(childComplexity int) int
 		Description func(childComplexity int) int
+		DonationBps func(childComplexity int) int
 		ID          func(childComplexity int) int
-		Logo        func(childComplexity int) int
+		Image       func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Owner       func(childComplexity int) int
 		Slug        func(childComplexity int) int
@@ -672,6 +674,14 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
+	UserLoginOrRegister struct {
+		Errors               func(childComplexity int) int
+		RefreshToken         func(childComplexity int) int
+		RequiresConfirmation func(childComplexity int) int
+		Token                func(childComplexity int) int
+		User                 func(childComplexity int) int
+	}
+
 	UserRegister struct {
 		Errors               func(childComplexity int) int
 		RequiresConfirmation func(childComplexity int) int
@@ -804,6 +814,7 @@ type MutationResolver interface {
 	UserRequestDeletion(ctx context.Context, redirectURL string) (*model.UserRequestDeletion, error)
 	UserDelete(ctx context.Context, token string) (*model.UserDelete, error)
 	TokenCreate(ctx context.Context, audience *string, authMechanism model.AuthMechanism) (*model.CreateToken, error)
+	UserLoginOrRegister(ctx context.Context, authMechanism model.AuthMechanism, input model.UserLoginOrRegisterInput) (*model.UserLoginOrRegister, error)
 	TokenRefresh(ctx context.Context, csrfToken *string, refreshToken *string) (*model.RefreshToken, error)
 	TokenVerify(ctx context.Context, token string) (*model.VerifyToken, error)
 	TokensDeactivateAll(ctx context.Context) (*model.DeactivateAllUserTokens, error)
@@ -819,12 +830,12 @@ type MutationResolver interface {
 	WalletCreate(ctx context.Context, input model.WalletCreateInput) (*model.WalletCreate, error)
 	WalletUpdate(ctx context.Context, id persist.DBID, input model.WalletUpdateInput) (*model.WalletUpdate, error)
 	WalletDelete(ctx context.Context, id persist.DBID) (*model.WalletDelete, error)
-	ClaimCreate(ctx context.Context, input model.ClaimCreateInput) (*model.ClaimCreate, error)
-	ClaimUpdate(ctx context.Context, id persist.DBID, input model.ClaimUpdateInput) (*model.ClaimUpdate, error)
-	ClaimDelete(ctx context.Context, id persist.DBID) (*model.ClaimDelete, error)
-	ClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, claims []*model.ClaimBulkCreateInput) (*model.ClaimBulkCreate, error)
-	ClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, ids []persist.DBID, claims []*model.ClaimBulkUpdateInput) (*model.ClaimBulkCreate, error)
-	ClaimBulkDelete(ctx context.Context, ids []persist.DBID) (*model.ClaimBulkDelete, error)
+	PoolClaimCreate(ctx context.Context, poolID persist.DBID, input model.ClaimCreateInput) (*model.ClaimCreate, error)
+	PoolClaimUpdate(ctx context.Context, poolID persist.DBID, input model.ClaimUpdateInput) (*model.ClaimUpdate, error)
+	PoolClaimDelete(ctx context.Context, poolID persist.DBID, claimID persist.DBID) (*model.ClaimDelete, error)
+	PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) (*model.ClaimBulkCreate, error)
+	PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) (*model.ClaimBulkUpdate, error)
+	PoolClaimBulkDelete(ctx context.Context, poolID persist.DBID, claimIds []persist.DBID) (*model.ClaimBulkDelete, error)
 	PoolCreate(ctx context.Context, input model.PoolCreateInput) (*model.PoolCreate, error)
 	PoolUpdate(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (*model.PoolUpdate, error)
 	PoolDelete(ctx context.Context, id persist.DBID) (*model.PoolDelete, error)
@@ -1001,6 +1012,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Claim.CreatedAt(childComplexity), true
 
+	case "Claim.data":
+		if e.complexity.Claim.Data == nil {
+			break
+		}
+
+		return e.complexity.Claim.Data(childComplexity), true
+
 	case "Claim.dbid":
 		if e.complexity.Claim.Dbid == nil {
 			break
@@ -1070,13 +1088,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Claim.UpdatedAt(childComplexity), true
-
-	case "Claim.value":
-		if e.complexity.Claim.Value == nil {
-			break
-		}
-
-		return e.complexity.Claim.Value(childComplexity), true
 
 	case "ClaimBulkCreate.count":
 		if e.complexity.ClaimBulkCreate.Count == nil {
@@ -1771,78 +1782,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.LogoutPayload.Viewer(childComplexity), true
 
-	case "Mutation.claimBulkCreate":
-		if e.complexity.Mutation.ClaimBulkCreate == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_claimBulkCreate_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClaimBulkCreate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["claims"].([]*model.ClaimBulkCreateInput)), true
-
-	case "Mutation.claimBulkDelete":
-		if e.complexity.Mutation.ClaimBulkDelete == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_claimBulkDelete_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClaimBulkDelete(childComplexity, args["ids"].([]persist.DBID)), true
-
-	case "Mutation.claimBulkUpdate":
-		if e.complexity.Mutation.ClaimBulkUpdate == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_claimBulkUpdate_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClaimBulkUpdate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["ids"].([]persist.DBID), args["claims"].([]*model.ClaimBulkUpdateInput)), true
-
-	case "Mutation.claimCreate":
-		if e.complexity.Mutation.ClaimCreate == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_claimCreate_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClaimCreate(childComplexity, args["input"].(model.ClaimCreateInput)), true
-
-	case "Mutation.claimDelete":
-		if e.complexity.Mutation.ClaimDelete == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_claimDelete_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClaimDelete(childComplexity, args["id"].(persist.DBID)), true
-
-	case "Mutation.claimUpdate":
-		if e.complexity.Mutation.ClaimUpdate == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_claimUpdate_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClaimUpdate(childComplexity, args["id"].(persist.DBID), args["input"].(model.ClaimUpdateInput)), true
-
 	case "Mutation.clearNotifications":
 		if e.complexity.Mutation.ClearNotifications == nil {
 			break
@@ -1904,6 +1843,78 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.NotificationSettingsUpdate(childComplexity, args["settings"].(model.NotificationSettingsInput)), true
+
+	case "Mutation.poolClaimBulkCreate":
+		if e.complexity.Mutation.PoolClaimBulkCreate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_poolClaimBulkCreate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PoolClaimBulkCreate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["poolId"].(persist.DBID), args["claims"].([]*model.ClaimBulkCreateInput)), true
+
+	case "Mutation.poolClaimBulkDelete":
+		if e.complexity.Mutation.PoolClaimBulkDelete == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_poolClaimBulkDelete_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PoolClaimBulkDelete(childComplexity, args["poolId"].(persist.DBID), args["claimIds"].([]persist.DBID)), true
+
+	case "Mutation.poolClaimBulkUpdate":
+		if e.complexity.Mutation.PoolClaimBulkUpdate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_poolClaimBulkUpdate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PoolClaimBulkUpdate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["poolId"].(persist.DBID), args["claims"].([]*model.ClaimBulkUpdateInput)), true
+
+	case "Mutation.poolClaimCreate":
+		if e.complexity.Mutation.PoolClaimCreate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_poolClaimCreate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PoolClaimCreate(childComplexity, args["poolId"].(persist.DBID), args["input"].(model.ClaimCreateInput)), true
+
+	case "Mutation.poolClaimDelete":
+		if e.complexity.Mutation.PoolClaimDelete == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_poolClaimDelete_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PoolClaimDelete(childComplexity, args["poolId"].(persist.DBID), args["claimId"].(persist.DBID)), true
+
+	case "Mutation.poolClaimUpdate":
+		if e.complexity.Mutation.PoolClaimUpdate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_poolClaimUpdate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PoolClaimUpdate(childComplexity, args["poolId"].(persist.DBID), args["input"].(model.ClaimUpdateInput)), true
 
 	case "Mutation.poolCreate":
 		if e.complexity.Mutation.PoolCreate == nil {
@@ -2055,6 +2066,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UserDelete(childComplexity, args["token"].(string)), true
+
+	case "Mutation.userLoginOrRegister":
+		if e.complexity.Mutation.UserLoginOrRegister == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_userLoginOrRegister_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UserLoginOrRegister(childComplexity, args["authMechanism"].(model.AuthMechanism), args["input"].(model.UserLoginOrRegisterInput)), true
 
 	case "Mutation.userRegister":
 		if e.complexity.Mutation.UserRegister == nil {
@@ -2275,6 +2298,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Pool.Description(childComplexity), true
 
+	case "Pool.donationBps":
+		if e.complexity.Pool.DonationBps == nil {
+			break
+		}
+
+		return e.complexity.Pool.DonationBps(childComplexity), true
+
 	case "Pool.id":
 		if e.complexity.Pool.ID == nil {
 			break
@@ -2282,12 +2312,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Pool.ID(childComplexity), true
 
-	case "Pool.logo":
-		if e.complexity.Pool.Logo == nil {
+	case "Pool.image":
+		if e.complexity.Pool.Image == nil {
 			break
 		}
 
-		return e.complexity.Pool.Logo(childComplexity), true
+		return e.complexity.Pool.Image(childComplexity), true
 
 	case "Pool.name":
 		if e.complexity.Pool.Name == nil {
@@ -3347,6 +3377,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserError.Message(childComplexity), true
 
+	case "UserLoginOrRegister.errors":
+		if e.complexity.UserLoginOrRegister.Errors == nil {
+			break
+		}
+
+		return e.complexity.UserLoginOrRegister.Errors(childComplexity), true
+
+	case "UserLoginOrRegister.refreshToken":
+		if e.complexity.UserLoginOrRegister.RefreshToken == nil {
+			break
+		}
+
+		return e.complexity.UserLoginOrRegister.RefreshToken(childComplexity), true
+
+	case "UserLoginOrRegister.requiresConfirmation":
+		if e.complexity.UserLoginOrRegister.RequiresConfirmation == nil {
+			break
+		}
+
+		return e.complexity.UserLoginOrRegister.RequiresConfirmation(childComplexity), true
+
+	case "UserLoginOrRegister.token":
+		if e.complexity.UserLoginOrRegister.Token == nil {
+			break
+		}
+
+		return e.complexity.UserLoginOrRegister.Token(childComplexity), true
+
+	case "UserLoginOrRegister.user":
+		if e.complexity.UserLoginOrRegister.User == nil {
+			break
+		}
+
+		return e.complexity.UserLoginOrRegister.User(childComplexity), true
+
 	case "UserRegister.errors":
 		if e.complexity.UserRegister.Errors == nil {
 			break
@@ -3736,6 +3801,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateUserInfoInput,
 		ec.unmarshalInputUploadPersistedQueriesInput,
 		ec.unmarshalInputUserInput,
+		ec.unmarshalInputUserLoginOrRegisterInput,
 		ec.unmarshalInputUserRegisterInput,
 		ec.unmarshalInputVerifyEmailInput,
 		ec.unmarshalInputVerifyEmailMagicLinkInput,
@@ -4259,8 +4325,8 @@ type Claim implements Node {
   id: ID!
   # { claim id }
   dbid: DBID!
-  # allocated value (BigDecimal)
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
   # label
   label: String!
   # path
@@ -4299,7 +4365,9 @@ type Pool implements Node {
   # description
   description: String!
   # logo
-  logo: String!
+  image: String!
+  """Basis point donation."""
+  donationBps: Int!
   # slug
   slug: String!
   # status of the pool
@@ -4947,6 +5015,33 @@ type UserUpdate {
   user: User
 }
 
+"""
+Login an existing user or register a new one.
+"""
+type UserLoginOrRegister {
+  """Informs whether users need to confirm their email address."""
+  requiresConfirmation: Boolean
+
+  """JWT token, required to authenticate."""
+  token: String
+
+  """JWT refresh token, required to re-generate access token."""
+  refreshToken: String
+
+  user: User
+
+  errors: [UserError!]!
+}
+
+
+"""Fields required to login or register a user."""
+input UserLoginOrRegisterInput {
+  """
+  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+  """
+  redirectUrl: String
+}
+
 """Represents errors in user mutations."""
 type UserError {
   """
@@ -5316,17 +5411,20 @@ enum ClaimErrorCode {
 }
 
 input ClaimCreateInput {
+  """Claim label."""
+  label: String
+
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
-  """Parent claim."""
-  parent: DBID
+  """Parent claim label."""
+  parentLabel: String
 
-  """Children claims."""
-  children: [DBID!]
+  """Children claim labels."""
+  childrenLabels: [String!]
 
   """State id."""
   stateId: String!
@@ -5344,11 +5442,14 @@ type ClaimUpdate {
 }
 
 input ClaimUpdateInput {
+  """Claim ID."""
+  claimId: DBID!
+
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
   """Parent claim."""
   parent: DBID
@@ -5419,8 +5520,8 @@ input ClaimBulkCreateInput {
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
   """Parent claim."""
   parent: DBID
@@ -5448,11 +5549,14 @@ type ClaimBulkUpdate {
 }
 
 input ClaimBulkUpdateInput {
+  """Claim ID."""
+  claimId: DBID!
+
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
   """Parent claim."""
   parent: DBID
@@ -5510,6 +5614,9 @@ enum PoolErrorCode {
 }
 
 input PoolCreateInput {
+  """Name of the pool."""
+  owner: String
+
   """Whether a pool is shared with its recipients or not."""
   private: Boolean
 
@@ -5519,11 +5626,17 @@ input PoolCreateInput {
   """Name of the pool."""
   description: String
 
+  """Name of the pool."""
+  image: String
+
+  """Basis point donation."""
+  donationBps: Int
+
   """Slug of the pool."""
   slug: String
 
-  """List of claims to assign to the pool."""
-  addClaims: [DBID!]
+  """List of claims to create and assign to the pool."""
+  addClaims: [ClaimCreateInput!]
 }
 
 """
@@ -5544,11 +5657,20 @@ input PoolUpdateInput {
   """Name of the pool."""
   description: String
 
+  """Image of the pool."""
+  image: String
+
+  """Basis point donation."""
+  donationBps: Int
+
   """Slug of the pool."""
   slug: String
 
   """List of claims to assign to the pool."""
-  addClaims: [DBID!]
+  addClaims: [ClaimCreateInput!]
+
+  """List of claims to assign to the pool."""
+  updateClaims: [ClaimUpdateInput!]
 
   """List of claims to remove from the pool."""
   removeClaims: [DBID!]
@@ -5622,6 +5744,14 @@ type Mutation {
 
     authMechanism: AuthMechanism!
   ): CreateToken
+
+  """Create JWT token."""
+  userLoginOrRegister(
+    authMechanism: AuthMechanism!,
+
+    """Fields required to login or create a user."""
+    input: UserLoginOrRegisterInput!
+  ): UserLoginOrRegister
 
   """
   Refresh JWT token. Mutation tries to take refreshToken from the input. If it fails it will try to take ` + "`" + `refreshToken` + "`" + ` from the http-only cookie ` + "`" + `refreshToken` + "`" + `. ` + "`" + `csrfToken` + "`" + ` is required when ` + "`" + `refreshToken` + "`" + ` is provided as a cookie.
@@ -5767,7 +5897,10 @@ type Mutation {
   """
   Creates a new claim.
   """
-  claimCreate(
+  poolClaimCreate(
+    """ID of a pool to create a claim within."""
+    poolId: DBID!
+
     """Fields required to create a claim."""
     input: ClaimCreateInput!
   ): ClaimCreate @authRequired
@@ -5775,9 +5908,9 @@ type Mutation {
   """
   Updates a new claim.
   """
-  claimUpdate(
-    """ID of a claim to update."""
-    id: DBID!
+  poolClaimUpdate(
+    """ID of a pool to update."""
+    poolId: DBID!
 
     """Fields required to update a claim."""
     input: ClaimUpdateInput!
@@ -5786,17 +5919,23 @@ type Mutation {
   """
   Deletes a claim.
   """
-  claimDelete(
+  poolClaimDelete(
+    """ID of a pool with the claim to delete."""
+    poolId: DBID!
+
     """ID of a claim to delete."""
-    id: DBID!
+    claimId: DBID!
   ): ClaimDelete @authRequired
 
   """
   Creates claims.
   """
-  claimBulkCreate(
+  poolClaimBulkCreate(
     """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
     errorPolicy: ErrorPolicyEnum
+
+    """Pool ID to create claims to."""
+    poolId: DBID!
 
     """Input list of claims to create."""
     claims: [ClaimBulkCreateInput!]!
@@ -5805,23 +5944,26 @@ type Mutation {
   """
   Updates claims.
   """
-  claimBulkUpdate(
+  poolClaimBulkUpdate(
     """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
     errorPolicy: ErrorPolicyEnum
 
-    """List of claim IDs to update."""
-    ids: [DBID!]!
+    """Pool ID to update."""
+    poolId: DBID!
 
     """Input list of claims to update."""
     claims: [ClaimBulkUpdateInput!]!
-  ): ClaimBulkCreate @authRequired
+  ): ClaimBulkUpdate @authRequired
 
   """
   Deletes claims.
   """
-  claimBulkDelete(
+  poolClaimBulkDelete(
+    """Pool ID to delete claims from."""
+    poolId: DBID!
+
     """List of claim IDs to delete."""
-    ids: [DBID!]!
+    claimIds: [DBID!]!
   ): ClaimBulkDelete @authRequired
 
   """
@@ -5830,7 +5972,7 @@ type Mutation {
   poolCreate(
     """Fields required when creating an invoice."""
     input: PoolCreateInput!
-  ): PoolCreate @authRequired
+  ): PoolCreate #@authRequired
 
   """
   Updates a pool.
@@ -6000,306 +6142,6 @@ func (ec *executionContext) dir_restrictEnvironment_argsAllowed(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_claimBulkCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_claimBulkCreate_argsErrorPolicy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["errorPolicy"] = arg0
-	arg1, err := ec.field_Mutation_claimBulkCreate_argsClaims(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["claims"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_claimBulkCreate_argsErrorPolicy(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*model.ErrorPolicyEnum, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["errorPolicy"]
-	if !ok {
-		var zeroVal *model.ErrorPolicyEnum
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("errorPolicy"))
-	if tmp, ok := rawArgs["errorPolicy"]; ok {
-		return ec.unmarshalOErrorPolicyEnum2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐErrorPolicyEnum(ctx, tmp)
-	}
-
-	var zeroVal *model.ErrorPolicyEnum
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimBulkCreate_argsClaims(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) ([]*model.ClaimBulkCreateInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["claims"]
-	if !ok {
-		var zeroVal []*model.ClaimBulkCreateInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claims"))
-	if tmp, ok := rawArgs["claims"]; ok {
-		return ec.unmarshalNClaimBulkCreateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkCreateInputᚄ(ctx, tmp)
-	}
-
-	var zeroVal []*model.ClaimBulkCreateInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimBulkDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_claimBulkDelete_argsIds(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["ids"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_claimBulkDelete_argsIds(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) ([]persist.DBID, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["ids"]
-	if !ok {
-		var zeroVal []persist.DBID
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
-	if tmp, ok := rawArgs["ids"]; ok {
-		return ec.unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
-	}
-
-	var zeroVal []persist.DBID
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimBulkUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_claimBulkUpdate_argsErrorPolicy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["errorPolicy"] = arg0
-	arg1, err := ec.field_Mutation_claimBulkUpdate_argsIds(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["ids"] = arg1
-	arg2, err := ec.field_Mutation_claimBulkUpdate_argsClaims(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["claims"] = arg2
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_claimBulkUpdate_argsErrorPolicy(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*model.ErrorPolicyEnum, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["errorPolicy"]
-	if !ok {
-		var zeroVal *model.ErrorPolicyEnum
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("errorPolicy"))
-	if tmp, ok := rawArgs["errorPolicy"]; ok {
-		return ec.unmarshalOErrorPolicyEnum2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐErrorPolicyEnum(ctx, tmp)
-	}
-
-	var zeroVal *model.ErrorPolicyEnum
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimBulkUpdate_argsIds(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) ([]persist.DBID, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["ids"]
-	if !ok {
-		var zeroVal []persist.DBID
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
-	if tmp, ok := rawArgs["ids"]; ok {
-		return ec.unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
-	}
-
-	var zeroVal []persist.DBID
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimBulkUpdate_argsClaims(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) ([]*model.ClaimBulkUpdateInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["claims"]
-	if !ok {
-		var zeroVal []*model.ClaimBulkUpdateInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claims"))
-	if tmp, ok := rawArgs["claims"]; ok {
-		return ec.unmarshalNClaimBulkUpdateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkUpdateInputᚄ(ctx, tmp)
-	}
-
-	var zeroVal []*model.ClaimBulkUpdateInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_claimCreate_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_claimCreate_argsInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.ClaimCreateInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["input"]
-	if !ok {
-		var zeroVal model.ClaimCreateInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNClaimCreateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreateInput(ctx, tmp)
-	}
-
-	var zeroVal model.ClaimCreateInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_claimDelete_argsID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_claimDelete_argsID(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (persist.DBID, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["id"]
-	if !ok {
-		var zeroVal persist.DBID
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
-	}
-
-	var zeroVal persist.DBID
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_claimUpdate_argsID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	arg1, err := ec.field_Mutation_claimUpdate_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_claimUpdate_argsID(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (persist.DBID, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["id"]
-	if !ok {
-		var zeroVal persist.DBID
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
-	}
-
-	var zeroVal persist.DBID
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_claimUpdate_argsInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.ClaimUpdateInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["input"]
-	if !ok {
-		var zeroVal model.ClaimUpdateInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNClaimUpdateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdateInput(ctx, tmp)
-	}
-
-	var zeroVal model.ClaimUpdateInput
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Mutation_confirmEmailChange_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -6452,6 +6294,414 @@ func (ec *executionContext) field_Mutation_notificationSettingsUpdate_argsSettin
 	}
 
 	var zeroVal model.NotificationSettingsInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_poolClaimBulkCreate_argsErrorPolicy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["errorPolicy"] = arg0
+	arg1, err := ec.field_Mutation_poolClaimBulkCreate_argsPoolID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg1
+	arg2, err := ec.field_Mutation_poolClaimBulkCreate_argsClaims(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["claims"] = arg2
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_poolClaimBulkCreate_argsErrorPolicy(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.ErrorPolicyEnum, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["errorPolicy"]
+	if !ok {
+		var zeroVal *model.ErrorPolicyEnum
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("errorPolicy"))
+	if tmp, ok := rawArgs["errorPolicy"]; ok {
+		return ec.unmarshalOErrorPolicyEnum2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐErrorPolicyEnum(ctx, tmp)
+	}
+
+	var zeroVal *model.ErrorPolicyEnum
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkCreate_argsPoolID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+	if tmp, ok := rawArgs["poolId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkCreate_argsClaims(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*model.ClaimBulkCreateInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["claims"]
+	if !ok {
+		var zeroVal []*model.ClaimBulkCreateInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claims"))
+	if tmp, ok := rawArgs["claims"]; ok {
+		return ec.unmarshalNClaimBulkCreateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkCreateInputᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*model.ClaimBulkCreateInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_poolClaimBulkDelete_argsPoolID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg0
+	arg1, err := ec.field_Mutation_poolClaimBulkDelete_argsClaimIds(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["claimIds"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_poolClaimBulkDelete_argsPoolID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+	if tmp, ok := rawArgs["poolId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkDelete_argsClaimIds(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["claimIds"]
+	if !ok {
+		var zeroVal []persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claimIds"))
+	if tmp, ok := rawArgs["claimIds"]; ok {
+		return ec.unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
+	}
+
+	var zeroVal []persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_poolClaimBulkUpdate_argsErrorPolicy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["errorPolicy"] = arg0
+	arg1, err := ec.field_Mutation_poolClaimBulkUpdate_argsPoolID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg1
+	arg2, err := ec.field_Mutation_poolClaimBulkUpdate_argsClaims(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["claims"] = arg2
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_poolClaimBulkUpdate_argsErrorPolicy(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*model.ErrorPolicyEnum, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["errorPolicy"]
+	if !ok {
+		var zeroVal *model.ErrorPolicyEnum
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("errorPolicy"))
+	if tmp, ok := rawArgs["errorPolicy"]; ok {
+		return ec.unmarshalOErrorPolicyEnum2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐErrorPolicyEnum(ctx, tmp)
+	}
+
+	var zeroVal *model.ErrorPolicyEnum
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkUpdate_argsPoolID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+	if tmp, ok := rawArgs["poolId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimBulkUpdate_argsClaims(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) ([]*model.ClaimBulkUpdateInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["claims"]
+	if !ok {
+		var zeroVal []*model.ClaimBulkUpdateInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claims"))
+	if tmp, ok := rawArgs["claims"]; ok {
+		return ec.unmarshalNClaimBulkUpdateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkUpdateInputᚄ(ctx, tmp)
+	}
+
+	var zeroVal []*model.ClaimBulkUpdateInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_poolClaimCreate_argsPoolID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg0
+	arg1, err := ec.field_Mutation_poolClaimCreate_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_poolClaimCreate_argsPoolID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+	if tmp, ok := rawArgs["poolId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimCreate_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ClaimCreateInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.ClaimCreateInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNClaimCreateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreateInput(ctx, tmp)
+	}
+
+	var zeroVal model.ClaimCreateInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_poolClaimDelete_argsPoolID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg0
+	arg1, err := ec.field_Mutation_poolClaimDelete_argsClaimID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["claimId"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_poolClaimDelete_argsPoolID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+	if tmp, ok := rawArgs["poolId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimDelete_argsClaimID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["claimId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claimId"))
+	if tmp, ok := rawArgs["claimId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_poolClaimUpdate_argsPoolID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["poolId"] = arg0
+	arg1, err := ec.field_Mutation_poolClaimUpdate_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_poolClaimUpdate_argsPoolID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["poolId"]
+	if !ok {
+		var zeroVal persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
+	if tmp, ok := rawArgs["poolId"]; ok {
+		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_poolClaimUpdate_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.ClaimUpdateInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.ClaimUpdateInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNClaimUpdateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdateInput(ctx, tmp)
+	}
+
+	var zeroVal model.ClaimUpdateInput
 	return zeroVal, nil
 }
 
@@ -6998,6 +7248,65 @@ func (ec *executionContext) field_Mutation_userDelete_argsToken(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_userLoginOrRegister_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_userLoginOrRegister_argsAuthMechanism(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["authMechanism"] = arg0
+	arg1, err := ec.field_Mutation_userLoginOrRegister_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_userLoginOrRegister_argsAuthMechanism(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.AuthMechanism, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["authMechanism"]
+	if !ok {
+		var zeroVal model.AuthMechanism
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
+	if tmp, ok := rawArgs["authMechanism"]; ok {
+		return ec.unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
+	}
+
+	var zeroVal model.AuthMechanism
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_userLoginOrRegister_argsInput(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (model.UserLoginOrRegisterInput, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["input"]
+	if !ok {
+		var zeroVal model.UserLoginOrRegisterInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUserLoginOrRegisterInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserLoginOrRegisterInput(ctx, tmp)
+	}
+
+	var zeroVal model.UserLoginOrRegisterInput
 	return zeroVal, nil
 }
 
@@ -8276,8 +8585,10 @@ func (ec *executionContext) fieldContext_ChainPools_pools(_ context.Context, fie
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -8469,8 +8780,8 @@ func (ec *executionContext) fieldContext_Claim_dbid(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Claim_value(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Claim_value(ctx, field)
+func (ec *executionContext) _Claim_data(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Claim_data(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8483,31 +8794,28 @@ func (ec *executionContext) _Claim_value(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Value, nil
+		return obj.Data, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.JSON)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Claim_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Claim_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Claim",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type JSON does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8685,8 +8993,8 @@ func (ec *executionContext) fieldContext_Claim_parent(_ context.Context, field g
 				return ec.fieldContext_Claim_id(ctx, field)
 			case "dbid":
 				return ec.fieldContext_Claim_dbid(ctx, field)
-			case "value":
-				return ec.fieldContext_Claim_value(ctx, field)
+			case "data":
+				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -8756,8 +9064,8 @@ func (ec *executionContext) fieldContext_Claim_children(_ context.Context, field
 				return ec.fieldContext_Claim_id(ctx, field)
 			case "dbid":
 				return ec.fieldContext_Claim_dbid(ctx, field)
-			case "value":
-				return ec.fieldContext_Claim_value(ctx, field)
+			case "data":
+				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -8834,8 +9142,10 @@ func (ec *executionContext) fieldContext_Claim_pool(_ context.Context, field gra
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -9534,8 +9844,8 @@ func (ec *executionContext) fieldContext_ClaimBulkResult_claim(_ context.Context
 				return ec.fieldContext_Claim_id(ctx, field)
 			case "dbid":
 				return ec.fieldContext_Claim_dbid(ctx, field)
-			case "value":
-				return ec.fieldContext_Claim_value(ctx, field)
+			case "data":
+				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -9852,8 +10162,8 @@ func (ec *executionContext) fieldContext_ClaimCreate_claim(_ context.Context, fi
 				return ec.fieldContext_Claim_id(ctx, field)
 			case "dbid":
 				return ec.fieldContext_Claim_dbid(ctx, field)
-			case "value":
-				return ec.fieldContext_Claim_value(ctx, field)
+			case "data":
+				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -9975,8 +10285,8 @@ func (ec *executionContext) fieldContext_ClaimDelete_claim(_ context.Context, fi
 				return ec.fieldContext_Claim_id(ctx, field)
 			case "dbid":
 				return ec.fieldContext_Claim_dbid(ctx, field)
-			case "value":
-				return ec.fieldContext_Claim_value(ctx, field)
+			case "data":
+				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -10224,8 +10534,8 @@ func (ec *executionContext) fieldContext_ClaimUpdate_claim(_ context.Context, fi
 				return ec.fieldContext_Claim_id(ctx, field)
 			case "dbid":
 				return ec.fieldContext_Claim_dbid(ctx, field)
-			case "value":
-				return ec.fieldContext_Claim_value(ctx, field)
+			case "data":
+				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -11057,8 +11367,10 @@ func (ec *executionContext) fieldContext_Deposit_pool(_ context.Context, field g
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -11633,8 +11945,10 @@ func (ec *executionContext) fieldContext_EVMAccount_selfPools(_ context.Context,
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -13069,9 +13383,9 @@ func (ec *executionContext) _Extension_data(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(persist.JSON)
 	fc.Result = res
-	return ec.marshalOJSON2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Extension_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14306,6 +14620,70 @@ func (ec *executionContext) fieldContext_Mutation_tokenCreate(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_userLoginOrRegister(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_userLoginOrRegister(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UserLoginOrRegister(rctx, fc.Args["authMechanism"].(model.AuthMechanism), fc.Args["input"].(model.UserLoginOrRegisterInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserLoginOrRegister)
+	fc.Result = res
+	return ec.marshalOUserLoginOrRegister2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserLoginOrRegister(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_userLoginOrRegister(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "requiresConfirmation":
+				return ec.fieldContext_UserLoginOrRegister_requiresConfirmation(ctx, field)
+			case "token":
+				return ec.fieldContext_UserLoginOrRegister_token(ctx, field)
+			case "refreshToken":
+				return ec.fieldContext_UserLoginOrRegister_refreshToken(ctx, field)
+			case "user":
+				return ec.fieldContext_UserLoginOrRegister_user(ctx, field)
+			case "errors":
+				return ec.fieldContext_UserLoginOrRegister_errors(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserLoginOrRegister", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_userLoginOrRegister_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_tokenRefresh(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_tokenRefresh(ctx, field)
 	if err != nil {
@@ -15484,8 +15862,8 @@ func (ec *executionContext) fieldContext_Mutation_walletDelete(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_claimCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_claimCreate(ctx, field)
+func (ec *executionContext) _Mutation_poolClaimCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_poolClaimCreate(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15499,7 +15877,7 @@ func (ec *executionContext) _Mutation_claimCreate(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClaimCreate(rctx, fc.Args["input"].(model.ClaimCreateInput))
+			return ec.resolvers.Mutation().PoolClaimCreate(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["input"].(model.ClaimCreateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -15534,7 +15912,7 @@ func (ec *executionContext) _Mutation_claimCreate(ctx context.Context, field gra
 	return ec.marshalOClaimCreate2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreate(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_claimCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_poolClaimCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15557,15 +15935,15 @@ func (ec *executionContext) fieldContext_Mutation_claimCreate(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_claimCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_poolClaimCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_claimUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_claimUpdate(ctx, field)
+func (ec *executionContext) _Mutation_poolClaimUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_poolClaimUpdate(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15579,7 +15957,7 @@ func (ec *executionContext) _Mutation_claimUpdate(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClaimUpdate(rctx, fc.Args["id"].(persist.DBID), fc.Args["input"].(model.ClaimUpdateInput))
+			return ec.resolvers.Mutation().PoolClaimUpdate(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["input"].(model.ClaimUpdateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -15614,7 +15992,7 @@ func (ec *executionContext) _Mutation_claimUpdate(ctx context.Context, field gra
 	return ec.marshalOClaimUpdate2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdate(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_claimUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_poolClaimUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15637,15 +16015,15 @@ func (ec *executionContext) fieldContext_Mutation_claimUpdate(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_claimUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_poolClaimUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_claimDelete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_claimDelete(ctx, field)
+func (ec *executionContext) _Mutation_poolClaimDelete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_poolClaimDelete(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15659,7 +16037,7 @@ func (ec *executionContext) _Mutation_claimDelete(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClaimDelete(rctx, fc.Args["id"].(persist.DBID))
+			return ec.resolvers.Mutation().PoolClaimDelete(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["claimId"].(persist.DBID))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -15694,7 +16072,7 @@ func (ec *executionContext) _Mutation_claimDelete(ctx context.Context, field gra
 	return ec.marshalOClaimDelete2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimDelete(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_claimDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_poolClaimDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15717,15 +16095,15 @@ func (ec *executionContext) fieldContext_Mutation_claimDelete(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_claimDelete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_poolClaimDelete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_claimBulkCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_claimBulkCreate(ctx, field)
+func (ec *executionContext) _Mutation_poolClaimBulkCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_poolClaimBulkCreate(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15739,7 +16117,7 @@ func (ec *executionContext) _Mutation_claimBulkCreate(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClaimBulkCreate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["claims"].([]*model.ClaimBulkCreateInput))
+			return ec.resolvers.Mutation().PoolClaimBulkCreate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["poolId"].(persist.DBID), fc.Args["claims"].([]*model.ClaimBulkCreateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -15774,7 +16152,7 @@ func (ec *executionContext) _Mutation_claimBulkCreate(ctx context.Context, field
 	return ec.marshalOClaimBulkCreate2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkCreate(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_claimBulkCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_poolClaimBulkCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15799,15 +16177,15 @@ func (ec *executionContext) fieldContext_Mutation_claimBulkCreate(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_claimBulkCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_poolClaimBulkCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_claimBulkUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_claimBulkUpdate(ctx, field)
+func (ec *executionContext) _Mutation_poolClaimBulkUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_poolClaimBulkUpdate(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15821,12 +16199,12 @@ func (ec *executionContext) _Mutation_claimBulkUpdate(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClaimBulkUpdate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["ids"].([]persist.DBID), fc.Args["claims"].([]*model.ClaimBulkUpdateInput))
+			return ec.resolvers.Mutation().PoolClaimBulkUpdate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["poolId"].(persist.DBID), fc.Args["claims"].([]*model.ClaimBulkUpdateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal *model.ClaimBulkCreate
+				var zeroVal *model.ClaimBulkUpdate
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -15839,10 +16217,10 @@ func (ec *executionContext) _Mutation_claimBulkUpdate(ctx context.Context, field
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*model.ClaimBulkCreate); ok {
+		if data, ok := tmp.(*model.ClaimBulkUpdate); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.ClaimBulkCreate`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.ClaimBulkUpdate`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15851,12 +16229,12 @@ func (ec *executionContext) _Mutation_claimBulkUpdate(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.ClaimBulkCreate)
+	res := resTmp.(*model.ClaimBulkUpdate)
 	fc.Result = res
-	return ec.marshalOClaimBulkCreate2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkCreate(ctx, field.Selections, res)
+	return ec.marshalOClaimBulkUpdate2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkUpdate(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_claimBulkUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_poolClaimBulkUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15865,13 +16243,13 @@ func (ec *executionContext) fieldContext_Mutation_claimBulkUpdate(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "count":
-				return ec.fieldContext_ClaimBulkCreate_count(ctx, field)
+				return ec.fieldContext_ClaimBulkUpdate_count(ctx, field)
 			case "results":
-				return ec.fieldContext_ClaimBulkCreate_results(ctx, field)
+				return ec.fieldContext_ClaimBulkUpdate_results(ctx, field)
 			case "errors":
-				return ec.fieldContext_ClaimBulkCreate_errors(ctx, field)
+				return ec.fieldContext_ClaimBulkUpdate_errors(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ClaimBulkCreate", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ClaimBulkUpdate", field.Name)
 		},
 	}
 	defer func() {
@@ -15881,15 +16259,15 @@ func (ec *executionContext) fieldContext_Mutation_claimBulkUpdate(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_claimBulkUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_poolClaimBulkUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_claimBulkDelete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_claimBulkDelete(ctx, field)
+func (ec *executionContext) _Mutation_poolClaimBulkDelete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_poolClaimBulkDelete(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15903,7 +16281,7 @@ func (ec *executionContext) _Mutation_claimBulkDelete(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClaimBulkDelete(rctx, fc.Args["ids"].([]persist.DBID))
+			return ec.resolvers.Mutation().PoolClaimBulkDelete(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["claimIds"].([]persist.DBID))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -15938,7 +16316,7 @@ func (ec *executionContext) _Mutation_claimBulkDelete(ctx context.Context, field
 	return ec.marshalOClaimBulkDelete2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkDelete(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_claimBulkDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_poolClaimBulkDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15961,7 +16339,7 @@ func (ec *executionContext) fieldContext_Mutation_claimBulkDelete(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_claimBulkDelete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_poolClaimBulkDelete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -15981,30 +16359,8 @@ func (ec *executionContext) _Mutation_poolCreate(ctx context.Context, field grap
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolCreate(rctx, fc.Args["input"].(model.PoolCreateInput))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal *model.PoolCreate
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.PoolCreate); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.PoolCreate`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().PoolCreate(rctx, fc.Args["input"].(model.PoolCreateInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17191,8 +17547,8 @@ func (ec *executionContext) fieldContext_Pool_description(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Pool_logo(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Pool_logo(ctx, field)
+func (ec *executionContext) _Pool_image(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_image(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17205,7 +17561,7 @@ func (ec *executionContext) _Pool_logo(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Logo, nil
+		return obj.Image, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17222,7 +17578,7 @@ func (ec *executionContext) _Pool_logo(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Pool_logo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Pool_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Pool",
 		Field:      field,
@@ -17230,6 +17586,50 @@ func (ec *executionContext) fieldContext_Pool_logo(_ context.Context, field grap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Pool_donationBps(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_donationBps(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DonationBps, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_donationBps(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17476,8 +17876,8 @@ func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field gr
 				return ec.fieldContext_Claim_id(ctx, field)
 			case "dbid":
 				return ec.fieldContext_Claim_dbid(ctx, field)
-			case "value":
-				return ec.fieldContext_Claim_value(ctx, field)
+			case "data":
+				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -18395,8 +18795,10 @@ func (ec *executionContext) fieldContext_PoolCreate_pool(_ context.Context, fiel
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -18597,8 +18999,10 @@ func (ec *executionContext) fieldContext_PoolDayBalance_pool(_ context.Context, 
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -18920,8 +19324,10 @@ func (ec *executionContext) fieldContext_PoolDelete_pool(_ context.Context, fiel
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -19572,8 +19978,10 @@ func (ec *executionContext) fieldContext_PoolHourBalance_pool(_ context.Context,
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -19843,8 +20251,10 @@ func (ec *executionContext) fieldContext_PoolSearchResult_pool(_ context.Context
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -19962,8 +20372,10 @@ func (ec *executionContext) fieldContext_PoolUpdate_pool(_ context.Context, fiel
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -24111,8 +24523,10 @@ func (ec *executionContext) fieldContext_User_pools(_ context.Context, field gra
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -24636,6 +25050,240 @@ func (ec *executionContext) fieldContext_UserError_code(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UserErrorCode does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserLoginOrRegister_requiresConfirmation(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserLoginOrRegister_requiresConfirmation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequiresConfirmation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserLoginOrRegister_requiresConfirmation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserLoginOrRegister",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserLoginOrRegister_token(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserLoginOrRegister_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserLoginOrRegister_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserLoginOrRegister",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserLoginOrRegister_refreshToken(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserLoginOrRegister_refreshToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RefreshToken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserLoginOrRegister_refreshToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserLoginOrRegister",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserLoginOrRegister_user(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserLoginOrRegister_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserLoginOrRegister_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserLoginOrRegister",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_User_dbid(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
+			case "wallets":
+				return ec.fieldContext_User_wallets(ctx, field)
+			case "primaryWallet":
+				return ec.fieldContext_User_primaryWallet(ctx, field)
+			case "pools":
+				return ec.fieldContext_User_pools(ctx, field)
+			case "isAuthenticatedUser":
+				return ec.fieldContext_User_isAuthenticatedUser(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserLoginOrRegister_errors(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserLoginOrRegister_errors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Errors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.UserError)
+	fc.Result = res
+	return ec.marshalNUserError2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserLoginOrRegister_errors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserLoginOrRegister",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "field":
+				return ec.fieldContext_UserError_field(ctx, field)
+			case "message":
+				return ec.fieldContext_UserError_message(ctx, field)
+			case "code":
+				return ec.fieldContext_UserError_code(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserError", field.Name)
 		},
 	}
 	return fc, nil
@@ -25709,8 +26357,10 @@ func (ec *executionContext) fieldContext_ViewerPool_pool(_ context.Context, fiel
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -26722,8 +27372,10 @@ func (ec *executionContext) fieldContext_Withdrawal_pool(_ context.Context, fiel
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Pool_description(ctx, field)
-			case "logo":
-				return ec.fieldContext_Pool_logo(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
 			case "slug":
 				return ec.fieldContext_Pool_slug(ctx, field)
 			case "status":
@@ -29105,7 +29757,7 @@ func (ec *executionContext) unmarshalInputClaimBulkCreateInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"recipientAddress", "value", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -29119,13 +29771,13 @@ func (ec *executionContext) unmarshalInputClaimBulkCreateInput(ctx context.Conte
 				return it, err
 			}
 			it.RecipientAddress = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, v)
+		case "data":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Value = data
+			it.Data = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
@@ -29167,13 +29819,20 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"recipientAddress", "value", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"claimId", "recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "claimId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimId"))
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClaimID = data
 		case "recipientAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
@@ -29181,13 +29840,13 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 				return it, err
 			}
 			it.RecipientAddress = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, v)
+		case "data":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Value = data
+			it.Data = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
@@ -29229,13 +29888,20 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"recipientAddress", "value", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"label", "recipientAddress", "data", "parentLabel", "childrenLabels", "stateId", "strategyId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
 		case "recipientAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
@@ -29243,27 +29909,27 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 				return it, err
 			}
 			it.RecipientAddress = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, v)
+		case "data":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Value = data
-		case "parent":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			it.Data = data
+		case "parentLabel":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentLabel"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Parent = data
-		case "children":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			it.ParentLabel = data
+		case "childrenLabels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childrenLabels"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Children = data
+			it.ChildrenLabels = data
 		case "stateId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -29291,13 +29957,20 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"recipientAddress", "value", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"claimId", "recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "claimId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimId"))
+			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClaimID = data
 		case "recipientAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
 			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
@@ -29305,13 +29978,13 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 				return it, err
 			}
 			it.RecipientAddress = data
-		case "value":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, v)
+		case "data":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Value = data
+			it.Data = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
@@ -29663,13 +30336,20 @@ func (ec *executionContext) unmarshalInputPoolCreateInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"private", "name", "description", "slug", "addClaims"}
+	fieldsInOrder := [...]string{"owner", "private", "name", "description", "image", "donationBps", "slug", "addClaims"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "owner":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Owner = data
 		case "private":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("private"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -29691,6 +30371,20 @@ func (ec *executionContext) unmarshalInputPoolCreateInput(ctx context.Context, o
 				return it, err
 			}
 			it.Description = data
+		case "image":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Image = data
+		case "donationBps":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("donationBps"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DonationBps = data
 		case "slug":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -29700,7 +30394,7 @@ func (ec *executionContext) unmarshalInputPoolCreateInput(ctx context.Context, o
 			it.Slug = data
 		case "addClaims":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addClaims"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalOClaimCreateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreateInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -29718,7 +30412,7 @@ func (ec *executionContext) unmarshalInputPoolUpdateInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"private", "name", "description", "slug", "addClaims", "removeClaims"}
+	fieldsInOrder := [...]string{"private", "name", "description", "image", "donationBps", "slug", "addClaims", "updateClaims", "removeClaims"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -29746,6 +30440,20 @@ func (ec *executionContext) unmarshalInputPoolUpdateInput(ctx context.Context, o
 				return it, err
 			}
 			it.Description = data
+		case "image":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Image = data
+		case "donationBps":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("donationBps"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DonationBps = data
 		case "slug":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -29755,11 +30463,18 @@ func (ec *executionContext) unmarshalInputPoolUpdateInput(ctx context.Context, o
 			it.Slug = data
 		case "addClaims":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addClaims"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalOClaimCreateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreateInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.AddClaims = data
+		case "updateClaims":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updateClaims"))
+			data, err := ec.unmarshalOClaimUpdateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdateInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UpdateClaims = data
 		case "removeClaims":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeClaims"))
 			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
@@ -30155,6 +30870,33 @@ func (ec *executionContext) unmarshalInputUserInput(ctx context.Context, obj int
 				return it, err
 			}
 			it.Username = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUserLoginOrRegisterInput(ctx context.Context, obj interface{}) (model.UserLoginOrRegisterInput, error) {
+	var it model.UserLoginOrRegisterInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"redirectUrl"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "redirectUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("redirectUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RedirectURL = data
 		}
 	}
 
@@ -31459,11 +32201,8 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "value":
-			out.Values[i] = ec._Claim_value(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
+		case "data":
+			out.Values[i] = ec._Claim_data(ctx, field, obj)
 		case "label":
 			out.Values[i] = ec._Claim_label(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -33787,6 +34526,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_tokenCreate(ctx, field)
 			})
+		case "userLoginOrRegister":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_userLoginOrRegister(ctx, field)
+			})
 		case "tokenRefresh":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_tokenRefresh(ctx, field)
@@ -33847,29 +34590,29 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_walletDelete(ctx, field)
 			})
-		case "claimCreate":
+		case "poolClaimCreate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_claimCreate(ctx, field)
+				return ec._Mutation_poolClaimCreate(ctx, field)
 			})
-		case "claimUpdate":
+		case "poolClaimUpdate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_claimUpdate(ctx, field)
+				return ec._Mutation_poolClaimUpdate(ctx, field)
 			})
-		case "claimDelete":
+		case "poolClaimDelete":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_claimDelete(ctx, field)
+				return ec._Mutation_poolClaimDelete(ctx, field)
 			})
-		case "claimBulkCreate":
+		case "poolClaimBulkCreate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_claimBulkCreate(ctx, field)
+				return ec._Mutation_poolClaimBulkCreate(ctx, field)
 			})
-		case "claimBulkUpdate":
+		case "poolClaimBulkUpdate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_claimBulkUpdate(ctx, field)
+				return ec._Mutation_poolClaimBulkUpdate(ctx, field)
 			})
-		case "claimBulkDelete":
+		case "poolClaimBulkDelete":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_claimBulkDelete(ctx, field)
+				return ec._Mutation_poolClaimBulkDelete(ctx, field)
 			})
 		case "poolCreate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -34226,8 +34969,13 @@ func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "logo":
-			out.Values[i] = ec._Pool_logo(ctx, field, obj)
+		case "image":
+			out.Values[i] = ec._Pool_image(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "donationBps":
+			out.Values[i] = ec._Pool_donationBps(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -37007,6 +37755,53 @@ func (ec *executionContext) _UserError(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var userLoginOrRegisterImplementors = []string{"UserLoginOrRegister"}
+
+func (ec *executionContext) _UserLoginOrRegister(ctx context.Context, sel ast.SelectionSet, obj *model.UserLoginOrRegister) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userLoginOrRegisterImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserLoginOrRegister")
+		case "requiresConfirmation":
+			out.Values[i] = ec._UserLoginOrRegister_requiresConfirmation(ctx, field, obj)
+		case "token":
+			out.Values[i] = ec._UserLoginOrRegister_token(ctx, field, obj)
+		case "refreshToken":
+			out.Values[i] = ec._UserLoginOrRegister_refreshToken(ctx, field, obj)
+		case "user":
+			out.Values[i] = ec._UserLoginOrRegister_user(ctx, field, obj)
+		case "errors":
+			out.Values[i] = ec._UserLoginOrRegister_errors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var userRegisterImplementors = []string{"UserRegister"}
 
 func (ec *executionContext) _UserRegister(ctx context.Context, sel ast.SelectionSet, obj *model.UserRegister) graphql.Marshaler {
@@ -38723,6 +39518,11 @@ func (ec *executionContext) unmarshalNClaimCreateInput2githubᚗcomᚋmutualsᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNClaimCreateInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreateInput(ctx context.Context, v interface{}) (*model.ClaimCreateInput, error) {
+	res, err := ec.unmarshalInputClaimCreateInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNClaimError2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimErrorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClaimError) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -38790,6 +39590,11 @@ func (ec *executionContext) marshalNClaimErrorCode2githubᚗcomᚋmutualsᚋgo�
 func (ec *executionContext) unmarshalNClaimUpdateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdateInput(ctx context.Context, v interface{}) (model.ClaimUpdateInput, error) {
 	res, err := ec.unmarshalInputClaimUpdateInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNClaimUpdateInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdateInput(ctx context.Context, v interface{}) (*model.ClaimUpdateInput, error) {
+	res, err := ec.unmarshalInputClaimUpdateInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (persist.DBID, error) {
@@ -39754,6 +40559,11 @@ func (ec *executionContext) unmarshalNUserInput2githubᚗcomᚋmutualsᚋgoᚑmu
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUserLoginOrRegisterInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserLoginOrRegisterInput(ctx context.Context, v interface{}) (model.UserLoginOrRegisterInput, error) {
+	res, err := ec.unmarshalInputUserLoginOrRegisterInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNUserOrAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserOrAccount(ctx context.Context, sel ast.SelectionSet, v model.UserOrAccount) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -40557,11 +41367,38 @@ func (ec *executionContext) marshalOClaimBulkError2ᚕᚖgithubᚗcomᚋmutuals�
 	return ret
 }
 
+func (ec *executionContext) marshalOClaimBulkUpdate2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimBulkUpdate(ctx context.Context, sel ast.SelectionSet, v *model.ClaimBulkUpdate) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ClaimBulkUpdate(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOClaimCreate2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreate(ctx context.Context, sel ast.SelectionSet, v *model.ClaimCreate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ClaimCreate(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOClaimCreateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreateInputᚄ(ctx context.Context, v interface{}) ([]*model.ClaimCreateInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.ClaimCreateInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNClaimCreateInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimCreateInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOClaimDelete2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimDelete(ctx context.Context, sel ast.SelectionSet, v *model.ClaimDelete) graphql.Marshaler {
@@ -40576,6 +41413,26 @@ func (ec *executionContext) marshalOClaimUpdate2ᚖgithubᚗcomᚋmutualsᚋgo�
 		return graphql.Null
 	}
 	return ec._ClaimUpdate(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOClaimUpdateInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdateInputᚄ(ctx context.Context, v interface{}) ([]*model.ClaimUpdateInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.ClaimUpdateInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNClaimUpdateInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimUpdateInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOClearAllNotificationsPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClearAllNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v *model.ClearAllNotificationsPayload) graphql.Marshaler {
@@ -40852,20 +41709,20 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) unmarshalOJSON2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+func (ec *executionContext) unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx context.Context, v interface{}) (persist.JSON, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := graphql.UnmarshalString(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	var res persist.JSON
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOJSON2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+func (ec *executionContext) marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx context.Context, sel ast.SelectionSet, v persist.JSON) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	res := graphql.MarshalString(*v)
-	return res
+	return v
 }
 
 func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx context.Context, v interface{}) (*model.MagicLinkAuth, error) {
@@ -41550,6 +42407,13 @@ func (ec *executionContext) marshalOUserEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑm
 		return graphql.Null
 	}
 	return ec._UserEmail(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserLoginOrRegister2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserLoginOrRegister(ctx context.Context, sel ast.SelectionSet, v *model.UserLoginOrRegister) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserLoginOrRegister(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUserRegister2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserRegister(ctx context.Context, sel ast.SelectionSet, v *model.UserRegister) graphql.Marshaler {

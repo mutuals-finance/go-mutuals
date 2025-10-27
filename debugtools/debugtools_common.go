@@ -4,6 +4,7 @@
 package debugtools
 
 import (
+	"context"
 	"fmt"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/env"
@@ -25,6 +26,10 @@ type DebugAuthenticator struct {
 
 func (d DebugAuthenticator) GetDescription() string {
 	return fmt.Sprintf("DebugAuthenticator(user: %+v, addresses: %v)", d.User, d.ChainAddresses)
+}
+
+func (d DebugAuthenticator) UserRegistered(context.Context) (bool, error) {
+	return false, nil
 }
 
 func NewDebugAuthenticator(user *db.User, chainAddresses []persist.ChainAddress, debugToolsPassword string) auth.Authenticator {

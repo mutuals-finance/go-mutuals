@@ -162,8 +162,9 @@ type ChainPools struct {
 }
 
 type Claim struct {
-	Dbid          persist.DBID           `json:"dbid"`
-	Value         persist.HexString      `json:"value"`
+	Dbid persist.DBID `json:"dbid"`
+	// Extension (strategy and state) specific data.
+	Data          persist.JSON           `json:"data"`
 	Label         string                 `json:"label"`
 	Path          string                 `json:"path"`
 	ChildrenCount int                    `json:"childrenCount"`
@@ -191,8 +192,8 @@ type ClaimBulkCreate struct {
 type ClaimBulkCreateInput struct {
 	// Claim recipient address.
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// The allocated value of the claim.
-	Value persist.HexString `json:"value"`
+	// Extension (strategy and state) specific data.
+	Data persist.JSON `json:"data"`
 	// Parent claim.
 	Parent *persist.DBID `json:"parent"`
 	// Children claims.
@@ -236,10 +237,12 @@ type ClaimBulkUpdate struct {
 }
 
 type ClaimBulkUpdateInput struct {
+	// Claim ID.
+	ClaimID persist.DBID `json:"claimId"`
 	// Claim recipient address.
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// The allocated value of the claim.
-	Value persist.HexString `json:"value"`
+	// Extension (strategy and state) specific data.
+	Data persist.JSON `json:"data"`
 	// Parent claim.
 	Parent *persist.DBID `json:"parent"`
 	// Children claims.
@@ -257,14 +260,16 @@ type ClaimCreate struct {
 }
 
 type ClaimCreateInput struct {
+	// Claim label.
+	Label *string `json:"label"`
 	// Claim recipient address.
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// The allocated value of the claim.
-	Value persist.HexString `json:"value"`
-	// Parent claim.
-	Parent *persist.DBID `json:"parent"`
-	// Children claims.
-	Children []persist.DBID `json:"children"`
+	// Extension (strategy and state) specific data.
+	Data persist.JSON `json:"data"`
+	// Parent claim label.
+	ParentLabel *string `json:"parentLabel"`
+	// Children claim labels.
+	ChildrenLabels []string `json:"childrenLabels"`
 	// State id.
 	StateID string `json:"stateId"`
 	// Strategy id.
@@ -293,10 +298,12 @@ type ClaimUpdate struct {
 }
 
 type ClaimUpdateInput struct {
+	// Claim ID.
+	ClaimID persist.DBID `json:"claimId"`
 	// Claim recipient address.
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// The allocated value of the claim.
-	Value persist.HexString `json:"value"`
+	// Extension (strategy and state) specific data.
+	Data persist.JSON `json:"data"`
 	// Parent claim.
 	Parent *persist.DBID `json:"parent"`
 	// Children claims.
@@ -552,7 +559,7 @@ type Extension struct {
 	ExtensionID       string             `json:"extensionId"`
 	ExtensionType     ExtensionType      `json:"extensionType"`
 	Permissions       []string           `json:"permissions"`
-	Data              *string            `json:"data"`
+	Data              persist.JSON       `json:"data"`
 	Name              string             `json:"name"`
 	Description       string             `json:"description"`
 	CreatedAt         time.Time          `json:"createdAt"`
@@ -652,10 +659,12 @@ type PageInfo struct {
 }
 
 type Pool struct {
-	Dbid        persist.DBID  `json:"dbid"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Logo        string        `json:"logo"`
+	Dbid        persist.DBID `json:"dbid"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Image       string       `json:"image"`
+	// Basis point donation.
+	DonationBps int           `json:"donationBps"`
 	Slug        string        `json:"slug"`
 	Status      PoolStatus    `json:"status"`
 	Owner       UserOrAccount `json:"owner"`
@@ -691,16 +700,22 @@ type PoolCreate struct {
 }
 
 type PoolCreateInput struct {
+	// Name of the pool.
+	Owner *string `json:"owner"`
 	// Whether a pool is shared with its recipients or not.
 	Private *bool `json:"private"`
 	// Name of the pool.
 	Name *string `json:"name"`
 	// Name of the pool.
 	Description *string `json:"description"`
+	// Name of the pool.
+	Image *string `json:"image"`
+	// Basis point donation.
+	DonationBps *int `json:"donationBps"`
 	// Slug of the pool.
 	Slug *string `json:"slug"`
-	// List of claims to assign to the pool.
-	AddClaims []persist.DBID `json:"addClaims"`
+	// List of claims to create and assign to the pool.
+	AddClaims []*ClaimCreateInput `json:"addClaims"`
 }
 
 type PoolDayBalance struct {
@@ -767,10 +782,16 @@ type PoolUpdateInput struct {
 	Name *string `json:"name"`
 	// Name of the pool.
 	Description *string `json:"description"`
+	// Image of the pool.
+	Image *string `json:"image"`
+	// Basis point donation.
+	DonationBps *int `json:"donationBps"`
 	// Slug of the pool.
 	Slug *string `json:"slug"`
 	// List of claims to assign to the pool.
-	AddClaims []persist.DBID `json:"addClaims"`
+	AddClaims []*ClaimCreateInput `json:"addClaims"`
+	// List of claims to assign to the pool.
+	UpdateClaims []*ClaimUpdateInput `json:"updateClaims"`
 	// List of claims to remove from the pool.
 	RemoveClaims []persist.DBID `json:"removeClaims"`
 }
@@ -1062,6 +1083,24 @@ type UserError struct {
 type UserInput struct {
 	// Username.
 	Username *string `json:"username"`
+}
+
+// Login an existing user or register a new one.
+type UserLoginOrRegister struct {
+	// Informs whether users need to confirm their email address.
+	RequiresConfirmation *bool `json:"requiresConfirmation"`
+	// JWT token, required to authenticate.
+	Token *string `json:"token"`
+	// JWT refresh token, required to re-generate access token.
+	RefreshToken *string      `json:"refreshToken"`
+	User         *User        `json:"user"`
+	Errors       []*UserError `json:"errors"`
+}
+
+// Fields required to login or register a user.
+type UserLoginOrRegisterInput struct {
+	// Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+	RedirectURL *string `json:"redirectUrl"`
 }
 
 // Register a new user.

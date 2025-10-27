@@ -19,7 +19,7 @@ var (
 )
 
 const getClaimByIdBatch = `-- name: GetClaimByIdBatch :batchone
-SELECT id, pool_id, recipient_address, value, state_id, strategy_id, label, path, deleted, updated_at, created_at
+SELECT id, pool_id, recipient_address, state_id, strategy_id, data, label, path, deleted, updated_at, created_at
 FROM claims
 WHERE id = $1
   AND deleted = FALSE
@@ -58,9 +58,9 @@ func (b *GetClaimByIdBatchBatchResults) QueryRow(f func(int, Claim, error)) {
 			&i.ID,
 			&i.PoolID,
 			&i.RecipientAddress,
-			&i.Value,
 			&i.StateID,
 			&i.StrategyID,
+			&i.Data,
 			&i.Label,
 			&i.Path,
 			&i.Deleted,
@@ -79,7 +79,7 @@ func (b *GetClaimByIdBatchBatchResults) Close() error {
 }
 
 const getClaimsByPoolIdBatch = `-- name: GetClaimsByPoolIdBatch :batchmany
-SELECT c.id, c.pool_id, c.recipient_address, c.value, c.state_id, c.strategy_id, c.label, c.path, c.deleted, c.updated_at, c.created_at
+SELECT c.id, c.pool_id, c.recipient_address, c.state_id, c.strategy_id, c.data, c.label, c.path, c.deleted, c.updated_at, c.created_at
 FROM pools p
          INNER JOIN claims c ON c.pool_id = p.id
 WHERE p.id = $1
@@ -127,9 +127,9 @@ func (b *GetClaimsByPoolIdBatchBatchResults) Query(f func(int, []Claim, error)) 
 					&i.ID,
 					&i.PoolID,
 					&i.RecipientAddress,
-					&i.Value,
 					&i.StateID,
 					&i.StrategyID,
+					&i.Data,
 					&i.Label,
 					&i.Path,
 					&i.Deleted,
@@ -154,7 +154,7 @@ func (b *GetClaimsByPoolIdBatchBatchResults) Close() error {
 }
 
 const getClaimsByUserIdBatch = `-- name: GetClaimsByUserIdBatch :batchmany
-SELECT c.id, c.pool_id, c.recipient_address, c.value, c.state_id, c.strategy_id, c.label, c.path, c.deleted, c.updated_at, c.created_at
+SELECT c.id, c.pool_id, c.recipient_address, c.state_id, c.strategy_id, c.data, c.label, c.path, c.deleted, c.updated_at, c.created_at
 FROM users u
          INNER JOIN user_accounts ua ON u.id = ua.user_id
          INNER JOIN claims c ON c.recipient_address = ua.address
@@ -206,9 +206,9 @@ func (b *GetClaimsByUserIdBatchBatchResults) Query(f func(int, []Claim, error)) 
 					&i.ID,
 					&i.PoolID,
 					&i.RecipientAddress,
-					&i.Value,
 					&i.StateID,
 					&i.StrategyID,
+					&i.Data,
 					&i.Label,
 					&i.Path,
 					&i.Deleted,
@@ -294,7 +294,7 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 }
 
 const getPoolByIdBatch = `-- name: GetPoolByIdBatch :batchone
-SELECT id, name, description, logo, slug, owner_id, contract_id, deleted, updated_at, created_at
+SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
 FROM pools
 WHERE id = $1
   AND deleted = FALSE
@@ -331,9 +331,12 @@ func (b *GetPoolByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
 		row := b.br.QueryRow()
 		err := row.Scan(
 			&i.ID,
+			&i.Version,
+			&i.Private,
 			&i.Name,
 			&i.Description,
-			&i.Logo,
+			&i.DonationBps,
+			&i.Image,
 			&i.Slug,
 			&i.OwnerID,
 			&i.ContractID,
@@ -353,7 +356,7 @@ func (b *GetPoolByIdBatchBatchResults) Close() error {
 }
 
 const getPoolsByUserIDBatch = `-- name: GetPoolsByUserIDBatch :batchmany
-SELECT p.id, p.name, p.description, p.logo, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
+SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
 FROM users u
          INNER JOIN user_accounts ua ON u.id = ua.user_id
          INNER JOIN claims c ON c.recipient_address = ua.address
@@ -403,9 +406,12 @@ func (b *GetPoolsByUserIDBatchBatchResults) Query(f func(int, []Pool, error)) {
 				var i Pool
 				if err := rows.Scan(
 					&i.ID,
+					&i.Version,
+					&i.Private,
 					&i.Name,
 					&i.Description,
-					&i.Logo,
+					&i.DonationBps,
+					&i.Image,
 					&i.Slug,
 					&i.OwnerID,
 					&i.ContractID,

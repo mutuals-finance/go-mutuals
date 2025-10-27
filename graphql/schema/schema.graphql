@@ -402,8 +402,8 @@ type Claim implements Node {
   id: ID!
   # { claim id }
   dbid: DBID!
-  # allocated value (BigDecimal)
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
   # label
   label: String!
   # path
@@ -442,7 +442,9 @@ type Pool implements Node {
   # description
   description: String!
   # logo
-  logo: String!
+  image: String!
+  """Basis point donation."""
+  donationBps: Int!
   # slug
   slug: String!
   # status of the pool
@@ -1090,6 +1092,33 @@ type UserUpdate {
   user: User
 }
 
+"""
+Login an existing user or register a new one.
+"""
+type UserLoginOrRegister {
+  """Informs whether users need to confirm their email address."""
+  requiresConfirmation: Boolean
+
+  """JWT token, required to authenticate."""
+  token: String
+
+  """JWT refresh token, required to re-generate access token."""
+  refreshToken: String
+
+  user: User
+
+  errors: [UserError!]!
+}
+
+
+"""Fields required to login or register a user."""
+input UserLoginOrRegisterInput {
+  """
+  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+  """
+  redirectUrl: String
+}
+
 """Represents errors in user mutations."""
 type UserError {
   """
@@ -1459,17 +1488,20 @@ enum ClaimErrorCode {
 }
 
 input ClaimCreateInput {
+  """Claim label."""
+  label: String
+
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
-  """Parent claim."""
-  parent: DBID
+  """Parent claim label."""
+  parentLabel: String
 
-  """Children claims."""
-  children: [DBID!]
+  """Children claim labels."""
+  childrenLabels: [String!]
 
   """State id."""
   stateId: String!
@@ -1487,11 +1519,14 @@ type ClaimUpdate {
 }
 
 input ClaimUpdateInput {
+  """Claim ID."""
+  claimId: DBID!
+
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
   """Parent claim."""
   parent: DBID
@@ -1562,8 +1597,8 @@ input ClaimBulkCreateInput {
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
   """Parent claim."""
   parent: DBID
@@ -1591,11 +1626,14 @@ type ClaimBulkUpdate {
 }
 
 input ClaimBulkUpdateInput {
+  """Claim ID."""
+  claimId: DBID!
+
   """Claim recipient address."""
   recipientAddress: Address
 
-  """The allocated value of the claim."""
-  value: HexString!
+  """Extension (strategy and state) specific data."""
+  data: JSON
 
   """Parent claim."""
   parent: DBID
@@ -1653,6 +1691,9 @@ enum PoolErrorCode {
 }
 
 input PoolCreateInput {
+  """Name of the pool."""
+  owner: String
+
   """Whether a pool is shared with its recipients or not."""
   private: Boolean
 
@@ -1662,11 +1703,17 @@ input PoolCreateInput {
   """Name of the pool."""
   description: String
 
+  """Name of the pool."""
+  image: String
+
+  """Basis point donation."""
+  donationBps: Int
+
   """Slug of the pool."""
   slug: String
 
-  """List of claims to assign to the pool."""
-  addClaims: [DBID!]
+  """List of claims to create and assign to the pool."""
+  addClaims: [ClaimCreateInput!]
 }
 
 """
@@ -1687,11 +1734,20 @@ input PoolUpdateInput {
   """Name of the pool."""
   description: String
 
+  """Image of the pool."""
+  image: String
+
+  """Basis point donation."""
+  donationBps: Int
+
   """Slug of the pool."""
   slug: String
 
   """List of claims to assign to the pool."""
-  addClaims: [DBID!]
+  addClaims: [ClaimCreateInput!]
+
+  """List of claims to assign to the pool."""
+  updateClaims: [ClaimUpdateInput!]
 
   """List of claims to remove from the pool."""
   removeClaims: [DBID!]
@@ -1765,6 +1821,14 @@ type Mutation {
 
     authMechanism: AuthMechanism!
   ): CreateToken
+
+  """Create JWT token."""
+  userLoginOrRegister(
+    authMechanism: AuthMechanism!,
+
+    """Fields required to login or create a user."""
+    input: UserLoginOrRegisterInput!
+  ): UserLoginOrRegister
 
   """
   Refresh JWT token. Mutation tries to take refreshToken from the input. If it fails it will try to take `refreshToken` from the http-only cookie `refreshToken`. `csrfToken` is required when `refreshToken` is provided as a cookie.
@@ -1910,7 +1974,10 @@ type Mutation {
   """
   Creates a new claim.
   """
-  claimCreate(
+  poolClaimCreate(
+    """ID of a pool to create a claim within."""
+    poolId: DBID!
+
     """Fields required to create a claim."""
     input: ClaimCreateInput!
   ): ClaimCreate @authRequired
@@ -1918,9 +1985,9 @@ type Mutation {
   """
   Updates a new claim.
   """
-  claimUpdate(
-    """ID of a claim to update."""
-    id: DBID!
+  poolClaimUpdate(
+    """ID of a pool to update."""
+    poolId: DBID!
 
     """Fields required to update a claim."""
     input: ClaimUpdateInput!
@@ -1929,17 +1996,23 @@ type Mutation {
   """
   Deletes a claim.
   """
-  claimDelete(
+  poolClaimDelete(
+    """ID of a pool with the claim to delete."""
+    poolId: DBID!
+
     """ID of a claim to delete."""
-    id: DBID!
+    claimId: DBID!
   ): ClaimDelete @authRequired
 
   """
   Creates claims.
   """
-  claimBulkCreate(
+  poolClaimBulkCreate(
     """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
     errorPolicy: ErrorPolicyEnum
+
+    """Pool ID to create claims to."""
+    poolId: DBID!
 
     """Input list of claims to create."""
     claims: [ClaimBulkCreateInput!]!
@@ -1948,23 +2021,26 @@ type Mutation {
   """
   Updates claims.
   """
-  claimBulkUpdate(
+  poolClaimBulkUpdate(
     """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
     errorPolicy: ErrorPolicyEnum
 
-    """List of claim IDs to update."""
-    ids: [DBID!]!
+    """Pool ID to update."""
+    poolId: DBID!
 
     """Input list of claims to update."""
     claims: [ClaimBulkUpdateInput!]!
-  ): ClaimBulkCreate @authRequired
+  ): ClaimBulkUpdate @authRequired
 
   """
   Deletes claims.
   """
-  claimBulkDelete(
+  poolClaimBulkDelete(
+    """Pool ID to delete claims from."""
+    poolId: DBID!
+
     """List of claim IDs to delete."""
-    ids: [DBID!]!
+    claimIds: [DBID!]!
   ): ClaimBulkDelete @authRequired
 
   """
@@ -1973,7 +2049,7 @@ type Mutation {
   poolCreate(
     """Fields required when creating an invoice."""
     input: PoolCreateInput!
-  ): PoolCreate @authRequired
+  ): PoolCreate #@authRequired
 
   """
   Updates a pool.

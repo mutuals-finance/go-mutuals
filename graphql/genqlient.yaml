@@ -12,6 +12,8 @@ bindings:
     type: github.com/mutuals/go-mutuals/service/persist.DBID
   Address:
     type: github.com/mutuals/go-mutuals/service/persist.Address
+  JSON:
+    type: encoding/json.RawMessage
   PubKey:
     type: string
   Time:
