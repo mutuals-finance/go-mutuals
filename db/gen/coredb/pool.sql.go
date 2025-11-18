@@ -135,6 +135,38 @@ func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, e
 	return i, err
 }
 
+const getPoolById = `-- name: GetPoolById :one
+
+SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
+FROM pools
+WHERE id = $1
+  AND deleted = FALSE
+`
+
+// -----------------------------------------------------------------------------
+// POOL
+// -----------------------------------------------------------------------------
+func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error) {
+	row := q.db.QueryRow(ctx, getPoolById, id)
+	var i Pool
+	err := row.Scan(
+		&i.ID,
+		&i.Version,
+		&i.Private,
+		&i.Name,
+		&i.Description,
+		&i.DonationBps,
+		&i.Image,
+		&i.Slug,
+		&i.OwnerID,
+		&i.ContractID,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const updateClaims = `-- name: UpdateClaims :many
 WITH updates AS (SELECT UNNEST($1::text[])                AS id,
                         UNNEST($2::text[]) AS recipient_address,

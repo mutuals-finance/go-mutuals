@@ -445,50 +445,37 @@ func (api UserAPI) RemoveWalletsFromUser(ctx context.Context, walletIDs []persis
 	return removalErr
 }
 
-func (api UserAPI) CreateUser(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email) (userID persist.DBID, err error) {
+func (api UserAPI) CreateUser(ctx context.Context, did string) (user coredb.User, err error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": validate.WithTag(username, "username"),
+		"did": validate.WithTag(did, "did"),
 	}); err != nil {
-		return "", err
+		return coredb.User{}, err
 	}
 
-	user, err := createUser(ctx, api.repos, api.queries, api.taskClient, authenticator, "", nil)
+	// TODO check id token and take DID from there
+	user, err = userService.CreateUser(ctx, userService.CreateUserInput{
+		DID: did,
+	}, api.repos, api.queries)
+
 	if err != nil {
-		return "", err
+		return coredb.User{}, err
 	}
 
-	return user.ID, nil
-}
+	// Send event
+	err = event.Dispatch(ctx, coredb.Event{
+		ActorID:        persist.DBIDToNullStr(user.ID),
+		Action:         persist.ActionUserCreated,
+		ResourceTypeID: persist.ResourceTypeUser,
+		UserID:         user.ID,
+		SubjectID:      user.ID,
+		Data:           persist.EventData{},
+	})
 
-func (api UserAPI) LoginOrRegisterUser(ctx context.Context, authenticator auth.Authenticator) (user coredb.User, requiresConfirmation bool, token *string, refreshToken *string, err error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{}); err != nil {
-		return coredb.User{}, false, nil, nil, err
-	}
-
-	registered, err := authenticator.UserRegistered(ctx)
 	if err != nil {
-		return coredb.User{}, false, nil, nil, err
+		logger.For(ctx).Errorf("failed to dispatch event: %s", err)
 	}
 
-	if registered {
-		result, err := authenticator.Authenticate(ctx)
-		if err != nil {
-			return coredb.User{}, false, nil, nil, err
-
-		}
-		requiresConfirmation = false
-		user = *result.User
-	} else {
-		user, err = createUser(ctx, api.repos, api.queries, api.taskClient, authenticator, "", nil)
-		if err != nil {
-			return coredb.User{}, false, nil, nil, err
-		}
-
-		requiresConfirmation = true
-	}
-
-	return user, requiresConfirmation, token, refreshToken, nil
+	return user, nil
 }
 
 func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
@@ -781,108 +768,5 @@ func (api UserAPI) UnblockUser(ctx context.Context, userID persist.DBID) error {
 	return api.queries.UnblockUser(ctx, coredb.UnblockUserParams{UserID: viewerID, BlockedUserID: userID})
 }
 
-func createUser(ctx context.Context, repos *postgres.Repositories, queries *coredb.Queries, taskClient *task.Client, authenticator auth.Authenticator, username string, email *persist.Email) (user coredb.User, err error) {
-	createUserParams, err := createNewUserParamsWithAuth(ctx, authenticator, username, email)
-	if err != nil {
-		return coredb.User{}, err
-	}
-
-	tx, err := repos.BeginTx(ctx)
-	if err != nil {
-		return coredb.User{}, err
-	}
-	txQueries := queries.WithTx(tx)
-	defer tx.Rollback(ctx)
-
-	user, err = userService.CreateUser(ctx, createUserParams, repos.UserRepository, queries)
-	if err != nil {
-		return coredb.User{}, err
-	}
-
-	gc := util.MustGetGinContext(ctx)
-	err = txQueries.AddPiiAccountCreationInfo(ctx, coredb.AddPiiAccountCreationInfoParams{
-		UserID:    user.ID,
-		IpAddress: gc.ClientIP(),
-	})
-	if err != nil {
-		logger.For(ctx).Warnf("failed to get IP address for userID %s: %s\n", user.ID, err)
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return coredb.User{}, err
-	}
-
-	if createUserParams.EmailStatus == persist.EmailVerificationStatusUnverified && email != nil {
-		if err := emails.RequestVerificationEmail(ctx, user.ID); err != nil {
-			// Just the log the error since the user can verify their email later
-			logger.For(ctx).Warnf("failed to send verification email: %s", err)
-		}
-	}
-
-	if createUserParams.EmailStatus == persist.EmailVerificationStatusVerified {
-		if err := taskClient.CreateTaskForAddingEmailToMailingList(ctx, task.AddEmailToMailingListMessage{UserID: user.ID}); err != nil {
-			// Report error to Sentry since there's not another way to subscribe the user to the mailing list
-			sentryutil.ReportError(ctx, err)
-			logger.For(ctx).Warnf("failed to send mailing list subscription task: %s", err)
-		}
-	}
-
-	// Send event
-	err = event.Dispatch(ctx, coredb.Event{
-		ActorID:        persist.DBIDToNullStr(user.ID),
-		Action:         persist.ActionUserCreated,
-		ResourceTypeID: persist.ResourceTypeUser,
-		UserID:         user.ID,
-		SubjectID:      user.ID,
-		Data:           persist.EventData{},
-	})
-	if err != nil {
-		logger.For(ctx).Errorf("failed to dispatch event: %s", err)
-	}
-
-	return user, nil
-}
-
-func createNewUserParamsWithAuth(ctx context.Context, authenticator auth.Authenticator, username string, email *persist.Email) (persist.CreateUserInput, error) {
-	authResult, err := authenticator.Authenticate(ctx)
-	if err != nil && !util.ErrorIs[persist.ErrUserNotFound](err) {
-		return persist.CreateUserInput{}, auth.ErrAuthenticationFailed{WrappedErr: err}
-	}
-
-	if authResult.User != nil && !authResult.User.Universal {
-		if _, ok := authenticator.(auth.MagicLinkAuthenticator); ok {
-			// TODO: We currently only use MagicLink for email, but we may use it for other login methods like SMS later,
-			// so this error may not always be applicable in the future.
-			return persist.CreateUserInput{}, auth.ErrEmailAlreadyUsed
-		}
-		return persist.CreateUserInput{}, persist.ErrUserAlreadyExists{Authenticator: authenticator.GetDescription()}
-	}
-
-	var wallet auth.AuthenticatedAddress
-
-	if len(authResult.Addresses) > 0 {
-		// TODO: This currently takes the first authenticated address returned by the authenticator and creates
-		// the user's account based on that address. This works because the only auth mechanism we have is nonce-based
-		// auth and that supplies a single address. In the future, a user may authenticate in a way that makes
-		// multiple authenticated addresses available for initial user creation, and we may want to add all of
-		// those addresses to the user's account here.
-		wallet = authResult.Addresses[0]
-	}
-
-	params := persist.CreateUserInput{
-		Username:     username,
-		Email:        email,
-		EmailStatus:  persist.EmailVerificationStatusUnverified,
-		ChainAddress: wallet.ChainAddress,
-		WalletType:   wallet.WalletType,
-	}
-
-	// Override input email with verified email if available
-	if authResult.Email != nil {
-		params.Email = authResult.Email
-		params.EmailStatus = persist.EmailVerificationStatusVerified
-	}
-
-	return params, nil
+func createUser(ctx context.Context, repos *postgres.Repositories, queries *coredb.Queries, did string) (user coredb.User, err error) {
 }

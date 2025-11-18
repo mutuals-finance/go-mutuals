@@ -4995,14 +4995,11 @@ type UserRegister {
 
 """Fields required to create a user."""
 input UserRegisterInput {
-  """User name."""
-  username: String
-
-  """The email address of the user."""
-  email: String
+  """Decentralized identifier of the user."""
+  did: String
 
   """
-  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+  Base of frontend URL that will be needed to create confirmation URL.
   """
   redirectUrl: String
 }
@@ -30910,27 +30907,20 @@ func (ec *executionContext) unmarshalInputUserRegisterInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "email", "redirectUrl"}
+	fieldsInOrder := [...]string{"did", "redirectUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "username":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		case "did":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("did"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Username = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
+			it.Did = data
 		case "redirectUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("redirectUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

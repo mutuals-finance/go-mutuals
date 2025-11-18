@@ -78,6 +78,81 @@ func (b *GetClaimByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
+const getClaimsByAddressBatch = `-- name: GetClaimsByAddressBatch :batchmany
+SELECT c.id, c.pool_id, c.recipient_address, c.state_id, c.strategy_id, c.data, c.label, c.path, c.deleted, c.updated_at, c.created_at
+FROM claims c
+         INNER JOIN pools p ON p.id = c.pool_id
+WHERE c.recipient_address = $1
+  AND c.deleted = FALSE
+  AND p.deleted = FALSE
+`
+
+type GetClaimsByAddressBatchBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) GetClaimsByAddressBatch(ctx context.Context, recipientAddress []persist.Address) *GetClaimsByAddressBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range recipientAddress {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(getClaimsByAddressBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetClaimsByAddressBatchBatchResults{br, len(recipientAddress), false}
+}
+
+func (b *GetClaimsByAddressBatchBatchResults) Query(f func(int, []Claim, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []Claim
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			defer rows.Close()
+			if err != nil {
+				return err
+			}
+			for rows.Next() {
+				var i Claim
+				if err := rows.Scan(
+					&i.ID,
+					&i.PoolID,
+					&i.RecipientAddress,
+					&i.StateID,
+					&i.StrategyID,
+					&i.Data,
+					&i.Label,
+					&i.Path,
+					&i.Deleted,
+					&i.UpdatedAt,
+					&i.CreatedAt,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *GetClaimsByAddressBatchBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
 const getClaimsByPoolIdBatch = `-- name: GetClaimsByPoolIdBatch :batchmany
 SELECT c.id, c.pool_id, c.recipient_address, c.state_id, c.strategy_id, c.data, c.label, c.path, c.deleted, c.updated_at, c.created_at
 FROM pools p
@@ -149,85 +224,6 @@ func (b *GetClaimsByPoolIdBatchBatchResults) Query(f func(int, []Claim, error)) 
 }
 
 func (b *GetClaimsByPoolIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getClaimsByUserIdBatch = `-- name: GetClaimsByUserIdBatch :batchmany
-SELECT c.id, c.pool_id, c.recipient_address, c.state_id, c.strategy_id, c.data, c.label, c.path, c.deleted, c.updated_at, c.created_at
-FROM users u
-         INNER JOIN user_accounts ua ON u.id = ua.user_id
-         INNER JOIN claims c ON c.recipient_address = ua.address
-         INNER JOIN pools p ON p.id = c.pool_id
-WHERE u.id = $1
-  AND u.deleted = FALSE
-  AND ua.deleted = FALSE
-  AND c.deleted = FALSE
-  AND p.deleted = FALSE
-`
-
-type GetClaimsByUserIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetClaimsByUserIdBatch(ctx context.Context, id []persist.DBID) *GetClaimsByUserIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getClaimsByUserIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetClaimsByUserIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetClaimsByUserIdBatchBatchResults) Query(f func(int, []Claim, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []Claim
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i Claim
-				if err := rows.Scan(
-					&i.ID,
-					&i.PoolID,
-					&i.RecipientAddress,
-					&i.StateID,
-					&i.StrategyID,
-					&i.Data,
-					&i.Label,
-					&i.Path,
-					&i.Deleted,
-					&i.UpdatedAt,
-					&i.CreatedAt,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetClaimsByUserIdBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -355,38 +351,34 @@ func (b *GetPoolByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getPoolsByUserIDBatch = `-- name: GetPoolsByUserIDBatch :batchmany
+const getPoolsByAddressBatch = `-- name: GetPoolsByAddressBatch :batchmany
 SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
-FROM users u
-         INNER JOIN user_accounts ua ON u.id = ua.user_id
-         INNER JOIN claims c ON c.recipient_address = ua.address
+FROM claims c
          INNER JOIN pools p ON p.id = c.pool_id
-WHERE u.id = $1
-  AND u.deleted = FALSE
-  AND ua.deleted = FALSE
+WHERE c.recipient_address = $1
   AND c.deleted = FALSE
   AND p.deleted = FALSE
 `
 
-type GetPoolsByUserIDBatchBatchResults struct {
+type GetPoolsByAddressBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetPoolsByUserIDBatch(ctx context.Context, id []persist.DBID) *GetPoolsByUserIDBatchBatchResults {
+func (q *Queries) GetPoolsByAddressBatch(ctx context.Context, recipientAddress []persist.Address) *GetPoolsByAddressBatchBatchResults {
 	batch := &pgx.Batch{}
-	for _, a := range id {
+	for _, a := range recipientAddress {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getPoolsByUserIDBatch, vals...)
+		batch.Queue(getPoolsByAddressBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetPoolsByUserIDBatchBatchResults{br, len(id), false}
+	return &GetPoolsByAddressBatchBatchResults{br, len(recipientAddress), false}
 }
 
-func (b *GetPoolsByUserIDBatchBatchResults) Query(f func(int, []Pool, error)) {
+func (b *GetPoolsByAddressBatchBatchResults) Query(f func(int, []Pool, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var items []Pool
@@ -431,200 +423,13 @@ func (b *GetPoolsByUserIDBatchBatchResults) Query(f func(int, []Pool, error)) {
 	}
 }
 
-func (b *GetPoolsByUserIDBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getUserAccountByAddressBatch = `-- name: GetUserAccountByAddressBatch :batchone
-SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted
-FROM user_accounts
-WHERE address = $1
-  AND deleted = FALSE
-`
-
-type GetUserAccountByAddressBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetUserAccountByAddressBatch(ctx context.Context, address []persist.Address) *GetUserAccountByAddressBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range address {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getUserAccountByAddressBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetUserAccountByAddressBatchBatchResults{br, len(address), false}
-}
-
-func (b *GetUserAccountByAddressBatchBatchResults) QueryRow(f func(int, UserAccount, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i UserAccount
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Name,
-			&i.FtsName,
-			&i.Address,
-			&i.FtsAddress,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Deleted,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetUserAccountByAddressBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getUserAccountByIdBatch = `-- name: GetUserAccountByIdBatch :batchone
-SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted
-FROM user_accounts
-WHERE id = $1
-  AND deleted = FALSE
-`
-
-type GetUserAccountByIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetUserAccountByIdBatch(ctx context.Context, id []persist.DBID) *GetUserAccountByIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getUserAccountByIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetUserAccountByIdBatchBatchResults{br, len(id), false}
-}
-
-func (b *GetUserAccountByIdBatchBatchResults) QueryRow(f func(int, UserAccount, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i UserAccount
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Name,
-			&i.FtsName,
-			&i.Address,
-			&i.FtsAddress,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Deleted,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetUserAccountByIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getUserAccountsByUserIdBatch = `-- name: GetUserAccountsByUserIdBatch :batchmany
-SELECT id, user_id, name, fts_name, address, fts_address, created_at, updated_at, deleted
-FROM user_accounts
-WHERE user_id = $1
-  AND deleted = FALSE
-`
-
-type GetUserAccountsByUserIdBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetUserAccountsByUserIdBatch(ctx context.Context, userID []persist.DBID) *GetUserAccountsByUserIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range userID {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getUserAccountsByUserIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetUserAccountsByUserIdBatchBatchResults{br, len(userID), false}
-}
-
-func (b *GetUserAccountsByUserIdBatchBatchResults) Query(f func(int, []UserAccount, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var items []UserAccount
-		if b.closed {
-			if f != nil {
-				f(t, items, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		err := func() error {
-			rows, err := b.br.Query()
-			defer rows.Close()
-			if err != nil {
-				return err
-			}
-			for rows.Next() {
-				var i UserAccount
-				if err := rows.Scan(
-					&i.ID,
-					&i.UserID,
-					&i.Name,
-					&i.FtsName,
-					&i.Address,
-					&i.FtsAddress,
-					&i.CreatedAt,
-					&i.UpdatedAt,
-					&i.Deleted,
-				); err != nil {
-					return err
-				}
-				items = append(items, i)
-			}
-			return rows.Err()
-		}()
-		if f != nil {
-			f(t, items, err)
-		}
-	}
-}
-
-func (b *GetUserAccountsByUserIdBatchBatchResults) Close() error {
+func (b *GetPoolsByAddressBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
 
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences
+SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
 FROM users
 WHERE id = $1
   AND deleted = FALSE
@@ -661,17 +466,13 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 		row := b.br.QueryRow()
 		err := row.Scan(
 			&i.ID,
+			&i.Did,
 			&i.Deleted,
 			&i.Version,
 			&i.UpdatedAt,
 			&i.CreatedAt,
-			&i.Username,
-			&i.UsernameIdempotent,
-			&i.PrimaryAccountID,
-			&i.Universal,
 			&i.NotificationSettings,
 			&i.EmailUnsubscriptions,
-			&i.UserExperiences,
 		)
 		if f != nil {
 			f(t, i, err)
@@ -680,67 +481,6 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 }
 
 func (b *GetUserByIdBatchBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const getUserByUsernameBatch = `-- name: GetUserByUsernameBatch :batchone
-SELECT id, deleted, version, updated_at, created_at, username, username_idempotent, primary_account_id, universal, notification_settings, email_unsubscriptions, user_experiences
-FROM users
-WHERE username_idempotent = LOWER($1)
-  AND deleted = FALSE
-`
-
-type GetUserByUsernameBatchBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-func (q *Queries) GetUserByUsernameBatch(ctx context.Context, lower []string) *GetUserByUsernameBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range lower {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getUserByUsernameBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetUserByUsernameBatchBatchResults{br, len(lower), false}
-}
-
-func (b *GetUserByUsernameBatchBatchResults) QueryRow(f func(int, User, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		var i User
-		if b.closed {
-			if f != nil {
-				f(t, i, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		row := b.br.QueryRow()
-		err := row.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Username,
-			&i.UsernameIdempotent,
-			&i.PrimaryAccountID,
-			&i.Universal,
-			&i.NotificationSettings,
-			&i.EmailUnsubscriptions,
-			&i.UserExperiences,
-		)
-		if f != nil {
-			f(t, i, err)
-		}
-	}
-}
-
-func (b *GetUserByUsernameBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
@@ -841,7 +581,7 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
-SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
+SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
 FROM users u
          JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)
 WHERE NOT u.deleted
@@ -897,17 +637,13 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Query(f func(int, []User, 
 				var i User
 				if err := rows.Scan(
 					&i.ID,
+					&i.Did,
 					&i.Deleted,
 					&i.Version,
 					&i.UpdatedAt,
 					&i.CreatedAt,
-					&i.Username,
-					&i.UsernameIdempotent,
-					&i.PrimaryAccountID,
-					&i.Universal,
 					&i.NotificationSettings,
 					&i.EmailUnsubscriptions,
-					&i.UserExperiences,
 				); err != nil {
 					return err
 				}
@@ -927,7 +663,7 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
-SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.username, u.username_idempotent, u.primary_account_id, u.universal, u.notification_settings, u.email_unsubscriptions, u.user_experiences
+SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
 FROM users u
          JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)
 WHERE NOT u.deleted
@@ -974,17 +710,13 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 				var i User
 				if err := rows.Scan(
 					&i.ID,
+					&i.Did,
 					&i.Deleted,
 					&i.Version,
 					&i.UpdatedAt,
 					&i.CreatedAt,
-					&i.Username,
-					&i.UsernameIdempotent,
-					&i.PrimaryAccountID,
-					&i.Universal,
 					&i.NotificationSettings,
 					&i.EmailUnsubscriptions,
-					&i.UserExperiences,
 				); err != nil {
 					return err
 				}

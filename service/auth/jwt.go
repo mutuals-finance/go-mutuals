@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
-	"github.com/golang-jwt/jwt/v4"
+	"fmt"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/mutuals/go-mutuals/env"
 	"github.com/mutuals/go-mutuals/service/persist"
@@ -177,8 +179,19 @@ func generateJWT(claims jwt.Claims, jwtSecret string) (string, error) {
 	return jwtToken, nil
 }
 
+/*
 func keyFunc(secret string) jwt.Keyfunc {
 	return func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
+	}
+}*/
+
+func keyFunc(verificationKey string) jwt.Keyfunc {
+	return func(token *jwt.Token) (interface{}, error) {
+		if token.Method.Alg() != "ES256" {
+			return []byte{}, fmt.Errorf("unexpected JWT signing method=%v", token.Header["alg"])
+		}
+		// https://pkg.go.dev/github.com/dgrijalva/jwt-go#ParseECPublicKeyFromPEM
+		return jwt.ParseECPublicKeyFromPEM([]byte(verificationKey)), nil
 	}
 }

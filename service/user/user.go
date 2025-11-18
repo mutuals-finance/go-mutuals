@@ -3,19 +3,16 @@ package user
 import (
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v4"
-	"github.com/mutuals/go-mutuals/db/gen/coredb"
-	"github.com/mutuals/go-mutuals/service/logger"
 	"strings"
 	"time"
 
-	"github.com/mutuals/go-mutuals/service/multichain"
+	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/util"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/mutuals/go-mutuals/service/auth"
 	"github.com/mutuals/go-mutuals/service/persist"
-	"github.com/mutuals/go-mutuals/util"
 )
 
 var errUserCannotRemoveAllWallets = errors.New("user does not have enough wallets to remove")
@@ -80,140 +77,41 @@ type MergeUsersInput struct {
 	WalletType   persist.WalletType `json:"wallet_type"`
 }
 
-// CreateUser creates a new user
-func CreateUser(ctx context.Context, pUser persist.CreateUserInput, userRepo *postgres.UserRepository, queries *coredb.Queries) (user coredb.User, err error) {
-	gc := util.MustGetGinContext(ctx)
+type CreateUserInput struct {
+	DID string
+}
 
-	if pUser.Username != "" {
-		user, err := queries.GetUserByUsername(ctx, strings.ToLower(pUser.Username))
-		if err == nil && user.ID != "" {
-			return coredb.User{}, persist.ErrUsernameNotAvailable{Username: pUser.Username}
-		}
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			return coredb.User{}, err
-		}
+// CreateUser creates a new user
+func CreateUser(ctx context.Context, in CreateUserInput, repos *postgres.Repositories, queries *coredb.Queries) (user coredb.User, err error) {
+	gc := util.MustGetGinContext(ctx)
+	tx, err := repos.BeginTx(ctx)
+	if err != nil {
+		return coredb.User{}, err
 	}
+
+	txQueries := queries.WithTx(tx)
+	defer tx.Rollback(ctx)
 
 	user, err = queries.CreateUser(ctx, coredb.CreateUserParams{
-		ID:                   persist.GenerateID(),
-		Username:             util.ToNullString(pUser.Username, true),
-		UsernameIdempotent:   util.ToNullString(strings.ToLower(pUser.Username), true),
-		Universal:            pUser.Universal,
-		EmailUnsubscriptions: pUser.EmailNotificationsSettings,
+		ID:  persist.GenerateID(),
+		Did: in.DID,
 	})
 
-	/* TODO privy
-	   if pUser.PrivyDID != nil {
-	   		err := queries.SetPrivyDIDForUser(pCtx, db.SetPrivyDIDForUserParams{
-	   			ID:       persist.GenerateID(),
-	   			UserID:   userID,
-	   			PrivyDid: *pUser.PrivyDID,
-	   		})
-	   		if err != nil {
-	   			return "", err
-	   		}
-	   	}
-	*/
+	err = txQueries.AddPiiAccountCreationInfo(ctx, coredb.AddPiiAccountCreationInfoParams{
+		UserID:    user.ID,
+		IpAddress: gc.ClientIP(),
+	})
 
-	if pUser.ChainAddress.Address() != "" {
-		err := queries.InsertWallet(ctx, coredb.InsertWalletParams{
-			ID:      persist.GenerateID(),
-			UserID:  user.ID,
-			Name:    pUser.Username,
-			Address: pUser.ChainAddress.Address(),
-		})
-		if err != nil {
-			return coredb.User{}, err
-		}
+	if err != nil {
+		logger.For(ctx).Warnf("failed to get IP address for userID %s: %s\n", user.ID, err)
 	}
 
-	if pUser.Email != nil {
-		if pUser.EmailStatus == persist.EmailVerificationStatusVerified {
-			err := queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
-				UserID:       user.ID,
-				EmailAddress: *pUser.Email,
-			})
-			if err != nil {
-				logger.For(ctx).Errorf("failed to insert verified email address when creating new user with userID=%s\n", user.ID)
-			}
-		} else if pUser.EmailStatus == persist.EmailVerificationStatusUnverified {
-			err := queries.UpdateUserUnverifiedEmail(ctx, coredb.UpdateUserUnverifiedEmailParams{
-				UserID:       user.ID,
-				EmailAddress: *pUser.Email,
-			})
-			if err != nil {
-				logger.For(ctx).Errorf("failed to insert unverified email address when creating new user with userID=%s\n", user.ID)
-			}
-		}
-
-	}
-
-	_, _, err = auth.StartSession(gc, queries, user.ID)
+	err = tx.Commit(ctx)
 	if err != nil {
 		return coredb.User{}, err
 	}
 
 	return user, nil
-}
-
-// RemoveWalletsFromUser removes wallets from a user in the DB, and returns the IDs of the wallets that were removed.
-// The set of removed IDs is valid even in cases where this function returns an error; it will contain the IDs of wallets
-// that were successfully removed before the error occurred.
-func RemoveWalletsFromUser(pCtx context.Context, pUserID persist.DBID, pWalletIDs []persist.DBID, userRepo *postgres.UserRepository) ([]persist.DBID, error) {
-	removedIDs := make([]persist.DBID, 0, len(pWalletIDs))
-
-	/*	TODO
-		user, err := userRepo.GetByID(pCtx, pUserID)
-				if err != nil {
-					return removedIDs, err
-				}
-
-			for _, walletID := range pWalletIDs {
-							if user.PrimaryWalletID.String() == walletID.String() {
-								return removedIDs, errUserCannotRemovePrimaryWallet
-							}
-						}
-
-					if len(user.Wallets) <= len(pWalletIDs) {
-						return removedIDs, errUserCannotRemoveAllWallets
-					}
-
-				for _, walletID := range pWalletIDs {
-						removed, err := userRepo.RemoveWallet(pCtx, pUserID, walletID)
-						if err != nil {
-							return removedIDs, err
-						} else if removed {
-							removedIDs = append(removedIDs, walletID)
-						}
-					}
-	*/
-
-	return removedIDs, nil
-}
-
-// AddWalletToUser adds a single wallet to a user in the DB because a signature needs to be provided and validated per address
-func AddWalletToUser(pCtx context.Context, pUserID persist.DBID, pChainAddress persist.ChainAddress, addressAuth auth.Authenticator,
-	userRepo *postgres.UserRepository, mp *multichain.Provider) error {
-
-	authResult, err := addressAuth.Authenticate(pCtx)
-	if err != nil {
-		return err
-	}
-
-	if authResult.User != nil && !authResult.User.Universal {
-		return persist.ErrAddressOwnedByUser{ChainAddress: pChainAddress, OwnerID: authResult.User.ID}
-	}
-
-	authenticatedAddress, ok := authResult.GetAuthenticatedAddress(pChainAddress)
-	if !ok {
-		return persist.ErrAddressNotOwnedByUser{ChainAddress: pChainAddress, UserID: authResult.User.ID}
-	}
-
-	if err := userRepo.AddWallet(pCtx, pUserID, authenticatedAddress.ChainAddress, authenticatedAddress.WalletType, nil); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // UpdateUserInfo updates a user by ID and ensures that if they are using an ENS name as a username that their address resolves to that ENS

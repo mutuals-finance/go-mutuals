@@ -87,14 +87,7 @@ type UserNotificationSettings struct {
 }
 
 type CreateUserInput struct {
-	Username                   string
-	Email                      *Email
-	EmailStatus                EmailVerificationStatus
-	ChainAddress               ChainAddress
-	WalletType                 WalletType
-	Universal                  bool
-	EmailNotificationsSettings EmailUnsubscriptions
-	PrivyDID                   *string
+	DID string
 }
 
 // UserRepository represents the interface for interacting with the persisted state of users

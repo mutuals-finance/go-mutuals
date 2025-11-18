@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v4"
-	db "github.com/mutuals/go-mutuals/db/gen/coredb"
-	"github.com/mutuals/go-mutuals/service/redis"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v4"
+	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/redis"
 
 	"github.com/magiclabs/magic-admin-go"
 	magicclient "github.com/magiclabs/magic-admin-go/client"
@@ -52,7 +53,7 @@ const cookieExpires = 1 * time.Hour
 const NoncePrepend = "Mutuals uses this cryptographic signature in place of a password: "
 
 // AuthCookieKey is the key used to store the auth token in the cookie
-const AuthCookieKey = "SPLITFI_JWT"
+const AuthCookieKey = "privy-token"
 
 // RefreshCookieKey is the key used to store the refresh token in the cookie
 const RefreshCookieKey = "SPLITFI_REFRESH_JWT"

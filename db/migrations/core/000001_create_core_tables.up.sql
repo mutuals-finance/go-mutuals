@@ -6,58 +6,16 @@ CREATE SCHEMA IF NOT EXISTS scrubbed_pii;
 CREATE TABLE IF NOT EXISTS users
 (
     id                    character varying(255) PRIMARY KEY NOT NULL,
+    did                   character varying(255) PRIMARY KEY NOT NULL,
     deleted               boolean                            NOT NULL DEFAULT FALSE,
     version               integer                                     DEFAULT 0,
     updated_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    username              character varying(255),
-    username_idempotent   character varying(255),
-    primary_account_id    character varying(255),
-    universal             boolean                            NOT NULL DEFAULT FALSE,
     notification_settings jsonb,
     email_unsubscriptions jsonb                              NOT NULL DEFAULT '{
       "all": false
-    }'::jsonb,
-    user_experiences      jsonb                              NOT NULL DEFAULT '{}'::jsonb,
-    fts_username          tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, ((username)::text ||
-                                                                                          CASE
-                                                                                              WHEN (universal = FALSE)
-                                                                                                  THEN (' '::text ||
-                                                                                                        REGEXP_REPLACE(
-                                                                                                                (username)::text,
-                                                                                                                '(^0[xX]|\d+|\D+)'::text,
-                                                                                                                '\1 '::text,
-                                                                                                                'g'::text))
-                                                                                              ELSE ''::text
-                                                                                              END))) STORED
+    }'::jsonb
 );
-
-CREATE INDEX users_fts_username_idx ON users USING gin (fts_username);
-
-CREATE TABLE IF NOT EXISTS user_accounts
-(
-    id          character varying(255) PRIMARY KEY NOT NULL,
-    user_id     character varying(255)             NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    name        character varying                  NOT NULL DEFAULT ''::character varying,
-    fts_name    tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (name)::text)) STORED,
-    address     character varying(255),
-    fts_address tsvector GENERATED ALWAYS AS (TO_TSVECTOR('simple'::regconfig, (address)::text)) STORED,
-    created_at  timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted     boolean                            NOT NULL DEFAULT FALSE
-);
-
-CREATE INDEX user_accounts_user_id_idx ON user_accounts (user_id);
-CREATE INDEX user_accounts_address_idx ON user_accounts (address);
-CREATE INDEX user_accounts_fts_name_idx ON user_accounts USING gin (fts_name);
-CREATE INDEX user_accounts_fts_address_idx ON user_accounts USING gin (fts_address);
-CREATE UNIQUE INDEX IF NOT EXISTS user_accounts_unique_active_address_idx
-    ON user_accounts (address)
-    WHERE deleted = FALSE;
-
-ALTER TABLE users
-    ADD CONSTRAINT users_primary_account_id_fkey
-        FOREIGN KEY (primary_account_id) REFERENCES user_accounts(id);
 
 CREATE TABLE IF NOT EXISTS pools
 (
@@ -149,16 +107,6 @@ ALTER TABLE events
     ADD CONSTRAINT events_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
 
-CREATE TABLE IF NOT EXISTS nonces
-(
-    id         varchar(255) PRIMARY KEY,
-    value      text        NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT NOW(),
-    consumed   bool        NOT NULL DEFAULT FALSE
-);
-
-CREATE UNIQUE INDEX nonces_value_idx ON nonces (value);
-
 CREATE TABLE IF NOT EXISTS notifications
 (
     id         character varying(255) PRIMARY KEY NOT NULL,
@@ -235,17 +183,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS pii_for_users_pii_verified_email_address_idx O
 
 CREATE VIEW pii.user_view AS
 SELECT users.id,
+       users.did,
        users.deleted,
        users.version,
        users.updated_at,
        users.created_at,
-       users.username,
-       users.username_idempotent,
-       users.universal,
        users.notification_settings,
        users.email_unsubscriptions,
-       users.primary_account_id,
-       users.user_experiences,
        for_users.pii_unverified_email_address,
        for_users.pii_verified_email_address
 FROM users
@@ -313,28 +257,6 @@ CREATE TABLE IF NOT EXISTS user_blocklist
     active          bool                              DEFAULT TRUE
 );
 CREATE UNIQUE INDEX user_blocklist_user_id_blocked_user_id_idx ON user_blocklist (user_id, blocked_user_id) WHERE NOT deleted;
-
-CREATE TABLE IF NOT EXISTS sessions
-(
-    id                      varchar(255) PRIMARY KEY,
-    user_id                 varchar(255) NOT NULL REFERENCES users (id),
-    created_at              timestamptz  NOT NULL,
-    created_with_user_agent text         NOT NULL,
-    created_with_platform   text         NOT NULL,
-    created_with_os         text         NOT NULL,
-    last_refreshed          timestamptz  NOT NULL,
-    last_user_agent         text         NOT NULL,
-    last_platform           text         NOT NULL,
-    last_os                 text         NOT NULL,
-    current_refresh_id      varchar(255) NOT NULL,
-    active_until            timestamptz  NOT NULL,
-    invalidated             bool         NOT NULL,
-    updated_at              timestamptz  NOT NULL,
-    deleted                 bool         NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions (user_id) WHERE deleted = FALSE;
-CREATE UNIQUE INDEX IF NOT EXISTS sessions_id_idx ON sessions (id) WHERE deleted = FALSE;
 
 CREATE TABLE IF NOT EXISTS push_notification_tokens
 (

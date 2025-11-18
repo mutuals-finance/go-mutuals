@@ -15,8 +15,6 @@
 -- Hide tsvector search columns from sqlc. We don't actually want to select them when
 -- we select all columns in a table, and pgx can't handle them, so "select *" queries
 -- will fail if we don't hide these columns.
-alter table users drop column if exists fts_username;
-
 alter table pools drop column if exists fts_name;
 alter table pools drop column if exists fts_description_english;
 

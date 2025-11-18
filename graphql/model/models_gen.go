@@ -1113,11 +1113,9 @@ type UserRegister struct {
 
 // Fields required to create a user.
 type UserRegisterInput struct {
-	// User name.
-	Username *string `json:"username"`
-	// The email address of the user.
-	Email *string `json:"email"`
-	// Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+	// Decentralized identifier of the user.
+	Did *string `json:"did"`
+	// Base of frontend URL that will be needed to create confirmation URL.
 	RedirectURL *string `json:"redirectUrl"`
 }
 

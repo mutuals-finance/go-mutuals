@@ -566,19 +566,14 @@ func (v *UserInput) GetUsername() *string { return v.Username }
 
 // Fields required to create a user.
 type UserRegisterInput struct {
-	// User name.
-	Username *string `json:"username"`
-	// The email address of the user.
-	Email *string `json:"email"`
-	// Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+	// Decentralized identifier of the user.
+	Did *string `json:"did"`
+	// Base of frontend URL that will be needed to create confirmation URL.
 	RedirectUrl *string `json:"redirectUrl"`
 }
 
-// GetUsername returns UserRegisterInput.Username, and is useful for accessing the field via an interface.
-func (v *UserRegisterInput) GetUsername() *string { return v.Username }
-
-// GetEmail returns UserRegisterInput.Email, and is useful for accessing the field via an interface.
-func (v *UserRegisterInput) GetEmail() *string { return v.Email }
+// GetDid returns UserRegisterInput.Did, and is useful for accessing the field via an interface.
+func (v *UserRegisterInput) GetDid() *string { return v.Did }
 
 // GetRedirectUrl returns UserRegisterInput.RedirectUrl, and is useful for accessing the field via an interface.
 func (v *UserRegisterInput) GetRedirectUrl() *string { return v.RedirectUrl }

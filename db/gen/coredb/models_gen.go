@@ -50,13 +50,6 @@ type Event struct {
 	CreatedAt      time.Time            `db:"created_at" json:"created_at"`
 }
 
-type Nonce struct {
-	ID        persist.DBID `db:"id" json:"id"`
-	Value     string       `db:"value" json:"value"`
-	CreatedAt time.Time    `db:"created_at" json:"created_at"`
-	Consumed  bool         `db:"consumed" json:"consumed"`
-}
-
 type Notification struct {
 	ID        persist.DBID             `db:"id" json:"id"`
 	Deleted   bool                     `db:"deleted" json:"deleted"`
@@ -87,17 +80,13 @@ type PiiForUser struct {
 
 type PiiUserView struct {
 	ID                        persist.DBID                     `db:"id" json:"id"`
+	Did                       string                           `db:"did" json:"did"`
 	Deleted                   bool                             `db:"deleted" json:"deleted"`
 	Version                   sql.NullInt32                    `db:"version" json:"version"`
 	UpdatedAt                 time.Time                        `db:"updated_at" json:"updated_at"`
 	CreatedAt                 time.Time                        `db:"created_at" json:"created_at"`
-	Username                  sql.NullString                   `db:"username" json:"username"`
-	UsernameIdempotent        sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
-	Universal                 bool                             `db:"universal" json:"universal"`
 	NotificationSettings      persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions      persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	PrimaryAccountID          persist.DBID                     `db:"primary_account_id" json:"primary_account_id"`
-	UserExperiences           pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
 	PiiUnverifiedEmailAddress persist.Email                    `db:"pii_unverified_email_address" json:"pii_unverified_email_address"`
 	PiiVerifiedEmailAddress   persist.Email                    `db:"pii_verified_email_address" json:"pii_verified_email_address"`
 }
@@ -143,24 +132,6 @@ type ScrubbedPiiForUser struct {
 	Deleted                   bool          `db:"deleted" json:"deleted"`
 }
 
-type Session struct {
-	ID                   persist.DBID `db:"id" json:"id"`
-	UserID               persist.DBID `db:"user_id" json:"user_id"`
-	CreatedAt            time.Time    `db:"created_at" json:"created_at"`
-	CreatedWithUserAgent string       `db:"created_with_user_agent" json:"created_with_user_agent"`
-	CreatedWithPlatform  string       `db:"created_with_platform" json:"created_with_platform"`
-	CreatedWithOs        string       `db:"created_with_os" json:"created_with_os"`
-	LastRefreshed        time.Time    `db:"last_refreshed" json:"last_refreshed"`
-	LastUserAgent        string       `db:"last_user_agent" json:"last_user_agent"`
-	LastPlatform         string       `db:"last_platform" json:"last_platform"`
-	LastOs               string       `db:"last_os" json:"last_os"`
-	CurrentRefreshID     persist.DBID `db:"current_refresh_id" json:"current_refresh_id"`
-	ActiveUntil          time.Time    `db:"active_until" json:"active_until"`
-	Invalidated          bool         `db:"invalidated" json:"invalidated"`
-	UpdatedAt            time.Time    `db:"updated_at" json:"updated_at"`
-	Deleted              bool         `db:"deleted" json:"deleted"`
-}
-
 type SpamUserScore struct {
 	UserID        persist.DBID `db:"user_id" json:"user_id"`
 	Score         int32        `db:"score" json:"score"`
@@ -172,29 +143,13 @@ type SpamUserScore struct {
 
 type User struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
+	Did                  string                           `db:"did" json:"did"`
 	Deleted              bool                             `db:"deleted" json:"deleted"`
 	Version              sql.NullInt32                    `db:"version" json:"version"`
 	UpdatedAt            time.Time                        `db:"updated_at" json:"updated_at"`
 	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
-	Username             sql.NullString                   `db:"username" json:"username"`
-	UsernameIdempotent   sql.NullString                   `db:"username_idempotent" json:"username_idempotent"`
-	PrimaryAccountID     persist.DBID                     `db:"primary_account_id" json:"primary_account_id"`
-	Universal            bool                             `db:"universal" json:"universal"`
 	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	UserExperiences      pgtype.JSONB                     `db:"user_experiences" json:"user_experiences"`
-}
-
-type UserAccount struct {
-	ID         persist.DBID    `db:"id" json:"id"`
-	UserID     persist.DBID    `db:"user_id" json:"user_id"`
-	Name       string          `db:"name" json:"name"`
-	FtsName    interface{}     `db:"fts_name" json:"fts_name"`
-	Address    persist.Address `db:"address" json:"address"`
-	FtsAddress persist.Address `db:"fts_address" json:"fts_address"`
-	CreatedAt  time.Time       `db:"created_at" json:"created_at"`
-	UpdatedAt  time.Time       `db:"updated_at" json:"updated_at"`
-	Deleted    bool            `db:"deleted" json:"deleted"`
 }
 
 type UserBlocklist struct {

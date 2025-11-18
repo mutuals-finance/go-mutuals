@@ -97,30 +97,14 @@ func (r *mutationResolver) Nonce(ctx context.Context) (*model.Nonce, error) {
 }
 
 // UserRegister is the resolver for the userRegister field.
-func (r *mutationResolver) UserRegister(ctx context.Context, authMechanism model.AuthMechanism, input model.UserRegisterInput) (*model.UserRegister, error) {
-	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
-	if err != nil {
-		return nil, err
-	}
-
-	userName := ""
-	if input.Username != nil {
-		userName = *input.Username
-	}
-
-	var email *persist.Email
-	if input.Email != nil {
-		it := persist.Email(*input.Email)
-		email = &it
-	}
-
-	_, err = publicapi.For(ctx).User.CreateUser(ctx, authenticator, userName, email)
+func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserRegisterInput) (*model.UserRegister, error) {
+	user, err := publicapi.For(ctx).User.CreateUser(ctx, *input.Did)
 	if err != nil {
 		return nil, err
 	}
 
 	output := model.UserRegister{
-		User: resolveViewer(ctx),
+		User: userToModel(ctx, user),
 	}
 
 	return &output, nil

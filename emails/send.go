@@ -321,7 +321,6 @@ func runForUsersWithNotificationsOnForEmailType(ctx context.Context, emailType p
 			CurBeforeTime:       endTime,
 			CurAfterID:          lastID,
 			PagingForward:       true,
-			EmailVerified:       requiredStatus,
 			EmailUnsubscription: emailType.String(),
 		})
 		if err != nil {

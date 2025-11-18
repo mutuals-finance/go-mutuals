@@ -1,3 +1,27 @@
+-- -----------------------------------------------------------------------------
+-- POOL
+-- -----------------------------------------------------------------------------
+
+-- name: GetPoolById :one
+SELECT *
+FROM pools
+WHERE id = $1
+  AND deleted = FALSE;
+
+-- name: GetPoolByIdBatch :batchone
+SELECT *
+FROM pools
+WHERE id = $1
+  AND deleted = FALSE;
+
+-- name: GetPoolsByAddressBatch :batchmany
+SELECT p.*
+FROM claims c
+         INNER JOIN pools p ON p.id = c.pool_id
+WHERE c.recipient_address = $1
+  AND c.deleted = FALSE
+  AND p.deleted = FALSE;
+
 -- name: CreatePool :one
 INSERT INTO pools (id, name, description, image, slug, owner_id, contract_id, donation_bps, private, deleted,
                    updated_at, created_at)

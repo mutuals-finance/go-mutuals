@@ -1072,14 +1072,11 @@ type UserRegister {
 
 """Fields required to create a user."""
 input UserRegisterInput {
-  """User name."""
-  username: String
-
-  """The email address of the user."""
-  email: String
+  """Decentralized identifier of the user."""
+  did: String
 
   """
-  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+  Base of frontend URL that will be needed to create confirmation URL.
   """
   redirectUrl: String
 }
