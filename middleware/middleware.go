@@ -3,14 +3,15 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/service/auth/basicauth"
 	"github.com/mutuals/go-mutuals/service/limiters"
 	"github.com/mutuals/go-mutuals/service/redis"
 	"google.golang.org/api/idtoken"
-	"io"
-	"net/http"
-	"strings"
 
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
@@ -114,10 +115,10 @@ func TaskRequired() gin.HandlerFunc {
 	}
 }
 
-// ContinueSession is a middleware that manages session cookies
-func ContinueSession(queries *db.Queries, authRefreshCache *redis.Cache) gin.HandlerFunc {
+// VerifySession is a middleware that verifies access token cookies
+func VerifySession(queries *db.Queries, authRefreshCache *redis.Cache) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, _, err := auth.ContinueSession(c, queries, authRefreshCache)
+		err := auth.VerifySession(c, queries, authRefreshCache)
 		if err == nil {
 			loggerCtx := logger.NewContextWithFields(c.Request.Context(), logrus.Fields{
 				"authedUserId": auth.GetUserIDFromCtx(c),

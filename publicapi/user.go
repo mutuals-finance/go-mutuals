@@ -75,29 +75,6 @@ func (api UserAPI) GetUserById(ctx context.Context, userID persist.DBID) (*cored
 	return &user, nil
 }
 
-func (api UserAPI) GetUserByVerifiedEmailAddress(ctx context.Context, emailAddress persist.Email) (*coredb.User, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"emailAddress": validate.WithTag(emailAddress, "required"),
-	}); err != nil {
-		return nil, err
-	}
-
-	// Intentionally using queries here instead of a dataloader. Caching a user by email address is tricky
-	// because the key (email address) isn't part of the user object, and this method isn't currently invoked
-	// in a way that would benefit from dataloaders or caching anyway.
-	user, err := api.queries.GetUserByVerifiedEmailAddress(ctx, emailAddress.String())
-
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			err = persist.ErrUserNotFound{Email: emailAddress}
-		}
-		return nil, err
-	}
-
-	return &user, nil
-}
-
 func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress persist.Email) (bool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -109,14 +86,14 @@ func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress 
 	// Intentionally using queries here instead of a dataloader. Caching a user by email address is tricky
 	// because the key (email address) isn't part of the user object, and this method isn't currently invoked
 	// in a way that would benefit from dataloaders or caching anyway.
-	_, err := api.queries.GetUserByVerifiedEmailAddress(ctx, emailAddress.String())
+	/*_, err := api.queries.GetUserByVerifiedEmailAddress(ctx, emailAddress.String())
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
 		}
 		return false, err
-	}
+	}*/
 
 	return true, nil
 }
@@ -212,22 +189,6 @@ func (api UserAPI) paginatorWithQuery(c *positionCursor, queryF func(positionPag
 	return paginator
 }
 
-func (api UserAPI) GetUserByUsername(ctx context.Context, username string) (*coredb.User, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": validate.WithTag(username, "required"),
-	}); err != nil {
-		return nil, err
-	}
-
-	user, err := api.loaders.GetUserByUsernameBatch.Load(username)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
-}
-
 func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*coredb.User, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -236,12 +197,12 @@ func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.Ch
 		return nil, err
 	}
 
-	dbUser, err := api.queries.GetUserByAccountAddress(ctx, chainAddress.Address())
-	if err != nil {
-		return nil, err
-	}
-
-	return &dbUser, nil
+	/*	dbUser, err := api.queries.GetUsersByDIDs(ctx, chainAddress.Address())
+		if err != nil {
+			return nil, err
+		}
+	*/
+	return nil, nil
 }
 
 func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*coredb.User, error) {
@@ -379,7 +340,7 @@ func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role,
 	}
 
 	cursorFunc := func(u coredb.User) (string, persist.DBID, error) {
-		return u.UsernameIdempotent.String, u.ID, nil
+		return u.ID.String(), u.ID, nil
 	}
 
 	paginator := lexicalPaginator[coredb.User]{
@@ -388,61 +349,6 @@ func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role,
 	}
 
 	return paginator.paginate(before, after, first, last)
-}
-
-func (api UserAPI) AddWalletToUser(ctx context.Context, chainAddress persist.ChainAddress, authenticator auth.Authenticator) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"chainAddress":  validate.WithTag(chainAddress, "required"),
-		"authenticator": validate.WithTag(authenticator, "required"),
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = userService.AddWalletToUser(ctx, userID, chainAddress, authenticator, api.repos.UserRepository, api.multichainProvider)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (api UserAPI) RemoveWalletsFromUser(ctx context.Context, walletIDs []persist.DBID) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"walletIDs": validate.WithTag(walletIDs, "required,unique,dive,required"),
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	removedIDs, removalErr := userService.RemoveWalletsFromUser(ctx, userID, walletIDs, api.repos.UserRepository)
-
-	// If any wallet IDs were successfully removed, we need to process those removals, even if we also
-	// encountered an error.
-	if len(removedIDs) > 0 {
-		walletRemovalMessage := task.TokenProcessingWalletRemovalMessage{
-			UserID:    userID,
-			WalletIDs: removedIDs,
-		}
-
-		if err := api.taskClient.CreateTaskForWalletRemoval(ctx, walletRemovalMessage); err != nil {
-			// Just log the error here. No need to return it -- the actual wallet removal DID succeed,
-			// but tokens owned by the affected wallets won't be updated until the user's next sync.
-			logger.For(ctx).WithError(err).Error("failed to create task to process wallet removal")
-		}
-	}
-
-	return removalErr
 }
 
 func (api UserAPI) CreateUser(ctx context.Context, did string) (user coredb.User, err error) {
@@ -499,27 +405,6 @@ func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
 	return nil
 }
 
-func (api UserAPI) UpdateUserPrimaryWallet(ctx context.Context, primaryWalletID persist.DBID) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"primaryWalletID": validate.WithTag(primaryWalletID, "required"),
-	}); err != nil {
-		return err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = api.queries.UpdateUserPrimaryWallet(ctx, coredb.UpdateUserPrimaryWalletParams{WalletID: primaryWalletID, UserID: userID})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (api UserAPI) UpdateUserEmailWithManualVerification(ctx context.Context, email persist.Email) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
@@ -548,7 +433,7 @@ func (api UserAPI) UpdateUserEmailWithManualVerification(ctx context.Context, em
 	return nil
 }
 
-func (api UserAPI) UpdateUserEmailWithAuthenticator(ctx context.Context, email persist.Email, authenticator auth.Authenticator) error {
+func (api UserAPI) UpdateUserEmail(ctx context.Context, email persist.Email) error {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"email": validate.WithTag(email, "required"),
@@ -559,19 +444,6 @@ func (api UserAPI) UpdateUserEmailWithAuthenticator(ctx context.Context, email p
 	userID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return err
-	}
-
-	authResult, err := authenticator.Authenticate(ctx)
-	if err != nil {
-		return err
-	}
-
-	if authResult.Email == nil {
-		return fmt.Errorf("authenticator did not return a verified email address")
-	}
-
-	if email.String() != authResult.Email.String() {
-		return fmt.Errorf("supplied email address (%s) does not match verified email address from authenticator (%s)", email.String(), authResult.Email.String())
 	}
 
 	err = api.queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
@@ -766,7 +638,4 @@ func (api UserAPI) UnblockUser(ctx context.Context, userID persist.DBID) error {
 		return err
 	}
 	return api.queries.UnblockUser(ctx, coredb.UnblockUserParams{UserID: viewerID, BlockedUserID: userID})
-}
-
-func createUser(ctx context.Context, repos *postgres.Repositories, queries *coredb.Queries, did string) (user coredb.User, err error) {
 }

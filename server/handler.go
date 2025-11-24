@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/service/task"
 	"github.com/vektah/gqlparser/v2/ast"
-	"net/http"
-	"time"
 
 	"github.com/mutuals/go-mutuals/env"
 	"github.com/mutuals/go-mutuals/graphql/apq"
@@ -60,8 +61,8 @@ func HandlersInit(router *gin.Engine, repos *postgres.Repositories, coreQueries 
 func GraphqlHandlersInit(router *gin.Engine, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, apqCache *apq.APQCache, authRefreshCache *redis.Cache, publicapiF func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI) {
 	graphqlGroup := router.Group("/mutuals/graphql")
 	graphqlHandler := GraphQLHandler(coreQueries, taskClient, pub, lock, apqCache, publicapiF)
-	graphqlGroup.Any("/query", middleware.ContinueSession(coreQueries, authRefreshCache), graphqlHandler)
-	graphqlGroup.Any("/query/:operationName", middleware.ContinueSession(coreQueries, authRefreshCache), graphqlHandler)
+	graphqlGroup.Any("/query", middleware.VerifySession(coreQueries, authRefreshCache), graphqlHandler)
+	graphqlGroup.Any("/query/:operationName", middleware.VerifySession(coreQueries, authRefreshCache), graphqlHandler)
 	graphqlGroup.GET("/playground", graphqlPlaygroundHandler())
 }
 

@@ -189,9 +189,13 @@ func keyFunc(secret string) jwt.Keyfunc {
 func keyFunc(verificationKey string) jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
 		if token.Method.Alg() != "ES256" {
-			return []byte{}, fmt.Errorf("unexpected JWT signing method=%v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected JWT signing method=%v", token.Header["alg"])
 		}
 		// https://pkg.go.dev/github.com/dgrijalva/jwt-go#ParseECPublicKeyFromPEM
-		return jwt.ParseECPublicKeyFromPEM([]byte(verificationKey)), nil
+		key, err := jwt.ParseECPublicKeyFromPEM([]byte(verificationKey))
+		if err != nil {
+			return nil, err
+		}
+		return key, nil
 	}
 }

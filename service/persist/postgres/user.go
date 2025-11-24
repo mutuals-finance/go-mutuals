@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/mutuals/go-mutuals/util"
 	"strings"
 	"time"
 
@@ -145,27 +144,6 @@ func (u *UserRepository) UpdateByID(pCtx context.Context, pID persist.DBID, pUpd
 
 }
 
-func (u *UserRepository) CreateWalletWithTx(ctx context.Context, queries *db.Queries, chainAddress persist.ChainAddress, walletType persist.WalletType, userID persist.DBID) (persist.DBID, error) {
-
-	walletID := persist.GenerateID()
-	// At this point, we know there's no existing wallet in the database with this ChainAddress, so let's make a new one!
-	err := queries.InsertWallet(ctx, db.InsertWalletParams{
-		ID:      walletID,
-		UserID:  userID,
-		Name:    "",
-		Address: chainAddress.Address(),
-	})
-	if err != nil {
-		return "", persist.ErrWalletCreateFailed{
-			ChainAddress: chainAddress,
-			WalletID:     walletID,
-			Err:          err,
-		}
-	}
-
-	return walletID, nil
-}
-
 // Create creates a new user
 func (u *UserRepository) Create(pCtx context.Context, pUser persist.CreateUserInput, queries *db.Queries) (persist.DBID, error) {
 	if queries == nil {
@@ -183,69 +161,7 @@ func (u *UserRepository) Create(pCtx context.Context, pUser persist.CreateUserIn
 		}()
 	}
 
-	if pUser.Username != "" {
-		user, err := queries.GetUserByUsername(pCtx, strings.ToLower(pUser.Username))
-		if err == nil && user.ID != "" {
-			return "", persist.ErrUsernameNotAvailable{Username: pUser.Username}
-		}
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-			return "", err
-		}
-	}
-
-	userID, err := queries.InsertUser(pCtx, db.InsertUserParams{
-		ID:                   persist.GenerateID(),
-		Username:             util.ToNullString(pUser.Username, true),
-		UsernameIdempotent:   util.ToNullString(strings.ToLower(pUser.Username), true),
-		Universal:            pUser.Universal,
-		EmailUnsubscriptions: pUser.EmailNotificationsSettings,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	/* TODO privy
-	   if pUser.PrivyDID != nil {
-	   		err := queries.SetPrivyDIDForUser(pCtx, db.SetPrivyDIDForUserParams{
-	   			ID:       persist.GenerateID(),
-	   			UserID:   userID,
-	   			PrivyDid: *pUser.PrivyDID,
-	   		})
-	   		if err != nil {
-	   			return "", err
-	   		}
-	   	}
-	*/
-
-	if pUser.ChainAddress.Address() != "" {
-		_, err = u.CreateWalletWithTx(pCtx, queries, pUser.ChainAddress, pUser.WalletType, userID)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if pUser.Email != nil {
-		if pUser.EmailStatus == persist.EmailVerificationStatusVerified {
-			err := queries.UpdateUserVerifiedEmail(pCtx, db.UpdateUserVerifiedEmailParams{
-				UserID:       userID,
-				EmailAddress: *pUser.Email,
-			})
-			if err != nil {
-				logger.For(pCtx).Errorf("failed to insert verified email address when creating new user with userID=%s\n", userID)
-			}
-		} else if pUser.EmailStatus == persist.EmailVerificationStatusUnverified {
-			err := queries.UpdateUserUnverifiedEmail(pCtx, db.UpdateUserUnverifiedEmailParams{
-				UserID:       userID,
-				EmailAddress: *pUser.Email,
-			})
-			if err != nil {
-				logger.For(pCtx).Errorf("failed to insert unverified email address when creating new user with userID=%s\n", userID)
-			}
-		}
-
-	}
-	return userID, nil
+	return "", nil
 }
 
 // GetByID gets the user with the given ID
@@ -290,12 +206,6 @@ func (u *UserRepository) GetByUsername(pCtx context.Context, pUsername string) (
 	}
 	return user, nil
 
-}
-
-// AddWallet adds an address to user as well as ensures that the wallet and address exists
-func (u *UserRepository) AddWallet(pCtx context.Context, pUserID persist.DBID, pChainAddress persist.ChainAddress, pWalletType persist.WalletType, queries *db.Queries) error {
-	_, err := u.CreateWalletWithTx(pCtx, queries, pChainAddress, pWalletType, pUserID)
-	return err
 }
 
 // RemoveWallet removes the specified wallet from a user. Returns true if the wallet exists and was successfully removed,

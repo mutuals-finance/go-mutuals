@@ -13,7 +13,6 @@ import (
 	"github.com/mutuals/go-mutuals/publicapi"
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist"
-	"github.com/mutuals/go-mutuals/util"
 )
 
 // Parent is the resolver for the parent field.
@@ -81,21 +80,6 @@ func (r *extensionRegistryResolver) Owner(ctx context.Context, obj *model.Extens
 	panic(fmt.Errorf("not implemented: Owner - owner"))
 }
 
-// Nonce is the resolver for the nonce field.
-func (r *mutationResolver) Nonce(ctx context.Context) (*model.Nonce, error) {
-	nonce, message, err := publicapi.For(ctx).Auth.GetAuthNonce(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.Nonce{
-		Nonce:   &nonce,
-		Message: &message,
-	}
-
-	return output, nil
-}
-
 // UserRegister is the resolver for the userRegister field.
 func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserRegisterInput) (*model.UserRegister, error) {
 	user, err := publicapi.For(ctx).User.CreateUser(ctx, *input.Did)
@@ -157,87 +141,9 @@ func (r *mutationResolver) UserDelete(ctx context.Context, token string) (*model
 	panic(fmt.Errorf("not implemented: UserDelete - userDelete"))
 }
 
-// TokenCreate is the resolver for the tokenCreate field.
-func (r *mutationResolver) TokenCreate(ctx context.Context, audience *string, authMechanism model.AuthMechanism) (*model.CreateToken, error) {
-	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
-	if err != nil {
-		return nil, err
-	}
-
-	token, refreshToken, err := publicapi.For(ctx).Auth.CreateToken(ctx, authenticator)
-	if err != nil {
-		return nil, err
-	}
-
-	output := &model.CreateToken{
-		Token:        token,
-		RefreshToken: refreshToken,
-		User:         nil, //TODO get(ctx),
-	}
-
-	return output, nil
-}
-
-// UserLoginOrRegister is the resolver for the userLoginOrRegister field.
-func (r *mutationResolver) UserLoginOrRegister(ctx context.Context, authMechanism model.AuthMechanism, input model.UserLoginOrRegisterInput) (*model.UserLoginOrRegister, error) {
-	authenticator, err := r.authMechanismToAuthenticator(ctx, authMechanism)
-	if err != nil {
-		return nil, err
-	}
-
-	user, requiresConfirmation, token, refreshToken, err := publicapi.For(ctx).User.LoginOrRegisterUser(ctx, authenticator)
-	if err != nil {
-		return nil, err
-	}
-
-	output := model.UserLoginOrRegister{
-		RequiresConfirmation: util.ToPointer(requiresConfirmation),
-		Token:                token,
-		RefreshToken:         refreshToken,
-		User:                 userToModel(ctx, user),
-	}
-
-	return &output, nil
-}
-
-// TokenRefresh is the resolver for the tokenRefresh field.
-func (r *mutationResolver) TokenRefresh(ctx context.Context, csrfToken *string, refreshToken *string) (*model.RefreshToken, error) {
-	panic(fmt.Errorf("not implemented: TokenRefresh - tokenRefresh"))
-}
-
 // TokenVerify is the resolver for the tokenVerify field.
 func (r *mutationResolver) TokenVerify(ctx context.Context, token string) (*model.VerifyToken, error) {
 	panic(fmt.Errorf("not implemented: TokenVerify - tokenVerify"))
-}
-
-// TokensDeactivateAll is the resolver for the tokensDeactivateAll field.
-func (r *mutationResolver) TokensDeactivateAll(ctx context.Context) (*model.DeactivateAllUserTokens, error) {
-	publicapi.For(ctx).Auth.DeactivateAllTokens(ctx)
-
-	output := model.DeactivateAllUserTokens{}
-
-	return &output, nil
-}
-
-// SendConfirmationEmail is the resolver for the sendConfirmationEmail field.
-func (r *mutationResolver) SendConfirmationEmail(ctx context.Context, redirectURL string) (*model.SendConfirmationEmail, error) {
-	panic(fmt.Errorf("not implemented: SendConfirmationEmail - sendConfirmationEmail"))
-	//return resendEmailVerification(ctx)
-}
-
-// ConfirmUser is the resolver for the confirmUser field.
-func (r *mutationResolver) ConfirmUser(ctx context.Context, email string, token string) (*model.ConfirmUser, error) {
-	return confirmUser(ctx, token)
-}
-
-// RequestEmailChange is the resolver for the requestEmailChange field.
-func (r *mutationResolver) RequestEmailChange(ctx context.Context, newEmail string, password string, redirectURL string) (*model.RequestEmailChange, error) {
-	panic(fmt.Errorf("not implemented: RequestEmailChange - requestEmailChange"))
-}
-
-// ConfirmEmailChange is the resolver for the confirmEmailChange field.
-func (r *mutationResolver) ConfirmEmailChange(ctx context.Context, token string) (*model.ConfirmEmailChange, error) {
-	panic(fmt.Errorf("not implemented: ConfirmEmailChange - confirmEmailChange"))
 }
 
 // PushTokenRegister is the resolver for the pushTokenRegister field.
@@ -307,46 +213,6 @@ func (r *mutationResolver) ClearNotifications(ctx context.Context) (*model.Clear
 func (r *mutationResolver) EmailNotificationSettingsUpdate(ctx context.Context, settings model.UpdateEmailNotificationSettingsInput) (*model.EmailNotificationSettings, error) {
 	panic(fmt.Errorf("not implemented: EmailNotificationSettingsUpdate - emailNotificationSettingsUpdate"))
 	//return updateUserEmailNotificationSettings(ctx, settings)
-}
-
-// WalletCreate is the resolver for the walletCreate field.
-func (r *mutationResolver) WalletCreate(ctx context.Context, input model.WalletCreateInput) (*model.WalletCreate, error) {
-	panic(fmt.Errorf("not implemented: WalletCreate - walletCreate"))
-}
-
-// WalletUpdate is the resolver for the walletUpdate field.
-func (r *mutationResolver) WalletUpdate(ctx context.Context, id persist.DBID, input model.WalletUpdateInput) (*model.WalletUpdate, error) {
-	panic(fmt.Errorf("not implemented: WalletUpdate - walletUpdate"))
-	/*	authenticator, err := r.authMechanismToAuthenticator(ctx, input.authMechanism)
-		if err != nil {
-			return nil, err
-		}
-
-		wallet, err = publicapi.For(ctx).Wallet.Update(ctx, input.Address, authenticator)
-		if err != nil {
-			return nil, err
-		}
-
-		output := &model.WalletUpdate{
-			Wallet: wallet,
-		}
-
-		return output, nil*/
-}
-
-// WalletDelete is the resolver for the walletDelete field.
-func (r *mutationResolver) WalletDelete(ctx context.Context, id persist.DBID) (*model.WalletDelete, error) {
-	panic(fmt.Errorf("not implemented: WalletDelete - walletDelete"))
-	/*	wallet, err := publicapi.For(ctx).Wallet.Delete(ctx, id)
-		if err != nil {
-			return nil, err
-		}
-
-		out := &model.WalletDelete{
-			Wallet: wallet,
-		}
-
-		return out, nil*/
 }
 
 // PoolClaimCreate is the resolver for the poolClaimCreate field.
@@ -546,17 +412,6 @@ func (r *queryResolver) PoolByID(ctx context.Context, id persist.DBID) (model.Po
 	return pool, nil
 }
 
-// ViewerPoolByID is the resolver for the viewerPoolById field.
-func (r *queryResolver) ViewerPoolByID(ctx context.Context, id persist.DBID) (model.ViewerPoolByIDPayloadOrError, error) {
-	pool, err := resolveViewerPoolByPoolID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return pool, nil
-}
-
 // SearchUsers is the resolver for the searchUsers field.
 func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersPayloadOrError, error) {
 	panic(fmt.Errorf("not implemented: SearchUsers - searchUsers"))
@@ -638,17 +493,6 @@ func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*persist.R
 	return roles, nil
 }
 
-// Wallets is the resolver for the wallets field.
-func (r *userResolver) Wallets(ctx context.Context, obj *model.User) ([]*model.Wallet, error) {
-	return resolveWalletsByUserID(ctx, obj.Dbid)
-}
-
-// PrimaryWallet is the resolver for the primaryWallet field.
-func (r *userResolver) PrimaryWallet(ctx context.Context, obj *model.User) (*model.Wallet, error) {
-	panic(fmt.Errorf("not implemented: PrimaryWallet - primaryWallet"))
-	//return resolvePrimaryWalletByUserID(ctx, obj.HelperUserData.UserID)
-}
-
 // Pools is the resolver for the pools field.
 func (r *userResolver) Pools(ctx context.Context, obj *model.User) ([]*model.Pool, error) {
 	panic(fmt.Errorf("not implemented: Pools - pools"))
@@ -675,29 +519,9 @@ func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.Us
 	return resolveUserByUserID(ctx, userID)
 }
 
-// ViewerPools is the resolver for the viewerPools field.
-func (r *viewerResolver) ViewerPools(ctx context.Context, obj *model.Viewer) ([]*model.ViewerPool, error) {
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-
-	pools, err := resolvePoolsByUserID(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	output := make([]*model.ViewerPool, len(pools))
-	for i, pool := range pools {
-		output[i] = &model.ViewerPool{
-			Pool: pool,
-		}
-	}
-
-	return output, nil
-}
-
-// Email is the resolver for the email field.
-func (r *viewerResolver) Email(ctx context.Context, obj *model.Viewer) (*model.UserEmail, error) {
-	return resolveViewerEmail(ctx), nil
+// Pools is the resolver for the pools field.
+func (r *viewerResolver) Pools(ctx context.Context, obj *model.Viewer) ([]*model.Pool, error) {
+	panic(fmt.Errorf("not implemented: Pools - pools"))
 }
 
 // Notifications is the resolver for the notifications field.
@@ -708,16 +532,6 @@ func (r *viewerResolver) Notifications(ctx context.Context, obj *model.Viewer, b
 // NotificationSettings is the resolver for the notificationSettings field.
 func (r *viewerResolver) NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error) {
 	return resolveViewerNotificationSettings(ctx)
-}
-
-// Account is the resolver for the account field.
-func (r *walletResolver) Account(ctx context.Context, obj *model.Wallet) (*model.EVMAccount, error) {
-	panic(fmt.Errorf("not implemented: Account - account"))
-}
-
-// User is the resolver for the user field.
-func (r *walletResolver) User(ctx context.Context, obj *model.Wallet) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
 }
 
 // Transaction is the resolver for the transaction field.
@@ -812,9 +626,6 @@ func (r *Resolver) UserEmail() generated.UserEmailResolver { return &userEmailRe
 // Viewer returns generated.ViewerResolver implementation.
 func (r *Resolver) Viewer() generated.ViewerResolver { return &viewerResolver{r} }
 
-// Wallet returns generated.WalletResolver implementation.
-func (r *Resolver) Wallet() generated.WalletResolver { return &walletResolver{r} }
-
 // Withdrawal returns generated.WithdrawalResolver implementation.
 func (r *Resolver) Withdrawal() generated.WithdrawalResolver { return &withdrawalResolver{r} }
 
@@ -845,7 +656,6 @@ type txResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type userEmailResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
-type walletResolver struct{ *Resolver }
 type withdrawalResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }

@@ -3,18 +3,15 @@ package adminapi
 import (
 	"context"
 	"fmt"
+
 	"github.com/mutuals/go-mutuals/service/auth/basicauth"
-	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/redis"
 
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/service/auth"
 	"github.com/mutuals/go-mutuals/service/multichain"
-	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
-	"github.com/mutuals/go-mutuals/service/user"
-	"github.com/mutuals/go-mutuals/validate"
 )
 
 type AdminAPI struct {
@@ -29,86 +26,6 @@ func NewAPI(repos *postgres.Repositories, queries *db.Queries, authRefreshCache 
 	return &AdminAPI{repos, queries, authRefreshCache, validator, mp}
 }
 
-func (api *AdminAPI) AddRolesToUser(ctx context.Context, username string, roles []*persist.Role) (*db.User, error) {
-	requireRetoolAuthorized(ctx)
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": validate.WithTag(username, "required"),
-		"roles":    validate.WithTag(roles, "required,unique,dive,role"),
-	}); err != nil {
-		return nil, err
-	}
-
-	user, err := api.queries.GetUserByUsername(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-
-	newRoles := make([]string, len(roles))
-	for i, role := range roles {
-		newRoles[i] = string(*role)
-	}
-
-	ids := make([]string, len(roles))
-	for i := range roles {
-		ids[i] = persist.GenerateID().String()
-	}
-
-	err = api.queries.AddUserRoles(ctx, db.AddUserRolesParams{
-		UserID: user.ID,
-		Ids:    ids,
-		Roles:  newRoles,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = auth.ForceAuthTokenRefresh(ctx, api.authRefreshCache, user.ID)
-	if err != nil {
-		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", user.ID, err)
-	}
-
-	return &user, err
-}
-
-func (api *AdminAPI) RemoveRolesFromUser(ctx context.Context, username string, roles []*persist.Role) (*db.User, error) {
-	requireRetoolAuthorized(ctx)
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": validate.WithTag(username, "required"),
-		"roles":    validate.WithTag(roles, "required,unique,dive,role"),
-	}); err != nil {
-		return nil, err
-	}
-
-	user, err := api.queries.GetUserByUsername(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-
-	deleteRoles := make([]persist.Role, len(roles))
-	for i, role := range roles {
-		deleteRoles[i] = *role
-	}
-
-	err = api.queries.DeleteUserRoles(ctx, db.DeleteUserRolesParams{
-		Roles:  deleteRoles,
-		UserID: user.ID,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = auth.ForceAuthTokenRefresh(ctx, api.authRefreshCache, user.ID)
-	if err != nil {
-		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", user.ID, err)
-	}
-
-	return &user, err
-}
-
 type authenticator struct {
 	authMethod func(context.Context) (*auth.AuthResult, error)
 }
@@ -117,34 +34,6 @@ func (a authenticator) GetDescription() string                           { retur
 func (a authenticator) UserRegistered(ctx context.Context) (bool, error) { return false, nil }
 func (a authenticator) Authenticate(ctx context.Context) (*auth.AuthResult, error) {
 	return a.authMethod(ctx)
-}
-
-func (api *AdminAPI) AddWalletByUsernameUnchecked(ctx context.Context, username string, chainAddress persist.ChainAddress) error {
-	requireRetoolAuthorized(ctx)
-
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username":     validate.WithTag(username, "required,username"),
-		"chainAddress": validate.WithTag(chainAddress, "required"),
-	}); err != nil {
-		return err
-	}
-
-	u, err := api.repos.UserRepository.GetByUsername(ctx, username)
-	if err != nil {
-		return err
-	}
-
-	authMethod := func(ctx context.Context) (*auth.AuthResult, error) {
-		authedAddress := auth.AuthenticatedAddress{
-			ChainAddress: chainAddress,
-		}
-
-		return &auth.AuthResult{
-			Addresses: []auth.AuthenticatedAddress{authedAddress},
-		}, nil
-	}
-
-	return user.AddWalletToUser(ctx, u.ID, chainAddress, authenticator{authMethod}, api.repos.UserRepository, api.multichain)
 }
 
 func requireRetoolAuthorized(ctx context.Context) {

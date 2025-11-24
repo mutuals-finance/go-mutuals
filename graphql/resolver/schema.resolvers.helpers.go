@@ -7,20 +7,18 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/gammazero/workerpool"
-	"github.com/magiclabs/magic-admin-go/token"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
-	"github.com/mutuals/go-mutuals/debugtools"
 	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/publicapi"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/emails"
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/notifications"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/validate"
-	"time"
 )
 
 var errNoAuthMechanismFound = fmt.Errorf("no auth mechanism found")
@@ -31,7 +29,6 @@ var nodeFetcher = model.NodeFetcher{
 	OnPool:        resolvePoolByID,
 	OnUser:        resolveUserByUserID,
 	OnViewer:      resolveViewerByID,
-	OnWallet:      resolveWalletByID,
 }
 
 func init() {
@@ -79,47 +76,6 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 	return nil, false
 }
 
-// authMechanismToAuthenticator takes a GraphQL AuthMechanism and returns an Authenticator that can be used for auth
-func (r *Resolver) authMechanismToAuthenticator(ctx context.Context, m model.AuthMechanism) (auth.Authenticator, error) {
-
-	authApi := publicapi.For(ctx).Auth
-
-	if debugtools.Enabled {
-		if debugtools.IsDebugEnv() && m.Debug != nil {
-			return authApi.NewDebugAuthenticator(ctx, *m.Debug)
-		}
-	}
-
-	if m.Eoa != nil && m.Eoa.ChainPubKey != nil {
-		return authApi.NewNonceAuthenticator(*m.Eoa.ChainPubKey, m.Eoa.Nonce, m.Eoa.Message, m.Eoa.Signature, persist.WalletTypeEOA), nil
-	}
-
-	if m.GnosisSafe != nil {
-		// GnosisSafe passes an empty signature
-		return authApi.NewNonceAuthenticator(persist.NewChainPubKey(persist.PubKey(m.GnosisSafe.Address), persist.ChainETH), m.GnosisSafe.Nonce, m.GnosisSafe.Message, "0x", persist.WalletTypeGnosis), nil
-	}
-
-	if m.MagicLink != nil && m.MagicLink.Token != "" {
-		t, err := token.NewToken(m.MagicLink.Token)
-		if err != nil {
-			return nil, err
-		}
-		return authApi.NewMagicLinkAuthenticator(*t), nil
-	}
-
-	if m.OneTimeLoginToken != nil && m.OneTimeLoginToken.Token != "" {
-		return authApi.NewOneTimeLoginTokenAuthenticator(m.OneTimeLoginToken.Token), nil
-	}
-
-	/*
-	   TODO
-	   if m.Privy != nil && m.Privy.Token != "" {
-	   		return authApi.NewPrivyAuthenticator(m.Privy.Token), nil
-	   	}
-	*/
-	return nil, errNoAuthMechanismFound
-}
-
 func resolveUserByUserID(ctx context.Context, userID persist.DBID) (*model.User, error) {
 	user, err := publicapi.For(ctx).User.GetUserById(ctx, userID)
 	if err != nil {
@@ -130,16 +86,6 @@ func resolveUserByUserID(ctx context.Context, userID persist.DBID) (*model.User,
 
 func resolveUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.User, error) {
 	user, err := publicapi.For(ctx).User.GetUserByAddress(ctx, chainAddress)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return userToModel(ctx, *user), nil
-}
-
-func resolveUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	user, err := publicapi.For(ctx).User.GetUserByUsername(ctx, username)
 
 	if err != nil {
 		return nil, err
@@ -179,28 +125,6 @@ func resolvePoolContractByPoolContractID(ctx context.Context, contractID persist
 	}
 
 	return pool, nil
-}
-
-func resolveViewerPoolByPoolID(ctx context.Context, poolID persist.DBID) (*model.ViewerPool, error) {
-	pool, err := publicapi.For(ctx).Pool.GetViewerPoolById(ctx, poolID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.ViewerPool{
-		Pool: poolToModel(ctx, *pool),
-	}, nil
-}
-
-func resolvePoolsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Pool, error) {
-	pools, err := publicapi.For(ctx).Pool.GetPoolsByUserID(ctx, userID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return poolsToModels(ctx, pools), nil
 }
 
 func resolveClaimByID(ctx context.Context, id persist.DBID) (*model.Claim, error) {
@@ -292,22 +216,6 @@ func userWithPIIToEmailModel(user *db.PiiUserView) *model.UserEmail {
 		},
 	}
 
-}
-
-func resolveWalletByID(ctx context.Context, id persist.DBID) (*model.Wallet, error) {
-	wallet, err := publicapi.For(ctx).Wallet.GetWalletByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return walletToModel(ctx, *wallet), nil
-}
-
-func resolveWalletsByUserID(ctx context.Context, userID persist.DBID) ([]*model.Wallet, error) {
-	wallets, err := publicapi.For(ctx).Wallet.GetWalletsByUserID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	return walletsToModels(ctx, wallets), nil
 }
 
 func resolveViewerNotifications(ctx context.Context, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error) {
@@ -494,8 +402,8 @@ func resolveViewerByID(ctx context.Context, id string) (*model.Viewer, error) {
 		HelperViewerData: model.HelperViewerData{
 			UserId: userID,
 		},
-		User:        nil, // handled by dedicated resolver
-		ViewerPools: nil, // handled by dedicated resolver
+		User:  nil, // handled by dedicated resolver
+		Pools: nil, // handled by dedicated resolver
 	}, nil
 }
 
@@ -503,18 +411,6 @@ func resolveDeletedNodeByID(ctx context.Context, id persist.DBID) (*model.Delete
 	return &model.DeletedNode{
 		Dbid: id,
 	}, nil
-}
-
-func confirmUser(ctx context.Context, token string) (*model.ConfirmUser, error) {
-	_, err := emails.VerifyEmail(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.ConfirmUser{
-		User: nil, // TODO
-	}, nil
-
 }
 
 /*
@@ -626,42 +522,16 @@ func claimsToModels(ctx context.Context, claims []db.Claim) []*model.Claim {
 	return models
 }
 
-func walletToModel(ctx context.Context, wallet db.UserAccount) *model.Wallet {
-	return &model.Wallet{
-		Dbid: wallet.ID,
-		Name: wallet.Name,
-		// TODO Primary:   wallet.Primary,
-		CreatedAt: wallet.CreatedAt,
-		UpdatedAt: wallet.UpdatedAt,
-		Account:   nil, // handled by dedicated resolver
-		User:      nil, // handled by dedicated resolver
-	}
-}
-
-func walletsToModels(ctx context.Context, wallets []db.UserAccount) []*model.Wallet {
-	models := make([]*model.Wallet, len(wallets))
-	for i, wallet := range wallets {
-		models[i] = walletToModel(ctx, wallet)
-	}
-	return models
-}
-
 // userToModel converts a db.User to a model.User
 func userToModel(ctx context.Context, user db.User) *model.User {
-	userApi := publicapi.For(ctx).User
-	isAuthenticatedUser := userApi.IsUserLoggedIn(ctx) && userApi.GetLoggedInUserId(ctx) == user.ID
 
 	return &model.User{
 		HelperUserData: model.HelperUserData{
 			UserID: user.ID,
 		},
-		Dbid:                user.ID,
-		Username:            &user.Username.String,
-		IsAuthenticatedUser: &isAuthenticatedUser,
-		PrimaryWallet:       nil, // handled by dedicated resolver
-		Wallets:             nil, // handled by dedicated resolver
-		Pools:               nil, // handled by dedicated resolver
-		Roles:               nil, // handled by dedicated resolver
+		Dbid:  user.ID,
+		Pools: nil, // handled by dedicated resolver
+		Roles: nil, // handled by dedicated resolver
 	}
 }
 

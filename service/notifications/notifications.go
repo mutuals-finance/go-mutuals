@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/mutuals/go-mutuals/service/limiters"
 	"github.com/mutuals/go-mutuals/service/redis"
 	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
 	"github.com/mutuals/go-mutuals/service/task"
 	"github.com/sourcegraph/conc/pool"
 	"golang.org/x/net/html"
-	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/bsm/redislock"
@@ -524,7 +525,7 @@ func NotificationToUserFacingData(ctx context.Context, queries *db.Queries, n db
 				return UserFacingNotificationData{}, fmt.Errorf("failed to get user for viewer %s: %w", n.Data.AuthedViewerIDs[0], err)
 			}
 			return UserFacingNotificationData{
-				Actor:  userActor.Username.String,
+				Actor:  userActor.ID.String(),
 				Action: "viewed your pool",
 			}, nil
 		}

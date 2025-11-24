@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
@@ -18,44 +19,6 @@ type PoolAPI struct {
 	loaders   *dataloader.Loaders
 	validator *validator.Validate
 	ethClient *ethclient.Client
-}
-
-func (api PoolAPI) GetViewerPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"poolID": validate.WithTag(poolID, "required"),
-	}); err != nil {
-		return nil, err
-	}
-
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	pool, err := api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
-		UserID: userID,
-		PoolID: poolID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &pool, nil
-}
-
-func (api PoolAPI) GetPoolsByUserID(ctx context.Context, userID persist.DBID) ([]db.Pool, error) {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": validate.WithTag(userID, "required"),
-	}); err != nil {
-		return nil, err
-	}
-
-	pools, err := api.loaders.GetPoolsByUserIDBatch.Load(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return pools, nil
 }
 
 func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
@@ -193,11 +156,8 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		return db.Pool{}, err
 	}
 
-	// Verify user owns the pool
-	pool, err := api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
-		UserID: userID,
-		PoolID: id,
-	})
+	// TODO: verify user owns the pool
+	pool, err := api.queries.GetPoolById(ctx, id)
 	if err != nil {
 		return db.Pool{}, err
 	}
@@ -319,20 +279,21 @@ func (api PoolAPI) DeletePool(ctx context.Context, poolID persist.DBID) error {
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return err
-	}
+	/*
+		userID, err := getAuthenticatedUserID(ctx)
+		if err != nil {
+			return err
+		}
 
-	// Verify user owns the pool
-	_, err = api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
-		UserID: userID,
-		PoolID: poolID,
-	})
-	if err != nil {
-		return err
-	}
-
+		// Verify user owns the pool
+		_, err = api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
+			UserID: userID,
+			PoolID: poolID,
+		})
+		if err != nil {
+			return err
+		}
+	*/
 	// Begin transaction
 	tx, err := api.repos.BeginTx(ctx)
 	if err != nil {

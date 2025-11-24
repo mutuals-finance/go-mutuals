@@ -1,439 +1,466 @@
 # Query operations
-query userByUsernameQuery($user: String!) {
-  userByUsername(username: $user) {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on User {
-      username
-      dbid
-    }
-  }
-}
-
 query userByIdQuery($id: DBID!) {
-  userById(id: $id) {
-    ... on Error {
-      __typename
-      message
+    userById(id: $id) {
+        ... on User {
+            id
+            dbid
+            roles
+        }
+        ... on ErrUserNotFound {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
     }
-    ... on User {
-      username
-      dbid
-    }
-  }
 }
 
 query userByAddressQuery($input: ChainAddressInput!) {
-  userByAddress(chainAddress: $input) {
-    ... on Error {
-      __typename
-      message
+    userByAddress(chainAddress: $input) {
+        ... on User {
+            id
+            dbid
+            roles
+        }
+        ... on ErrUserNotFound {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
     }
-    ... on User {
-      username
-      dbid
-    }
-  }
 }
 
 query viewerQuery {
-  viewer {
-    ... on Error {
-      __typename
-      message
+    viewer {
+        ... on Viewer {
+            id
+            user {
+                id
+                dbid
+                roles
+            }
+        }
+        ... on ErrNotAuthorized {
+            message
+        }
     }
-    ... on Viewer {
-      user {
-        username
-        dbid
-      }
-    }
-  }
 }
 
 query notificationsForViewerQuery {
-  viewer {
-    ... on Error {
-      __typename
-      message
-    }
-    ... on Viewer {
-      notifications(last: 1, before: null) {
-        unseenCount
-        edges {
-          node {
-            id
-            seen
-            creationTime
-          }
+    viewer {
+        ... on Viewer {
+            notifications(last: 1, before: null) {
+                unseenCount
+                edges {
+                    node {
+                        id
+                        seen
+                        creationTime
+                    }
+                }
+                pageInfo {
+                    hasNextPage
+                    hasPreviousPage
+                    startCursor
+                    endCursor
+                }
+            }
         }
-        pageInfo {
-          hasNextPage
-          hasPreviousPage
-          startCursor
-          endCursor
+        ... on ErrNotAuthorized {
+            message
         }
-      }
     }
-  }
 }
 
-# Mutation operations
-mutation createUserMutation($authMechanism: AuthMechanism!, $input: UserRegisterInput!) {
-  userRegister(authMechanism: $authMechanism, input: $input) {
-    __typename
-    requiresConfirmation
-    user {
-      username
-      dbid
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation getNonceMutation {
-  nonce {
-    nonce
-    message
-  }
-}
-
-mutation loginMutation($authMechanism: AuthMechanism!) {
-  tokenCreate(authMechanism: $authMechanism) {
-    token
-    refreshToken
-    user {
-      username
-      dbid
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation logoutMutation {
-  tokensDeactivateAll {
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation addUserWalletMutation($input: WalletCreateInput!) {
-  walletCreate(input: $input) {
-    wallet {
-      id
-      dbid
-      name
-      account {
-        address
-      }
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation removeUserWalletsMutation($id: DBID!) {
-  walletDelete(id: $id) {
-    wallet {
-      id
-      dbid
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation createPoolMutation($input: PoolCreateInput!) {
-  poolCreate(input: $input) {
-    pool {
-      dbid
-      name
-      description
-      claims {
-        id
-        dbid
-      }
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation updatePoolMutation($id: DBID!, $input: PoolUpdateInput!) {
-  poolUpdate(id: $id, input: $input) {
-    pool {
-      dbid
-      name
-      description
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation registerPushTokenMutation($pushToken: String!) {
-  pushTokenRegister(pushToken: $pushToken) {
-    pushToken
-    user {
-      username
-      dbid
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation unregisterPushTokenMutation($pushToken: String!) {
-  pushTokenUnregister(pushToken: $pushToken) {
-    pushToken
-    user {
-      username
-      dbid
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation updateUserMutation($input: UserInput!) {
-  userUpdate(input: $input) {
-    user {
-      username
-      dbid
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation clearNotificationsMutation {
-  clearNotifications {
-    notifications {
-      id
-      seen
-    }
-  }
-}
-
-mutation createClaimMutation($poolId: DBID!, $input: ClaimCreateInput!) {
-  poolClaimCreate(poolId: $poolId, input: $input) {
-    claim {
-      id
-      dbid
-      label
-      path
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation updateClaimMutation($poolId: DBID!, $input: ClaimUpdateInput!) {
-  poolClaimUpdate(poolId: $poolId, input: $input) {
-    claim {
-      id
-      dbid
-      label
-      path
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation deleteClaimMutation($poolId: DBID!, $claimId: DBID!) {
-  poolClaimDelete(poolId: $poolId, claimId: $claimId) {
-    claim {
-      id
-      dbid
-    }
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-mutation bulkCreateClaimsMutation($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
-  poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
-    count
-    results {
-      claim {
-        id
-        dbid
-        label
-        path
-      }
-      errors {
-        path
-        message
-        code
-      }
-    }
-    errors {
-      path
-      message
-      code
-    }
-  }
-}
-
-mutation bulkUpdateClaimsMutation($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
-  poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
-    count
-    results {
-      claim {
-        id
-        dbid
-        label
-        path
-      }
-      errors {
-        path
-        message
-        code
-      }
-    }
-    errors {
-      path
-      message
-      code
-    }
-  }
-}
-
-mutation bulkDeleteClaimsMutation($poolId: DBID!, $claimIds: [DBID!]!) {
-  poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
-    count
-    errors {
-      field
-      message
-      code
-    }
-  }
-}
-
-# Additional useful queries based on the schema
 query poolByIdQuery($id: DBID!) {
-  poolById(id: $id) {
-    ... on Pool {
-      id
-      dbid
-      name
-      description
-      status
-      owner {
-        ... on User {
-          username
-          dbid
+    poolById(id: $id) {
+        ... on Pool {
+            id
+            dbid
+            name
+            description
+            status
+            image
+            donationBps
+            slug
+            owner {
+                ... on User {
+                    id
+                    dbid
+                }
+                ... on EVMAccount {
+                    address
+                    accountType
+                }
+            }
+            createdAt
+            updatedAt
         }
-        ... on EVMAccount {
-          address
-          accountType
+        ... on ErrPoolNotFound {
+            message
         }
-      }
     }
-    ... on ErrPoolNotFound {
-      message
-    }
-  }
-}
-
-query viewerPoolByIdQuery($id: DBID!) {
-  viewerPoolById(id: $id) {
-    ... on ViewerPool {
-      pool {
-        id
-        dbid
-        name
-        description
-      }
-    }
-    ... on ErrPoolNotFound {
-      message
-    }
-  }
 }
 
 query searchUsersQuery($query: String!, $limit: Int, $usernameWeight: Float) {
-  searchUsers(query: $query, limit: $limit, usernameWeight: $usernameWeight) {
-    ... on SearchUsersPayload {
-      results {
-        user {
-          username
-          dbid
+    searchUsers(query: $query, limit: $limit, usernameWeight: $usernameWeight) {
+        ... on SearchUsersPayload {
+            results {
+                user {
+                    id
+                    dbid
+                }
+            }
         }
-      }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
     }
-    ... on ErrInvalidInput {
-      message
-      parameters
-      reasons
-    }
-  }
 }
 
 query searchPoolsQuery($query: String!, $limit: Int, $nameWeight: Float, $descriptionWeight: Float) {
-  searchPools(query: $query, limit: $limit, nameWeight: $nameWeight, descriptionWeight: $descriptionWeight) {
-    ... on SearchPoolsPayload {
-      results {
-        pool {
-          id
-          dbid
-          name
-          description
+    searchPools(query: $query, limit: $limit, nameWeight: $nameWeight, descriptionWeight: $descriptionWeight) {
+        ... on SearchPoolsPayload {
+            results {
+                pool {
+                    id
+                    dbid
+                    name
+                    description
+                }
+            }
         }
-      }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
     }
-    ... on ErrInvalidInput {
-      message
-      parameters
-      reasons
-    }
-  }
 }
 
 query isEmailAvailableQuery($emailAddress: Email!) {
-  isEmailAddressAvailable(emailAddress: $emailAddress)
+    isEmailAddressAvailable(emailAddress: $emailAddress)
+}
+
+query usersByRoleQuery($role: Role!, $before: String, $after: String, $first: Int, $last: Int) {
+    usersByRole(role: $role, before: $before, after: $after, first: $first, last: $last) {
+        edges {
+            node {
+                id
+                dbid
+                roles
+            }
+            cursor
+        }
+        pageInfo {
+            total
+            size
+            hasPreviousPage
+            hasNextPage
+            startCursor
+            endCursor
+        }
+    }
+}
+
+# Mutation operations
+mutation userRegisterMutation($input: UserRegisterInput!) {
+    userRegister(input: $input) {
+        requiresConfirmation
+        user {
+            id
+            dbid
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation userUpdateMutation($userId: DBID, $input: UserInput!) {
+    userUpdate(userId: $userId, input: $input) {
+        user {
+            id
+            dbid
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation userRequestDeletionMutation($redirectUrl: String!) {
+    userRequestDeletion(redirectUrl: $redirectUrl) {
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation userDeleteMutation($token: String!) {
+    userDelete(token: $token) {
+        user {
+            id
+            dbid
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation tokenVerifyMutation($token: String!) {
+    tokenVerify(token: $token) {
+        user {
+            id
+            dbid
+        }
+        isValid
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation pushTokenRegisterMutation($pushToken: String!) {
+    pushTokenRegister(pushToken: $pushToken) {
+        pushToken
+        user {
+            id
+            dbid
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation pushTokenUnregisterMutation($pushToken: String!) {
+    pushTokenUnregister(pushToken: $pushToken) {
+        pushToken
+        user {
+            id
+            dbid
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation notificationSettingsUpdateMutation($settings: NotificationSettingsInput!) {
+    notificationSettingsUpdate(settings: $settings) {
+        someoneViewedYourPool
+    }
+}
+
+mutation clearNotificationsMutation {
+    clearNotifications {
+        notifications {
+            id
+            seen
+        }
+    }
+}
+
+mutation emailNotificationSettingsUpdateMutation($settings: UpdateEmailNotificationSettingsInput!) {
+    emailNotificationSettingsUpdate(settings: $settings) {
+        unsubscribedFromAll
+        unsubscribedFromNotifications
+    }
+}
+
+mutation poolCreateMutation($input: PoolCreateInput!) {
+    poolCreate(input: $input) {
+        pool {
+            id
+            dbid
+            name
+            description
+            image
+            donationBps
+            slug
+            status
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation poolUpdateMutation($id: DBID!, $input: PoolUpdateInput!) {
+    poolUpdate(id: $id, input: $input) {
+        pool {
+            id
+            dbid
+            name
+            description
+            image
+            donationBps
+            slug
+            status
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation poolDeleteMutation($id: DBID!) {
+    poolDelete(id: $id) {
+        pool {
+            id
+            dbid
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation poolClaimCreateMutation($poolId: DBID!, $input: ClaimCreateInput!) {
+    poolClaimCreate(poolId: $poolId, input: $input) {
+        claim {
+            id
+            dbid
+            label
+            path
+            data
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation poolClaimUpdateMutation($poolId: DBID!, $input: ClaimUpdateInput!) {
+    poolClaimUpdate(poolId: $poolId, input: $input) {
+        claim {
+            id
+            dbid
+            label
+            path
+            data
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation poolClaimDeleteMutation($poolId: DBID!, $claimId: DBID!) {
+    poolClaimDelete(poolId: $poolId, claimId: $claimId) {
+        claim {
+            id
+            dbid
+        }
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation poolClaimBulkCreateMutation($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+    poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
+        count
+        results {
+            claim {
+                id
+                dbid
+                label
+                path
+                data
+            }
+            errors {
+                path
+                message
+                code
+            }
+        }
+        errors {
+            path
+            message
+            code
+        }
+    }
+}
+
+mutation poolClaimBulkUpdateMutation($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+    poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
+        count
+        results {
+            claim {
+                id
+                dbid
+                label
+                path
+                data
+            }
+            errors {
+                path
+                message
+                code
+            }
+        }
+        errors {
+            path
+            message
+            code
+        }
+    }
+}
+
+mutation poolClaimBulkDeleteMutation($poolId: DBID!, $claimIds: [DBID!]!) {
+    poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
+        count
+        errors {
+            field
+            message
+            code
+        }
+    }
+}
+
+mutation roleUpdateMutation($role: Role, $input: RoleUpdateInput!) {
+    roleUpdate(role: $role, input: $input) {
+        role
+        errors {
+            field
+            message
+            code
+        }
+    }
 }

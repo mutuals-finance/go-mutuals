@@ -137,10 +137,6 @@ type ViewerOrError interface {
 	IsViewerOrError()
 }
 
-type ViewerPoolByIDPayloadOrError interface {
-	IsViewerPoolByIDPayloadOrError()
-}
-
 type AddUserWalletPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
@@ -318,41 +314,11 @@ type ClearAllNotificationsPayload struct {
 	Notifications []Notification `json:"notifications"`
 }
 
-// Confirm the email change of the logged-in user.
-type ConfirmEmailChange struct {
-	// A user instance with a new email.
-	User   *User        `json:"user"`
-	Errors []*UserError `json:"errors"`
-}
-
-// Confirm user account with token sent by email during registration.
-type ConfirmUser struct {
-	// An activated user.
-	User   *User        `json:"user"`
-	Errors []*UserError `json:"errors"`
-}
-
-// Create JWT token.
-type CreateToken struct {
-	// JWT token, required to authenticate.
-	Token *string `json:"token"`
-	// JWT refresh token, required to re-generate access token.
-	RefreshToken *string `json:"refreshToken"`
-	// A user instance.
-	User   *User        `json:"user"`
-	Errors []*UserError `json:"errors"`
-}
-
 type CreateUserPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
 func (CreateUserPayload) IsCreateUserPayloadOrError() {}
-
-// Deactivate all JWT tokens of the currently authenticated user.
-type DeactivateAllUserTokens struct {
-	Errors []*UserError `json:"errors"`
-}
 
 type DebugAuth struct {
 	AsUsername         *string                 `json:"asUsername"`
@@ -497,9 +463,8 @@ type ErrPoolNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrPoolNotFound) IsViewerPoolByIDPayloadOrError() {}
-func (ErrPoolNotFound) IsError()                        {}
-func (ErrPoolNotFound) IsPoolByIDPayloadOrError()       {}
+func (ErrPoolNotFound) IsError()                  {}
+func (ErrPoolNotFound) IsPoolByIDPayloadOrError() {}
 
 type ErrPushTokenBelongsToAnotherUser struct {
 	Message string `json:"message"`
@@ -865,27 +830,11 @@ type PushTokenUnregisterInput struct {
 	RemoveClaims []persist.DBID `json:"removeClaims"`
 }
 
-// Refresh JWT token. Mutation tries to take refreshToken from the input. If it fails it will try to take `refreshToken` from the http-only cookie `refreshToken`. `csrfToken` is required when `refreshToken` is provided as a cookie.
-type RefreshToken struct {
-	// JWT token, required to authenticate.
-	Token *string `json:"token"`
-	// A user instance.
-	User   *User        `json:"user"`
-	Errors []*UserError `json:"errors"`
-}
-
 type RemoveUserWalletsPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
 func (RemoveUserWalletsPayload) IsRemoveUserWalletsPayloadOrError() {}
-
-// Request email change of the logged in user.
-type RequestEmailChange struct {
-	// A user instance.
-	User   *User        `json:"user"`
-	Errors []*UserError `json:"errors"`
-}
 
 type ResendVerificationEmailPayload struct {
 	Viewer *Viewer `json:"viewer"`
@@ -926,20 +875,6 @@ type SearchUsersPayload struct {
 }
 
 func (SearchUsersPayload) IsSearchUsersPayloadOrError() {}
-
-// Sends a notification confirmation.
-type SendConfirmationEmail struct {
-	Errors []*SendConfirmationEmailError `json:"errors"`
-}
-
-type SendConfirmationEmailError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code SendConfirmationEmailErrorCode `json:"code"`
-}
 
 type Token struct {
 	ID           GqlID           `json:"id"`
@@ -1034,13 +969,9 @@ func (UploadPersistedQueriesPayload) IsUploadPersistedQueriesPayloadOrError() {}
 
 type User struct {
 	HelperUserData
-	Dbid                persist.DBID    `json:"dbid"`
-	Username            *string         `json:"username"`
-	Roles               []*persist.Role `json:"roles"`
-	Wallets             []*Wallet       `json:"wallets"`
-	PrimaryWallet       *Wallet         `json:"primaryWallet"`
-	Pools               []*Pool         `json:"pools"`
-	IsAuthenticatedUser *bool           `json:"isAuthenticatedUser"`
+	Dbid  persist.DBID    `json:"dbid"`
+	Roles []*persist.Role `json:"roles"`
+	Pools []*Pool         `json:"pools"`
 }
 
 func (User) IsNode()                              {}
@@ -1176,9 +1107,8 @@ type VerifyToken struct {
 
 type Viewer struct {
 	HelperViewerData
-	User        *User         `json:"user"`
-	ViewerPools []*ViewerPool `json:"viewerPools"`
-	Email       *UserEmail    `json:"email"`
+	User  *User   `json:"user"`
+	Pools []*Pool `json:"pools"`
 	// Returns a list of notifications in reverse chronological order.
 	// Seen notifications come after unseen notifications
 	Notifications        *NotificationsConnection `json:"notifications"`
@@ -1187,61 +1117,6 @@ type Viewer struct {
 
 func (Viewer) IsViewerOrError() {}
 func (Viewer) IsNode()          {}
-
-type ViewerPool struct {
-	Pool *Pool `json:"pool"`
-}
-
-func (ViewerPool) IsViewerPoolByIDPayloadOrError() {}
-
-type Wallet struct {
-	Dbid      persist.DBID `json:"dbid"`
-	Name      string       `json:"name"`
-	Primary   bool         `json:"primary"`
-	Account   *EVMAccount  `json:"account"`
-	User      *User        `json:"user"`
-	CreatedAt time.Time    `json:"createdAt"`
-	UpdatedAt time.Time    `json:"updatedAt"`
-}
-
-func (Wallet) IsNode() {}
-
-// Creates a new wallet.
-type WalletCreate struct {
-	Errors []*WalletError `json:"errors"`
-	Wallet *Wallet        `json:"wallet"`
-}
-
-type WalletCreateInput struct {
-	// Wallet account address.
-	Address persist.Address `json:"address"`
-}
-
-// Deletes a wallet.
-type WalletDelete struct {
-	Errors []*WalletError `json:"errors"`
-	Wallet *Wallet        `json:"wallet"`
-}
-
-type WalletError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code WalletErrorCode `json:"code"`
-}
-
-// Updates given wallet.
-type WalletUpdate struct {
-	Errors []*WalletError `json:"errors"`
-	Wallet *Wallet        `json:"wallet"`
-}
-
-type WalletUpdateInput struct {
-	// Wallet account address.
-	Address *persist.Address `json:"address"`
-}
 
 type Withdrawal struct {
 	ID          GqlID             `json:"id"`
@@ -1757,49 +1632,6 @@ func (e RoleErrorCode) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type SendConfirmationEmailErrorCode string
-
-const (
-	SendConfirmationEmailErrorCodeInvalid                      SendConfirmationEmailErrorCode = "INVALID"
-	SendConfirmationEmailErrorCodeUserConfirmed                SendConfirmationEmailErrorCode = "USER_CONFIRMED"
-	SendConfirmationEmailErrorCodeConfirmationAlreadyRequested SendConfirmationEmailErrorCode = "CONFIRMATION_ALREADY_REQUESTED"
-)
-
-var AllSendConfirmationEmailErrorCode = []SendConfirmationEmailErrorCode{
-	SendConfirmationEmailErrorCodeInvalid,
-	SendConfirmationEmailErrorCodeUserConfirmed,
-	SendConfirmationEmailErrorCodeConfirmationAlreadyRequested,
-}
-
-func (e SendConfirmationEmailErrorCode) IsValid() bool {
-	switch e {
-	case SendConfirmationEmailErrorCodeInvalid, SendConfirmationEmailErrorCodeUserConfirmed, SendConfirmationEmailErrorCodeConfirmationAlreadyRequested:
-		return true
-	}
-	return false
-}
-
-func (e SendConfirmationEmailErrorCode) String() string {
-	return string(e)
-}
-
-func (e *SendConfirmationEmailErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SendConfirmationEmailErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SendConfirmationEmailErrorCode", str)
-	}
-	return nil
-}
-
-func (e SendConfirmationEmailErrorCode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
 type TokenType string
 
 const (
@@ -1921,54 +1753,5 @@ func (e *UserErrorCode) UnmarshalGQL(v interface{}) error {
 }
 
 func (e UserErrorCode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type WalletErrorCode string
-
-const (
-	WalletErrorCodeAlreadyExists WalletErrorCode = "ALREADY_EXISTS"
-	WalletErrorCodeGraphqlError  WalletErrorCode = "GRAPHQL_ERROR"
-	WalletErrorCodeInvalid       WalletErrorCode = "INVALID"
-	WalletErrorCodeNotFound      WalletErrorCode = "NOT_FOUND"
-	WalletErrorCodeRequired      WalletErrorCode = "REQUIRED"
-	WalletErrorCodeUnique        WalletErrorCode = "UNIQUE"
-)
-
-var AllWalletErrorCode = []WalletErrorCode{
-	WalletErrorCodeAlreadyExists,
-	WalletErrorCodeGraphqlError,
-	WalletErrorCodeInvalid,
-	WalletErrorCodeNotFound,
-	WalletErrorCodeRequired,
-	WalletErrorCodeUnique,
-}
-
-func (e WalletErrorCode) IsValid() bool {
-	switch e {
-	case WalletErrorCodeAlreadyExists, WalletErrorCodeGraphqlError, WalletErrorCodeInvalid, WalletErrorCodeNotFound, WalletErrorCodeRequired, WalletErrorCodeUnique:
-		return true
-	}
-	return false
-}
-
-func (e WalletErrorCode) String() string {
-	return string(e)
-}
-
-func (e *WalletErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = WalletErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid WalletErrorCode", str)
-	}
-	return nil
-}
-
-func (e WalletErrorCode) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

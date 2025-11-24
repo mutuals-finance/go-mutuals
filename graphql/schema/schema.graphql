@@ -215,15 +215,11 @@ enum Role {
 type User implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
-  username: String
   roles: [Role] @goField(forceResolver: true)
-  wallets: [Wallet] @goField(forceResolver: true)
-  primaryWallet: Wallet @goField(forceResolver: true)
   # Returns all pools owned by this user. Useful for retrieving all pools without any duplicates,
   # as opposed to retrieving user -> accounts -> pools, which would contain duplicates for any pool
   # that appears in more than one of the user's wallets.
   pools: [Pool] @goField(forceResolver: true)
-  isAuthenticatedUser: Boolean
 }
 
 union UserOrAccount = User | EVMAccount
@@ -252,37 +248,14 @@ type UsersConnection {
 }
 
 #-------------------------------------------------------------------------------
-# WALLET
-#-------------------------------------------------------------------------------
-
-type Wallet implements Node{
-  # wallet id
-  id: ID!
-  dbid: DBID!
-  # wallet name
-  name: String!
-  # primary wallet for user or not
-  primary: Boolean!
-  # account
-  account: EVMAccount @goField(forceResolver: true)
-  # user reference
-  user: User @goField(forceResolver: true)
-  # creation timestamp
-  createdAt: Time!
-  # update timestamp
-  updatedAt: Time!
-}
-
-#-------------------------------------------------------------------------------
 # VIEWER
 #-------------------------------------------------------------------------------
 
 type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: User @goField(forceResolver: true)
-  viewerPools: [ViewerPool] @goField(forceResolver: true)
+  pools: [Pool] @goField(forceResolver: true)
 
-  email: UserEmail @goField(forceResolver: true)
   """
   Returns a list of notifications in reverse chronological order.
   Seen notifications come after unseen notifications
@@ -292,14 +265,6 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
 
   notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
-
-# We have this extra type in case we need to stick authed data
-# in here one day.
-type ViewerPool {
-  pool: Pool
-}
-
-union ViewerPoolByIdPayloadOrError = ViewerPool | ErrPoolNotFound
 
 # -------------------------------------------------------------------------------
 # TOKEN
@@ -706,7 +671,6 @@ type Query {
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
   poolById(id: DBID!): PoolByIdPayloadOrError
-  viewerPoolById(id: DBID!): ViewerPoolByIdPayloadOrError
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
@@ -1178,59 +1142,6 @@ type UserDelete {
   user: User
 }
 
-"""
-Sends a notification confirmation.
-"""
-type SendConfirmationEmail {
-  errors: [SendConfirmationEmailError!]!
-}
-
-type SendConfirmationEmailError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: SendConfirmationEmailErrorCode!
-}
-
-enum SendConfirmationEmailErrorCode {
-  INVALID
-  USER_CONFIRMED
-  CONFIRMATION_ALREADY_REQUESTED
-}
-
-"""
-Confirm user account with token sent by email during registration.
-"""
-type ConfirmUser {
-  """An activated user."""
-  user: User
-  errors: [UserError!]!
-}
-
-"""
-Request email change of the logged in user.
-"""
-type RequestEmailChange {
-  """A user instance."""
-  user: User
-  errors: [UserError!]!
-}
-
-"""
-Confirm the email change of the logged-in user.
-"""
-type ConfirmEmailChange {
-  """A user instance with a new email."""
-  user: User
-  errors: [UserError!]!
-}
-
 type PushTokenRegister {
   """push token."""
   pushToken: String
@@ -1316,32 +1227,6 @@ input PushTokenUnregisterInput {
   removeClaims: [DBID!]
 }
 
-"""Create JWT token."""
-type CreateToken {
-  """JWT token, required to authenticate."""
-  token: String
-
-  """JWT refresh token, required to re-generate access token."""
-  refreshToken: String
-
-  """A user instance."""
-  user: User
-  errors: [UserError!]!
-}
-
-
-"""
-Refresh JWT token. Mutation tries to take refreshToken from the input. If it fails it will try to take `refreshToken` from the http-only cookie `refreshToken`. `csrfToken` is required when `refreshToken` is provided as a cookie.
-"""
-type RefreshToken {
-  """JWT token, required to authenticate."""
-  token: String
-
-  """A user instance."""
-  user: User
-  errors: [UserError!]!
-}
-
 """Verify JWT token."""
 type VerifyToken {
   """User assigned to token."""
@@ -1353,69 +1238,6 @@ type VerifyToken {
   """JWT payload."""
   # payload: GenericScalar
   errors: [UserError!]!
-}
-
-"""
-Deactivate all JWT tokens of the currently authenticated user.
-"""
-type DeactivateAllUserTokens {
-  errors: [UserError!]!
-}
-
-"""
-Creates a new wallet.
-"""
-type WalletCreate {
-  errors: [WalletError!]!
-  wallet: Wallet
-}
-
-type WalletError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: WalletErrorCode!
-}
-
-enum WalletErrorCode {
-  ALREADY_EXISTS
-  GRAPHQL_ERROR
-  INVALID
-  NOT_FOUND
-  REQUIRED
-  UNIQUE
-}
-
-input WalletCreateInput {
-  """Wallet account address."""
-  address: Address!
-}
-
-"""
-Updates given wallet.
-"""
-type WalletUpdate {
-  errors: [WalletError!]!
-  wallet: Wallet
-}
-
-input WalletUpdateInput {
-  """Wallet account address."""
-  address: Address
-}
-
-"""
-Deletes a wallet.
-"""
-type WalletDelete {
-  errors: [WalletError!]!
-  wallet: Wallet
 }
 
 type RoleError {
@@ -1759,17 +1581,10 @@ type PoolDelete {
 }
 
 type Mutation {
-
-  """
-  Get a nonce.
-  """
-  nonce: Nonce
-
   """
   Register a new user.
   """ # prev:  createUser(authMechanism: AuthMechanism!, input: CreateUserInput!): CreateUserPayloadOrError
   userRegister(
-    authMechanism: AuthMechanism!,
     """Fields required to create a user."""
     input: UserRegisterInput!
   ): UserRegister
@@ -1809,98 +1624,11 @@ type Mutation {
     token: String!
   ): UserDelete @authRequired
 
-  """Create JWT token.""" # prev: login(authMechanism: AuthMechanism!): LoginPayloadOrError
-  tokenCreate(
-    """
-    The audience that will be included to JWT tokens with prefix `custom:`.
-    """
-    audience: String
-
-    authMechanism: AuthMechanism!
-  ): CreateToken
-
-  """Create JWT token."""
-  userLoginOrRegister(
-    authMechanism: AuthMechanism!,
-
-    """Fields required to login or create a user."""
-    input: UserLoginOrRegisterInput!
-  ): UserLoginOrRegister
-
-  """
-  Refresh JWT token. Mutation tries to take refreshToken from the input. If it fails it will try to take `refreshToken` from the http-only cookie `refreshToken`. `csrfToken` is required when `refreshToken` is provided as a cookie.
-  """
-  tokenRefresh(
-    """
-    CSRF token required to refresh token. This argument is required when `refreshToken` is provided as a cookie.
-    """
-    csrfToken: String
-
-    """Refresh token."""
-    refreshToken: String
-  ): RefreshToken @authRequired
-
   """Verify JWT token."""
   tokenVerify(
     """JWT token to validate."""
     token: String!
   ): VerifyToken @authRequired
-
-  """
-  Deactivate all JWT tokens of the currently authenticated user.
-
-  Requires one of the following permissions: AUTHENTICATED_USER.
-  """
-  # prev: logout(pushTokenToUnregister: String): LogoutPayload
-  # prev: preverifyEmail(input: PreverifyEmailInput!): PreverifyEmailPayloadOrError
-  tokensDeactivateAll: DeactivateAllUserTokens @authRequired
-
-  """
-  Sends a notification confirmation.
-  """
-  # prev: resendVerificationEmail: ResendVerificationEmailPayloadOrError @authRequired
-  sendConfirmationEmail(
-    """Base of frontend URL that will be needed to create confirmation URL."""
-    redirectUrl: String!
-  ): SendConfirmationEmail @authRequired
-
-  """
-  Confirm user account with token sent by email during registration.
-  """
-  # prev: verifyEmail(input: VerifyEmailInput!): VerifyEmailPayloadOrError
-  # prev: verifyEmailMagicLink(input: VerifyEmailMagicLinkInput!): VerifyEmailMagicLinkPayloadOrError
-  confirmUser(
-    """E-mail of the user performing account confirmation."""
-    email: String!
-
-    """A one-time token required to confirm the account."""
-    token: String!
-  ): ConfirmUser @authRequired
-
-  """
-  Request email change of the logged in user.
-  """
-  # prev: updateEmail(input: UpdateEmailInput!): UpdateEmailPayloadOrError @authRequired
-  requestEmailChange(
-    """New user email."""
-    newEmail: String!
-
-    """User password."""
-    password: String!
-
-    """
-    URL of a view where users should be redirected to update the email address. URL in RFC 1808 format.
-    """
-    redirectUrl: String!
-  ): RequestEmailChange @authRequired
-
-  """
-  Confirm the email change of the logged-in user.
-  """
-  confirmEmailChange(
-    """A one-time token required to change the email."""
-    token: String!
-  ): ConfirmEmailChange @authRequired
 
   """
   Register a push token.
@@ -1940,33 +1668,6 @@ type Mutation {
     """Fields required to update notification settings."""
     settings: UpdateEmailNotificationSettingsInput!
   ): EmailNotificationSettings @authRequired
-
-  """
-  Creates a new wallet.
-  """
-  walletCreate(
-    """Fields required to create a wallet."""
-    input: WalletCreateInput!
-  ): WalletCreate @authRequired
-
-  """
-  Updates a new wallet.
-  """
-  walletUpdate(
-    """ID of a wallet to update."""
-    id: DBID!
-
-    """Fields required to update a claim."""
-    input: WalletUpdateInput!
-  ): WalletUpdate @authRequired
-
-  """
-  Deletes a wallet.
-  """
-  walletDelete(
-    """ID of a wallet to delete."""
-    id: DBID!
-  ): WalletDelete @authRequired
 
   """
   Creates a new claim.

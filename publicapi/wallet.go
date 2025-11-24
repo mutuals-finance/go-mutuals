@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"context"
+
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/mutuals/go-mutuals/validate"
@@ -24,38 +25,6 @@ type WalletAPI struct {
 	validator          *validator.Validate
 	ethClient          *ethclient.Client
 	multichainProvider *multichain.Provider
-}
-
-func (api WalletAPI) GetWalletByID(ctx context.Context, id persist.DBID) (*db.UserAccount, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"id": validate.WithTag(id, "required"),
-	}); err != nil {
-		return nil, err
-	}
-
-	result, err := api.coreLoaders.GetUserAccountByIdBatch.Load(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
-func (api WalletAPI) GetWalletsByUserID(ctx context.Context, userID persist.DBID) ([]db.UserAccount, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": validate.WithTag(userID, "required"),
-	}); err != nil {
-		return nil, err
-	}
-
-	result, err := api.coreLoaders.GetUserAccountsByUserIdBatch.Load(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (api WalletAPI) GetAccountsByAddresses(ctx context.Context, addresses []string) ([]indexerdb.Account, error) {

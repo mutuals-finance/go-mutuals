@@ -11,33 +11,6 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-type AuthMechanism struct {
-	Eoa               *EoaAuth               `json:"eoa"`
-	GnosisSafe        *GnosisSafeAuth        `json:"gnosisSafe"`
-	Debug             *DebugAuth             `json:"debug"`
-	MagicLink         *MagicLinkAuth         `json:"magicLink"`
-	OneTimeLoginToken *OneTimeLoginTokenAuth `json:"oneTimeLoginToken"`
-	Privy             *PrivyAuth             `json:"privy"`
-}
-
-// GetEoa returns AuthMechanism.Eoa, and is useful for accessing the field via an interface.
-func (v *AuthMechanism) GetEoa() *EoaAuth { return v.Eoa }
-
-// GetGnosisSafe returns AuthMechanism.GnosisSafe, and is useful for accessing the field via an interface.
-func (v *AuthMechanism) GetGnosisSafe() *GnosisSafeAuth { return v.GnosisSafe }
-
-// GetDebug returns AuthMechanism.Debug, and is useful for accessing the field via an interface.
-func (v *AuthMechanism) GetDebug() *DebugAuth { return v.Debug }
-
-// GetMagicLink returns AuthMechanism.MagicLink, and is useful for accessing the field via an interface.
-func (v *AuthMechanism) GetMagicLink() *MagicLinkAuth { return v.MagicLink }
-
-// GetOneTimeLoginToken returns AuthMechanism.OneTimeLoginToken, and is useful for accessing the field via an interface.
-func (v *AuthMechanism) GetOneTimeLoginToken() *OneTimeLoginTokenAuth { return v.OneTimeLoginToken }
-
-// GetPrivy returns AuthMechanism.Privy, and is useful for accessing the field via an interface.
-func (v *AuthMechanism) GetPrivy() *PrivyAuth { return v.Privy }
-
 type ChainAddressInput struct {
 	Address persist.Address `json:"address"`
 	ChainId int             `json:"chainId"`
@@ -48,17 +21,6 @@ func (v *ChainAddressInput) GetAddress() persist.Address { return v.Address }
 
 // GetChainId returns ChainAddressInput.ChainId, and is useful for accessing the field via an interface.
 func (v *ChainAddressInput) GetChainId() int { return v.ChainId }
-
-type ChainPubKeyInput struct {
-	PubKey  string `json:"pubKey"`
-	ChainId int    `json:"chainId"`
-}
-
-// GetPubKey returns ChainPubKeyInput.PubKey, and is useful for accessing the field via an interface.
-func (v *ChainPubKeyInput) GetPubKey() string { return v.PubKey }
-
-// GetChainId returns ChainPubKeyInput.ChainId, and is useful for accessing the field via an interface.
-func (v *ChainPubKeyInput) GetChainId() int { return v.ChainId }
 
 type ClaimBulkCreateInput struct {
 	// Claim recipient address.
@@ -251,25 +213,6 @@ func (v *ClaimUpdateInput) GetStateId() string { return v.StateId }
 // GetStrategyId returns ClaimUpdateInput.StrategyId, and is useful for accessing the field via an interface.
 func (v *ClaimUpdateInput) GetStrategyId() string { return v.StrategyId }
 
-type DebugAuth struct {
-	AsUsername         *string             `json:"asUsername"`
-	UserId             *persist.DBID       `json:"userId"`
-	ChainAddresses     []ChainAddressInput `json:"chainAddresses"`
-	DebugToolsPassword *string             `json:"debugToolsPassword"`
-}
-
-// GetAsUsername returns DebugAuth.AsUsername, and is useful for accessing the field via an interface.
-func (v *DebugAuth) GetAsUsername() *string { return v.AsUsername }
-
-// GetUserId returns DebugAuth.UserId, and is useful for accessing the field via an interface.
-func (v *DebugAuth) GetUserId() *persist.DBID { return v.UserId }
-
-// GetChainAddresses returns DebugAuth.ChainAddresses, and is useful for accessing the field via an interface.
-func (v *DebugAuth) GetChainAddresses() []ChainAddressInput { return v.ChainAddresses }
-
-// GetDebugToolsPassword returns DebugAuth.DebugToolsPassword, and is useful for accessing the field via an interface.
-func (v *DebugAuth) GetDebugToolsPassword() *string { return v.DebugToolsPassword }
-
 type EVMAccountType string
 
 const (
@@ -281,25 +224,6 @@ var AllEVMAccountType = []EVMAccountType{
 	EVMAccountTypeEoa,
 	EVMAccountTypeContract,
 }
-
-type EoaAuth struct {
-	ChainPubKey ChainPubKeyInput `json:"chainPubKey"`
-	Nonce       string           `json:"nonce"`
-	Message     string           `json:"message"`
-	Signature   string           `json:"signature"`
-}
-
-// GetChainPubKey returns EoaAuth.ChainPubKey, and is useful for accessing the field via an interface.
-func (v *EoaAuth) GetChainPubKey() ChainPubKeyInput { return v.ChainPubKey }
-
-// GetNonce returns EoaAuth.Nonce, and is useful for accessing the field via an interface.
-func (v *EoaAuth) GetNonce() string { return v.Nonce }
-
-// GetMessage returns EoaAuth.Message, and is useful for accessing the field via an interface.
-func (v *EoaAuth) GetMessage() string { return v.Message }
-
-// GetSignature returns EoaAuth.Signature, and is useful for accessing the field via an interface.
-func (v *EoaAuth) GetSignature() string { return v.Signature }
 
 type ErrorPolicyEnum string
 
@@ -318,34 +242,12 @@ var AllErrorPolicyEnum = []ErrorPolicyEnum{
 	ErrorPolicyEnumRejectFailedRows,
 }
 
-type GnosisSafeAuth struct {
-	Address persist.Address `json:"address"`
-	Nonce   string          `json:"nonce"`
-	Message string          `json:"message"`
+type NotificationSettingsInput struct {
+	SomeoneViewedYourPool *bool `json:"someoneViewedYourPool"`
 }
 
-// GetAddress returns GnosisSafeAuth.Address, and is useful for accessing the field via an interface.
-func (v *GnosisSafeAuth) GetAddress() persist.Address { return v.Address }
-
-// GetNonce returns GnosisSafeAuth.Nonce, and is useful for accessing the field via an interface.
-func (v *GnosisSafeAuth) GetNonce() string { return v.Nonce }
-
-// GetMessage returns GnosisSafeAuth.Message, and is useful for accessing the field via an interface.
-func (v *GnosisSafeAuth) GetMessage() string { return v.Message }
-
-type MagicLinkAuth struct {
-	Token string `json:"token"`
-}
-
-// GetToken returns MagicLinkAuth.Token, and is useful for accessing the field via an interface.
-func (v *MagicLinkAuth) GetToken() string { return v.Token }
-
-type OneTimeLoginTokenAuth struct {
-	Token string `json:"token"`
-}
-
-// GetToken returns OneTimeLoginTokenAuth.Token, and is useful for accessing the field via an interface.
-func (v *OneTimeLoginTokenAuth) GetToken() string { return v.Token }
+// GetSomeoneViewedYourPool returns NotificationSettingsInput.SomeoneViewedYourPool, and is useful for accessing the field via an interface.
+func (v *NotificationSettingsInput) GetSomeoneViewedYourPool() *bool { return v.SomeoneViewedYourPool }
 
 type PoolCreateInput struct {
 	// Name of the pool.
@@ -472,13 +374,6 @@ func (v *PoolUpdateInput) GetUpdateClaims() []ClaimUpdateInput { return v.Update
 // GetRemoveClaims returns PoolUpdateInput.RemoveClaims, and is useful for accessing the field via an interface.
 func (v *PoolUpdateInput) GetRemoveClaims() []persist.DBID { return v.RemoveClaims }
 
-type PrivyAuth struct {
-	Token string `json:"token"`
-}
-
-// GetToken returns PrivyAuth.Token, and is useful for accessing the field via an interface.
-func (v *PrivyAuth) GetToken() string { return v.Token }
-
 type PushTokenErrorCode string
 
 const (
@@ -497,6 +392,64 @@ var AllPushTokenErrorCode = []PushTokenErrorCode{
 	PushTokenErrorCodeNotFound,
 	PushTokenErrorCodeRequired,
 	PushTokenErrorCodeUnique,
+}
+
+type Role string
+
+const (
+	RoleAdmin       Role = "ADMIN"
+	RoleBetaTester  Role = "BETA_TESTER"
+	RoleEarlyAccess Role = "EARLY_ACCESS"
+)
+
+var AllRole = []Role{
+	RoleAdmin,
+	RoleBetaTester,
+	RoleEarlyAccess,
+}
+
+type RoleErrorCode string
+
+const (
+	RoleErrorCodeRequired            RoleErrorCode = "REQUIRED"
+	RoleErrorCodeUnique              RoleErrorCode = "UNIQUE"
+	RoleErrorCodeDuplicatedInputItem RoleErrorCode = "DUPLICATED_INPUT_ITEM"
+	RoleErrorCodeOutOfScopeUser      RoleErrorCode = "OUT_OF_SCOPE_USER"
+)
+
+var AllRoleErrorCode = []RoleErrorCode{
+	RoleErrorCodeRequired,
+	RoleErrorCodeUnique,
+	RoleErrorCodeDuplicatedInputItem,
+	RoleErrorCodeOutOfScopeUser,
+}
+
+type RoleUpdateInput struct {
+	// List of users to assign to a role.
+	AddUsers []persist.DBID `json:"addUsers"`
+	// List of users to unassign from a role.
+	RemoveUsers []persist.DBID `json:"removeUsers"`
+}
+
+// GetAddUsers returns RoleUpdateInput.AddUsers, and is useful for accessing the field via an interface.
+func (v *RoleUpdateInput) GetAddUsers() []persist.DBID { return v.AddUsers }
+
+// GetRemoveUsers returns RoleUpdateInput.RemoveUsers, and is useful for accessing the field via an interface.
+func (v *RoleUpdateInput) GetRemoveUsers() []persist.DBID { return v.RemoveUsers }
+
+type UpdateEmailNotificationSettingsInput struct {
+	UnsubscribedFromAll           bool `json:"unsubscribedFromAll"`
+	UnsubscribedFromNotifications bool `json:"unsubscribedFromNotifications"`
+}
+
+// GetUnsubscribedFromAll returns UpdateEmailNotificationSettingsInput.UnsubscribedFromAll, and is useful for accessing the field via an interface.
+func (v *UpdateEmailNotificationSettingsInput) GetUnsubscribedFromAll() bool {
+	return v.UnsubscribedFromAll
+}
+
+// GetUnsubscribedFromNotifications returns UpdateEmailNotificationSettingsInput.UnsubscribedFromNotifications, and is useful for accessing the field via an interface.
+func (v *UpdateEmailNotificationSettingsInput) GetUnsubscribedFromNotifications() bool {
+	return v.UnsubscribedFromNotifications
 }
 
 type UserErrorCode string
@@ -578,129 +531,15 @@ func (v *UserRegisterInput) GetDid() *string { return v.Did }
 // GetRedirectUrl returns UserRegisterInput.RedirectUrl, and is useful for accessing the field via an interface.
 func (v *UserRegisterInput) GetRedirectUrl() *string { return v.RedirectUrl }
 
-type WalletCreateInput struct {
-	// Wallet account address.
-	Address persist.Address `json:"address"`
+// __emailNotificationSettingsUpdateMutationInput is used internally by genqlient
+type __emailNotificationSettingsUpdateMutationInput struct {
+	Settings UpdateEmailNotificationSettingsInput `json:"settings"`
 }
 
-// GetAddress returns WalletCreateInput.Address, and is useful for accessing the field via an interface.
-func (v *WalletCreateInput) GetAddress() persist.Address { return v.Address }
-
-type WalletErrorCode string
-
-const (
-	WalletErrorCodeAlreadyExists WalletErrorCode = "ALREADY_EXISTS"
-	WalletErrorCodeGraphqlError  WalletErrorCode = "GRAPHQL_ERROR"
-	WalletErrorCodeInvalid       WalletErrorCode = "INVALID"
-	WalletErrorCodeNotFound      WalletErrorCode = "NOT_FOUND"
-	WalletErrorCodeRequired      WalletErrorCode = "REQUIRED"
-	WalletErrorCodeUnique        WalletErrorCode = "UNIQUE"
-)
-
-var AllWalletErrorCode = []WalletErrorCode{
-	WalletErrorCodeAlreadyExists,
-	WalletErrorCodeGraphqlError,
-	WalletErrorCodeInvalid,
-	WalletErrorCodeNotFound,
-	WalletErrorCodeRequired,
-	WalletErrorCodeUnique,
+// GetSettings returns __emailNotificationSettingsUpdateMutationInput.Settings, and is useful for accessing the field via an interface.
+func (v *__emailNotificationSettingsUpdateMutationInput) GetSettings() UpdateEmailNotificationSettingsInput {
+	return v.Settings
 }
-
-// __addUserWalletMutationInput is used internally by genqlient
-type __addUserWalletMutationInput struct {
-	Input WalletCreateInput `json:"input"`
-}
-
-// GetInput returns __addUserWalletMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__addUserWalletMutationInput) GetInput() WalletCreateInput { return v.Input }
-
-// __bulkCreateClaimsMutationInput is used internally by genqlient
-type __bulkCreateClaimsMutationInput struct {
-	PoolId      persist.DBID           `json:"poolId"`
-	Claims      []ClaimBulkCreateInput `json:"claims"`
-	ErrorPolicy *ErrorPolicyEnum       `json:"errorPolicy"`
-}
-
-// GetPoolId returns __bulkCreateClaimsMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__bulkCreateClaimsMutationInput) GetPoolId() persist.DBID { return v.PoolId }
-
-// GetClaims returns __bulkCreateClaimsMutationInput.Claims, and is useful for accessing the field via an interface.
-func (v *__bulkCreateClaimsMutationInput) GetClaims() []ClaimBulkCreateInput { return v.Claims }
-
-// GetErrorPolicy returns __bulkCreateClaimsMutationInput.ErrorPolicy, and is useful for accessing the field via an interface.
-func (v *__bulkCreateClaimsMutationInput) GetErrorPolicy() *ErrorPolicyEnum { return v.ErrorPolicy }
-
-// __bulkDeleteClaimsMutationInput is used internally by genqlient
-type __bulkDeleteClaimsMutationInput struct {
-	PoolId   persist.DBID   `json:"poolId"`
-	ClaimIds []persist.DBID `json:"claimIds"`
-}
-
-// GetPoolId returns __bulkDeleteClaimsMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__bulkDeleteClaimsMutationInput) GetPoolId() persist.DBID { return v.PoolId }
-
-// GetClaimIds returns __bulkDeleteClaimsMutationInput.ClaimIds, and is useful for accessing the field via an interface.
-func (v *__bulkDeleteClaimsMutationInput) GetClaimIds() []persist.DBID { return v.ClaimIds }
-
-// __bulkUpdateClaimsMutationInput is used internally by genqlient
-type __bulkUpdateClaimsMutationInput struct {
-	PoolId      persist.DBID           `json:"poolId"`
-	Claims      []ClaimBulkUpdateInput `json:"claims"`
-	ErrorPolicy *ErrorPolicyEnum       `json:"errorPolicy"`
-}
-
-// GetPoolId returns __bulkUpdateClaimsMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__bulkUpdateClaimsMutationInput) GetPoolId() persist.DBID { return v.PoolId }
-
-// GetClaims returns __bulkUpdateClaimsMutationInput.Claims, and is useful for accessing the field via an interface.
-func (v *__bulkUpdateClaimsMutationInput) GetClaims() []ClaimBulkUpdateInput { return v.Claims }
-
-// GetErrorPolicy returns __bulkUpdateClaimsMutationInput.ErrorPolicy, and is useful for accessing the field via an interface.
-func (v *__bulkUpdateClaimsMutationInput) GetErrorPolicy() *ErrorPolicyEnum { return v.ErrorPolicy }
-
-// __createClaimMutationInput is used internally by genqlient
-type __createClaimMutationInput struct {
-	PoolId persist.DBID     `json:"poolId"`
-	Input  ClaimCreateInput `json:"input"`
-}
-
-// GetPoolId returns __createClaimMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__createClaimMutationInput) GetPoolId() persist.DBID { return v.PoolId }
-
-// GetInput returns __createClaimMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__createClaimMutationInput) GetInput() ClaimCreateInput { return v.Input }
-
-// __createPoolMutationInput is used internally by genqlient
-type __createPoolMutationInput struct {
-	Input PoolCreateInput `json:"input"`
-}
-
-// GetInput returns __createPoolMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__createPoolMutationInput) GetInput() PoolCreateInput { return v.Input }
-
-// __createUserMutationInput is used internally by genqlient
-type __createUserMutationInput struct {
-	AuthMechanism AuthMechanism     `json:"authMechanism"`
-	Input         UserRegisterInput `json:"input"`
-}
-
-// GetAuthMechanism returns __createUserMutationInput.AuthMechanism, and is useful for accessing the field via an interface.
-func (v *__createUserMutationInput) GetAuthMechanism() AuthMechanism { return v.AuthMechanism }
-
-// GetInput returns __createUserMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__createUserMutationInput) GetInput() UserRegisterInput { return v.Input }
-
-// __deleteClaimMutationInput is used internally by genqlient
-type __deleteClaimMutationInput struct {
-	PoolId  persist.DBID `json:"poolId"`
-	ClaimId persist.DBID `json:"claimId"`
-}
-
-// GetPoolId returns __deleteClaimMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__deleteClaimMutationInput) GetPoolId() persist.DBID { return v.PoolId }
-
-// GetClaimId returns __deleteClaimMutationInput.ClaimId, and is useful for accessing the field via an interface.
-func (v *__deleteClaimMutationInput) GetClaimId() persist.DBID { return v.ClaimId }
 
 // __isEmailAvailableQueryInput is used internally by genqlient
 type __isEmailAvailableQueryInput struct {
@@ -710,13 +549,15 @@ type __isEmailAvailableQueryInput struct {
 // GetEmailAddress returns __isEmailAvailableQueryInput.EmailAddress, and is useful for accessing the field via an interface.
 func (v *__isEmailAvailableQueryInput) GetEmailAddress() string { return v.EmailAddress }
 
-// __loginMutationInput is used internally by genqlient
-type __loginMutationInput struct {
-	AuthMechanism AuthMechanism `json:"authMechanism"`
+// __notificationSettingsUpdateMutationInput is used internally by genqlient
+type __notificationSettingsUpdateMutationInput struct {
+	Settings NotificationSettingsInput `json:"settings"`
 }
 
-// GetAuthMechanism returns __loginMutationInput.AuthMechanism, and is useful for accessing the field via an interface.
-func (v *__loginMutationInput) GetAuthMechanism() AuthMechanism { return v.AuthMechanism }
+// GetSettings returns __notificationSettingsUpdateMutationInput.Settings, and is useful for accessing the field via an interface.
+func (v *__notificationSettingsUpdateMutationInput) GetSettings() NotificationSettingsInput {
+	return v.Settings
+}
 
 // __poolByIdQueryInput is used internally by genqlient
 type __poolByIdQueryInput struct {
@@ -726,21 +567,141 @@ type __poolByIdQueryInput struct {
 // GetId returns __poolByIdQueryInput.Id, and is useful for accessing the field via an interface.
 func (v *__poolByIdQueryInput) GetId() persist.DBID { return v.Id }
 
-// __registerPushTokenMutationInput is used internally by genqlient
-type __registerPushTokenMutationInput struct {
-	PushToken string `json:"pushToken"`
+// __poolClaimBulkCreateMutationInput is used internally by genqlient
+type __poolClaimBulkCreateMutationInput struct {
+	PoolId      persist.DBID           `json:"poolId"`
+	Claims      []ClaimBulkCreateInput `json:"claims"`
+	ErrorPolicy *ErrorPolicyEnum       `json:"errorPolicy"`
 }
 
-// GetPushToken returns __registerPushTokenMutationInput.PushToken, and is useful for accessing the field via an interface.
-func (v *__registerPushTokenMutationInput) GetPushToken() string { return v.PushToken }
+// GetPoolId returns __poolClaimBulkCreateMutationInput.PoolId, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkCreateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
 
-// __removeUserWalletsMutationInput is used internally by genqlient
-type __removeUserWalletsMutationInput struct {
+// GetClaims returns __poolClaimBulkCreateMutationInput.Claims, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkCreateMutationInput) GetClaims() []ClaimBulkCreateInput { return v.Claims }
+
+// GetErrorPolicy returns __poolClaimBulkCreateMutationInput.ErrorPolicy, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkCreateMutationInput) GetErrorPolicy() *ErrorPolicyEnum { return v.ErrorPolicy }
+
+// __poolClaimBulkDeleteMutationInput is used internally by genqlient
+type __poolClaimBulkDeleteMutationInput struct {
+	PoolId   persist.DBID   `json:"poolId"`
+	ClaimIds []persist.DBID `json:"claimIds"`
+}
+
+// GetPoolId returns __poolClaimBulkDeleteMutationInput.PoolId, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkDeleteMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+
+// GetClaimIds returns __poolClaimBulkDeleteMutationInput.ClaimIds, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkDeleteMutationInput) GetClaimIds() []persist.DBID { return v.ClaimIds }
+
+// __poolClaimBulkUpdateMutationInput is used internally by genqlient
+type __poolClaimBulkUpdateMutationInput struct {
+	PoolId      persist.DBID           `json:"poolId"`
+	Claims      []ClaimBulkUpdateInput `json:"claims"`
+	ErrorPolicy *ErrorPolicyEnum       `json:"errorPolicy"`
+}
+
+// GetPoolId returns __poolClaimBulkUpdateMutationInput.PoolId, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkUpdateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+
+// GetClaims returns __poolClaimBulkUpdateMutationInput.Claims, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkUpdateMutationInput) GetClaims() []ClaimBulkUpdateInput { return v.Claims }
+
+// GetErrorPolicy returns __poolClaimBulkUpdateMutationInput.ErrorPolicy, and is useful for accessing the field via an interface.
+func (v *__poolClaimBulkUpdateMutationInput) GetErrorPolicy() *ErrorPolicyEnum { return v.ErrorPolicy }
+
+// __poolClaimCreateMutationInput is used internally by genqlient
+type __poolClaimCreateMutationInput struct {
+	PoolId persist.DBID     `json:"poolId"`
+	Input  ClaimCreateInput `json:"input"`
+}
+
+// GetPoolId returns __poolClaimCreateMutationInput.PoolId, and is useful for accessing the field via an interface.
+func (v *__poolClaimCreateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+
+// GetInput returns __poolClaimCreateMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__poolClaimCreateMutationInput) GetInput() ClaimCreateInput { return v.Input }
+
+// __poolClaimDeleteMutationInput is used internally by genqlient
+type __poolClaimDeleteMutationInput struct {
+	PoolId  persist.DBID `json:"poolId"`
+	ClaimId persist.DBID `json:"claimId"`
+}
+
+// GetPoolId returns __poolClaimDeleteMutationInput.PoolId, and is useful for accessing the field via an interface.
+func (v *__poolClaimDeleteMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+
+// GetClaimId returns __poolClaimDeleteMutationInput.ClaimId, and is useful for accessing the field via an interface.
+func (v *__poolClaimDeleteMutationInput) GetClaimId() persist.DBID { return v.ClaimId }
+
+// __poolClaimUpdateMutationInput is used internally by genqlient
+type __poolClaimUpdateMutationInput struct {
+	PoolId persist.DBID     `json:"poolId"`
+	Input  ClaimUpdateInput `json:"input"`
+}
+
+// GetPoolId returns __poolClaimUpdateMutationInput.PoolId, and is useful for accessing the field via an interface.
+func (v *__poolClaimUpdateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+
+// GetInput returns __poolClaimUpdateMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__poolClaimUpdateMutationInput) GetInput() ClaimUpdateInput { return v.Input }
+
+// __poolCreateMutationInput is used internally by genqlient
+type __poolCreateMutationInput struct {
+	Input PoolCreateInput `json:"input"`
+}
+
+// GetInput returns __poolCreateMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__poolCreateMutationInput) GetInput() PoolCreateInput { return v.Input }
+
+// __poolDeleteMutationInput is used internally by genqlient
+type __poolDeleteMutationInput struct {
 	Id persist.DBID `json:"id"`
 }
 
-// GetId returns __removeUserWalletsMutationInput.Id, and is useful for accessing the field via an interface.
-func (v *__removeUserWalletsMutationInput) GetId() persist.DBID { return v.Id }
+// GetId returns __poolDeleteMutationInput.Id, and is useful for accessing the field via an interface.
+func (v *__poolDeleteMutationInput) GetId() persist.DBID { return v.Id }
+
+// __poolUpdateMutationInput is used internally by genqlient
+type __poolUpdateMutationInput struct {
+	Id    persist.DBID    `json:"id"`
+	Input PoolUpdateInput `json:"input"`
+}
+
+// GetId returns __poolUpdateMutationInput.Id, and is useful for accessing the field via an interface.
+func (v *__poolUpdateMutationInput) GetId() persist.DBID { return v.Id }
+
+// GetInput returns __poolUpdateMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__poolUpdateMutationInput) GetInput() PoolUpdateInput { return v.Input }
+
+// __pushTokenRegisterMutationInput is used internally by genqlient
+type __pushTokenRegisterMutationInput struct {
+	PushToken string `json:"pushToken"`
+}
+
+// GetPushToken returns __pushTokenRegisterMutationInput.PushToken, and is useful for accessing the field via an interface.
+func (v *__pushTokenRegisterMutationInput) GetPushToken() string { return v.PushToken }
+
+// __pushTokenUnregisterMutationInput is used internally by genqlient
+type __pushTokenUnregisterMutationInput struct {
+	PushToken string `json:"pushToken"`
+}
+
+// GetPushToken returns __pushTokenUnregisterMutationInput.PushToken, and is useful for accessing the field via an interface.
+func (v *__pushTokenUnregisterMutationInput) GetPushToken() string { return v.PushToken }
+
+// __roleUpdateMutationInput is used internally by genqlient
+type __roleUpdateMutationInput struct {
+	Role  *Role           `json:"role"`
+	Input RoleUpdateInput `json:"input"`
+}
+
+// GetRole returns __roleUpdateMutationInput.Role, and is useful for accessing the field via an interface.
+func (v *__roleUpdateMutationInput) GetRole() *Role { return v.Role }
+
+// GetInput returns __roleUpdateMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__roleUpdateMutationInput) GetInput() RoleUpdateInput { return v.Input }
 
 // __searchPoolsQueryInput is used internally by genqlient
 type __searchPoolsQueryInput struct {
@@ -778,45 +739,13 @@ func (v *__searchUsersQueryInput) GetLimit() *int { return v.Limit }
 // GetUsernameWeight returns __searchUsersQueryInput.UsernameWeight, and is useful for accessing the field via an interface.
 func (v *__searchUsersQueryInput) GetUsernameWeight() *float64 { return v.UsernameWeight }
 
-// __unregisterPushTokenMutationInput is used internally by genqlient
-type __unregisterPushTokenMutationInput struct {
-	PushToken string `json:"pushToken"`
+// __tokenVerifyMutationInput is used internally by genqlient
+type __tokenVerifyMutationInput struct {
+	Token string `json:"token"`
 }
 
-// GetPushToken returns __unregisterPushTokenMutationInput.PushToken, and is useful for accessing the field via an interface.
-func (v *__unregisterPushTokenMutationInput) GetPushToken() string { return v.PushToken }
-
-// __updateClaimMutationInput is used internally by genqlient
-type __updateClaimMutationInput struct {
-	PoolId persist.DBID     `json:"poolId"`
-	Input  ClaimUpdateInput `json:"input"`
-}
-
-// GetPoolId returns __updateClaimMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__updateClaimMutationInput) GetPoolId() persist.DBID { return v.PoolId }
-
-// GetInput returns __updateClaimMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__updateClaimMutationInput) GetInput() ClaimUpdateInput { return v.Input }
-
-// __updatePoolMutationInput is used internally by genqlient
-type __updatePoolMutationInput struct {
-	Id    persist.DBID    `json:"id"`
-	Input PoolUpdateInput `json:"input"`
-}
-
-// GetId returns __updatePoolMutationInput.Id, and is useful for accessing the field via an interface.
-func (v *__updatePoolMutationInput) GetId() persist.DBID { return v.Id }
-
-// GetInput returns __updatePoolMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__updatePoolMutationInput) GetInput() PoolUpdateInput { return v.Input }
-
-// __updateUserMutationInput is used internally by genqlient
-type __updateUserMutationInput struct {
-	Input UserInput `json:"input"`
-}
-
-// GetInput returns __updateUserMutationInput.Input, and is useful for accessing the field via an interface.
-func (v *__updateUserMutationInput) GetInput() UserInput { return v.Input }
+// GetToken returns __tokenVerifyMutationInput.Token, and is useful for accessing the field via an interface.
+func (v *__tokenVerifyMutationInput) GetToken() string { return v.Token }
 
 // __userByAddressQueryInput is used internally by genqlient
 type __userByAddressQueryInput struct {
@@ -834,420 +763,65 @@ type __userByIdQueryInput struct {
 // GetId returns __userByIdQueryInput.Id, and is useful for accessing the field via an interface.
 func (v *__userByIdQueryInput) GetId() persist.DBID { return v.Id }
 
-// __userByUsernameQueryInput is used internally by genqlient
-type __userByUsernameQueryInput struct {
-	User string `json:"user"`
+// __userDeleteMutationInput is used internally by genqlient
+type __userDeleteMutationInput struct {
+	Token string `json:"token"`
 }
 
-// GetUser returns __userByUsernameQueryInput.User, and is useful for accessing the field via an interface.
-func (v *__userByUsernameQueryInput) GetUser() string { return v.User }
+// GetToken returns __userDeleteMutationInput.Token, and is useful for accessing the field via an interface.
+func (v *__userDeleteMutationInput) GetToken() string { return v.Token }
 
-// __viewerPoolByIdQueryInput is used internally by genqlient
-type __viewerPoolByIdQueryInput struct {
-	Id persist.DBID `json:"id"`
+// __userRegisterMutationInput is used internally by genqlient
+type __userRegisterMutationInput struct {
+	Input UserRegisterInput `json:"input"`
 }
 
-// GetId returns __viewerPoolByIdQueryInput.Id, and is useful for accessing the field via an interface.
-func (v *__viewerPoolByIdQueryInput) GetId() persist.DBID { return v.Id }
+// GetInput returns __userRegisterMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__userRegisterMutationInput) GetInput() UserRegisterInput { return v.Input }
 
-// addUserWalletMutationResponse is returned by addUserWalletMutation on success.
-type addUserWalletMutationResponse struct {
-	// Creates a new wallet.
-	WalletCreate *addUserWalletMutationWalletCreate `json:"walletCreate"`
+// __userRequestDeletionMutationInput is used internally by genqlient
+type __userRequestDeletionMutationInput struct {
+	RedirectUrl string `json:"redirectUrl"`
 }
 
-// GetWalletCreate returns addUserWalletMutationResponse.WalletCreate, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationResponse) GetWalletCreate() *addUserWalletMutationWalletCreate {
-	return v.WalletCreate
+// GetRedirectUrl returns __userRequestDeletionMutationInput.RedirectUrl, and is useful for accessing the field via an interface.
+func (v *__userRequestDeletionMutationInput) GetRedirectUrl() string { return v.RedirectUrl }
+
+// __userUpdateMutationInput is used internally by genqlient
+type __userUpdateMutationInput struct {
+	UserId *persist.DBID `json:"userId"`
+	Input  UserInput     `json:"input"`
 }
 
-// addUserWalletMutationWalletCreate includes the requested fields of the GraphQL type WalletCreate.
-// The GraphQL type's documentation follows.
-//
-// Creates a new wallet.
-type addUserWalletMutationWalletCreate struct {
-	Wallet *addUserWalletMutationWalletCreateWallet             `json:"wallet"`
-	Errors []addUserWalletMutationWalletCreateErrorsWalletError `json:"errors"`
+// GetUserId returns __userUpdateMutationInput.UserId, and is useful for accessing the field via an interface.
+func (v *__userUpdateMutationInput) GetUserId() *persist.DBID { return v.UserId }
+
+// GetInput returns __userUpdateMutationInput.Input, and is useful for accessing the field via an interface.
+func (v *__userUpdateMutationInput) GetInput() UserInput { return v.Input }
+
+// __usersByRoleQueryInput is used internally by genqlient
+type __usersByRoleQueryInput struct {
+	Role   Role    `json:"role"`
+	Before *string `json:"before"`
+	After  *string `json:"after"`
+	First  *int    `json:"first"`
+	Last   *int    `json:"last"`
 }
 
-// GetWallet returns addUserWalletMutationWalletCreate.Wallet, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreate) GetWallet() *addUserWalletMutationWalletCreateWallet {
-	return v.Wallet
-}
+// GetRole returns __usersByRoleQueryInput.Role, and is useful for accessing the field via an interface.
+func (v *__usersByRoleQueryInput) GetRole() Role { return v.Role }
 
-// GetErrors returns addUserWalletMutationWalletCreate.Errors, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreate) GetErrors() []addUserWalletMutationWalletCreateErrorsWalletError {
-	return v.Errors
-}
+// GetBefore returns __usersByRoleQueryInput.Before, and is useful for accessing the field via an interface.
+func (v *__usersByRoleQueryInput) GetBefore() *string { return v.Before }
 
-// addUserWalletMutationWalletCreateErrorsWalletError includes the requested fields of the GraphQL type WalletError.
-type addUserWalletMutationWalletCreateErrorsWalletError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code WalletErrorCode `json:"code"`
-}
+// GetAfter returns __usersByRoleQueryInput.After, and is useful for accessing the field via an interface.
+func (v *__usersByRoleQueryInput) GetAfter() *string { return v.After }
 
-// GetField returns addUserWalletMutationWalletCreateErrorsWalletError.Field, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateErrorsWalletError) GetField() *string { return v.Field }
+// GetFirst returns __usersByRoleQueryInput.First, and is useful for accessing the field via an interface.
+func (v *__usersByRoleQueryInput) GetFirst() *int { return v.First }
 
-// GetMessage returns addUserWalletMutationWalletCreateErrorsWalletError.Message, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateErrorsWalletError) GetMessage() *string { return v.Message }
-
-// GetCode returns addUserWalletMutationWalletCreateErrorsWalletError.Code, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateErrorsWalletError) GetCode() WalletErrorCode { return v.Code }
-
-// addUserWalletMutationWalletCreateWallet includes the requested fields of the GraphQL type Wallet.
-type addUserWalletMutationWalletCreateWallet struct {
-	Id      string                                                    `json:"id"`
-	Dbid    persist.DBID                                              `json:"dbid"`
-	Name    string                                                    `json:"name"`
-	Account *addUserWalletMutationWalletCreateWalletAccountEVMAccount `json:"account"`
-}
-
-// GetId returns addUserWalletMutationWalletCreateWallet.Id, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateWallet) GetId() string { return v.Id }
-
-// GetDbid returns addUserWalletMutationWalletCreateWallet.Dbid, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateWallet) GetDbid() persist.DBID { return v.Dbid }
-
-// GetName returns addUserWalletMutationWalletCreateWallet.Name, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateWallet) GetName() string { return v.Name }
-
-// GetAccount returns addUserWalletMutationWalletCreateWallet.Account, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateWallet) GetAccount() *addUserWalletMutationWalletCreateWalletAccountEVMAccount {
-	return v.Account
-}
-
-// addUserWalletMutationWalletCreateWalletAccountEVMAccount includes the requested fields of the GraphQL type EVMAccount.
-type addUserWalletMutationWalletCreateWalletAccountEVMAccount struct {
-	Address persist.Address `json:"address"`
-}
-
-// GetAddress returns addUserWalletMutationWalletCreateWalletAccountEVMAccount.Address, and is useful for accessing the field via an interface.
-func (v *addUserWalletMutationWalletCreateWalletAccountEVMAccount) GetAddress() persist.Address {
-	return v.Address
-}
-
-// bulkCreateClaimsMutationPoolClaimBulkCreate includes the requested fields of the GraphQL type ClaimBulkCreate.
-// The GraphQL type's documentation follows.
-//
-// Creates claims.
-type bulkCreateClaimsMutationPoolClaimBulkCreate struct {
-	// Returns how many objects were created.
-	Count int `json:"count"`
-	// List of the created claims.
-	Results []bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult `json:"results"`
-	Errors  []bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError   `json:"errors"`
-}
-
-// GetCount returns bulkCreateClaimsMutationPoolClaimBulkCreate.Count, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreate) GetCount() int { return v.Count }
-
-// GetResults returns bulkCreateClaimsMutationPoolClaimBulkCreate.Results, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreate) GetResults() []bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult {
-	return v.Results
-}
-
-// GetErrors returns bulkCreateClaimsMutationPoolClaimBulkCreate.Errors, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreate) GetErrors() []bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError {
-	return v.Errors
-}
-
-// bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
-type bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError struct {
-	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Path *string `json:"path"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimBulkErrorCode `json:"code"`
-}
-
-// GetPath returns bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError) GetPath() *string {
-	return v.Path
-}
-
-// GetMessage returns bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError) GetMessage() *string {
-	return v.Message
-}
-
-// GetCode returns bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
-	return v.Code
-}
-
-// bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult includes the requested fields of the GraphQL type ClaimBulkResult.
-type bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult struct {
-	// Claim data.
-	Claim *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim `json:"claim"`
-	// List of errors occurred on create attempt.
-	Errors []bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError `json:"errors"`
-}
-
-// GetClaim returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult.Claim, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult) GetClaim() *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim {
-	return v.Claim
-}
-
-// GetErrors returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult.Errors, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResult) GetErrors() []bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError {
-	return v.Errors
-}
-
-// bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim includes the requested fields of the GraphQL type Claim.
-type bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim struct {
-	Id    string       `json:"id"`
-	Dbid  persist.DBID `json:"dbid"`
-	Label string       `json:"label"`
-	Path  string       `json:"path"`
-}
-
-// GetId returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Id, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetId() string {
-	return v.Id
-}
-
-// GetDbid returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// GetLabel returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Label, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetLabel() string {
-	return v.Label
-}
-
-// GetPath returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Path, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetPath() string {
-	return v.Path
-}
-
-// bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
-type bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError struct {
-	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Path *string `json:"path"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimBulkErrorCode `json:"code"`
-}
-
-// GetPath returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError) GetPath() *string {
-	return v.Path
-}
-
-// GetMessage returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError) GetMessage() *string {
-	return v.Message
-}
-
-// GetCode returns bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
-	return v.Code
-}
-
-// bulkCreateClaimsMutationResponse is returned by bulkCreateClaimsMutation on success.
-type bulkCreateClaimsMutationResponse struct {
-	// Creates claims.
-	PoolClaimBulkCreate *bulkCreateClaimsMutationPoolClaimBulkCreate `json:"poolClaimBulkCreate"`
-}
-
-// GetPoolClaimBulkCreate returns bulkCreateClaimsMutationResponse.PoolClaimBulkCreate, and is useful for accessing the field via an interface.
-func (v *bulkCreateClaimsMutationResponse) GetPoolClaimBulkCreate() *bulkCreateClaimsMutationPoolClaimBulkCreate {
-	return v.PoolClaimBulkCreate
-}
-
-// bulkDeleteClaimsMutationPoolClaimBulkDelete includes the requested fields of the GraphQL type ClaimBulkDelete.
-// The GraphQL type's documentation follows.
-//
-// Deletes claims.
-type bulkDeleteClaimsMutationPoolClaimBulkDelete struct {
-	// Returns how many objects were affected.
-	Count  int                                                           `json:"count"`
-	Errors []bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError `json:"errors"`
-}
-
-// GetCount returns bulkDeleteClaimsMutationPoolClaimBulkDelete.Count, and is useful for accessing the field via an interface.
-func (v *bulkDeleteClaimsMutationPoolClaimBulkDelete) GetCount() int { return v.Count }
-
-// GetErrors returns bulkDeleteClaimsMutationPoolClaimBulkDelete.Errors, and is useful for accessing the field via an interface.
-func (v *bulkDeleteClaimsMutationPoolClaimBulkDelete) GetErrors() []bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError {
-	return v.Errors
-}
-
-// bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
-type bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimErrorCode `json:"code"`
-}
-
-// GetField returns bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError.Field, and is useful for accessing the field via an interface.
-func (v *bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError) GetField() *string {
-	return v.Field
-}
-
-// GetMessage returns bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError.Message, and is useful for accessing the field via an interface.
-func (v *bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError) GetMessage() *string {
-	return v.Message
-}
-
-// GetCode returns bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError.Code, and is useful for accessing the field via an interface.
-func (v *bulkDeleteClaimsMutationPoolClaimBulkDeleteErrorsClaimError) GetCode() ClaimErrorCode {
-	return v.Code
-}
-
-// bulkDeleteClaimsMutationResponse is returned by bulkDeleteClaimsMutation on success.
-type bulkDeleteClaimsMutationResponse struct {
-	// Deletes claims.
-	PoolClaimBulkDelete *bulkDeleteClaimsMutationPoolClaimBulkDelete `json:"poolClaimBulkDelete"`
-}
-
-// GetPoolClaimBulkDelete returns bulkDeleteClaimsMutationResponse.PoolClaimBulkDelete, and is useful for accessing the field via an interface.
-func (v *bulkDeleteClaimsMutationResponse) GetPoolClaimBulkDelete() *bulkDeleteClaimsMutationPoolClaimBulkDelete {
-	return v.PoolClaimBulkDelete
-}
-
-// bulkUpdateClaimsMutationPoolClaimBulkUpdate includes the requested fields of the GraphQL type ClaimBulkUpdate.
-// The GraphQL type's documentation follows.
-//
-// Updates claims.
-type bulkUpdateClaimsMutationPoolClaimBulkUpdate struct {
-	// Returns how many objects were updated.
-	Count int `json:"count"`
-	// List of the updated claims.
-	Results []bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult `json:"results"`
-	Errors  []bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError   `json:"errors"`
-}
-
-// GetCount returns bulkUpdateClaimsMutationPoolClaimBulkUpdate.Count, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdate) GetCount() int { return v.Count }
-
-// GetResults returns bulkUpdateClaimsMutationPoolClaimBulkUpdate.Results, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdate) GetResults() []bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult {
-	return v.Results
-}
-
-// GetErrors returns bulkUpdateClaimsMutationPoolClaimBulkUpdate.Errors, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdate) GetErrors() []bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError {
-	return v.Errors
-}
-
-// bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
-type bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError struct {
-	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Path *string `json:"path"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimBulkErrorCode `json:"code"`
-}
-
-// GetPath returns bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError) GetPath() *string {
-	return v.Path
-}
-
-// GetMessage returns bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError) GetMessage() *string {
-	return v.Message
-}
-
-// GetCode returns bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
-	return v.Code
-}
-
-// bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult includes the requested fields of the GraphQL type ClaimBulkResult.
-type bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult struct {
-	// Claim data.
-	Claim *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim `json:"claim"`
-	// List of errors occurred on create attempt.
-	Errors []bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError `json:"errors"`
-}
-
-// GetClaim returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult.Claim, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult) GetClaim() *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim {
-	return v.Claim
-}
-
-// GetErrors returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult.Errors, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResult) GetErrors() []bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError {
-	return v.Errors
-}
-
-// bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim includes the requested fields of the GraphQL type Claim.
-type bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim struct {
-	Id    string       `json:"id"`
-	Dbid  persist.DBID `json:"dbid"`
-	Label string       `json:"label"`
-	Path  string       `json:"path"`
-}
-
-// GetId returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Id, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetId() string {
-	return v.Id
-}
-
-// GetDbid returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetDbid() persist.DBID {
-	return v.Dbid
-}
-
-// GetLabel returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Label, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetLabel() string {
-	return v.Label
-}
-
-// GetPath returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Path, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetPath() string {
-	return v.Path
-}
-
-// bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
-type bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError struct {
-	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Path *string `json:"path"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimBulkErrorCode `json:"code"`
-}
-
-// GetPath returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError) GetPath() *string {
-	return v.Path
-}
-
-// GetMessage returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError) GetMessage() *string {
-	return v.Message
-}
-
-// GetCode returns bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
-	return v.Code
-}
-
-// bulkUpdateClaimsMutationResponse is returned by bulkUpdateClaimsMutation on success.
-type bulkUpdateClaimsMutationResponse struct {
-	// Updates claims.
-	PoolClaimBulkUpdate *bulkUpdateClaimsMutationPoolClaimBulkUpdate `json:"poolClaimBulkUpdate"`
-}
-
-// GetPoolClaimBulkUpdate returns bulkUpdateClaimsMutationResponse.PoolClaimBulkUpdate, and is useful for accessing the field via an interface.
-func (v *bulkUpdateClaimsMutationResponse) GetPoolClaimBulkUpdate() *bulkUpdateClaimsMutationPoolClaimBulkUpdate {
-	return v.PoolClaimBulkUpdate
-}
+// GetLast returns __usersByRoleQueryInput.Last, and is useful for accessing the field via an interface.
+func (v *__usersByRoleQueryInput) GetLast() *int { return v.Last }
 
 // clearNotificationsMutationClearNotificationsClearAllNotificationsPayload includes the requested fields of the GraphQL type ClearAllNotificationsPayload.
 type clearNotificationsMutationClearNotificationsClearAllNotificationsPayload struct {
@@ -1396,310 +970,32 @@ func (v *clearNotificationsMutationResponse) GetClearNotifications() *clearNotif
 	return v.ClearNotifications
 }
 
-// createClaimMutationPoolClaimCreate includes the requested fields of the GraphQL type ClaimCreate.
-// The GraphQL type's documentation follows.
-//
-// Creates a new claim.
-type createClaimMutationPoolClaimCreate struct {
-	Claim  *createClaimMutationPoolClaimCreateClaim             `json:"claim"`
-	Errors []createClaimMutationPoolClaimCreateErrorsClaimError `json:"errors"`
+// emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings includes the requested fields of the GraphQL type EmailNotificationSettings.
+type emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings struct {
+	UnsubscribedFromAll           bool `json:"unsubscribedFromAll"`
+	UnsubscribedFromNotifications bool `json:"unsubscribedFromNotifications"`
 }
 
-// GetClaim returns createClaimMutationPoolClaimCreate.Claim, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreate) GetClaim() *createClaimMutationPoolClaimCreateClaim {
-	return v.Claim
+// GetUnsubscribedFromAll returns emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings.UnsubscribedFromAll, and is useful for accessing the field via an interface.
+func (v *emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings) GetUnsubscribedFromAll() bool {
+	return v.UnsubscribedFromAll
 }
 
-// GetErrors returns createClaimMutationPoolClaimCreate.Errors, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreate) GetErrors() []createClaimMutationPoolClaimCreateErrorsClaimError {
-	return v.Errors
+// GetUnsubscribedFromNotifications returns emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings.UnsubscribedFromNotifications, and is useful for accessing the field via an interface.
+func (v *emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings) GetUnsubscribedFromNotifications() bool {
+	return v.UnsubscribedFromNotifications
 }
 
-// createClaimMutationPoolClaimCreateClaim includes the requested fields of the GraphQL type Claim.
-type createClaimMutationPoolClaimCreateClaim struct {
-	Id    string       `json:"id"`
-	Dbid  persist.DBID `json:"dbid"`
-	Label string       `json:"label"`
-	Path  string       `json:"path"`
+// emailNotificationSettingsUpdateMutationResponse is returned by emailNotificationSettingsUpdateMutation on success.
+type emailNotificationSettingsUpdateMutationResponse struct {
+	// Updates a users email notification settings.
+	EmailNotificationSettingsUpdate *emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings `json:"emailNotificationSettingsUpdate"`
 }
 
-// GetId returns createClaimMutationPoolClaimCreateClaim.Id, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreateClaim) GetId() string { return v.Id }
-
-// GetDbid returns createClaimMutationPoolClaimCreateClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreateClaim) GetDbid() persist.DBID { return v.Dbid }
-
-// GetLabel returns createClaimMutationPoolClaimCreateClaim.Label, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreateClaim) GetLabel() string { return v.Label }
-
-// GetPath returns createClaimMutationPoolClaimCreateClaim.Path, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreateClaim) GetPath() string { return v.Path }
-
-// createClaimMutationPoolClaimCreateErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
-type createClaimMutationPoolClaimCreateErrorsClaimError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimErrorCode `json:"code"`
+// GetEmailNotificationSettingsUpdate returns emailNotificationSettingsUpdateMutationResponse.EmailNotificationSettingsUpdate, and is useful for accessing the field via an interface.
+func (v *emailNotificationSettingsUpdateMutationResponse) GetEmailNotificationSettingsUpdate() *emailNotificationSettingsUpdateMutationEmailNotificationSettingsUpdateEmailNotificationSettings {
+	return v.EmailNotificationSettingsUpdate
 }
-
-// GetField returns createClaimMutationPoolClaimCreateErrorsClaimError.Field, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreateErrorsClaimError) GetField() *string { return v.Field }
-
-// GetMessage returns createClaimMutationPoolClaimCreateErrorsClaimError.Message, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreateErrorsClaimError) GetMessage() *string { return v.Message }
-
-// GetCode returns createClaimMutationPoolClaimCreateErrorsClaimError.Code, and is useful for accessing the field via an interface.
-func (v *createClaimMutationPoolClaimCreateErrorsClaimError) GetCode() ClaimErrorCode { return v.Code }
-
-// createClaimMutationResponse is returned by createClaimMutation on success.
-type createClaimMutationResponse struct {
-	// Creates a new claim.
-	PoolClaimCreate *createClaimMutationPoolClaimCreate `json:"poolClaimCreate"`
-}
-
-// GetPoolClaimCreate returns createClaimMutationResponse.PoolClaimCreate, and is useful for accessing the field via an interface.
-func (v *createClaimMutationResponse) GetPoolClaimCreate() *createClaimMutationPoolClaimCreate {
-	return v.PoolClaimCreate
-}
-
-// createPoolMutationPoolCreate includes the requested fields of the GraphQL type PoolCreate.
-type createPoolMutationPoolCreate struct {
-	Pool   *createPoolMutationPoolCreatePool             `json:"pool"`
-	Errors []createPoolMutationPoolCreateErrorsPoolError `json:"errors"`
-}
-
-// GetPool returns createPoolMutationPoolCreate.Pool, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreate) GetPool() *createPoolMutationPoolCreatePool { return v.Pool }
-
-// GetErrors returns createPoolMutationPoolCreate.Errors, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreate) GetErrors() []createPoolMutationPoolCreateErrorsPoolError {
-	return v.Errors
-}
-
-// createPoolMutationPoolCreateErrorsPoolError includes the requested fields of the GraphQL type PoolError.
-type createPoolMutationPoolCreateErrorsPoolError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code PoolErrorCode `json:"code"`
-}
-
-// GetField returns createPoolMutationPoolCreateErrorsPoolError.Field, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreateErrorsPoolError) GetField() *string { return v.Field }
-
-// GetMessage returns createPoolMutationPoolCreateErrorsPoolError.Message, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreateErrorsPoolError) GetMessage() *string { return v.Message }
-
-// GetCode returns createPoolMutationPoolCreateErrorsPoolError.Code, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreateErrorsPoolError) GetCode() PoolErrorCode { return v.Code }
-
-// createPoolMutationPoolCreatePool includes the requested fields of the GraphQL type Pool.
-type createPoolMutationPoolCreatePool struct {
-	Dbid        persist.DBID                                  `json:"dbid"`
-	Name        string                                        `json:"name"`
-	Description string                                        `json:"description"`
-	Claims      []createPoolMutationPoolCreatePoolClaimsClaim `json:"claims"`
-}
-
-// GetDbid returns createPoolMutationPoolCreatePool.Dbid, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreatePool) GetDbid() persist.DBID { return v.Dbid }
-
-// GetName returns createPoolMutationPoolCreatePool.Name, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreatePool) GetName() string { return v.Name }
-
-// GetDescription returns createPoolMutationPoolCreatePool.Description, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreatePool) GetDescription() string { return v.Description }
-
-// GetClaims returns createPoolMutationPoolCreatePool.Claims, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreatePool) GetClaims() []createPoolMutationPoolCreatePoolClaimsClaim {
-	return v.Claims
-}
-
-// createPoolMutationPoolCreatePoolClaimsClaim includes the requested fields of the GraphQL type Claim.
-type createPoolMutationPoolCreatePoolClaimsClaim struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
-}
-
-// GetId returns createPoolMutationPoolCreatePoolClaimsClaim.Id, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreatePoolClaimsClaim) GetId() string { return v.Id }
-
-// GetDbid returns createPoolMutationPoolCreatePoolClaimsClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *createPoolMutationPoolCreatePoolClaimsClaim) GetDbid() persist.DBID { return v.Dbid }
-
-// createPoolMutationResponse is returned by createPoolMutation on success.
-type createPoolMutationResponse struct {
-	// Creates a pool.
-	PoolCreate *createPoolMutationPoolCreate `json:"poolCreate"`
-}
-
-// GetPoolCreate returns createPoolMutationResponse.PoolCreate, and is useful for accessing the field via an interface.
-func (v *createPoolMutationResponse) GetPoolCreate() *createPoolMutationPoolCreate {
-	return v.PoolCreate
-}
-
-// createUserMutationResponse is returned by createUserMutation on success.
-type createUserMutationResponse struct {
-	// Register a new user.
-	UserRegister *createUserMutationUserRegister `json:"userRegister"`
-}
-
-// GetUserRegister returns createUserMutationResponse.UserRegister, and is useful for accessing the field via an interface.
-func (v *createUserMutationResponse) GetUserRegister() *createUserMutationUserRegister {
-	return v.UserRegister
-}
-
-// createUserMutationUserRegister includes the requested fields of the GraphQL type UserRegister.
-// The GraphQL type's documentation follows.
-//
-// Register a new user.
-type createUserMutationUserRegister struct {
-	Typename *string `json:"__typename"`
-	// Informs whether users need to confirm their email address.
-	RequiresConfirmation *bool                                           `json:"requiresConfirmation"`
-	User                 *createUserMutationUserRegisterUser             `json:"user"`
-	Errors               []createUserMutationUserRegisterErrorsUserError `json:"errors"`
-}
-
-// GetTypename returns createUserMutationUserRegister.Typename, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegister) GetTypename() *string { return v.Typename }
-
-// GetRequiresConfirmation returns createUserMutationUserRegister.RequiresConfirmation, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegister) GetRequiresConfirmation() *bool {
-	return v.RequiresConfirmation
-}
-
-// GetUser returns createUserMutationUserRegister.User, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegister) GetUser() *createUserMutationUserRegisterUser { return v.User }
-
-// GetErrors returns createUserMutationUserRegister.Errors, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegister) GetErrors() []createUserMutationUserRegisterErrorsUserError {
-	return v.Errors
-}
-
-// createUserMutationUserRegisterErrorsUserError includes the requested fields of the GraphQL type UserError.
-// The GraphQL type's documentation follows.
-//
-// Represents errors in user mutations.
-type createUserMutationUserRegisterErrorsUserError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code UserErrorCode `json:"code"`
-}
-
-// GetField returns createUserMutationUserRegisterErrorsUserError.Field, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegisterErrorsUserError) GetField() *string { return v.Field }
-
-// GetMessage returns createUserMutationUserRegisterErrorsUserError.Message, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegisterErrorsUserError) GetMessage() *string { return v.Message }
-
-// GetCode returns createUserMutationUserRegisterErrorsUserError.Code, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegisterErrorsUserError) GetCode() UserErrorCode { return v.Code }
-
-// createUserMutationUserRegisterUser includes the requested fields of the GraphQL type User.
-type createUserMutationUserRegisterUser struct {
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
-}
-
-// GetUsername returns createUserMutationUserRegisterUser.Username, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegisterUser) GetUsername() *string { return v.Username }
-
-// GetDbid returns createUserMutationUserRegisterUser.Dbid, and is useful for accessing the field via an interface.
-func (v *createUserMutationUserRegisterUser) GetDbid() persist.DBID { return v.Dbid }
-
-// deleteClaimMutationPoolClaimDelete includes the requested fields of the GraphQL type ClaimDelete.
-// The GraphQL type's documentation follows.
-//
-// Deletes a claim.
-type deleteClaimMutationPoolClaimDelete struct {
-	Claim  *deleteClaimMutationPoolClaimDeleteClaim             `json:"claim"`
-	Errors []deleteClaimMutationPoolClaimDeleteErrorsClaimError `json:"errors"`
-}
-
-// GetClaim returns deleteClaimMutationPoolClaimDelete.Claim, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationPoolClaimDelete) GetClaim() *deleteClaimMutationPoolClaimDeleteClaim {
-	return v.Claim
-}
-
-// GetErrors returns deleteClaimMutationPoolClaimDelete.Errors, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationPoolClaimDelete) GetErrors() []deleteClaimMutationPoolClaimDeleteErrorsClaimError {
-	return v.Errors
-}
-
-// deleteClaimMutationPoolClaimDeleteClaim includes the requested fields of the GraphQL type Claim.
-type deleteClaimMutationPoolClaimDeleteClaim struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
-}
-
-// GetId returns deleteClaimMutationPoolClaimDeleteClaim.Id, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationPoolClaimDeleteClaim) GetId() string { return v.Id }
-
-// GetDbid returns deleteClaimMutationPoolClaimDeleteClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationPoolClaimDeleteClaim) GetDbid() persist.DBID { return v.Dbid }
-
-// deleteClaimMutationPoolClaimDeleteErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
-type deleteClaimMutationPoolClaimDeleteErrorsClaimError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimErrorCode `json:"code"`
-}
-
-// GetField returns deleteClaimMutationPoolClaimDeleteErrorsClaimError.Field, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationPoolClaimDeleteErrorsClaimError) GetField() *string { return v.Field }
-
-// GetMessage returns deleteClaimMutationPoolClaimDeleteErrorsClaimError.Message, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationPoolClaimDeleteErrorsClaimError) GetMessage() *string { return v.Message }
-
-// GetCode returns deleteClaimMutationPoolClaimDeleteErrorsClaimError.Code, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationPoolClaimDeleteErrorsClaimError) GetCode() ClaimErrorCode { return v.Code }
-
-// deleteClaimMutationResponse is returned by deleteClaimMutation on success.
-type deleteClaimMutationResponse struct {
-	// Deletes a claim.
-	PoolClaimDelete *deleteClaimMutationPoolClaimDelete `json:"poolClaimDelete"`
-}
-
-// GetPoolClaimDelete returns deleteClaimMutationResponse.PoolClaimDelete, and is useful for accessing the field via an interface.
-func (v *deleteClaimMutationResponse) GetPoolClaimDelete() *deleteClaimMutationPoolClaimDelete {
-	return v.PoolClaimDelete
-}
-
-// getNonceMutationNonce includes the requested fields of the GraphQL type Nonce.
-// The GraphQL type's documentation follows.
-//
-// Create and get a new nonce and message.
-type getNonceMutationNonce struct {
-	Nonce   *string `json:"nonce"`
-	Message *string `json:"message"`
-}
-
-// GetNonce returns getNonceMutationNonce.Nonce, and is useful for accessing the field via an interface.
-func (v *getNonceMutationNonce) GetNonce() *string { return v.Nonce }
-
-// GetMessage returns getNonceMutationNonce.Message, and is useful for accessing the field via an interface.
-func (v *getNonceMutationNonce) GetMessage() *string { return v.Message }
-
-// getNonceMutationResponse is returned by getNonceMutation on success.
-type getNonceMutationResponse struct {
-	// Get a nonce.
-	Nonce *getNonceMutationNonce `json:"nonce"`
-}
-
-// GetNonce returns getNonceMutationResponse.Nonce, and is useful for accessing the field via an interface.
-func (v *getNonceMutationResponse) GetNonce() *getNonceMutationNonce { return v.Nonce }
 
 // isEmailAvailableQueryResponse is returned by isEmailAvailableQuery on success.
 type isEmailAvailableQueryResponse struct {
@@ -1711,133 +1007,25 @@ func (v *isEmailAvailableQueryResponse) GetIsEmailAddressAvailable() *bool {
 	return v.IsEmailAddressAvailable
 }
 
-// loginMutationResponse is returned by loginMutation on success.
-type loginMutationResponse struct {
-	// Create JWT token.
-	TokenCreate *loginMutationTokenCreateCreateToken `json:"tokenCreate"`
+// notificationSettingsUpdateMutationNotificationSettingsUpdateNotificationSettings includes the requested fields of the GraphQL type NotificationSettings.
+type notificationSettingsUpdateMutationNotificationSettingsUpdateNotificationSettings struct {
+	SomeoneViewedYourPool *bool `json:"someoneViewedYourPool"`
 }
 
-// GetTokenCreate returns loginMutationResponse.TokenCreate, and is useful for accessing the field via an interface.
-func (v *loginMutationResponse) GetTokenCreate() *loginMutationTokenCreateCreateToken {
-	return v.TokenCreate
+// GetSomeoneViewedYourPool returns notificationSettingsUpdateMutationNotificationSettingsUpdateNotificationSettings.SomeoneViewedYourPool, and is useful for accessing the field via an interface.
+func (v *notificationSettingsUpdateMutationNotificationSettingsUpdateNotificationSettings) GetSomeoneViewedYourPool() *bool {
+	return v.SomeoneViewedYourPool
 }
 
-// loginMutationTokenCreateCreateToken includes the requested fields of the GraphQL type CreateToken.
-// The GraphQL type's documentation follows.
-//
-// Create JWT token.
-type loginMutationTokenCreateCreateToken struct {
-	// JWT token, required to authenticate.
-	Token *string `json:"token"`
-	// JWT refresh token, required to re-generate access token.
-	RefreshToken *string `json:"refreshToken"`
-	// A user instance.
-	User   *loginMutationTokenCreateCreateTokenUser             `json:"user"`
-	Errors []loginMutationTokenCreateCreateTokenErrorsUserError `json:"errors"`
+// notificationSettingsUpdateMutationResponse is returned by notificationSettingsUpdateMutation on success.
+type notificationSettingsUpdateMutationResponse struct {
+	// Updates a users notification settings.
+	NotificationSettingsUpdate *notificationSettingsUpdateMutationNotificationSettingsUpdateNotificationSettings `json:"notificationSettingsUpdate"`
 }
 
-// GetToken returns loginMutationTokenCreateCreateToken.Token, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateToken) GetToken() *string { return v.Token }
-
-// GetRefreshToken returns loginMutationTokenCreateCreateToken.RefreshToken, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateToken) GetRefreshToken() *string { return v.RefreshToken }
-
-// GetUser returns loginMutationTokenCreateCreateToken.User, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateToken) GetUser() *loginMutationTokenCreateCreateTokenUser {
-	return v.User
-}
-
-// GetErrors returns loginMutationTokenCreateCreateToken.Errors, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateToken) GetErrors() []loginMutationTokenCreateCreateTokenErrorsUserError {
-	return v.Errors
-}
-
-// loginMutationTokenCreateCreateTokenErrorsUserError includes the requested fields of the GraphQL type UserError.
-// The GraphQL type's documentation follows.
-//
-// Represents errors in user mutations.
-type loginMutationTokenCreateCreateTokenErrorsUserError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code UserErrorCode `json:"code"`
-}
-
-// GetField returns loginMutationTokenCreateCreateTokenErrorsUserError.Field, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateTokenErrorsUserError) GetField() *string { return v.Field }
-
-// GetMessage returns loginMutationTokenCreateCreateTokenErrorsUserError.Message, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateTokenErrorsUserError) GetMessage() *string { return v.Message }
-
-// GetCode returns loginMutationTokenCreateCreateTokenErrorsUserError.Code, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateTokenErrorsUserError) GetCode() UserErrorCode { return v.Code }
-
-// loginMutationTokenCreateCreateTokenUser includes the requested fields of the GraphQL type User.
-type loginMutationTokenCreateCreateTokenUser struct {
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
-}
-
-// GetUsername returns loginMutationTokenCreateCreateTokenUser.Username, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateTokenUser) GetUsername() *string { return v.Username }
-
-// GetDbid returns loginMutationTokenCreateCreateTokenUser.Dbid, and is useful for accessing the field via an interface.
-func (v *loginMutationTokenCreateCreateTokenUser) GetDbid() persist.DBID { return v.Dbid }
-
-// logoutMutationResponse is returned by logoutMutation on success.
-type logoutMutationResponse struct {
-	// Deactivate all JWT tokens of the currently authenticated user.
-	//
-	// Requires one of the following permissions: AUTHENTICATED_USER.
-	TokensDeactivateAll *logoutMutationTokensDeactivateAllDeactivateAllUserTokens `json:"tokensDeactivateAll"`
-}
-
-// GetTokensDeactivateAll returns logoutMutationResponse.TokensDeactivateAll, and is useful for accessing the field via an interface.
-func (v *logoutMutationResponse) GetTokensDeactivateAll() *logoutMutationTokensDeactivateAllDeactivateAllUserTokens {
-	return v.TokensDeactivateAll
-}
-
-// logoutMutationTokensDeactivateAllDeactivateAllUserTokens includes the requested fields of the GraphQL type DeactivateAllUserTokens.
-// The GraphQL type's documentation follows.
-//
-// Deactivate all JWT tokens of the currently authenticated user.
-type logoutMutationTokensDeactivateAllDeactivateAllUserTokens struct {
-	Errors []logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError `json:"errors"`
-}
-
-// GetErrors returns logoutMutationTokensDeactivateAllDeactivateAllUserTokens.Errors, and is useful for accessing the field via an interface.
-func (v *logoutMutationTokensDeactivateAllDeactivateAllUserTokens) GetErrors() []logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError {
-	return v.Errors
-}
-
-// logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError includes the requested fields of the GraphQL type UserError.
-// The GraphQL type's documentation follows.
-//
-// Represents errors in user mutations.
-type logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code UserErrorCode `json:"code"`
-}
-
-// GetField returns logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError.Field, and is useful for accessing the field via an interface.
-func (v *logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError) GetField() *string {
-	return v.Field
-}
-
-// GetMessage returns logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError.Message, and is useful for accessing the field via an interface.
-func (v *logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError) GetMessage() *string {
-	return v.Message
-}
-
-// GetCode returns logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError.Code, and is useful for accessing the field via an interface.
-func (v *logoutMutationTokensDeactivateAllDeactivateAllUserTokensErrorsUserError) GetCode() UserErrorCode {
-	return v.Code
+// GetNotificationSettingsUpdate returns notificationSettingsUpdateMutationResponse.NotificationSettingsUpdate, and is useful for accessing the field via an interface.
+func (v *notificationSettingsUpdateMutationResponse) GetNotificationSettingsUpdate() *notificationSettingsUpdateMutationNotificationSettingsUpdateNotificationSettings {
+	return v.NotificationSettingsUpdate
 }
 
 // notificationsForViewerQueryResponse is returned by notificationsForViewerQuery on success.
@@ -2207,13 +1395,19 @@ func (v *poolByIdQueryPoolByIdErrPoolNotFound) GetMessage() string { return v.Me
 
 // poolByIdQueryPoolByIdPool includes the requested fields of the GraphQL type Pool.
 type poolByIdQueryPoolByIdPool struct {
-	Typename    *string                                     `json:"__typename"`
-	Id          string                                      `json:"id"`
-	Dbid        persist.DBID                                `json:"dbid"`
-	Name        string                                      `json:"name"`
-	Description string                                      `json:"description"`
-	Status      PoolStatus                                  `json:"status"`
+	Typename    *string      `json:"__typename"`
+	Id          string       `json:"id"`
+	Dbid        persist.DBID `json:"dbid"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Status      PoolStatus   `json:"status"`
+	Image       string       `json:"image"`
+	// Basis point donation.
+	DonationBps int                                         `json:"donationBps"`
+	Slug        string                                      `json:"slug"`
 	Owner       poolByIdQueryPoolByIdPoolOwnerUserOrAccount `json:"-"`
+	CreatedAt   string                                      `json:"createdAt"`
+	UpdatedAt   string                                      `json:"updatedAt"`
 }
 
 // GetTypename returns poolByIdQueryPoolByIdPool.Typename, and is useful for accessing the field via an interface.
@@ -2234,10 +1428,25 @@ func (v *poolByIdQueryPoolByIdPool) GetDescription() string { return v.Descripti
 // GetStatus returns poolByIdQueryPoolByIdPool.Status, and is useful for accessing the field via an interface.
 func (v *poolByIdQueryPoolByIdPool) GetStatus() PoolStatus { return v.Status }
 
+// GetImage returns poolByIdQueryPoolByIdPool.Image, and is useful for accessing the field via an interface.
+func (v *poolByIdQueryPoolByIdPool) GetImage() string { return v.Image }
+
+// GetDonationBps returns poolByIdQueryPoolByIdPool.DonationBps, and is useful for accessing the field via an interface.
+func (v *poolByIdQueryPoolByIdPool) GetDonationBps() int { return v.DonationBps }
+
+// GetSlug returns poolByIdQueryPoolByIdPool.Slug, and is useful for accessing the field via an interface.
+func (v *poolByIdQueryPoolByIdPool) GetSlug() string { return v.Slug }
+
 // GetOwner returns poolByIdQueryPoolByIdPool.Owner, and is useful for accessing the field via an interface.
 func (v *poolByIdQueryPoolByIdPool) GetOwner() poolByIdQueryPoolByIdPoolOwnerUserOrAccount {
 	return v.Owner
 }
+
+// GetCreatedAt returns poolByIdQueryPoolByIdPool.CreatedAt, and is useful for accessing the field via an interface.
+func (v *poolByIdQueryPoolByIdPool) GetCreatedAt() string { return v.CreatedAt }
+
+// GetUpdatedAt returns poolByIdQueryPoolByIdPool.UpdatedAt, and is useful for accessing the field via an interface.
+func (v *poolByIdQueryPoolByIdPool) GetUpdatedAt() string { return v.UpdatedAt }
 
 func (v *poolByIdQueryPoolByIdPool) UnmarshalJSON(b []byte) error {
 
@@ -2285,7 +1494,17 @@ type __premarshalpoolByIdQueryPoolByIdPool struct {
 
 	Status PoolStatus `json:"status"`
 
+	Image string `json:"image"`
+
+	DonationBps int `json:"donationBps"`
+
+	Slug string `json:"slug"`
+
 	Owner json.RawMessage `json:"owner"`
+
+	CreatedAt string `json:"createdAt"`
+
+	UpdatedAt string `json:"updatedAt"`
 }
 
 func (v *poolByIdQueryPoolByIdPool) MarshalJSON() ([]byte, error) {
@@ -2305,6 +1524,9 @@ func (v *poolByIdQueryPoolByIdPool) __premarshalJSON() (*__premarshalpoolByIdQue
 	retval.Name = v.Name
 	retval.Description = v.Description
 	retval.Status = v.Status
+	retval.Image = v.Image
+	retval.DonationBps = v.DonationBps
+	retval.Slug = v.Slug
 	{
 
 		dst := &retval.Owner
@@ -2317,6 +1539,8 @@ func (v *poolByIdQueryPoolByIdPool) __premarshalJSON() (*__premarshalpoolByIdQue
 				"unable to marshal poolByIdQueryPoolByIdPool.Owner: %w", err)
 		}
 	}
+	retval.CreatedAt = v.CreatedAt
+	retval.UpdatedAt = v.UpdatedAt
 	return &retval, nil
 }
 
@@ -2418,15 +1642,15 @@ func (v *poolByIdQueryPoolByIdPoolOwnerEVMAccount) GetAccountType() EVMAccountTy
 // poolByIdQueryPoolByIdPoolOwnerUser includes the requested fields of the GraphQL type User.
 type poolByIdQueryPoolByIdPoolOwnerUser struct {
 	Typename *string      `json:"__typename"`
-	Username *string      `json:"username"`
+	Id       string       `json:"id"`
 	Dbid     persist.DBID `json:"dbid"`
 }
 
 // GetTypename returns poolByIdQueryPoolByIdPoolOwnerUser.Typename, and is useful for accessing the field via an interface.
 func (v *poolByIdQueryPoolByIdPoolOwnerUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns poolByIdQueryPoolByIdPoolOwnerUser.Username, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPoolOwnerUser) GetUsername() *string { return v.Username }
+// GetId returns poolByIdQueryPoolByIdPoolOwnerUser.Id, and is useful for accessing the field via an interface.
+func (v *poolByIdQueryPoolByIdPoolOwnerUser) GetId() string { return v.Id }
 
 // GetDbid returns poolByIdQueryPoolByIdPoolOwnerUser.Dbid, and is useful for accessing the field via an interface.
 func (v *poolByIdQueryPoolByIdPoolOwnerUser) GetDbid() persist.DBID { return v.Dbid }
@@ -2580,30 +1804,807 @@ func (v *poolByIdQueryResponse) __premarshalJSON() (*__premarshalpoolByIdQueryRe
 	return &retval, nil
 }
 
-// registerPushTokenMutationPushTokenRegister includes the requested fields of the GraphQL type PushTokenRegister.
-type registerPushTokenMutationPushTokenRegister struct {
-	// push token.
-	PushToken *string `json:"pushToken"`
-	// A user instance.
-	User   *registerPushTokenMutationPushTokenRegisterUser                  `json:"user"`
-	Errors []registerPushTokenMutationPushTokenRegisterErrorsPushTokenError `json:"errors"`
+// poolClaimBulkCreateMutationPoolClaimBulkCreate includes the requested fields of the GraphQL type ClaimBulkCreate.
+// The GraphQL type's documentation follows.
+//
+// Creates claims.
+type poolClaimBulkCreateMutationPoolClaimBulkCreate struct {
+	// Returns how many objects were created.
+	Count int `json:"count"`
+	// List of the created claims.
+	Results []poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult `json:"results"`
+	Errors  []poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError   `json:"errors"`
 }
 
-// GetPushToken returns registerPushTokenMutationPushTokenRegister.PushToken, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegister) GetPushToken() *string { return v.PushToken }
+// GetCount returns poolClaimBulkCreateMutationPoolClaimBulkCreate.Count, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreate) GetCount() int { return v.Count }
 
-// GetUser returns registerPushTokenMutationPushTokenRegister.User, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegister) GetUser() *registerPushTokenMutationPushTokenRegisterUser {
-	return v.User
+// GetResults returns poolClaimBulkCreateMutationPoolClaimBulkCreate.Results, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreate) GetResults() []poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult {
+	return v.Results
 }
 
-// GetErrors returns registerPushTokenMutationPushTokenRegister.Errors, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegister) GetErrors() []registerPushTokenMutationPushTokenRegisterErrorsPushTokenError {
+// GetErrors returns poolClaimBulkCreateMutationPoolClaimBulkCreate.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreate) GetErrors() []poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError {
 	return v.Errors
 }
 
-// registerPushTokenMutationPushTokenRegisterErrorsPushTokenError includes the requested fields of the GraphQL type PushTokenError.
-type registerPushTokenMutationPushTokenRegisterErrorsPushTokenError struct {
+// poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
+type poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError struct {
+	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Path *string `json:"path"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimBulkErrorCode `json:"code"`
+}
+
+// GetPath returns poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError) GetPath() *string {
+	return v.Path
+}
+
+// GetMessage returns poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
+	return v.Code
+}
+
+// poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult includes the requested fields of the GraphQL type ClaimBulkResult.
+type poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult struct {
+	// Claim data.
+	Claim *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim `json:"claim"`
+	// List of errors occurred on create attempt.
+	Errors []poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError `json:"errors"`
+}
+
+// GetClaim returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult.Claim, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult) GetClaim() *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim {
+	return v.Claim
+}
+
+// GetErrors returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResult) GetErrors() []poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError {
+	return v.Errors
+}
+
+// poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim includes the requested fields of the GraphQL type Claim.
+type poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim struct {
+	Id    string       `json:"id"`
+	Dbid  persist.DBID `json:"dbid"`
+	Label string       `json:"label"`
+	Path  string       `json:"path"`
+	// Extension (strategy and state) specific data.
+	Data *json.RawMessage `json:"data"`
+}
+
+// GetId returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Id, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetId() string {
+	return v.Id
+}
+
+// GetDbid returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Dbid, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetDbid() persist.DBID {
+	return v.Dbid
+}
+
+// GetLabel returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Label, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetLabel() string {
+	return v.Label
+}
+
+// GetPath returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetPath() string {
+	return v.Path
+}
+
+// GetData returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim.Data, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultClaim) GetData() *json.RawMessage {
+	return v.Data
+}
+
+// poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
+type poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError struct {
+	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Path *string `json:"path"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimBulkErrorCode `json:"code"`
+}
+
+// GetPath returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError) GetPath() *string {
+	return v.Path
+}
+
+// GetMessage returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateResultsClaimBulkResultErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
+	return v.Code
+}
+
+// poolClaimBulkCreateMutationResponse is returned by poolClaimBulkCreateMutation on success.
+type poolClaimBulkCreateMutationResponse struct {
+	// Creates claims.
+	PoolClaimBulkCreate *poolClaimBulkCreateMutationPoolClaimBulkCreate `json:"poolClaimBulkCreate"`
+}
+
+// GetPoolClaimBulkCreate returns poolClaimBulkCreateMutationResponse.PoolClaimBulkCreate, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationResponse) GetPoolClaimBulkCreate() *poolClaimBulkCreateMutationPoolClaimBulkCreate {
+	return v.PoolClaimBulkCreate
+}
+
+// poolClaimBulkDeleteMutationPoolClaimBulkDelete includes the requested fields of the GraphQL type ClaimBulkDelete.
+// The GraphQL type's documentation follows.
+//
+// Deletes claims.
+type poolClaimBulkDeleteMutationPoolClaimBulkDelete struct {
+	// Returns how many objects were affected.
+	Count  int                                                              `json:"count"`
+	Errors []poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError `json:"errors"`
+}
+
+// GetCount returns poolClaimBulkDeleteMutationPoolClaimBulkDelete.Count, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkDeleteMutationPoolClaimBulkDelete) GetCount() int { return v.Count }
+
+// GetErrors returns poolClaimBulkDeleteMutationPoolClaimBulkDelete.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkDeleteMutationPoolClaimBulkDelete) GetErrors() []poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError {
+	return v.Errors
+}
+
+// poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
+type poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimErrorCode `json:"code"`
+}
+
+// GetField returns poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError.Field, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError) GetField() *string {
+	return v.Field
+}
+
+// GetMessage returns poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrorsClaimError) GetCode() ClaimErrorCode {
+	return v.Code
+}
+
+// poolClaimBulkDeleteMutationResponse is returned by poolClaimBulkDeleteMutation on success.
+type poolClaimBulkDeleteMutationResponse struct {
+	// Deletes claims.
+	PoolClaimBulkDelete *poolClaimBulkDeleteMutationPoolClaimBulkDelete `json:"poolClaimBulkDelete"`
+}
+
+// GetPoolClaimBulkDelete returns poolClaimBulkDeleteMutationResponse.PoolClaimBulkDelete, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkDeleteMutationResponse) GetPoolClaimBulkDelete() *poolClaimBulkDeleteMutationPoolClaimBulkDelete {
+	return v.PoolClaimBulkDelete
+}
+
+// poolClaimBulkUpdateMutationPoolClaimBulkUpdate includes the requested fields of the GraphQL type ClaimBulkUpdate.
+// The GraphQL type's documentation follows.
+//
+// Updates claims.
+type poolClaimBulkUpdateMutationPoolClaimBulkUpdate struct {
+	// Returns how many objects were updated.
+	Count int `json:"count"`
+	// List of the updated claims.
+	Results []poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult `json:"results"`
+	Errors  []poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError   `json:"errors"`
+}
+
+// GetCount returns poolClaimBulkUpdateMutationPoolClaimBulkUpdate.Count, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdate) GetCount() int { return v.Count }
+
+// GetResults returns poolClaimBulkUpdateMutationPoolClaimBulkUpdate.Results, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdate) GetResults() []poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult {
+	return v.Results
+}
+
+// GetErrors returns poolClaimBulkUpdateMutationPoolClaimBulkUpdate.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdate) GetErrors() []poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError {
+	return v.Errors
+}
+
+// poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
+type poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError struct {
+	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Path *string `json:"path"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimBulkErrorCode `json:"code"`
+}
+
+// GetPath returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError) GetPath() *string {
+	return v.Path
+}
+
+// GetMessage returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
+	return v.Code
+}
+
+// poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult includes the requested fields of the GraphQL type ClaimBulkResult.
+type poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult struct {
+	// Claim data.
+	Claim *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim `json:"claim"`
+	// List of errors occurred on create attempt.
+	Errors []poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError `json:"errors"`
+}
+
+// GetClaim returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult.Claim, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult) GetClaim() *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim {
+	return v.Claim
+}
+
+// GetErrors returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResult) GetErrors() []poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError {
+	return v.Errors
+}
+
+// poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim includes the requested fields of the GraphQL type Claim.
+type poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim struct {
+	Id    string       `json:"id"`
+	Dbid  persist.DBID `json:"dbid"`
+	Label string       `json:"label"`
+	Path  string       `json:"path"`
+	// Extension (strategy and state) specific data.
+	Data *json.RawMessage `json:"data"`
+}
+
+// GetId returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Id, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetId() string {
+	return v.Id
+}
+
+// GetDbid returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Dbid, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetDbid() persist.DBID {
+	return v.Dbid
+}
+
+// GetLabel returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Label, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetLabel() string {
+	return v.Label
+}
+
+// GetPath returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetPath() string {
+	return v.Path
+}
+
+// GetData returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim.Data, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultClaim) GetData() *json.RawMessage {
+	return v.Data
+}
+
+// poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError includes the requested fields of the GraphQL type ClaimBulkError.
+type poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError struct {
+	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Path *string `json:"path"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimBulkErrorCode `json:"code"`
+}
+
+// GetPath returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError) GetPath() *string {
+	return v.Path
+}
+
+// GetMessage returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateResultsClaimBulkResultErrorsClaimBulkError) GetCode() ClaimBulkErrorCode {
+	return v.Code
+}
+
+// poolClaimBulkUpdateMutationResponse is returned by poolClaimBulkUpdateMutation on success.
+type poolClaimBulkUpdateMutationResponse struct {
+	// Updates claims.
+	PoolClaimBulkUpdate *poolClaimBulkUpdateMutationPoolClaimBulkUpdate `json:"poolClaimBulkUpdate"`
+}
+
+// GetPoolClaimBulkUpdate returns poolClaimBulkUpdateMutationResponse.PoolClaimBulkUpdate, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationResponse) GetPoolClaimBulkUpdate() *poolClaimBulkUpdateMutationPoolClaimBulkUpdate {
+	return v.PoolClaimBulkUpdate
+}
+
+// poolClaimCreateMutationPoolClaimCreate includes the requested fields of the GraphQL type ClaimCreate.
+// The GraphQL type's documentation follows.
+//
+// Creates a new claim.
+type poolClaimCreateMutationPoolClaimCreate struct {
+	Claim  *poolClaimCreateMutationPoolClaimCreateClaim             `json:"claim"`
+	Errors []poolClaimCreateMutationPoolClaimCreateErrorsClaimError `json:"errors"`
+}
+
+// GetClaim returns poolClaimCreateMutationPoolClaimCreate.Claim, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreate) GetClaim() *poolClaimCreateMutationPoolClaimCreateClaim {
+	return v.Claim
+}
+
+// GetErrors returns poolClaimCreateMutationPoolClaimCreate.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreate) GetErrors() []poolClaimCreateMutationPoolClaimCreateErrorsClaimError {
+	return v.Errors
+}
+
+// poolClaimCreateMutationPoolClaimCreateClaim includes the requested fields of the GraphQL type Claim.
+type poolClaimCreateMutationPoolClaimCreateClaim struct {
+	Id    string       `json:"id"`
+	Dbid  persist.DBID `json:"dbid"`
+	Label string       `json:"label"`
+	Path  string       `json:"path"`
+	// Extension (strategy and state) specific data.
+	Data *json.RawMessage `json:"data"`
+}
+
+// GetId returns poolClaimCreateMutationPoolClaimCreateClaim.Id, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateClaim) GetId() string { return v.Id }
+
+// GetDbid returns poolClaimCreateMutationPoolClaimCreateClaim.Dbid, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateClaim) GetDbid() persist.DBID { return v.Dbid }
+
+// GetLabel returns poolClaimCreateMutationPoolClaimCreateClaim.Label, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateClaim) GetLabel() string { return v.Label }
+
+// GetPath returns poolClaimCreateMutationPoolClaimCreateClaim.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateClaim) GetPath() string { return v.Path }
+
+// GetData returns poolClaimCreateMutationPoolClaimCreateClaim.Data, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateClaim) GetData() *json.RawMessage { return v.Data }
+
+// poolClaimCreateMutationPoolClaimCreateErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
+type poolClaimCreateMutationPoolClaimCreateErrorsClaimError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimErrorCode `json:"code"`
+}
+
+// GetField returns poolClaimCreateMutationPoolClaimCreateErrorsClaimError.Field, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateErrorsClaimError) GetField() *string { return v.Field }
+
+// GetMessage returns poolClaimCreateMutationPoolClaimCreateErrorsClaimError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateErrorsClaimError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimCreateMutationPoolClaimCreateErrorsClaimError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateErrorsClaimError) GetCode() ClaimErrorCode {
+	return v.Code
+}
+
+// poolClaimCreateMutationResponse is returned by poolClaimCreateMutation on success.
+type poolClaimCreateMutationResponse struct {
+	// Creates a new claim.
+	PoolClaimCreate *poolClaimCreateMutationPoolClaimCreate `json:"poolClaimCreate"`
+}
+
+// GetPoolClaimCreate returns poolClaimCreateMutationResponse.PoolClaimCreate, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationResponse) GetPoolClaimCreate() *poolClaimCreateMutationPoolClaimCreate {
+	return v.PoolClaimCreate
+}
+
+// poolClaimDeleteMutationPoolClaimDelete includes the requested fields of the GraphQL type ClaimDelete.
+// The GraphQL type's documentation follows.
+//
+// Deletes a claim.
+type poolClaimDeleteMutationPoolClaimDelete struct {
+	Claim  *poolClaimDeleteMutationPoolClaimDeleteClaim             `json:"claim"`
+	Errors []poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError `json:"errors"`
+}
+
+// GetClaim returns poolClaimDeleteMutationPoolClaimDelete.Claim, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationPoolClaimDelete) GetClaim() *poolClaimDeleteMutationPoolClaimDeleteClaim {
+	return v.Claim
+}
+
+// GetErrors returns poolClaimDeleteMutationPoolClaimDelete.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationPoolClaimDelete) GetErrors() []poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError {
+	return v.Errors
+}
+
+// poolClaimDeleteMutationPoolClaimDeleteClaim includes the requested fields of the GraphQL type Claim.
+type poolClaimDeleteMutationPoolClaimDeleteClaim struct {
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
+}
+
+// GetId returns poolClaimDeleteMutationPoolClaimDeleteClaim.Id, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationPoolClaimDeleteClaim) GetId() string { return v.Id }
+
+// GetDbid returns poolClaimDeleteMutationPoolClaimDeleteClaim.Dbid, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationPoolClaimDeleteClaim) GetDbid() persist.DBID { return v.Dbid }
+
+// poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
+type poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimErrorCode `json:"code"`
+}
+
+// GetField returns poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError.Field, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError) GetField() *string { return v.Field }
+
+// GetMessage returns poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationPoolClaimDeleteErrorsClaimError) GetCode() ClaimErrorCode {
+	return v.Code
+}
+
+// poolClaimDeleteMutationResponse is returned by poolClaimDeleteMutation on success.
+type poolClaimDeleteMutationResponse struct {
+	// Deletes a claim.
+	PoolClaimDelete *poolClaimDeleteMutationPoolClaimDelete `json:"poolClaimDelete"`
+}
+
+// GetPoolClaimDelete returns poolClaimDeleteMutationResponse.PoolClaimDelete, and is useful for accessing the field via an interface.
+func (v *poolClaimDeleteMutationResponse) GetPoolClaimDelete() *poolClaimDeleteMutationPoolClaimDelete {
+	return v.PoolClaimDelete
+}
+
+// poolClaimUpdateMutationPoolClaimUpdate includes the requested fields of the GraphQL type ClaimUpdate.
+// The GraphQL type's documentation follows.
+//
+// Updates given claim.
+type poolClaimUpdateMutationPoolClaimUpdate struct {
+	Claim  *poolClaimUpdateMutationPoolClaimUpdateClaim             `json:"claim"`
+	Errors []poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError `json:"errors"`
+}
+
+// GetClaim returns poolClaimUpdateMutationPoolClaimUpdate.Claim, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdate) GetClaim() *poolClaimUpdateMutationPoolClaimUpdateClaim {
+	return v.Claim
+}
+
+// GetErrors returns poolClaimUpdateMutationPoolClaimUpdate.Errors, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdate) GetErrors() []poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError {
+	return v.Errors
+}
+
+// poolClaimUpdateMutationPoolClaimUpdateClaim includes the requested fields of the GraphQL type Claim.
+type poolClaimUpdateMutationPoolClaimUpdateClaim struct {
+	Id    string       `json:"id"`
+	Dbid  persist.DBID `json:"dbid"`
+	Label string       `json:"label"`
+	Path  string       `json:"path"`
+	// Extension (strategy and state) specific data.
+	Data *json.RawMessage `json:"data"`
+}
+
+// GetId returns poolClaimUpdateMutationPoolClaimUpdateClaim.Id, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateClaim) GetId() string { return v.Id }
+
+// GetDbid returns poolClaimUpdateMutationPoolClaimUpdateClaim.Dbid, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateClaim) GetDbid() persist.DBID { return v.Dbid }
+
+// GetLabel returns poolClaimUpdateMutationPoolClaimUpdateClaim.Label, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateClaim) GetLabel() string { return v.Label }
+
+// GetPath returns poolClaimUpdateMutationPoolClaimUpdateClaim.Path, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateClaim) GetPath() string { return v.Path }
+
+// GetData returns poolClaimUpdateMutationPoolClaimUpdateClaim.Data, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateClaim) GetData() *json.RawMessage { return v.Data }
+
+// poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
+type poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code ClaimErrorCode `json:"code"`
+}
+
+// GetField returns poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError.Field, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError) GetField() *string { return v.Field }
+
+// GetMessage returns poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError.Message, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError.Code, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateErrorsClaimError) GetCode() ClaimErrorCode {
+	return v.Code
+}
+
+// poolClaimUpdateMutationResponse is returned by poolClaimUpdateMutation on success.
+type poolClaimUpdateMutationResponse struct {
+	// Updates a new claim.
+	PoolClaimUpdate *poolClaimUpdateMutationPoolClaimUpdate `json:"poolClaimUpdate"`
+}
+
+// GetPoolClaimUpdate returns poolClaimUpdateMutationResponse.PoolClaimUpdate, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationResponse) GetPoolClaimUpdate() *poolClaimUpdateMutationPoolClaimUpdate {
+	return v.PoolClaimUpdate
+}
+
+// poolCreateMutationPoolCreate includes the requested fields of the GraphQL type PoolCreate.
+type poolCreateMutationPoolCreate struct {
+	Pool   *poolCreateMutationPoolCreatePool             `json:"pool"`
+	Errors []poolCreateMutationPoolCreateErrorsPoolError `json:"errors"`
+}
+
+// GetPool returns poolCreateMutationPoolCreate.Pool, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreate) GetPool() *poolCreateMutationPoolCreatePool { return v.Pool }
+
+// GetErrors returns poolCreateMutationPoolCreate.Errors, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreate) GetErrors() []poolCreateMutationPoolCreateErrorsPoolError {
+	return v.Errors
+}
+
+// poolCreateMutationPoolCreateErrorsPoolError includes the requested fields of the GraphQL type PoolError.
+type poolCreateMutationPoolCreateErrorsPoolError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code PoolErrorCode `json:"code"`
+}
+
+// GetField returns poolCreateMutationPoolCreateErrorsPoolError.Field, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreateErrorsPoolError) GetField() *string { return v.Field }
+
+// GetMessage returns poolCreateMutationPoolCreateErrorsPoolError.Message, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreateErrorsPoolError) GetMessage() *string { return v.Message }
+
+// GetCode returns poolCreateMutationPoolCreateErrorsPoolError.Code, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreateErrorsPoolError) GetCode() PoolErrorCode { return v.Code }
+
+// poolCreateMutationPoolCreatePool includes the requested fields of the GraphQL type Pool.
+type poolCreateMutationPoolCreatePool struct {
+	Id          string       `json:"id"`
+	Dbid        persist.DBID `json:"dbid"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Image       string       `json:"image"`
+	// Basis point donation.
+	DonationBps int        `json:"donationBps"`
+	Slug        string     `json:"slug"`
+	Status      PoolStatus `json:"status"`
+}
+
+// GetId returns poolCreateMutationPoolCreatePool.Id, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetId() string { return v.Id }
+
+// GetDbid returns poolCreateMutationPoolCreatePool.Dbid, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetDbid() persist.DBID { return v.Dbid }
+
+// GetName returns poolCreateMutationPoolCreatePool.Name, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetName() string { return v.Name }
+
+// GetDescription returns poolCreateMutationPoolCreatePool.Description, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetDescription() string { return v.Description }
+
+// GetImage returns poolCreateMutationPoolCreatePool.Image, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetImage() string { return v.Image }
+
+// GetDonationBps returns poolCreateMutationPoolCreatePool.DonationBps, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetDonationBps() int { return v.DonationBps }
+
+// GetSlug returns poolCreateMutationPoolCreatePool.Slug, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetSlug() string { return v.Slug }
+
+// GetStatus returns poolCreateMutationPoolCreatePool.Status, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationPoolCreatePool) GetStatus() PoolStatus { return v.Status }
+
+// poolCreateMutationResponse is returned by poolCreateMutation on success.
+type poolCreateMutationResponse struct {
+	// Creates a pool.
+	PoolCreate *poolCreateMutationPoolCreate `json:"poolCreate"`
+}
+
+// GetPoolCreate returns poolCreateMutationResponse.PoolCreate, and is useful for accessing the field via an interface.
+func (v *poolCreateMutationResponse) GetPoolCreate() *poolCreateMutationPoolCreate {
+	return v.PoolCreate
+}
+
+// poolDeleteMutationPoolDelete includes the requested fields of the GraphQL type PoolDelete.
+// The GraphQL type's documentation follows.
+//
+// Update a pool.
+type poolDeleteMutationPoolDelete struct {
+	Pool   *poolDeleteMutationPoolDeletePool             `json:"pool"`
+	Errors []poolDeleteMutationPoolDeleteErrorsPoolError `json:"errors"`
+}
+
+// GetPool returns poolDeleteMutationPoolDelete.Pool, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationPoolDelete) GetPool() *poolDeleteMutationPoolDeletePool { return v.Pool }
+
+// GetErrors returns poolDeleteMutationPoolDelete.Errors, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationPoolDelete) GetErrors() []poolDeleteMutationPoolDeleteErrorsPoolError {
+	return v.Errors
+}
+
+// poolDeleteMutationPoolDeleteErrorsPoolError includes the requested fields of the GraphQL type PoolError.
+type poolDeleteMutationPoolDeleteErrorsPoolError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code PoolErrorCode `json:"code"`
+}
+
+// GetField returns poolDeleteMutationPoolDeleteErrorsPoolError.Field, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationPoolDeleteErrorsPoolError) GetField() *string { return v.Field }
+
+// GetMessage returns poolDeleteMutationPoolDeleteErrorsPoolError.Message, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationPoolDeleteErrorsPoolError) GetMessage() *string { return v.Message }
+
+// GetCode returns poolDeleteMutationPoolDeleteErrorsPoolError.Code, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationPoolDeleteErrorsPoolError) GetCode() PoolErrorCode { return v.Code }
+
+// poolDeleteMutationPoolDeletePool includes the requested fields of the GraphQL type Pool.
+type poolDeleteMutationPoolDeletePool struct {
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
+}
+
+// GetId returns poolDeleteMutationPoolDeletePool.Id, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationPoolDeletePool) GetId() string { return v.Id }
+
+// GetDbid returns poolDeleteMutationPoolDeletePool.Dbid, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationPoolDeletePool) GetDbid() persist.DBID { return v.Dbid }
+
+// poolDeleteMutationResponse is returned by poolDeleteMutation on success.
+type poolDeleteMutationResponse struct {
+	// Deletes a pool.
+	PoolDelete *poolDeleteMutationPoolDelete `json:"poolDelete"`
+}
+
+// GetPoolDelete returns poolDeleteMutationResponse.PoolDelete, and is useful for accessing the field via an interface.
+func (v *poolDeleteMutationResponse) GetPoolDelete() *poolDeleteMutationPoolDelete {
+	return v.PoolDelete
+}
+
+// poolUpdateMutationPoolUpdate includes the requested fields of the GraphQL type PoolUpdate.
+// The GraphQL type's documentation follows.
+//
+// Update a pool.
+type poolUpdateMutationPoolUpdate struct {
+	Pool   *poolUpdateMutationPoolUpdatePool             `json:"pool"`
+	Errors []poolUpdateMutationPoolUpdateErrorsPoolError `json:"errors"`
+}
+
+// GetPool returns poolUpdateMutationPoolUpdate.Pool, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdate) GetPool() *poolUpdateMutationPoolUpdatePool { return v.Pool }
+
+// GetErrors returns poolUpdateMutationPoolUpdate.Errors, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdate) GetErrors() []poolUpdateMutationPoolUpdateErrorsPoolError {
+	return v.Errors
+}
+
+// poolUpdateMutationPoolUpdateErrorsPoolError includes the requested fields of the GraphQL type PoolError.
+type poolUpdateMutationPoolUpdateErrorsPoolError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code PoolErrorCode `json:"code"`
+}
+
+// GetField returns poolUpdateMutationPoolUpdateErrorsPoolError.Field, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdateErrorsPoolError) GetField() *string { return v.Field }
+
+// GetMessage returns poolUpdateMutationPoolUpdateErrorsPoolError.Message, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdateErrorsPoolError) GetMessage() *string { return v.Message }
+
+// GetCode returns poolUpdateMutationPoolUpdateErrorsPoolError.Code, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdateErrorsPoolError) GetCode() PoolErrorCode { return v.Code }
+
+// poolUpdateMutationPoolUpdatePool includes the requested fields of the GraphQL type Pool.
+type poolUpdateMutationPoolUpdatePool struct {
+	Id          string       `json:"id"`
+	Dbid        persist.DBID `json:"dbid"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Image       string       `json:"image"`
+	// Basis point donation.
+	DonationBps int        `json:"donationBps"`
+	Slug        string     `json:"slug"`
+	Status      PoolStatus `json:"status"`
+}
+
+// GetId returns poolUpdateMutationPoolUpdatePool.Id, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetId() string { return v.Id }
+
+// GetDbid returns poolUpdateMutationPoolUpdatePool.Dbid, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetDbid() persist.DBID { return v.Dbid }
+
+// GetName returns poolUpdateMutationPoolUpdatePool.Name, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetName() string { return v.Name }
+
+// GetDescription returns poolUpdateMutationPoolUpdatePool.Description, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetDescription() string { return v.Description }
+
+// GetImage returns poolUpdateMutationPoolUpdatePool.Image, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetImage() string { return v.Image }
+
+// GetDonationBps returns poolUpdateMutationPoolUpdatePool.DonationBps, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetDonationBps() int { return v.DonationBps }
+
+// GetSlug returns poolUpdateMutationPoolUpdatePool.Slug, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetSlug() string { return v.Slug }
+
+// GetStatus returns poolUpdateMutationPoolUpdatePool.Status, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationPoolUpdatePool) GetStatus() PoolStatus { return v.Status }
+
+// poolUpdateMutationResponse is returned by poolUpdateMutation on success.
+type poolUpdateMutationResponse struct {
+	// Updates a pool.
+	PoolUpdate *poolUpdateMutationPoolUpdate `json:"poolUpdate"`
+}
+
+// GetPoolUpdate returns poolUpdateMutationResponse.PoolUpdate, and is useful for accessing the field via an interface.
+func (v *poolUpdateMutationResponse) GetPoolUpdate() *poolUpdateMutationPoolUpdate {
+	return v.PoolUpdate
+}
+
+// pushTokenRegisterMutationPushTokenRegister includes the requested fields of the GraphQL type PushTokenRegister.
+type pushTokenRegisterMutationPushTokenRegister struct {
+	// push token.
+	PushToken *string `json:"pushToken"`
+	// A user instance.
+	User   *pushTokenRegisterMutationPushTokenRegisterUser                  `json:"user"`
+	Errors []pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError `json:"errors"`
+}
+
+// GetPushToken returns pushTokenRegisterMutationPushTokenRegister.PushToken, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegister) GetPushToken() *string { return v.PushToken }
+
+// GetUser returns pushTokenRegisterMutationPushTokenRegister.User, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegister) GetUser() *pushTokenRegisterMutationPushTokenRegisterUser {
+	return v.User
+}
+
+// GetErrors returns pushTokenRegisterMutationPushTokenRegister.Errors, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegister) GetErrors() []pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError {
+	return v.Errors
+}
+
+// pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError includes the requested fields of the GraphQL type PushTokenError.
+type pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError struct {
 	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
 	Field *string `json:"field"`
 	// The error message.
@@ -2612,108 +2613,163 @@ type registerPushTokenMutationPushTokenRegisterErrorsPushTokenError struct {
 	Code PushTokenErrorCode `json:"code"`
 }
 
-// GetField returns registerPushTokenMutationPushTokenRegisterErrorsPushTokenError.Field, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegisterErrorsPushTokenError) GetField() *string {
+// GetField returns pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError.Field, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError) GetField() *string {
 	return v.Field
 }
 
-// GetMessage returns registerPushTokenMutationPushTokenRegisterErrorsPushTokenError.Message, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegisterErrorsPushTokenError) GetMessage() *string {
+// GetMessage returns pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError.Message, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError) GetMessage() *string {
 	return v.Message
 }
 
-// GetCode returns registerPushTokenMutationPushTokenRegisterErrorsPushTokenError.Code, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegisterErrorsPushTokenError) GetCode() PushTokenErrorCode {
+// GetCode returns pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError.Code, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegisterErrorsPushTokenError) GetCode() PushTokenErrorCode {
 	return v.Code
 }
 
-// registerPushTokenMutationPushTokenRegisterUser includes the requested fields of the GraphQL type User.
-type registerPushTokenMutationPushTokenRegisterUser struct {
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
+// pushTokenRegisterMutationPushTokenRegisterUser includes the requested fields of the GraphQL type User.
+type pushTokenRegisterMutationPushTokenRegisterUser struct {
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetUsername returns registerPushTokenMutationPushTokenRegisterUser.Username, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegisterUser) GetUsername() *string { return v.Username }
+// GetId returns pushTokenRegisterMutationPushTokenRegisterUser.Id, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegisterUser) GetId() string { return v.Id }
 
-// GetDbid returns registerPushTokenMutationPushTokenRegisterUser.Dbid, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationPushTokenRegisterUser) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns pushTokenRegisterMutationPushTokenRegisterUser.Dbid, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationPushTokenRegisterUser) GetDbid() persist.DBID { return v.Dbid }
 
-// registerPushTokenMutationResponse is returned by registerPushTokenMutation on success.
-type registerPushTokenMutationResponse struct {
+// pushTokenRegisterMutationResponse is returned by pushTokenRegisterMutation on success.
+type pushTokenRegisterMutationResponse struct {
 	// Register a push token.
-	PushTokenRegister *registerPushTokenMutationPushTokenRegister `json:"pushTokenRegister"`
+	PushTokenRegister *pushTokenRegisterMutationPushTokenRegister `json:"pushTokenRegister"`
 }
 
-// GetPushTokenRegister returns registerPushTokenMutationResponse.PushTokenRegister, and is useful for accessing the field via an interface.
-func (v *registerPushTokenMutationResponse) GetPushTokenRegister() *registerPushTokenMutationPushTokenRegister {
+// GetPushTokenRegister returns pushTokenRegisterMutationResponse.PushTokenRegister, and is useful for accessing the field via an interface.
+func (v *pushTokenRegisterMutationResponse) GetPushTokenRegister() *pushTokenRegisterMutationPushTokenRegister {
 	return v.PushTokenRegister
 }
 
-// removeUserWalletsMutationResponse is returned by removeUserWalletsMutation on success.
-type removeUserWalletsMutationResponse struct {
-	// Deletes a wallet.
-	WalletDelete *removeUserWalletsMutationWalletDelete `json:"walletDelete"`
-}
-
-// GetWalletDelete returns removeUserWalletsMutationResponse.WalletDelete, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationResponse) GetWalletDelete() *removeUserWalletsMutationWalletDelete {
-	return v.WalletDelete
-}
-
-// removeUserWalletsMutationWalletDelete includes the requested fields of the GraphQL type WalletDelete.
+// pushTokenUnregisterMutationPushTokenUnregister includes the requested fields of the GraphQL type PushTokenUnregister.
 // The GraphQL type's documentation follows.
 //
-// Deletes a wallet.
-type removeUserWalletsMutationWalletDelete struct {
-	Wallet *removeUserWalletsMutationWalletDeleteWallet             `json:"wallet"`
-	Errors []removeUserWalletsMutationWalletDeleteErrorsWalletError `json:"errors"`
+// Update a pool.
+type pushTokenUnregisterMutationPushTokenUnregister struct {
+	// push token.
+	PushToken *string `json:"pushToken"`
+	// A user instance.
+	User   *pushTokenUnregisterMutationPushTokenUnregisterUser                  `json:"user"`
+	Errors []pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError `json:"errors"`
 }
 
-// GetWallet returns removeUserWalletsMutationWalletDelete.Wallet, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationWalletDelete) GetWallet() *removeUserWalletsMutationWalletDeleteWallet {
-	return v.Wallet
+// GetPushToken returns pushTokenUnregisterMutationPushTokenUnregister.PushToken, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregister) GetPushToken() *string { return v.PushToken }
+
+// GetUser returns pushTokenUnregisterMutationPushTokenUnregister.User, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregister) GetUser() *pushTokenUnregisterMutationPushTokenUnregisterUser {
+	return v.User
 }
 
-// GetErrors returns removeUserWalletsMutationWalletDelete.Errors, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationWalletDelete) GetErrors() []removeUserWalletsMutationWalletDeleteErrorsWalletError {
+// GetErrors returns pushTokenUnregisterMutationPushTokenUnregister.Errors, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregister) GetErrors() []pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError {
 	return v.Errors
 }
 
-// removeUserWalletsMutationWalletDeleteErrorsWalletError includes the requested fields of the GraphQL type WalletError.
-type removeUserWalletsMutationWalletDeleteErrorsWalletError struct {
+// pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError includes the requested fields of the GraphQL type PushTokenError.
+type pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError struct {
 	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
 	Field *string `json:"field"`
 	// The error message.
 	Message *string `json:"message"`
 	// The error code.
-	Code WalletErrorCode `json:"code"`
+	Code PushTokenErrorCode `json:"code"`
 }
 
-// GetField returns removeUserWalletsMutationWalletDeleteErrorsWalletError.Field, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationWalletDeleteErrorsWalletError) GetField() *string { return v.Field }
+// GetField returns pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError.Field, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError) GetField() *string {
+	return v.Field
+}
 
-// GetMessage returns removeUserWalletsMutationWalletDeleteErrorsWalletError.Message, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationWalletDeleteErrorsWalletError) GetMessage() *string {
+// GetMessage returns pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError.Message, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError) GetMessage() *string {
 	return v.Message
 }
 
-// GetCode returns removeUserWalletsMutationWalletDeleteErrorsWalletError.Code, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationWalletDeleteErrorsWalletError) GetCode() WalletErrorCode {
+// GetCode returns pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError.Code, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregisterErrorsPushTokenError) GetCode() PushTokenErrorCode {
 	return v.Code
 }
 
-// removeUserWalletsMutationWalletDeleteWallet includes the requested fields of the GraphQL type Wallet.
-type removeUserWalletsMutationWalletDeleteWallet struct {
+// pushTokenUnregisterMutationPushTokenUnregisterUser includes the requested fields of the GraphQL type User.
+type pushTokenUnregisterMutationPushTokenUnregisterUser struct {
 	Id   string       `json:"id"`
 	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetId returns removeUserWalletsMutationWalletDeleteWallet.Id, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationWalletDeleteWallet) GetId() string { return v.Id }
+// GetId returns pushTokenUnregisterMutationPushTokenUnregisterUser.Id, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregisterUser) GetId() string { return v.Id }
 
-// GetDbid returns removeUserWalletsMutationWalletDeleteWallet.Dbid, and is useful for accessing the field via an interface.
-func (v *removeUserWalletsMutationWalletDeleteWallet) GetDbid() persist.DBID { return v.Dbid }
+// GetDbid returns pushTokenUnregisterMutationPushTokenUnregisterUser.Dbid, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationPushTokenUnregisterUser) GetDbid() persist.DBID { return v.Dbid }
+
+// pushTokenUnregisterMutationResponse is returned by pushTokenUnregisterMutation on success.
+type pushTokenUnregisterMutationResponse struct {
+	// Unregister a push token.
+	PushTokenUnregister *pushTokenUnregisterMutationPushTokenUnregister `json:"pushTokenUnregister"`
+}
+
+// GetPushTokenUnregister returns pushTokenUnregisterMutationResponse.PushTokenUnregister, and is useful for accessing the field via an interface.
+func (v *pushTokenUnregisterMutationResponse) GetPushTokenUnregister() *pushTokenUnregisterMutationPushTokenUnregister {
+	return v.PushTokenUnregister
+}
+
+// roleUpdateMutationResponse is returned by roleUpdateMutation on success.
+type roleUpdateMutationResponse struct {
+	// Update a role.
+	RoleUpdate *roleUpdateMutationRoleUpdate `json:"roleUpdate"`
+}
+
+// GetRoleUpdate returns roleUpdateMutationResponse.RoleUpdate, and is useful for accessing the field via an interface.
+func (v *roleUpdateMutationResponse) GetRoleUpdate() *roleUpdateMutationRoleUpdate {
+	return v.RoleUpdate
+}
+
+// roleUpdateMutationRoleUpdate includes the requested fields of the GraphQL type RoleUpdate.
+// The GraphQL type's documentation follows.
+//
+// Update role.
+type roleUpdateMutationRoleUpdate struct {
+	Role   *Role                                         `json:"role"`
+	Errors []roleUpdateMutationRoleUpdateErrorsRoleError `json:"errors"`
+}
+
+// GetRole returns roleUpdateMutationRoleUpdate.Role, and is useful for accessing the field via an interface.
+func (v *roleUpdateMutationRoleUpdate) GetRole() *Role { return v.Role }
+
+// GetErrors returns roleUpdateMutationRoleUpdate.Errors, and is useful for accessing the field via an interface.
+func (v *roleUpdateMutationRoleUpdate) GetErrors() []roleUpdateMutationRoleUpdateErrorsRoleError {
+	return v.Errors
+}
+
+// roleUpdateMutationRoleUpdateErrorsRoleError includes the requested fields of the GraphQL type RoleError.
+type roleUpdateMutationRoleUpdateErrorsRoleError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code RoleErrorCode `json:"code"`
+}
+
+// GetField returns roleUpdateMutationRoleUpdateErrorsRoleError.Field, and is useful for accessing the field via an interface.
+func (v *roleUpdateMutationRoleUpdateErrorsRoleError) GetField() *string { return v.Field }
+
+// GetMessage returns roleUpdateMutationRoleUpdateErrorsRoleError.Message, and is useful for accessing the field via an interface.
+func (v *roleUpdateMutationRoleUpdateErrorsRoleError) GetMessage() *string { return v.Message }
+
+// GetCode returns roleUpdateMutationRoleUpdateErrorsRoleError.Code, and is useful for accessing the field via an interface.
+func (v *roleUpdateMutationRoleUpdateErrorsRoleError) GetCode() RoleErrorCode { return v.Code }
 
 // searchPoolsQueryResponse is returned by searchPoolsQuery on success.
 type searchPoolsQueryResponse struct {
@@ -3145,13 +3201,13 @@ func (v *searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResult) G
 
 // searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser includes the requested fields of the GraphQL type User.
 type searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser struct {
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
 }
 
-// GetUsername returns searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser.Username, and is useful for accessing the field via an interface.
-func (v *searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser) GetUsername() *string {
-	return v.Username
+// GetId returns searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser.Id, and is useful for accessing the field via an interface.
+func (v *searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser) GetId() string {
+	return v.Id
 }
 
 // GetDbid returns searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser.Dbid, and is useful for accessing the field via an interface.
@@ -3159,244 +3215,48 @@ func (v *searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUse
 	return v.Dbid
 }
 
-// unregisterPushTokenMutationPushTokenUnregister includes the requested fields of the GraphQL type PushTokenUnregister.
-// The GraphQL type's documentation follows.
-//
-// Update a pool.
-type unregisterPushTokenMutationPushTokenUnregister struct {
-	// push token.
-	PushToken *string `json:"pushToken"`
-	// A user instance.
-	User   *unregisterPushTokenMutationPushTokenUnregisterUser                  `json:"user"`
-	Errors []unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError `json:"errors"`
+// tokenVerifyMutationResponse is returned by tokenVerifyMutation on success.
+type tokenVerifyMutationResponse struct {
+	// Verify JWT token.
+	TokenVerify *tokenVerifyMutationTokenVerifyVerifyToken `json:"tokenVerify"`
 }
 
-// GetPushToken returns unregisterPushTokenMutationPushTokenUnregister.PushToken, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregister) GetPushToken() *string { return v.PushToken }
+// GetTokenVerify returns tokenVerifyMutationResponse.TokenVerify, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationResponse) GetTokenVerify() *tokenVerifyMutationTokenVerifyVerifyToken {
+	return v.TokenVerify
+}
 
-// GetUser returns unregisterPushTokenMutationPushTokenUnregister.User, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregister) GetUser() *unregisterPushTokenMutationPushTokenUnregisterUser {
+// tokenVerifyMutationTokenVerifyVerifyToken includes the requested fields of the GraphQL type VerifyToken.
+// The GraphQL type's documentation follows.
+//
+// Verify JWT token.
+type tokenVerifyMutationTokenVerifyVerifyToken struct {
+	// User assigned to token.
+	User *tokenVerifyMutationTokenVerifyVerifyTokenUser `json:"user"`
+	// Determine if token is valid or not.
+	IsValid bool `json:"isValid"`
+	// JWT payload.
+	Errors []tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError `json:"errors"`
+}
+
+// GetUser returns tokenVerifyMutationTokenVerifyVerifyToken.User, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyToken) GetUser() *tokenVerifyMutationTokenVerifyVerifyTokenUser {
 	return v.User
 }
 
-// GetErrors returns unregisterPushTokenMutationPushTokenUnregister.Errors, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregister) GetErrors() []unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError {
+// GetIsValid returns tokenVerifyMutationTokenVerifyVerifyToken.IsValid, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyToken) GetIsValid() bool { return v.IsValid }
+
+// GetErrors returns tokenVerifyMutationTokenVerifyVerifyToken.Errors, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyToken) GetErrors() []tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError {
 	return v.Errors
 }
 
-// unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError includes the requested fields of the GraphQL type PushTokenError.
-type unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code PushTokenErrorCode `json:"code"`
-}
-
-// GetField returns unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError.Field, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError) GetField() *string {
-	return v.Field
-}
-
-// GetMessage returns unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError.Message, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError) GetMessage() *string {
-	return v.Message
-}
-
-// GetCode returns unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError.Code, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregisterErrorsPushTokenError) GetCode() PushTokenErrorCode {
-	return v.Code
-}
-
-// unregisterPushTokenMutationPushTokenUnregisterUser includes the requested fields of the GraphQL type User.
-type unregisterPushTokenMutationPushTokenUnregisterUser struct {
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
-}
-
-// GetUsername returns unregisterPushTokenMutationPushTokenUnregisterUser.Username, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregisterUser) GetUsername() *string { return v.Username }
-
-// GetDbid returns unregisterPushTokenMutationPushTokenUnregisterUser.Dbid, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationPushTokenUnregisterUser) GetDbid() persist.DBID { return v.Dbid }
-
-// unregisterPushTokenMutationResponse is returned by unregisterPushTokenMutation on success.
-type unregisterPushTokenMutationResponse struct {
-	// Unregister a push token.
-	PushTokenUnregister *unregisterPushTokenMutationPushTokenUnregister `json:"pushTokenUnregister"`
-}
-
-// GetPushTokenUnregister returns unregisterPushTokenMutationResponse.PushTokenUnregister, and is useful for accessing the field via an interface.
-func (v *unregisterPushTokenMutationResponse) GetPushTokenUnregister() *unregisterPushTokenMutationPushTokenUnregister {
-	return v.PushTokenUnregister
-}
-
-// updateClaimMutationPoolClaimUpdate includes the requested fields of the GraphQL type ClaimUpdate.
-// The GraphQL type's documentation follows.
-//
-// Updates given claim.
-type updateClaimMutationPoolClaimUpdate struct {
-	Claim  *updateClaimMutationPoolClaimUpdateClaim             `json:"claim"`
-	Errors []updateClaimMutationPoolClaimUpdateErrorsClaimError `json:"errors"`
-}
-
-// GetClaim returns updateClaimMutationPoolClaimUpdate.Claim, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdate) GetClaim() *updateClaimMutationPoolClaimUpdateClaim {
-	return v.Claim
-}
-
-// GetErrors returns updateClaimMutationPoolClaimUpdate.Errors, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdate) GetErrors() []updateClaimMutationPoolClaimUpdateErrorsClaimError {
-	return v.Errors
-}
-
-// updateClaimMutationPoolClaimUpdateClaim includes the requested fields of the GraphQL type Claim.
-type updateClaimMutationPoolClaimUpdateClaim struct {
-	Id    string       `json:"id"`
-	Dbid  persist.DBID `json:"dbid"`
-	Label string       `json:"label"`
-	Path  string       `json:"path"`
-}
-
-// GetId returns updateClaimMutationPoolClaimUpdateClaim.Id, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdateClaim) GetId() string { return v.Id }
-
-// GetDbid returns updateClaimMutationPoolClaimUpdateClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdateClaim) GetDbid() persist.DBID { return v.Dbid }
-
-// GetLabel returns updateClaimMutationPoolClaimUpdateClaim.Label, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdateClaim) GetLabel() string { return v.Label }
-
-// GetPath returns updateClaimMutationPoolClaimUpdateClaim.Path, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdateClaim) GetPath() string { return v.Path }
-
-// updateClaimMutationPoolClaimUpdateErrorsClaimError includes the requested fields of the GraphQL type ClaimError.
-type updateClaimMutationPoolClaimUpdateErrorsClaimError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimErrorCode `json:"code"`
-}
-
-// GetField returns updateClaimMutationPoolClaimUpdateErrorsClaimError.Field, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdateErrorsClaimError) GetField() *string { return v.Field }
-
-// GetMessage returns updateClaimMutationPoolClaimUpdateErrorsClaimError.Message, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdateErrorsClaimError) GetMessage() *string { return v.Message }
-
-// GetCode returns updateClaimMutationPoolClaimUpdateErrorsClaimError.Code, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationPoolClaimUpdateErrorsClaimError) GetCode() ClaimErrorCode { return v.Code }
-
-// updateClaimMutationResponse is returned by updateClaimMutation on success.
-type updateClaimMutationResponse struct {
-	// Updates a new claim.
-	PoolClaimUpdate *updateClaimMutationPoolClaimUpdate `json:"poolClaimUpdate"`
-}
-
-// GetPoolClaimUpdate returns updateClaimMutationResponse.PoolClaimUpdate, and is useful for accessing the field via an interface.
-func (v *updateClaimMutationResponse) GetPoolClaimUpdate() *updateClaimMutationPoolClaimUpdate {
-	return v.PoolClaimUpdate
-}
-
-// updatePoolMutationPoolUpdate includes the requested fields of the GraphQL type PoolUpdate.
-// The GraphQL type's documentation follows.
-//
-// Update a pool.
-type updatePoolMutationPoolUpdate struct {
-	Pool   *updatePoolMutationPoolUpdatePool             `json:"pool"`
-	Errors []updatePoolMutationPoolUpdateErrorsPoolError `json:"errors"`
-}
-
-// GetPool returns updatePoolMutationPoolUpdate.Pool, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdate) GetPool() *updatePoolMutationPoolUpdatePool { return v.Pool }
-
-// GetErrors returns updatePoolMutationPoolUpdate.Errors, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdate) GetErrors() []updatePoolMutationPoolUpdateErrorsPoolError {
-	return v.Errors
-}
-
-// updatePoolMutationPoolUpdateErrorsPoolError includes the requested fields of the GraphQL type PoolError.
-type updatePoolMutationPoolUpdateErrorsPoolError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code PoolErrorCode `json:"code"`
-}
-
-// GetField returns updatePoolMutationPoolUpdateErrorsPoolError.Field, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdateErrorsPoolError) GetField() *string { return v.Field }
-
-// GetMessage returns updatePoolMutationPoolUpdateErrorsPoolError.Message, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdateErrorsPoolError) GetMessage() *string { return v.Message }
-
-// GetCode returns updatePoolMutationPoolUpdateErrorsPoolError.Code, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdateErrorsPoolError) GetCode() PoolErrorCode { return v.Code }
-
-// updatePoolMutationPoolUpdatePool includes the requested fields of the GraphQL type Pool.
-type updatePoolMutationPoolUpdatePool struct {
-	Dbid        persist.DBID `json:"dbid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-}
-
-// GetDbid returns updatePoolMutationPoolUpdatePool.Dbid, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdatePool) GetDbid() persist.DBID { return v.Dbid }
-
-// GetName returns updatePoolMutationPoolUpdatePool.Name, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdatePool) GetName() string { return v.Name }
-
-// GetDescription returns updatePoolMutationPoolUpdatePool.Description, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationPoolUpdatePool) GetDescription() string { return v.Description }
-
-// updatePoolMutationResponse is returned by updatePoolMutation on success.
-type updatePoolMutationResponse struct {
-	// Updates a pool.
-	PoolUpdate *updatePoolMutationPoolUpdate `json:"poolUpdate"`
-}
-
-// GetPoolUpdate returns updatePoolMutationResponse.PoolUpdate, and is useful for accessing the field via an interface.
-func (v *updatePoolMutationResponse) GetPoolUpdate() *updatePoolMutationPoolUpdate {
-	return v.PoolUpdate
-}
-
-// updateUserMutationResponse is returned by updateUserMutation on success.
-type updateUserMutationResponse struct {
-	// Updates the user of the logged-in user.
-	UserUpdate *updateUserMutationUserUpdate `json:"userUpdate"`
-}
-
-// GetUserUpdate returns updateUserMutationResponse.UserUpdate, and is useful for accessing the field via an interface.
-func (v *updateUserMutationResponse) GetUserUpdate() *updateUserMutationUserUpdate {
-	return v.UserUpdate
-}
-
-// updateUserMutationUserUpdate includes the requested fields of the GraphQL type UserUpdate.
-// The GraphQL type's documentation follows.
-//
-// Updates the user of the logged-in user.
-type updateUserMutationUserUpdate struct {
-	User   *updateUserMutationUserUpdateUser             `json:"user"`
-	Errors []updateUserMutationUserUpdateErrorsUserError `json:"errors"`
-}
-
-// GetUser returns updateUserMutationUserUpdate.User, and is useful for accessing the field via an interface.
-func (v *updateUserMutationUserUpdate) GetUser() *updateUserMutationUserUpdateUser { return v.User }
-
-// GetErrors returns updateUserMutationUserUpdate.Errors, and is useful for accessing the field via an interface.
-func (v *updateUserMutationUserUpdate) GetErrors() []updateUserMutationUserUpdateErrorsUserError {
-	return v.Errors
-}
-
-// updateUserMutationUserUpdateErrorsUserError includes the requested fields of the GraphQL type UserError.
+// tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError includes the requested fields of the GraphQL type UserError.
 // The GraphQL type's documentation follows.
 //
 // Represents errors in user mutations.
-type updateUserMutationUserUpdateErrorsUserError struct {
+type tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError struct {
 	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
 	Field *string `json:"field"`
 	// The error message.
@@ -3405,26 +3265,30 @@ type updateUserMutationUserUpdateErrorsUserError struct {
 	Code UserErrorCode `json:"code"`
 }
 
-// GetField returns updateUserMutationUserUpdateErrorsUserError.Field, and is useful for accessing the field via an interface.
-func (v *updateUserMutationUserUpdateErrorsUserError) GetField() *string { return v.Field }
+// GetField returns tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError.Field, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError) GetField() *string { return v.Field }
 
-// GetMessage returns updateUserMutationUserUpdateErrorsUserError.Message, and is useful for accessing the field via an interface.
-func (v *updateUserMutationUserUpdateErrorsUserError) GetMessage() *string { return v.Message }
-
-// GetCode returns updateUserMutationUserUpdateErrorsUserError.Code, and is useful for accessing the field via an interface.
-func (v *updateUserMutationUserUpdateErrorsUserError) GetCode() UserErrorCode { return v.Code }
-
-// updateUserMutationUserUpdateUser includes the requested fields of the GraphQL type User.
-type updateUserMutationUserUpdateUser struct {
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
+// GetMessage returns tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError.Message, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError) GetMessage() *string {
+	return v.Message
 }
 
-// GetUsername returns updateUserMutationUserUpdateUser.Username, and is useful for accessing the field via an interface.
-func (v *updateUserMutationUserUpdateUser) GetUsername() *string { return v.Username }
+// GetCode returns tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError.Code, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyTokenErrorsUserError) GetCode() UserErrorCode {
+	return v.Code
+}
 
-// GetDbid returns updateUserMutationUserUpdateUser.Dbid, and is useful for accessing the field via an interface.
-func (v *updateUserMutationUserUpdateUser) GetDbid() persist.DBID { return v.Dbid }
+// tokenVerifyMutationTokenVerifyVerifyTokenUser includes the requested fields of the GraphQL type User.
+type tokenVerifyMutationTokenVerifyVerifyTokenUser struct {
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
+}
+
+// GetId returns tokenVerifyMutationTokenVerifyVerifyTokenUser.Id, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyTokenUser) GetId() string { return v.Id }
+
+// GetDbid returns tokenVerifyMutationTokenVerifyVerifyTokenUser.Dbid, and is useful for accessing the field via an interface.
+func (v *tokenVerifyMutationTokenVerifyVerifyTokenUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userByAddressQueryResponse is returned by userByAddressQuery on success.
 type userByAddressQueryResponse struct {
@@ -3504,8 +3368,10 @@ func (v *userByAddressQueryResponse) __premarshalJSON() (*__premarshaluserByAddr
 
 // userByAddressQueryUserByAddressErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
 type userByAddressQueryUserByAddressErrInvalidInput struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
+	Typename   *string  `json:"__typename"`
+	Message    string   `json:"message"`
+	Parameters []string `json:"parameters"`
+	Reasons    []string `json:"reasons"`
 }
 
 // GetTypename returns userByAddressQueryUserByAddressErrInvalidInput.Typename, and is useful for accessing the field via an interface.
@@ -3513,6 +3379,14 @@ func (v *userByAddressQueryUserByAddressErrInvalidInput) GetTypename() *string {
 
 // GetMessage returns userByAddressQueryUserByAddressErrInvalidInput.Message, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressErrInvalidInput) GetMessage() string { return v.Message }
+
+// GetParameters returns userByAddressQueryUserByAddressErrInvalidInput.Parameters, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressErrInvalidInput) GetParameters() []string {
+	return v.Parameters
+}
+
+// GetReasons returns userByAddressQueryUserByAddressErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressErrInvalidInput) GetReasons() []string { return v.Reasons }
 
 // userByAddressQueryUserByAddressErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
 type userByAddressQueryUserByAddressErrUserNotFound struct {
@@ -3529,18 +3403,22 @@ func (v *userByAddressQueryUserByAddressErrUserNotFound) GetMessage() string { r
 // userByAddressQueryUserByAddressUser includes the requested fields of the GraphQL type User.
 type userByAddressQueryUserByAddressUser struct {
 	Typename *string      `json:"__typename"`
-	Username *string      `json:"username"`
+	Id       string       `json:"id"`
 	Dbid     persist.DBID `json:"dbid"`
+	Roles    []*Role      `json:"roles"`
 }
 
 // GetTypename returns userByAddressQueryUserByAddressUser.Typename, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByAddressQueryUserByAddressUser.Username, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressUser) GetUsername() *string { return v.Username }
+// GetId returns userByAddressQueryUserByAddressUser.Id, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressUser) GetId() string { return v.Id }
 
 // GetDbid returns userByAddressQueryUserByAddressUser.Dbid, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressUser) GetDbid() persist.DBID { return v.Dbid }
+
+// GetRoles returns userByAddressQueryUserByAddressUser.Roles, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressUser) GetRoles() []*Role { return v.Roles }
 
 // userByAddressQueryUserByAddressUserByAddressOrError includes the requested fields of the GraphQL interface UserByAddressOrError.
 //
@@ -3707,8 +3585,10 @@ func (v *userByIdQueryResponse) __premarshalJSON() (*__premarshaluserByIdQueryRe
 
 // userByIdQueryUserByIdErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
 type userByIdQueryUserByIdErrInvalidInput struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
+	Typename   *string  `json:"__typename"`
+	Message    string   `json:"message"`
+	Parameters []string `json:"parameters"`
+	Reasons    []string `json:"reasons"`
 }
 
 // GetTypename returns userByIdQueryUserByIdErrInvalidInput.Typename, and is useful for accessing the field via an interface.
@@ -3716,6 +3596,12 @@ func (v *userByIdQueryUserByIdErrInvalidInput) GetTypename() *string { return v.
 
 // GetMessage returns userByIdQueryUserByIdErrInvalidInput.Message, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdErrInvalidInput) GetMessage() string { return v.Message }
+
+// GetParameters returns userByIdQueryUserByIdErrInvalidInput.Parameters, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdErrInvalidInput) GetParameters() []string { return v.Parameters }
+
+// GetReasons returns userByIdQueryUserByIdErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdErrInvalidInput) GetReasons() []string { return v.Reasons }
 
 // userByIdQueryUserByIdErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
 type userByIdQueryUserByIdErrUserNotFound struct {
@@ -3732,18 +3618,22 @@ func (v *userByIdQueryUserByIdErrUserNotFound) GetMessage() string { return v.Me
 // userByIdQueryUserByIdUser includes the requested fields of the GraphQL type User.
 type userByIdQueryUserByIdUser struct {
 	Typename *string      `json:"__typename"`
-	Username *string      `json:"username"`
+	Id       string       `json:"id"`
 	Dbid     persist.DBID `json:"dbid"`
+	Roles    []*Role      `json:"roles"`
 }
 
 // GetTypename returns userByIdQueryUserByIdUser.Typename, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdUser) GetTypename() *string { return v.Typename }
 
-// GetUsername returns userByIdQueryUserByIdUser.Username, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdUser) GetUsername() *string { return v.Username }
+// GetId returns userByIdQueryUserByIdUser.Id, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdUser) GetId() string { return v.Id }
 
 // GetDbid returns userByIdQueryUserByIdUser.Dbid, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdUser) GetDbid() persist.DBID { return v.Dbid }
+
+// GetRoles returns userByIdQueryUserByIdUser.Roles, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdUser) GetRoles() []*Role { return v.Roles }
 
 // userByIdQueryUserByIdUserByIdOrError includes the requested fields of the GraphQL interface UserByIdOrError.
 //
@@ -3832,404 +3722,349 @@ func __marshaluserByIdQueryUserByIdUserByIdOrError(v *userByIdQueryUserByIdUserB
 	}
 }
 
-// userByUsernameQueryResponse is returned by userByUsernameQuery on success.
-type userByUsernameQueryResponse struct {
-	UserByUsername *userByUsernameQueryUserByUsernameUserByUsernameOrError `json:"-"`
+// userDeleteMutationResponse is returned by userDeleteMutation on success.
+type userDeleteMutationResponse struct {
+	// Remove user.
+	UserDelete *userDeleteMutationUserDelete `json:"userDelete"`
 }
 
-// GetUserByUsername returns userByUsernameQueryResponse.UserByUsername, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryResponse) GetUserByUsername() *userByUsernameQueryUserByUsernameUserByUsernameOrError {
-	return v.UserByUsername
+// GetUserDelete returns userDeleteMutationResponse.UserDelete, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationResponse) GetUserDelete() *userDeleteMutationUserDelete {
+	return v.UserDelete
 }
 
-func (v *userByUsernameQueryResponse) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*userByUsernameQueryResponse
-		UserByUsername json.RawMessage `json:"userByUsername"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.userByUsernameQueryResponse = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.UserByUsername
-		src := firstPass.UserByUsername
-		if len(src) != 0 && string(src) != "null" {
-			*dst = new(userByUsernameQueryUserByUsernameUserByUsernameOrError)
-			err = __unmarshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(
-				src, *dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal userByUsernameQueryResponse.UserByUsername: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshaluserByUsernameQueryResponse struct {
-	UserByUsername json.RawMessage `json:"userByUsername"`
-}
-
-func (v *userByUsernameQueryResponse) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *userByUsernameQueryResponse) __premarshalJSON() (*__premarshaluserByUsernameQueryResponse, error) {
-	var retval __premarshaluserByUsernameQueryResponse
-
-	{
-
-		dst := &retval.UserByUsername
-		src := v.UserByUsername
-		if src != nil {
-			var err error
-			*dst, err = __marshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(
-				src)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"unable to marshal userByUsernameQueryResponse.UserByUsername: %w", err)
-			}
-		}
-	}
-	return &retval, nil
-}
-
-// userByUsernameQueryUserByUsernameErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type userByUsernameQueryUserByUsernameErrInvalidInput struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
-}
-
-// GetTypename returns userByUsernameQueryUserByUsernameErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameErrInvalidInput) GetTypename() *string { return v.Typename }
-
-// GetMessage returns userByUsernameQueryUserByUsernameErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameErrInvalidInput) GetMessage() string { return v.Message }
-
-// userByUsernameQueryUserByUsernameErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
-type userByUsernameQueryUserByUsernameErrUserNotFound struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
-}
-
-// GetTypename returns userByUsernameQueryUserByUsernameErrUserNotFound.Typename, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameErrUserNotFound) GetTypename() *string { return v.Typename }
-
-// GetMessage returns userByUsernameQueryUserByUsernameErrUserNotFound.Message, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameErrUserNotFound) GetMessage() string { return v.Message }
-
-// userByUsernameQueryUserByUsernameUser includes the requested fields of the GraphQL type User.
-type userByUsernameQueryUserByUsernameUser struct {
-	Typename *string      `json:"__typename"`
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
-}
-
-// GetTypename returns userByUsernameQueryUserByUsernameUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameUser) GetTypename() *string { return v.Typename }
-
-// GetUsername returns userByUsernameQueryUserByUsernameUser.Username, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameUser) GetUsername() *string { return v.Username }
-
-// GetDbid returns userByUsernameQueryUserByUsernameUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByUsernameQueryUserByUsernameUser) GetDbid() persist.DBID { return v.Dbid }
-
-// userByUsernameQueryUserByUsernameUserByUsernameOrError includes the requested fields of the GraphQL interface UserByUsernameOrError.
+// userDeleteMutationUserDelete includes the requested fields of the GraphQL type UserDelete.
+// The GraphQL type's documentation follows.
 //
-// userByUsernameQueryUserByUsernameUserByUsernameOrError is implemented by the following types:
-// userByUsernameQueryUserByUsernameErrInvalidInput
-// userByUsernameQueryUserByUsernameErrUserNotFound
-// userByUsernameQueryUserByUsernameUser
-type userByUsernameQueryUserByUsernameUserByUsernameOrError interface {
-	implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() *string
+// Removes a user.
+type userDeleteMutationUserDelete struct {
+	User   *userDeleteMutationUserDeleteUser             `json:"user"`
+	Errors []userDeleteMutationUserDeleteErrorsUserError `json:"errors"`
 }
 
-func (v *userByUsernameQueryUserByUsernameErrInvalidInput) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
-}
-func (v *userByUsernameQueryUserByUsernameErrUserNotFound) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
-}
-func (v *userByUsernameQueryUserByUsernameUser) implementsGraphQLInterfaceuserByUsernameQueryUserByUsernameUserByUsernameOrError() {
-}
+// GetUser returns userDeleteMutationUserDelete.User, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationUserDelete) GetUser() *userDeleteMutationUserDeleteUser { return v.User }
 
-func __unmarshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(b []byte, v *userByUsernameQueryUserByUsernameUserByUsernameOrError) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "ErrInvalidInput":
-		*v = new(userByUsernameQueryUserByUsernameErrInvalidInput)
-		return json.Unmarshal(b, *v)
-	case "ErrUserNotFound":
-		*v = new(userByUsernameQueryUserByUsernameErrUserNotFound)
-		return json.Unmarshal(b, *v)
-	case "User":
-		*v = new(userByUsernameQueryUserByUsernameUser)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing UserByUsernameOrError.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for userByUsernameQueryUserByUsernameUserByUsernameOrError: "%v"`, tn.TypeName)
-	}
+// GetErrors returns userDeleteMutationUserDelete.Errors, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationUserDelete) GetErrors() []userDeleteMutationUserDeleteErrorsUserError {
+	return v.Errors
 }
 
-func __marshaluserByUsernameQueryUserByUsernameUserByUsernameOrError(v *userByUsernameQueryUserByUsernameUserByUsernameOrError) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *userByUsernameQueryUserByUsernameErrInvalidInput:
-		typename = "ErrInvalidInput"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*userByUsernameQueryUserByUsernameErrInvalidInput
-		}{typename, v}
-		return json.Marshal(result)
-	case *userByUsernameQueryUserByUsernameErrUserNotFound:
-		typename = "ErrUserNotFound"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*userByUsernameQueryUserByUsernameErrUserNotFound
-		}{typename, v}
-		return json.Marshal(result)
-	case *userByUsernameQueryUserByUsernameUser:
-		typename = "User"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*userByUsernameQueryUserByUsernameUser
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for userByUsernameQueryUserByUsernameUserByUsernameOrError: "%T"`, v)
-	}
-}
-
-// viewerPoolByIdQueryResponse is returned by viewerPoolByIdQuery on success.
-type viewerPoolByIdQueryResponse struct {
-	ViewerPoolById *viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError `json:"-"`
-}
-
-// GetViewerPoolById returns viewerPoolByIdQueryResponse.ViewerPoolById, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryResponse) GetViewerPoolById() *viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError {
-	return v.ViewerPoolById
-}
-
-func (v *viewerPoolByIdQueryResponse) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*viewerPoolByIdQueryResponse
-		ViewerPoolById json.RawMessage `json:"viewerPoolById"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.viewerPoolByIdQueryResponse = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.ViewerPoolById
-		src := firstPass.ViewerPoolById
-		if len(src) != 0 && string(src) != "null" {
-			*dst = new(viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError)
-			err = __unmarshalviewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError(
-				src, *dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal viewerPoolByIdQueryResponse.ViewerPoolById: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshalviewerPoolByIdQueryResponse struct {
-	ViewerPoolById json.RawMessage `json:"viewerPoolById"`
-}
-
-func (v *viewerPoolByIdQueryResponse) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *viewerPoolByIdQueryResponse) __premarshalJSON() (*__premarshalviewerPoolByIdQueryResponse, error) {
-	var retval __premarshalviewerPoolByIdQueryResponse
-
-	{
-
-		dst := &retval.ViewerPoolById
-		src := v.ViewerPoolById
-		if src != nil {
-			var err error
-			*dst, err = __marshalviewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError(
-				src)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"unable to marshal viewerPoolByIdQueryResponse.ViewerPoolById: %w", err)
-			}
-		}
-	}
-	return &retval, nil
-}
-
-// viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound includes the requested fields of the GraphQL type ErrPoolNotFound.
-type viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
-}
-
-// GetTypename returns viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound.Typename, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound) GetTypename() *string { return v.Typename }
-
-// GetMessage returns viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound.Message, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound) GetMessage() string { return v.Message }
-
-// viewerPoolByIdQueryViewerPoolByIdViewerPool includes the requested fields of the GraphQL type ViewerPool.
-type viewerPoolByIdQueryViewerPoolByIdViewerPool struct {
-	Typename *string                                          `json:"__typename"`
-	Pool     *viewerPoolByIdQueryViewerPoolByIdViewerPoolPool `json:"pool"`
-}
-
-// GetTypename returns viewerPoolByIdQueryViewerPoolByIdViewerPool.Typename, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdViewerPool) GetTypename() *string { return v.Typename }
-
-// GetPool returns viewerPoolByIdQueryViewerPoolByIdViewerPool.Pool, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdViewerPool) GetPool() *viewerPoolByIdQueryViewerPoolByIdViewerPoolPool {
-	return v.Pool
-}
-
-// viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError includes the requested fields of the GraphQL interface ViewerPoolByIdPayloadOrError.
+// userDeleteMutationUserDeleteErrorsUserError includes the requested fields of the GraphQL type UserError.
+// The GraphQL type's documentation follows.
 //
-// viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError is implemented by the following types:
-// viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound
-// viewerPoolByIdQueryViewerPoolByIdViewerPool
-type viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError interface {
-	implementsGraphQLInterfaceviewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() *string
+// Represents errors in user mutations.
+type userDeleteMutationUserDeleteErrorsUserError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code UserErrorCode `json:"code"`
 }
 
-func (v *viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound) implementsGraphQLInterfaceviewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError() {
-}
-func (v *viewerPoolByIdQueryViewerPoolByIdViewerPool) implementsGraphQLInterfaceviewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError() {
-}
+// GetField returns userDeleteMutationUserDeleteErrorsUserError.Field, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationUserDeleteErrorsUserError) GetField() *string { return v.Field }
 
-func __unmarshalviewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError(b []byte, v *viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError) error {
-	if string(b) == "null" {
-		return nil
-	}
+// GetMessage returns userDeleteMutationUserDeleteErrorsUserError.Message, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationUserDeleteErrorsUserError) GetMessage() *string { return v.Message }
 
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
+// GetCode returns userDeleteMutationUserDeleteErrorsUserError.Code, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationUserDeleteErrorsUserError) GetCode() UserErrorCode { return v.Code }
 
-	switch tn.TypeName {
-	case "ErrPoolNotFound":
-		*v = new(viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound)
-		return json.Unmarshal(b, *v)
-	case "ViewerPool":
-		*v = new(viewerPoolByIdQueryViewerPoolByIdViewerPool)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing ViewerPoolByIdPayloadOrError.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError: "%v"`, tn.TypeName)
-	}
+// userDeleteMutationUserDeleteUser includes the requested fields of the GraphQL type User.
+type userDeleteMutationUserDeleteUser struct {
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
 }
 
-func __marshalviewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError(v *viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError) ([]byte, error) {
+// GetId returns userDeleteMutationUserDeleteUser.Id, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationUserDeleteUser) GetId() string { return v.Id }
 
-	var typename string
-	switch v := (*v).(type) {
-	case *viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound:
-		typename = "ErrPoolNotFound"
+// GetDbid returns userDeleteMutationUserDeleteUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userDeleteMutationUserDeleteUser) GetDbid() persist.DBID { return v.Dbid }
 
-		result := struct {
-			TypeName string `json:"__typename"`
-			*viewerPoolByIdQueryViewerPoolByIdErrPoolNotFound
-		}{typename, v}
-		return json.Marshal(result)
-	case *viewerPoolByIdQueryViewerPoolByIdViewerPool:
-		typename = "ViewerPool"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*viewerPoolByIdQueryViewerPoolByIdViewerPool
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for viewerPoolByIdQueryViewerPoolByIdViewerPoolByIdPayloadOrError: "%T"`, v)
-	}
+// userRegisterMutationResponse is returned by userRegisterMutation on success.
+type userRegisterMutationResponse struct {
+	// Register a new user.
+	UserRegister *userRegisterMutationUserRegister `json:"userRegister"`
 }
 
-// viewerPoolByIdQueryViewerPoolByIdViewerPoolPool includes the requested fields of the GraphQL type Pool.
-type viewerPoolByIdQueryViewerPoolByIdViewerPoolPool struct {
-	Id          string       `json:"id"`
-	Dbid        persist.DBID `json:"dbid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
+// GetUserRegister returns userRegisterMutationResponse.UserRegister, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationResponse) GetUserRegister() *userRegisterMutationUserRegister {
+	return v.UserRegister
 }
 
-// GetId returns viewerPoolByIdQueryViewerPoolByIdViewerPoolPool.Id, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdViewerPoolPool) GetId() string { return v.Id }
+// userRegisterMutationUserRegister includes the requested fields of the GraphQL type UserRegister.
+// The GraphQL type's documentation follows.
+//
+// Register a new user.
+type userRegisterMutationUserRegister struct {
+	// Informs whether users need to confirm their email address.
+	RequiresConfirmation *bool                                             `json:"requiresConfirmation"`
+	User                 *userRegisterMutationUserRegisterUser             `json:"user"`
+	Errors               []userRegisterMutationUserRegisterErrorsUserError `json:"errors"`
+}
 
-// GetDbid returns viewerPoolByIdQueryViewerPoolByIdViewerPoolPool.Dbid, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdViewerPoolPool) GetDbid() persist.DBID { return v.Dbid }
+// GetRequiresConfirmation returns userRegisterMutationUserRegister.RequiresConfirmation, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegister) GetRequiresConfirmation() *bool {
+	return v.RequiresConfirmation
+}
 
-// GetName returns viewerPoolByIdQueryViewerPoolByIdViewerPoolPool.Name, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdViewerPoolPool) GetName() string { return v.Name }
+// GetUser returns userRegisterMutationUserRegister.User, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegister) GetUser() *userRegisterMutationUserRegisterUser {
+	return v.User
+}
 
-// GetDescription returns viewerPoolByIdQueryViewerPoolByIdViewerPoolPool.Description, and is useful for accessing the field via an interface.
-func (v *viewerPoolByIdQueryViewerPoolByIdViewerPoolPool) GetDescription() string {
-	return v.Description
+// GetErrors returns userRegisterMutationUserRegister.Errors, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegister) GetErrors() []userRegisterMutationUserRegisterErrorsUserError {
+	return v.Errors
+}
+
+// userRegisterMutationUserRegisterErrorsUserError includes the requested fields of the GraphQL type UserError.
+// The GraphQL type's documentation follows.
+//
+// Represents errors in user mutations.
+type userRegisterMutationUserRegisterErrorsUserError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code UserErrorCode `json:"code"`
+}
+
+// GetField returns userRegisterMutationUserRegisterErrorsUserError.Field, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegisterErrorsUserError) GetField() *string { return v.Field }
+
+// GetMessage returns userRegisterMutationUserRegisterErrorsUserError.Message, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegisterErrorsUserError) GetMessage() *string { return v.Message }
+
+// GetCode returns userRegisterMutationUserRegisterErrorsUserError.Code, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegisterErrorsUserError) GetCode() UserErrorCode { return v.Code }
+
+// userRegisterMutationUserRegisterUser includes the requested fields of the GraphQL type User.
+type userRegisterMutationUserRegisterUser struct {
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
+}
+
+// GetId returns userRegisterMutationUserRegisterUser.Id, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegisterUser) GetId() string { return v.Id }
+
+// GetDbid returns userRegisterMutationUserRegisterUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userRegisterMutationUserRegisterUser) GetDbid() persist.DBID { return v.Dbid }
+
+// userRequestDeletionMutationResponse is returned by userRequestDeletionMutation on success.
+type userRequestDeletionMutationResponse struct {
+	// Sends an email with the user removal link for the logged-in user.
+	UserRequestDeletion *userRequestDeletionMutationUserRequestDeletion `json:"userRequestDeletion"`
+}
+
+// GetUserRequestDeletion returns userRequestDeletionMutationResponse.UserRequestDeletion, and is useful for accessing the field via an interface.
+func (v *userRequestDeletionMutationResponse) GetUserRequestDeletion() *userRequestDeletionMutationUserRequestDeletion {
+	return v.UserRequestDeletion
+}
+
+// userRequestDeletionMutationUserRequestDeletion includes the requested fields of the GraphQL type UserRequestDeletion.
+// The GraphQL type's documentation follows.
+//
+// Sends an email with the user removal link for the logged-in user.
+type userRequestDeletionMutationUserRequestDeletion struct {
+	Errors []userRequestDeletionMutationUserRequestDeletionErrorsUserError `json:"errors"`
+}
+
+// GetErrors returns userRequestDeletionMutationUserRequestDeletion.Errors, and is useful for accessing the field via an interface.
+func (v *userRequestDeletionMutationUserRequestDeletion) GetErrors() []userRequestDeletionMutationUserRequestDeletionErrorsUserError {
+	return v.Errors
+}
+
+// userRequestDeletionMutationUserRequestDeletionErrorsUserError includes the requested fields of the GraphQL type UserError.
+// The GraphQL type's documentation follows.
+//
+// Represents errors in user mutations.
+type userRequestDeletionMutationUserRequestDeletionErrorsUserError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code UserErrorCode `json:"code"`
+}
+
+// GetField returns userRequestDeletionMutationUserRequestDeletionErrorsUserError.Field, and is useful for accessing the field via an interface.
+func (v *userRequestDeletionMutationUserRequestDeletionErrorsUserError) GetField() *string {
+	return v.Field
+}
+
+// GetMessage returns userRequestDeletionMutationUserRequestDeletionErrorsUserError.Message, and is useful for accessing the field via an interface.
+func (v *userRequestDeletionMutationUserRequestDeletionErrorsUserError) GetMessage() *string {
+	return v.Message
+}
+
+// GetCode returns userRequestDeletionMutationUserRequestDeletionErrorsUserError.Code, and is useful for accessing the field via an interface.
+func (v *userRequestDeletionMutationUserRequestDeletionErrorsUserError) GetCode() UserErrorCode {
+	return v.Code
+}
+
+// userUpdateMutationResponse is returned by userUpdateMutation on success.
+type userUpdateMutationResponse struct {
+	// Updates the user of the logged-in user.
+	UserUpdate *userUpdateMutationUserUpdate `json:"userUpdate"`
+}
+
+// GetUserUpdate returns userUpdateMutationResponse.UserUpdate, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationResponse) GetUserUpdate() *userUpdateMutationUserUpdate {
+	return v.UserUpdate
+}
+
+// userUpdateMutationUserUpdate includes the requested fields of the GraphQL type UserUpdate.
+// The GraphQL type's documentation follows.
+//
+// Updates the user of the logged-in user.
+type userUpdateMutationUserUpdate struct {
+	User   *userUpdateMutationUserUpdateUser             `json:"user"`
+	Errors []userUpdateMutationUserUpdateErrorsUserError `json:"errors"`
+}
+
+// GetUser returns userUpdateMutationUserUpdate.User, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationUserUpdate) GetUser() *userUpdateMutationUserUpdateUser { return v.User }
+
+// GetErrors returns userUpdateMutationUserUpdate.Errors, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationUserUpdate) GetErrors() []userUpdateMutationUserUpdateErrorsUserError {
+	return v.Errors
+}
+
+// userUpdateMutationUserUpdateErrorsUserError includes the requested fields of the GraphQL type UserError.
+// The GraphQL type's documentation follows.
+//
+// Represents errors in user mutations.
+type userUpdateMutationUserUpdateErrorsUserError struct {
+	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+	Field *string `json:"field"`
+	// The error message.
+	Message *string `json:"message"`
+	// The error code.
+	Code UserErrorCode `json:"code"`
+}
+
+// GetField returns userUpdateMutationUserUpdateErrorsUserError.Field, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationUserUpdateErrorsUserError) GetField() *string { return v.Field }
+
+// GetMessage returns userUpdateMutationUserUpdateErrorsUserError.Message, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationUserUpdateErrorsUserError) GetMessage() *string { return v.Message }
+
+// GetCode returns userUpdateMutationUserUpdateErrorsUserError.Code, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationUserUpdateErrorsUserError) GetCode() UserErrorCode { return v.Code }
+
+// userUpdateMutationUserUpdateUser includes the requested fields of the GraphQL type User.
+type userUpdateMutationUserUpdateUser struct {
+	Id   string       `json:"id"`
+	Dbid persist.DBID `json:"dbid"`
+}
+
+// GetId returns userUpdateMutationUserUpdateUser.Id, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationUserUpdateUser) GetId() string { return v.Id }
+
+// GetDbid returns userUpdateMutationUserUpdateUser.Dbid, and is useful for accessing the field via an interface.
+func (v *userUpdateMutationUserUpdateUser) GetDbid() persist.DBID { return v.Dbid }
+
+// usersByRoleQueryResponse is returned by usersByRoleQuery on success.
+type usersByRoleQueryResponse struct {
+	UsersByRole *usersByRoleQueryUsersByRoleUsersConnection `json:"usersByRole"`
+}
+
+// GetUsersByRole returns usersByRoleQueryResponse.UsersByRole, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryResponse) GetUsersByRole() *usersByRoleQueryUsersByRoleUsersConnection {
+	return v.UsersByRole
+}
+
+// usersByRoleQueryUsersByRoleUsersConnection includes the requested fields of the GraphQL type UsersConnection.
+type usersByRoleQueryUsersByRoleUsersConnection struct {
+	Edges    []*usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge `json:"edges"`
+	PageInfo usersByRoleQueryUsersByRoleUsersConnectionPageInfo         `json:"pageInfo"`
+}
+
+// GetEdges returns usersByRoleQueryUsersByRoleUsersConnection.Edges, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnection) GetEdges() []*usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge {
+	return v.Edges
+}
+
+// GetPageInfo returns usersByRoleQueryUsersByRoleUsersConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnection) GetPageInfo() usersByRoleQueryUsersByRoleUsersConnectionPageInfo {
+	return v.PageInfo
+}
+
+// usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge includes the requested fields of the GraphQL type UserEdge.
+type usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge struct {
+	Node   *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser `json:"node"`
+	Cursor *string                                                          `json:"cursor"`
+}
+
+// GetNode returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge.Node, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge) GetNode() *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser {
+	return v.Node
+}
+
+// GetCursor returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge.Cursor, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge) GetCursor() *string {
+	return v.Cursor
+}
+
+// usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser includes the requested fields of the GraphQL type User.
+type usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser struct {
+	Id    string       `json:"id"`
+	Dbid  persist.DBID `json:"dbid"`
+	Roles []*Role      `json:"roles"`
+}
+
+// GetId returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Id, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetId() string { return v.Id }
+
+// GetDbid returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Dbid, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetDbid() persist.DBID {
+	return v.Dbid
+}
+
+// GetRoles returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Roles, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetRoles() []*Role {
+	return v.Roles
+}
+
+// usersByRoleQueryUsersByRoleUsersConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+type usersByRoleQueryUsersByRoleUsersConnectionPageInfo struct {
+	Total           *int   `json:"total"`
+	Size            int    `json:"size"`
+	HasPreviousPage bool   `json:"hasPreviousPage"`
+	HasNextPage     bool   `json:"hasNextPage"`
+	StartCursor     string `json:"startCursor"`
+	EndCursor       string `json:"endCursor"`
+}
+
+// GetTotal returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.Total, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetTotal() *int { return v.Total }
+
+// GetSize returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.Size, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetSize() int { return v.Size }
+
+// GetHasPreviousPage returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.HasPreviousPage, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetHasPreviousPage() bool {
+	return v.HasPreviousPage
+}
+
+// GetHasNextPage returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetStartCursor returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetStartCursor() string {
+	return v.StartCursor
+}
+
+// GetEndCursor returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
 }
 
 // viewerQueryResponse is returned by viewerQuery on success.
@@ -4309,11 +4144,15 @@ func (v *viewerQueryResponse) __premarshalJSON() (*__premarshalviewerQueryRespon
 // viewerQueryViewer includes the requested fields of the GraphQL type Viewer.
 type viewerQueryViewer struct {
 	Typename *string                `json:"__typename"`
+	Id       string                 `json:"id"`
 	User     *viewerQueryViewerUser `json:"user"`
 }
 
 // GetTypename returns viewerQueryViewer.Typename, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewer) GetTypename() *string { return v.Typename }
+
+// GetId returns viewerQueryViewer.Id, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewer) GetId() string { return v.Id }
 
 // GetUser returns viewerQueryViewer.User, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewer) GetUser() *viewerQueryViewerUser { return v.User }
@@ -4332,15 +4171,19 @@ func (v *viewerQueryViewerErrNotAuthorized) GetMessage() string { return v.Messa
 
 // viewerQueryViewerUser includes the requested fields of the GraphQL type User.
 type viewerQueryViewerUser struct {
-	Username *string      `json:"username"`
-	Dbid     persist.DBID `json:"dbid"`
+	Id    string       `json:"id"`
+	Dbid  persist.DBID `json:"dbid"`
+	Roles []*Role      `json:"roles"`
 }
 
-// GetUsername returns viewerQueryViewerUser.Username, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUser) GetUsername() *string { return v.Username }
+// GetId returns viewerQueryViewerUser.Id, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUser) GetId() string { return v.Id }
 
 // GetDbid returns viewerQueryViewerUser.Dbid, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerUser) GetDbid() persist.DBID { return v.Dbid }
+
+// GetRoles returns viewerQueryViewerUser.Roles, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUser) GetRoles() []*Role { return v.Roles }
 
 // viewerQueryViewerViewerOrError includes the requested fields of the GraphQL interface ViewerOrError.
 //
@@ -4414,205 +4257,6 @@ func __marshalviewerQueryViewerViewerOrError(v *viewerQueryViewerViewerOrError) 
 	}
 }
 
-// The mutation executed by addUserWalletMutation.
-const addUserWalletMutation_Operation = `
-mutation addUserWalletMutation ($input: WalletCreateInput!) {
-	walletCreate(input: $input) {
-		wallet {
-			id
-			dbid
-			name
-			account {
-				address
-			}
-		}
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func addUserWalletMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	input WalletCreateInput,
-) (data_ *addUserWalletMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "addUserWalletMutation",
-		Query:  addUserWalletMutation_Operation,
-		Variables: &__addUserWalletMutationInput{
-			Input: input,
-		},
-	}
-
-	data_ = &addUserWalletMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by bulkCreateClaimsMutation.
-const bulkCreateClaimsMutation_Operation = `
-mutation bulkCreateClaimsMutation ($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
-	poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
-		count
-		results {
-			claim {
-				id
-				dbid
-				label
-				path
-			}
-			errors {
-				path
-				message
-				code
-			}
-		}
-		errors {
-			path
-			message
-			code
-		}
-	}
-}
-`
-
-func bulkCreateClaimsMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	poolId persist.DBID,
-	claims []ClaimBulkCreateInput,
-	errorPolicy *ErrorPolicyEnum,
-) (data_ *bulkCreateClaimsMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "bulkCreateClaimsMutation",
-		Query:  bulkCreateClaimsMutation_Operation,
-		Variables: &__bulkCreateClaimsMutationInput{
-			PoolId:      poolId,
-			Claims:      claims,
-			ErrorPolicy: errorPolicy,
-		},
-	}
-
-	data_ = &bulkCreateClaimsMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by bulkDeleteClaimsMutation.
-const bulkDeleteClaimsMutation_Operation = `
-mutation bulkDeleteClaimsMutation ($poolId: DBID!, $claimIds: [DBID!]!) {
-	poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
-		count
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func bulkDeleteClaimsMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	poolId persist.DBID,
-	claimIds []persist.DBID,
-) (data_ *bulkDeleteClaimsMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "bulkDeleteClaimsMutation",
-		Query:  bulkDeleteClaimsMutation_Operation,
-		Variables: &__bulkDeleteClaimsMutationInput{
-			PoolId:   poolId,
-			ClaimIds: claimIds,
-		},
-	}
-
-	data_ = &bulkDeleteClaimsMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by bulkUpdateClaimsMutation.
-const bulkUpdateClaimsMutation_Operation = `
-mutation bulkUpdateClaimsMutation ($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
-	poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
-		count
-		results {
-			claim {
-				id
-				dbid
-				label
-				path
-			}
-			errors {
-				path
-				message
-				code
-			}
-		}
-		errors {
-			path
-			message
-			code
-		}
-	}
-}
-`
-
-func bulkUpdateClaimsMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	poolId persist.DBID,
-	claims []ClaimBulkUpdateInput,
-	errorPolicy *ErrorPolicyEnum,
-) (data_ *bulkUpdateClaimsMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "bulkUpdateClaimsMutation",
-		Query:  bulkUpdateClaimsMutation_Operation,
-		Variables: &__bulkUpdateClaimsMutationInput{
-			PoolId:      poolId,
-			Claims:      claims,
-			ErrorPolicy: errorPolicy,
-		},
-	}
-
-	data_ = &bulkUpdateClaimsMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
 // The mutation executed by clearNotificationsMutation.
 const clearNotificationsMutation_Operation = `
 mutation clearNotificationsMutation {
@@ -4647,210 +4291,30 @@ func clearNotificationsMutation(
 	return data_, err_
 }
 
-// The mutation executed by createClaimMutation.
-const createClaimMutation_Operation = `
-mutation createClaimMutation ($poolId: DBID!, $input: ClaimCreateInput!) {
-	poolClaimCreate(poolId: $poolId, input: $input) {
-		claim {
-			id
-			dbid
-			label
-			path
-		}
-		errors {
-			field
-			message
-			code
-		}
+// The mutation executed by emailNotificationSettingsUpdateMutation.
+const emailNotificationSettingsUpdateMutation_Operation = `
+mutation emailNotificationSettingsUpdateMutation ($settings: UpdateEmailNotificationSettingsInput!) {
+	emailNotificationSettingsUpdate(settings: $settings) {
+		unsubscribedFromAll
+		unsubscribedFromNotifications
 	}
 }
 `
 
-func createClaimMutation(
+func emailNotificationSettingsUpdateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
-	input ClaimCreateInput,
-) (data_ *createClaimMutationResponse, err_ error) {
+	settings UpdateEmailNotificationSettingsInput,
+) (data_ *emailNotificationSettingsUpdateMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "createClaimMutation",
-		Query:  createClaimMutation_Operation,
-		Variables: &__createClaimMutationInput{
-			PoolId: poolId,
-			Input:  input,
+		OpName: "emailNotificationSettingsUpdateMutation",
+		Query:  emailNotificationSettingsUpdateMutation_Operation,
+		Variables: &__emailNotificationSettingsUpdateMutationInput{
+			Settings: settings,
 		},
 	}
 
-	data_ = &createClaimMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by createPoolMutation.
-const createPoolMutation_Operation = `
-mutation createPoolMutation ($input: PoolCreateInput!) {
-	poolCreate(input: $input) {
-		pool {
-			dbid
-			name
-			description
-			claims {
-				id
-				dbid
-			}
-		}
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func createPoolMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	input PoolCreateInput,
-) (data_ *createPoolMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "createPoolMutation",
-		Query:  createPoolMutation_Operation,
-		Variables: &__createPoolMutationInput{
-			Input: input,
-		},
-	}
-
-	data_ = &createPoolMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by createUserMutation.
-const createUserMutation_Operation = `
-mutation createUserMutation ($authMechanism: AuthMechanism!, $input: UserRegisterInput!) {
-	userRegister(authMechanism: $authMechanism, input: $input) {
-		__typename
-		requiresConfirmation
-		user {
-			username
-			dbid
-		}
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-// Mutation operations
-func createUserMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	authMechanism AuthMechanism,
-	input UserRegisterInput,
-) (data_ *createUserMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "createUserMutation",
-		Query:  createUserMutation_Operation,
-		Variables: &__createUserMutationInput{
-			AuthMechanism: authMechanism,
-			Input:         input,
-		},
-	}
-
-	data_ = &createUserMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by deleteClaimMutation.
-const deleteClaimMutation_Operation = `
-mutation deleteClaimMutation ($poolId: DBID!, $claimId: DBID!) {
-	poolClaimDelete(poolId: $poolId, claimId: $claimId) {
-		claim {
-			id
-			dbid
-		}
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func deleteClaimMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	poolId persist.DBID,
-	claimId persist.DBID,
-) (data_ *deleteClaimMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "deleteClaimMutation",
-		Query:  deleteClaimMutation_Operation,
-		Variables: &__deleteClaimMutationInput{
-			PoolId:  poolId,
-			ClaimId: claimId,
-		},
-	}
-
-	data_ = &deleteClaimMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by getNonceMutation.
-const getNonceMutation_Operation = `
-mutation getNonceMutation {
-	nonce {
-		nonce
-		message
-	}
-}
-`
-
-func getNonceMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-) (data_ *getNonceMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "getNonceMutation",
-		Query:  getNonceMutation_Operation,
-	}
-
-	data_ = &getNonceMutationResponse{}
+	data_ = &emailNotificationSettingsUpdateMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -4894,73 +4358,29 @@ func isEmailAvailableQuery(
 	return data_, err_
 }
 
-// The mutation executed by loginMutation.
-const loginMutation_Operation = `
-mutation loginMutation ($authMechanism: AuthMechanism!) {
-	tokenCreate(authMechanism: $authMechanism) {
-		token
-		refreshToken
-		user {
-			username
-			dbid
-		}
-		errors {
-			field
-			message
-			code
-		}
+// The mutation executed by notificationSettingsUpdateMutation.
+const notificationSettingsUpdateMutation_Operation = `
+mutation notificationSettingsUpdateMutation ($settings: NotificationSettingsInput!) {
+	notificationSettingsUpdate(settings: $settings) {
+		someoneViewedYourPool
 	}
 }
 `
 
-func loginMutation(
+func notificationSettingsUpdateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	authMechanism AuthMechanism,
-) (data_ *loginMutationResponse, err_ error) {
+	settings NotificationSettingsInput,
+) (data_ *notificationSettingsUpdateMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "loginMutation",
-		Query:  loginMutation_Operation,
-		Variables: &__loginMutationInput{
-			AuthMechanism: authMechanism,
+		OpName: "notificationSettingsUpdateMutation",
+		Query:  notificationSettingsUpdateMutation_Operation,
+		Variables: &__notificationSettingsUpdateMutationInput{
+			Settings: settings,
 		},
 	}
 
-	data_ = &loginMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by logoutMutation.
-const logoutMutation_Operation = `
-mutation logoutMutation {
-	tokensDeactivateAll {
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func logoutMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-) (data_ *logoutMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "logoutMutation",
-		Query:  logoutMutation_Operation,
-	}
-
-	data_ = &logoutMutationResponse{}
+	data_ = &notificationSettingsUpdateMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -4977,10 +4397,6 @@ const notificationsForViewerQuery_Operation = `
 query notificationsForViewerQuery {
 	viewer {
 		__typename
-		... on Error {
-			__typename
-			message
-		}
 		... on Viewer {
 			notifications(last: 1, before: null) {
 				unseenCount
@@ -4999,6 +4415,9 @@ query notificationsForViewerQuery {
 					endCursor
 				}
 			}
+		}
+		... on ErrNotAuthorized {
+			message
 		}
 	}
 }
@@ -5036,10 +4455,13 @@ query poolByIdQuery ($id: DBID!) {
 			name
 			description
 			status
+			image
+			donationBps
+			slug
 			owner {
 				__typename
 				... on User {
-					username
+					id
 					dbid
 				}
 				... on EVMAccount {
@@ -5047,6 +4469,8 @@ query poolByIdQuery ($id: DBID!) {
 					accountType
 				}
 			}
+			createdAt
+			updatedAt
 		}
 		... on ErrPoolNotFound {
 			message
@@ -5055,7 +4479,6 @@ query poolByIdQuery ($id: DBID!) {
 }
 `
 
-// Additional useful queries based on the schema
 func poolByIdQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
@@ -5081,17 +4504,27 @@ func poolByIdQuery(
 	return data_, err_
 }
 
-// The mutation executed by registerPushTokenMutation.
-const registerPushTokenMutation_Operation = `
-mutation registerPushTokenMutation ($pushToken: String!) {
-	pushTokenRegister(pushToken: $pushToken) {
-		pushToken
-		user {
-			username
-			dbid
+// The mutation executed by poolClaimBulkCreateMutation.
+const poolClaimBulkCreateMutation_Operation = `
+mutation poolClaimBulkCreateMutation ($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+	poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
+		count
+		results {
+			claim {
+				id
+				dbid
+				label
+				path
+				data
+			}
+			errors {
+				path
+				message
+				code
+			}
 		}
 		errors {
-			field
+			path
 			message
 			code
 		}
@@ -5099,20 +4532,24 @@ mutation registerPushTokenMutation ($pushToken: String!) {
 }
 `
 
-func registerPushTokenMutation(
+func poolClaimBulkCreateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	pushToken string,
-) (data_ *registerPushTokenMutationResponse, err_ error) {
+	poolId persist.DBID,
+	claims []ClaimBulkCreateInput,
+	errorPolicy *ErrorPolicyEnum,
+) (data_ *poolClaimBulkCreateMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "registerPushTokenMutation",
-		Query:  registerPushTokenMutation_Operation,
-		Variables: &__registerPushTokenMutationInput{
-			PushToken: pushToken,
+		OpName: "poolClaimBulkCreateMutation",
+		Query:  poolClaimBulkCreateMutation_Operation,
+		Variables: &__poolClaimBulkCreateMutationInput{
+			PoolId:      poolId,
+			Claims:      claims,
+			ErrorPolicy: errorPolicy,
 		},
 	}
 
-	data_ = &registerPushTokenMutationResponse{}
+	data_ = &poolClaimBulkCreateMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -5124,11 +4561,156 @@ func registerPushTokenMutation(
 	return data_, err_
 }
 
-// The mutation executed by removeUserWalletsMutation.
-const removeUserWalletsMutation_Operation = `
-mutation removeUserWalletsMutation ($id: DBID!) {
-	walletDelete(id: $id) {
-		wallet {
+// The mutation executed by poolClaimBulkDeleteMutation.
+const poolClaimBulkDeleteMutation_Operation = `
+mutation poolClaimBulkDeleteMutation ($poolId: DBID!, $claimIds: [DBID!]!) {
+	poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
+		count
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func poolClaimBulkDeleteMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	poolId persist.DBID,
+	claimIds []persist.DBID,
+) (data_ *poolClaimBulkDeleteMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolClaimBulkDeleteMutation",
+		Query:  poolClaimBulkDeleteMutation_Operation,
+		Variables: &__poolClaimBulkDeleteMutationInput{
+			PoolId:   poolId,
+			ClaimIds: claimIds,
+		},
+	}
+
+	data_ = &poolClaimBulkDeleteMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by poolClaimBulkUpdateMutation.
+const poolClaimBulkUpdateMutation_Operation = `
+mutation poolClaimBulkUpdateMutation ($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+	poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
+		count
+		results {
+			claim {
+				id
+				dbid
+				label
+				path
+				data
+			}
+			errors {
+				path
+				message
+				code
+			}
+		}
+		errors {
+			path
+			message
+			code
+		}
+	}
+}
+`
+
+func poolClaimBulkUpdateMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	poolId persist.DBID,
+	claims []ClaimBulkUpdateInput,
+	errorPolicy *ErrorPolicyEnum,
+) (data_ *poolClaimBulkUpdateMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolClaimBulkUpdateMutation",
+		Query:  poolClaimBulkUpdateMutation_Operation,
+		Variables: &__poolClaimBulkUpdateMutationInput{
+			PoolId:      poolId,
+			Claims:      claims,
+			ErrorPolicy: errorPolicy,
+		},
+	}
+
+	data_ = &poolClaimBulkUpdateMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by poolClaimCreateMutation.
+const poolClaimCreateMutation_Operation = `
+mutation poolClaimCreateMutation ($poolId: DBID!, $input: ClaimCreateInput!) {
+	poolClaimCreate(poolId: $poolId, input: $input) {
+		claim {
+			id
+			dbid
+			label
+			path
+			data
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func poolClaimCreateMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	poolId persist.DBID,
+	input ClaimCreateInput,
+) (data_ *poolClaimCreateMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolClaimCreateMutation",
+		Query:  poolClaimCreateMutation_Operation,
+		Variables: &__poolClaimCreateMutationInput{
+			PoolId: poolId,
+			Input:  input,
+		},
+	}
+
+	data_ = &poolClaimCreateMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by poolClaimDeleteMutation.
+const poolClaimDeleteMutation_Operation = `
+mutation poolClaimDeleteMutation ($poolId: DBID!, $claimId: DBID!) {
+	poolClaimDelete(poolId: $poolId, claimId: $claimId) {
+		claim {
 			id
 			dbid
 		}
@@ -5141,20 +4723,336 @@ mutation removeUserWalletsMutation ($id: DBID!) {
 }
 `
 
-func removeUserWalletsMutation(
+func poolClaimDeleteMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	poolId persist.DBID,
+	claimId persist.DBID,
+) (data_ *poolClaimDeleteMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolClaimDeleteMutation",
+		Query:  poolClaimDeleteMutation_Operation,
+		Variables: &__poolClaimDeleteMutationInput{
+			PoolId:  poolId,
+			ClaimId: claimId,
+		},
+	}
+
+	data_ = &poolClaimDeleteMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by poolClaimUpdateMutation.
+const poolClaimUpdateMutation_Operation = `
+mutation poolClaimUpdateMutation ($poolId: DBID!, $input: ClaimUpdateInput!) {
+	poolClaimUpdate(poolId: $poolId, input: $input) {
+		claim {
+			id
+			dbid
+			label
+			path
+			data
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func poolClaimUpdateMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	poolId persist.DBID,
+	input ClaimUpdateInput,
+) (data_ *poolClaimUpdateMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolClaimUpdateMutation",
+		Query:  poolClaimUpdateMutation_Operation,
+		Variables: &__poolClaimUpdateMutationInput{
+			PoolId: poolId,
+			Input:  input,
+		},
+	}
+
+	data_ = &poolClaimUpdateMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by poolCreateMutation.
+const poolCreateMutation_Operation = `
+mutation poolCreateMutation ($input: PoolCreateInput!) {
+	poolCreate(input: $input) {
+		pool {
+			id
+			dbid
+			name
+			description
+			image
+			donationBps
+			slug
+			status
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func poolCreateMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	input PoolCreateInput,
+) (data_ *poolCreateMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolCreateMutation",
+		Query:  poolCreateMutation_Operation,
+		Variables: &__poolCreateMutationInput{
+			Input: input,
+		},
+	}
+
+	data_ = &poolCreateMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by poolDeleteMutation.
+const poolDeleteMutation_Operation = `
+mutation poolDeleteMutation ($id: DBID!) {
+	poolDelete(id: $id) {
+		pool {
+			id
+			dbid
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func poolDeleteMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	id persist.DBID,
-) (data_ *removeUserWalletsMutationResponse, err_ error) {
+) (data_ *poolDeleteMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "removeUserWalletsMutation",
-		Query:  removeUserWalletsMutation_Operation,
-		Variables: &__removeUserWalletsMutationInput{
+		OpName: "poolDeleteMutation",
+		Query:  poolDeleteMutation_Operation,
+		Variables: &__poolDeleteMutationInput{
 			Id: id,
 		},
 	}
 
-	data_ = &removeUserWalletsMutationResponse{}
+	data_ = &poolDeleteMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by poolUpdateMutation.
+const poolUpdateMutation_Operation = `
+mutation poolUpdateMutation ($id: DBID!, $input: PoolUpdateInput!) {
+	poolUpdate(id: $id, input: $input) {
+		pool {
+			id
+			dbid
+			name
+			description
+			image
+			donationBps
+			slug
+			status
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func poolUpdateMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id persist.DBID,
+	input PoolUpdateInput,
+) (data_ *poolUpdateMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolUpdateMutation",
+		Query:  poolUpdateMutation_Operation,
+		Variables: &__poolUpdateMutationInput{
+			Id:    id,
+			Input: input,
+		},
+	}
+
+	data_ = &poolUpdateMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by pushTokenRegisterMutation.
+const pushTokenRegisterMutation_Operation = `
+mutation pushTokenRegisterMutation ($pushToken: String!) {
+	pushTokenRegister(pushToken: $pushToken) {
+		pushToken
+		user {
+			id
+			dbid
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func pushTokenRegisterMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	pushToken string,
+) (data_ *pushTokenRegisterMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "pushTokenRegisterMutation",
+		Query:  pushTokenRegisterMutation_Operation,
+		Variables: &__pushTokenRegisterMutationInput{
+			PushToken: pushToken,
+		},
+	}
+
+	data_ = &pushTokenRegisterMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by pushTokenUnregisterMutation.
+const pushTokenUnregisterMutation_Operation = `
+mutation pushTokenUnregisterMutation ($pushToken: String!) {
+	pushTokenUnregister(pushToken: $pushToken) {
+		pushToken
+		user {
+			id
+			dbid
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func pushTokenUnregisterMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	pushToken string,
+) (data_ *pushTokenUnregisterMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "pushTokenUnregisterMutation",
+		Query:  pushTokenUnregisterMutation_Operation,
+		Variables: &__pushTokenUnregisterMutationInput{
+			PushToken: pushToken,
+		},
+	}
+
+	data_ = &pushTokenUnregisterMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by roleUpdateMutation.
+const roleUpdateMutation_Operation = `
+mutation roleUpdateMutation ($role: Role, $input: RoleUpdateInput!) {
+	roleUpdate(role: $role, input: $input) {
+		role
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func roleUpdateMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	role *Role,
+	input RoleUpdateInput,
+) (data_ *roleUpdateMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "roleUpdateMutation",
+		Query:  roleUpdateMutation_Operation,
+		Variables: &__roleUpdateMutationInput{
+			Role:  role,
+			Input: input,
+		},
+	}
+
+	data_ = &roleUpdateMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -5229,7 +5127,7 @@ query searchUsersQuery ($query: String!, $limit: Int, $usernameWeight: Float) {
 		... on SearchUsersPayload {
 			results {
 				user {
-					username
+					id
 					dbid
 				}
 			}
@@ -5272,59 +5170,15 @@ func searchUsersQuery(
 	return data_, err_
 }
 
-// The mutation executed by unregisterPushTokenMutation.
-const unregisterPushTokenMutation_Operation = `
-mutation unregisterPushTokenMutation ($pushToken: String!) {
-	pushTokenUnregister(pushToken: $pushToken) {
-		pushToken
+// The mutation executed by tokenVerifyMutation.
+const tokenVerifyMutation_Operation = `
+mutation tokenVerifyMutation ($token: String!) {
+	tokenVerify(token: $token) {
 		user {
-			username
-			dbid
-		}
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func unregisterPushTokenMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	pushToken string,
-) (data_ *unregisterPushTokenMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "unregisterPushTokenMutation",
-		Query:  unregisterPushTokenMutation_Operation,
-		Variables: &__unregisterPushTokenMutationInput{
-			PushToken: pushToken,
-		},
-	}
-
-	data_ = &unregisterPushTokenMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by updateClaimMutation.
-const updateClaimMutation_Operation = `
-mutation updateClaimMutation ($poolId: DBID!, $input: ClaimUpdateInput!) {
-	poolClaimUpdate(poolId: $poolId, input: $input) {
-		claim {
 			id
 			dbid
-			label
-			path
 		}
+		isValid
 		errors {
 			field
 			message
@@ -5334,109 +5188,20 @@ mutation updateClaimMutation ($poolId: DBID!, $input: ClaimUpdateInput!) {
 }
 `
 
-func updateClaimMutation(
+func tokenVerifyMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
-	input ClaimUpdateInput,
-) (data_ *updateClaimMutationResponse, err_ error) {
+	token string,
+) (data_ *tokenVerifyMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "updateClaimMutation",
-		Query:  updateClaimMutation_Operation,
-		Variables: &__updateClaimMutationInput{
-			PoolId: poolId,
-			Input:  input,
+		OpName: "tokenVerifyMutation",
+		Query:  tokenVerifyMutation_Operation,
+		Variables: &__tokenVerifyMutationInput{
+			Token: token,
 		},
 	}
 
-	data_ = &updateClaimMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by updatePoolMutation.
-const updatePoolMutation_Operation = `
-mutation updatePoolMutation ($id: DBID!, $input: PoolUpdateInput!) {
-	poolUpdate(id: $id, input: $input) {
-		pool {
-			dbid
-			name
-			description
-		}
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func updatePoolMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	id persist.DBID,
-	input PoolUpdateInput,
-) (data_ *updatePoolMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "updatePoolMutation",
-		Query:  updatePoolMutation_Operation,
-		Variables: &__updatePoolMutationInput{
-			Id:    id,
-			Input: input,
-		},
-	}
-
-	data_ = &updatePoolMutationResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The mutation executed by updateUserMutation.
-const updateUserMutation_Operation = `
-mutation updateUserMutation ($input: UserInput!) {
-	userUpdate(input: $input) {
-		user {
-			username
-			dbid
-		}
-		errors {
-			field
-			message
-			code
-		}
-	}
-}
-`
-
-func updateUserMutation(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	input UserInput,
-) (data_ *updateUserMutationResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "updateUserMutation",
-		Query:  updateUserMutation_Operation,
-		Variables: &__updateUserMutationInput{
-			Input: input,
-		},
-	}
-
-	data_ = &updateUserMutationResponse{}
+	data_ = &tokenVerifyMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -5453,13 +5218,18 @@ const userByAddressQuery_Operation = `
 query userByAddressQuery ($input: ChainAddressInput!) {
 	userByAddress(chainAddress: $input) {
 		__typename
-		... on Error {
-			__typename
+		... on User {
+			id
+			dbid
+			roles
+		}
+		... on ErrUserNotFound {
 			message
 		}
-		... on User {
-			username
-			dbid
+		... on ErrInvalidInput {
+			message
+			parameters
+			reasons
 		}
 	}
 }
@@ -5495,18 +5265,24 @@ const userByIdQuery_Operation = `
 query userByIdQuery ($id: DBID!) {
 	userById(id: $id) {
 		__typename
-		... on Error {
-			__typename
+		... on User {
+			id
+			dbid
+			roles
+		}
+		... on ErrUserNotFound {
 			message
 		}
-		... on User {
-			username
-			dbid
+		... on ErrInvalidInput {
+			message
+			parameters
+			reasons
 		}
 	}
 }
 `
 
+// Query operations
 func userByIdQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
@@ -5532,38 +5308,37 @@ func userByIdQuery(
 	return data_, err_
 }
 
-// The query executed by userByUsernameQuery.
-const userByUsernameQuery_Operation = `
-query userByUsernameQuery ($user: String!) {
-	userByUsername(username: $user) {
-		__typename
-		... on Error {
-			__typename
-			message
-		}
-		... on User {
-			username
+// The mutation executed by userDeleteMutation.
+const userDeleteMutation_Operation = `
+mutation userDeleteMutation ($token: String!) {
+	userDelete(token: $token) {
+		user {
+			id
 			dbid
+		}
+		errors {
+			field
+			message
+			code
 		}
 	}
 }
 `
 
-// Query operations
-func userByUsernameQuery(
+func userDeleteMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	user string,
-) (data_ *userByUsernameQueryResponse, err_ error) {
+	token string,
+) (data_ *userDeleteMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "userByUsernameQuery",
-		Query:  userByUsernameQuery_Operation,
-		Variables: &__userByUsernameQueryInput{
-			User: user,
+		OpName: "userDeleteMutation",
+		Query:  userDeleteMutation_Operation,
+		Variables: &__userDeleteMutationInput{
+			Token: token,
 		},
 	}
 
-	data_ = &userByUsernameQueryResponse{}
+	data_ = &userDeleteMutationResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -5575,40 +5350,178 @@ func userByUsernameQuery(
 	return data_, err_
 }
 
-// The query executed by viewerPoolByIdQuery.
-const viewerPoolByIdQuery_Operation = `
-query viewerPoolByIdQuery ($id: DBID!) {
-	viewerPoolById(id: $id) {
-		__typename
-		... on ViewerPool {
-			pool {
-				id
-				dbid
-				name
-				description
-			}
+// The mutation executed by userRegisterMutation.
+const userRegisterMutation_Operation = `
+mutation userRegisterMutation ($input: UserRegisterInput!) {
+	userRegister(input: $input) {
+		requiresConfirmation
+		user {
+			id
+			dbid
 		}
-		... on ErrPoolNotFound {
+		errors {
+			field
 			message
+			code
 		}
 	}
 }
 `
 
-func viewerPoolByIdQuery(
+// Mutation operations
+func userRegisterMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	id persist.DBID,
-) (data_ *viewerPoolByIdQueryResponse, err_ error) {
+	input UserRegisterInput,
+) (data_ *userRegisterMutationResponse, err_ error) {
 	req_ := &graphql.Request{
-		OpName: "viewerPoolByIdQuery",
-		Query:  viewerPoolByIdQuery_Operation,
-		Variables: &__viewerPoolByIdQueryInput{
-			Id: id,
+		OpName: "userRegisterMutation",
+		Query:  userRegisterMutation_Operation,
+		Variables: &__userRegisterMutationInput{
+			Input: input,
 		},
 	}
 
-	data_ = &viewerPoolByIdQueryResponse{}
+	data_ = &userRegisterMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by userRequestDeletionMutation.
+const userRequestDeletionMutation_Operation = `
+mutation userRequestDeletionMutation ($redirectUrl: String!) {
+	userRequestDeletion(redirectUrl: $redirectUrl) {
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func userRequestDeletionMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	redirectUrl string,
+) (data_ *userRequestDeletionMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "userRequestDeletionMutation",
+		Query:  userRequestDeletionMutation_Operation,
+		Variables: &__userRequestDeletionMutationInput{
+			RedirectUrl: redirectUrl,
+		},
+	}
+
+	data_ = &userRequestDeletionMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by userUpdateMutation.
+const userUpdateMutation_Operation = `
+mutation userUpdateMutation ($userId: DBID, $input: UserInput!) {
+	userUpdate(userId: $userId, input: $input) {
+		user {
+			id
+			dbid
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+`
+
+func userUpdateMutation(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	userId *persist.DBID,
+	input UserInput,
+) (data_ *userUpdateMutationResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "userUpdateMutation",
+		Query:  userUpdateMutation_Operation,
+		Variables: &__userUpdateMutationInput{
+			UserId: userId,
+			Input:  input,
+		},
+	}
+
+	data_ = &userUpdateMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by usersByRoleQuery.
+const usersByRoleQuery_Operation = `
+query usersByRoleQuery ($role: Role!, $before: String, $after: String, $first: Int, $last: Int) {
+	usersByRole(role: $role, before: $before, after: $after, first: $first, last: $last) {
+		edges {
+			node {
+				id
+				dbid
+				roles
+			}
+			cursor
+		}
+		pageInfo {
+			total
+			size
+			hasPreviousPage
+			hasNextPage
+			startCursor
+			endCursor
+		}
+	}
+}
+`
+
+func usersByRoleQuery(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	role Role,
+	before *string,
+	after *string,
+	first *int,
+	last *int,
+) (data_ *usersByRoleQueryResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "usersByRoleQuery",
+		Query:  usersByRoleQuery_Operation,
+		Variables: &__usersByRoleQueryInput{
+			Role:   role,
+			Before: before,
+			After:  after,
+			First:  first,
+			Last:   last,
+		},
+	}
+
+	data_ = &usersByRoleQueryResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -5625,15 +5538,16 @@ const viewerQuery_Operation = `
 query viewerQuery {
 	viewer {
 		__typename
-		... on Error {
-			__typename
-			message
-		}
 		... on Viewer {
+			id
 			user {
-				username
+				id
 				dbid
+				roles
 			}
+		}
+		... on ErrNotAuthorized {
+			message
 		}
 	}
 }
