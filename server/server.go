@@ -3,15 +3,16 @@ package server
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/middleware"
 	"github.com/mutuals/go-mutuals/validate"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"os"
-	"time"
 
 	"cloud.google.com/go/pubsub"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
@@ -246,6 +247,7 @@ func SetDefaults() {
 
 	viper.SetDefault("FARCASTER_MNEMONIC", "")
 	viper.SetDefault("FARCASTER_APP_ID", "")
+	viper.SetDefault("PRIVY_AUTH_JWT_SECRET", "")
 
 	viper.AutomaticEnv()
 
@@ -271,6 +273,7 @@ func SetDefaults() {
 		util.VarNotSetTo("PUSH_NOTIFICATIONS_SECRET", "push-notifications-secret")
 		util.VarNotSetTo("REFRESH_JWT_SECRET", "Refresh-Test-Secret")
 		util.VarNotSetTo("AUTH_JWT_SECRET", "Test-Secret")
+		util.VarNotSetTo("PRIVY_AUTH_JWT_SECRET", "Test-Secret")
 		util.VarNotSetTo("ONE_TIME_LOGIN_JWT_SECRET", "One-Time-Login-Test-Secret")
 	}
 }

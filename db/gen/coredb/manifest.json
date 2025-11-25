@@ -461,7 +461,7 @@
                 "array_dims": 0
               },
               {
-                "name": "owner_id",
+                "name": "owner_did",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -79007,7 +79007,7 @@
       "insert_into_table": null
     },
     {
-      "text": "\nSELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "\nSELECT id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetPoolById",
       "cmd": ":one",
       "columns": [
@@ -79220,7 +79220,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_id",
+          "name": "owner_did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -79390,7 +79390,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "SELECT id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetPoolByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -79603,7 +79603,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_id",
+          "name": "owner_did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -79769,7 +79769,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at\nFROM claims c\n         INNER JOIN pools p ON p.id = c.pool_id\nWHERE c.recipient_address = $1\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
+      "text": "SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_did, p.contract_id, p.deleted, p.updated_at, p.created_at\nFROM claims c\n         INNER JOIN pools p ON p.id = c.pool_id\nWHERE c.recipient_address = $1\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
       "name": "GetPoolsByAddressBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -79982,7 +79982,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_id",
+          "name": "owner_did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80148,7 +80148,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO pools (id, name, description, image, slug, owner_id, contract_id, donation_bps, private, deleted,\n                   updated_at, created_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, NOW(), NOW())\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at",
+      "text": "INSERT INTO pools (id, name, description, image, slug, owner_did, contract_id, donation_bps, private, deleted,\n                   updated_at, created_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, NOW(), NOW())\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at",
       "name": "CreatePool",
       "cmd": ":one",
       "columns": [
@@ -80361,7 +80361,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_id",
+          "name": "owner_did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80640,7 +80640,7 @@
         {
           "number": 6,
           "column": {
-            "name": "owner_id",
+            "name": "owner_did",
             "not_null": true,
             "is_array": false,
             "comment": "",
@@ -80763,7 +80763,7 @@
       }
     },
     {
-      "text": "UPDATE pools\nSET name         = $1,\n    description  = $2,\n    image        = $3,\n    slug         = $4,\n    owner_id     = $5,\n    contract_id  = $6,\n    donation_bps = $7,\n    private      = $8,\n    updated_at   = NOW()\nWHERE id = $9\n  AND deleted = FALSE\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at",
+      "text": "UPDATE pools\nSET name         = $1,\n    description  = $2,\n    image        = $3,\n    slug         = $4,\n    owner_did    = $5,\n    contract_id  = $6,\n    donation_bps = $7,\n    private      = $8,\n    updated_at   = NOW()\nWHERE id = $9\n  AND deleted = FALSE\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at",
       "name": "UpdatePool",
       "cmd": ":one",
       "columns": [
@@ -80976,7 +80976,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_id",
+          "name": "owner_did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -81226,7 +81226,7 @@
         {
           "number": 5,
           "column": {
-            "name": "owner_id",
+            "name": "owner_did",
             "not_null": true,
             "is_array": false,
             "comment": "",

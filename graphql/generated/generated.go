@@ -4688,10 +4688,10 @@ input ClaimCreateInput {
   data: JSON
 
   """Parent claim label."""
-  parentLabel: String
+  parent: String
 
   """Children claim labels."""
-  childrenLabels: [String!]
+  children: [String!]
 
   """State id."""
   stateId: String!
@@ -25369,7 +25369,7 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"label", "recipientAddress", "data", "parentLabel", "childrenLabels", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"label", "recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -25397,20 +25397,20 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 				return it, err
 			}
 			it.Data = data
-		case "parentLabel":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentLabel"))
+		case "parent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ParentLabel = data
-		case "childrenLabels":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childrenLabels"))
+			it.Parent = data
+		case "children":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ChildrenLabels = data
+			it.Children = data
 		case "stateId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
 			data, err := ec.unmarshalNString2string(ctx, v)

@@ -14,14 +14,14 @@ func SetAuthContext(scope *sentry.Scope, gc *gin.Context) {
 	var userCtx sentry.User
 
 	if GetUserAuthedFromCtx(gc) {
-		userID := string(GetUserIDFromCtx(gc))
-		sessionID := string(GetSessionIDFromCtx(gc))
+		userDID := GetUserDIDFromCtx(gc)
+		appID := GetAppIDFromCtx(gc)
 		authCtx = sentry.Context{
 			"Authenticated": true,
-			"UserID":        userID,
-			"SessionID":     sessionID,
+			"UserDID":       userDID,
+			"AppID":         appID,
 		}
-		userCtx = sentry.User{ID: userID}
+		userCtx = sentry.User{ID: userDID}
 	} else {
 		authCtx = sentry.Context{
 			"AuthError": GetAuthErrorFromCtx(gc),

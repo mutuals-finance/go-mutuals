@@ -71,10 +71,10 @@ WHERE u.deleted = FALSE
   AND ur.deleted = FALSE
   AND u.id = ur.user_id
   AND ur.role = @role
-  AND (u.username_idempotent, u.id) < (@cur_before_key::varchar, @cur_before_id::dbid)
-  AND (u.username_idempotent, u.id) > (@cur_after_key::varchar, @cur_after_id::dbid)
-ORDER BY CASE WHEN @paging_forward::bool THEN (u.username_idempotent, u.id) END ASC,
-         CASE WHEN NOT @paging_forward::bool THEN (u.username_idempotent, u.id) END DESC
+  AND (u.id) < (@cur_before_key::varchar, @cur_before_id::dbid)
+  AND (u.id) > (@cur_after_key::varchar, @cur_after_id::dbid)
+ORDER BY CASE WHEN @paging_forward::bool THEN (u.id) END ASC,
+         CASE WHEN NOT @paging_forward::bool THEN (u.id) END DESC
 LIMIT $1;
 
 -- name: GetUsersByPositionPaginateBatch :batchmany

@@ -1,10 +1,13 @@
 package publicapi
 
 import (
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	"cloud.google.com/go/storage"
 	"context"
 	"errors"
+	"net/http"
+	"time"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/storage"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
@@ -27,8 +30,6 @@ import (
 	"github.com/mutuals/go-mutuals/service/tracing"
 	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
-	"net/http"
-	"time"
 )
 
 var errBadCursorFormat = errors.New("bad cursor format")
@@ -104,7 +105,7 @@ func For(ctx context.Context) *PublicAPI {
 	return gc.Value(apiContextKey).(*PublicAPI)
 }
 
-func getAuthenticatedUserID(ctx context.Context) (persist.DBID, error) {
+func getAuthenticatedUserID(ctx context.Context) (string, error) {
 	gc := util.MustGetGinContext(ctx)
 	authError := auth.GetAuthErrorFromCtx(gc)
 
@@ -112,7 +113,7 @@ func getAuthenticatedUserID(ctx context.Context) (persist.DBID, error) {
 		return "", authError
 	}
 
-	userID := auth.GetUserIDFromCtx(gc)
+	userID := auth.GetUserDIDFromCtx(gc)
 	return userID, nil
 }
 

@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS scrubbed_pii;
 CREATE TABLE IF NOT EXISTS users
 (
     id                    character varying(255) PRIMARY KEY NOT NULL,
-    did                   character varying(255) PRIMARY KEY NOT NULL,
+    did                   character varying(255) UNIQUE      NOT NULL,
     deleted               boolean                            NOT NULL DEFAULT FALSE,
     version               integer                                     DEFAULT 0,
     updated_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users
 
 CREATE TABLE IF NOT EXISTS pools
 (
-    id                      character varying(255)   PRIMARY KEY,
+    id                      character varying(255) PRIMARY KEY,
     version                 integer                  NOT NULL DEFAULT 0,
     private                 boolean                  NOT NULL DEFAULT FALSE,
     name                    character varying(255)   NOT NULL DEFAULT ''::character varying,
@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS pools
     donation_bps            integer                  NOT NULL DEFAULT 0,
     image                   character varying(500)   NOT NULL DEFAULT ''::character varying,
     slug                    character varying(255)   NOT NULL DEFAULT ''::character varying,
-    owner_id                character varying(255)   NOT NULL REFERENCES users ON DELETE CASCADE,
-    contract_id             character varying(255)   DEFAULT NULL,
+    owner_did               character varying(255)   NOT NULL REFERENCES users (did) ON DELETE CASCADE,
+    contract_id             character varying(255)            DEFAULT NULL,
     deleted                 boolean                  NOT NULL DEFAULT FALSE,
     updated_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at              timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS pools
 
 CREATE INDEX pools_fts_description_english_idx ON pools USING gin (fts_description_english);
 CREATE INDEX pools_fts_name_idx ON pools USING gin (fts_name);
-CREATE INDEX pools_owner_id_idx ON pools (owner_id) WHERE deleted = FALSE;
+CREATE INDEX pools_owner_id_idx ON pools (owner_did) WHERE deleted = FALSE;
 CREATE INDEX pools_private_idx ON pools (private) WHERE deleted = FALSE;
 CREATE INDEX pools_created_at_idx ON pools (created_at) WHERE deleted = FALSE;
 CREATE UNIQUE INDEX pools_slug_unique_idx ON pools (slug) WHERE deleted = FALSE;
@@ -203,7 +203,7 @@ CREATE VIEW scrubbed_pii.for_users AS
 WITH scrubbed_unverified_email_address AS (SELECT u.id    AS user_id,
                                                   CASE
                                                       WHEN p.pii_unverified_email_address IS NOT NULL
-                                                          THEN u.username_idempotent || '-unverified@dummy-email.mutuals.finance'
+                                                          THEN '-unverified@dummy-email.mutuals.finance'
                                                       END AS scrubbed_address
                                            FROM users u,
                                                 pii.for_users p
@@ -213,7 +213,7 @@ WITH scrubbed_unverified_email_address AS (SELECT u.id    AS user_id,
      scrubbed_verified_email_address AS (SELECT u.id    AS user_id,
                                                 CASE
                                                     WHEN p.pii_verified_email_address IS NOT NULL
-                                                        THEN u.username_idempotent || '@dummy-email.mutuals.finance'
+                                                        THEN '@dummy-email.mutuals.finance'
                                                     END AS scrubbed_address
                                          FROM users u,
                                               pii.for_users p

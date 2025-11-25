@@ -78,7 +78,7 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 		return db.Pool{}, err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userDID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return db.Pool{}, err
 	}
@@ -106,7 +106,7 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 		Image:       *input.Image,
 		Slug:        *input.Slug,
 		Private:     private,
-		OwnerID:     userID,
+		OwnerDid:    userDID,
 	})
 	if err != nil {
 		return db.Pool{}, err
@@ -151,7 +151,7 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		return db.Pool{}, err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userDID, err := getAuthenticatedUserID(ctx)
 	if err != nil {
 		return db.Pool{}, err
 	}
@@ -210,7 +210,7 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		Slug:        slug,
 		Private:     private,
 		DonationBps: donationBps,
-		OwnerID:     userID,
+		OwnerDid:    userDID,
 	})
 	if err != nil {
 		return db.Pool{}, err

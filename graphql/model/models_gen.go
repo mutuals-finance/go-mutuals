@@ -263,9 +263,9 @@ type ClaimCreateInput struct {
 	// Extension (strategy and state) specific data.
 	Data persist.JSON `json:"data"`
 	// Parent claim label.
-	ParentLabel *string `json:"parentLabel"`
+	Parent *string `json:"parent"`
 	// Children claim labels.
-	ChildrenLabels []string `json:"childrenLabels"`
+	Children []string `json:"children"`
 	// State id.
 	StateID string `json:"stateId"`
 	// Strategy id.

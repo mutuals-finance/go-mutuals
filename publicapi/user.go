@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jackc/pgx/v4"
 	"github.com/mutuals/go-mutuals/event"
 	"github.com/mutuals/go-mutuals/service/redis"
 	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
 	"github.com/mutuals/go-mutuals/service/task"
-	"time"
 
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/multichain"
@@ -47,7 +48,7 @@ type UserAPI struct {
 func (api UserAPI) GetLoggedInUserId(ctx context.Context) persist.DBID {
 	gc := util.MustGetGinContext(ctx)
 
-	return auth.GetUserIDFromCtx(gc)
+	return persist.DBID(auth.GetUserDIDFromCtx(gc))
 }
 
 func (api UserAPI) IsUserLoggedIn(ctx context.Context) bool {
@@ -101,18 +102,21 @@ func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress 
 // GetUserWithPII returns the current user and their associated personally identifiable information
 func (api UserAPI) GetUserWithPII(ctx context.Context) (*coredb.PiiUserView, error) {
 	// Nothing to validate
+	/*
+		userDID, err := getAuthenticatedUserID(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	userID, err := getAuthenticatedUserID(ctx)
-	if err != nil {
-		return nil, err
-	}
+			userWithPII, err := api.queries.GetUserWithPIIByID(ctx, userDID)
+			if err != nil {
+				return nil, err
+			}
 
-	userWithPII, err := api.queries.GetUserWithPIIByID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
+			return &userWithPII, nil
+	*/
 
-	return &userWithPII, nil
+	return nil, nil
 }
 
 func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, before, after *string, first, last *int) ([]coredb.User, PageInfo, error) {
@@ -231,7 +235,7 @@ func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*c
 	ids := util.MapWithoutError(roles, func(role persist.Role) string { return persist.GenerateID().String() })
 
 	err = api.queries.AddUserRoles(ctx, coredb.AddUserRolesParams{
-		UserID: userID,
+		UserID: persist.DBID(userID),
 		Ids:    ids,
 		Roles:  newRoles,
 	})
@@ -243,12 +247,12 @@ func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*c
 	// Even though the user's roles have changed in the database, it could take a while before
 	// the new roles are reflected in their auth token. Forcing an auth token refresh will
 	// make the roles appear immediately.
-	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, userID)
+	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, persist.DBID(userID))
 	if err != nil {
 		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userID, err)
 	}
 
-	user, err := api.queries.GetUserById(ctx, userID)
+	user, err := api.queries.GetUserById(ctx, persist.DBID(userID))
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +284,7 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 
 	err = api.queries.DeleteUserRoles(ctx, coredb.DeleteUserRolesParams{
 		Roles:  roles,
-		UserID: userID,
+		UserID: persist.DBID(userID),
 	})
 	if err != nil {
 		return nil, err
@@ -289,12 +293,12 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 	// Even though the user's roles have changed in the database, it could take a while before
 	// the new roles are reflected in their auth token. Forcing an auth token refresh will
 	// make the roles appear immediately.
-	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, userID)
+	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, persist.DBID(userID))
 	if err != nil {
 		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userID, err)
 	}
 
-	user, err := api.queries.GetUserById(ctx, userID)
+	user, err := api.queries.GetUserById(ctx, persist.DBID(userID))
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +401,7 @@ func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
 		return err
 	}
 
-	err = userService.UpdateUserInfo(ctx, userID, username, api.repos.UserRepository, api.ethClient)
+	err = userService.UpdateUserInfo(ctx, persist.DBID(userID), username, api.repos.UserRepository, api.ethClient)
 	if err != nil {
 		return err
 	}
@@ -418,14 +422,14 @@ func (api UserAPI) UpdateUserEmailWithManualVerification(ctx context.Context, em
 		return err
 	}
 	err = api.queries.UpdateUserUnverifiedEmail(ctx, coredb.UpdateUserUnverifiedEmailParams{
-		UserID:       userID,
+		UserID:       persist.DBID(userID),
 		EmailAddress: email,
 	})
 	if err != nil {
 		return err
 	}
 
-	err = emails.RequestVerificationEmail(ctx, userID)
+	err = emails.RequestVerificationEmail(ctx, persist.DBID(userID))
 	if err != nil {
 		return err
 	}
@@ -447,7 +451,7 @@ func (api UserAPI) UpdateUserEmail(ctx context.Context, email persist.Email) err
 	}
 
 	err = api.queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
-		UserID:       userID,
+		UserID:       persist.DBID(userID),
 		EmailAddress: email,
 	})
 
@@ -473,7 +477,7 @@ func (api UserAPI) UpdateUserEmailNotificationSettings(ctx context.Context, sett
 
 	// update unsubscriptions
 
-	return emails.UpdateUnsubscriptionsByUserID(ctx, userID, settings)
+	return emails.UpdateUnsubscriptionsByUserID(ctx, persist.DBID(userID), settings)
 
 }
 
@@ -486,7 +490,7 @@ func (api UserAPI) GetCurrentUserEmailNotificationSettings(ctx context.Context) 
 
 	// update unsubscriptions
 
-	return emails.GetCurrentUnsubscriptionsByUserID(ctx, userID)
+	return emails.GetCurrentUnsubscriptionsByUserID(ctx, persist.DBID(userID))
 
 }
 
@@ -497,7 +501,7 @@ func (api UserAPI) ResendEmailVerification(ctx context.Context) error {
 		return err
 	}
 
-	err = emails.RequestVerificationEmail(ctx, userID)
+	err = emails.RequestVerificationEmail(ctx, persist.DBID(userID))
 	if err != nil {
 		return err
 	}
@@ -518,7 +522,7 @@ func (api UserAPI) UpdateUserNotificationSettings(ctx context.Context, notificat
 		return err
 	}
 
-	return api.queries.UpdateNotificationSettingsByID(ctx, coredb.UpdateNotificationSettingsByIDParams{ID: userID, NotificationSettings: notificationSettings})
+	return api.queries.UpdateNotificationSettingsByID(ctx, coredb.UpdateNotificationSettingsByIDParams{ID: persist.DBID(userID), NotificationSettings: notificationSettings})
 }
 
 // CreatePushTokenForUser adds a push token to a user, or returns the existing push token if it's already been
@@ -542,7 +546,7 @@ func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string)
 	if err == nil {
 		// If the token exists and belongs to the current user, return it. Attempting to re-add
 		// a token that you've already registered is a no-op.
-		if token.UserID == userID {
+		if token.UserID.String() == userID {
 			return token, nil
 		}
 
@@ -558,7 +562,7 @@ func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string)
 
 	token, err = api.queries.CreatePushTokenForUser(ctx, coredb.CreatePushTokenForUserParams{
 		ID:        persist.GenerateID(),
-		UserID:    userID,
+		UserID:    persist.DBID(userID),
 		PushToken: pushToken,
 	})
 
@@ -587,7 +591,7 @@ func (api UserAPI) DeletePushTokenByPushToken(ctx context.Context, pushToken str
 	existingToken, err := api.queries.GetPushTokenByPushToken(ctx, pushToken)
 	if err == nil {
 		// If the token exists and belongs to the current user, let them delete it.
-		if existingToken.UserID == userID {
+		if existingToken.UserID.String() == userID {
 			return api.queries.DeletePushTokensByIDs(ctx, []persist.DBID{existingToken.ID})
 		}
 
@@ -597,7 +601,7 @@ func (api UserAPI) DeletePushTokenByPushToken(ctx context.Context, pushToken str
 
 	// ErrNoRows is okay and means the token doesn't exist. Unregistering it is a no-op
 	// and doesn't return an error.
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
 
@@ -617,7 +621,7 @@ func (api UserAPI) BlockUser(ctx context.Context, userID persist.DBID) error {
 	}
 	_, err = api.queries.BlockUser(ctx, coredb.BlockUserParams{
 		ID:            persist.GenerateID(),
-		UserID:        viewerID,
+		UserID:        persist.DBID(viewerID),
 		BlockedUserID: userID,
 	})
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {
@@ -637,5 +641,5 @@ func (api UserAPI) UnblockUser(ctx context.Context, userID persist.DBID) error {
 	if err != nil {
 		return err
 	}
-	return api.queries.UnblockUser(ctx, coredb.UnblockUserParams{UserID: viewerID, BlockedUserID: userID})
+	return api.queries.UnblockUser(ctx, coredb.UnblockUserParams{UserID: persist.DBID(viewerID), BlockedUserID: userID})
 }

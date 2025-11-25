@@ -1053,33 +1053,6 @@ type UserUpdate {
   user: User
 }
 
-"""
-Login an existing user or register a new one.
-"""
-type UserLoginOrRegister {
-  """Informs whether users need to confirm their email address."""
-  requiresConfirmation: Boolean
-
-  """JWT token, required to authenticate."""
-  token: String
-
-  """JWT refresh token, required to re-generate access token."""
-  refreshToken: String
-
-  user: User
-
-  errors: [UserError!]!
-}
-
-
-"""Fields required to login or register a user."""
-input UserLoginOrRegisterInput {
-  """
-  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
-  """
-  redirectUrl: String
-}
-
 """Represents errors in user mutations."""
 type UserError {
   """
@@ -1317,10 +1290,10 @@ input ClaimCreateInput {
   data: JSON
 
   """Parent claim label."""
-  parentLabel: String
+  parent: String
 
   """Children claim labels."""
-  childrenLabels: [String!]
+  children: [String!]
 
   """State id."""
   stateId: String!

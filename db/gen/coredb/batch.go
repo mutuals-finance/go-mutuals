@@ -290,7 +290,7 @@ func (b *GetNotificationByIDBatchBatchResults) Close() error {
 }
 
 const getPoolByIdBatch = `-- name: GetPoolByIdBatch :batchone
-SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
+SELECT id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at
 FROM pools
 WHERE id = $1
   AND deleted = FALSE
@@ -334,7 +334,7 @@ func (b *GetPoolByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
 			&i.DonationBps,
 			&i.Image,
 			&i.Slug,
-			&i.OwnerID,
+			&i.OwnerDid,
 			&i.ContractID,
 			&i.Deleted,
 			&i.UpdatedAt,
@@ -352,7 +352,7 @@ func (b *GetPoolByIdBatchBatchResults) Close() error {
 }
 
 const getPoolsByAddressBatch = `-- name: GetPoolsByAddressBatch :batchmany
-SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
+SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_did, p.contract_id, p.deleted, p.updated_at, p.created_at
 FROM claims c
          INNER JOIN pools p ON p.id = c.pool_id
 WHERE c.recipient_address = $1
@@ -405,7 +405,7 @@ func (b *GetPoolsByAddressBatchBatchResults) Query(f func(int, []Pool, error)) {
 					&i.DonationBps,
 					&i.Image,
 					&i.Slug,
-					&i.OwnerID,
+					&i.OwnerDid,
 					&i.ContractID,
 					&i.Deleted,
 					&i.UpdatedAt,

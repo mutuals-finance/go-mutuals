@@ -39,8 +39,8 @@ type AuthenticatedAddress struct {
 const (
 	// Context keys for auth data
 	userAuthedContextKey = "auth.authenticated"
-	userIDContextKey     = "auth.user_id"
-	sessionIDContextKey  = "auth.session_id"
+	userDIDContextKey    = "auth.user_did"
+	appIDContextKey      = "auth.app_id"
 	authErrorContextKey  = "auth.auth_error"
 	userRolesContextKey  = "auth.roles"
 )
@@ -231,14 +231,14 @@ func (a OneTimeLoginTokenAuthenticator) UserRegistered(ctx context.Context) (boo
 	return false, nil
 }
 
-// GetSessionIDFromCtx returns the session ID from the context
-func GetSessionIDFromCtx(c *gin.Context) persist.DBID {
-	return c.MustGet(sessionIDContextKey).(persist.DBID)
+// GetAppIDFromCtx returns the session ID from the context
+func GetAppIDFromCtx(c *gin.Context) string {
+	return c.MustGet(appIDContextKey).(string)
 }
 
-// GetUserIDFromCtx returns the user ID from the context
-func GetUserIDFromCtx(c *gin.Context) persist.DBID {
-	return c.MustGet(userIDContextKey).(persist.DBID)
+// GetUserDIDFromCtx returns the user ID from the context
+func GetUserDIDFromCtx(c *gin.Context) string {
+	return c.MustGet(userDIDContextKey).(string)
 }
 
 // GetUserAuthedFromCtx queries the context to determine whether the user is authenticated
@@ -260,31 +260,27 @@ func GetRolesFromCtx(c *gin.Context) []persist.Role {
 	return c.MustGet(userRolesContextKey).([]persist.Role)
 }
 
-func setSessionStateForCtx(c *gin.Context, userID persist.DBID, sessionID persist.DBID, roles []persist.Role) {
-	if userID == "" || sessionID == "" {
-		logger.For(c).Errorf("attempted to set session state with missing values. userID: %s, sessionID: %s", userID, sessionID)
+func setSessionStateForCtx(c *gin.Context, userDID string, appID string) {
+	if userDID == "" || appID == "" {
+		logger.For(c).Errorf("attempted to set session state with missing values. userDID: %s, appID: %s", userDID, appID)
 		err := errors.New("attempted to set session state with missing values")
-		// We should never be trying to set a session with an empty userID or sessionID. If we find
+		// We should never be trying to set a session with an empty userDID or appID. If we find
 		// ourselves here, clear the session and have the user log in again.
 		clearSessionStateForCtx(c, err)
 		clearSessionCookies(c)
 		return
 	}
 
-	if roles == nil {
-		roles = []persist.Role{}
-	}
-
-	c.Set(userIDContextKey, userID)
-	c.Set(sessionIDContextKey, sessionID)
+	c.Set(userDIDContextKey, userDID)
+	c.Set(appIDContextKey, appID)
 	c.Set(authErrorContextKey, nil)
 	c.Set(userAuthedContextKey, true)
-	c.Set(userRolesContextKey, roles)
+	c.Set(userRolesContextKey, []persist.Role{})
 }
 
 func clearSessionStateForCtx(c *gin.Context, err error) {
-	c.Set(userIDContextKey, "")
-	c.Set(sessionIDContextKey, "")
+	c.Set(userDIDContextKey, "")
+	c.Set(appIDContextKey, "")
 	c.Set(authErrorContextKey, err)
 	c.Set(userAuthedContextKey, false)
 	c.Set(userRolesContextKey, []persist.Role{})
@@ -319,11 +315,11 @@ func mustRefreshAuthToken(ctx context.Context, authRefreshCache *redis.Cache, us
 // VerifySession checks the request cookies for an existing auth session.
 // If the request is for an expired or invalid session, the user will be
 // logged out. After calling VerifySession, the current auth state can be queried with
-// functions like GetUserAuthedFromCtx(), GetUserIDFromCtx(), etc.
+// functions like GetUserAuthedFromCtx(), GetUserDIDFromCtx(), etc.
 func VerifySession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.Cache) error {
 	// If the user has a valid auth cookie, we can set their auth state and be done
 	// (unless something like updating roles triggered a forced refresh of the auth token)
-	_, authTokenErr := getAndParseAuthToken(c)
+	authClaims, authTokenErr := getAndParseAuthToken(c)
 
 	if authTokenErr != nil {
 		clearSessionStateForCtx(c, authTokenErr)
@@ -336,6 +332,8 @@ func VerifySession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.
 
 		return authTokenErr
 	}
+
+	setSessionStateForCtx(c, authClaims.UserDID, authClaims.AppId)
 
 	return nil
 }

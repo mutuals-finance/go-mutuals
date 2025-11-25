@@ -100,7 +100,7 @@ type Pool struct {
 	DonationBps int32        `db:"donation_bps" json:"donation_bps"`
 	Image       string       `db:"image" json:"image"`
 	Slug        string       `db:"slug" json:"slug"`
-	OwnerID     persist.DBID `db:"owner_id" json:"owner_id"`
+	OwnerDid    string       `db:"owner_did" json:"owner_did"`
 	ContractID  persist.DBID `db:"contract_id" json:"contract_id"`
 	Deleted     bool         `db:"deleted" json:"deleted"`
 	UpdatedAt   time.Time    `db:"updated_at" json:"updated_at"`

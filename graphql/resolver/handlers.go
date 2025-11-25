@@ -227,7 +227,7 @@ func AuthRequiredDirectiveHandler() func(ctx context.Context, obj interface{}, n
 			return makeErrNotAuthorized(errorMsg, gqlModel), nil
 		}
 
-		userID := auth.GetUserIDFromCtx(gc)
+		userID := auth.GetUserDIDFromCtx(gc)
 		if userID == "" {
 			panic(fmt.Errorf("userID is empty, but no auth error occurred"))
 		}

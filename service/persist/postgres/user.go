@@ -47,7 +47,7 @@ func NewUserRepository(db *sql.DB, queries *db.Queries, pgx *pgxpool.Pool) *User
 	defer cancel()
 
 	updateInfoStmt, err := db.PrepareContext(ctx, `UPDATE users SET USERNAME = $2, USERNAME_IDEMPOTENT = $3, UPDATED_AT = $4 WHERE ID = $1;`)
-	checkNoErr(err)
+	//checkNoErr(err)
 
 	// TODO update sql schema
 	getByIDStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM users WHERE ID = $1 AND DELETED = FALSE;`)

@@ -125,9 +125,9 @@ type ClaimCreateInput struct {
 	// Extension (strategy and state) specific data.
 	Data *json.RawMessage `json:"data"`
 	// Parent claim label.
-	ParentLabel *string `json:"parentLabel"`
+	Parent *string `json:"parent"`
 	// Children claim labels.
-	ChildrenLabels []string `json:"childrenLabels"`
+	Children []string `json:"children"`
 	// State id.
 	StateId string `json:"stateId"`
 	// Strategy id.
@@ -143,11 +143,11 @@ func (v *ClaimCreateInput) GetRecipientAddress() *persist.Address { return v.Rec
 // GetData returns ClaimCreateInput.Data, and is useful for accessing the field via an interface.
 func (v *ClaimCreateInput) GetData() *json.RawMessage { return v.Data }
 
-// GetParentLabel returns ClaimCreateInput.ParentLabel, and is useful for accessing the field via an interface.
-func (v *ClaimCreateInput) GetParentLabel() *string { return v.ParentLabel }
+// GetParent returns ClaimCreateInput.Parent, and is useful for accessing the field via an interface.
+func (v *ClaimCreateInput) GetParent() *string { return v.Parent }
 
-// GetChildrenLabels returns ClaimCreateInput.ChildrenLabels, and is useful for accessing the field via an interface.
-func (v *ClaimCreateInput) GetChildrenLabels() []string { return v.ChildrenLabels }
+// GetChildren returns ClaimCreateInput.Children, and is useful for accessing the field via an interface.
+func (v *ClaimCreateInput) GetChildren() []string { return v.Children }
 
 // GetStateId returns ClaimCreateInput.StateId, and is useful for accessing the field via an interface.
 func (v *ClaimCreateInput) GetStateId() string { return v.StateId }

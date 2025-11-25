@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/mutuals/go-mutuals/service/logger"
 
 	"github.com/mutuals/go-mutuals/env"
 	"github.com/mutuals/go-mutuals/service/persist"
@@ -21,47 +22,42 @@ const (
 )
 
 type MutualsClaims struct {
-	TokenType TokenType `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
 type AuthTokenClaims struct {
-	UserID    persist.DBID   `json:"user_id"`
-	SessionID persist.DBID   `json:"session_id"` // The session this auth token belongs to
-	RefreshID string         `json:"refresh_id"` // The refresh token this auth token was generated from
-	Roles     []persist.Role `json:"roles"`
+	UserDID string `json:"sub,omitempty"`
+	AppId   string `json:"aud,omitempty"`
 	MutualsClaims
 }
 
 type RefreshTokenClaims struct {
-	ID        string       `json:"id"`        // The refresh token's ID
-	ParentID  string       `json:"parent_id"` // The parent refresh token this child refresh token was generated from
-	UserID    persist.DBID `json:"user_id"`
-	SessionID persist.DBID `json:"session_id"` // The session this refresh token belongs to
+	ID       string       `json:"id"`        // The refresh token's ID
+	ParentID string       `json:"parent_id"` // The parent refresh token this child refresh token was generated from
+	UserID   persist.DBID `json:"user_id"`
+	AppID    persist.DBID `json:"session_id"` // The session this refresh token belongs to
 	MutualsClaims
 }
 
 type oneTimeLoginClaims struct {
-	UserID persist.DBID `json:"user_id"`
-	Source string       `json:"source"`
+	UserID string `json:"user_id"`
+	Source string `json:"source"`
 	MutualsClaims
 }
 
 type emailVerificationClaims struct {
-	UserID persist.DBID `json:"user_id"`
-	Email  string       `json:"email"`
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
 	MutualsClaims
 }
 
-func GenerateAuthToken(ctx context.Context, userID persist.DBID, sessionID persist.DBID, refreshID string, roles []persist.Role) (string, error) {
+func GenerateAuthToken(ctx context.Context, userID persist.DBID, appID persist.DBID, refreshID string, roles []persist.Role) (string, error) {
 	secret := env.GetString("AUTH_JWT_SECRET")
 	validFor := time.Duration(env.GetInt64("AUTH_JWT_TTL")) * time.Second
 
 	claims := AuthTokenClaims{
-		UserID:        userID,
-		SessionID:     sessionID,
-		RefreshID:     refreshID,
-		Roles:         roles,
+		UserDID:       userID.String(),
+		AppId:         appID.String(),
 		MutualsClaims: newMutualsClaims(TokenTypeAuth, validFor),
 	}
 
@@ -70,7 +66,8 @@ func GenerateAuthToken(ctx context.Context, userID persist.DBID, sessionID persi
 
 func ParseAuthToken(ctx context.Context, token string) (AuthTokenClaims, error) {
 	claims := AuthTokenClaims{}
-	parsedToken, err := jwt.ParseWithClaims(token, &claims, keyFunc(env.GetString("AUTH_JWT_SECRET")))
+	parsedToken, err := jwt.ParseWithClaims(token, &claims, keyFunc(env.GetString("PRIVY_AUTH_JWT_SECRET")))
+	logger.For(ctx).Infof("token %s, secret %s; parsedToken %v; err %s", token, env.GetString("PRIVY_AUTH_JWT_SECRET"), parsedToken, err)
 
 	if err != nil || !parsedToken.Valid {
 		return AuthTokenClaims{}, ErrInvalidJWT
@@ -79,7 +76,7 @@ func ParseAuthToken(ctx context.Context, token string) (AuthTokenClaims, error) 
 	return claims, nil
 }
 
-func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userID persist.DBID, sessionID persist.DBID) (string, time.Time, error) {
+func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userID persist.DBID, appID persist.DBID) (string, time.Time, error) {
 	secret := env.GetString("REFRESH_JWT_SECRET")
 	validFor := time.Duration(env.GetInt64("REFRESH_JWT_TTL")) * time.Second
 
@@ -87,7 +84,7 @@ func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userI
 		ID:            ID,
 		ParentID:      parentID,
 		UserID:        userID,
-		SessionID:     sessionID,
+		AppID:         appID,
 		MutualsClaims: newMutualsClaims(TokenTypeRefresh, validFor),
 	}
 
@@ -108,18 +105,6 @@ func ParseRefreshToken(ctx context.Context, token string) (RefreshTokenClaims, e
 	return claims, nil
 }
 
-func GenerateOneTimeLoginToken(ctx context.Context, userID persist.DBID, source string, validFor time.Duration) (string, error) {
-	secret := env.GetString("ONE_TIME_LOGIN_JWT_SECRET")
-
-	claims := oneTimeLoginClaims{
-		UserID:        userID,
-		Source:        source,
-		MutualsClaims: newMutualsClaims(TokenTypeOneTimeLogin, validFor),
-	}
-
-	return generateJWT(claims, secret)
-}
-
 func ParseOneTimeLoginToken(ctx context.Context, token string) (persist.DBID, time.Time, error) {
 	claims := oneTimeLoginClaims{}
 	parsedToken, err := jwt.ParseWithClaims(token, &claims, keyFunc(env.GetString("ONE_TIME_LOGIN_JWT_SECRET")))
@@ -128,7 +113,7 @@ func ParseOneTimeLoginToken(ctx context.Context, token string) (persist.DBID, ti
 		return "", time.Time{}, ErrInvalidJWT
 	}
 
-	return claims.UserID, claims.ExpiresAt.Time, nil
+	return persist.DBID(claims.UserID), claims.ExpiresAt.Time, nil
 }
 
 func GenerateEmailVerificationToken(ctx context.Context, userID persist.DBID, email string) (string, error) {
@@ -136,7 +121,7 @@ func GenerateEmailVerificationToken(ctx context.Context, userID persist.DBID, em
 	validFor := time.Duration(env.GetInt64("EMAIL_VERIFICATION_JWT_TTL")) * time.Second
 
 	claims := emailVerificationClaims{
-		UserID:        userID,
+		UserID:        userID.String(),
 		Email:         email,
 		MutualsClaims: newMutualsClaims(TokenTypeEmailVerification, validFor),
 	}
@@ -152,12 +137,11 @@ func ParseEmailVerificationToken(ctx context.Context, token string) (persist.DBI
 		return "", "", ErrInvalidJWT
 	}
 
-	return claims.UserID, claims.Email, nil
+	return persist.DBID(claims.UserID), claims.Email, nil
 }
 
 func newMutualsClaims(tokenType TokenType, validFor time.Duration) MutualsClaims {
 	claims := MutualsClaims{
-		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(validFor)),
 			Issuer:    "mutuals",
@@ -179,20 +163,14 @@ func generateJWT(claims jwt.Claims, jwtSecret string) (string, error) {
 	return jwtToken, nil
 }
 
-/*
-func keyFunc(secret string) jwt.Keyfunc {
-	return func(*jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
-	}
-}*/
-
 func keyFunc(verificationKey string) jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
+
 		if token.Method.Alg() != "ES256" {
 			return nil, fmt.Errorf("unexpected JWT signing method=%v", token.Header["alg"])
 		}
 		// https://pkg.go.dev/github.com/dgrijalva/jwt-go#ParseECPublicKeyFromPEM
-		key, err := jwt.ParseECPublicKeyFromPEM([]byte(verificationKey))
+		key, err := jwt.ParseECPublicKeyFromPEM([]byte("-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERFWiFvDlBs1m5ZCaNNwzxizIlmOlYgdKw0DjFVsZhJYfTcOc/gqMfz8WEOJZginOWCfy/Cyydj9xg9xWtHxJpg==\n-----END PUBLIC KEY-----"))
 		if err != nil {
 			return nil, err
 		}

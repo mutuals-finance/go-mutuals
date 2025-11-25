@@ -36,7 +36,7 @@ func (api NotificationsAPI) GetViewerNotifications(ctx context.Context, before, 
 
 	queryFunc := func(params timeIDPagingParams) ([]db.Notification, error) {
 		return api.loaders.GetUserNotificationsBatch.Load(db.GetUserNotificationsBatchParams{
-			OwnerID:       userID,
+			OwnerID:       persist.DBID(userID),
 			Limit:         params.Limit,
 			CurBeforeTime: params.CursorBeforeTime,
 			CurBeforeID:   params.CursorBeforeID,
@@ -47,7 +47,7 @@ func (api NotificationsAPI) GetViewerNotifications(ctx context.Context, before, 
 	}
 
 	countFunc := func() (int, error) {
-		total, err := api.queries.CountUserNotifications(ctx, userID)
+		total, err := api.queries.CountUserNotifications(ctx, persist.DBID(userID))
 		return int(total), err
 	}
 
@@ -66,7 +66,7 @@ func (api NotificationsAPI) GetViewerNotifications(ctx context.Context, before, 
 		return nil, PageInfo{}, 0, err
 	}
 
-	count, err := api.queries.CountUserUnseenNotifications(ctx, userID)
+	count, err := api.queries.CountUserUnseenNotifications(ctx, persist.DBID(userID))
 	if err != nil {
 		return nil, PageInfo{}, 0, err
 	}
@@ -83,5 +83,5 @@ func (api NotificationsAPI) ClearUserNotifications(ctx context.Context) ([]db.No
 	if err != nil {
 		return nil, err
 	}
-	return api.queries.ClearNotificationsForUser(ctx, userID)
+	return api.queries.ClearNotificationsForUser(ctx, persist.DBID(userID))
 }
