@@ -122,7 +122,7 @@ func VerifySession(queries *db.Queries, authRefreshCache *redis.Cache) gin.Handl
 		if err == nil {
 			loggerCtx := logger.NewContextWithFields(c.Request.Context(), logrus.Fields{
 				"authedUserId": auth.GetUserIdFromCtx(c),
-				"appID":        auth.GetAppIDFromCtx(c),
+				"appId":        auth.GetAppIdFromCtx(c),
 			})
 			c.Request = c.Request.WithContext(loggerCtx)
 		}

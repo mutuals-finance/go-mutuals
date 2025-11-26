@@ -34,7 +34,7 @@ type RefreshTokenClaims struct {
 	ID       string       `json:"id"`        // The refresh token's ID
 	ParentID string       `json:"parent_id"` // The parent refresh token this child refresh token was generated from
 	UserID   persist.DBID `json:"user_id"`
-	AppID    persist.DBID `json:"session_id"` // The session this refresh token belongs to
+	AppId    persist.DBID `json:"session_id"` // The session this refresh token belongs to
 	MutualsClaims
 }
 
@@ -75,7 +75,7 @@ func ParseAuthToken(ctx context.Context, token string) (AuthTokenClaims, error) 
 	return claims, nil
 }
 
-func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userID persist.DBID, appID persist.DBID) (string, time.Time, error) {
+func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userID persist.DBID, appId persist.DBID) (string, time.Time, error) {
 	secret := env.GetString("REFRESH_JWT_SECRET")
 	validFor := time.Duration(env.GetInt64("REFRESH_JWT_TTL")) * time.Second
 
@@ -83,7 +83,7 @@ func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userI
 		ID:            ID,
 		ParentID:      parentID,
 		UserID:        userID,
-		AppID:         appID,
+		AppId:         appId,
 		MutualsClaims: newMutualsClaims(TokenTypeRefresh, validFor),
 	}
 

@@ -40,7 +40,7 @@ const (
 	// Context keys for auth data
 	userAuthedContextKey = "auth.authenticated"
 	userIdContextKey     = "auth.user_id"
-	appIDContextKey      = "auth.app_id"
+	appIdContextKey      = "auth.app_id"
 	authErrorContextKey  = "auth.auth_error"
 	userRolesContextKey  = "auth.roles"
 )
@@ -231,9 +231,9 @@ func (a OneTimeLoginTokenAuthenticator) UserRegistered(ctx context.Context) (boo
 	return false, nil
 }
 
-// GetAppIDFromCtx returns the session ID from the context
-func GetAppIDFromCtx(c *gin.Context) string {
-	return c.MustGet(appIDContextKey).(string)
+// GetAppIdFromCtx returns the session ID from the context
+func GetAppIdFromCtx(c *gin.Context) string {
+	return c.MustGet(appIdContextKey).(string)
 }
 
 // GetUserIdFromCtx returns the user ID from the context
@@ -260,11 +260,11 @@ func GetRolesFromCtx(c *gin.Context) []persist.Role {
 	return c.MustGet(userRolesContextKey).([]persist.Role)
 }
 
-func setSessionStateForCtx(c *gin.Context, userId string, appID string) {
-	if userId == "" || appID == "" {
-		logger.For(c).Errorf("attempted to set session state with missing values. userId: %s, appID: %s", userId, appID)
+func setSessionStateForCtx(c *gin.Context, userId string, appId string) {
+	if userId == "" || appId == "" {
+		logger.For(c).Errorf("attempted to set session state with missing values. userId: %s, appId: %s", userId, appId)
 		err := errors.New("attempted to set session state with missing values")
-		// We should never be trying to set a session with an empty userId or appID. If we find
+		// We should never be trying to set a session with an empty userId or appId. If we find
 		// ourselves here, clear the session and have the user log in again.
 		clearSessionStateForCtx(c, err)
 		clearSessionCookies(c)
@@ -272,7 +272,7 @@ func setSessionStateForCtx(c *gin.Context, userId string, appID string) {
 	}
 
 	c.Set(userIdContextKey, userId)
-	c.Set(appIDContextKey, appID)
+	c.Set(appIdContextKey, appId)
 	c.Set(authErrorContextKey, nil)
 	c.Set(userAuthedContextKey, true)
 	c.Set(userRolesContextKey, []persist.Role{})
@@ -280,7 +280,7 @@ func setSessionStateForCtx(c *gin.Context, userId string, appID string) {
 
 func clearSessionStateForCtx(c *gin.Context, err error) {
 	c.Set(userIdContextKey, "")
-	c.Set(appIDContextKey, "")
+	c.Set(appIdContextKey, "")
 	c.Set(authErrorContextKey, err)
 	c.Set(userAuthedContextKey, false)
 	c.Set(userRolesContextKey, []persist.Role{})
