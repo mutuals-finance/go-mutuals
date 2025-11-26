@@ -78,7 +78,7 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 		return db.Pool{}, err
 	}
 
-	userDID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return db.Pool{}, err
 	}
@@ -106,7 +106,7 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 		Image:       *input.Image,
 		Slug:        *input.Slug,
 		Private:     private,
-		OwnerDid:    userDID,
+		OwnerID:     persist.DBID(userId),
 	})
 	if err != nil {
 		return db.Pool{}, err
@@ -151,7 +151,7 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		return db.Pool{}, err
 	}
 
-	userDID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return db.Pool{}, err
 	}
@@ -210,7 +210,7 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		Slug:        slug,
 		Private:     private,
 		DonationBps: donationBps,
-		OwnerDid:    userDID,
+		OwnerID:     userId,
 	})
 	if err != nil {
 		return db.Pool{}, err
@@ -280,14 +280,14 @@ func (api PoolAPI) DeletePool(ctx context.Context, poolID persist.DBID) error {
 	}
 
 	/*
-		userID, err := getAuthenticatedUserID(ctx)
+		userId, err := getAuthenticatedUserId(ctx)
 		if err != nil {
 			return err
 		}
 
 		// Verify user owns the pool
-		_, err = api.queries.GetPoolByUserID(ctx, db.GetPoolByUserIDParams{
-			UserID: userID,
+		_, err = api.queries.GetPoolByUserId(ctx, db.GetPoolByUserIdParams{
+			UserId: userId,
 			PoolID: poolID,
 		})
 		if err != nil {

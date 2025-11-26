@@ -244,7 +244,7 @@ type ownerGroupedNotificationHandler struct {
 func (h ownerGroupedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
 	var curNotif db.Notification
 	// Bucket notifications on a specific resource if it has one
-	curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIDForAction(ctx, db.GetMostRecentNotificationByOwnerIDForActionParams{
+	curNotif, _ = h.queries.GetMostRecentNotificationByOwnerIdForAction(ctx, db.GetMostRecentNotificationByOwnerIdForActionParams{
 		OwnerID: notif.OwnerID,
 		Action:  notif.Action,
 	})
@@ -283,7 +283,7 @@ func beginningOfWeek(t time.Time) time.Time {
 // does not show up mutliple times in a week
 func (h viewedNotificationHandler) Handle(ctx context.Context, notif db.Notification) error {
 	// all of this user's view notifications in the current week
-	notifs, _ := h.queries.GetNotificationsByOwnerIDForActionAfter(ctx, db.GetNotificationsByOwnerIDForActionAfterParams{
+	notifs, _ := h.queries.GetNotificationsByOwnerIdForActionAfter(ctx, db.GetNotificationsByOwnerIdForActionAfterParams{
 		OwnerID:      notif.OwnerID,
 		Action:       notif.Action,
 		CreatedAfter: beginningOfWeek(time.Now()),
@@ -595,7 +595,7 @@ func sendPushNotifications(ctx context.Context, notif db.Notification, queries *
 		return nil
 	}
 
-	pushTokens, err := queries.GetPushTokensByUserID(ctx, notif.OwnerID)
+	pushTokens, err := queries.GetPushTokensByUserId(ctx, notif.OwnerID)
 	if err != nil {
 		return fmt.Errorf("couldn't get push tokens for userID %s: %w", notif.OwnerID, err)
 	}
@@ -723,7 +723,7 @@ func updateAndPublishNotif(ctx context.Context, notif db.Notification, mostRecen
 		logger.For(ctx).Error(err)
 	}
 
-	updatedNotif, err := queries.GetNotificationByID(ctx, mostRecentNotif.ID)
+	updatedNotif, err := queries.GetNotificationById(ctx, mostRecentNotif.ID)
 	if err != nil {
 		return fmt.Errorf("error getting updated notification by %s: %w", mostRecentNotif.ID, err)
 	}

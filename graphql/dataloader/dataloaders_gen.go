@@ -143,34 +143,34 @@ func newGetClaimsByPoolIdBatch(
 	return d
 }
 
-// GetNotificationByIDBatch batches and caches requests
-type GetNotificationByIDBatch struct {
+// GetNotificationByIdBatch batches and caches requests
+type GetNotificationByIdBatch struct {
 	generator.Dataloader[persist.DBID, coredb.Notification]
 }
 
-// newGetNotificationByIDBatch creates a new GetNotificationByIDBatch with the given settings, functions, and options
-func newGetNotificationByIDBatch(
+// newGetNotificationByIdBatch creates a new GetNotificationByIdBatch with the given settings, functions, and options
+func newGetNotificationByIdBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetNotificationByIDBatch, []persist.DBID) ([]coredb.Notification, []error),
+	fetch func(context.Context, *GetNotificationByIdBatch, []persist.DBID) ([]coredb.Notification, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetNotificationByIDBatch {
-	d := &GetNotificationByIDBatch{}
+) *GetNotificationByIdBatch {
+	d := &GetNotificationByIdBatch{}
 
 	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Notification, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetNotificationByIDBatch")
+			ctx = preFetchHook(ctx, "GetNotificationByIdBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetNotificationByIDBatch")
+			postFetchHook(ctx, "GetNotificationByIdBatch")
 		}
 
 		return results, errors
@@ -180,7 +180,7 @@ func newGetNotificationByIDBatch(
 	return d
 }
 
-func (*GetNotificationByIDBatch) getKeyForResult(result coredb.Notification) persist.DBID {
+func (*GetNotificationByIdBatch) getKeyForResult(result coredb.Notification) persist.DBID {
 	return result.ID
 }
 

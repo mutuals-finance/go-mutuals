@@ -657,7 +657,7 @@ func canAutoCacheDBID(inputType types.Type, outputType types.Type, dbTypesPkg *t
 
 func getCustomBatchTypes(batchFunc *types.Func) (types.Type, types.Type, *customBatchingDefinition) {
 	// A custom batched sqlc query should have a function with a signature like this:
-	//     func (q *Queries) GetContractsByIDs(ctx context.Context, params []InputType) ([]OutputType, error)
+	//     func (q *Queries) GetContractsByIds(ctx context.Context, params []InputType) ([]OutputType, error)
 
 	signature := batchFunc.Type().(*types.Signature)
 	inputType := getBatchInputType(signature)

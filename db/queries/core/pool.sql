@@ -23,9 +23,9 @@ WHERE c.recipient_address = $1
   AND p.deleted = FALSE;
 
 -- name: CreatePool :one
-INSERT INTO pools (id, name, description, image, slug, owner_did, contract_id, donation_bps, private, deleted,
+INSERT INTO pools (id, name, description, image, slug, owner_id, contract_id, donation_bps, private, deleted,
                    updated_at, created_at)
-VALUES (@id, @name, @description, @image, @slug, @owner_did, @contract_id, @donation_bps, @private, FALSE, NOW(), NOW())
+VALUES (@id, @name, @description, @image, @slug, @owner_id, @contract_id, @donation_bps, @private, FALSE, NOW(), NOW())
 RETURNING *;
 
 -- name: UpdatePool :one
@@ -34,7 +34,7 @@ SET name         = @name,
     description  = @description,
     image        = @image,
     slug         = @slug,
-    owner_did    = @owner_did,
+    owner_id    = @owner_id,
     contract_id  = @contract_id,
     donation_bps = @donation_bps,
     private      = @private,

@@ -68,13 +68,13 @@ func verifyEmail(queries *coredb.Queries) gin.HandlerFunc {
 			return
 		}
 
-		userID, emailFromToken, err := auth.ParseEmailVerificationToken(c, input.JWT)
+		userId, emailFromToken, err := auth.ParseEmailVerificationToken(c, input.JWT)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIByID(c, userID)
+		userWithPII, err := queries.GetUserWithPIIById(c, userId)
 		if err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
@@ -94,7 +94,7 @@ func verifyEmail(queries *coredb.Queries) gin.HandlerFunc {
 		verifiedEmail := userWithPII.PiiUnverifiedEmailAddress
 
 		err = queries.UpdateUserVerifiedEmail(c, coredb.UpdateUserVerifiedEmailParams{
-			UserID:       userID,
+			UserID:       userId,
 			EmailAddress: verifiedEmail,
 		})
 
@@ -127,7 +127,7 @@ func processAddToMailingList(queries *coredb.Queries) gin.HandlerFunc {
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIByID(c, input.UserID)
+		userWithPII, err := queries.GetUserWithPIIById(c, input.UserID)
 		if err != nil {
 			util.ErrResponse(c, http.StatusNotFound, err)
 			return

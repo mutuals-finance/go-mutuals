@@ -132,7 +132,7 @@ func (u *UserRepository) UpdateByID(pCtx context.Context, pID persist.DBID, pUpd
 			return persist.ErrUserNotFound{UserID: pID}
 		}
 	case persist.UserUpdateNotificationSettings:
-		return u.queries.UpdateNotificationSettingsByID(pCtx, db.UpdateNotificationSettingsByIDParams{
+		return u.queries.UpdateNotificationSettingsById(pCtx, db.UpdateNotificationSettingsByIdParams{
 			ID:                   pID,
 			NotificationSettings: update.NotificationSettings,
 		})

@@ -27,6 +27,6 @@ type AuthAPI struct {
 	authRefreshCache   *redis.Cache
 }
 
-func (api AuthAPI) ForceAuthTokenRefresh(ctx context.Context, userID persist.DBID) error {
-	return auth.ForceAuthTokenRefresh(ctx, api.authRefreshCache, userID)
+func (api AuthAPI) ForceAuthTokenRefresh(ctx context.Context, userId persist.DBID) error {
+	return auth.ForceAuthTokenRefresh(ctx, api.authRefreshCache, userId)
 }

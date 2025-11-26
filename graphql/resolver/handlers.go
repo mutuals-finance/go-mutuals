@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/mutuals/go-mutuals/service/auth/basicauth"
 
 	"reflect"
@@ -227,9 +228,9 @@ func AuthRequiredDirectiveHandler() func(ctx context.Context, obj interface{}, n
 			return makeErrNotAuthorized(errorMsg, gqlModel), nil
 		}
 
-		userID := auth.GetUserDIDFromCtx(gc)
-		if userID == "" {
-			panic(fmt.Errorf("userID is empty, but no auth error occurred"))
+		userId := auth.GetUserIdFromCtx(gc)
+		if userId == "" {
+			panic(fmt.Errorf("userId is empty, but no auth error occurred"))
 		}
 
 		return next(ctx)

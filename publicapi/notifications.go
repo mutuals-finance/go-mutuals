@@ -18,7 +18,7 @@ type NotificationsAPI struct {
 }
 
 func (api NotificationsAPI) GetViewerNotifications(ctx context.Context, before, after *string, first *int, last *int) ([]db.Notification, PageInfo, int, error) {
-	userID, err := getAuthenticatedUserID(ctx)
+	userID, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return nil, PageInfo{}, 0, err
 	}
@@ -74,12 +74,12 @@ func (api NotificationsAPI) GetViewerNotifications(ctx context.Context, before, 
 	return notifications, pageInfo, int(count), err
 }
 
-func (api NotificationsAPI) GetByID(ctx context.Context, id persist.DBID) (db.Notification, error) {
-	return api.loaders.GetNotificationByIDBatch.Load(id)
+func (api NotificationsAPI) GetById(ctx context.Context, id persist.DBID) (db.Notification, error) {
+	return api.loaders.GetNotificationByIdBatch.Load(id)
 }
 
 func (api NotificationsAPI) ClearUserNotifications(ctx context.Context) ([]db.Notification, error) {
-	userID, err := getAuthenticatedUserID(ctx)
+	userID, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return nil, err
 	}

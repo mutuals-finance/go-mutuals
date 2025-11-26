@@ -228,32 +228,32 @@ func (b *GetClaimsByPoolIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getNotificationByIDBatch = `-- name: GetNotificationByIDBatch :batchone
+const getNotificationByIdBatch = `-- name: GetNotificationByIdBatch :batchone
 SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 FROM notifications
 WHERE id = $1
   AND deleted = FALSE
 `
 
-type GetNotificationByIDBatchBatchResults struct {
+type GetNotificationByIdBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetNotificationByIDBatch(ctx context.Context, id []persist.DBID) *GetNotificationByIDBatchBatchResults {
+func (q *Queries) GetNotificationByIdBatch(ctx context.Context, id []persist.DBID) *GetNotificationByIdBatchBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range id {
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(getNotificationByIDBatch, vals...)
+		batch.Queue(getNotificationByIdBatch, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &GetNotificationByIDBatchBatchResults{br, len(id), false}
+	return &GetNotificationByIdBatchBatchResults{br, len(id), false}
 }
 
-func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification, error)) {
+func (b *GetNotificationByIdBatchBatchResults) QueryRow(f func(int, Notification, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var i Notification
@@ -284,13 +284,13 @@ func (b *GetNotificationByIDBatchBatchResults) QueryRow(f func(int, Notification
 	}
 }
 
-func (b *GetNotificationByIDBatchBatchResults) Close() error {
+func (b *GetNotificationByIdBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
 
 const getPoolByIdBatch = `-- name: GetPoolByIdBatch :batchone
-SELECT id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at
+SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
 FROM pools
 WHERE id = $1
   AND deleted = FALSE
@@ -334,7 +334,7 @@ func (b *GetPoolByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
 			&i.DonationBps,
 			&i.Image,
 			&i.Slug,
-			&i.OwnerDid,
+			&i.OwnerID,
 			&i.ContractID,
 			&i.Deleted,
 			&i.UpdatedAt,
@@ -352,7 +352,7 @@ func (b *GetPoolByIdBatchBatchResults) Close() error {
 }
 
 const getPoolsByAddressBatch = `-- name: GetPoolsByAddressBatch :batchmany
-SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_did, p.contract_id, p.deleted, p.updated_at, p.created_at
+SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
 FROM claims c
          INNER JOIN pools p ON p.id = c.pool_id
 WHERE c.recipient_address = $1
@@ -405,7 +405,7 @@ func (b *GetPoolsByAddressBatchBatchResults) Query(f func(int, []Pool, error)) {
 					&i.DonationBps,
 					&i.Image,
 					&i.Slug,
-					&i.OwnerDid,
+					&i.OwnerID,
 					&i.ContractID,
 					&i.Deleted,
 					&i.UpdatedAt,
@@ -429,7 +429,7 @@ func (b *GetPoolsByAddressBatchBatchResults) Close() error {
 }
 
 const getUserByIdBatch = `-- name: GetUserByIdBatch :batchone
-SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
+SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
 FROM users
 WHERE id = $1
   AND deleted = FALSE
@@ -466,7 +466,6 @@ func (b *GetUserByIdBatchBatchResults) QueryRow(f func(int, User, error)) {
 		row := b.br.QueryRow()
 		err := row.Scan(
 			&i.ID,
-			&i.Did,
 			&i.Deleted,
 			&i.Version,
 			&i.UpdatedAt,
@@ -581,7 +580,7 @@ func (b *GetUserNotificationsBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPaginateBatch = `-- name: GetUsersByPositionPaginateBatch :batchmany
-SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
 FROM users u
          JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)
 WHERE NOT u.deleted
@@ -637,7 +636,6 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Query(f func(int, []User, 
 				var i User
 				if err := rows.Scan(
 					&i.ID,
-					&i.Did,
 					&i.Deleted,
 					&i.Version,
 					&i.UpdatedAt,
@@ -663,7 +661,7 @@ func (b *GetUsersByPositionPaginateBatchBatchResults) Close() error {
 }
 
 const getUsersByPositionPersonalizedBatch = `-- name: GetUsersByPositionPersonalizedBatch :batchmany
-SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
 FROM users u
          JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)
 WHERE NOT u.deleted
@@ -710,7 +708,6 @@ func (b *GetUsersByPositionPersonalizedBatchBatchResults) Query(f func(int, []Us
 				var i User
 				if err := rows.Scan(
 					&i.ID,
-					&i.Did,
 					&i.Deleted,
 					&i.Version,
 					&i.UpdatedAt,

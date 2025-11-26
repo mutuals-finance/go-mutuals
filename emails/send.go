@@ -37,17 +37,17 @@ func init() {
 const emailsAtATime = 10_000
 
 type sendNotificationEmailHttpInput struct {
-	UserID         persist.DBID  `json:"user_id" binding:"required"`
+	UserId         persist.DBID  `json:"user_id" binding:"required"`
 	ToEmail        persist.Email `json:"to_email" binding:"required"`
 	SendRealEmails bool          `json:"send_real_emails"`
 }
 
 type errNoEmailSet struct {
-	userID persist.DBID
+	userId persist.DBID
 }
 
 type errEmailMismatch struct {
-	userID persist.DBID
+	userId persist.DBID
 }
 
 func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Queries, s *sendgrid.Client) gin.HandlerFunc {
@@ -60,14 +60,14 @@ func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Quer
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIByID(c, input.UserID)
+		userWithPII, err := queries.GetUserWithPIIById(c, input.UserId)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
 		if userWithPII.PiiEmailAddress.String() == "" {
-			util.ErrResponse(c, http.StatusBadRequest, errNoEmailSet{userID: input.UserID})
+			util.ErrResponse(c, http.StatusBadRequest, errNoEmailSet{userId: input.UserID})
 			return
 		}
 
@@ -120,7 +120,7 @@ func adminSendNotificationEmail(queries *coredb.Queries, s *sendgrid.Client) gin
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIByID(c, input.UserID)
+		userWithPII, err := queries.GetUserWithPIIById(c, input.UserID)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
@@ -349,7 +349,7 @@ func runForUsersWithNotificationsOnForEmailType(ctx context.Context, emailType p
 }
 
 func (e errNoEmailSet) Error() string {
-	return fmt.Sprintf("user %s has no email", e.userID)
+	return fmt.Sprintf("user %s has no email", e.userId)
 }
 
 func (e errEmailMismatch) Error() string {

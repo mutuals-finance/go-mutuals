@@ -85,23 +85,21 @@ func (q *Queries) CountAllUsers(ctx context.Context) (int64, error) {
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, did, email_unsubscriptions)
-VALUES ($1, $2, $3)
-RETURNING id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
+INSERT INTO users (id, email_unsubscriptions)
+VALUES ($1, $2)
+RETURNING id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
 `
 
 type CreateUserParams struct {
 	ID                   persist.DBID                 `db:"id" json:"id"`
-	Did                  string                       `db:"did" json:"did"`
 	EmailUnsubscriptions persist.EmailUnsubscriptions `db:"email_unsubscriptions" json:"email_unsubscriptions"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.ID, arg.Did, arg.EmailUnsubscriptions)
+	row := q.db.QueryRow(ctx, createUser, arg.ID, arg.EmailUnsubscriptions)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Did,
 		&i.Deleted,
 		&i.Version,
 		&i.UpdatedAt,
@@ -112,14 +110,14 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
-const deleteUserByID = `-- name: DeleteUserByID :exec
+const deleteUserById = `-- name: DeleteUserById :exec
 UPDATE users
 SET deleted = TRUE
 WHERE id = $1
 `
 
-func (q *Queries) DeleteUserByID(ctx context.Context, id persist.DBID) error {
-	_, err := q.db.Exec(ctx, deleteUserByID, id)
+func (q *Queries) DeleteUserById(ctx context.Context, id persist.DBID) error {
+	_, err := q.db.Exec(ctx, deleteUserById, id)
 	return err
 }
 
@@ -141,32 +139,9 @@ func (q *Queries) DeleteUserRoles(ctx context.Context, arg DeleteUserRolesParams
 	return err
 }
 
-const getUserByDID = `-- name: GetUserByDID :one
-SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
-FROM users u
-WHERE u.did = $1
-  AND u.deleted = FALSE
-`
-
-func (q *Queries) GetUserByDID(ctx context.Context, did string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByDID, did)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Did,
-		&i.Deleted,
-		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.NotificationSettings,
-		&i.EmailUnsubscriptions,
-	)
-	return i, err
-}
-
 const getUserById = `-- name: GetUserById :one
 
-SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
+SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
 FROM users
 WHERE id = $1
   AND deleted = FALSE
@@ -180,7 +155,6 @@ func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Did,
 		&i.Deleted,
 		&i.Version,
 		&i.UpdatedAt,
@@ -218,19 +192,18 @@ func (q *Queries) GetUserRolesByUserId(ctx context.Context, userID persist.DBID)
 	return items, nil
 }
 
-const getUserWithPIIByID = `-- name: GetUserWithPIIByID :one
-SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions, pii_unverified_email_address, pii_verified_email_address
+const getUserWithPIIById = `-- name: GetUserWithPIIById :one
+SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions, pii_unverified_email_address, pii_verified_email_address
 FROM pii.user_view
 WHERE id = $1
   AND deleted = FALSE
 `
 
-func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (PiiUserView, error) {
-	row := q.db.QueryRow(ctx, getUserWithPIIByID, userID)
+func (q *Queries) GetUserWithPIIById(ctx context.Context, userID persist.DBID) (PiiUserView, error) {
+	row := q.db.QueryRow(ctx, getUserWithPIIById, userID)
 	var i PiiUserView
 	err := row.Scan(
 		&i.ID,
-		&i.Did,
 		&i.Deleted,
 		&i.Version,
 		&i.UpdatedAt,
@@ -243,44 +216,8 @@ func (q *Queries) GetUserWithPIIByID(ctx context.Context, userID persist.DBID) (
 	return i, err
 }
 
-const getUsersByDIDs = `-- name: GetUsersByDIDs :many
-SELECT DISTINCT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
-FROM users u
-WHERE u.did = ANY ($1::varchar[])
-  AND u.deleted = FALSE
-`
-
-func (q *Queries) GetUsersByDIDs(ctx context.Context, dollar_1 []string) ([]User, error) {
-	rows, err := q.db.Query(ctx, getUsersByDIDs, dollar_1)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Did,
-			&i.Deleted,
-			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.NotificationSettings,
-			&i.EmailUnsubscriptions,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getUsersByIDs = `-- name: GetUsersByIDs :many
-SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
+const getUsersByIds = `-- name: GetUsersByIds :many
+SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
 FROM users
 WHERE id = ANY ($2)
   AND deleted = FALSE
@@ -291,7 +228,7 @@ ORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,
 LIMIT $1
 `
 
-type GetUsersByIDsParams struct {
+type GetUsersByIdsParams struct {
 	Limit         int32            `db:"limit" json:"limit"`
 	UserIds       persist.DBIDList `db:"user_ids" json:"user_ids"`
 	CurBeforeTime time.Time        `db:"cur_before_time" json:"cur_before_time"`
@@ -301,8 +238,8 @@ type GetUsersByIDsParams struct {
 	PagingForward bool             `db:"paging_forward" json:"paging_forward"`
 }
 
-func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, getUsersByIDs,
+func (q *Queries) GetUsersByIds(ctx context.Context, arg GetUsersByIdsParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, getUsersByIds,
 		arg.Limit,
 		arg.UserIds,
 		arg.CurBeforeTime,
@@ -320,7 +257,6 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.Did,
 			&i.Deleted,
 			&i.Version,
 			&i.UpdatedAt,
@@ -339,7 +275,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, arg GetUsersByIDsParams) ([
 }
 
 const getUsersWithEmailNotificationsOnForEmailType = `-- name: GetUsersWithEmailNotificationsOnForEmailType :many
-SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions, u.pii_unverified_email_address, u.pii_verified_email_address
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions, u.pii_unverified_email_address, u.pii_verified_email_address
 FROM pii.user_view u
          LEFT JOIN user_roles r ON r.user_id = u.id AND r.role = 'EMAIL_TESTER' AND r.deleted = FALSE
 WHERE (u.email_unsubscriptions ->> 'all' = 'false' OR u.email_unsubscriptions ->> 'all' IS NULL)
@@ -387,7 +323,6 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 		var i PiiUserView
 		if err := rows.Scan(
 			&i.ID,
-			&i.Did,
 			&i.Deleted,
 			&i.Version,
 			&i.UpdatedAt,
@@ -408,17 +343,17 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 }
 
 const getUsersWithRolePaginate = `-- name: GetUsersWithRolePaginate :many
-SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
 FROM users u,
      user_roles ur
 WHERE u.deleted = FALSE
   AND ur.deleted = FALSE
   AND u.id = ur.user_id
   AND ur.role = $2
-  AND (u.username_idempotent, u.id) < ($3::varchar, $4::dbid)
-  AND (u.username_idempotent, u.id) > ($5::varchar, $6::dbid)
-ORDER BY CASE WHEN $7::bool THEN (u.username_idempotent, u.id) END ASC,
-         CASE WHEN NOT $7::bool THEN (u.username_idempotent, u.id) END DESC
+  AND (u.id) < ($3::varchar, $4::dbid)
+  AND (u.id) > ($5::varchar, $6::dbid)
+ORDER BY CASE WHEN $7::bool THEN (u.id) END ASC,
+         CASE WHEN NOT $7::bool THEN (u.id) END DESC
 LIMIT $1
 `
 
@@ -451,7 +386,6 @@ func (q *Queries) GetUsersWithRolePaginate(ctx context.Context, arg GetUsersWith
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.Did,
 			&i.Deleted,
 			&i.Version,
 			&i.UpdatedAt,

@@ -87,7 +87,7 @@ type UserNotificationSettings struct {
 }
 
 type CreateUserInput struct {
-	DID string
+	ID string
 }
 
 // UserRepository represents the interface for interacting with the persisted state of users

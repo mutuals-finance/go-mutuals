@@ -64,7 +64,7 @@ func (api ClaimAPI) GetClaimsByPoolID(ctx context.Context, poolID persist.DBID) 
 	return pools, nil
 }
 
-func (api ClaimAPI) GetClaimByID(ctx context.Context, id persist.DBID) (*db.Claim, error) {
+func (api ClaimAPI) GetClaimById(ctx context.Context, id persist.DBID) (*db.Claim, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"id": validate.WithTag(id, "required"),

@@ -82,7 +82,7 @@ func (r *extensionRegistryResolver) Owner(ctx context.Context, obj *model.Extens
 
 // UserRegister is the resolver for the userRegister field.
 func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserRegisterInput) (*model.UserRegister, error) {
-	user, err := publicapi.For(ctx).User.CreateUser(ctx, *input.Did)
+	user, err := publicapi.For(ctx).User.CreateUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserReg
 }
 
 // UserUpdate is the resolver for the userUpdate field.
-func (r *mutationResolver) UserUpdate(ctx context.Context, userID *persist.DBID, input model.UserInput) (*model.UserUpdate, error) {
+func (r *mutationResolver) UserUpdate(ctx context.Context, userId *persist.DBID, input model.UserInput) (*model.UserUpdate, error) {
 	panic(fmt.Errorf("not implemented: UserUpdate - userUpdate"))
 	/*	user, err := publicapi.For(ctx).User.Update(ctx, input.Username)
 		if err != nil {
@@ -479,7 +479,7 @@ func (r *txResolver) Withdrawals(ctx context.Context, obj *model.Tx) ([]*model.W
 
 // Roles is the resolver for the roles field.
 func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*persist.Role, error) {
-	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserID(ctx, obj.Dbid)
+	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserId(ctx, obj.Dbid)
 	if err != nil {
 		return nil, err
 	}
@@ -515,8 +515,8 @@ func (r *userEmailResolver) EmailNotificationSettings(ctx context.Context, obj *
 
 // User is the resolver for the user field.
 func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.User, error) {
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	return resolveUserByUserID(ctx, userID)
+	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	return resolveUserByUserID(ctx, userId)
 }
 
 // Pools is the resolver for the pools field.

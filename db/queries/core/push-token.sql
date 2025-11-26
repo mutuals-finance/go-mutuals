@@ -9,19 +9,19 @@ INSERT INTO push_notification_tokens (id, user_id, push_token, created_at, delet
 VALUES (@id, @user_id, @push_token, NOW(), FALSE)
 RETURNING *;
 
--- name: DeletePushTokensByIDs :exec
+-- name: DeletePushTokensByIds :exec
 UPDATE push_notification_tokens
 SET deleted = TRUE
 WHERE id = ANY (@ids)
   AND deleted = FALSE;
 
--- name: GetPushTokensByUserID :many
+-- name: GetPushTokensByUserId :many
 SELECT *
 FROM push_notification_tokens
 WHERE user_id = @user_id
   AND deleted = FALSE;
 
--- name: GetPushTokensByIDs :many
+-- name: GetPushTokensByIds :many
 WITH keys AS (SELECT UNNEST(@ids::text[])                 AS id
                    , GENERATE_SUBSCRIPTS(@ids::text[], 1) AS index)
 SELECT t.*

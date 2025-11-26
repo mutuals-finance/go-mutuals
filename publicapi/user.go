@@ -48,7 +48,7 @@ type UserAPI struct {
 func (api UserAPI) GetLoggedInUserId(ctx context.Context) persist.DBID {
 	gc := util.MustGetGinContext(ctx)
 
-	return persist.DBID(auth.GetUserDIDFromCtx(gc))
+	return auth.GetUserIdFromCtx(gc)
 }
 
 func (api UserAPI) IsUserLoggedIn(ctx context.Context) bool {
@@ -60,15 +60,15 @@ func (api UserAPI) IsUserLoggedIn(ctx context.Context) bool {
 	return auth.GetUserAuthedFromCtx(gc)
 }
 
-func (api UserAPI) GetUserById(ctx context.Context, userID persist.DBID) (*coredb.User, error) {
+func (api UserAPI) GetUserById(ctx context.Context, userId persist.DBID) (*coredb.User, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": validate.WithTag(userID, "required"),
+		"userId": validate.WithTag(userId, "required"),
 	}); err != nil {
 		return nil, err
 	}
 
-	user, err := api.loaders.GetUserByIdBatch.Load(userID)
+	user, err := api.loaders.GetUserByIdBatch.Load(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -103,12 +103,12 @@ func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress 
 func (api UserAPI) GetUserWithPII(ctx context.Context) (*coredb.PiiUserView, error) {
 	// Nothing to validate
 	/*
-		userDID, err := getAuthenticatedUserID(ctx)
+		userId, err := getAuthenticatedUserId(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-			userWithPII, err := api.queries.GetUserWithPIIByID(ctx, userDID)
+			userWithPII, err := api.queries.GetUserWithPIIById(ctx, userId)
 			if err != nil {
 				return nil, err
 			}
@@ -119,10 +119,10 @@ func (api UserAPI) GetUserWithPII(ctx context.Context) (*coredb.PiiUserView, err
 	return nil, nil
 }
 
-func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, before, after *string, first, last *int) ([]coredb.User, PageInfo, error) {
+func (api UserAPI) GetUsersByIds(ctx context.Context, userIds []persist.DBID, before, after *string, first, last *int) ([]coredb.User, PageInfo, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userIDs": validate.WithTag(userIDs, "required"),
+		"userIds": validate.WithTag(userIds, "required"),
 	}); err != nil {
 		return nil, PageInfo{}, err
 	}
@@ -132,9 +132,9 @@ func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, be
 	}
 
 	queryFunc := func(params timeIDPagingParams) ([]coredb.User, error) {
-		return api.queries.GetUsersByIDs(ctx, coredb.GetUsersByIDsParams{
+		return api.queries.GetUsersByIds(ctx, coredb.GetUsersByIdsParams{
 			Limit:         params.Limit,
-			UserIds:       userIDs,
+			UserIds:       userIds,
 			CurBeforeTime: params.CursorBeforeTime,
 			CurBeforeID:   params.CursorBeforeID,
 			CurAfterTime:  params.CursorAfterTime,
@@ -144,7 +144,7 @@ func (api UserAPI) GetUsersByIDs(ctx context.Context, userIDs []persist.DBID, be
 	}
 
 	countFunc := func() (int, error) {
-		return len(userIDs), nil
+		return len(userIds), nil
 	}
 
 	cursorFunc := func(u coredb.User) (time.Time, persist.DBID, error) {
@@ -201,7 +201,7 @@ func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.Ch
 		return nil, err
 	}
 
-	/*	dbUser, err := api.queries.GetUsersByDIDs(ctx, chainAddress.Address())
+	/*	dbUser, err := api.queries.GetUsersByIds(ctx, chainAddress.Address())
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +216,7 @@ func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*c
 		return nil, err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*c
 	ids := util.MapWithoutError(roles, func(role persist.Role) string { return persist.GenerateID().String() })
 
 	err = api.queries.AddUserRoles(ctx, coredb.AddUserRolesParams{
-		UserID: persist.DBID(userID),
+		UserID: userId,
 		Ids:    ids,
 		Roles:  newRoles,
 	})
@@ -247,12 +247,12 @@ func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*c
 	// Even though the user's roles have changed in the database, it could take a while before
 	// the new roles are reflected in their auth token. Forcing an auth token refresh will
 	// make the roles appear immediately.
-	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, persist.DBID(userID))
+	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, userId)
 	if err != nil {
-		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userID, err)
+		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userId, err)
 	}
 
-	user, err := api.queries.GetUserById(ctx, persist.DBID(userID))
+	user, err := api.queries.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 		return nil, err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 
 	err = api.queries.DeleteUserRoles(ctx, coredb.DeleteUserRolesParams{
 		Roles:  roles,
-		UserID: persist.DBID(userID),
+		UserID: userId,
 	})
 	if err != nil {
 		return nil, err
@@ -293,12 +293,12 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 	// Even though the user's roles have changed in the database, it could take a while before
 	// the new roles are reflected in their auth token. Forcing an auth token refresh will
 	// make the roles appear immediately.
-	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, persist.DBID(userID))
+	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, userId)
 	if err != nil {
-		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userID, err)
+		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userId, err)
 	}
 
-	user, err := api.queries.GetUserById(ctx, persist.DBID(userID))
+	user, err := api.queries.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -306,8 +306,8 @@ func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*
 	return &user, err
 }
 
-func (api *UserAPI) GetUserRolesByUserID(ctx context.Context, userID persist.DBID) ([]persist.Role, error) {
-	return auth.RolesByUserID(ctx, api.queries, userID)
+func (api *UserAPI) GetUserRolesByUserId(ctx context.Context, userId persist.DBID) ([]persist.Role, error) {
+	return auth.RolesByUserId(ctx, api.queries, userId)
 }
 
 func (api *UserAPI) UserIsAdmin(ctx context.Context) bool {
@@ -355,18 +355,8 @@ func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role,
 	return paginator.paginate(before, after, first, last)
 }
 
-func (api UserAPI) CreateUser(ctx context.Context, did string) (user coredb.User, err error) {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"did": validate.WithTag(did, "did"),
-	}); err != nil {
-		return coredb.User{}, err
-	}
-
-	// TODO check id token and take DID from there
-	user, err = userService.CreateUser(ctx, userService.CreateUserInput{
-		DID: did,
-	}, api.repos, api.queries)
-
+func (api UserAPI) CreateUser(ctx context.Context) (user coredb.User, err error) {
+	user, err = userService.CreateUser(ctx, api.repos, api.queries)
 	if err != nil {
 		return coredb.User{}, err
 	}
@@ -396,12 +386,12 @@ func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = userService.UpdateUserInfo(ctx, persist.DBID(userID), username, api.repos.UserRepository, api.ethClient)
+	err = userService.UpdateUserInfo(ctx, userId, username, api.repos.UserRepository, api.ethClient)
 	if err != nil {
 		return err
 	}
@@ -417,19 +407,19 @@ func (api UserAPI) UpdateUserEmailWithManualVerification(ctx context.Context, em
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
 	err = api.queries.UpdateUserUnverifiedEmail(ctx, coredb.UpdateUserUnverifiedEmailParams{
-		UserID:       persist.DBID(userID),
+		UserID:       userId,
 		EmailAddress: email,
 	})
 	if err != nil {
 		return err
 	}
 
-	err = emails.RequestVerificationEmail(ctx, persist.DBID(userID))
+	err = emails.RequestVerificationEmail(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -445,13 +435,13 @@ func (api UserAPI) UpdateUserEmail(ctx context.Context, email persist.Email) err
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
 
 	err = api.queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
-		UserID:       persist.DBID(userID),
+		UserID:       userId,
 		EmailAddress: email,
 	})
 
@@ -470,38 +460,38 @@ func (api UserAPI) UpdateUserEmailNotificationSettings(ctx context.Context, sett
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
 
 	// update unsubscriptions
 
-	return emails.UpdateUnsubscriptionsByUserID(ctx, persist.DBID(userID), settings)
+	return emails.UpdateUnsubscriptionsByUserID(ctx, userId, settings)
 
 }
 
 func (api UserAPI) GetCurrentUserEmailNotificationSettings(ctx context.Context) (persist.EmailUnsubscriptions, error) {
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return persist.EmailUnsubscriptions{}, err
 	}
 
 	// update unsubscriptions
 
-	return emails.GetCurrentUnsubscriptionsByUserID(ctx, persist.DBID(userID))
+	return emails.GetCurrentUnsubscriptionsByUserID(ctx, userId)
 
 }
 
 func (api UserAPI) ResendEmailVerification(ctx context.Context) error {
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = emails.RequestVerificationEmail(ctx, persist.DBID(userID))
+	err = emails.RequestVerificationEmail(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -517,12 +507,12 @@ func (api UserAPI) UpdateUserNotificationSettings(ctx context.Context, notificat
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
 
-	return api.queries.UpdateNotificationSettingsByID(ctx, coredb.UpdateNotificationSettingsByIDParams{ID: persist.DBID(userID), NotificationSettings: notificationSettings})
+	return api.queries.UpdateNotificationSettingsById(ctx, coredb.UpdateNotificationSettingsByIdParams{ID: userId, NotificationSettings: notificationSettings})
 }
 
 // CreatePushTokenForUser adds a push token to a user, or returns the existing push token if it's already been
@@ -535,7 +525,7 @@ func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string)
 		return coredb.PushNotificationToken{}, err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return coredb.PushNotificationToken{}, err
 	}
@@ -546,7 +536,7 @@ func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string)
 	if err == nil {
 		// If the token exists and belongs to the current user, return it. Attempting to re-add
 		// a token that you've already registered is a no-op.
-		if token.UserID.String() == userID {
+		if token.UserID == userId {
 			return token, nil
 		}
 
@@ -562,7 +552,7 @@ func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string)
 
 	token, err = api.queries.CreatePushTokenForUser(ctx, coredb.CreatePushTokenForUserParams{
 		ID:        persist.GenerateID(),
-		UserID:    persist.DBID(userID),
+		UserID:    userId,
 		PushToken: pushToken,
 	})
 
@@ -583,7 +573,7 @@ func (api UserAPI) DeletePushTokenByPushToken(ctx context.Context, pushToken str
 		return err
 	}
 
-	userID, err := getAuthenticatedUserID(ctx)
+	userId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -591,8 +581,8 @@ func (api UserAPI) DeletePushTokenByPushToken(ctx context.Context, pushToken str
 	existingToken, err := api.queries.GetPushTokenByPushToken(ctx, pushToken)
 	if err == nil {
 		// If the token exists and belongs to the current user, let them delete it.
-		if existingToken.UserID.String() == userID {
-			return api.queries.DeletePushTokensByIDs(ctx, []persist.DBID{existingToken.ID})
+		if existingToken.UserID == userId {
+			return api.queries.DeletePushTokensByIds(ctx, []persist.DBID{existingToken.ID})
 		}
 
 		// Otherwise, the token belongs to another user. Return an error.
@@ -610,18 +600,18 @@ func (api UserAPI) DeletePushTokenByPushToken(ctx context.Context, pushToken str
 
 func (api UserAPI) BlockUser(ctx context.Context, userID persist.DBID) error {
 	// Validate
-	viewerID, err := getAuthenticatedUserID(ctx)
+	viewerId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": validate.WithTag(userID, fmt.Sprintf("required,ne=%s", viewerID)),
+		"userID": validate.WithTag(userID, fmt.Sprintf("required,ne=%s", viewerId)),
 	}); err != nil {
 		return err
 	}
 	_, err = api.queries.BlockUser(ctx, coredb.BlockUserParams{
 		ID:            persist.GenerateID(),
-		UserID:        persist.DBID(viewerID),
+		UserID:        viewerId,
 		BlockedUserID: userID,
 	})
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {
@@ -637,7 +627,7 @@ func (api UserAPI) UnblockUser(ctx context.Context, userID persist.DBID) error {
 	}); err != nil {
 		return err
 	}
-	viewerID, err := getAuthenticatedUserID(ctx)
+	viewerID, err := getAuthenticatedUserId(ctx)
 	if err != nil {
 		return err
 	}

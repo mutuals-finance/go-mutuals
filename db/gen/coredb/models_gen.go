@@ -80,7 +80,6 @@ type PiiForUser struct {
 
 type PiiUserView struct {
 	ID                        persist.DBID                     `db:"id" json:"id"`
-	Did                       string                           `db:"did" json:"did"`
 	Deleted                   bool                             `db:"deleted" json:"deleted"`
 	Version                   sql.NullInt32                    `db:"version" json:"version"`
 	UpdatedAt                 time.Time                        `db:"updated_at" json:"updated_at"`
@@ -100,7 +99,7 @@ type Pool struct {
 	DonationBps int32        `db:"donation_bps" json:"donation_bps"`
 	Image       string       `db:"image" json:"image"`
 	Slug        string       `db:"slug" json:"slug"`
-	OwnerDid    string       `db:"owner_did" json:"owner_did"`
+	OwnerID     persist.DBID `db:"owner_id" json:"owner_id"`
 	ContractID  persist.DBID `db:"contract_id" json:"contract_id"`
 	Deleted     bool         `db:"deleted" json:"deleted"`
 	UpdatedAt   time.Time    `db:"updated_at" json:"updated_at"`
@@ -143,7 +142,6 @@ type SpamUserScore struct {
 
 type User struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
-	Did                  string                           `db:"did" json:"did"`
 	Deleted              bool                             `db:"deleted" json:"deleted"`
 	Version              sql.NullInt32                    `db:"version" json:"version"`
 	UpdatedAt            time.Time                        `db:"updated_at" json:"updated_at"`

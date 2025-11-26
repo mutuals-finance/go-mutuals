@@ -86,10 +86,10 @@ func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]C
 }
 
 const createPool = `-- name: CreatePool :one
-INSERT INTO pools (id, name, description, image, slug, owner_did, contract_id, donation_bps, private, deleted,
+INSERT INTO pools (id, name, description, image, slug, owner_id, contract_id, donation_bps, private, deleted,
                    updated_at, created_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, NOW(), NOW())
-RETURNING id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at
+RETURNING id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
 `
 
 type CreatePoolParams struct {
@@ -98,7 +98,7 @@ type CreatePoolParams struct {
 	Description string       `db:"description" json:"description"`
 	Image       string       `db:"image" json:"image"`
 	Slug        string       `db:"slug" json:"slug"`
-	OwnerDid    string       `db:"owner_did" json:"owner_did"`
+	OwnerID     persist.DBID `db:"owner_id" json:"owner_id"`
 	ContractID  persist.DBID `db:"contract_id" json:"contract_id"`
 	DonationBps int32        `db:"donation_bps" json:"donation_bps"`
 	Private     bool         `db:"private" json:"private"`
@@ -111,7 +111,7 @@ func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, e
 		arg.Description,
 		arg.Image,
 		arg.Slug,
-		arg.OwnerDid,
+		arg.OwnerID,
 		arg.ContractID,
 		arg.DonationBps,
 		arg.Private,
@@ -126,7 +126,7 @@ func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, e
 		&i.DonationBps,
 		&i.Image,
 		&i.Slug,
-		&i.OwnerDid,
+		&i.OwnerID,
 		&i.ContractID,
 		&i.Deleted,
 		&i.UpdatedAt,
@@ -137,7 +137,7 @@ func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, e
 
 const getPoolById = `-- name: GetPoolById :one
 
-SELECT id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at
+SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
 FROM pools
 WHERE id = $1
   AND deleted = FALSE
@@ -158,7 +158,7 @@ func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error
 		&i.DonationBps,
 		&i.Image,
 		&i.Slug,
-		&i.OwnerDid,
+		&i.OwnerID,
 		&i.ContractID,
 		&i.Deleted,
 		&i.UpdatedAt,
@@ -245,14 +245,14 @@ SET name         = $1,
     description  = $2,
     image        = $3,
     slug         = $4,
-    owner_did    = $5,
+    owner_id    = $5,
     contract_id  = $6,
     donation_bps = $7,
     private      = $8,
     updated_at   = NOW()
 WHERE id = $9
   AND deleted = FALSE
-RETURNING id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at
+RETURNING id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
 `
 
 type UpdatePoolParams struct {
@@ -260,7 +260,7 @@ type UpdatePoolParams struct {
 	Description string       `db:"description" json:"description"`
 	Image       string       `db:"image" json:"image"`
 	Slug        string       `db:"slug" json:"slug"`
-	OwnerDid    string       `db:"owner_did" json:"owner_did"`
+	OwnerID     persist.DBID `db:"owner_id" json:"owner_id"`
 	ContractID  persist.DBID `db:"contract_id" json:"contract_id"`
 	DonationBps int32        `db:"donation_bps" json:"donation_bps"`
 	Private     bool         `db:"private" json:"private"`
@@ -273,7 +273,7 @@ func (q *Queries) UpdatePool(ctx context.Context, arg UpdatePoolParams) (Pool, e
 		arg.Description,
 		arg.Image,
 		arg.Slug,
-		arg.OwnerDid,
+		arg.OwnerID,
 		arg.ContractID,
 		arg.DonationBps,
 		arg.Private,
@@ -289,7 +289,7 @@ func (q *Queries) UpdatePool(ctx context.Context, arg UpdatePoolParams) (Pool, e
 		&i.DonationBps,
 		&i.Image,
 		&i.Slug,
-		&i.OwnerDid,
+		&i.OwnerID,
 		&i.ContractID,
 		&i.Deleted,
 		&i.UpdatedAt,

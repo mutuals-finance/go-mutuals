@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/auth"
 	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/mutuals/go-mutuals/util"
@@ -21,7 +22,7 @@ var errMustResolveENS = errors.New("ENS username must resolve to owner address")
 
 // GetUserInput is the input for the user get pipeline
 type GetUserInput struct {
-	UserID   persist.DBID    `json:"user_id" form:"user_id"`
+	UserId   persist.DBID    `json:"user_id" form:"user_id"`
 	Address  persist.Address `json:"address" form:"address"`
 	Chain    persist.Chain   `json:"chain" form:"chain"`
 	Username string          `json:"username" form:"username"`
@@ -29,7 +30,7 @@ type GetUserInput struct {
 
 // GetUserOutput is the output of the user get pipeline
 type GetUserOutput struct {
-	UserID    persist.DBID     `json:"id"`
+	UserId    persist.DBID     `json:"id"`
 	Username  string           `json:"username"`
 	BioStr    string           `json:"bio"`
 	Addresses []persist.Wallet `json:"addresses"`
@@ -63,13 +64,13 @@ type RemoveUserAddressesInput struct {
 type CreateUserOutput struct {
 	SignatureValid bool         `json:"signature_valid"`
 	JWTtoken       string       `json:"jwt_token"` // JWT token is sent back to user to use to continue onboarding
-	UserID         persist.DBID `json:"user_id"`
+	UserId         persist.DBID `json:"user_id"`
 	PoolID         persist.DBID `json:"pool_id"`
 }
 
 // MergeUsersInput is the input for the user merge pipeline
 type MergeUsersInput struct {
-	SecondUserID persist.DBID       `json:"second_user_id" binding:"required"`
+	SecondUserId persist.DBID       `json:"second_user_id" binding:"required"`
 	Signature    string             `json:"signature" binding:"signature"`
 	Nonce        string             `json:"nonce"`
 	Address      persist.Address    `json:"address"   binding:"required"`
@@ -82,7 +83,7 @@ type CreateUserInput struct {
 }
 
 // CreateUser creates a new user
-func CreateUser(ctx context.Context, in CreateUserInput, repos *postgres.Repositories, queries *coredb.Queries) (user coredb.User, err error) {
+func CreateUser(ctx context.Context, repos *postgres.Repositories, queries *coredb.Queries) (user coredb.User, err error) {
 	gc := util.MustGetGinContext(ctx)
 	tx, err := repos.BeginTx(ctx)
 	if err != nil {
@@ -92,10 +93,14 @@ func CreateUser(ctx context.Context, in CreateUserInput, repos *postgres.Reposit
 	txQueries := queries.WithTx(tx)
 	defer tx.Rollback(ctx)
 
+	userId := auth.GetUserIdFromCtx(gc)
+
 	user, err = queries.CreateUser(ctx, coredb.CreateUserParams{
-		ID:  persist.GenerateID(),
-		Did: in.DID,
+		ID: userId,
 	})
+	if err != nil {
+		return coredb.User{}, err
+	}
 
 	err = txQueries.AddPiiAccountCreationInfo(ctx, coredb.AddPiiAccountCreationInfoParams{
 		UserID:    user.ID,
@@ -103,7 +108,7 @@ func CreateUser(ctx context.Context, in CreateUserInput, repos *postgres.Reposit
 	})
 
 	if err != nil {
-		logger.For(ctx).Warnf("failed to get IP address for userID %s: %s\n", user.ID, err)
+		logger.For(ctx).Warnf("failed to get IP address for userId %s: %s\n", user.ID, err)
 	}
 
 	err = tx.Commit(ctx)
@@ -115,9 +120,9 @@ func CreateUser(ctx context.Context, in CreateUserInput, repos *postgres.Reposit
 }
 
 // UpdateUserInfo updates a user by ID and ensures that if they are using an ENS name as a username that their address resolves to that ENS
-func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, userRepository *postgres.UserRepository, ethClient *ethclient.Client) error {
+func UpdateUserInfo(pCtx context.Context, userId persist.DBID, username string, userRepository *postgres.UserRepository, ethClient *ethclient.Client) error {
 	if strings.HasSuffix(strings.ToLower(username), ".eth") {
-		/*		user, err := userRepository.GetByID(pCtx, userID)
+		/*		user, err := userRepository.GetByID(pCtx, userId)
 				if err != nil {
 					return err
 				}
@@ -136,7 +141,7 @@ func UpdateUserInfo(pCtx context.Context, userID persist.DBID, username string, 
 
 	err := userRepository.UpdateByID(
 		pCtx,
-		userID,
+		userId,
 		persist.UserUpdateInfoInput{
 			UsernameIdempotent: persist.NullString(strings.ToLower(username)),
 			Username:           persist.NullString(username),

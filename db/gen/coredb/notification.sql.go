@@ -239,7 +239,7 @@ func (q *Queries) CreateViewPoolNotification(ctx context.Context, arg CreateView
 	return i, err
 }
 
-const getMostRecentNotificationByOwnerIDForAction = `-- name: GetMostRecentNotificationByOwnerIDForAction :one
+const getMostRecentNotificationByOwnerIdForAction = `-- name: GetMostRecentNotificationByOwnerIdForAction :one
 SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 FROM notifications
 WHERE owner_id = $1
@@ -249,13 +249,13 @@ ORDER BY created_at DESC
 LIMIT 1
 `
 
-type GetMostRecentNotificationByOwnerIDForActionParams struct {
+type GetMostRecentNotificationByOwnerIdForActionParams struct {
 	OwnerID persist.DBID   `db:"owner_id" json:"owner_id"`
 	Action  persist.Action `db:"action" json:"action"`
 }
 
-func (q *Queries) GetMostRecentNotificationByOwnerIDForAction(ctx context.Context, arg GetMostRecentNotificationByOwnerIDForActionParams) (Notification, error) {
-	row := q.db.QueryRow(ctx, getMostRecentNotificationByOwnerIDForAction, arg.OwnerID, arg.Action)
+func (q *Queries) GetMostRecentNotificationByOwnerIdForAction(ctx context.Context, arg GetMostRecentNotificationByOwnerIdForActionParams) (Notification, error) {
+	row := q.db.QueryRow(ctx, getMostRecentNotificationByOwnerIdForAction, arg.OwnerID, arg.Action)
 	var i Notification
 	err := row.Scan(
 		&i.ID,
@@ -274,15 +274,15 @@ func (q *Queries) GetMostRecentNotificationByOwnerIDForAction(ctx context.Contex
 	return i, err
 }
 
-const getNotificationByID = `-- name: GetNotificationByID :one
+const getNotificationById = `-- name: GetNotificationById :one
 SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 FROM notifications
 WHERE id = $1
   AND deleted = FALSE
 `
 
-func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Notification, error) {
-	row := q.db.QueryRow(ctx, getNotificationByID, id)
+func (q *Queries) GetNotificationById(ctx context.Context, id persist.DBID) (Notification, error) {
+	row := q.db.QueryRow(ctx, getNotificationById, id)
 	var i Notification
 	err := row.Scan(
 		&i.ID,
@@ -301,7 +301,7 @@ func (q *Queries) GetNotificationByID(ctx context.Context, id persist.DBID) (Not
 	return i, err
 }
 
-const getNotificationsByOwnerIDForActionAfter = `-- name: GetNotificationsByOwnerIDForActionAfter :many
+const getNotificationsByOwnerIdForActionAfter = `-- name: GetNotificationsByOwnerIdForActionAfter :many
 SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at
 FROM notifications
 WHERE owner_id = $1
@@ -311,14 +311,14 @@ WHERE owner_id = $1
 ORDER BY created_at DESC
 `
 
-type GetNotificationsByOwnerIDForActionAfterParams struct {
+type GetNotificationsByOwnerIdForActionAfterParams struct {
 	OwnerID      persist.DBID   `db:"owner_id" json:"owner_id"`
 	Action       persist.Action `db:"action" json:"action"`
 	CreatedAfter time.Time      `db:"created_after" json:"created_after"`
 }
 
-func (q *Queries) GetNotificationsByOwnerIDForActionAfter(ctx context.Context, arg GetNotificationsByOwnerIDForActionAfterParams) ([]Notification, error) {
-	rows, err := q.db.Query(ctx, getNotificationsByOwnerIDForActionAfter, arg.OwnerID, arg.Action, arg.CreatedAfter)
+func (q *Queries) GetNotificationsByOwnerIdForActionAfter(ctx context.Context, arg GetNotificationsByOwnerIdForActionAfterParams) ([]Notification, error) {
+	rows, err := q.db.Query(ctx, getNotificationsByOwnerIdForActionAfter, arg.OwnerID, arg.Action, arg.CreatedAfter)
 	if err != nil {
 		return nil, err
 	}
@@ -556,18 +556,18 @@ func (q *Queries) UpdateNotification(ctx context.Context, arg UpdateNotification
 	return err
 }
 
-const updateNotificationSettingsByID = `-- name: UpdateNotificationSettingsByID :exec
+const updateNotificationSettingsById = `-- name: UpdateNotificationSettingsById :exec
 UPDATE users
 SET notification_settings = $2
 WHERE id = $1
 `
 
-type UpdateNotificationSettingsByIDParams struct {
+type UpdateNotificationSettingsByIdParams struct {
 	ID                   persist.DBID                     `db:"id" json:"id"`
 	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
 }
 
-func (q *Queries) UpdateNotificationSettingsByID(ctx context.Context, arg UpdateNotificationSettingsByIDParams) error {
-	_, err := q.db.Exec(ctx, updateNotificationSettingsByID, arg.ID, arg.NotificationSettings)
+func (q *Queries) UpdateNotificationSettingsById(ctx context.Context, arg UpdateNotificationSettingsByIdParams) error {
+	_, err := q.db.Exec(ctx, updateNotificationSettingsById, arg.ID, arg.NotificationSettings)
 	return err
 }

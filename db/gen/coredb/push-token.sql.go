@@ -61,15 +61,15 @@ func (q *Queries) CreatePushTokenForUser(ctx context.Context, arg CreatePushToke
 	return i, err
 }
 
-const deletePushTokensByIDs = `-- name: DeletePushTokensByIDs :exec
+const deletePushTokensByIds = `-- name: DeletePushTokensByIds :exec
 UPDATE push_notification_tokens
 SET deleted = TRUE
 WHERE id = ANY ($1)
   AND deleted = FALSE
 `
 
-func (q *Queries) DeletePushTokensByIDs(ctx context.Context, ids persist.DBIDList) error {
-	_, err := q.db.Exec(ctx, deletePushTokensByIDs, ids)
+func (q *Queries) DeletePushTokensByIds(ctx context.Context, ids persist.DBIDList) error {
+	_, err := q.db.Exec(ctx, deletePushTokensByIds, ids)
 	return err
 }
 
@@ -129,7 +129,7 @@ func (q *Queries) GetPushTokenByPushToken(ctx context.Context, pushToken string)
 	return i, err
 }
 
-const getPushTokensByIDs = `-- name: GetPushTokensByIDs :many
+const getPushTokensByIds = `-- name: GetPushTokensByIds :many
 WITH keys AS (SELECT UNNEST($1::text[])                 AS id
                    , GENERATE_SUBSCRIPTS($1::text[], 1) AS index)
 SELECT t.id, t.user_id, t.push_token, t.created_at, t.deleted
@@ -138,8 +138,8 @@ FROM keys k
 ORDER BY k.index
 `
 
-func (q *Queries) GetPushTokensByIDs(ctx context.Context, ids []string) ([]PushNotificationToken, error) {
-	rows, err := q.db.Query(ctx, getPushTokensByIDs, ids)
+func (q *Queries) GetPushTokensByIds(ctx context.Context, ids []string) ([]PushNotificationToken, error) {
+	rows, err := q.db.Query(ctx, getPushTokensByIds, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -164,15 +164,15 @@ func (q *Queries) GetPushTokensByIDs(ctx context.Context, ids []string) ([]PushN
 	return items, nil
 }
 
-const getPushTokensByUserID = `-- name: GetPushTokensByUserID :many
+const getPushTokensByUserId = `-- name: GetPushTokensByUserId :many
 SELECT id, user_id, push_token, created_at, deleted
 FROM push_notification_tokens
 WHERE user_id = $1
   AND deleted = FALSE
 `
 
-func (q *Queries) GetPushTokensByUserID(ctx context.Context, userID persist.DBID) ([]PushNotificationToken, error) {
-	rows, err := q.db.Query(ctx, getPushTokensByUserID, userID)
+func (q *Queries) GetPushTokensByUserId(ctx context.Context, userID persist.DBID) ([]PushNotificationToken, error) {
+	rows, err := q.db.Query(ctx, getPushTokensByUserId, userID)
 	if err != nil {
 		return nil, err
 	}

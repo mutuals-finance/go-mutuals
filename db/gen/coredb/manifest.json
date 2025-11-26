@@ -61,32 +61,6 @@
                 "array_dims": 0
               },
               {
-                "name": "did",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "users"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "pg_catalog",
-                  "name": "varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
                 "name": "deleted",
                 "not_null": true,
                 "is_array": false,
@@ -461,7 +435,7 @@
                 "array_dims": 0
               },
               {
-                "name": "owner_did",
+                "name": "owner_id",
                 "not_null": true,
                 "is_array": false,
                 "comment": "",
@@ -67585,32 +67559,6 @@
                 "array_dims": 0
               },
               {
-                "name": "did",
-                "not_null": true,
-                "is_array": false,
-                "comment": "",
-                "length": -1,
-                "is_named_param": false,
-                "is_func_call": false,
-                "scope": "",
-                "table": {
-                  "catalog": "",
-                  "schema": "pii",
-                  "name": "user_view"
-                },
-                "table_alias": "",
-                "type": {
-                  "catalog": "",
-                  "schema": "",
-                  "name": "pg_catalog.varchar"
-                },
-                "is_sqlc_slice": false,
-                "embed_table": null,
-                "original_name": "",
-                "unsigned": false,
-                "array_dims": 0
-              },
-              {
                 "name": "deleted",
                 "not_null": true,
                 "is_array": false,
@@ -75515,7 +75463,7 @@
     },
     {
       "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE id = $1\n  AND deleted = FALSE",
-      "name": "GetNotificationByID",
+      "name": "GetNotificationById",
       "cmd": ":one",
       "columns": [
         {
@@ -75868,7 +75816,7 @@
     },
     {
       "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE id = $1\n  AND deleted = FALSE",
-      "name": "GetNotificationByIDBatch",
+      "name": "GetNotificationByIdBatch",
       "cmd": ":batchone",
       "columns": [
         {
@@ -76221,7 +76169,7 @@
     },
     {
       "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND action = $2\n  AND deleted = FALSE\nORDER BY created_at DESC\nLIMIT 1",
-      "name": "GetMostRecentNotificationByOwnerIDForAction",
+      "name": "GetMostRecentNotificationByOwnerIdForAction",
       "cmd": ":one",
       "columns": [
         {
@@ -76603,7 +76551,7 @@
     },
     {
       "text": "SELECT id, deleted, owner_id, version, action, data, event_ids, pool_id, seen, amount, updated_at, created_at\nFROM notifications\nWHERE owner_id = $1\n  AND action = $2\n  AND deleted = FALSE\n  AND created_at \u003e $3\nORDER BY created_at DESC",
-      "name": "GetNotificationsByOwnerIDForActionAfter",
+      "name": "GetNotificationsByOwnerIdForActionAfter",
       "cmd": ":many",
       "columns": [
         {
@@ -78586,7 +78534,7 @@
     },
     {
       "text": "UPDATE users\nSET notification_settings = $2\nWHERE id = $1",
-      "name": "UpdateNotificationSettingsByID",
+      "name": "UpdateNotificationSettingsById",
       "cmd": ":exec",
       "columns": [],
       "params": [
@@ -79007,7 +78955,7 @@
       "insert_into_table": null
     },
     {
-      "text": "\nSELECT id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "\nSELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetPoolById",
       "cmd": ":one",
       "columns": [
@@ -79220,7 +79168,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_did",
+          "name": "owner_id",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -79390,7 +79338,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at\nFROM pools\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetPoolByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -79603,7 +79551,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_did",
+          "name": "owner_id",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -79769,7 +79717,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_did, p.contract_id, p.deleted, p.updated_at, p.created_at\nFROM claims c\n         INNER JOIN pools p ON p.id = c.pool_id\nWHERE c.recipient_address = $1\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
+      "text": "SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at\nFROM claims c\n         INNER JOIN pools p ON p.id = c.pool_id\nWHERE c.recipient_address = $1\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
       "name": "GetPoolsByAddressBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -79982,7 +79930,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_did",
+          "name": "owner_id",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80148,7 +80096,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO pools (id, name, description, image, slug, owner_did, contract_id, donation_bps, private, deleted,\n                   updated_at, created_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, NOW(), NOW())\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at",
+      "text": "INSERT INTO pools (id, name, description, image, slug, owner_id, contract_id, donation_bps, private, deleted,\n                   updated_at, created_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, NOW(), NOW())\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at",
       "name": "CreatePool",
       "cmd": ":one",
       "columns": [
@@ -80361,7 +80309,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_did",
+          "name": "owner_id",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -80640,7 +80588,7 @@
         {
           "number": 6,
           "column": {
-            "name": "owner_did",
+            "name": "owner_id",
             "not_null": true,
             "is_array": false,
             "comment": "",
@@ -80763,7 +80711,7 @@
       }
     },
     {
-      "text": "UPDATE pools\nSET name         = $1,\n    description  = $2,\n    image        = $3,\n    slug         = $4,\n    owner_did    = $5,\n    contract_id  = $6,\n    donation_bps = $7,\n    private      = $8,\n    updated_at   = NOW()\nWHERE id = $9\n  AND deleted = FALSE\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_did, contract_id, deleted, updated_at, created_at",
+      "text": "UPDATE pools\nSET name         = $1,\n    description  = $2,\n    image        = $3,\n    slug         = $4,\n    owner_id    = $5,\n    contract_id  = $6,\n    donation_bps = $7,\n    private      = $8,\n    updated_at   = NOW()\nWHERE id = $9\n  AND deleted = FALSE\nRETURNING id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at",
       "name": "UpdatePool",
       "cmd": ":one",
       "columns": [
@@ -80976,7 +80924,7 @@
           "array_dims": 0
         },
         {
-          "name": "owner_did",
+          "name": "owner_id",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -81226,7 +81174,7 @@
         {
           "number": 5,
           "column": {
-            "name": "owner_did",
+            "name": "owner_id",
             "not_null": true,
             "is_array": false,
             "comment": "",
@@ -82733,7 +82681,7 @@
     },
     {
       "text": "UPDATE push_notification_tokens\nSET deleted = TRUE\nWHERE id = ANY ($1)\n  AND deleted = FALSE",
-      "name": "DeletePushTokensByIDs",
+      "name": "DeletePushTokensByIds",
       "cmd": ":exec",
       "columns": [],
       "params": [
@@ -82773,7 +82721,7 @@
     },
     {
       "text": "SELECT id, user_id, push_token, created_at, deleted\nFROM push_notification_tokens\nWHERE user_id = $1\n  AND deleted = FALSE",
-      "name": "GetPushTokensByUserID",
+      "name": "GetPushTokensByUserId",
       "cmd": ":many",
       "columns": [
         {
@@ -82944,7 +82892,7 @@
     },
     {
       "text": "WITH keys AS (SELECT UNNEST($1::text[])                 AS id\n                   , GENERATE_SUBSCRIPTS($1::text[], 1) AS index)\nSELECT t.id, t.user_id, t.push_token, t.created_at, t.deleted\nFROM keys k\n         JOIN push_notification_tokens t ON t.id = k.id AND t.deleted = FALSE\nORDER BY k.index",
-      "name": "GetPushTokensByIDs",
+      "name": "GetPushTokensByIds",
       "cmd": ":many",
       "columns": [
         {
@@ -83588,38 +83536,12 @@
       "insert_into_table": null
     },
     {
-      "text": "\nSELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions\nFROM users\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "\nSELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions\nFROM users\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetUserById",
       "cmd": ":one",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -83841,38 +83763,12 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions, pii_unverified_email_address, pii_verified_email_address\nFROM pii.user_view\nWHERE id = $1\n  AND deleted = FALSE",
-      "name": "GetUserWithPIIByID",
+      "text": "SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions, pii_unverified_email_address, pii_verified_email_address\nFROM pii.user_view\nWHERE id = $1\n  AND deleted = FALSE",
+      "name": "GetUserWithPIIById",
       "cmd": ":one",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -84142,38 +84038,12 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions\nFROM users\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions\nFROM users\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetUserByIdBatch",
       "cmd": ":batchone",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -84391,38 +84261,12 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions\nFROM users\nWHERE id = ANY ($2)\n  AND deleted = FALSE\n  AND (created_at, id) \u003c ($3, $4)\n  AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
-      "name": "GetUsersByIDs",
+      "text": "SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions\nFROM users\nWHERE id = ANY ($2)\n  AND deleted = FALSE\n  AND (created_at, id) \u003c ($3, $4)\n  AND (created_at, id) \u003e ($5, $6)\nORDER BY CASE WHEN $7::bool THEN (created_at, id) END ASC,\n         CASE WHEN NOT $7::bool THEN (created_at, id) END DESC\nLIMIT $1",
+      "name": "GetUsersByIds",
       "cmd": ":many",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -84806,500 +84650,6 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u\nWHERE u.did = $1\n  AND u.deleted = FALSE",
-      "name": "GetUserByDID",
-      "cmd": ":one",
-      "columns": [
-        {
-          "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "deleted",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "bool"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "version",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "updated_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "created_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "notification_settings",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "email_unsubscriptions",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "did",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": true,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "",
-              "name": "users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "user.sql",
-      "insert_into_table": null
-    },
-    {
-      "text": "SELECT DISTINCT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u\nWHERE u.did = ANY ($1::varchar[])\n  AND u.deleted = FALSE",
-      "name": "GetUsersByDIDs",
-      "cmd": ":many",
-      "columns": [
-        {
-          "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "deleted",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "bool"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "version",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "int4"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "updated_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "created_at",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "timestamptz"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "notification_settings",
-          "not_null": false,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "email_unsubscriptions",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "jsonb"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        }
-      ],
-      "params": [
-        {
-          "number": 1,
-          "column": {
-            "name": "",
-            "not_null": true,
-            "is_array": true,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": null,
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "pg_catalog",
-              "name": "varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        }
-      ],
-      "comments": [],
-      "filename": "user.sql",
-      "insert_into_table": null
-    },
-    {
       "text": "SELECT COUNT(*)\nFROM users\nWHERE deleted = FALSE",
       "name": "CountAllUsers",
       "cmd": ":one",
@@ -85333,38 +84683,12 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO users (id, did, email_unsubscriptions)\nVALUES ($1, $2, $3)\nRETURNING id, did, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions",
+      "text": "INSERT INTO users (id, email_unsubscriptions)\nVALUES ($1, $2)\nRETURNING id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions",
       "name": "CreateUser",
       "cmd": ":one",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -85579,35 +84903,6 @@
         {
           "number": 2,
           "column": {
-            "name": "did",
-            "not_null": true,
-            "is_array": false,
-            "comment": "",
-            "length": -1,
-            "is_named_param": false,
-            "is_func_call": false,
-            "scope": "",
-            "table": {
-              "catalog": "",
-              "schema": "public",
-              "name": "users"
-            },
-            "table_alias": "",
-            "type": {
-              "catalog": "",
-              "schema": "",
-              "name": "pg_catalog.varchar"
-            },
-            "is_sqlc_slice": false,
-            "embed_table": null,
-            "original_name": "",
-            "unsigned": false,
-            "array_dims": 0
-          }
-        },
-        {
-          "number": 3,
-          "column": {
             "name": "email_unsubscriptions",
             "not_null": true,
             "is_array": false,
@@ -85645,7 +84940,7 @@
     },
     {
       "text": "UPDATE users\nSET deleted = TRUE\nWHERE id = $1",
-      "name": "DeleteUserByID",
+      "name": "DeleteUserById",
       "cmd": ":exec",
       "columns": [],
       "params": [
@@ -85757,38 +85052,12 @@
       }
     },
     {
-      "text": "SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u,\n     user_roles ur\nWHERE u.deleted = FALSE\n  AND ur.deleted = FALSE\n  AND u.id = ur.user_id\n  AND ur.role = $2\n  AND (u.username_idempotent, u.id) \u003c ($3::varchar, $4::dbid)\n  AND (u.username_idempotent, u.id) \u003e ($5::varchar, $6::dbid)\nORDER BY CASE WHEN $7::bool THEN (u.username_idempotent, u.id) END ASC,\n         CASE WHEN NOT $7::bool THEN (u.username_idempotent, u.id) END DESC\nLIMIT $1",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u,\n     user_roles ur\nWHERE u.deleted = FALSE\n  AND ur.deleted = FALSE\n  AND u.id = ur.user_id\n  AND ur.role = $2\n  AND (u.id) \u003c ($3::varchar, $4::dbid)\n  AND (u.id) \u003e ($5::varchar, $6::dbid)\nORDER BY CASE WHEN $7::bool THEN (u.id) END ASC,\n         CASE WHEN NOT $7::bool THEN (u.id) END DESC\nLIMIT $1",
       "name": "GetUsersWithRolePaginate",
       "cmd": ":many",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -86156,38 +85425,12 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u\n         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)\nWHERE NOT u.deleted\n  AND NOT u.universal\n  AND t.pos \u003e $2::int\n  AND t.pos \u003c $3::int\nORDER BY t.pos ASC",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u\n         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)\nWHERE NOT u.deleted\n  AND NOT u.universal\n  AND t.pos \u003e $2::int\n  AND t.pos \u003c $3::int\nORDER BY t.pos ASC",
       "name": "GetUsersByPositionPaginateBatch",
       "cmd": ":batchmany",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -86451,38 +85694,12 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u\n         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)\nWHERE NOT u.deleted\n  AND NOT u.universal\nORDER BY t.pos\nLIMIT 100",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions\nFROM users u\n         JOIN UNNEST($1::varchar[]) WITH ORDINALITY t(id, pos) USING (id)\nWHERE NOT u.deleted\n  AND NOT u.universal\nORDER BY t.pos\nLIMIT 100",
       "name": "GetUsersByPositionPersonalizedBatch",
       "cmd": ":batchmany",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "",
-            "name": "users"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "pg_catalog",
-            "name": "varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",
@@ -87141,38 +86358,12 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT u.id, u.did, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions, u.pii_unverified_email_address, u.pii_verified_email_address\nFROM pii.user_view u\n         LEFT JOIN user_roles r ON r.user_id = u.id AND r.role = 'EMAIL_TESTER' AND r.deleted = FALSE\nWHERE (u.email_unsubscriptions -\u003e\u003e 'all' = 'false' OR u.email_unsubscriptions -\u003e\u003e 'all' IS NULL)\n  AND (u.email_unsubscriptions -\u003e\u003e $2::varchar = 'false' OR\n       u.email_unsubscriptions -\u003e\u003e $2::varchar IS NULL)\n  AND u.deleted = FALSE\n  AND u.pii_verified_email_address IS NOT NULL\n  AND (u.created_at, u.id) \u003c ($3, $4::dbid)\n  AND (u.created_at, u.id) \u003e ($5, $6::dbid)\n  AND ($7::bool = FALSE OR r.user_id IS NOT NULL)\nORDER BY CASE WHEN $8::bool THEN (u.created_at, u.id) END ASC,\n         CASE WHEN NOT $8::bool THEN (u.created_at, u.id) END DESC\nLIMIT $1",
+      "text": "SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions, u.pii_unverified_email_address, u.pii_verified_email_address\nFROM pii.user_view u\n         LEFT JOIN user_roles r ON r.user_id = u.id AND r.role = 'EMAIL_TESTER' AND r.deleted = FALSE\nWHERE (u.email_unsubscriptions -\u003e\u003e 'all' = 'false' OR u.email_unsubscriptions -\u003e\u003e 'all' IS NULL)\n  AND (u.email_unsubscriptions -\u003e\u003e $2::varchar = 'false' OR\n       u.email_unsubscriptions -\u003e\u003e $2::varchar IS NULL)\n  AND u.deleted = FALSE\n  AND u.pii_verified_email_address IS NOT NULL\n  AND (u.created_at, u.id) \u003c ($3, $4::dbid)\n  AND (u.created_at, u.id) \u003e ($5, $6::dbid)\n  AND ($7::bool = FALSE OR r.user_id IS NOT NULL)\nORDER BY CASE WHEN $8::bool THEN (u.created_at, u.id) END ASC,\n         CASE WHEN NOT $8::bool THEN (u.created_at, u.id) END DESC\nLIMIT $1",
       "name": "GetUsersWithEmailNotificationsOnForEmailType",
       "cmd": ":many",
       "columns": [
         {
           "name": "id",
-          "not_null": true,
-          "is_array": false,
-          "comment": "",
-          "length": -1,
-          "is_named_param": false,
-          "is_func_call": false,
-          "scope": "",
-          "table": {
-            "catalog": "",
-            "schema": "pii",
-            "name": "user_view"
-          },
-          "table_alias": "",
-          "type": {
-            "catalog": "",
-            "schema": "",
-            "name": "pg_catalog.varchar"
-          },
-          "is_sqlc_slice": false,
-          "embed_table": null,
-          "original_name": "",
-          "unsigned": false,
-          "array_dims": 0
-        },
-        {
-          "name": "did",
           "not_null": true,
           "is_array": false,
           "comment": "",

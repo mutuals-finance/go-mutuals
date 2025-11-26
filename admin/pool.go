@@ -14,7 +14,7 @@ var errGetPoolsInput = errors.New("id or user_id must be provided")
 
 type getPoolsInput struct {
 	ID     persist.DBID `form:"id"`
-	UserID persist.DBID `form:"user_id"`
+	UserId persist.DBID `form:"user_id"`
 }
 
 func getPools(poolRepo postgres.PoolRepository) gin.HandlerFunc {
@@ -26,7 +26,7 @@ func getPools(poolRepo postgres.PoolRepository) gin.HandlerFunc {
 			return
 		}
 
-		if input.ID == "" && input.UserID == "" {
+		if input.ID == "" && input.UserId == "" {
 			util.ErrResponse(c, http.StatusBadRequest, errGetPoolsInput)
 			return
 		}
@@ -39,7 +39,7 @@ func getPools(poolRepo postgres.PoolRepository) gin.HandlerFunc {
 		//	pools = []persist.Pool{pool}
 		//	err = e
 		//} else {
-		//	pools, err = poolRepo.GetByRecipient(c, input.UserID)
+		//	pools, err = poolRepo.GetByRecipient(c, input.UserId)
 		//}
 		//if err != nil {
 		//	util.ErrResponse(c, http.StatusInternalServerError, err)

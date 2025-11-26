@@ -36,7 +36,7 @@ func updateSubscriptions(queries *coredb.Queries) gin.HandlerFunc {
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIByID(c, input.UserID)
+		userWithPII, err := queries.GetUserWithPIIById(c, input.UserID)
 		if err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
@@ -104,26 +104,26 @@ func unsubscribe(queries *coredb.Queries) gin.HandlerFunc {
 			return
 		}
 
-		userID, emailFromToken, err := auth.ParseEmailVerificationToken(c, input.JWT)
+		userId, emailFromToken, err := auth.ParseEmailVerificationToken(c, input.JWT)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIByID(c, userID)
+		userWithPII, err := queries.GetUserWithPIIById(c, userId)
 		if err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
 		}
 
 		if userWithPII.PiiEmailAddress.String() == "" {
-			util.ErrResponse(c, http.StatusBadRequest, errNoEmailSet{userID})
+			util.ErrResponse(c, http.StatusBadRequest, errNoEmailSet{userId})
 			return
 		}
 
 		emailAddress := userWithPII.PiiEmailAddress.String()
 		if !strings.EqualFold(emailAddress, emailFromToken) {
-			util.ErrResponse(c, http.StatusBadRequest, errEmailMismatch{userID})
+			util.ErrResponse(c, http.StatusBadRequest, errEmailMismatch{userId})
 			return
 		}
 
@@ -151,9 +151,9 @@ func unsubscribe(queries *coredb.Queries) gin.HandlerFunc {
 
 		}
 
-		logger.For(c).Infof("unsubscribing user %s from email types: %+v", userID, unsubs)
+		logger.For(c).Infof("unsubscribing user %s from email types: %+v", userId, unsubs)
 		err = queries.UpdateUserEmailUnsubscriptions(c, coredb.UpdateUserEmailUnsubscriptionsParams{
-			ID:                   userID,
+			ID:                   userId,
 			EmailUnsubscriptions: unsubs,
 		})
 		if err != nil {
@@ -185,7 +185,7 @@ func resubscribe(queries *coredb.Queries) gin.HandlerFunc {
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIByID(c, userID)
+		userWithPII, err := queries.GetUserWithPIIById(c, userID)
 		if err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return

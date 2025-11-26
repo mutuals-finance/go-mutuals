@@ -17,7 +17,7 @@ type Loaders struct {
 	GetClaimByIdBatch                   *GetClaimByIdBatch
 	GetClaimsByAddressBatch             *GetClaimsByAddressBatch
 	GetClaimsByPoolIdBatch              *GetClaimsByPoolIdBatch
-	GetNotificationByIDBatch            *GetNotificationByIDBatch
+	GetNotificationByIdBatch            *GetNotificationByIdBatch
 	GetPoolByIdBatch                    *GetPoolByIdBatch
 	GetPoolsByAddressBatch              *GetPoolsByAddressBatch
 	GetUserByIdBatch                    *GetUserByIdBatch
@@ -32,7 +32,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders.GetClaimByIdBatch = newGetClaimByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetClaimsByAddressBatch = newGetClaimsByAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimsByAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetClaimsByPoolIdBatch = newGetClaimsByPoolIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimsByPoolIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetNotificationByIDBatch = newGetNotificationByIDBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIDBatch(q), preFetchHook, postFetchHook)
+	loaders.GetNotificationByIdBatch = newGetNotificationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolByIdBatch = newGetPoolByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolsByAddressBatch = newGetPoolsByAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolsByAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
@@ -52,7 +52,7 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	})
 	loaders.GetUserNotificationsBatch.RegisterResultSubscriber(func(result []coredb.Notification) {
 		for _, entry := range result {
-			loaders.GetNotificationByIDBatch.Prime(loaders.GetNotificationByIDBatch.getKeyForResult(entry), entry)
+			loaders.GetNotificationByIdBatch.Prime(loaders.GetNotificationByIdBatch.getKeyForResult(entry), entry)
 		}
 	})
 	loaders.GetPoolsByAddressBatch.RegisterResultSubscriber(func(result []coredb.Pool) {
@@ -125,12 +125,12 @@ func loadGetClaimsByPoolIdBatch(q *coredb.Queries) func(context.Context, *GetCla
 	}
 }
 
-func loadGetNotificationByIDBatch(q *coredb.Queries) func(context.Context, *GetNotificationByIDBatch, []persist.DBID) ([]coredb.Notification, []error) {
-	return func(ctx context.Context, d *GetNotificationByIDBatch, params []persist.DBID) ([]coredb.Notification, []error) {
+func loadGetNotificationByIdBatch(q *coredb.Queries) func(context.Context, *GetNotificationByIdBatch, []persist.DBID) ([]coredb.Notification, []error) {
+	return func(ctx context.Context, d *GetNotificationByIdBatch, params []persist.DBID) ([]coredb.Notification, []error) {
 		results := make([]coredb.Notification, len(params))
 		errors := make([]error, len(params))
 
-		b := q.GetNotificationByIDBatch(ctx, params)
+		b := q.GetNotificationByIdBatch(ctx, params)
 		defer b.Close()
 
 		b.QueryRow(func(i int, r coredb.Notification, err error) {

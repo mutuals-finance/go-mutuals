@@ -55,19 +55,19 @@ WHERE owner_id = $1
   AND deleted = FALSE
   AND seen = FALSE;
 
--- name: GetNotificationByID :one
+-- name: GetNotificationById :one
 SELECT *
 FROM notifications
 WHERE id = $1
   AND deleted = FALSE;
 
--- name: GetNotificationByIDBatch :batchone
+-- name: GetNotificationByIdBatch :batchone
 SELECT *
 FROM notifications
 WHERE id = $1
   AND deleted = FALSE;
 
--- name: GetMostRecentNotificationByOwnerIDForAction :one
+-- name: GetMostRecentNotificationByOwnerIdForAction :one
 SELECT *
 FROM notifications
 WHERE owner_id = $1
@@ -76,7 +76,7 @@ WHERE owner_id = $1
 ORDER BY created_at DESC
 LIMIT 1;
 
--- name: GetNotificationsByOwnerIDForActionAfter :many
+-- name: GetNotificationsByOwnerIdForActionAfter :many
 SELECT *
 FROM notifications
 WHERE owner_id = $1
@@ -133,7 +133,7 @@ WHERE id = $1
   AND deleted = FALSE
   AND NOT amount = $4;
 
--- name: UpdateNotificationSettingsByID :exec
+-- name: UpdateNotificationSettingsById :exec
 UPDATE users
 SET notification_settings = $2
 WHERE id = $1;

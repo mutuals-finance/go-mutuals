@@ -8,7 +8,7 @@ FROM users
 WHERE id = $1
   AND deleted = FALSE;
 
--- name: GetUserWithPIIByID :one
+-- name: GetUserWithPIIById :one
 SELECT *
 FROM pii.user_view
 WHERE id = @user_id
@@ -20,7 +20,7 @@ FROM users
 WHERE id = $1
   AND deleted = FALSE;
 
--- name: GetUsersByIDs :many
+-- name: GetUsersByIds :many
 SELECT *
 FROM users
 WHERE id = ANY (@user_ids)
@@ -31,29 +31,17 @@ ORDER BY CASE WHEN @paging_forward::bool THEN (created_at, id) END ASC,
          CASE WHEN NOT @paging_forward::bool THEN (created_at, id) END DESC
 LIMIT $1;
 
--- name: GetUserByDID :one
-SELECT u.*
-FROM users u
-WHERE u.did = @did
-  AND u.deleted = FALSE;
-
--- name: GetUsersByDIDs :many
-SELECT DISTINCT u.*
-FROM users u
-WHERE u.did = ANY ($1::varchar[])
-  AND u.deleted = FALSE;
-
 -- name: CountAllUsers :one
 SELECT COUNT(*)
 FROM users
 WHERE deleted = FALSE;
 
 -- name: CreateUser :one
-INSERT INTO users (id, did, email_unsubscriptions)
-VALUES ($1, $2, $3)
+INSERT INTO users (id, email_unsubscriptions)
+VALUES ($1, $2)
 RETURNING *;
 
--- name: DeleteUserByID :exec
+-- name: DeleteUserById :exec
 UPDATE users
 SET deleted = TRUE
 WHERE id = $1;

@@ -75,22 +75,22 @@ func newRepos(pq *sql.DB, pgx *pgxpool.Pool) *postgres.Repositories {
 func seedNotifications(ctx context.Context, t *testing.T, q *coredb.Queries, repos *postgres.Repositories) {
 
 	email := testUser.PiiEmailAddress
-	userID, err := repos.UserRepository.Create(ctx, persist.CreateUserInput{Username: testUser.Username.String, Email: &email, ChainAddress: persist.NewChainAddress("0x8914496dc01efcc49a2fa340331fb90969b6f1d2", persist.ChainETH)})
+	userId, err := repos.UserRepository.Create(ctx, persist.CreateUserInput{Username: testUser.Username.String, Email: &email, ChainAddress: persist.NewChainAddress("0x8914496dc01efcc49a2fa340331fb90969b6f1d2", persist.ChainETH)})
 	if err != nil {
 		t.Fatalf("failed to create user: %s", err)
 	}
 
 	email2 := testUser2.PiiEmailAddress
-	userID2, err := repos.UserRepository.Create(ctx, persist.CreateUserInput{Username: testUser2.Username.String, Email: &email2, ChainAddress: persist.NewChainAddress("0x9a3f9764b21adaf3c6fdf6f947e6d3340a3f8ac5", persist.ChainETH)})
+	userId2, err := repos.UserRepository.Create(ctx, persist.CreateUserInput{Username: testUser2.Username.String, Email: &email2, ChainAddress: persist.NewChainAddress("0x9a3f9764b21adaf3c6fdf6f947e6d3340a3f8ac5", persist.ChainETH)})
 	if err != nil {
 		t.Fatalf("failed to create user: %s", err)
 	}
 
-	testUser.ID = userID
+	testUser.ID = userId
 
-	testUser2.ID = userID2
+	testUser2.ID = userId2
 
-	poolInsert := coredb.PoolRepoCreateParams{OwnerUserID: userID, PoolID: persist.GenerateID(), Position: "0.1"}
+	poolInsert := coredb.PoolRepoCreateParams{OwnerUserID: userId, PoolID: persist.GenerateID(), Position: "0.1"}
 
 	pool, err := repos.PoolRepository.Create(ctx, poolInsert)
 	if err != nil {

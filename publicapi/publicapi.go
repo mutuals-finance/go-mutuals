@@ -105,7 +105,7 @@ func For(ctx context.Context) *PublicAPI {
 	return gc.Value(apiContextKey).(*PublicAPI)
 }
 
-func getAuthenticatedUserID(ctx context.Context) (string, error) {
+func getAuthenticatedUserId(ctx context.Context) (persist.DBID, error) {
 	gc := util.MustGetGinContext(ctx)
 	authError := auth.GetAuthErrorFromCtx(gc)
 
@@ -113,7 +113,7 @@ func getAuthenticatedUserID(ctx context.Context) (string, error) {
 		return "", authError
 	}
 
-	userID := auth.GetUserDIDFromCtx(gc)
+	userID := auth.GetUserIdFromCtx(gc)
 	return userID, nil
 }
 

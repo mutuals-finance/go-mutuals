@@ -76,8 +76,8 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 	return nil, false
 }
 
-func resolveUserByUserID(ctx context.Context, userID persist.DBID) (*model.User, error) {
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, userID)
+func resolveUserByUserID(ctx context.Context, userId persist.DBID) (*model.User, error) {
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func resolvePoolContractByPoolContractID(ctx context.Context, contractID persist
 }
 
 func resolveClaimByID(ctx context.Context, id persist.DBID) (*model.Claim, error) {
-	claim, err := publicapi.For(ctx).Claim.GetClaimByID(ctx, id)
+	claim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -267,9 +267,9 @@ func notificationToModel(notif db.Notification) (model.Notification, error) {
 
 func resolveViewerNotificationSettings(ctx context.Context) (*model.NotificationSettings, error) {
 
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, userID)
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
 
 	if err != nil {
 		return nil, err
@@ -286,10 +286,10 @@ func notificationSettingsToModel(ctx context.Context, user *db.User) *model.Noti
 }
 
 func resolveNewNotificationSubscription(ctx context.Context) <-chan model.Notification {
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 	notifDispatcher := notifications.For(ctx)
-	notifs := notifDispatcher.GetNewNotificationsForUser(userID)
-	logger.For(ctx).Info("new notification subscription for ", userID)
+	notifs := notifDispatcher.GetNewNotificationsForUser(userId)
+	logger.For(ctx).Info("new notification subscription for ", userId)
 
 	result := make(chan model.Notification)
 
@@ -306,7 +306,7 @@ func resolveNewNotificationSubscription(ctx context.Context) <-chan model.Notifi
 				logger.For(nil).Debug("sent new notification to subscription")
 			default:
 				logger.For(nil).Errorf("notification subscription channel full, dropping notification")
-				notifDispatcher.UnsubscribeNewNotificationsForUser(userID)
+				notifDispatcher.UnsubscribeNewNotificationsForUser(userId)
 			}
 		}
 	}()
@@ -315,9 +315,9 @@ func resolveNewNotificationSubscription(ctx context.Context) <-chan model.Notifi
 }
 
 func resolveUpdatedNotificationSubscription(ctx context.Context) <-chan model.Notification {
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 	notifDispatcher := notifications.For(ctx)
-	notifs := notifDispatcher.GetUpdatedNotificationsForUser(userID)
+	notifs := notifDispatcher.GetUpdatedNotificationsForUser(userId)
 
 	result := make(chan model.Notification)
 
@@ -337,7 +337,7 @@ func resolveUpdatedNotificationSubscription(ctx context.Context) <-chan model.No
 					logger.For(nil).Debug("sent updated notification to subscription")
 				default:
 					logger.For(nil).Errorf("notification subscription channel full, dropping notification")
-					notifDispatcher.UnsubscribeUpdatedNotificationsForUser(userID)
+					notifDispatcher.UnsubscribeUpdatedNotificationsForUser(userId)
 				}
 			})
 		}
@@ -347,14 +347,14 @@ func resolveUpdatedNotificationSubscription(ctx context.Context) <-chan model.No
 	return result
 }
 
-func resolveGroupNotificationUsersConnectionByUserIDs(ctx context.Context, userIDs persist.DBIDList, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	if len(userIDs) == 0 {
+func resolveGroupNotificationUsersConnectionByUserIDs(ctx context.Context, userIds persist.DBIDList, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
+	if len(userIds) == 0 {
 		return &model.GroupNotificationUsersConnection{
 			Edges:    []*model.GroupNotificationUserEdge{},
 			PageInfo: &model.PageInfo{},
 		}, nil
 	}
-	users, pageInfo, err := publicapi.For(ctx).User.GetUsersByIDs(ctx, userIDs, before, after, first, last)
+	users, pageInfo, err := publicapi.For(ctx).User.GetUsersByIds(ctx, userIds, before, after, first, last)
 	if err != nil {
 		return nil, err
 	}
@@ -372,13 +372,13 @@ func resolveGroupNotificationUsersConnectionByUserIDs(ctx context.Context, userI
 		Edges:    edges,
 		PageInfo: pageInfoToModel(ctx, pageInfo),
 		HelperGroupNotificationUsersConnectionData: model.HelperGroupNotificationUsersConnectionData{
-			UserIDs: userIDs,
+			UserIDs: userIds,
 		},
 	}, nil
 }
 
 func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notification, error) {
-	notification, err := publicapi.For(ctx).Notifications.GetByID(ctx, id)
+	notification, err := publicapi.For(ctx).Notifications.GetById(ctx, id)
 
 	if err != nil {
 		return nil, err
@@ -392,15 +392,15 @@ func resolveViewerByID(ctx context.Context, id string) (*model.Viewer, error) {
 	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
 		return nil, nil
 	}
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 
-	if userID.String() != id {
+	if userId.String() != id {
 		return nil, nil
 	}
 
 	return &model.Viewer{
 		HelperViewerData: model.HelperViewerData{
-			UserId: userID,
+			UserId: userId,
 		},
 		User:  nil, // handled by dedicated resolver
 		Pools: nil, // handled by dedicated resolver

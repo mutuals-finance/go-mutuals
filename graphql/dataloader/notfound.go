@@ -9,7 +9,7 @@ func (*GetPoolByIdBatch) getNotFoundError(key persist.DBID) error {
 	return persist.ErrPoolNotFound{ID: key}
 }
 
-func (*GetNotificationByIDBatch) getNotFoundError(key persist.DBID) error {
+func (*GetNotificationByIdBatch) getNotFoundError(key persist.DBID) error {
 	return pgx.ErrNoRows
 }
 

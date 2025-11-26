@@ -17,7 +17,6 @@ type TokenType string
 const (
 	TokenTypeAuth              TokenType = "auth"
 	TokenTypeRefresh           TokenType = "refresh"
-	TokenTypeOneTimeLogin      TokenType = "one_time_login"
 	TokenTypeEmailVerification TokenType = "email_verification"
 )
 
@@ -26,8 +25,8 @@ type MutualsClaims struct {
 }
 
 type AuthTokenClaims struct {
-	UserDID string `json:"sub,omitempty"`
-	AppId   string `json:"aud,omitempty"`
+	UserId string `json:"sub,omitempty"`
+	AppId  string `json:"aud,omitempty"`
 	MutualsClaims
 }
 
@@ -51,13 +50,13 @@ type emailVerificationClaims struct {
 	MutualsClaims
 }
 
-func GenerateAuthToken(ctx context.Context, userID persist.DBID, appID persist.DBID, refreshID string, roles []persist.Role) (string, error) {
+func GenerateAuthToken(ctx context.Context, userId persist.DBID, appId persist.DBID, refreshID string, roles []persist.Role) (string, error) {
 	secret := env.GetString("AUTH_JWT_SECRET")
 	validFor := time.Duration(env.GetInt64("AUTH_JWT_TTL")) * time.Second
 
 	claims := AuthTokenClaims{
-		UserDID:       userID.String(),
-		AppId:         appID.String(),
+		UserId:        userId.String(),
+		AppId:         appId.String(),
 		MutualsClaims: newMutualsClaims(TokenTypeAuth, validFor),
 	}
 

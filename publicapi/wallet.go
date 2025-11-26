@@ -42,7 +42,7 @@ func (api WalletAPI) GetAccountsByAddresses(ctx context.Context, addresses []str
 	return result, nil
 }
 
-func (api WalletAPI) GetAccountByID(ctx context.Context, id persist.DBID) (*indexerdb.Account, error) {
+func (api WalletAPI) GetAccountById(ctx context.Context, id persist.DBID) (*indexerdb.Account, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"id": validate.WithTag(id, "required"),
 	}); err != nil {

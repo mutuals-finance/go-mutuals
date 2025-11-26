@@ -42,7 +42,7 @@ var notFoundError ErrNotFound
 
 // ErrNotFound is a general error for when some entity is not found.
 // Errors should wrap this error to provide more details on what was not found (e.g. ErrUserNotFound)
-// and how it was not found (e.g. ErrUserNotFoundByID)
+// and how it was not found (e.g. ErrUserNotFoundById)
 type ErrNotFound struct{}
 
 func (e ErrNotFound) Error() string { return "entity not found" }

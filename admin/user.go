@@ -34,8 +34,8 @@ type updateUserInput struct {
 }
 
 type mergeUserInput struct {
-	FirstUserID  persist.DBID `json:"first_user" binding:"required"`
-	SecondUserID persist.DBID `json:"second_user" binding:"required"`
+	FirstUserId  persist.DBID `json:"first_user" binding:"required"`
+	SecondUserId persist.DBID `json:"second_user" binding:"required"`
 }
 
 type createUserInput struct {
@@ -45,7 +45,7 @@ type createUserInput struct {
 }
 
 type createUserOutput struct {
-	UserID persist.DBID `json:"user_id"`
+	UserId persist.DBID `json:"user_id"`
 }
 
 func getUser(getUserByIDStmt, getUserByUsername, getUserByAddress *sql.Stmt) gin.HandlerFunc {
@@ -93,7 +93,7 @@ func createUser(db *sql.DB, createUserStmt, createNonceStmt *sql.Stmt) gin.Handl
 			return
 		}
 
-		var userID persist.DBID
+		var userId persist.DBID
 		if err := tx.StmtContext(c, createUserStmt).QueryRowContext(c, persist.GenerateID(), pq.Array(input.Addresses), input.Username, strings.ToLower(input.Username), input.Bio).Scan(&userID); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
@@ -112,7 +112,7 @@ func createUser(db *sql.DB, createUserStmt, createNonceStmt *sql.Stmt) gin.Handl
 		}
 
 		c.JSON(http.StatusOK, createUserOutput{
-			UserID: userID,
+			UserId: userID,
 		})
 	}
 }
@@ -201,7 +201,7 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getP
 		}
 
 		var firstUser persist.User
-		if err := getUserByIDStmt.QueryRowContext(c, input.FirstUserID).Scan(&firstUser.ID, pq.Array(&firstUser.Wallets), &firstUser.Bio, &firstUser.Username, &firstUser.UsernameIdempotent, &firstUser.UpdatedAt, &firstUser.CreationTime); err != nil {
+		if err := getUserByIDStmt.QueryRowContext(c, input.FirstUserId).Scan(&firstUser.ID, pq.Array(&firstUser.Wallets), &firstUser.Bio, &firstUser.Username, &firstUser.UsernameIdempotent, &firstUser.UpdatedAt, &firstUser.CreationTime); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}

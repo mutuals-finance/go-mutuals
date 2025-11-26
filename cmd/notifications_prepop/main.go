@@ -83,7 +83,7 @@ func main() {
 		if action == persist.ActionViewedPool {
 			event.PoolID = subject
 		} else if action == persist.ActionUserFollowedUsers {
-			event.UserID = subject
+			event.UserId = subject
 		}
 
 		events = append(events, event)
@@ -113,8 +113,8 @@ func main() {
 				panic(err)
 			}
 		} else if event.Action == persist.ActionUserFollowedUsers {
-			fmt.Printf("UserID %s\n", event.UserID)
-			_, err := pg.Exec(ctx, "INSERT INTO EVENTS (ID, ACTOR_ID, RESOURCE_TYPE_ID, SUBJECT_ID, USER_ID, ACTION) VALUES ($1, $2, $3, $4, $5, $6)", event.ID, event.ActorID, event.ResourceTypeID, event.SubjectID, event.UserID, event.Action)
+			fmt.Printf("UserId %s\n", event.UserId)
+			_, err := pg.Exec(ctx, "INSERT INTO EVENTS (ID, ACTOR_ID, RESOURCE_TYPE_ID, SUBJECT_ID, USER_ID, ACTION) VALUES ($1, $2, $3, $4, $5, $6)", event.ID, event.ActorID, event.ResourceTypeID, event.SubjectID, event.UserId, event.Action)
 			if err != nil {
 				panic(err)
 			}
@@ -134,7 +134,7 @@ func main() {
 				panic(err)
 			}
 		} else if notif.Action == persist.ActionUserFollowedUsers {
-			fmt.Printf("UserID %s\n", notif.Data.FollowerIDs)
+			fmt.Printf("UserId %s\n", notif.Data.FollowerIDs)
 			_, err := pg.Exec(ctx, "INSERT INTO NOTIFICATIONS (ID, OWNER_ID, ACTION, DATA, EVENT_IDS) VALUES ($1, $2, $3, $4, $5)", notif.ID, notif.OwnerID, notif.Action, notif.Data, notif.EventIds)
 			if err != nil {
 				panic(err)

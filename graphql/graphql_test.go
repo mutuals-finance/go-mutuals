@@ -386,7 +386,7 @@ func registerPushToken(t *testing.T, ctx context.Context, c genql.Client) {
 }
 
 // newUser makes a GraphQL request to generate a new user
-func newUser(t *testing.T, ctx context.Context, c genql.Client, w wallet) (userID persist.DBID, username string, galleryID persist.DBID) {
+func newUser(t *testing.T, ctx context.Context, c genql.Client, w wallet) (userId persist.DBID, username string, galleryID persist.DBID) {
 	t.Helper()
 	nonce, message := newNonce(t, ctx, c)
 	username = "user" + persist.GenerateID().String()
@@ -477,8 +477,8 @@ func defaultHandlerClient(t *testing.T) *handlerClient {
 }
 
 // authedHandlerClient returns a GraphQL client with an authenticated JWT
-func authedHandlerClient(t *testing.T, userID persist.DBID) *handlerClient {
-	return customHandlerClient(t, defaultHandler(t), withJWTOpt(t, userID))
+func authedHandlerClient(t *testing.T, userId persist.DBID) *handlerClient {
+	return customHandlerClient(t, defaultHandler(t), withJWTOpt(t, userId))
 }
 
 // customHandlerClient configures the client with the provided HTTP handler and client options
@@ -492,8 +492,8 @@ func defaultServerClient(t *testing.T, host string) *serverClient {
 }
 
 // authedServerClient provides an authenticated client to a live server
-func authedServerClient(t *testing.T, host string, userID persist.DBID) *serverClient {
-	return customServerClient(t, host, withJWTOpt(t, userID))
+func authedServerClient(t *testing.T, host string, userId persist.DBID) *serverClient {
+	return customServerClient(t, host, withJWTOpt(t, userId))
 }
 
 // customServerClient provides a client to a live server with custom options

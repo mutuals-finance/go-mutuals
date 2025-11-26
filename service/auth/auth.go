@@ -39,7 +39,7 @@ type AuthenticatedAddress struct {
 const (
 	// Context keys for auth data
 	userAuthedContextKey = "auth.authenticated"
-	userDIDContextKey    = "auth.user_did"
+	userIdContextKey     = "auth.user_id"
 	appIDContextKey      = "auth.app_id"
 	authErrorContextKey  = "auth.auth_error"
 	userRolesContextKey  = "auth.roles"
@@ -197,7 +197,7 @@ func (a OneTimeLoginTokenAuthenticator) GetDescription() string {
 }
 
 func (a OneTimeLoginTokenAuthenticator) Authenticate(ctx context.Context) (*AuthResult, error) {
-	userID, expiresAt, err := ParseOneTimeLoginToken(ctx, a.LoginToken)
+	userId, expiresAt, err := ParseOneTimeLoginToken(ctx, a.LoginToken)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (a OneTimeLoginTokenAuthenticator) Authenticate(ctx context.Context) (*Auth
 		return nil, errors.New("token already used")
 	}
 
-	user, err := a.Queries.GetUserById(ctx, userID)
+	user, err := a.Queries.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -236,9 +236,9 @@ func GetAppIDFromCtx(c *gin.Context) string {
 	return c.MustGet(appIDContextKey).(string)
 }
 
-// GetUserDIDFromCtx returns the user ID from the context
-func GetUserDIDFromCtx(c *gin.Context) string {
-	return c.MustGet(userDIDContextKey).(string)
+// GetUserIdFromCtx returns the user ID from the context
+func GetUserIdFromCtx(c *gin.Context) persist.DBID {
+	return c.MustGet(userIdContextKey).(persist.DBID)
 }
 
 // GetUserAuthedFromCtx queries the context to determine whether the user is authenticated
@@ -260,18 +260,18 @@ func GetRolesFromCtx(c *gin.Context) []persist.Role {
 	return c.MustGet(userRolesContextKey).([]persist.Role)
 }
 
-func setSessionStateForCtx(c *gin.Context, userDID string, appID string) {
-	if userDID == "" || appID == "" {
-		logger.For(c).Errorf("attempted to set session state with missing values. userDID: %s, appID: %s", userDID, appID)
+func setSessionStateForCtx(c *gin.Context, userId string, appID string) {
+	if userId == "" || appID == "" {
+		logger.For(c).Errorf("attempted to set session state with missing values. userId: %s, appID: %s", userId, appID)
 		err := errors.New("attempted to set session state with missing values")
-		// We should never be trying to set a session with an empty userDID or appID. If we find
+		// We should never be trying to set a session with an empty userId or appID. If we find
 		// ourselves here, clear the session and have the user log in again.
 		clearSessionStateForCtx(c, err)
 		clearSessionCookies(c)
 		return
 	}
 
-	c.Set(userDIDContextKey, userDID)
+	c.Set(userIdContextKey, userId)
 	c.Set(appIDContextKey, appID)
 	c.Set(authErrorContextKey, nil)
 	c.Set(userAuthedContextKey, true)
@@ -279,7 +279,7 @@ func setSessionStateForCtx(c *gin.Context, userDID string, appID string) {
 }
 
 func clearSessionStateForCtx(c *gin.Context, err error) {
-	c.Set(userDIDContextKey, "")
+	c.Set(userIdContextKey, "")
 	c.Set(appIDContextKey, "")
 	c.Set(authErrorContextKey, err)
 	c.Set(userAuthedContextKey, false)
@@ -289,14 +289,14 @@ func clearSessionStateForCtx(c *gin.Context, err error) {
 // ForceAuthTokenRefresh should be called whenever something happens that would result in existing auth
 // tokens being out-of-date. For example, when a user's roles are changed, or a user logs out of a session,
 // existing otherwise-valid auth tokens should be refreshed so they have the latest session state.
-func ForceAuthTokenRefresh(ctx context.Context, authRefreshCache *redis.Cache, userID persist.DBID) error {
+func ForceAuthTokenRefresh(ctx context.Context, authRefreshCache *redis.Cache, userId persist.DBID) error {
 	// Keep the key long enough for any existing auth tokens to expire, plus an extra minute of wiggle room
 	expiration := time.Duration(env.GetInt64("AUTH_JWT_TTL"))*time.Second + time.Minute
-	return authRefreshCache.SetTime(ctx, userID.String(), time.Now(), expiration, true)
+	return authRefreshCache.SetTime(ctx, userId.String(), time.Now(), expiration, true)
 }
 
-func mustRefreshAuthToken(ctx context.Context, authRefreshCache *redis.Cache, userID persist.DBID, issuedAt time.Time) bool {
-	forceRefreshBefore, err := authRefreshCache.GetTime(ctx, userID.String())
+func mustRefreshAuthToken(ctx context.Context, authRefreshCache *redis.Cache, userId persist.DBID, issuedAt time.Time) bool {
+	forceRefreshBefore, err := authRefreshCache.GetTime(ctx, userId.String())
 	if err != nil {
 		// If there's no key for this user, we don't need to force an auth token refresh
 		var notFound redis.ErrKeyNotFound
@@ -315,7 +315,7 @@ func mustRefreshAuthToken(ctx context.Context, authRefreshCache *redis.Cache, us
 // VerifySession checks the request cookies for an existing auth session.
 // If the request is for an expired or invalid session, the user will be
 // logged out. After calling VerifySession, the current auth state can be queried with
-// functions like GetUserAuthedFromCtx(), GetUserDIDFromCtx(), etc.
+// functions like GetUserAuthedFromCtx(), GetUserIdFromCtx(), etc.
 func VerifySession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.Cache) error {
 	// If the user has a valid auth cookie, we can set their auth state and be done
 	// (unless something like updating roles triggered a forced refresh of the auth token)
@@ -333,7 +333,7 @@ func VerifySession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.
 		return authTokenErr
 	}
 
-	setSessionStateForCtx(c, authClaims.UserDID, authClaims.AppId)
+	setSessionStateForCtx(c, authClaims.UserId, authClaims.AppId)
 
 	return nil
 }
