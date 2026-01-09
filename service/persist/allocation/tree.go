@@ -2,12 +2,15 @@ package allocation
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-// Claim represents a claim in the allocation tree
+// Claim is the single node structure.
 type Claim struct {
+	// Data Fields
 	ID               persist.DBID
 	Label            string
 	Path             string
@@ -15,129 +18,150 @@ type Claim struct {
 	Data             persist.JSON
 	StateID          string
 	StrategyID       string
-	Parent           *string
-	Children         []string
+
+	// Raw Inputs (used only for initial linking)
+	ParentID *string
+	ChildIDs []string
+
+	// Pointer Links (used for actual logic)
+	Parent   *Claim
+	Children []*Claim
 }
 
-// Tree holds the full allocation tree
+// Tree is a container for a flat claims list and root claims with pointers
 type Tree struct {
-	RootClaims      []persist.DBID
-	Flat            []Claim
-	ClaimsByID      map[persist.DBID]*Claim
-	ClaimsRefByID   map[persist.DBID][]persist.DBID
-	UpdatedIDs      map[persist.DBID]persist.DBID
-	Params          any
-	Count           int
-	claimValidators []ClaimValidator
-	treeValidators  []TreeValidator
-	claimProcessors []ClaimProcessor
-	treeProcessors  []TreeProcessor
+	Claims []*Claim // Flat list of pointers to all claims
+	Roots  []*Claim // Pointers to top-level claims
 }
 
-// NewTree constructs a tree from the flattened claim list
-func NewTree(flat []Claim, opts ...TreeOption) (*Tree, error) {
-	if len(flat) == 0 {
+// NewTree parses the flat list, converts to pointers, and links references
+func NewTree(inputs []Claim) (*Tree, error) {
+	if len(inputs) == 0 {
 		return &Tree{}, nil
 	}
 
-	tree := &Tree{
-		RootClaims:    []persist.DBID{},
-		Flat:          flat,
-		ClaimsByID:    make(map[persist.DBID]*Claim),
-		ClaimsRefByID: make(map[persist.DBID][]persist.DBID),
-		UpdatedIDs:    make(map[persist.DBID]persist.DBID),
-		Params:        nil,
-		Count:         len(flat),
-		claimValidators: []ClaimValidator{
-			RequiredFieldsValidator{},
-			NewRecipientAddressValidator(),
-			ParentChildValidator{},
-		},
-		treeValidators: []TreeValidator{
-			TreeCompletenessValidator{},
-		},
-		claimProcessors: []ClaimProcessor{
-			BaseClaimProcessor{},
-			NewRecipientAddressProcessor(),
-		},
-		treeProcessors: []TreeProcessor{
-			PathProcessor{},
-		},
+	t := &Tree{
+		Claims: make([]*Claim, 0, len(inputs)),
+		Roots:  make([]*Claim, 0),
 	}
 
-	for _, opt := range opts {
-		opt(tree)
-	}
+	labelMap := make(map[string]*Claim)
+	allPtrs := make([]*Claim, len(inputs))
 
-	for i := range tree.Flat {
-		claim := &tree.Flat[i]
-		tree.ClaimsByID[claim.ID] = claim
-		if claim.Parent != nil {
-			parentID := persist.DBID(*claim.Parent)
-			tree.ClaimsRefByID[parentID] = append(tree.ClaimsRefByID[parentID], claim.ID)
-		} else {
-			tree.RootClaims = append(tree.RootClaims, claim.ID)
-		}
-
-		for _, childIDStr := range claim.Children {
-			childID := persist.DBID(childIDStr)
-			tree.ClaimsRefByID[childID] = append(tree.ClaimsRefByID[childID], claim.ID)
-		}
-
-	}
-
-	return tree, nil
-}
-
-// Traverse performs depth-first traversal with a visitor function
-func (tree *Tree) Traverse(fn func(claim *Claim, tree *Tree, args ...any) error, args ...any) error {
-	for _, claim := range tree.Flat {
-		if err := fn(&claim, tree, args...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (tree *Tree) Validate(ctx context.Context) (err error) {
-
-	// Run tree validators
-	for _, v := range tree.treeValidators {
-		if err := v.Validate(ctx, tree); err != nil {
-			return err
+	// 1: create pointers and map by label
+	for i := range inputs {
+		ptr := &inputs[i]
+		allPtrs[i] = ptr
+		if ptr.Label != "" {
+			labelMap[ptr.Label] = ptr
 		}
 	}
 
-	// Run claim validators
-	for _, claim := range tree.Flat {
-		for _, v := range tree.claimValidators {
-			if err := v.Validate(ctx, tree, &claim); err != nil {
-				return err
+	// 2: Identify container-only nodes
+	containerNodes := make(map[*Claim]bool)
+	for _, ptr := range allPtrs {
+		if ptr.StateID == "" && ptr.StrategyID == "" && len(ptr.ChildIDs) > 0 {
+			containerNodes[ptr] = true
+		}
+	}
+
+	// 3: determine what goes in Claims list (exclude containers)
+	for _, ptr := range allPtrs {
+		if !containerNodes[ptr] {
+			t.Claims = append(t.Claims, ptr)
+		}
+	}
+
+	// 4: Link parent-child relationships
+	for _, ptr := range allPtrs {
+		// Link Parent
+		if ptr.ParentID != nil {
+			if parent, ok := labelMap[*ptr.ParentID]; ok {
+				ptr.Parent = parent
+			}
+		}
+
+		// Link Children
+		for _, childLabel := range ptr.ChildIDs {
+			if child, ok := labelMap[childLabel]; ok {
+				ptr.Children = append(ptr.Children, child)
+				if child.Parent == nil {
+					child.Parent = ptr
+				}
 			}
 		}
 	}
 
-	return nil
-}
+	// 5: Determine roots - nodes without parents OR nodes whose parent is a container
+	for _, ptr := range allPtrs {
+		if containerNodes[ptr] {
+			continue // Skip container nodes themselves
+		}
 
-func (tree *Tree) Process(ctx context.Context) error {
-
-	// Run claim processors
-	for i := range tree.Flat {
-		claim := &tree.Flat[i]
-		for _, p := range tree.claimProcessors {
-			if err := p.Process(ctx, tree, claim); err != nil {
-				return err
+		if ptr.Parent == nil || containerNodes[ptr.Parent] {
+			// This is a root: either no parent, or parent is a container
+			t.Roots = append(t.Roots, ptr)
+			// Clear the parent pointer if it was a container
+			if ptr.Parent != nil && containerNodes[ptr.Parent] {
+				ptr.Parent = nil
 			}
 		}
 	}
 
-	// Run tree processors
-	for _, p := range tree.treeProcessors {
-		if err := p.Process(ctx, tree); err != nil {
-			return err
-		}
+	return t, nil
+}
+
+// Prepare generates ids and computes paths.
+func (t *Tree) Prepare(ctx context.Context) error {
+	for _, claim := range t.Claims {
+		newID := persist.GenerateID()
+		claim.ID = newID
+		claim.Label = string(newID)
+	}
+
+	for _, root := range t.Roots {
+		computePathRecursive(root, "")
 	}
 
 	return nil
+}
+
+func computePathRecursive(claim *Claim, parentPath string) {
+	if parentPath == "" {
+		claim.Path = claim.Label
+	} else {
+		claim.Path = parentPath + "." + claim.Label
+	}
+
+	for _, child := range claim.Children {
+		computePathRecursive(child, claim.Path)
+	}
+}
+
+// Validate performs basic sanity checks
+func (t *Tree) Validate(ctx context.Context) error {
+	for _, claim := range t.Claims {
+		if len(claim.Children) == 0 && (claim.RecipientAddress == nil || claim.RecipientAddress.String() == "") {
+			return errors.New(fmt.Sprintf("node %s: leaf node must have recipient address", claim.Label))
+		}
+
+		if hasCycle(claim, make(map[*Claim]bool)) {
+			return errors.New(fmt.Sprintf("cycle detected starting at %s", claim.Label))
+		}
+	}
+	return nil
+}
+
+func hasCycle(current *Claim, visited map[*Claim]bool) bool {
+	if visited[current] {
+		return true
+	}
+	visited[current] = true
+	for _, child := range current.Children {
+		if hasCycle(child, visited) {
+			return true
+		}
+	}
+	visited[current] = false
+	return false
 }

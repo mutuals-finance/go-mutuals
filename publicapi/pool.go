@@ -148,8 +148,8 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 				Label:            util.FromPointer(c.Label),
 				RecipientAddress: c.RecipientAddress,
 				Data:             c.Data,
-				Parent:           c.Parent,
-				Children:         c.Children,
+				ParentID:         c.Parent,
+				ChildIDs:         c.Children,
 				StateID:          c.StateID,
 				StrategyID:       c.StrategyID,
 			})
