@@ -7,6 +7,7 @@ package coredb
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -289,32 +290,44 @@ func (b *GetNotificationByIdBatchBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const getPoolByIdBatch = `-- name: GetPoolByIdBatch :batchone
+const getPoolBatch = `-- name: GetPoolBatch :batchone
 SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at
 FROM pools
-WHERE id = $1
-  AND deleted = FALSE
+WHERE deleted = FALSE
+  AND (
+    ($1::text IS NOT NULL AND id = $1)
+        OR ($2::text IS NOT NULL AND slug = $2)
+        OR ($3::text IS NOT NULL AND contract_id = $3)
+    )
 `
 
-type GetPoolByIdBatchBatchResults struct {
+type GetPoolBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetPoolByIdBatch(ctx context.Context, id []persist.DBID) *GetPoolByIdBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range id {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getPoolByIdBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetPoolByIdBatchBatchResults{br, len(id), false}
+type GetPoolBatchParams struct {
+	PoolID     sql.NullString `db:"pool_id" json:"pool_id"`
+	Slug       sql.NullString `db:"slug" json:"slug"`
+	ContractID sql.NullString `db:"contract_id" json:"contract_id"`
 }
 
-func (b *GetPoolByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
+func (q *Queries) GetPoolBatch(ctx context.Context, arg []GetPoolBatchParams) *GetPoolBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.PoolID,
+			a.Slug,
+			a.ContractID,
+		}
+		batch.Queue(getPoolBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetPoolBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetPoolBatchBatchResults) QueryRow(f func(int, Pool, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var i Pool
@@ -346,39 +359,47 @@ func (b *GetPoolByIdBatchBatchResults) QueryRow(f func(int, Pool, error)) {
 	}
 }
 
-func (b *GetPoolByIdBatchBatchResults) Close() error {
+func (b *GetPoolBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
 
-const getPoolsByAddressBatch = `-- name: GetPoolsByAddressBatch :batchmany
-SELECT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
-FROM claims c
-         INNER JOIN pools p ON p.id = c.pool_id
-WHERE c.recipient_address = $1
-  AND c.deleted = FALSE
-  AND p.deleted = FALSE
+const getPoolsByAddressesOrOwnerBatch = `-- name: GetPoolsByAddressesOrOwnerBatch :batchmany
+SELECT DISTINCT p.id, p.version, p.private, p.name, p.description, p.donation_bps, p.image, p.slug, p.owner_id, p.contract_id, p.deleted, p.updated_at, p.created_at
+FROM pools p
+         LEFT JOIN claims c ON c.pool_id = p.id AND c.deleted = FALSE
+WHERE p.deleted = FALSE
+  AND (
+    p.owner_id = $1
+        OR c.recipient_address = ANY ($2::text[])
+    )
 `
 
-type GetPoolsByAddressBatchBatchResults struct {
+type GetPoolsByAddressesOrOwnerBatchBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-func (q *Queries) GetPoolsByAddressBatch(ctx context.Context, recipientAddress []persist.Address) *GetPoolsByAddressBatchBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range recipientAddress {
-		vals := []interface{}{
-			a,
-		}
-		batch.Queue(getPoolsByAddressBatch, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &GetPoolsByAddressBatchBatchResults{br, len(recipientAddress), false}
+type GetPoolsByAddressesOrOwnerBatchParams struct {
+	OwnerID   persist.DBID `db:"owner_id" json:"owner_id"`
+	Addresses []string     `db:"addresses" json:"addresses"`
 }
 
-func (b *GetPoolsByAddressBatchBatchResults) Query(f func(int, []Pool, error)) {
+func (q *Queries) GetPoolsByAddressesOrOwnerBatch(ctx context.Context, arg []GetPoolsByAddressesOrOwnerBatchParams) *GetPoolsByAddressesOrOwnerBatchBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.OwnerID,
+			a.Addresses,
+		}
+		batch.Queue(getPoolsByAddressesOrOwnerBatch, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &GetPoolsByAddressesOrOwnerBatchBatchResults{br, len(arg), false}
+}
+
+func (b *GetPoolsByAddressesOrOwnerBatchBatchResults) Query(f func(int, []Pool, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		var items []Pool
@@ -423,7 +444,7 @@ func (b *GetPoolsByAddressBatchBatchResults) Query(f func(int, []Pool, error)) {
 	}
 }
 
-func (b *GetPoolsByAddressBatchBatchResults) Close() error {
+func (b *GetPoolsByAddressesOrOwnerBatchBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

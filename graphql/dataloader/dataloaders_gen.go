@@ -184,34 +184,34 @@ func (*GetNotificationByIdBatch) getKeyForResult(result coredb.Notification) per
 	return result.ID
 }
 
-// GetPoolByIdBatch batches and caches requests
-type GetPoolByIdBatch struct {
-	generator.Dataloader[persist.DBID, coredb.Pool]
+// GetPoolBatch batches and caches requests
+type GetPoolBatch struct {
+	generator.Dataloader[coredb.GetPoolBatchParams, coredb.Pool]
 }
 
-// newGetPoolByIdBatch creates a new GetPoolByIdBatch with the given settings, functions, and options
-func newGetPoolByIdBatch(
+// newGetPoolBatch creates a new GetPoolBatch with the given settings, functions, and options
+func newGetPoolBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetPoolByIdBatch, []persist.DBID) ([]coredb.Pool, []error),
+	fetch func(context.Context, *GetPoolBatch, []coredb.GetPoolBatchParams) ([]coredb.Pool, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetPoolByIdBatch {
-	d := &GetPoolByIdBatch{}
+) *GetPoolBatch {
+	d := &GetPoolBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Pool, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []coredb.GetPoolBatchParams) ([]coredb.Pool, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetPoolByIdBatch")
+			ctx = preFetchHook(ctx, "GetPoolBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetPoolByIdBatch")
+			postFetchHook(ctx, "GetPoolBatch")
 		}
 
 		return results, errors
@@ -221,44 +221,40 @@ func newGetPoolByIdBatch(
 	return d
 }
 
-func (*GetPoolByIdBatch) getKeyForResult(result coredb.Pool) persist.DBID {
-	return result.ID
+// GetPoolsByAddressesOrOwnerBatch batches and caches requests
+type GetPoolsByAddressesOrOwnerBatch struct {
+	generator.Dataloader[coredb.GetPoolsByAddressesOrOwnerBatchParams, []coredb.Pool]
 }
 
-// GetPoolsByAddressBatch batches and caches requests
-type GetPoolsByAddressBatch struct {
-	generator.Dataloader[persist.Address, []coredb.Pool]
-}
-
-// newGetPoolsByAddressBatch creates a new GetPoolsByAddressBatch with the given settings, functions, and options
-func newGetPoolsByAddressBatch(
+// newGetPoolsByAddressesOrOwnerBatch creates a new GetPoolsByAddressesOrOwnerBatch with the given settings, functions, and options
+func newGetPoolsByAddressesOrOwnerBatch(
 	ctx context.Context,
 	maxBatchSize int,
 	batchTimeout time.Duration,
 	cacheResults bool,
 	publishResults bool,
-	fetch func(context.Context, *GetPoolsByAddressBatch, []persist.Address) ([][]coredb.Pool, []error),
+	fetch func(context.Context, *GetPoolsByAddressesOrOwnerBatch, []coredb.GetPoolsByAddressesOrOwnerBatchParams) ([][]coredb.Pool, []error),
 	preFetchHook PreFetchHook,
 	postFetchHook PostFetchHook,
-) *GetPoolsByAddressBatch {
-	d := &GetPoolsByAddressBatch{}
+) *GetPoolsByAddressesOrOwnerBatch {
+	d := &GetPoolsByAddressesOrOwnerBatch{}
 
-	fetchWithHooks := func(ctx context.Context, keys []persist.Address) ([][]coredb.Pool, []error) {
+	fetchWithHooks := func(ctx context.Context, keys []coredb.GetPoolsByAddressesOrOwnerBatchParams) ([][]coredb.Pool, []error) {
 		// Allow the preFetchHook to modify and return a new context
 		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetPoolsByAddressBatch")
+			ctx = preFetchHook(ctx, "GetPoolsByAddressesOrOwnerBatch")
 		}
 
 		results, errors := fetch(ctx, d, keys)
 
 		if postFetchHook != nil {
-			postFetchHook(ctx, "GetPoolsByAddressBatch")
+			postFetchHook(ctx, "GetPoolsByAddressesOrOwnerBatch")
 		}
 
 		return results, errors
 	}
 
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
+	d.Dataloader = *generator.NewDataloaderWithNonComparableKey(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
 	return d
 }
 

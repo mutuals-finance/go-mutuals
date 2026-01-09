@@ -60,18 +60,18 @@ func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Quer
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIById(c, input.UserId)
+		userWithPII, err := queries.GetUserWithPIIById(c, input.UserID)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
 
-		if userWithPII.PiiEmailAddress.String() == "" {
+		if userWithPII.PiiUnverifiedEmailAddress.String() == "" {
 			util.ErrResponse(c, http.StatusBadRequest, errNoEmailSet{userId: input.UserID})
 			return
 		}
 
-		emailAddress := userWithPII.PiiEmailAddress.String()
+		emailAddress := userWithPII.PiiUnverifiedEmailAddress.String()
 		j, err := auth.GenerateEmailVerificationToken(c, input.UserID, emailAddress)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
@@ -81,13 +81,13 @@ func sendVerificationEmail(dataloaders *dataloader.Loaders, queries *coredb.Quer
 		//logger.For(c).Debugf("sending verification email to %s with token %s", emailAddress, j)
 
 		from := mail.NewEmail("SpltFi", env.GetString("FROM_EMAIL"))
-		to := mail.NewEmail(userWithPII.Username.String, emailAddress)
+		to := mail.NewEmail(userWithPII.ID.String(), emailAddress)
 		m := mail.NewV3Mail()
 		m.SetFrom(from)
 		p := mail.NewPersonalization()
 		m.SetTemplateID(env.GetString("SENDGRID_VERIFICATION_TEMPLATE_ID"))
 		p.DynamicTemplateData = map[string]interface{}{
-			"username":          userWithPII.Username.String,
+			"username":          "unknown",
 			"verificationToken": j,
 		}
 		m.AddPersonalizations(p)
@@ -120,7 +120,7 @@ func adminSendNotificationEmail(queries *coredb.Queries, s *sendgrid.Client) gin
 			return
 		}
 
-		userWithPII, err := queries.GetUserWithPIIById(c, input.UserID)
+		userWithPII, err := queries.GetUserWithPIIById(c, input.UserId)
 		if err != nil {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return

@@ -3,9 +3,11 @@ package auth
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/mutuals/go-mutuals/service/auth/privy"
 	"github.com/mutuals/go-mutuals/service/logger"
 
 	"github.com/mutuals/go-mutuals/env"
@@ -23,6 +25,8 @@ const (
 type MutualsClaims struct {
 	jwt.RegisteredClaims
 }
+
+type IdTokenClaims = privy.IdTokenClaims
 
 type AuthTokenClaims struct {
 	UserId string `json:"sub,omitempty"`
@@ -63,10 +67,14 @@ func GenerateAuthToken(ctx context.Context, userId persist.DBID, appId persist.D
 	return generateJWT(claims, secret)
 }
 
+func ParseIdToken(ctx context.Context, token string) (IdTokenClaims, error) {
+	return privy.ParseIdToken(ctx, token)
+}
+
 func ParseAuthToken(ctx context.Context, token string) (AuthTokenClaims, error) {
 	claims := AuthTokenClaims{}
-	parsedToken, err := jwt.ParseWithClaims(token, &claims, keyFunc(env.GetString("PRIVY_AUTH_JWT_SECRET")))
-	logger.For(ctx).Infof("token %s, secret %s; parsedToken %v; err %s", token, env.GetString("PRIVY_AUTH_JWT_SECRET"), parsedToken, err)
+	parsedToken, err := jwt.ParseWithClaims(token, &claims, keyFunc(env.GetString("PRIVY_VERIFICATION_KEY")))
+	logger.For(ctx).Infof("token %s, secret %s; parsedToken %v; err %s", token, env.GetString("PRIVY_VERIFICATION_KEY"), parsedToken, err)
 
 	if err != nil || !parsedToken.Valid {
 		return AuthTokenClaims{}, ErrInvalidJWT
@@ -91,17 +99,6 @@ func GenerateRefreshToken(ctx context.Context, ID string, parentID string, userI
 	expiresAt := time.Now().Add(validFor)
 
 	return jwt, expiresAt, err
-}
-
-func ParseRefreshToken(ctx context.Context, token string) (RefreshTokenClaims, error) {
-	claims := RefreshTokenClaims{}
-	parsedToken, err := jwt.ParseWithClaims(token, &claims, keyFunc(env.GetString("REFRESH_JWT_SECRET")))
-
-	if err != nil || !parsedToken.Valid {
-		return RefreshTokenClaims{}, ErrInvalidJWT
-	}
-
-	return claims, nil
 }
 
 func ParseOneTimeLoginToken(ctx context.Context, token string) (persist.DBID, time.Time, error) {
@@ -162,7 +159,23 @@ func generateJWT(claims jwt.Claims, jwtSecret string) (string, error) {
 	return jwtToken, nil
 }
 
+// keyFunc returns a key function for verifying Privy ES256 tokens
 func keyFunc(verificationKey string) jwt.Keyfunc {
+	return func(token *jwt.Token) (interface{}, error) {
+		if token.Method.Alg() != "ES256" {
+			return nil, fmt.Errorf("unexpected JWT signing method=%v", token.Header["alg"])
+		}
+
+		parsed := strings.ReplaceAll("-----BEGIN PUBLIC KEY-----\\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERFWiFvDlBs1m5ZCaNNwzxizIlmOlYgdKw0DjFVsZhJYfTcOc/gqMfz8WEOJZginOWCfy/Cyydj9xg9xWtHxJpg==\\n-----END PUBLIC KEY-----", "\\n", "\n")
+		key, err := jwt.ParseECPublicKeyFromPEM([]byte(parsed))
+		if err != nil {
+			return nil, err
+		}
+		return key, nil
+	}
+}
+
+/*func keyFunc(verificationKey string) jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
 
 		if token.Method.Alg() != "ES256" {
@@ -175,4 +188,4 @@ func keyFunc(verificationKey string) jwt.Keyfunc {
 		}
 		return key, nil
 	}
-}
+}*/

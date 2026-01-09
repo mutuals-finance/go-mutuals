@@ -486,7 +486,7 @@ type ComplexityRoot struct {
 	Query struct {
 		IsEmailAddressAvailable func(childComplexity int, emailAddress persist.Email) int
 		Node                    func(childComplexity int, id model.GqlID) int
-		PoolByID                func(childComplexity int, id persist.DBID) int
+		Pool                    func(childComplexity int, id *persist.DBID, slug *string, contractID *persist.DBID) int
 		SearchPools             func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
 		SearchUsers             func(childComplexity int, query string, limit *int, usernameWeight *float64) int
 		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
@@ -612,14 +612,6 @@ type ComplexityRoot struct {
 		Code    func(childComplexity int) int
 		Field   func(childComplexity int) int
 		Message func(childComplexity int) int
-	}
-
-	UserLoginOrRegister struct {
-		Errors               func(childComplexity int) int
-		RefreshToken         func(childComplexity int) int
-		RequiresConfirmation func(childComplexity int) int
-		Token                func(childComplexity int) int
-		User                 func(childComplexity int) int
 	}
 
 	UserRegister struct {
@@ -760,7 +752,7 @@ type QueryResolver interface {
 	UserByUsername(ctx context.Context, username string) (model.UserByUsernameOrError, error)
 	UserByID(ctx context.Context, id persist.DBID) (model.UserByIDOrError, error)
 	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error)
-	PoolByID(ctx context.Context, id persist.DBID) (model.PoolByIDPayloadOrError, error)
+	Pool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (*model.Pool, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersPayloadOrError, error)
 	SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsPayloadOrError, error)
 	IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error)
@@ -2463,17 +2455,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Node(childComplexity, args["id"].(model.GqlID)), true
 
-	case "Query.poolById":
-		if e.complexity.Query.PoolByID == nil {
+	case "Query.pool":
+		if e.complexity.Query.Pool == nil {
 			break
 		}
 
-		args, err := ec.field_Query_poolById_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_pool_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.PoolByID(childComplexity, args["id"].(persist.DBID)), true
+		return e.complexity.Query.Pool(childComplexity, args["id"].(*persist.DBID), args["slug"].(*string), args["contractId"].(*persist.DBID)), true
 
 	case "Query.searchPools":
 		if e.complexity.Query.SearchPools == nil {
@@ -2960,41 +2952,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserError.Message(childComplexity), true
 
-	case "UserLoginOrRegister.errors":
-		if e.complexity.UserLoginOrRegister.Errors == nil {
-			break
-		}
-
-		return e.complexity.UserLoginOrRegister.Errors(childComplexity), true
-
-	case "UserLoginOrRegister.refreshToken":
-		if e.complexity.UserLoginOrRegister.RefreshToken == nil {
-			break
-		}
-
-		return e.complexity.UserLoginOrRegister.RefreshToken(childComplexity), true
-
-	case "UserLoginOrRegister.requiresConfirmation":
-		if e.complexity.UserLoginOrRegister.RequiresConfirmation == nil {
-			break
-		}
-
-		return e.complexity.UserLoginOrRegister.RequiresConfirmation(childComplexity), true
-
-	case "UserLoginOrRegister.token":
-		if e.complexity.UserLoginOrRegister.Token == nil {
-			break
-		}
-
-		return e.complexity.UserLoginOrRegister.Token(childComplexity), true
-
-	case "UserLoginOrRegister.user":
-		if e.complexity.UserLoginOrRegister.User == nil {
-			break
-		}
-
-		return e.complexity.UserLoginOrRegister.User(childComplexity), true
-
 	case "UserRegister.errors":
 		if e.complexity.UserRegister.Errors == nil {
 			break
@@ -3251,7 +3208,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateUserInfoInput,
 		ec.unmarshalInputUploadPersistedQueriesInput,
 		ec.unmarshalInputUserInput,
-		ec.unmarshalInputUserLoginOrRegisterInput,
 		ec.unmarshalInputUserRegisterInput,
 		ec.unmarshalInputVerifyEmailInput,
 		ec.unmarshalInputVerifyEmailMagicLinkInput,
@@ -4041,7 +3997,19 @@ type Query {
   userByUsername(username: String!): UserByUsernameOrError
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-  poolById(id: DBID!): PoolByIdPayloadOrError
+
+  """Look up a pool by ID, slug, or contract ID."""
+  pool(
+    """ID of the pool."""
+    id: DBID
+
+    """Slug of the pool"""
+    slug: String
+
+    """ID of the contract"""
+    contractId: DBID
+  ): Pool
+
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
@@ -4422,33 +4390,6 @@ Updates the user of the logged-in user.
 type UserUpdate {
   errors: [UserError!]!
   user: User
-}
-
-"""
-Login an existing user or register a new one.
-"""
-type UserLoginOrRegister {
-  """Informs whether users need to confirm their email address."""
-  requiresConfirmation: Boolean
-
-  """JWT token, required to authenticate."""
-  token: String
-
-  """JWT refresh token, required to re-generate access token."""
-  refreshToken: String
-
-  user: User
-
-  errors: [UserError!]!
-}
-
-
-"""Fields required to login or register a user."""
-input UserLoginOrRegisterInput {
-  """
-  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
-  """
-  redirectUrl: String
 }
 
 """Represents errors in user mutations."""
@@ -6289,35 +6230,89 @@ func (ec *executionContext) field_Query_node_argsID(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_poolById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_pool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_poolById_argsID(ctx, rawArgs)
+	arg0, err := ec.field_Query_pool_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["id"] = arg0
+	arg1, err := ec.field_Query_pool_argsSlug(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["slug"] = arg1
+	arg2, err := ec.field_Query_pool_argsContractID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["contractId"] = arg2
 	return args, nil
 }
-func (ec *executionContext) field_Query_poolById_argsID(
+func (ec *executionContext) field_Query_pool_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (*persist.DBID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["id"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal *persist.DBID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal *persist.DBID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_pool_argsSlug(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["slug"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+	if tmp, ok := rawArgs["slug"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_pool_argsContractID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*persist.DBID, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["contractId"]
+	if !ok {
+		var zeroVal *persist.DBID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("contractId"))
+	if tmp, ok := rawArgs["contractId"]; ok {
+		return ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+	}
+
+	var zeroVal *persist.DBID
 	return zeroVal, nil
 }
 
@@ -18369,8 +18364,8 @@ func (ec *executionContext) fieldContext_Query_userByAddress(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_poolById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_poolById(ctx, field)
+func (ec *executionContext) _Query_pool(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_pool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18383,7 +18378,7 @@ func (ec *executionContext) _Query_poolById(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PoolByID(rctx, fc.Args["id"].(persist.DBID))
+		return ec.resolvers.Query().Pool(rctx, fc.Args["id"].(*persist.DBID), fc.Args["slug"].(*string), fc.Args["contractId"].(*persist.DBID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18392,19 +18387,47 @@ func (ec *executionContext) _Query_poolById(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.PoolByIDPayloadOrError)
+	res := resTmp.(*model.Pool)
 	fc.Result = res
-	return ec.marshalOPoolByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolByIDPayloadOrError(ctx, field.Selections, res)
+	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_poolById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_pool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PoolByIdPayloadOrError does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Pool_id(ctx, field)
+			case "dbid":
+				return ec.fieldContext_Pool_dbid(ctx, field)
+			case "name":
+				return ec.fieldContext_Pool_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Pool_description(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
+			case "slug":
+				return ec.fieldContext_Pool_slug(ctx, field)
+			case "status":
+				return ec.fieldContext_Pool_status(ctx, field)
+			case "owner":
+				return ec.fieldContext_Pool_owner(ctx, field)
+			case "contract":
+				return ec.fieldContext_Pool_contract(ctx, field)
+			case "claims":
+				return ec.fieldContext_Pool_claims(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Pool_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Pool_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	defer func() {
@@ -18414,7 +18437,7 @@ func (ec *executionContext) fieldContext_Query_poolById(ctx context.Context, fie
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_poolById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_pool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -21512,232 +21535,6 @@ func (ec *executionContext) fieldContext_UserError_code(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UserErrorCode does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserLoginOrRegister_requiresConfirmation(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserLoginOrRegister_requiresConfirmation(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RequiresConfirmation, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserLoginOrRegister_requiresConfirmation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserLoginOrRegister",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserLoginOrRegister_token(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserLoginOrRegister_token(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Token, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserLoginOrRegister_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserLoginOrRegister",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserLoginOrRegister_refreshToken(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserLoginOrRegister_refreshToken(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RefreshToken, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserLoginOrRegister_refreshToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserLoginOrRegister",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserLoginOrRegister_user(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserLoginOrRegister_user(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserLoginOrRegister_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserLoginOrRegister",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserLoginOrRegister_errors(ctx context.Context, field graphql.CollectedField, obj *model.UserLoginOrRegister) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserLoginOrRegister_errors(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Errors, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.UserError)
-	fc.Result = res
-	return ec.marshalNUserError2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserLoginOrRegister_errors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserLoginOrRegister",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "field":
-				return ec.fieldContext_UserError_field(ctx, field)
-			case "message":
-				return ec.fieldContext_UserError_message(ctx, field)
-			case "code":
-				return ec.fieldContext_UserError_code(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UserError", field.Name)
 		},
 	}
 	return fc, nil
@@ -26351,33 +26148,6 @@ func (ec *executionContext) unmarshalInputUserInput(ctx context.Context, obj int
 				return it, err
 			}
 			it.Username = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUserLoginOrRegisterInput(ctx context.Context, obj interface{}) (model.UserLoginOrRegisterInput, error) {
-	var it model.UserLoginOrRegisterInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"redirectUrl"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "redirectUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("redirectUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RedirectURL = data
 		}
 	}
 
@@ -31446,7 +31216,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "poolById":
+		case "pool":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -31455,7 +31225,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_poolById(ctx, field)
+				res = ec._Query_pool(ctx, field)
 				return res
 			}
 
@@ -32650,53 +32420,6 @@ func (ec *executionContext) _UserError(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._UserError_message(ctx, field, obj)
 		case "code":
 			out.Values[i] = ec._UserError_code(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var userLoginOrRegisterImplementors = []string{"UserLoginOrRegister"}
-
-func (ec *executionContext) _UserLoginOrRegister(ctx context.Context, sel ast.SelectionSet, obj *model.UserLoginOrRegister) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userLoginOrRegisterImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UserLoginOrRegister")
-		case "requiresConfirmation":
-			out.Values[i] = ec._UserLoginOrRegister_requiresConfirmation(ctx, field, obj)
-		case "token":
-			out.Values[i] = ec._UserLoginOrRegister_token(ctx, field, obj)
-		case "refreshToken":
-			out.Values[i] = ec._UserLoginOrRegister_refreshToken(ctx, field, obj)
-		case "user":
-			out.Values[i] = ec._UserLoginOrRegister_user(ctx, field, obj)
-		case "errors":
-			out.Values[i] = ec._UserLoginOrRegister_errors(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -36331,13 +36054,6 @@ func (ec *executionContext) marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutual
 		return graphql.Null
 	}
 	return ec._Pool(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPoolByIdPayloadOrError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolByIDPayloadOrError(ctx context.Context, sel ast.SelectionSet, v model.PoolByIDPayloadOrError) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._PoolByIdPayloadOrError(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPoolContract2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolContract(ctx context.Context, sel ast.SelectionSet, v *model.PoolContract) graphql.Marshaler {

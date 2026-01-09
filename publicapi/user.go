@@ -356,7 +356,7 @@ func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role,
 }
 
 func (api UserAPI) CreateUser(ctx context.Context) (user coredb.User, err error) {
-	user, err = userService.CreateUser(ctx, api.repos, api.queries)
+	user, err = userService.CreateUser(ctx, api.queries)
 	if err != nil {
 		return coredb.User{}, err
 	}

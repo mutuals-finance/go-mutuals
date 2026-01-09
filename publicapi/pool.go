@@ -8,8 +8,12 @@ import (
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/graphql/model"
+	claimsService "github.com/mutuals/go-mutuals/service/claims"
+	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/allocation"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
 )
 
@@ -21,19 +25,49 @@ type PoolAPI struct {
 	ethClient *ethclient.Client
 }
 
-func (api PoolAPI) GetPoolById(ctx context.Context, poolID persist.DBID) (*db.Pool, error) {
+func (api PoolAPI) GetPool(ctx context.Context, poolID *persist.DBID, slug *string, contractID *persist.DBID) (*db.Pool, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"poolID": validate.WithTag(poolID, "required"),
+		"poolID | slug | contractID": validate.WithTag([]any{poolID, slug, contractID}, "at_least_one"),
 	}); err != nil {
 		return nil, err
 	}
 
-	pool, err := api.loaders.GetPoolByIdBatch.Load(poolID)
+	pool, err := api.loaders.GetPoolBatch.Load(db.GetPoolBatchParams{
+		PoolID:     persist.DBIDPtrToNullStr(poolID),
+		Slug:       persist.StrPtrToNullStr(slug),
+		ContractID: persist.DBIDPtrToNullStr(contractID),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &pool, nil
+}
+
+func (api PoolAPI) GetViewerPools(ctx context.Context) (*[]db.Pool, error) {
+	viewerId, err := getAuthenticatedUserId(ctx)
+	viewerAccounts, err := getAuthenticatedLinkedAccounts(ctx)
+	logger.For(ctx).Infof("VIEWER: %s, %v", viewerId, viewerAccounts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	params := db.GetPoolsByAddressesOrOwnerBatchParams{
+		OwnerID: viewerId,
+	}
+
+	for _, account := range viewerAccounts {
+		params.Addresses = append(params.Addresses, account.Address)
+	}
+	logger.For(ctx).Infof("PARAMS: %v", params)
+
+	pools, err := api.loaders.GetPoolsByAddressesOrOwnerBatch.Load(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pools, nil
 }
 
 func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([]*db.Pool, []error) {
@@ -44,7 +78,9 @@ func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([
 			return func() (db.Pool, error) { return db.Pool{}, err }
 		}
 
-		return api.loaders.GetPoolByIdBatch.LoadThunk(poolID)
+		return api.loaders.GetPoolBatch.LoadThunk(db.GetPoolBatchParams{
+			PoolID: persist.DBIDToNullStr(poolID),
+		})
 	}
 
 	thunks := make([]func() (db.Pool, error), len(poolIDs))
@@ -69,7 +105,6 @@ func (api PoolAPI) GetPoolsByIds(ctx context.Context, poolIDs []persist.DBID) ([
 
 // CreatePool creates a new pool with optional claims
 func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) (db.Pool, error) {
-	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"name":        validate.WithTag(input.Name, "max=200"),
 		"description": validate.WithTag(input.Description, "max=600"),
@@ -83,7 +118,6 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 		return db.Pool{}, err
 	}
 
-	// Begin transaction
 	tx, err := api.repos.BeginTx(ctx)
 	if err != nil {
 		return db.Pool{}, err
@@ -91,48 +125,44 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 	defer tx.Rollback(ctx)
 
 	q := api.queries.WithTx(tx)
-
 	poolID := persist.GenerateID()
-
-	private := false
-	if input.Private != nil {
-		private = *input.Private
-	}
 
 	pool, err := q.CreatePool(ctx, db.CreatePoolParams{
 		ID:          poolID,
-		Name:        *input.Name,
-		Description: *input.Description,
-		Image:       *input.Image,
-		Slug:        *input.Slug,
-		Private:     private,
-		OwnerID:     persist.DBID(userId),
+		Name:        util.FromPointer(input.Name),
+		Description: util.FromPointer(input.Description),
+		Image:       util.FromPointer(input.Image),
+		Slug:        util.FromPointer(input.Slug),
+		Private:     util.FromPointer(input.Private),
+		OwnerID:     userId,
 	})
 	if err != nil {
 		return db.Pool{}, err
 	}
 
-	// Create claims if provided
-	if input.AddClaims != nil && len(input.AddClaims) > 0 {
-		/*	for _, claimInput := range input.AddClaims {
-			_, err := q.CreateClaims(ctx, db.CreateClaimsParams{
-				ID:               persist.GenerateID(),
-				PoolID:           poolID,
-				RecipientAddress: claimInput.RecipientAddress.String(),
-				StateID:          claimInput.StateId,
-				StrategyID:       claimInput.StrategyId,
-				Data:             claimInput.Data,
-				ParentID:         "", // TODO: Handle nested claims if needed
+	if len(input.AddClaims) > 0 {
+		var claims []allocation.Claim
+
+		for _, c := range input.AddClaims {
+			claims = append(claims, allocation.Claim{
+				Label:            util.FromPointer(c.Label),
+				RecipientAddress: c.RecipientAddress,
+				Data:             c.Data,
+				Parent:           c.Parent,
+				Children:         c.Children,
+				StateID:          c.StateID,
+				StrategyID:       c.StrategyID,
 			})
-			if err != nil {
-				return db.Pool{}, err
-			}
-		}*/
+		}
+
+		_, err := claimsService.CreateClaims(ctx, q, poolID, claims)
+		if err != nil {
+			return db.Pool{}, err
+		}
+
 	}
 
-	// Commit transaction
-	err = tx.Commit(ctx)
-	if err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return db.Pool{}, err
 	}
 

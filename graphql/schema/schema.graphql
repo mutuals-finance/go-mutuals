@@ -670,7 +670,19 @@ type Query {
   userByUsername(username: String!): UserByUsernameOrError
   userById(id: DBID!): UserByIdOrError
   userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-  poolById(id: DBID!): PoolByIdPayloadOrError
+
+  """Look up a pool by ID, slug, or contract ID."""
+  pool(
+    """ID of the pool."""
+    id: DBID
+
+    """Slug of the pool"""
+    slug: String
+
+    """ID of the contract"""
+    contractId: DBID
+  ): Pool
+
   """
   Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
   that help determine how matches will be ranked. usernameWeight defaults to 0.4 and

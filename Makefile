@@ -9,6 +9,7 @@
 # GCP only allows letters, numbers, and hyphens (e.g. kaito/feature => kaito-feature)
 CURRENT_BRANCH       := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[^a-zA-Z0-9]/-/g')
 CURRENT_COMMIT_HASH  := $(shell git rev-parse --short=10 HEAD)
+RUN               	 := run
 DEPLOY               := deploy
 PROMOTE              := promote
 STOP                 := stop
@@ -77,6 +78,10 @@ $(DEPLOY)-$(PROD)-%               : CONFIG_DIR             := ./$(SOPS_SECRETS_D
 $(PROMOTE)-$(PROD)-%              : ENV                    := $(PROD)
 $(PROMOTE)-$(PROD)-%              : REQUIRED_SOPS_SECRETS  := $(SOPS_PROD_SECRETS)
 
+$(RUN)-$(LOCAL)-%  : REQUIRED_SOPS_SECRETS := $(SOPS_LOCAL_SECRETS)
+$(RUN)-$(DEV)-%    : REQUIRED_SOPS_SECRETS := $(SOPS_DEV_SECRETS)
+$(RUN)-$(PROD)-%   : REQUIRED_SOPS_SECRETS := $(SOPS_PROD_SECRETS)
+
 # Service files, add a line for each service and environment you want to deploy.
 $(DEPLOY)-$(DEV)-backend            : SERVICE_FILE := backend-env.yaml
 $(DEPLOY)-$(DEV)-admin              : SERVICE_FILE := app-dev-admin.yaml
@@ -88,7 +93,6 @@ $(DEPLOY)-$(SANDBOX)-backend        : SERVICE_FILE := backend-sandbox-env.yaml
 $(DEPLOY)-$(PROD)-backend           : SERVICE_FILE := backend-env.yaml
 $(DEPLOY)-$(PROD)-admin             : SERVICE_FILE := app-prod-admin.yaml
 $(DEPLOY)-$(PROD)-pushnotifications : SERVICE_FILE := pushnotifications-env.yaml
-# $(DEPLOY)-$(PROD)-kafka-streamer    : SERVICE_FILE := kafka-streamer-env.yaml
 $(DEPLOY)-$(PROD)-emails            : SERVICE_FILE := emails-server-env.yaml
 $(DEPLOY)-$(PROD)-routing-rules     : SERVICE_FILE := dispatch.yaml
 $(DEPLOY)-$(PROD)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
@@ -97,7 +101,6 @@ $(DEPLOY)-$(PROD)-graphql-gateway   : SERVICE_FILE := graphql-gateway.yml
 $(DEPLOY)-%-backend               : SENTRY_PROJECT := mutuals-backend
 $(DEPLOY)-%-pushnotifications     : SENTRY_PROJECT := pushnotifications
 $(DEPLOY)-%-emails                : SENTRY_PROJECT := emails
-# $(DEPLOY)-%-kafka-streamer        : SENTRY_PROJECT := kafka-streamer
 
 # Docker builds
 $(DEPLOY)-%-pushnotifications          : REPO           := pushnotifications
@@ -141,24 +144,6 @@ $(DEPLOY)-%-graphql-gateway            : MEMORY         := $(GRAPHQL_GATEWAY_MEM
 $(DEPLOY)-%-graphql-gateway            : CONCURRENCY    := $(GRAPHQL_GATEWAY_CONCURRENCY)
 $(DEPLOY)-$(DEV)-graphql-gateway       : SERVICE        := graphql-gateway-dev
 $(DEPLOY)-$(PROD)-graphql-gateway      : SERVICE        := graphql-gateway
-#$(DEPLOY)-%-kafka-streamer             : REPO           := kafka-streamer
-#$(DEPLOY)-%-kafka-streamer             : DOCKER_FILE    := $(DOCKER_DIR)/kafka-streamer/Dockerfile
-#$(DEPLOY)-%-kafka-streamer             : PORT           := 3000
-#$(DEPLOY)-%-kafka-streamer             : TIMEOUT        := $(KAFKA_STREAMER_TIMEOUT)
-#$(DEPLOY)-%-kafka-streamer             : CPU            := $(KAFKA_STREAMER_CPU)
-#$(DEPLOY)-%-kafka-streamer             : MEMORY         := $(KAFKA_STREAMER_MEMORY)
-#$(DEPLOY)-%-kafka-streamer             : CONCURRENCY    := $(KAFKA_STREAMER_CONCURRENCY)
-#$(DEPLOY)-%-kafka-streamer             : DEPLOY_FLAGS   = $(BASE_DEPLOY_FLAGS) --no-cpu-throttling
-# $(DEPLOY)-$(PROD)-kafka-streamer       : SERVICE        := kafka-streamer
-
-# Cloud Scheduler Jobs
-#$(DEPLOY)-%-alchemy-spam                     : CRON_PREFIX    := alchemy-spam
-#$(DEPLOY)-%-alchemy-spam                     : CRON_LOCATION  := $(DEPLOY_REGION)
-#$(DEPLOY)-%-alchemy-spam                     : CRON_SCHEDULE  := '0 0 * * *'
-#$(DEPLOY)-%-alchemy-spam                     : CRON_URI       = $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')/contracts/detect-spam
-#$(DEPLOY)-%-alchemy-spam                     : CRON_METHOD    := POST
-#$(DEPLOY)-$(DEV)-alchemy-spam                : URI_NAME       := tokenprocessing-dev
-#$(DEPLOY)-$(PROD)-alchemy-spam               : URI_NAME       := tokenprocessing-v3
 $(DEPLOY)-%-check-push-tickets               : CRON_PREFIX    := check-push-tickets
 $(DEPLOY)-%-check-push-tickets               : CRON_LOCATION  := $(DEPLOY_REGION)
 $(DEPLOY)-%-check-push-tickets               : CRON_SCHEDULE  := '*/5 * * * *'
@@ -175,14 +160,6 @@ $(DEPLOY)-%-emails-notifications             : CRON_FLAGS     = --oidc-service-a
 $(DEPLOY)-%-emails-notifications             : CRON_METHOD    := POST
 $(DEPLOY)-$(DEV)-emails-notifications        : URI_NAME       := emails-dev
 $(DEPLOY)-$(PROD)-emails-notifications       : URI_NAME       := emails-v2
-#$(DEPLOY)-%-emails-digest                    : CRON_PREFIX    := emails_digest
-#$(DEPLOY)-%-emails-digest                    : CRON_LOCATION  := $(DEPLOY_REGION)
-#$(DEPLOY)-%-emails-digest                    : CRON_SCHEDULE  := '0 16 * * 1'
-#$(DEPLOY)-%-emails-digest                    : CRON_URI       = $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')/digest/send
-#$(DEPLOY)-%-emails-digest                    : CRON_FLAGS     = --oidc-service-account-email $(GCP_PROJECT_NUMBER)-compute@developer.gserviceaccount.com --oidc-token-audience $(shell gcloud run services describe $(URI_NAME) --region $(DEPLOY_REGION) --format 'value(status.url)')
-#$(DEPLOY)-%-emails-digest                    : CRON_METHOD    := POST
-#$(DEPLOY)-$(DEV)-emails-digest               : URI_NAME       := emails-dev
-#$(DEPLOY)-$(PROD)-emails-digest              : URI_NAME       := emails-v2
 
 # Service name mappings
 $(PROMOTE)-%-backend                   : SERVICE := default
@@ -312,10 +289,8 @@ $(DEPLOY)-$(DEV)-emails             : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-e
 $(DEPLOY)-$(DEV)-admin              : _set-project-$(ENV) _$(DEPLOY)-admin
 $(DEPLOY)-$(DEV)-routing-rules    : _set-project-$(ENV) _$(DEPLOY)-routing-rules
 $(DEPLOY)-$(DEV)-graphql-gateway    : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
-# $(DEPLOY)-$(DEV)-alchemy-spam       : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-alchemy-spam _$(CRON)-$(PAUSE)-alchemy-spam
 $(DEPLOY)-$(DEV)-check-push-tickets : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-check-push-tickets _$(CRON)-$(PAUSE)-check-push-tickets
 $(DEPLOY)-$(DEV)-emails-notifications : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-notifications _$(CRON)-$(PAUSE)-emails-notifications
-# $(DEPLOY)-$(DEV)-emails-digest : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-digest _$(CRON)-$(PAUSE)-emails-digest
 
 # SANDBOX deployments
 $(DEPLOY)-$(SANDBOX)-backend      : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend # go server that uses dev upstream services
@@ -324,14 +299,11 @@ $(DEPLOY)-$(SANDBOX)-backend      : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-bac
 $(DEPLOY)-$(PROD)-backend                  : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-backend _$(RELEASE)-backend
 $(DEPLOY)-$(PROD)-pushnotifications        : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-pushnotifications _$(RELEASE)-pushnotifications
 $(DEPLOY)-$(PROD)-emails                   : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-emails _$(RELEASE)-emails
-# $(DEPLOY)-$(PROD)-kafka-streamer           : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-kafka-streamer _$(RELEASE)-kafka-streamer
 $(DEPLOY)-$(PROD)-admin                    : _set-project-$(ENV) _$(DEPLOY)-admin
 $(DEPLOY)-$(PROD)-routing-rules            : _set-project-$(ENV) _$(DEPLOY)-routing-rules
 $(DEPLOY)-$(PROD)-graphql-gateway          : _set-project-$(ENV) _$(DOCKER)-$(DEPLOY)-graphql-gateway
-# $(DEPLOY)-$(PROD)-alchemy-spam             : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-alchemy-spam _$(CRON)-$(PAUSE)-alchemy-spam
 $(DEPLOY)-$(PROD)-check-push-tickets       : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-check-push-tickets _$(CRON)-$(PAUSE)-check-push-tickets
 $(DEPLOY)-$(PROD)-emails-notifications     : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-notifications _$(CRON)-$(PAUSE)-emails-notifications
-# $(DEPLOY)-$(PROD)-emails-digest            : _set-project-$(ENV) _$(CRON)-$(DEPLOY)-emails-digest _$(CRON)-$(PAUSE)-emails-digest
 
 # PROD promotions. Running these targets will migrate traffic to the specified version.
 # Example usage:
@@ -342,6 +314,10 @@ $(PROMOTE)-$(PROD)-backend            : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE
 $(PROMOTE)-$(PROD)-pushnotifications  : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-pushnotifications
 $(PROMOTE)-$(PROD)-emails             : _set-project-$(ENV) _$(DOCKER)-$(PROMOTE)-emails
 $(PROMOTE)-$(PROD)-admin              : _set-project-$(ENV) _$(PROMOTE)-admin
+
+# generic command runner with SOPS secrets
+$(RUN)-$(LOCAL)-% $(RUN)-$(DEV)-% $(RUN)-$(PROD)-%:
+	@$(CMD)
 
 # Contracts
 contracts: solc abi-gen

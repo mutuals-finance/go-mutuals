@@ -37,19 +37,28 @@ FROM users
 WHERE deleted = FALSE;
 
 -- name: CreateUser :one
-INSERT INTO users (id, email_unsubscriptions)
-VALUES ($1, $2)
+WITH new_accounts AS (
+    INSERT INTO linked_accounts (id, user_id, type, address, chain_type, wallet_client_type, linked_at, deleted,
+                                 updated_at, created_at)
+        SELECT UNNEST(@id::text[]),
+               @user_id,
+               UNNEST(@type::text[]),
+               NULLIF(UNNEST(@address::text[]), ''),
+               NULLIF(UNNEST(@chain_type::text[]), ''),
+               NULLIF(UNNEST(@wallet_client_type::text[]), ''),
+               UNNEST(@linked_at::timestamptz[]),
+               FALSE,
+               NOW(),
+               NOW())
+INSERT
+INTO users (id, deleted, updated_at, created_at)
+VALUES (@user_id, FALSE, NOW(), NOW())
 RETURNING *;
 
 -- name: DeleteUserById :exec
 UPDATE users
 SET deleted = TRUE
 WHERE id = $1;
-
--- name: AddPiiAccountCreationInfo :exec
-INSERT INTO pii.account_creation_info (user_id, ip_address, created_at)
-VALUES (@user_id, @ip_address, NOW())
-ON CONFLICT DO NOTHING;
 
 -- name: GetUsersWithRolePaginate :many
 SELECT u.*
@@ -83,6 +92,7 @@ WHERE NOT u.deleted
   AND NOT u.universal
 ORDER BY t.pos
 LIMIT 100;
+
 
 -- name: UpdateUserVerifiedEmail :exec
 INSERT INTO pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address)

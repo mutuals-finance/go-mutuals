@@ -77,33 +77,28 @@ query notificationsForViewerQuery {
     }
 }
 
-query poolByIdQuery($id: DBID!) {
-    poolById(id: $id) {
-        ... on Pool {
-            id
-            dbid
-            name
-            description
-            status
-            image
-            donationBps
-            slug
-            owner {
-                ... on User {
-                    id
-                    dbid
-                }
-                ... on EVMAccount {
-                    address
-                    accountType
-                }
+query poolQuery($id: DBID!) {
+    pool(id: $id) {
+        id
+        dbid
+        name
+        description
+        status
+        image
+        donationBps
+        slug
+        owner {
+            ... on User {
+                id
+                dbid
             }
-            createdAt
-            updatedAt
+            ... on EVMAccount {
+                address
+                accountType
+            }
         }
-        ... on ErrPoolNotFound {
-            message
-        }
+        createdAt
+        updatedAt
     }
 }
 

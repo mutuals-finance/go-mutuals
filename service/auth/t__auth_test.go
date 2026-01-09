@@ -1,60 +1,48 @@
 package auth
 
-// import (
-// 	"testing"
+import (
+	"context"
+	"testing"
 
-// 	"github.com/ethereum/go-ethereum/ethclient"
-// 	"github.com/mutuals/go-mutuals/service/persist"
-// 	"github.com/spf13/viper"
-// 	"github.com/stretchr/testify/assert"
-// )
+	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-// func TestAuthVerifySignature_Success(t *testing.T) {
-// 	assert := assert.New(t)
+func TestGenerateAuthToken_Success(t *testing.T) {
+	ctx := context.Background()
+	userId := persist.DBID("test-user-id")
+	appId := persist.DBID("test-app-id")
+	refreshID := "refresh-id"
+	roles := []persist.Role{}
 
-// 	client, err := ethclient.Dial("https://eth-rinkeby.alchemyapi.io/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	token, err := GenerateAuthToken(ctx, userId, appId, refreshID, roles)
 
-// 	testNonce := "TestNonce"
-// 	sig := "0x7d3b810c5ae6efa6e5457f5ed85fe048f623b0f1127a7825f119a86714b72fec444d3fa301c05887ba1b94b77e5d68c8567171404cff43b7790e8f4d928b752a1b"
-// 	addr := persist.Address("0x9a3f9764B21adAF3C6fDf6f947e6D3340a3F8AC5")
+	require.NoError(t, err)
+	assert.NotEmpty(t, token)
+}
 
-// 	success, err := VerifySignatureAllMethods(sig, testNonce, addr, WalletTypeEOA, client)
-// 	assert.Nil(err)
-// 	assert.True(success)
-// }
+func TestParseIdToken_Success(t *testing.T) {
+	ctx := context.Background()
 
-// func TestAuthVerifySignature_WrongNonce_Failure(t *testing.T) {
-// 	assert := assert.New(t)
+	mockToken := "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImozdVc2YnJIMXV0LUlXWTE4bGRWYWFyS1JQZkN4SXUyUmpJd0FWcWtyZjgifQ.eyJjciI6IjE3NjY2NjgzMTEiLCJndWVzdCI6InQiLCJsaW5rZWRfYWNjb3VudHMiOiJbe1wiaWRcIjpcInQ4dWJiYzF4MzA0cHFiejZoNGRpMmhjbFwiLFwidHlwZVwiOlwid2FsbGV0XCIsXCJhZGRyZXNzXCI6XCIweDA3MGI4NTk2MDI2OThGOUZjNjE2YzYyQkZkMmI0MzhmMDBCZDFFMzBcIixcImNoYWluX3R5cGVcIjpcImV0aGVyZXVtXCIsXCJ3YWxsZXRfY2xpZW50X3R5cGVcIjpcInByaXZ5XCIsXCJsdlwiOjE3NjY2NjgzMTJ9XSIsImlzcyI6InByaXZ5LmlvIiwiaWF0IjoxNzY2ODM0MjQwLCJhdWQiOiJjbWhvcGg5MXMwMDU1aTgwYzk5eWRva2E4Iiwic3ViIjoiZGlkOnByaXZ5OmNtamxncDU4cDAxY2FsNzBkeHN4MDl6ZWIiLCJleHAiOjE3NjY4Mzc4NDB9.NhTT_QW354pYOXxAGz2l_0SqI0As_tpbrkBvE3Yh4PrJY_HruL3WYq9nnxrdDVTcBmIcEiD_x8_OnJ5Y-m7z8g"
 
-// 	client, err := ethclient.Dial("https://eth-rinkeby.alchemyapi.io/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	testNonce := "Wrong Nonce despite address signing sig"
-// 	sig := "0x7d3b810c5ae6efa6e5457f5ed85fe048f623b0f1127a7825f119a86714b72fec444d3fa301c05887ba1b94b77e5d68c8567171404cff43b7790e8f4d928b752a1b"
-// 	addr := persist.Address("0x9a3f9764B21adAF3C6fDf6f947e6D3340a3F8AC5")
+	claims, err := ParseIdToken(ctx, mockToken)
+	if err == nil {
+		assert.Equal(t, "privy.io", claims.Issuer)
+		assert.Equal(t, "did:privy:cmjlgp58p01cal70dxsx09zeb", claims.UserId)
+		//assert.Equal(t, "TODO", claims.AppId)
+		assert.NotEmpty(t, claims.LinkedAccounts)
+		assert.Equal(t, "wallet", claims.LinkedAccounts[0].Type)
+		assert.Equal(t, "0x070b859602698F9Fc616c62BFd2b438f00Bd1E30", claims.LinkedAccounts[0].Address)
+	}
+}
 
-// 	success, err := VerifySignatureAllMethods(sig, testNonce, addr, WalletTypeEOA, client)
-// 	assert.NotNil(err)
-// 	assert.False(success)
-// }
+func TestParseIdToken_InvalidToken(t *testing.T) {
+	ctx := context.Background()
+	invalidToken := "invalid.token.here"
 
-// func TestAuthVerifySignature_WrongAddress_Failure(t *testing.T) {
-// 	assert := assert.New(t)
+	_, err := ParseIdToken(ctx, invalidToken)
 
-// 	client, err := ethclient.Dial("https://eth-rinkeby.alchemyapi.io/v2/_2u--i79yarLYdOT4Bgydqa0dBceVRLD")
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	testNonce := "TestNonce"
-// 	sig := "0x7d3b810c5ae6efa6e5457f5ed85fe048f623b0f1127a7825f119a86714b72fec444d3fa301c05887ba1b94b77e5d68c8567171404cff43b7790e8f4d928b752a1b"
-// 	addr := persist.Address("0x456d569592f15Af845D0dbe984C12BAB8F430e32")
-
-// 	success, err := VerifySignatureAllMethods(sig, testNonce, addr, WalletTypeEOA, client)
-// 	assert.NotNil(err)
-// 	assert.False(success)
-// }
+	assert.Error(t, err)
+}

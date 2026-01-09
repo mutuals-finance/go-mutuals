@@ -1016,24 +1016,6 @@ type UserInput struct {
 	Username *string `json:"username"`
 }
 
-// Login an existing user or register a new one.
-type UserLoginOrRegister struct {
-	// Informs whether users need to confirm their email address.
-	RequiresConfirmation *bool `json:"requiresConfirmation"`
-	// JWT token, required to authenticate.
-	Token *string `json:"token"`
-	// JWT refresh token, required to re-generate access token.
-	RefreshToken *string      `json:"refreshToken"`
-	User         *User        `json:"user"`
-	Errors       []*UserError `json:"errors"`
-}
-
-// Fields required to login or register a user.
-type UserLoginOrRegisterInput struct {
-	// Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
-	RedirectURL *string `json:"redirectUrl"`
-}
-
 // Register a new user.
 type UserRegister struct {
 	// Informs whether users need to confirm their email address.

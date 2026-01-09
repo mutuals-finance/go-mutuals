@@ -12,22 +12,6 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-const addPiiAccountCreationInfo = `-- name: AddPiiAccountCreationInfo :exec
-INSERT INTO pii.account_creation_info (user_id, ip_address, created_at)
-VALUES ($1, $2, NOW())
-ON CONFLICT DO NOTHING
-`
-
-type AddPiiAccountCreationInfoParams struct {
-	UserID    persist.DBID `db:"user_id" json:"user_id"`
-	IpAddress string       `db:"ip_address" json:"ip_address"`
-}
-
-func (q *Queries) AddPiiAccountCreationInfo(ctx context.Context, arg AddPiiAccountCreationInfoParams) error {
-	_, err := q.db.Exec(ctx, addPiiAccountCreationInfo, arg.UserID, arg.IpAddress)
-	return err
-}
-
 const addUserRoles = `-- name: AddUserRoles :exec
 INSERT INTO user_roles (id, user_id, role, created_at, updated_at)
 SELECT UNNEST($2::varchar[]), $1, UNNEST($3::varchar[]), NOW(), NOW()
@@ -85,18 +69,45 @@ func (q *Queries) CountAllUsers(ctx context.Context) (int64, error) {
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email_unsubscriptions)
-VALUES ($1, $2)
+WITH new_accounts AS (
+    INSERT INTO linked_accounts (id, user_id, type, address, chain_type, wallet_client_type, linked_at, deleted,
+                                 updated_at, created_at)
+        SELECT UNNEST($2::text[]),
+               $1,
+               UNNEST($3::text[]),
+               NULLIF(UNNEST($4::text[]), ''),
+               NULLIF(UNNEST($5::text[]), ''),
+               NULLIF(UNNEST($6::text[]), ''),
+               UNNEST($7::timestamptz[]),
+               FALSE,
+               NOW(),
+               NOW())
+INSERT
+INTO users (id, deleted, updated_at, created_at)
+VALUES ($1, FALSE, NOW(), NOW())
 RETURNING id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
 `
 
 type CreateUserParams struct {
-	ID                   persist.DBID                 `db:"id" json:"id"`
-	EmailUnsubscriptions persist.EmailUnsubscriptions `db:"email_unsubscriptions" json:"email_unsubscriptions"`
+	UserID           persist.DBID `db:"user_id" json:"user_id"`
+	ID               []string     `db:"id" json:"id"`
+	Type             []string     `db:"type" json:"type"`
+	Address          []string     `db:"address" json:"address"`
+	ChainType        []string     `db:"chain_type" json:"chain_type"`
+	WalletClientType []string     `db:"wallet_client_type" json:"wallet_client_type"`
+	LinkedAt         []time.Time  `db:"linked_at" json:"linked_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.ID, arg.EmailUnsubscriptions)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.UserID,
+		arg.ID,
+		arg.Type,
+		arg.Address,
+		arg.ChainType,
+		arg.WalletClientType,
+		arg.LinkedAt,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,

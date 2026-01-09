@@ -8,7 +8,6 @@ import (
 
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/mutuals/go-mutuals/util"
 
@@ -83,35 +82,22 @@ type CreateUserInput struct {
 }
 
 // CreateUser creates a new user
-func CreateUser(ctx context.Context, repos *postgres.Repositories, queries *coredb.Queries) (user coredb.User, err error) {
+func CreateUser(ctx context.Context, queries *coredb.Queries) (user coredb.User, err error) {
 	gc := util.MustGetGinContext(ctx)
-	tx, err := repos.BeginTx(ctx)
-	if err != nil {
-		return coredb.User{}, err
-	}
-
-	txQueries := queries.WithTx(tx)
-	defer tx.Rollback(ctx)
-
 	userId := auth.GetUserIdFromCtx(gc)
+	linkedAccounts := auth.GetLinkedAccountsFromCtx(gc)
 
-	user, err = queries.CreateUser(ctx, coredb.CreateUserParams{
-		ID: userId,
-	})
-	if err != nil {
-		return coredb.User{}, err
+	params := coredb.CreateUserParams{UserID: userId}
+	for _, a := range linkedAccounts {
+		params.ID = append(params.ID, a.Id)
+		params.Type = append(params.Type, a.Type)
+		params.Address = append(params.Address, a.Address)
+		params.ChainType = append(params.ChainType, a.ChainType)
+		params.WalletClientType = append(params.WalletClientType, a.WalletClientType)
+		params.LinkedAt = append(params.LinkedAt, time.Unix(a.Lv, 0))
 	}
 
-	err = txQueries.AddPiiAccountCreationInfo(ctx, coredb.AddPiiAccountCreationInfoParams{
-		UserID:    user.ID,
-		IpAddress: gc.ClientIP(),
-	})
-
-	if err != nil {
-		logger.For(ctx).Warnf("failed to get IP address for userId %s: %s\n", user.ID, err)
-	}
-
-	err = tx.Commit(ctx)
+	user, err = queries.CreateUser(ctx, params)
 	if err != nil {
 		return coredb.User{}, err
 	}

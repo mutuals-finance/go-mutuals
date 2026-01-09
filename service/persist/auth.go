@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-	// "github.com/davecgh/go-spew/spew"
 )
 
 // ReqHeaders is a type that holds the headers for a request

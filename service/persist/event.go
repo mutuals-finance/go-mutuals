@@ -79,6 +79,14 @@ func DBIDToNullStr(id DBID) sql.NullString {
 	return StrPtrToNullStr(&s)
 }
 
+func DBIDPtrToNullStr(id *DBID) sql.NullString {
+	if id == nil {
+		return sql.NullString{}
+	}
+	s := id.String()
+	return StrPtrToNullStr(&s)
+}
+
 func NullStrToDBID(s sql.NullString) DBID {
 	return DBID(NullStrToStr(s))
 }

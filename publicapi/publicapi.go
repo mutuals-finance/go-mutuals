@@ -21,6 +21,7 @@ import (
 	coreData "github.com/mutuals/go-mutuals/graphql/dataloader"
 	indexerData "github.com/mutuals/go-mutuals/graphql/dataloader/indexerdb"
 	"github.com/mutuals/go-mutuals/service/auth"
+	"github.com/mutuals/go-mutuals/service/auth/privy"
 	"github.com/mutuals/go-mutuals/service/multichain"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
@@ -115,6 +116,18 @@ func getAuthenticatedUserId(ctx context.Context) (persist.DBID, error) {
 
 	userID := auth.GetUserIdFromCtx(gc)
 	return userID, nil
+}
+
+func getAuthenticatedLinkedAccounts(ctx context.Context) ([]privy.LinkedAccount, error) {
+	gc := util.MustGetGinContext(ctx)
+	authError := auth.GetAuthErrorFromCtx(gc)
+
+	if authError != nil {
+		return []privy.LinkedAccount{}, authError
+	}
+
+	accounts := auth.GetLinkedAccountsFromCtx(gc)
+	return accounts, nil
 }
 
 func getUserRoles(ctx context.Context) []persist.Role {

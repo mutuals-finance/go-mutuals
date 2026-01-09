@@ -50,6 +50,20 @@ type Event struct {
 	CreatedAt      time.Time            `db:"created_at" json:"created_at"`
 }
 
+type LinkedAccount struct {
+	ID               persist.DBID    `db:"id" json:"id"`
+	UserID           persist.DBID    `db:"user_id" json:"user_id"`
+	Type             string          `db:"type" json:"type"`
+	Address          persist.Address `db:"address" json:"address"`
+	ChainType        sql.NullString  `db:"chain_type" json:"chain_type"`
+	WalletClientType sql.NullString  `db:"wallet_client_type" json:"wallet_client_type"`
+	Version          int32           `db:"version" json:"version"`
+	Deleted          bool            `db:"deleted" json:"deleted"`
+	LinkedAt         sql.NullTime    `db:"linked_at" json:"linked_at"`
+	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
+	UpdatedAt        time.Time       `db:"updated_at" json:"updated_at"`
+}
+
 type Notification struct {
 	ID        persist.DBID             `db:"id" json:"id"`
 	Deleted   bool                     `db:"deleted" json:"deleted"`
@@ -63,12 +77,6 @@ type Notification struct {
 	Amount    int32                    `db:"amount" json:"amount"`
 	UpdatedAt time.Time                `db:"updated_at" json:"updated_at"`
 	CreatedAt time.Time                `db:"created_at" json:"created_at"`
-}
-
-type PiiAccountCreationInfo struct {
-	UserID    persist.DBID `db:"user_id" json:"user_id"`
-	IpAddress string       `db:"ip_address" json:"ip_address"`
-	CreatedAt time.Time    `db:"created_at" json:"created_at"`
 }
 
 type PiiForUser struct {

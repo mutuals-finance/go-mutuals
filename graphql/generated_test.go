@@ -559,14 +559,6 @@ func (v *__notificationSettingsUpdateMutationInput) GetSettings() NotificationSe
 	return v.Settings
 }
 
-// __poolByIdQueryInput is used internally by genqlient
-type __poolByIdQueryInput struct {
-	Id persist.DBID `json:"id"`
-}
-
-// GetId returns __poolByIdQueryInput.Id, and is useful for accessing the field via an interface.
-func (v *__poolByIdQueryInput) GetId() persist.DBID { return v.Id }
-
 // __poolClaimBulkCreateMutationInput is used internally by genqlient
 type __poolClaimBulkCreateMutationInput struct {
 	PoolId      persist.DBID           `json:"poolId"`
@@ -662,6 +654,14 @@ type __poolDeleteMutationInput struct {
 
 // GetId returns __poolDeleteMutationInput.Id, and is useful for accessing the field via an interface.
 func (v *__poolDeleteMutationInput) GetId() persist.DBID { return v.Id }
+
+// __poolQueryInput is used internally by genqlient
+type __poolQueryInput struct {
+	Id persist.DBID `json:"id"`
+}
+
+// GetId returns __poolQueryInput.Id, and is useful for accessing the field via an interface.
+func (v *__poolQueryInput) GetId() persist.DBID { return v.Id }
 
 // __poolUpdateMutationInput is used internally by genqlient
 type __poolUpdateMutationInput struct {
@@ -1381,429 +1381,6 @@ func __marshalnotificationsForViewerQueryViewerViewerOrError(v *notificationsFor
 	}
 }
 
-// poolByIdQueryPoolByIdErrPoolNotFound includes the requested fields of the GraphQL type ErrPoolNotFound.
-type poolByIdQueryPoolByIdErrPoolNotFound struct {
-	Typename *string `json:"__typename"`
-	Message  string  `json:"message"`
-}
-
-// GetTypename returns poolByIdQueryPoolByIdErrPoolNotFound.Typename, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdErrPoolNotFound) GetTypename() *string { return v.Typename }
-
-// GetMessage returns poolByIdQueryPoolByIdErrPoolNotFound.Message, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdErrPoolNotFound) GetMessage() string { return v.Message }
-
-// poolByIdQueryPoolByIdPool includes the requested fields of the GraphQL type Pool.
-type poolByIdQueryPoolByIdPool struct {
-	Typename    *string      `json:"__typename"`
-	Id          string       `json:"id"`
-	Dbid        persist.DBID `json:"dbid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Status      PoolStatus   `json:"status"`
-	Image       string       `json:"image"`
-	// Basis point donation.
-	DonationBps int                                         `json:"donationBps"`
-	Slug        string                                      `json:"slug"`
-	Owner       poolByIdQueryPoolByIdPoolOwnerUserOrAccount `json:"-"`
-	CreatedAt   string                                      `json:"createdAt"`
-	UpdatedAt   string                                      `json:"updatedAt"`
-}
-
-// GetTypename returns poolByIdQueryPoolByIdPool.Typename, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetTypename() *string { return v.Typename }
-
-// GetId returns poolByIdQueryPoolByIdPool.Id, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetId() string { return v.Id }
-
-// GetDbid returns poolByIdQueryPoolByIdPool.Dbid, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetDbid() persist.DBID { return v.Dbid }
-
-// GetName returns poolByIdQueryPoolByIdPool.Name, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetName() string { return v.Name }
-
-// GetDescription returns poolByIdQueryPoolByIdPool.Description, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetDescription() string { return v.Description }
-
-// GetStatus returns poolByIdQueryPoolByIdPool.Status, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetStatus() PoolStatus { return v.Status }
-
-// GetImage returns poolByIdQueryPoolByIdPool.Image, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetImage() string { return v.Image }
-
-// GetDonationBps returns poolByIdQueryPoolByIdPool.DonationBps, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetDonationBps() int { return v.DonationBps }
-
-// GetSlug returns poolByIdQueryPoolByIdPool.Slug, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetSlug() string { return v.Slug }
-
-// GetOwner returns poolByIdQueryPoolByIdPool.Owner, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetOwner() poolByIdQueryPoolByIdPoolOwnerUserOrAccount {
-	return v.Owner
-}
-
-// GetCreatedAt returns poolByIdQueryPoolByIdPool.CreatedAt, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetCreatedAt() string { return v.CreatedAt }
-
-// GetUpdatedAt returns poolByIdQueryPoolByIdPool.UpdatedAt, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPool) GetUpdatedAt() string { return v.UpdatedAt }
-
-func (v *poolByIdQueryPoolByIdPool) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*poolByIdQueryPoolByIdPool
-		Owner json.RawMessage `json:"owner"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.poolByIdQueryPoolByIdPool = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.Owner
-		src := firstPass.Owner
-		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalpoolByIdQueryPoolByIdPoolOwnerUserOrAccount(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal poolByIdQueryPoolByIdPool.Owner: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshalpoolByIdQueryPoolByIdPool struct {
-	Typename *string `json:"__typename"`
-
-	Id string `json:"id"`
-
-	Dbid persist.DBID `json:"dbid"`
-
-	Name string `json:"name"`
-
-	Description string `json:"description"`
-
-	Status PoolStatus `json:"status"`
-
-	Image string `json:"image"`
-
-	DonationBps int `json:"donationBps"`
-
-	Slug string `json:"slug"`
-
-	Owner json.RawMessage `json:"owner"`
-
-	CreatedAt string `json:"createdAt"`
-
-	UpdatedAt string `json:"updatedAt"`
-}
-
-func (v *poolByIdQueryPoolByIdPool) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *poolByIdQueryPoolByIdPool) __premarshalJSON() (*__premarshalpoolByIdQueryPoolByIdPool, error) {
-	var retval __premarshalpoolByIdQueryPoolByIdPool
-
-	retval.Typename = v.Typename
-	retval.Id = v.Id
-	retval.Dbid = v.Dbid
-	retval.Name = v.Name
-	retval.Description = v.Description
-	retval.Status = v.Status
-	retval.Image = v.Image
-	retval.DonationBps = v.DonationBps
-	retval.Slug = v.Slug
-	{
-
-		dst := &retval.Owner
-		src := v.Owner
-		var err error
-		*dst, err = __marshalpoolByIdQueryPoolByIdPoolOwnerUserOrAccount(
-			&src)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"unable to marshal poolByIdQueryPoolByIdPool.Owner: %w", err)
-		}
-	}
-	retval.CreatedAt = v.CreatedAt
-	retval.UpdatedAt = v.UpdatedAt
-	return &retval, nil
-}
-
-// poolByIdQueryPoolByIdPoolByIdPayloadOrError includes the requested fields of the GraphQL interface PoolByIdPayloadOrError.
-//
-// poolByIdQueryPoolByIdPoolByIdPayloadOrError is implemented by the following types:
-// poolByIdQueryPoolByIdErrPoolNotFound
-// poolByIdQueryPoolByIdPool
-type poolByIdQueryPoolByIdPoolByIdPayloadOrError interface {
-	implementsGraphQLInterfacepoolByIdQueryPoolByIdPoolByIdPayloadOrError()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() *string
-}
-
-func (v *poolByIdQueryPoolByIdErrPoolNotFound) implementsGraphQLInterfacepoolByIdQueryPoolByIdPoolByIdPayloadOrError() {
-}
-func (v *poolByIdQueryPoolByIdPool) implementsGraphQLInterfacepoolByIdQueryPoolByIdPoolByIdPayloadOrError() {
-}
-
-func __unmarshalpoolByIdQueryPoolByIdPoolByIdPayloadOrError(b []byte, v *poolByIdQueryPoolByIdPoolByIdPayloadOrError) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "ErrPoolNotFound":
-		*v = new(poolByIdQueryPoolByIdErrPoolNotFound)
-		return json.Unmarshal(b, *v)
-	case "Pool":
-		*v = new(poolByIdQueryPoolByIdPool)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing PoolByIdPayloadOrError.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for poolByIdQueryPoolByIdPoolByIdPayloadOrError: "%v"`, tn.TypeName)
-	}
-}
-
-func __marshalpoolByIdQueryPoolByIdPoolByIdPayloadOrError(v *poolByIdQueryPoolByIdPoolByIdPayloadOrError) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *poolByIdQueryPoolByIdErrPoolNotFound:
-		typename = "ErrPoolNotFound"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*poolByIdQueryPoolByIdErrPoolNotFound
-		}{typename, v}
-		return json.Marshal(result)
-	case *poolByIdQueryPoolByIdPool:
-		typename = "Pool"
-
-		premarshaled, err := v.__premarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		result := struct {
-			TypeName string `json:"__typename"`
-			*__premarshalpoolByIdQueryPoolByIdPool
-		}{typename, premarshaled}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for poolByIdQueryPoolByIdPoolByIdPayloadOrError: "%T"`, v)
-	}
-}
-
-// poolByIdQueryPoolByIdPoolOwnerEVMAccount includes the requested fields of the GraphQL type EVMAccount.
-type poolByIdQueryPoolByIdPoolOwnerEVMAccount struct {
-	Typename    *string         `json:"__typename"`
-	Address     persist.Address `json:"address"`
-	AccountType EVMAccountType  `json:"accountType"`
-}
-
-// GetTypename returns poolByIdQueryPoolByIdPoolOwnerEVMAccount.Typename, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPoolOwnerEVMAccount) GetTypename() *string { return v.Typename }
-
-// GetAddress returns poolByIdQueryPoolByIdPoolOwnerEVMAccount.Address, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPoolOwnerEVMAccount) GetAddress() persist.Address { return v.Address }
-
-// GetAccountType returns poolByIdQueryPoolByIdPoolOwnerEVMAccount.AccountType, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPoolOwnerEVMAccount) GetAccountType() EVMAccountType {
-	return v.AccountType
-}
-
-// poolByIdQueryPoolByIdPoolOwnerUser includes the requested fields of the GraphQL type User.
-type poolByIdQueryPoolByIdPoolOwnerUser struct {
-	Typename *string      `json:"__typename"`
-	Id       string       `json:"id"`
-	Dbid     persist.DBID `json:"dbid"`
-}
-
-// GetTypename returns poolByIdQueryPoolByIdPoolOwnerUser.Typename, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPoolOwnerUser) GetTypename() *string { return v.Typename }
-
-// GetId returns poolByIdQueryPoolByIdPoolOwnerUser.Id, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPoolOwnerUser) GetId() string { return v.Id }
-
-// GetDbid returns poolByIdQueryPoolByIdPoolOwnerUser.Dbid, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryPoolByIdPoolOwnerUser) GetDbid() persist.DBID { return v.Dbid }
-
-// poolByIdQueryPoolByIdPoolOwnerUserOrAccount includes the requested fields of the GraphQL interface UserOrAccount.
-//
-// poolByIdQueryPoolByIdPoolOwnerUserOrAccount is implemented by the following types:
-// poolByIdQueryPoolByIdPoolOwnerEVMAccount
-// poolByIdQueryPoolByIdPoolOwnerUser
-type poolByIdQueryPoolByIdPoolOwnerUserOrAccount interface {
-	implementsGraphQLInterfacepoolByIdQueryPoolByIdPoolOwnerUserOrAccount()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() *string
-}
-
-func (v *poolByIdQueryPoolByIdPoolOwnerEVMAccount) implementsGraphQLInterfacepoolByIdQueryPoolByIdPoolOwnerUserOrAccount() {
-}
-func (v *poolByIdQueryPoolByIdPoolOwnerUser) implementsGraphQLInterfacepoolByIdQueryPoolByIdPoolOwnerUserOrAccount() {
-}
-
-func __unmarshalpoolByIdQueryPoolByIdPoolOwnerUserOrAccount(b []byte, v *poolByIdQueryPoolByIdPoolOwnerUserOrAccount) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "EVMAccount":
-		*v = new(poolByIdQueryPoolByIdPoolOwnerEVMAccount)
-		return json.Unmarshal(b, *v)
-	case "User":
-		*v = new(poolByIdQueryPoolByIdPoolOwnerUser)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing UserOrAccount.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for poolByIdQueryPoolByIdPoolOwnerUserOrAccount: "%v"`, tn.TypeName)
-	}
-}
-
-func __marshalpoolByIdQueryPoolByIdPoolOwnerUserOrAccount(v *poolByIdQueryPoolByIdPoolOwnerUserOrAccount) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *poolByIdQueryPoolByIdPoolOwnerEVMAccount:
-		typename = "EVMAccount"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*poolByIdQueryPoolByIdPoolOwnerEVMAccount
-		}{typename, v}
-		return json.Marshal(result)
-	case *poolByIdQueryPoolByIdPoolOwnerUser:
-		typename = "User"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*poolByIdQueryPoolByIdPoolOwnerUser
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for poolByIdQueryPoolByIdPoolOwnerUserOrAccount: "%T"`, v)
-	}
-}
-
-// poolByIdQueryResponse is returned by poolByIdQuery on success.
-type poolByIdQueryResponse struct {
-	PoolById *poolByIdQueryPoolByIdPoolByIdPayloadOrError `json:"-"`
-}
-
-// GetPoolById returns poolByIdQueryResponse.PoolById, and is useful for accessing the field via an interface.
-func (v *poolByIdQueryResponse) GetPoolById() *poolByIdQueryPoolByIdPoolByIdPayloadOrError {
-	return v.PoolById
-}
-
-func (v *poolByIdQueryResponse) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*poolByIdQueryResponse
-		PoolById json.RawMessage `json:"poolById"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.poolByIdQueryResponse = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.PoolById
-		src := firstPass.PoolById
-		if len(src) != 0 && string(src) != "null" {
-			*dst = new(poolByIdQueryPoolByIdPoolByIdPayloadOrError)
-			err = __unmarshalpoolByIdQueryPoolByIdPoolByIdPayloadOrError(
-				src, *dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal poolByIdQueryResponse.PoolById: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshalpoolByIdQueryResponse struct {
-	PoolById json.RawMessage `json:"poolById"`
-}
-
-func (v *poolByIdQueryResponse) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *poolByIdQueryResponse) __premarshalJSON() (*__premarshalpoolByIdQueryResponse, error) {
-	var retval __premarshalpoolByIdQueryResponse
-
-	{
-
-		dst := &retval.PoolById
-		src := v.PoolById
-		if src != nil {
-			var err error
-			*dst, err = __marshalpoolByIdQueryPoolByIdPoolByIdPayloadOrError(
-				src)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"unable to marshal poolByIdQueryResponse.PoolById: %w", err)
-			}
-		}
-	}
-	return &retval, nil
-}
-
 // poolClaimBulkCreateMutationPoolClaimBulkCreate includes the requested fields of the GraphQL type ClaimBulkCreate.
 // The GraphQL type's documentation follows.
 //
@@ -2496,6 +2073,260 @@ type poolDeleteMutationResponse struct {
 func (v *poolDeleteMutationResponse) GetPoolDelete() *poolDeleteMutationPoolDelete {
 	return v.PoolDelete
 }
+
+// poolQueryPool includes the requested fields of the GraphQL type Pool.
+type poolQueryPool struct {
+	Id          string       `json:"id"`
+	Dbid        persist.DBID `json:"dbid"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Status      PoolStatus   `json:"status"`
+	Image       string       `json:"image"`
+	// Basis point donation.
+	DonationBps int                             `json:"donationBps"`
+	Slug        string                          `json:"slug"`
+	Owner       poolQueryPoolOwnerUserOrAccount `json:"-"`
+	CreatedAt   string                          `json:"createdAt"`
+	UpdatedAt   string                          `json:"updatedAt"`
+}
+
+// GetId returns poolQueryPool.Id, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetId() string { return v.Id }
+
+// GetDbid returns poolQueryPool.Dbid, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetDbid() persist.DBID { return v.Dbid }
+
+// GetName returns poolQueryPool.Name, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetName() string { return v.Name }
+
+// GetDescription returns poolQueryPool.Description, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetDescription() string { return v.Description }
+
+// GetStatus returns poolQueryPool.Status, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetStatus() PoolStatus { return v.Status }
+
+// GetImage returns poolQueryPool.Image, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetImage() string { return v.Image }
+
+// GetDonationBps returns poolQueryPool.DonationBps, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetDonationBps() int { return v.DonationBps }
+
+// GetSlug returns poolQueryPool.Slug, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetSlug() string { return v.Slug }
+
+// GetOwner returns poolQueryPool.Owner, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetOwner() poolQueryPoolOwnerUserOrAccount { return v.Owner }
+
+// GetCreatedAt returns poolQueryPool.CreatedAt, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetCreatedAt() string { return v.CreatedAt }
+
+// GetUpdatedAt returns poolQueryPool.UpdatedAt, and is useful for accessing the field via an interface.
+func (v *poolQueryPool) GetUpdatedAt() string { return v.UpdatedAt }
+
+func (v *poolQueryPool) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*poolQueryPool
+		Owner json.RawMessage `json:"owner"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.poolQueryPool = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.Owner
+		src := firstPass.Owner
+		if len(src) != 0 && string(src) != "null" {
+			err = __unmarshalpoolQueryPoolOwnerUserOrAccount(
+				src, dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal poolQueryPool.Owner: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalpoolQueryPool struct {
+	Id string `json:"id"`
+
+	Dbid persist.DBID `json:"dbid"`
+
+	Name string `json:"name"`
+
+	Description string `json:"description"`
+
+	Status PoolStatus `json:"status"`
+
+	Image string `json:"image"`
+
+	DonationBps int `json:"donationBps"`
+
+	Slug string `json:"slug"`
+
+	Owner json.RawMessage `json:"owner"`
+
+	CreatedAt string `json:"createdAt"`
+
+	UpdatedAt string `json:"updatedAt"`
+}
+
+func (v *poolQueryPool) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *poolQueryPool) __premarshalJSON() (*__premarshalpoolQueryPool, error) {
+	var retval __premarshalpoolQueryPool
+
+	retval.Id = v.Id
+	retval.Dbid = v.Dbid
+	retval.Name = v.Name
+	retval.Description = v.Description
+	retval.Status = v.Status
+	retval.Image = v.Image
+	retval.DonationBps = v.DonationBps
+	retval.Slug = v.Slug
+	{
+
+		dst := &retval.Owner
+		src := v.Owner
+		var err error
+		*dst, err = __marshalpoolQueryPoolOwnerUserOrAccount(
+			&src)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unable to marshal poolQueryPool.Owner: %w", err)
+		}
+	}
+	retval.CreatedAt = v.CreatedAt
+	retval.UpdatedAt = v.UpdatedAt
+	return &retval, nil
+}
+
+// poolQueryPoolOwnerEVMAccount includes the requested fields of the GraphQL type EVMAccount.
+type poolQueryPoolOwnerEVMAccount struct {
+	Typename    *string         `json:"__typename"`
+	Address     persist.Address `json:"address"`
+	AccountType EVMAccountType  `json:"accountType"`
+}
+
+// GetTypename returns poolQueryPoolOwnerEVMAccount.Typename, and is useful for accessing the field via an interface.
+func (v *poolQueryPoolOwnerEVMAccount) GetTypename() *string { return v.Typename }
+
+// GetAddress returns poolQueryPoolOwnerEVMAccount.Address, and is useful for accessing the field via an interface.
+func (v *poolQueryPoolOwnerEVMAccount) GetAddress() persist.Address { return v.Address }
+
+// GetAccountType returns poolQueryPoolOwnerEVMAccount.AccountType, and is useful for accessing the field via an interface.
+func (v *poolQueryPoolOwnerEVMAccount) GetAccountType() EVMAccountType { return v.AccountType }
+
+// poolQueryPoolOwnerUser includes the requested fields of the GraphQL type User.
+type poolQueryPoolOwnerUser struct {
+	Typename *string      `json:"__typename"`
+	Id       string       `json:"id"`
+	Dbid     persist.DBID `json:"dbid"`
+}
+
+// GetTypename returns poolQueryPoolOwnerUser.Typename, and is useful for accessing the field via an interface.
+func (v *poolQueryPoolOwnerUser) GetTypename() *string { return v.Typename }
+
+// GetId returns poolQueryPoolOwnerUser.Id, and is useful for accessing the field via an interface.
+func (v *poolQueryPoolOwnerUser) GetId() string { return v.Id }
+
+// GetDbid returns poolQueryPoolOwnerUser.Dbid, and is useful for accessing the field via an interface.
+func (v *poolQueryPoolOwnerUser) GetDbid() persist.DBID { return v.Dbid }
+
+// poolQueryPoolOwnerUserOrAccount includes the requested fields of the GraphQL interface UserOrAccount.
+//
+// poolQueryPoolOwnerUserOrAccount is implemented by the following types:
+// poolQueryPoolOwnerEVMAccount
+// poolQueryPoolOwnerUser
+type poolQueryPoolOwnerUserOrAccount interface {
+	implementsGraphQLInterfacepoolQueryPoolOwnerUserOrAccount()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() *string
+}
+
+func (v *poolQueryPoolOwnerEVMAccount) implementsGraphQLInterfacepoolQueryPoolOwnerUserOrAccount() {}
+func (v *poolQueryPoolOwnerUser) implementsGraphQLInterfacepoolQueryPoolOwnerUserOrAccount()       {}
+
+func __unmarshalpoolQueryPoolOwnerUserOrAccount(b []byte, v *poolQueryPoolOwnerUserOrAccount) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "EVMAccount":
+		*v = new(poolQueryPoolOwnerEVMAccount)
+		return json.Unmarshal(b, *v)
+	case "User":
+		*v = new(poolQueryPoolOwnerUser)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing UserOrAccount.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for poolQueryPoolOwnerUserOrAccount: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalpoolQueryPoolOwnerUserOrAccount(v *poolQueryPoolOwnerUserOrAccount) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *poolQueryPoolOwnerEVMAccount:
+		typename = "EVMAccount"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*poolQueryPoolOwnerEVMAccount
+		}{typename, v}
+		return json.Marshal(result)
+	case *poolQueryPoolOwnerUser:
+		typename = "User"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*poolQueryPoolOwnerUser
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for poolQueryPoolOwnerUserOrAccount: "%T"`, v)
+	}
+}
+
+// poolQueryResponse is returned by poolQuery on success.
+type poolQueryResponse struct {
+	// Look up a pool by ID, slug, or contract ID.
+	Pool *poolQueryPool `json:"pool"`
+}
+
+// GetPool returns poolQueryResponse.Pool, and is useful for accessing the field via an interface.
+func (v *poolQueryResponse) GetPool() *poolQueryPool { return v.Pool }
 
 // poolUpdateMutationPoolUpdate includes the requested fields of the GraphQL type PoolUpdate.
 // The GraphQL type's documentation follows.
@@ -4444,66 +4275,6 @@ func notificationsForViewerQuery(
 	return data_, err_
 }
 
-// The query executed by poolByIdQuery.
-const poolByIdQuery_Operation = `
-query poolByIdQuery ($id: DBID!) {
-	poolById(id: $id) {
-		__typename
-		... on Pool {
-			id
-			dbid
-			name
-			description
-			status
-			image
-			donationBps
-			slug
-			owner {
-				__typename
-				... on User {
-					id
-					dbid
-				}
-				... on EVMAccount {
-					address
-					accountType
-				}
-			}
-			createdAt
-			updatedAt
-		}
-		... on ErrPoolNotFound {
-			message
-		}
-	}
-}
-`
-
-func poolByIdQuery(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	id persist.DBID,
-) (data_ *poolByIdQueryResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "poolByIdQuery",
-		Query:  poolByIdQuery_Operation,
-		Variables: &__poolByIdQueryInput{
-			Id: id,
-		},
-	}
-
-	data_ = &poolByIdQueryResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
 // The mutation executed by poolClaimBulkCreateMutation.
 const poolClaimBulkCreateMutation_Operation = `
 mutation poolClaimBulkCreateMutation ($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
@@ -4876,6 +4647,60 @@ func poolDeleteMutation(
 	}
 
 	data_ = &poolDeleteMutationResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by poolQuery.
+const poolQuery_Operation = `
+query poolQuery ($id: DBID!) {
+	pool(id: $id) {
+		id
+		dbid
+		name
+		description
+		status
+		image
+		donationBps
+		slug
+		owner {
+			__typename
+			... on User {
+				id
+				dbid
+			}
+			... on EVMAccount {
+				address
+				accountType
+			}
+		}
+		createdAt
+		updatedAt
+	}
+}
+`
+
+func poolQuery(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id persist.DBID,
+) (data_ *poolQueryResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "poolQuery",
+		Query:  poolQuery_Operation,
+		Variables: &__poolQueryInput{
+			Id: id,
+		},
+	}
+
+	data_ = &poolQueryResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

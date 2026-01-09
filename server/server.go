@@ -247,7 +247,7 @@ func SetDefaults() {
 
 	viper.SetDefault("FARCASTER_MNEMONIC", "")
 	viper.SetDefault("FARCASTER_APP_ID", "")
-	viper.SetDefault("PRIVY_AUTH_JWT_SECRET", "")
+	viper.SetDefault("PRIVY_VERIFICATION_KEY", "")
 
 	viper.AutomaticEnv()
 

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/service/auth/privy"
 	"github.com/mutuals/go-mutuals/service/redis"
 
 	"github.com/magiclabs/magic-admin-go"
@@ -38,20 +39,21 @@ type AuthenticatedAddress struct {
 
 const (
 	// Context keys for auth data
-	userAuthedContextKey = "auth.authenticated"
-	userIdContextKey     = "auth.user_id"
-	appIdContextKey      = "auth.app_id"
-	authErrorContextKey  = "auth.auth_error"
-	userRolesContextKey  = "auth.roles"
+	userAuthedContextKey     = "auth.authenticated"
+	userIdContextKey         = "auth.user_id"
+	appIdContextKey          = "auth.app_id"
+	linkedAccountsContextKey = "auth.linked_accounts"
+	authErrorContextKey      = "auth.auth_error"
+	userRolesContextKey      = "auth.roles"
 )
 
 const cookieExpires = 1 * time.Hour
 
-// NoncePrepend is prepended to a nonce to make our default signing message
-const NoncePrepend = "Mutuals uses this cryptographic signature in place of a password: "
-
 // AuthCookieKey is the key used to store the auth token in the cookie
 const AuthCookieKey = "privy-token"
+
+// IdCookieKey is the key used to store the id token in the cookie
+const IdCookieKey = "privy-id-token"
 
 // RefreshCookieKey is the key used to store the refresh token in the cookie
 const RefreshCookieKey = "SPLITFI_REFRESH_JWT"
@@ -238,7 +240,12 @@ func GetAppIdFromCtx(c *gin.Context) string {
 
 // GetUserIdFromCtx returns the user ID from the context
 func GetUserIdFromCtx(c *gin.Context) persist.DBID {
-	return c.MustGet(userIdContextKey).(persist.DBID)
+	return persist.DBID(c.MustGet(userIdContextKey).(string))
+}
+
+// GetLinkedAccountsFromCtx returns the linked accounts from the context
+func GetLinkedAccountsFromCtx(c *gin.Context) []privy.LinkedAccount {
+	return c.MustGet(linkedAccountsContextKey).([]privy.LinkedAccount)
 }
 
 // GetUserAuthedFromCtx queries the context to determine whether the user is authenticated
@@ -260,9 +267,9 @@ func GetRolesFromCtx(c *gin.Context) []persist.Role {
 	return c.MustGet(userRolesContextKey).([]persist.Role)
 }
 
-func setSessionStateForCtx(c *gin.Context, userId string, appId string) {
+func setSessionStateForCtx(c *gin.Context, userId string, appId string, linkedAccounts []privy.LinkedAccount) {
 	if userId == "" || appId == "" {
-		logger.For(c).Errorf("attempted to set session state with missing values. userId: %s, appId: %s", userId, appId)
+		logger.For(c).Errorf("attempted to set session state with missing values. userId: %s, appId: %s, linkedAccounts %v", userId, appId, linkedAccounts)
 		err := errors.New("attempted to set session state with missing values")
 		// We should never be trying to set a session with an empty userId or appId. If we find
 		// ourselves here, clear the session and have the user log in again.
@@ -273,6 +280,7 @@ func setSessionStateForCtx(c *gin.Context, userId string, appId string) {
 
 	c.Set(userIdContextKey, userId)
 	c.Set(appIdContextKey, appId)
+	c.Set(linkedAccountsContextKey, linkedAccounts)
 	c.Set(authErrorContextKey, nil)
 	c.Set(userAuthedContextKey, true)
 	c.Set(userRolesContextKey, []persist.Role{})
@@ -281,6 +289,7 @@ func setSessionStateForCtx(c *gin.Context, userId string, appId string) {
 func clearSessionStateForCtx(c *gin.Context, err error) {
 	c.Set(userIdContextKey, "")
 	c.Set(appIdContextKey, "")
+	c.Set(linkedAccountsContextKey, []privy.LinkedAccount{})
 	c.Set(authErrorContextKey, err)
 	c.Set(userAuthedContextKey, false)
 	c.Set(userRolesContextKey, []persist.Role{})
@@ -319,28 +328,38 @@ func mustRefreshAuthToken(ctx context.Context, authRefreshCache *redis.Cache, us
 func VerifySession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.Cache) error {
 	// If the user has a valid auth cookie, we can set their auth state and be done
 	// (unless something like updating roles triggered a forced refresh of the auth token)
-	authClaims, authTokenErr := getAndParseAuthToken(c)
+	idClaims, idTokenErr := getAndParseIdToken(c)
 
-	if authTokenErr != nil {
-		clearSessionStateForCtx(c, authTokenErr)
+	if idTokenErr != nil {
+		clearSessionStateForCtx(c, idTokenErr)
 		// The most common case here is that the user has no cookies at all, which is fine and expected.
 		// If we encounter any other errors, log them and clear the user's cookies.
-		if !errors.Is(authTokenErr, ErrNoCookie) {
-			logger.For(c).Warnf("could not verify session: authTokenErr=%s", authTokenErr)
+		if !errors.Is(idTokenErr, ErrNoCookie) {
+			logger.For(c).Warnf("could not verify session: authTokenErr=%s", idTokenErr)
 			clearSessionCookies(c)
 		}
 
-		return authTokenErr
+		return idTokenErr
 	}
 
-	setSessionStateForCtx(c, authClaims.UserId, authClaims.AppId)
+	setSessionStateForCtx(c, idClaims.UserId, idClaims.AppId, idClaims.LinkedAccounts)
 
 	return nil
 }
 
 func clearSessionCookies(c *gin.Context) {
 	clearCookie(c, AuthCookieKey)
+	clearCookie(c, IdCookieKey)
 	clearCookie(c, RefreshCookieKey)
+}
+
+func getAndParseIdToken(c *gin.Context) (IdTokenClaims, error) {
+	idToken, err := getCookie(c, IdCookieKey)
+	if err != nil {
+		return IdTokenClaims{}, err
+	}
+
+	return ParseIdToken(c, idToken)
 }
 
 func getAndParseAuthToken(c *gin.Context) (AuthTokenClaims, error) {

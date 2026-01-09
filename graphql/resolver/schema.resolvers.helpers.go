@@ -94,13 +94,28 @@ func resolveUserByAddress(ctx context.Context, chainAddress persist.ChainAddress
 	return userToModel(ctx, *user), nil
 }
 
-func resolvePoolByID(ctx context.Context, poolID persist.DBID) (*model.Pool, error) {
-	pool, err := publicapi.For(ctx).Pool.GetPoolById(ctx, poolID)
+func resolvePool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (*model.Pool, error) {
+	pool, err := publicapi.For(ctx).Pool.GetPool(ctx, id, slug, contractID)
 	if err != nil {
 		return nil, err
 	}
 
 	return poolToModel(ctx, *pool), nil
+}
+
+func resolvePoolByID(ctx context.Context, id persist.DBID) (*model.Pool, error) {
+	return resolvePool(ctx, &id, nil, nil)
+}
+
+func resolveViewerPools(ctx context.Context) ([]*model.Pool, error) {
+	pools, err := publicapi.For(ctx).Pool.GetViewerPools(ctx)
+	logger.For(ctx).Infof("VIEWER_POOLS FINALLY CALLED: %v", pools)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return poolsToModels(ctx, *pools), nil
 }
 
 func resolvePoolContractByPoolContractID(ctx context.Context, contractID persist.DBID) (*model.PoolContract, error) {
@@ -173,17 +188,22 @@ func resolveTokenBalanceByTokenBalanceID(ctx context.Context, assetID persist.DB
 	return &model.TokenBalance{}, nil
 }
 
-func resolveViewer(ctx context.Context) *model.User {
-
+func resolveViewer(ctx context.Context) *model.Viewer {
 	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
 		return nil
 	}
 
-	// me := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
 
-	output := model.User{}
+	viewer := &model.Viewer{
+		HelperViewerData: model.HelperViewerData{
+			UserId: userID,
+		},
+		User:  nil, // handled by dedicated resolver
+		Pools: nil, // handled by dedicated resolver
+	}
 
-	return &output
+	return viewer
 }
 
 func resolveViewerEmail(ctx context.Context) *model.UserEmail {
@@ -388,7 +408,7 @@ func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notifi
 }
 
 func resolveViewerByID(ctx context.Context, id string) (*model.Viewer, error) {
-
+	logger.For(ctx).Infof("User fetch for %s", id)
 	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
 		return nil, nil
 	}

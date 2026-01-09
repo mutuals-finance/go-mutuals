@@ -11,80 +11,6 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-const createClaims = `-- name: CreateClaims :many
-WITH updates AS (SELECT UNNEST($1::text[])                AS id,
-                        $2                           AS pool_id,
-                        UNNEST($3::text[]) AS recipient_address,
-                        UNNEST($4::text[])          AS state_id,
-                        UNNEST($5::text[])       AS strategy_id,
-                        UNNEST($6::text[])             AS label,
-                        UNNEST($7::ltree[])             AS path)
-INSERT
-INTO claims (id, pool_id, recipient_address, state_id, strategy_id, label, path, deleted, updated_at, created_at)
-SELECT id,
-       pool_id,
-       recipient_address,
-       state_id,
-       strategy_id,
-       label,
-       path,
-       FALSE,
-       NOW(),
-       NOW()
-FROM updates
-RETURNING id, pool_id, recipient_address, state_id, strategy_id, data, label, path, deleted, updated_at, created_at
-`
-
-type CreateClaimsParams struct {
-	ID               []string     `db:"id" json:"id"`
-	PoolID           persist.DBID `db:"pool_id" json:"pool_id"`
-	RecipientAddress []string     `db:"recipient_address" json:"recipient_address"`
-	StateID          []string     `db:"state_id" json:"state_id"`
-	StrategyID       []string     `db:"strategy_id" json:"strategy_id"`
-	Label            []string     `db:"label" json:"label"`
-	Path             []string     `db:"path" json:"path"`
-}
-
-func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]Claim, error) {
-	rows, err := q.db.Query(ctx, createClaims,
-		arg.ID,
-		arg.PoolID,
-		arg.RecipientAddress,
-		arg.StateID,
-		arg.StrategyID,
-		arg.Label,
-		arg.Path,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Claim
-	for rows.Next() {
-		var i Claim
-		if err := rows.Scan(
-			&i.ID,
-			&i.PoolID,
-			&i.RecipientAddress,
-			&i.StateID,
-			&i.StrategyID,
-			&i.Data,
-			&i.Label,
-			&i.Path,
-			&i.Deleted,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const createPool = `-- name: CreatePool :one
 INSERT INTO pools (id, name, description, image, slug, owner_id, contract_id, donation_bps, private, deleted,
                    updated_at, created_at)
@@ -167,85 +93,13 @@ func (q *Queries) GetPoolById(ctx context.Context, id persist.DBID) (Pool, error
 	return i, err
 }
 
-const updateClaims = `-- name: UpdateClaims :many
-WITH updates AS (SELECT UNNEST($1::text[])                AS id,
-                        UNNEST($2::text[]) AS recipient_address,
-                        UNNEST($3::text[])          AS state_id,
-                        UNNEST($4::text[])       AS strategy_id,
-                        UNNEST($5::text[])             AS label,
-                        UNNEST($6::ltree[])             AS path,
-                        UNNEST($7::boolean[])        AS deleted)
-UPDATE claims
-SET recipient_address = updates.recipient_address,
-    state_id          = updates.state_id,
-    strategy_id       = updates.strategy_id,
-    label             = updates.label,
-    path              = updates.path,
-    deleted           = updates.deleted,
-    updated_at        = NOW()
-FROM updates
-WHERE claims.id = updates.id
-  AND claims.deleted = FALSE
-RETURNING claims.id, claims.pool_id, claims.recipient_address, claims.state_id, claims.strategy_id, claims.data, claims.label, claims.path, claims.deleted, claims.updated_at, claims.created_at
-`
-
-type UpdateClaimsParams struct {
-	ID               []string `db:"id" json:"id"`
-	RecipientAddress []string `db:"recipient_address" json:"recipient_address"`
-	StateID          []string `db:"state_id" json:"state_id"`
-	StrategyID       []string `db:"strategy_id" json:"strategy_id"`
-	Label            []string `db:"label" json:"label"`
-	Path             []string `db:"path" json:"path"`
-	Deleted          []bool   `db:"deleted" json:"deleted"`
-}
-
-func (q *Queries) UpdateClaims(ctx context.Context, arg UpdateClaimsParams) ([]Claim, error) {
-	rows, err := q.db.Query(ctx, updateClaims,
-		arg.ID,
-		arg.RecipientAddress,
-		arg.StateID,
-		arg.StrategyID,
-		arg.Label,
-		arg.Path,
-		arg.Deleted,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Claim
-	for rows.Next() {
-		var i Claim
-		if err := rows.Scan(
-			&i.ID,
-			&i.PoolID,
-			&i.RecipientAddress,
-			&i.StateID,
-			&i.StrategyID,
-			&i.Data,
-			&i.Label,
-			&i.Path,
-			&i.Deleted,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updatePool = `-- name: UpdatePool :one
 UPDATE pools
 SET name         = $1,
     description  = $2,
     image        = $3,
     slug         = $4,
-    owner_id    = $5,
+    owner_id     = $5,
     contract_id  = $6,
     donation_bps = $7,
     private      = $8,

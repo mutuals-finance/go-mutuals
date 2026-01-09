@@ -232,6 +232,7 @@ func AuthRequiredDirectiveHandler() func(ctx context.Context, obj interface{}, n
 		if userId == "" {
 			panic(fmt.Errorf("userId is empty, but no auth error occurred"))
 		}
+		logger.For(ctx).Infof("AuthRequiredDirectiveHandler: %s", userId)
 
 		return next(ctx)
 	}

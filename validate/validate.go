@@ -145,6 +145,8 @@ func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("opt_in_role", IsOptInRole)
 	v.RegisterValidation("persona", IsValidPersona)
 	v.RegisterValidation("http", HTTPValidator)
+	v.RegisterValidation("at_least_one", AtLeastOneValidator)
+
 	v.RegisterAlias("pool_name", "max=200")
 	v.RegisterAlias("pool_description", "max=1200")
 	v.RegisterAlias("token_note", "max=1200")
@@ -325,6 +327,19 @@ var SortedAscValidator validator.Func = func(fl validator.FieldLevel) bool {
 var ChainValidator validator.Func = func(fl validator.FieldLevel) bool {
 	chain := fl.Field().Int()
 	return chain >= 0 && chain <= int64(persist.MaxChainValue)
+}
+
+var AtLeastOneValidator validator.Func = func(fl validator.FieldLevel) bool {
+	slice, ok := fl.Field().Interface().([]any)
+	if !ok {
+		return false
+	}
+	for _, v := range slice {
+		if v != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func consecutivePeriodsOrUnderscores(s string) bool {

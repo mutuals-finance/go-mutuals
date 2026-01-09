@@ -95,7 +95,7 @@ func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserReg
 }
 
 // UserUpdate is the resolver for the userUpdate field.
-func (r *mutationResolver) UserUpdate(ctx context.Context, userId *persist.DBID, input model.UserInput) (*model.UserUpdate, error) {
+func (r *mutationResolver) UserUpdate(ctx context.Context, userID *persist.DBID, input model.UserInput) (*model.UserUpdate, error) {
 	panic(fmt.Errorf("not implemented: UserUpdate - userUpdate"))
 	/*	user, err := publicapi.For(ctx).User.Update(ctx, input.Username)
 		if err != nil {
@@ -380,7 +380,7 @@ func (r *queryResolver) Node(ctx context.Context, id model.GqlID) (model.Node, e
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (model.ViewerOrError, error) {
-	return nil, nil
+	return resolveViewer(ctx), nil
 }
 
 // UserByUsername is the resolver for the userByUsername field.
@@ -398,18 +398,12 @@ func (r *queryResolver) UserByID(ctx context.Context, id persist.DBID) (model.Us
 // UserByAddress is the resolver for the userByAddress field.
 func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error) {
 	panic(fmt.Errorf("not implemented: UserByAddress - userByAddress"))
-	//return resolveMutualsUserByAddress(ctx, chainAddress)
+	//poolById resolveMutualsUserByAddress(ctx, chainAddress)
 }
 
-// PoolByID is the resolver for the poolById field.
-func (r *queryResolver) PoolByID(ctx context.Context, id persist.DBID) (model.PoolByIDPayloadOrError, error) {
-	pool, err := resolvePoolByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return pool, nil
+// Pool is the resolver for the pool field.
+func (r *queryResolver) Pool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (*model.Pool, error) {
+	return resolvePool(ctx, id, slug, contractID)
 }
 
 // SearchUsers is the resolver for the searchUsers field.
@@ -521,7 +515,8 @@ func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.Us
 
 // Pools is the resolver for the pools field.
 func (r *viewerResolver) Pools(ctx context.Context, obj *model.Viewer) ([]*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pools - pools"))
+	logger.For(ctx).Infof("viewerResolver: %v", obj)
+	return resolveViewerPools(ctx)
 }
 
 // Notifications is the resolver for the notifications field.

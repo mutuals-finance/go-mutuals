@@ -16,6 +16,26 @@ CREATE TABLE IF NOT EXISTS users
     }'::jsonb
 );
 
+CREATE TABLE IF NOT EXISTS linked_accounts
+(
+    id                 character varying(255) PRIMARY KEY NOT NULL,
+    user_id            character varying(255)             NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    type               character varying(64)              NOT NULL,
+    address            character varying(255),
+    chain_type         character varying(64),
+    wallet_client_type character varying(64),
+    version            integer                            NOT NULL DEFAULT 0,
+    deleted            boolean                            NOT NULL DEFAULT FALSE,
+    linked_at          timestamp WITH TIME ZONE,
+    created_at         timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at         timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX linked_accounts_user_id_idx ON linked_accounts (user_id) WHERE deleted = FALSE;
+CREATE INDEX linked_accounts_type_idx ON linked_accounts (type) WHERE deleted = FALSE;
+CREATE UNIQUE INDEX linked_accounts_address_chain_type_idx ON linked_accounts (address, chain_type) WHERE deleted = FALSE AND address IS NOT NULL;
+CREATE UNIQUE INDEX linked_accounts_user_id_type_idx ON linked_accounts (user_id, type) WHERE deleted = FALSE AND user_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS pools
 (
     id                      character varying(255) PRIMARY KEY,
@@ -40,6 +60,7 @@ CREATE INDEX pools_fts_name_idx ON pools USING gin (fts_name);
 CREATE INDEX pools_owner_id_idx ON pools (owner_id) WHERE deleted = FALSE;
 CREATE INDEX pools_private_idx ON pools (private) WHERE deleted = FALSE;
 CREATE INDEX pools_created_at_idx ON pools (created_at) WHERE deleted = FALSE;
+CREATE INDEX pools_contract_id_idx ON pools (contract_id) WHERE deleted = FALSE AND contract_id IS NOT NULL;
 CREATE UNIQUE INDEX pools_slug_unique_idx ON pools (slug) WHERE deleted = FALSE;
 
 CREATE TABLE IF NOT EXISTS claims
@@ -225,14 +246,6 @@ FROM pii.for_users p
          JOIN scrubbed_unverified_email_address unverified_email ON unverified_email.user_id = p.user_id
          JOIN scrubbed_verified_email_address verified_email ON verified_email.user_id = p.user_id
     );
-
-
-CREATE TABLE IF NOT EXISTS pii.account_creation_info
-(
-    user_id    character varying(255) PRIMARY KEY REFERENCES users,
-    ip_address text        NOT NULL,
-    created_at timestamptz NOT NULL
-);
 
 /*
 TODO pii cron -> add later?
