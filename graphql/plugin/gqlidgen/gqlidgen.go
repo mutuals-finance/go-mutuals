@@ -120,16 +120,13 @@ func getNodeImplementors(objects []*codegen.Object, modelPackage string) []nodeI
 	for _, obj := range objects {
 		for _, impl := range obj.Implements {
 			if impl.Name == "Node" {
-				// Find {Type}ID or DBID
-				idField := ""
-				candidates := []string{obj.Name + "ID", "DBID", "dbid", "Id"}
-
+				// Look for ID field - simple and straightforward
+				var idField string
+				candidates := []string{"ID", obj.Name + "ID", "DBID", "Id"}
 				for _, c := range candidates {
 					for _, f := range obj.Fields {
 						if strings.EqualFold(f.Name, c) {
 							idField = f.GoFieldName
-							// Get the Go type of the field
-							//idFieldType = f.TypeReference.GO.String()
 							break
 						}
 					}
@@ -140,14 +137,12 @@ func getNodeImplementors(objects []*codegen.Object, modelPackage string) []nodeI
 
 				if idField != "" {
 					res = append(res, nodeImplementor{
-						Name: obj.Name,
-						// We cast the fmt.Sprintf result to model.GqlID
+						Name:           obj.Name,
 						Implementation: fmt.Sprintf(`GqlID(fmt.Sprintf("%s:%%s", r.%s))`, obj.Name, idField),
-						// Add the type and argument for the ID
-						Types:         []string{"persist.DBID"},
-						TypeIsPointer: []bool{false},
-						Args:          []string{"id"},
-						Packages:      []string{"github.com/mutuals/go-mutuals/service/persist"},
+						Types:          []string{"persist.DBID"},
+						TypeIsPointer:  []bool{false},
+						Args:           []string{"id"},
+						Packages:       []string{"github.com/mutuals/go-mutuals/service/persist"},
 					})
 				}
 			}

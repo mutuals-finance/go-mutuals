@@ -546,7 +546,6 @@ type GroupNotificationUserEdge struct {
 }
 
 type GroupNotificationUsersConnection struct {
-	HelperGroupNotificationUsersConnectionData
 	Edges    []*GroupNotificationUserEdge `json:"edges"`
 	PageInfo *PageInfo                    `json:"pageInfo"`
 }
@@ -590,7 +589,6 @@ type NotificationSettingsUpdatePayload struct {
 func (NotificationSettingsUpdatePayload) IsNotificationSettingsUpdateResult() {}
 
 type NotificationsConnection struct {
-	HelperNotificationsConnectionData
 	Edges       []*NotificationEdge `json:"edges"`
 	UnseenCount *int                `json:"unseenCount"`
 	PageInfo    *PageInfo           `json:"pageInfo"`
@@ -839,7 +837,6 @@ type UpdateEmailPayload struct {
 func (UpdateEmailPayload) IsUpdateEmailResult() {}
 
 type User struct {
-	HelperUserData
 	Roles []*persist.Role `json:"roles"`
 	Pools []*Pool         `json:"pools"`
 }
@@ -910,7 +907,6 @@ type VerifyTokenPayload struct {
 func (VerifyTokenPayload) IsVerifyTokenResult() {}
 
 type Viewer struct {
-	HelperViewerData
 	User                 *User                    `json:"user"`
 	Pools                []*Pool                  `json:"pools"`
 	Notifications        *NotificationsConnection `json:"notifications"`

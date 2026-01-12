@@ -3,31 +3,18 @@
 {{ reserveImport "context" }}
 
 {{ range $import := .AddedImports }}
-	{{ reserveImport $import }}
+    {{ reserveImport $import }}
 {{end}}
 
 {{- range $node := .NodeImplementors }}
 func (r *{{$node.Name}}) ID() GqlID {
-    {{- if $node.HasBindingMethods}}
-    //-----------------------------------------------------------------------------------------------
-    //-----------------------------------------------------------------------------------------------
-    // Some fields specified by @goGqlId require manual binding because one of the following is true:
-    // (a) the field does not exist on the {{$node.Name}} type, or
-    // (b) the field exists but is not a string type
-    //-----------------------------------------------------------------------------------------------
-    // Please create binding methods on the {{$node.Name}} type with the following signatures:
-        {{- range $signature := $node.BindingMethodSignatures}}
-    // {{$signature}}
-        {{- end }}
-    //-----------------------------------------------------------------------------------------------
-    {{- end }}
-    return GqlID({{$node.Implementation}})
+    return {{$node.Implementation}}
 }
 {{ end }}
 
 type NodeFetcher struct {
     {{- range $node := .NodeImplementors }}
-    On{{$node.Name}} func(ctx context.Context, {{range $index, $arg := $node.Args}}{{if $index}},{{end}}{{$arg}} {{index $node.Types $index}}{{end}}) (*{{$node.Name}}, error)
+    On{{$node.Name}} func(ctx context.Context, id persist.DBID) (*{{$node.Name}}, error)
     {{- end }}
 }
 
@@ -38,19 +25,16 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
     }
 
     typeName := parts[0]
-    ids := parts[1:]
+    idStr := strings.Join(parts[1:], ":")
 
     switch typeName {
     {{- range $node := .NodeImplementors }}
     case "{{$node.Name}}":
-        if len(ids) != {{len $node.Args}} {
-            return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'{{$node.Name}}' type requires {{len $node.Args}} ID component(s) (%d component(s) supplied)", len(ids))}
-        }
-        return n.On{{$node.Name}}(ctx, {{range $index, $type := $node.Types}}{{if $index}},{{end}}{{$type}}(ids[{{$index}}]){{end}})
+        return n.On{{$node.Name}}(ctx, persist.DBID(idStr))
     {{- end }}
     }
 
-    return nil, ErrInvalidIDFormat{typeName}
+    return nil, ErrInvalidIDType{typeName: typeName}
 }
 
 func (n *NodeFetcher) ValidateHandlers() {

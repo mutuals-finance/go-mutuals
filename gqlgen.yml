@@ -122,9 +122,5 @@ models:
     model:
       - github.com/mutuals/go-mutuals/service/auth/basicauth.AuthTokenType
 directives:
-  goGqlId:
-    skip_runtime: true
-  goEmbedHelper:
-    skip_runtime: true
   scrub:
     skip_runtime: true

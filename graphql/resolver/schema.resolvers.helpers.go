@@ -166,17 +166,11 @@ func resolveViewer(ctx context.Context) model.ViewerResult {
 		return nil
 	}
 
-	userID := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-
-	viewer := &model.Viewer{
-		HelperViewerData: model.HelperViewerData{
-			UserId: userID,
-		},
+	// User id assignment works through the ID() method via @goGqlId directive
+	return &model.Viewer{
 		User:  nil, // handled by dedicated resolver
 		Pools: nil, // handled by dedicated resolver
 	}
-
-	return viewer
 }
 
 func resolveViewerEmail(ctx context.Context) *model.UserEmail {
@@ -352,9 +346,6 @@ func resolveGroupNotificationUsersConnectionByUserIDs(ctx context.Context, userI
 	return &model.GroupNotificationUsersConnection{
 		Edges:    edges,
 		PageInfo: pageInfoToModel(ctx, pageInfo),
-		HelperGroupNotificationUsersConnectionData: model.HelperGroupNotificationUsersConnectionData{
-			UserIDs: userIds,
-		},
 	}, nil
 }
 
@@ -367,7 +358,6 @@ func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notifi
 }
 
 func resolveViewerByID(ctx context.Context, id persist.DBID) (*model.Viewer, error) {
-	logger.For(ctx).Infof("User fetch for %s", id)
 	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
 		return nil, nil
 	}

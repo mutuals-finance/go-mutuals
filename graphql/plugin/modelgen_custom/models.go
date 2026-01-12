@@ -43,7 +43,6 @@ type ModelBuild struct {
 	Models      []*Object
 	Enums       []*Enum
 	Scalars     []string
-	Embeds      map[string]bool // Added by es@gallery.so
 }
 
 type Interface struct {
@@ -210,8 +209,6 @@ func (m *Plugin) MutateConfig(cfg *config.Config) error {
 	if m.MutateHook != nil {
 		b = m.MutateHook(b)
 	}
-
-	b.Embeds = getEmbeds(cfg)
 
 	getInterfaceByName := func(name string) *Interface {
 		// Allow looking up interfaces, so template can generate getters for each field
@@ -513,19 +510,3 @@ func findAndHandleCyclicalRelationships(b *ModelBuild) {
 		}
 	}
 }
-
-func getEmbeds(cfg *config.Config) map[string]bool {
-	embeds := make(map[string]bool)
-
-	for _, t := range cfg.Schema.Types {
-		for _, d := range t.Directives {
-			if d.Name == "goEmbedHelper" {
-				embeds[t.Name] = true
-			}
-		}
-	}
-
-	return embeds
-}
-
-// End of addition

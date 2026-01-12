@@ -11,23 +11,23 @@ import (
 )
 
 func (r *Claim) ID() GqlID {
-	return GqlID(GqlID(fmt.Sprintf("Claim:%s", r.ID)))
+	return GqlID(fmt.Sprintf("Claim:%s", r.ID))
 }
 
 func (r *DeletedNode) ID() GqlID {
-	return GqlID(GqlID(fmt.Sprintf("DeletedNode:%s", r.ID)))
+	return GqlID(fmt.Sprintf("DeletedNode:%s", r.ID))
 }
 
 func (r *Pool) ID() GqlID {
-	return GqlID(GqlID(fmt.Sprintf("Pool:%s", r.ID)))
+	return GqlID(fmt.Sprintf("Pool:%s", r.ID))
 }
 
 func (r *User) ID() GqlID {
-	return GqlID(GqlID(fmt.Sprintf("User:%s", r.ID)))
+	return GqlID(fmt.Sprintf("User:%s", r.ID))
 }
 
 func (r *Viewer) ID() GqlID {
-	return GqlID(GqlID(fmt.Sprintf("Viewer:%s", r.ID)))
+	return GqlID(fmt.Sprintf("Viewer:%s", r.ID))
 }
 
 type NodeFetcher struct {
@@ -45,37 +45,22 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 	}
 
 	typeName := parts[0]
-	ids := parts[1:]
+	idStr := strings.Join(parts[1:], ":")
 
 	switch typeName {
 	case "Claim":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Claim' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnClaim(ctx, persist.DBID(ids[0]))
+		return n.OnClaim(ctx, persist.DBID(idStr))
 	case "DeletedNode":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'DeletedNode' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnDeletedNode(ctx, persist.DBID(ids[0]))
+		return n.OnDeletedNode(ctx, persist.DBID(idStr))
 	case "Pool":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Pool' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnPool(ctx, persist.DBID(ids[0]))
+		return n.OnPool(ctx, persist.DBID(idStr))
 	case "User":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'User' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnUser(ctx, persist.DBID(ids[0]))
+		return n.OnUser(ctx, persist.DBID(idStr))
 	case "Viewer":
-		if len(ids) != 1 {
-			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Viewer' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
-		}
-		return n.OnViewer(ctx, persist.DBID(ids[0]))
+		return n.OnViewer(ctx, persist.DBID(idStr))
 	}
 
-	return nil, ErrInvalidIDFormat{typeName}
+	return nil, ErrInvalidIDType{typeName: typeName}
 }
 
 func (n *NodeFetcher) ValidateHandlers() {

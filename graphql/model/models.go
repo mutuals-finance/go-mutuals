@@ -9,7 +9,7 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-// GqlID represents a Global ID (Type:ID)
+// GqlID represents a Global Graphql compatible ID (Type:ID)
 type GqlID string
 
 // DBID extracts the raw database identifier by stripping the prefix
@@ -22,6 +22,7 @@ func (v GqlID) DBID() persist.DBID {
 	return persist.DBID(strings.Join(parts[1:], ":"))
 }
 
+// DBIDPtr returns a pointer to the DBID
 func (v *GqlID) DBIDPtr() *persist.DBID {
 	if v == nil {
 		return nil
@@ -56,34 +57,15 @@ func ToDBIDList(ids []GqlID) persist.DBIDList {
 	return res
 }
 
-func (v *Viewer) GetGqlIDField_UserID() string {
-	return string(v.UserId)
+// ToDBIDPtr converts a GqlID pointer to a persist.DBID pointer
+func ToDBIDPtr(id *GqlID) *persist.DBID {
+	if id == nil {
+		return nil
+	}
+	return id.DBIDPtr()
 }
 
-type HelperViewerData struct {
-	UserId persist.DBID
-}
-
-type HelperGroupNotificationUsersConnectionData struct {
-	UserIDs persist.DBIDList
-}
-
-type HelperUserData struct {
-	UserID persist.DBID
-}
-
-type HelperNotificationSettingsData struct {
-	UserId persist.DBID
-}
-
-type HelperNotificationsConnectionData struct {
-	UserId persist.DBID
-}
-
-type HelperUserEmailData struct {
-	UserId persist.DBID
-}
-
+// ErrInvalidIDFormat indicates an invalid ID format
 type ErrInvalidIDFormat struct {
 	message string
 }
@@ -92,6 +74,7 @@ func (e ErrInvalidIDFormat) Error() string {
 	return fmt.Sprintf("invalid ID format: %s", e.message)
 }
 
+// ErrInvalidIDType indicates an unsupported ID type
 type ErrInvalidIDType struct {
 	typeName string
 }
@@ -100,6 +83,7 @@ func (e ErrInvalidIDType) Error() string {
 	return fmt.Sprintf("no fetch method found for ID type '%s'", e.typeName)
 }
 
+// Window represents a time window for queries
 type Window struct {
 	time.Duration
 	Name string
@@ -124,7 +108,7 @@ func (w *Window) UnmarshalGQL(v interface{}) error {
 	case allTimeWindow.Name:
 		*w = allTimeWindow
 	default:
-		panic(fmt.Sprintf("unknown window: %s", window))
+		return fmt.Errorf("unknown window: %s", window)
 	}
 	return nil
 }

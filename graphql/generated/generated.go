@@ -3038,10 +3038,6 @@ directive @restrictEnvironment(
   allowed: [String!]!
 ) on INPUT_FIELD_DEFINITION | INPUT_OBJECT | FIELD_DEFINITION | OBJECT
 
-directive @goGqlId(fields: [String!]!) on OBJECT
-
-directive @goEmbedHelper on OBJECT
-
 scalar Time
 scalar Address
 scalar PubKey
@@ -3159,7 +3155,7 @@ enum Role {
   EARLY_ACCESS
 }
 
-type User implements Node @goEmbedHelper {
+type User implements Node {
   id: ID!
   roles: [Role] @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
@@ -3181,7 +3177,7 @@ type UsersConnection {
 # VIEWER
 #-------------------------------------------------------------------------------
 
-type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
+type Viewer implements Node {
   id: ID!
   user: User @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
@@ -3338,7 +3334,7 @@ type NotificationEdge {
   cursor: String
 }
 
-type NotificationsConnection @goEmbedHelper {
+type NotificationsConnection {
   edges: [NotificationEdge]
   unseenCount: Int
   pageInfo: PageInfo
@@ -3590,7 +3586,7 @@ type GroupNotificationUserEdge {
   cursor: String
 }
 
-type GroupNotificationUsersConnection @goEmbedHelper {
+type GroupNotificationUsersConnection {
   edges: [GroupNotificationUserEdge]
   pageInfo: PageInfo
 }

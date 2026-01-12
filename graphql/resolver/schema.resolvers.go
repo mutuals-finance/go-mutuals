@@ -455,7 +455,7 @@ func (r *txResolver) Withdrawals(ctx context.Context, obj *model.Tx) ([]*model.W
 
 // Roles is the resolver for the roles field.
 func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*persist.Role, error) {
-	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserId(ctx, obj.UserID)
+	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserId(ctx, obj.ID().DBID())
 	if err != nil {
 		return nil, err
 	}
