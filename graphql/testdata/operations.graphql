@@ -1,9 +1,8 @@
 # Query operations
-query userByIdQuery($id: DBID!) {
+query userByIdQuery($id: ID!) {
     userById(id: $id) {
         ... on User {
             id
-            dbid
             roles
         }
         ... on ErrUserNotFound {
@@ -21,7 +20,6 @@ query userByAddressQuery($input: ChainAddressInput!) {
     userByAddress(chainAddress: $input) {
         ... on User {
             id
-            dbid
             roles
         }
         ... on ErrUserNotFound {
@@ -41,7 +39,6 @@ query viewerQuery {
             id
             user {
                 id
-                dbid
                 roles
             }
         }
@@ -105,11 +102,10 @@ query notificationsForViewerQuery {
     }
 }
 
-query poolQuery($id: DBID, $slug: String, $contractId: DBID) {
+query poolQuery($id: ID, $slug: String, $contractId: ID) {
     pool(id: $id, slug: $slug, contractId: $contractId) {
         ... on Pool {
             id
-            dbid
             name
             description
             status
@@ -119,7 +115,6 @@ query poolQuery($id: DBID, $slug: String, $contractId: DBID) {
             owner {
                 ... on User {
                     id
-                    dbid
                 }
                 ... on EVMAccount {
                     address
@@ -146,7 +141,6 @@ query searchUsersQuery($query: String!, $limit: Int, $usernameWeight: Float) {
             results {
                 user {
                     id
-                    dbid
                 }
             }
         }
@@ -164,7 +158,6 @@ query searchPoolsQuery($query: String!, $limit: Int, $nameWeight: Float, $descri
             results {
                 pool {
                     id
-                    dbid
                     name
                     description
                 }
@@ -187,7 +180,6 @@ query usersByRoleQuery($role: Role!, $before: String, $after: String, $first: In
         edges {
             node {
                 id
-                dbid
                 roles
             }
             cursor
@@ -210,7 +202,6 @@ mutation userRegisterMutation($input: UserRegisterInput!) {
             requiresConfirmation
             user {
                 id
-                dbid
             }
         }
         ... on ErrAuthenticationFailed {
@@ -230,12 +221,11 @@ mutation userRegisterMutation($input: UserRegisterInput!) {
     }
 }
 
-mutation userUpdateMutation($userId: DBID, $input: UserUpdateInput!) {
+mutation userUpdateMutation($userId: ID, $input: UserUpdateInput!) {
     userUpdate(userId: $userId, input: $input) {
         ... on UserUpdatePayload {
             user {
                 id
-                dbid
             }
         }
         ... on ErrNotAuthorized {
@@ -271,7 +261,6 @@ mutation userRequestDeletionMutation($redirectUrl: String!) {
         ... on UserDeletePayload {
             user {
                 id
-                dbid
             }
         }
         ... on ErrNotAuthorized {
@@ -298,7 +287,6 @@ mutation userDeleteMutation($token: String!) {
         ... on UserDeletePayload {
             user {
                 id
-                dbid
             }
         }
         ... on ErrNotAuthorized {
@@ -317,7 +305,6 @@ mutation tokenVerifyMutation($token: String!) {
         ... on VerifyTokenPayload {
             user {
                 id
-                dbid
             }
             isValid
         }
@@ -338,7 +325,6 @@ mutation pushTokenRegisterMutation($pushToken: String!) {
             pushToken
             user {
                 id
-                dbid
             }
         }
         ... on ErrNotAuthorized {
@@ -361,7 +347,6 @@ mutation pushTokenUnregisterMutation($pushToken: String!) {
             pushToken
             user {
                 id
-                dbid
             }
         }
         ... on ErrNotAuthorized {
@@ -431,7 +416,6 @@ mutation poolCreateMutation($input: PoolCreateInput!) {
         ... on PoolCreatePayload {
             pool {
                 id
-                dbid
                 name
                 description
                 image
@@ -451,12 +435,11 @@ mutation poolCreateMutation($input: PoolCreateInput!) {
     }
 }
 
-mutation poolUpdateMutation($id: DBID!, $input: PoolUpdateInput!) {
+mutation poolUpdateMutation($id: ID!, $input: PoolUpdateInput!) {
     poolUpdate(id: $id, input: $input) {
         ... on PoolUpdatePayload {
             pool {
                 id
-                dbid
                 name
                 description
                 image
@@ -479,12 +462,11 @@ mutation poolUpdateMutation($id: DBID!, $input: PoolUpdateInput!) {
     }
 }
 
-mutation poolDeleteMutation($id: DBID!) {
+mutation poolDeleteMutation($id: ID!) {
     poolDelete(id: $id) {
         ... on PoolDeletePayload {
             pool {
                 id
-                dbid
             }
         }
         ... on ErrNotAuthorized {
@@ -501,12 +483,11 @@ mutation poolDeleteMutation($id: DBID!) {
     }
 }
 
-mutation poolClaimCreateMutation($poolId: DBID!, $input: ClaimCreateInput!) {
+mutation poolClaimCreateMutation($poolId: ID!, $input: ClaimCreateInput!) {
     poolClaimCreate(poolId: $poolId, input: $input) {
         ... on ClaimCreatePayload {
             claim {
                 id
-                dbid
                 label
                 path
                 data
@@ -526,12 +507,11 @@ mutation poolClaimCreateMutation($poolId: DBID!, $input: ClaimCreateInput!) {
     }
 }
 
-mutation poolClaimUpdateMutation($poolId: DBID!, $input: ClaimUpdateInput!) {
+mutation poolClaimUpdateMutation($poolId: ID!, $input: ClaimUpdateInput!) {
     poolClaimUpdate(poolId: $poolId, input: $input) {
         ... on ClaimUpdatePayload {
             claim {
                 id
-                dbid
                 label
                 path
                 data
@@ -551,12 +531,11 @@ mutation poolClaimUpdateMutation($poolId: DBID!, $input: ClaimUpdateInput!) {
     }
 }
 
-mutation poolClaimDeleteMutation($poolId: DBID!, $claimId: DBID!) {
+mutation poolClaimDeleteMutation($poolId: ID!, $claimId: ID!) {
     poolClaimDelete(poolId: $poolId, claimId: $claimId) {
         ... on ClaimDeletePayload {
             claim {
                 id
-                dbid
             }
         }
         ... on ErrNotAuthorized {
@@ -573,13 +552,12 @@ mutation poolClaimDeleteMutation($poolId: DBID!, $claimId: DBID!) {
     }
 }
 
-mutation poolClaimBulkCreateMutation($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+mutation poolClaimBulkCreateMutation($poolId: ID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
     poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
         ... on ClaimBulkCreatePayload {
             count
             claims {
                 id
-                dbid
                 label
                 path
                 data
@@ -599,13 +577,12 @@ mutation poolClaimBulkCreateMutation($poolId: DBID!, $claims: [ClaimBulkCreateIn
     }
 }
 
-mutation poolClaimBulkUpdateMutation($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+mutation poolClaimBulkUpdateMutation($poolId: ID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
     poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
         ... on ClaimBulkUpdatePayload {
             count
             claims {
                 id
-                dbid
                 label
                 path
                 data
@@ -625,7 +602,7 @@ mutation poolClaimBulkUpdateMutation($poolId: DBID!, $claims: [ClaimBulkUpdateIn
     }
 }
 
-mutation poolClaimBulkDeleteMutation($poolId: DBID!, $claimIds: [DBID!]!) {
+mutation poolClaimBulkDeleteMutation($poolId: ID!, $claimIds: [ID!]!) {
     poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
         ... on ClaimBulkDeletePayload {
             count
@@ -649,7 +626,6 @@ mutation roleUpdateMutation($role: Role!, $input: RoleUpdateInput!) {
         ... on RoleUpdatePayload {
             user {
                 id
-                dbid
                 roles
             }
         }

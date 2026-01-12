@@ -185,7 +185,6 @@ type ChainPools struct {
 }
 
 type Claim struct {
-	Dbid          persist.DBID           `json:"dbid"`
 	Data          persist.JSON           `json:"data"`
 	Label         string                 `json:"label"`
 	Path          string                 `json:"path"`
@@ -205,8 +204,8 @@ func (Claim) IsNode() {}
 type ClaimBulkCreateInput struct {
 	RecipientAddress *persist.Address `json:"recipientAddress"`
 	Data             persist.JSON     `json:"data"`
-	Parent           *persist.DBID    `json:"parent"`
-	Children         []persist.DBID   `json:"children"`
+	Parent           *GqlID           `json:"parent"`
+	Children         []GqlID          `json:"children"`
 	StateID          string           `json:"stateId"`
 	StrategyID       string           `json:"strategyId"`
 }
@@ -225,11 +224,11 @@ type ClaimBulkDeletePayload struct {
 func (ClaimBulkDeletePayload) IsClaimBulkDeleteResult() {}
 
 type ClaimBulkUpdateInput struct {
-	ClaimID          persist.DBID     `json:"claimId"`
+	ClaimID          GqlID            `json:"claimId"`
 	RecipientAddress *persist.Address `json:"recipientAddress"`
 	Data             persist.JSON     `json:"data"`
-	Parent           *persist.DBID    `json:"parent"`
-	Children         []persist.DBID   `json:"children"`
+	Parent           *GqlID           `json:"parent"`
+	Children         []GqlID          `json:"children"`
 	StateID          *string          `json:"stateId"`
 	StrategyID       *string          `json:"strategyId"`
 }
@@ -264,11 +263,11 @@ type ClaimDeletePayload struct {
 func (ClaimDeletePayload) IsClaimDeleteResult() {}
 
 type ClaimUpdateInput struct {
-	ClaimID          persist.DBID     `json:"claimId"`
+	ClaimID          GqlID            `json:"claimId"`
 	RecipientAddress *persist.Address `json:"recipientAddress"`
 	Data             persist.JSON     `json:"data"`
-	Parent           *persist.DBID    `json:"parent"`
-	Children         []persist.DBID   `json:"children"`
+	Parent           *GqlID           `json:"parent"`
+	Children         []GqlID          `json:"children"`
 	StateID          *string          `json:"stateId"`
 	StrategyID       *string          `json:"strategyId"`
 }
@@ -287,13 +286,11 @@ func (ClearNotificationsPayload) IsClearNotificationsResult() {}
 
 type DebugAuth struct {
 	AsUsername         *string                 `json:"asUsername"`
-	UserID             *persist.DBID           `json:"userId"`
 	ChainAddresses     []*persist.ChainAddress `json:"chainAddresses"`
 	DebugToolsPassword *string                 `json:"debugToolsPassword"`
 }
 
 type DeletedNode struct {
-	Dbid persist.DBID `json:"dbid"`
 }
 
 func (DeletedNode) IsNode() {}
@@ -613,7 +610,6 @@ type PageInfo struct {
 }
 
 type Pool struct {
-	Dbid        persist.DBID  `json:"dbid"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Image       string        `json:"image"`
@@ -715,7 +711,7 @@ type PoolUpdateInput struct {
 	Slug         *string             `json:"slug"`
 	AddClaims    []*ClaimCreateInput `json:"addClaims"`
 	UpdateClaims []*ClaimUpdateInput `json:"updateClaims"`
-	RemoveClaims []persist.DBID      `json:"removeClaims"`
+	RemoveClaims []GqlID             `json:"removeClaims"`
 }
 
 type PoolUpdatePayload struct {
@@ -844,7 +840,6 @@ func (UpdateEmailPayload) IsUpdateEmailResult() {}
 
 type User struct {
 	HelperUserData
-	Dbid  persist.DBID    `json:"dbid"`
 	Roles []*persist.Role `json:"roles"`
 	Pools []*Pool         `json:"pools"`
 }

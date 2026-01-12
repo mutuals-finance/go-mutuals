@@ -121,7 +121,7 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 
 	q := api.queries.WithTx(tx)
 
-	pool, err := poolService.CreatePool(ctx, q, util.FromPointer(input.Name), util.FromPointer(input.Description), util.FromPointer(input.Image), util.FromPointer(input.Slug), util.FromPointer(input.Private))
+	pool, err := poolService.CreatePool(ctx, q, input.Name, input.Description, util.FromPointer(input.Image), input.Slug, util.FromPointer(input.Private))
 	if err != nil {
 		return db.Pool{}, err
 	}
@@ -131,7 +131,7 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 
 		for _, c := range input.AddClaims {
 			claims = append(claims, allocation.Claim{
-				Label:            util.FromPointer(c.Label),
+				Label:            c.Label,
 				RecipientAddress: c.RecipientAddress,
 				Data:             c.Data,
 				ParentID:         c.Parent,

@@ -95,7 +95,7 @@ func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserReg
 }
 
 // UserUpdate is the resolver for the userUpdate field.
-func (r *mutationResolver) UserUpdate(ctx context.Context, userID *persist.DBID, input model.UserUpdateInput) (model.UserUpdateResult, error) {
+func (r *mutationResolver) UserUpdate(ctx context.Context, userID *model.GqlID, input model.UserUpdateInput) (model.UserUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: UserUpdate - userUpdate"))
 }
 
@@ -130,7 +130,7 @@ func (r *mutationResolver) AddUserWallet(ctx context.Context, authMechanism mode
 }
 
 // RemoveUserWallets is the resolver for the removeUserWallets field.
-func (r *mutationResolver) RemoveUserWallets(ctx context.Context, walletIds []persist.DBID) (model.RemoveUserWalletsResult, error) {
+func (r *mutationResolver) RemoveUserWallets(ctx context.Context, walletIds []model.GqlID) (model.RemoveUserWalletsResult, error) {
 	panic(fmt.Errorf("not implemented: RemoveUserWallets - removeUserWallets"))
 }
 
@@ -223,32 +223,32 @@ func (r *mutationResolver) RoleUpdate(ctx context.Context, role persist.Role, in
 }
 
 // PoolClaimCreate is the resolver for the poolClaimCreate field.
-func (r *mutationResolver) PoolClaimCreate(ctx context.Context, poolID persist.DBID, input model.ClaimCreateInput) (model.ClaimCreateResult, error) {
+func (r *mutationResolver) PoolClaimCreate(ctx context.Context, poolID model.GqlID, input model.ClaimCreateInput) (model.ClaimCreateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimCreate - poolClaimCreate"))
 }
 
 // PoolClaimUpdate is the resolver for the poolClaimUpdate field.
-func (r *mutationResolver) PoolClaimUpdate(ctx context.Context, poolID persist.DBID, input model.ClaimUpdateInput) (model.ClaimUpdateResult, error) {
+func (r *mutationResolver) PoolClaimUpdate(ctx context.Context, poolID model.GqlID, input model.ClaimUpdateInput) (model.ClaimUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimUpdate - poolClaimUpdate"))
 }
 
 // PoolClaimDelete is the resolver for the poolClaimDelete field.
-func (r *mutationResolver) PoolClaimDelete(ctx context.Context, poolID persist.DBID, claimID persist.DBID) (model.ClaimDeleteResult, error) {
+func (r *mutationResolver) PoolClaimDelete(ctx context.Context, poolID model.GqlID, claimID model.GqlID) (model.ClaimDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimDelete - poolClaimDelete"))
 }
 
 // PoolClaimBulkCreate is the resolver for the poolClaimBulkCreate field.
-func (r *mutationResolver) PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) (model.ClaimBulkCreateResult, error) {
+func (r *mutationResolver) PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkCreateInput) (model.ClaimBulkCreateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimBulkCreate - poolClaimBulkCreate"))
 }
 
 // PoolClaimBulkUpdate is the resolver for the poolClaimBulkUpdate field.
-func (r *mutationResolver) PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) (model.ClaimBulkUpdateResult, error) {
+func (r *mutationResolver) PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkUpdateInput) (model.ClaimBulkUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimBulkUpdate - poolClaimBulkUpdate"))
 }
 
 // PoolClaimBulkDelete is the resolver for the poolClaimBulkDelete field.
-func (r *mutationResolver) PoolClaimBulkDelete(ctx context.Context, poolID persist.DBID, claimIds []persist.DBID) (model.ClaimBulkDeleteResult, error) {
+func (r *mutationResolver) PoolClaimBulkDelete(ctx context.Context, poolID model.GqlID, claimIds []model.GqlID) (model.ClaimBulkDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimBulkDelete - poolClaimBulkDelete"))
 }
 
@@ -265,8 +265,8 @@ func (r *mutationResolver) PoolCreate(ctx context.Context, input model.PoolCreat
 }
 
 // PoolUpdate is the resolver for the poolUpdate field.
-func (r *mutationResolver) PoolUpdate(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (model.PoolUpdateResult, error) {
-	dbPool, err := publicapi.For(ctx).Pool.UpdatePool(ctx, id, input)
+func (r *mutationResolver) PoolUpdate(ctx context.Context, id model.GqlID, input model.PoolUpdateInput) (model.PoolUpdateResult, error) {
+	dbPool, err := publicapi.For(ctx).Pool.UpdatePool(ctx, id.DBID(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func (r *mutationResolver) PoolUpdate(ctx context.Context, id persist.DBID, inpu
 }
 
 // PoolDelete is the resolver for the poolDelete field.
-func (r *mutationResolver) PoolDelete(ctx context.Context, id persist.DBID) (model.PoolDeleteResult, error) {
+func (r *mutationResolver) PoolDelete(ctx context.Context, id model.GqlID) (model.PoolDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: PoolDelete - poolDelete"))
 }
 
@@ -293,7 +293,7 @@ func (r *poolResolver) Contract(ctx context.Context, obj *model.Pool) (*model.Po
 
 // Claims is the resolver for the claims field.
 func (r *poolResolver) Claims(ctx context.Context, obj *model.Pool) ([]*model.Claim, error) {
-	return resolveClaimsByPoolID(ctx, obj.Dbid)
+	return resolveClaimsByPoolID(ctx, obj.ID().DBID())
 }
 
 // PoolFactory is the resolver for the poolFactory field.
@@ -367,8 +367,8 @@ func (r *queryResolver) UserByUsername(ctx context.Context, username string) (mo
 }
 
 // UserByID is the resolver for the userById field.
-func (r *queryResolver) UserByID(ctx context.Context, id persist.DBID) (model.UserResult, error) {
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, id)
+func (r *queryResolver) UserByID(ctx context.Context, id model.GqlID) (model.UserResult, error) {
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, id.DBID())
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +385,7 @@ func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.
 }
 
 // Pool is the resolver for the pool field.
-func (r *queryResolver) Pool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (model.PoolResult, error) {
+func (r *queryResolver) Pool(ctx context.Context, id *model.GqlID, slug *string, contractID *model.GqlID) (model.PoolResult, error) {
 	return resolvePool(ctx, id, slug, contractID)
 }
 
@@ -455,7 +455,7 @@ func (r *txResolver) Withdrawals(ctx context.Context, obj *model.Tx) ([]*model.W
 
 // Roles is the resolver for the roles field.
 func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*persist.Role, error) {
-	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserId(ctx, obj.Dbid)
+	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserId(ctx, obj.UserID)
 	if err != nil {
 		return nil, err
 	}

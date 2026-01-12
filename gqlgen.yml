@@ -76,9 +76,6 @@ models:
   HexString:
     model:
       - github.com/mutuals/go-mutuals/service/persist.HexString
-  DBID:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.DBID
   WalletType:
     model:
       - github.com/mutuals/go-mutuals/service/persist.WalletType

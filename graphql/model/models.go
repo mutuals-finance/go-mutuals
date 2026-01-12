@@ -3,12 +3,58 @@ package model
 import (
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
+// GqlID represents a Global ID (Type:ID)
 type GqlID string
+
+// DBID extracts the raw database identifier by stripping the prefix
+func (v GqlID) DBID() persist.DBID {
+	s := string(v)
+	parts := strings.Split(s, ":")
+	if len(parts) < 2 {
+		return persist.DBID(s)
+	}
+	return persist.DBID(strings.Join(parts[1:], ":"))
+}
+
+func (v *GqlID) DBIDPtr() *persist.DBID {
+	if v == nil {
+		return nil
+	}
+	dbid := v.DBID()
+	return &dbid
+}
+
+func (v GqlID) String() string {
+	return string(v)
+}
+
+func (v *GqlID) UnmarshalGQL(i interface{}) error {
+	str, ok := i.(string)
+	if !ok {
+		return fmt.Errorf("IDs must be strings")
+	}
+	*v = GqlID(str)
+	return nil
+}
+
+func (v GqlID) MarshalGQL(w io.Writer) {
+	io.WriteString(w, fmt.Sprintf(`"%s"`, v))
+}
+
+// ToDBIDList converts a slice of GqlIDs to a persist.DBIDList
+func ToDBIDList(ids []GqlID) persist.DBIDList {
+	res := make(persist.DBIDList, len(ids))
+	for i, id := range ids {
+		res[i] = id.DBID()
+	}
+	return res
+}
 
 func (v *Viewer) GetGqlIDField_UserID() string {
 	return string(v.UserId)

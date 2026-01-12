@@ -98,7 +98,6 @@ type ComplexityRoot struct {
 		ChildrenCount func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
 		Data          func(childComplexity int) int
-		Dbid          func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Label         func(childComplexity int) int
 		Parent        func(childComplexity int) int
@@ -141,8 +140,7 @@ type ComplexityRoot struct {
 	}
 
 	DeletedNode struct {
-		Dbid func(childComplexity int) int
-		ID   func(childComplexity int) int
+		ID func(childComplexity int) int
 	}
 
 	Deposit struct {
@@ -291,19 +289,19 @@ type ComplexityRoot struct {
 		Login                           func(childComplexity int, authMechanism model.AuthMechanism) int
 		Logout                          func(childComplexity int) int
 		NotificationSettingsUpdate      func(childComplexity int, settings model.NotificationSettingsInput) int
-		PoolClaimBulkCreate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) int
-		PoolClaimBulkDelete             func(childComplexity int, poolID persist.DBID, claimIds []persist.DBID) int
-		PoolClaimBulkUpdate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) int
-		PoolClaimCreate                 func(childComplexity int, poolID persist.DBID, input model.ClaimCreateInput) int
-		PoolClaimDelete                 func(childComplexity int, poolID persist.DBID, claimID persist.DBID) int
-		PoolClaimUpdate                 func(childComplexity int, poolID persist.DBID, input model.ClaimUpdateInput) int
+		PoolClaimBulkCreate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkCreateInput) int
+		PoolClaimBulkDelete             func(childComplexity int, poolID model.GqlID, claimIds []model.GqlID) int
+		PoolClaimBulkUpdate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkUpdateInput) int
+		PoolClaimCreate                 func(childComplexity int, poolID model.GqlID, input model.ClaimCreateInput) int
+		PoolClaimDelete                 func(childComplexity int, poolID model.GqlID, claimID model.GqlID) int
+		PoolClaimUpdate                 func(childComplexity int, poolID model.GqlID, input model.ClaimUpdateInput) int
 		PoolCreate                      func(childComplexity int, input model.PoolCreateInput) int
-		PoolDelete                      func(childComplexity int, id persist.DBID) int
-		PoolUpdate                      func(childComplexity int, id persist.DBID, input model.PoolUpdateInput) int
+		PoolDelete                      func(childComplexity int, id model.GqlID) int
+		PoolUpdate                      func(childComplexity int, id model.GqlID, input model.PoolUpdateInput) int
 		PreverifyEmail                  func(childComplexity int, email persist.Email) int
 		PushTokenRegister               func(childComplexity int, pushToken string) int
 		PushTokenUnregister             func(childComplexity int, pushToken string) int
-		RemoveUserWallets               func(childComplexity int, walletIds []persist.DBID) int
+		RemoveUserWallets               func(childComplexity int, walletIds []model.GqlID) int
 		ResendVerificationEmail         func(childComplexity int) int
 		RoleUpdate                      func(childComplexity int, role persist.Role, input model.RoleUpdateInput) int
 		TokenVerify                     func(childComplexity int, token string) int
@@ -312,7 +310,7 @@ type ComplexityRoot struct {
 		UserDelete                      func(childComplexity int, token string) int
 		UserRegister                    func(childComplexity int, input model.UserRegisterInput) int
 		UserRequestDeletion             func(childComplexity int, redirectURL string) int
-		UserUpdate                      func(childComplexity int, userID *persist.DBID, input model.UserUpdateInput) int
+		UserUpdate                      func(childComplexity int, userID *model.GqlID, input model.UserUpdateInput) int
 		VerifyEmail                     func(childComplexity int, token string) int
 	}
 
@@ -353,7 +351,6 @@ type ComplexityRoot struct {
 		Claims      func(childComplexity int) int
 		Contract    func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
-		Dbid        func(childComplexity int) int
 		Description func(childComplexity int) int
 		DonationBps func(childComplexity int) int
 		ID          func(childComplexity int) int
@@ -447,11 +444,11 @@ type ComplexityRoot struct {
 	Query struct {
 		IsEmailAddressAvailable func(childComplexity int, emailAddress persist.Email) int
 		Node                    func(childComplexity int, id model.GqlID) int
-		Pool                    func(childComplexity int, id *persist.DBID, slug *string, contractID *persist.DBID) int
+		Pool                    func(childComplexity int, id *model.GqlID, slug *string, contractID *model.GqlID) int
 		SearchPools             func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
 		SearchUsers             func(childComplexity int, query string, limit *int, usernameWeight *float64) int
 		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
-		UserByID                func(childComplexity int, id persist.DBID) int
+		UserByID                func(childComplexity int, id model.GqlID) int
 		UserByUsername          func(childComplexity int, username string) int
 		UsersByRole             func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
 		Viewer                  func(childComplexity int) int
@@ -528,7 +525,6 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Dbid  func(childComplexity int) int
 		ID    func(childComplexity int) int
 		Pools func(childComplexity int) int
 		Roles func(childComplexity int) int
@@ -628,14 +624,14 @@ type ExtensionRegistryResolver interface {
 }
 type MutationResolver interface {
 	UserRegister(ctx context.Context, input model.UserRegisterInput) (model.UserRegisterResult, error)
-	UserUpdate(ctx context.Context, userID *persist.DBID, input model.UserUpdateInput) (model.UserUpdateResult, error)
+	UserUpdate(ctx context.Context, userID *model.GqlID, input model.UserUpdateInput) (model.UserUpdateResult, error)
 	UserRequestDeletion(ctx context.Context, redirectURL string) (model.UserDeleteResult, error)
 	UserDelete(ctx context.Context, token string) (model.UserDeleteResult, error)
 	Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginResult, error)
 	Logout(ctx context.Context) (*model.LogoutPayload, error)
 	TokenVerify(ctx context.Context, token string) (model.VerifyTokenResult, error)
 	AddUserWallet(ctx context.Context, authMechanism model.AuthMechanism) (model.AddUserWalletResult, error)
-	RemoveUserWallets(ctx context.Context, walletIds []persist.DBID) (model.RemoveUserWalletsResult, error)
+	RemoveUserWallets(ctx context.Context, walletIds []model.GqlID) (model.RemoveUserWalletsResult, error)
 	PushTokenRegister(ctx context.Context, pushToken string) (model.PushTokenRegisterResult, error)
 	PushTokenUnregister(ctx context.Context, pushToken string) (model.PushTokenUnregisterResult, error)
 	NotificationSettingsUpdate(ctx context.Context, settings model.NotificationSettingsInput) (model.NotificationSettingsUpdateResult, error)
@@ -647,15 +643,15 @@ type MutationResolver interface {
 	ResendVerificationEmail(ctx context.Context) (model.ResendVerificationEmailResult, error)
 	UnsubscribeFromEmail(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailResult, error)
 	RoleUpdate(ctx context.Context, role persist.Role, input model.RoleUpdateInput) (model.RoleUpdateResult, error)
-	PoolClaimCreate(ctx context.Context, poolID persist.DBID, input model.ClaimCreateInput) (model.ClaimCreateResult, error)
-	PoolClaimUpdate(ctx context.Context, poolID persist.DBID, input model.ClaimUpdateInput) (model.ClaimUpdateResult, error)
-	PoolClaimDelete(ctx context.Context, poolID persist.DBID, claimID persist.DBID) (model.ClaimDeleteResult, error)
-	PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) (model.ClaimBulkCreateResult, error)
-	PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) (model.ClaimBulkUpdateResult, error)
-	PoolClaimBulkDelete(ctx context.Context, poolID persist.DBID, claimIds []persist.DBID) (model.ClaimBulkDeleteResult, error)
+	PoolClaimCreate(ctx context.Context, poolID model.GqlID, input model.ClaimCreateInput) (model.ClaimCreateResult, error)
+	PoolClaimUpdate(ctx context.Context, poolID model.GqlID, input model.ClaimUpdateInput) (model.ClaimUpdateResult, error)
+	PoolClaimDelete(ctx context.Context, poolID model.GqlID, claimID model.GqlID) (model.ClaimDeleteResult, error)
+	PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkCreateInput) (model.ClaimBulkCreateResult, error)
+	PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkUpdateInput) (model.ClaimBulkUpdateResult, error)
+	PoolClaimBulkDelete(ctx context.Context, poolID model.GqlID, claimIds []model.GqlID) (model.ClaimBulkDeleteResult, error)
 	PoolCreate(ctx context.Context, input model.PoolCreateInput) (model.PoolCreateResult, error)
-	PoolUpdate(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (model.PoolUpdateResult, error)
-	PoolDelete(ctx context.Context, id persist.DBID) (model.PoolDeleteResult, error)
+	PoolUpdate(ctx context.Context, id model.GqlID, input model.PoolUpdateInput) (model.PoolUpdateResult, error)
+	PoolDelete(ctx context.Context, id model.GqlID) (model.PoolDeleteResult, error)
 }
 type PoolResolver interface {
 	Owner(ctx context.Context, obj *model.Pool) (model.UserOrAccount, error)
@@ -683,9 +679,9 @@ type QueryResolver interface {
 	Node(ctx context.Context, id model.GqlID) (model.Node, error)
 	Viewer(ctx context.Context) (model.ViewerResult, error)
 	UserByUsername(ctx context.Context, username string) (model.UserResult, error)
-	UserByID(ctx context.Context, id persist.DBID) (model.UserResult, error)
+	UserByID(ctx context.Context, id model.GqlID) (model.UserResult, error)
 	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserResult, error)
-	Pool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (model.PoolResult, error)
+	Pool(ctx context.Context, id *model.GqlID, slug *string, contractID *model.GqlID) (model.PoolResult, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersResult, error)
 	SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsResult, error)
 	IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error)
@@ -827,13 +823,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Claim.Data(childComplexity), true
 
-	case "Claim.dbid":
-		if e.complexity.Claim.Dbid == nil {
-			break
-		}
-
-		return e.complexity.Claim.Dbid(childComplexity), true
-
 	case "Claim.id":
 		if e.complexity.Claim.ID == nil {
 			break
@@ -959,13 +948,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ClearNotificationsPayload.Notifications(childComplexity), true
-
-	case "DeletedNode.dbid":
-		if e.complexity.DeletedNode.Dbid == nil {
-			break
-		}
-
-		return e.complexity.DeletedNode.Dbid(childComplexity), true
 
 	case "DeletedNode.id":
 		if e.complexity.DeletedNode.ID == nil {
@@ -1494,7 +1476,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolClaimBulkCreate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["poolId"].(persist.DBID), args["claims"].([]*model.ClaimBulkCreateInput)), true
+		return e.complexity.Mutation.PoolClaimBulkCreate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["poolId"].(model.GqlID), args["claims"].([]*model.ClaimBulkCreateInput)), true
 
 	case "Mutation.poolClaimBulkDelete":
 		if e.complexity.Mutation.PoolClaimBulkDelete == nil {
@@ -1506,7 +1488,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolClaimBulkDelete(childComplexity, args["poolId"].(persist.DBID), args["claimIds"].([]persist.DBID)), true
+		return e.complexity.Mutation.PoolClaimBulkDelete(childComplexity, args["poolId"].(model.GqlID), args["claimIds"].([]model.GqlID)), true
 
 	case "Mutation.poolClaimBulkUpdate":
 		if e.complexity.Mutation.PoolClaimBulkUpdate == nil {
@@ -1518,7 +1500,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolClaimBulkUpdate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["poolId"].(persist.DBID), args["claims"].([]*model.ClaimBulkUpdateInput)), true
+		return e.complexity.Mutation.PoolClaimBulkUpdate(childComplexity, args["errorPolicy"].(*model.ErrorPolicyEnum), args["poolId"].(model.GqlID), args["claims"].([]*model.ClaimBulkUpdateInput)), true
 
 	case "Mutation.poolClaimCreate":
 		if e.complexity.Mutation.PoolClaimCreate == nil {
@@ -1530,7 +1512,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolClaimCreate(childComplexity, args["poolId"].(persist.DBID), args["input"].(model.ClaimCreateInput)), true
+		return e.complexity.Mutation.PoolClaimCreate(childComplexity, args["poolId"].(model.GqlID), args["input"].(model.ClaimCreateInput)), true
 
 	case "Mutation.poolClaimDelete":
 		if e.complexity.Mutation.PoolClaimDelete == nil {
@@ -1542,7 +1524,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolClaimDelete(childComplexity, args["poolId"].(persist.DBID), args["claimId"].(persist.DBID)), true
+		return e.complexity.Mutation.PoolClaimDelete(childComplexity, args["poolId"].(model.GqlID), args["claimId"].(model.GqlID)), true
 
 	case "Mutation.poolClaimUpdate":
 		if e.complexity.Mutation.PoolClaimUpdate == nil {
@@ -1554,7 +1536,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolClaimUpdate(childComplexity, args["poolId"].(persist.DBID), args["input"].(model.ClaimUpdateInput)), true
+		return e.complexity.Mutation.PoolClaimUpdate(childComplexity, args["poolId"].(model.GqlID), args["input"].(model.ClaimUpdateInput)), true
 
 	case "Mutation.poolCreate":
 		if e.complexity.Mutation.PoolCreate == nil {
@@ -1578,7 +1560,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolDelete(childComplexity, args["id"].(persist.DBID)), true
+		return e.complexity.Mutation.PoolDelete(childComplexity, args["id"].(model.GqlID)), true
 
 	case "Mutation.poolUpdate":
 		if e.complexity.Mutation.PoolUpdate == nil {
@@ -1590,7 +1572,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PoolUpdate(childComplexity, args["id"].(persist.DBID), args["input"].(model.PoolUpdateInput)), true
+		return e.complexity.Mutation.PoolUpdate(childComplexity, args["id"].(model.GqlID), args["input"].(model.PoolUpdateInput)), true
 
 	case "Mutation.preverifyEmail":
 		if e.complexity.Mutation.PreverifyEmail == nil {
@@ -1638,7 +1620,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemoveUserWallets(childComplexity, args["walletIds"].([]persist.DBID)), true
+		return e.complexity.Mutation.RemoveUserWallets(childComplexity, args["walletIds"].([]model.GqlID)), true
 
 	case "Mutation.resendVerificationEmail":
 		if e.complexity.Mutation.ResendVerificationEmail == nil {
@@ -1741,7 +1723,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UserUpdate(childComplexity, args["userId"].(*persist.DBID), args["input"].(model.UserUpdateInput)), true
+		return e.complexity.Mutation.UserUpdate(childComplexity, args["userId"].(*model.GqlID), args["input"].(model.UserUpdateInput)), true
 
 	case "Mutation.verifyEmail":
 		if e.complexity.Mutation.VerifyEmail == nil {
@@ -1880,13 +1862,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Pool.CreatedAt(childComplexity), true
-
-	case "Pool.dbid":
-		if e.complexity.Pool.Dbid == nil {
-			break
-		}
-
-		return e.complexity.Pool.Dbid(childComplexity), true
 
 	case "Pool.description":
 		if e.complexity.Pool.Description == nil {
@@ -2307,7 +2282,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Pool(childComplexity, args["id"].(*persist.DBID), args["slug"].(*string), args["contractId"].(*persist.DBID)), true
+		return e.complexity.Query.Pool(childComplexity, args["id"].(*model.GqlID), args["slug"].(*string), args["contractId"].(*model.GqlID)), true
 
 	case "Query.searchPools":
 		if e.complexity.Query.SearchPools == nil {
@@ -2355,7 +2330,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.UserByID(childComplexity, args["id"].(persist.DBID)), true
+		return e.complexity.Query.UserByID(childComplexity, args["id"].(model.GqlID)), true
 
 	case "Query.userByUsername":
 		if e.complexity.Query.UserByUsername == nil {
@@ -2646,13 +2621,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UpdateEmailPayload.Viewer(childComplexity), true
-
-	case "User.dbid":
-		if e.complexity.User.Dbid == nil {
-			break
-		}
-
-		return e.complexity.User.Dbid(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -3077,7 +3045,6 @@ directive @goEmbedHelper on OBJECT
 scalar Time
 scalar Address
 scalar PubKey
-scalar DBID
 scalar Email
 scalar HexString
 scalar JSON
@@ -3099,7 +3066,6 @@ interface Node {
 
 type DeletedNode implements Node {
   id: ID!
-  dbid: DBID!
 }
 
 interface Error {
@@ -3195,7 +3161,6 @@ enum Role {
 
 type User implements Node @goEmbedHelper {
   id: ID!
-  dbid: DBID!
   roles: [Role] @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
 }
@@ -3285,7 +3250,6 @@ type Extension {
 
 type Claim implements Node {
   id: ID!
-  dbid: DBID!
   data: JSON
   label: String!
   path: String!
@@ -3312,7 +3276,6 @@ enum PoolStatus {
 
 type Pool implements Node {
   id: ID!
-  dbid: DBID!
   name: String!
   description: String!
   image: String!
@@ -3589,7 +3552,6 @@ input EoaAuth {
 
 input DebugAuth @restrictEnvironment(allowed: ["local", "development", "sandbox"]) {
   asUsername: String
-  userId: DBID
   chainAddresses: [ChainAddressInput!]
   debugToolsPassword: String
 }
@@ -3647,14 +3609,14 @@ type Query {
   node(id: ID!): Node
   viewer: ViewerResult! @authRequired
   userByUsername(username: String!): UserResult!
-  userById(id: DBID!): UserResult!
+  userById(id: ID!): UserResult!
   userByAddress(chainAddress: ChainAddressInput!): UserResult!
 
   """Look up a pool by ID, slug, or contract ID."""
   pool(
-    id: DBID
+    id: ID
     slug: String
-    contractId: DBID
+    contractId: ID
   ): PoolResult!
 
   searchUsers(
@@ -3858,11 +3820,11 @@ type ClaimUpdatePayload {
 }
 
 input ClaimUpdateInput {
-  claimId: DBID!
+  claimId: ID!
   recipientAddress: Address
   data: JSON
-  parent: DBID
-  children: [DBID!]
+  parent: ID
+  children: [ID!]
   stateId: String
   strategyId: String
 }
@@ -3883,8 +3845,8 @@ type ClaimBulkCreatePayload {
 input ClaimBulkCreateInput {
   recipientAddress: Address
   data: JSON
-  parent: DBID
-  children: [DBID!]
+  parent: ID
+  children: [ID!]
   stateId: String!
   strategyId: String!
 }
@@ -3897,11 +3859,11 @@ type ClaimBulkUpdatePayload {
 }
 
 input ClaimBulkUpdateInput {
-  claimId: DBID!
+  claimId: ID!
   recipientAddress: Address
   data: JSON
-  parent: DBID
-  children: [DBID!]
+  parent: ID
+  children: [ID!]
   stateId: String
   strategyId: String
 }
@@ -3946,7 +3908,7 @@ input PoolUpdateInput {
   slug: String
   addClaims: [ClaimCreateInput!]
   updateClaims: [ClaimUpdateInput!]
-  removeClaims: [DBID!]
+  removeClaims: [ID!]
 }
 
 union PoolUpdateResult = PoolUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -3960,7 +3922,7 @@ union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput 
 type Mutation {
   # User
   userRegister(input: UserRegisterInput!): UserRegisterResult!
-  userUpdate(userId: DBID, input: UserUpdateInput!): UserUpdateResult! @authRequired
+  userUpdate(userId: ID, input: UserUpdateInput!): UserUpdateResult! @authRequired
   userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
   userDelete(token: String!): UserDeleteResult! @authRequired
 
@@ -3971,7 +3933,7 @@ type Mutation {
 
   # Wallets
   addUserWallet(authMechanism: AuthMechanism!): AddUserWalletResult! @authRequired
-  removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsResult! @authRequired
+  removeUserWallets(walletIds: [ID!]!): RemoveUserWalletsResult! @authRequired
 
   # Push Tokens
   pushTokenRegister(pushToken: String!): PushTokenRegisterResult! @authRequired
@@ -3993,17 +3955,17 @@ type Mutation {
   roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
 
   # Claims
-  poolClaimCreate(poolId: DBID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
-  poolClaimUpdate(poolId: DBID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
-  poolClaimDelete(poolId: DBID!, claimId: DBID!): ClaimDeleteResult! @authRequired
-  poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: DBID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
-  poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: DBID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
-  poolClaimBulkDelete(poolId: DBID!, claimIds: [DBID!]!): ClaimBulkDeleteResult! @authRequired
+  poolClaimCreate(poolId: ID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
+  poolClaimUpdate(poolId: ID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
+  poolClaimDelete(poolId: ID!, claimId: ID!): ClaimDeleteResult! @authRequired
+  poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
+  poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
+  poolClaimBulkDelete(poolId: ID!, claimIds: [ID!]!): ClaimBulkDeleteResult! @authRequired
 
   # Pools
   poolCreate(input: PoolCreateInput!): PoolCreateResult!
-  poolUpdate(id: DBID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
-  poolDelete(id: DBID!): PoolDeleteResult! @authRequired
+  poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
+  poolDelete(id: ID!): PoolDeleteResult! @authRequired
 }
 
 type Subscription {
@@ -4314,22 +4276,22 @@ func (ec *executionContext) field_Mutation_poolClaimBulkCreate_argsErrorPolicy(
 func (ec *executionContext) field_Mutation_poolClaimBulkCreate_argsPoolID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["poolId"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 	if tmp, ok := rawArgs["poolId"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -4373,44 +4335,44 @@ func (ec *executionContext) field_Mutation_poolClaimBulkDelete_args(ctx context.
 func (ec *executionContext) field_Mutation_poolClaimBulkDelete_argsPoolID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["poolId"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 	if tmp, ok := rawArgs["poolId"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_poolClaimBulkDelete_argsClaimIds(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) ([]persist.DBID, error) {
+) ([]model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["claimIds"]
 	if !ok {
-		var zeroVal []persist.DBID
+		var zeroVal []model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claimIds"))
 	if tmp, ok := rawArgs["claimIds"]; ok {
-		return ec.unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
+		return ec.unmarshalNID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx, tmp)
 	}
 
-	var zeroVal []persist.DBID
+	var zeroVal []model.GqlID
 	return zeroVal, nil
 }
 
@@ -4459,22 +4421,22 @@ func (ec *executionContext) field_Mutation_poolClaimBulkUpdate_argsErrorPolicy(
 func (ec *executionContext) field_Mutation_poolClaimBulkUpdate_argsPoolID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["poolId"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 	if tmp, ok := rawArgs["poolId"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -4518,22 +4480,22 @@ func (ec *executionContext) field_Mutation_poolClaimCreate_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_poolClaimCreate_argsPoolID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["poolId"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 	if tmp, ok := rawArgs["poolId"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -4577,44 +4539,44 @@ func (ec *executionContext) field_Mutation_poolClaimDelete_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_poolClaimDelete_argsPoolID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["poolId"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 	if tmp, ok := rawArgs["poolId"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Mutation_poolClaimDelete_argsClaimID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["claimId"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("claimId"))
 	if tmp, ok := rawArgs["claimId"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -4636,22 +4598,22 @@ func (ec *executionContext) field_Mutation_poolClaimUpdate_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_poolClaimUpdate_argsPoolID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["poolId"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("poolId"))
 	if tmp, ok := rawArgs["poolId"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -4722,22 +4684,22 @@ func (ec *executionContext) field_Mutation_poolDelete_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_poolDelete_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["id"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -4759,22 +4721,22 @@ func (ec *executionContext) field_Mutation_poolUpdate_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_poolUpdate_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["id"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -4909,22 +4871,22 @@ func (ec *executionContext) field_Mutation_removeUserWallets_args(ctx context.Co
 func (ec *executionContext) field_Mutation_removeUserWallets_argsWalletIds(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) ([]persist.DBID, error) {
+) ([]model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["walletIds"]
 	if !ok {
-		var zeroVal []persist.DBID
+		var zeroVal []model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("walletIds"))
 	if tmp, ok := rawArgs["walletIds"]; ok {
-		return ec.unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, tmp)
+		return ec.unmarshalNID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx, tmp)
 	}
 
-	var zeroVal []persist.DBID
+	var zeroVal []model.GqlID
 	return zeroVal, nil
 }
 
@@ -5224,22 +5186,22 @@ func (ec *executionContext) field_Mutation_userUpdate_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_userUpdate_argsUserID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*persist.DBID, error) {
+) (*model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["userId"]
 	if !ok {
-		var zeroVal *persist.DBID
+		var zeroVal *model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
 	if tmp, ok := rawArgs["userId"]; ok {
-		return ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal *persist.DBID
+	var zeroVal *model.GqlID
 	return zeroVal, nil
 }
 
@@ -5416,22 +5378,22 @@ func (ec *executionContext) field_Query_pool_args(ctx context.Context, rawArgs m
 func (ec *executionContext) field_Query_pool_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*persist.DBID, error) {
+) (*model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["id"]
 	if !ok {
-		var zeroVal *persist.DBID
+		var zeroVal *model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal *persist.DBID
+	var zeroVal *model.GqlID
 	return zeroVal, nil
 }
 
@@ -5460,22 +5422,22 @@ func (ec *executionContext) field_Query_pool_argsSlug(
 func (ec *executionContext) field_Query_pool_argsContractID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*persist.DBID, error) {
+) (*model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["contractId"]
 	if !ok {
-		var zeroVal *persist.DBID
+		var zeroVal *model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("contractId"))
 	if tmp, ok := rawArgs["contractId"]; ok {
-		return ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal *persist.DBID
+	var zeroVal *model.GqlID
 	return zeroVal, nil
 }
 
@@ -5723,22 +5685,22 @@ func (ec *executionContext) field_Query_userById_args(ctx context.Context, rawAr
 func (ec *executionContext) field_Query_userById_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.DBID, error) {
+) (model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["id"]
 	if !ok {
-		var zeroVal persist.DBID
+		var zeroVal model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, tmp)
+		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal persist.DBID
+	var zeroVal model.GqlID
 	return zeroVal, nil
 }
 
@@ -6316,8 +6278,6 @@ func (ec *executionContext) fieldContext_ChainPools_pools(_ context.Context, fie
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -6468,50 +6428,6 @@ func (ec *executionContext) fieldContext_Claim_id(_ context.Context, field graph
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Claim_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Claim_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Claim_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Claim",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6728,8 +6644,6 @@ func (ec *executionContext) fieldContext_Claim_parent(_ context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -6799,8 +6713,6 @@ func (ec *executionContext) fieldContext_Claim_children(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -6873,8 +6785,6 @@ func (ec *executionContext) fieldContext_Claim_pool(_ context.Context, field gra
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -7258,8 +7168,6 @@ func (ec *executionContext) fieldContext_ClaimBulkCreatePayload_claims(_ context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -7420,8 +7328,6 @@ func (ec *executionContext) fieldContext_ClaimBulkUpdatePayload_claims(_ context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -7494,8 +7400,6 @@ func (ec *executionContext) fieldContext_ClaimCreatePayload_claim(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -7568,8 +7472,6 @@ func (ec *executionContext) fieldContext_ClaimDeletePayload_claim(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -7642,8 +7544,6 @@ func (ec *executionContext) fieldContext_ClaimUpdatePayload_claim(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -7758,50 +7658,6 @@ func (ec *executionContext) fieldContext_DeletedNode_id(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeletedNode_dbid(ctx context.Context, field graphql.CollectedField, obj *model.DeletedNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeletedNode_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeletedNode_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeletedNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7952,8 +7808,6 @@ func (ec *executionContext) fieldContext_Deposit_pool(_ context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -8530,8 +8384,6 @@ func (ec *executionContext) fieldContext_EVMAccount_selfPools(_ context.Context,
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -10536,8 +10388,6 @@ func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(_ contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -10871,7 +10721,7 @@ func (ec *executionContext) _Mutation_userUpdate(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UserUpdate(rctx, fc.Args["userId"].(*persist.DBID), fc.Args["input"].(model.UserUpdateInput))
+			return ec.resolvers.Mutation().UserUpdate(rctx, fc.Args["userId"].(*model.GqlID), fc.Args["input"].(model.UserUpdateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -11359,7 +11209,7 @@ func (ec *executionContext) _Mutation_removeUserWallets(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().RemoveUserWallets(rctx, fc.Args["walletIds"].([]persist.DBID))
+			return ec.resolvers.Mutation().RemoveUserWallets(rctx, fc.Args["walletIds"].([]model.GqlID))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12195,7 +12045,7 @@ func (ec *executionContext) _Mutation_poolClaimCreate(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolClaimCreate(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["input"].(model.ClaimCreateInput))
+			return ec.resolvers.Mutation().PoolClaimCreate(rctx, fc.Args["poolId"].(model.GqlID), fc.Args["input"].(model.ClaimCreateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12272,7 +12122,7 @@ func (ec *executionContext) _Mutation_poolClaimUpdate(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolClaimUpdate(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["input"].(model.ClaimUpdateInput))
+			return ec.resolvers.Mutation().PoolClaimUpdate(rctx, fc.Args["poolId"].(model.GqlID), fc.Args["input"].(model.ClaimUpdateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12349,7 +12199,7 @@ func (ec *executionContext) _Mutation_poolClaimDelete(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolClaimDelete(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["claimId"].(persist.DBID))
+			return ec.resolvers.Mutation().PoolClaimDelete(rctx, fc.Args["poolId"].(model.GqlID), fc.Args["claimId"].(model.GqlID))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12426,7 +12276,7 @@ func (ec *executionContext) _Mutation_poolClaimBulkCreate(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolClaimBulkCreate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["poolId"].(persist.DBID), fc.Args["claims"].([]*model.ClaimBulkCreateInput))
+			return ec.resolvers.Mutation().PoolClaimBulkCreate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["poolId"].(model.GqlID), fc.Args["claims"].([]*model.ClaimBulkCreateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12503,7 +12353,7 @@ func (ec *executionContext) _Mutation_poolClaimBulkUpdate(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolClaimBulkUpdate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["poolId"].(persist.DBID), fc.Args["claims"].([]*model.ClaimBulkUpdateInput))
+			return ec.resolvers.Mutation().PoolClaimBulkUpdate(rctx, fc.Args["errorPolicy"].(*model.ErrorPolicyEnum), fc.Args["poolId"].(model.GqlID), fc.Args["claims"].([]*model.ClaimBulkUpdateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12580,7 +12430,7 @@ func (ec *executionContext) _Mutation_poolClaimBulkDelete(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolClaimBulkDelete(rctx, fc.Args["poolId"].(persist.DBID), fc.Args["claimIds"].([]persist.DBID))
+			return ec.resolvers.Mutation().PoolClaimBulkDelete(rctx, fc.Args["poolId"].(model.GqlID), fc.Args["claimIds"].([]model.GqlID))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12712,7 +12562,7 @@ func (ec *executionContext) _Mutation_poolUpdate(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolUpdate(rctx, fc.Args["id"].(persist.DBID), fc.Args["input"].(model.PoolUpdateInput))
+			return ec.resolvers.Mutation().PoolUpdate(rctx, fc.Args["id"].(model.GqlID), fc.Args["input"].(model.PoolUpdateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -12789,7 +12639,7 @@ func (ec *executionContext) _Mutation_poolDelete(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PoolDelete(rctx, fc.Args["id"].(persist.DBID))
+			return ec.resolvers.Mutation().PoolDelete(rctx, fc.Args["id"].(model.GqlID))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -13552,50 +13402,6 @@ func (ec *executionContext) fieldContext_Pool_id(_ context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _Pool_dbid(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Pool_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Pool_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Pool",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Pool_name(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pool_name(ctx, field)
 	if err != nil {
@@ -14011,8 +13817,6 @@ func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field gr
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Claim_dbid(ctx, field)
 			case "data":
 				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
@@ -14877,8 +14681,6 @@ func (ec *executionContext) fieldContext_PoolCreatePayload_pool(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -15081,8 +14883,6 @@ func (ec *executionContext) fieldContext_PoolDayBalance_pool(_ context.Context, 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -15357,8 +15157,6 @@ func (ec *executionContext) fieldContext_PoolDeletePayload_pool(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -15885,8 +15683,6 @@ func (ec *executionContext) fieldContext_PoolHourBalance_pool(_ context.Context,
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -16158,8 +15954,6 @@ func (ec *executionContext) fieldContext_PoolSearchResult_pool(_ context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -16230,8 +16024,6 @@ func (ec *executionContext) fieldContext_PoolUpdatePayload_pool(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -16434,8 +16226,6 @@ func (ec *executionContext) fieldContext_PushTokenRegisterPayload_user(_ context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -16532,8 +16322,6 @@ func (ec *executionContext) fieldContext_PushTokenUnregisterPayload_user(_ conte
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -16732,7 +16520,7 @@ func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserByID(rctx, fc.Args["id"].(persist.DBID))
+		return ec.resolvers.Query().UserByID(rctx, fc.Args["id"].(model.GqlID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16842,7 +16630,7 @@ func (ec *executionContext) _Query_pool(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Pool(rctx, fc.Args["id"].(*persist.DBID), fc.Args["slug"].(*string), fc.Args["contractId"].(*persist.DBID))
+		return ec.resolvers.Query().Pool(rctx, fc.Args["id"].(*model.GqlID), fc.Args["slug"].(*string), fc.Args["contractId"].(*model.GqlID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17460,8 +17248,6 @@ func (ec *executionContext) fieldContext_RoleUpdatePayload_user(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -19081,50 +18867,6 @@ func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _User_dbid(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_dbid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Dbid, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.DBID)
-	fc.Result = res
-	return ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_User_dbid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DBID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _User_roles(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_roles(ctx, field)
 	if err != nil {
@@ -19204,8 +18946,6 @@ func (ec *executionContext) fieldContext_User_pools(_ context.Context, field gra
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -19273,8 +19013,6 @@ func (ec *executionContext) fieldContext_UserDeletePayload_user(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -19324,8 +19062,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -19548,8 +19284,6 @@ func (ec *executionContext) fieldContext_UserRegisterPayload_user(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -19640,8 +19374,6 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(_ context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -19694,8 +19426,6 @@ func (ec *executionContext) fieldContext_UserUpdatePayload_user(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -19897,8 +19627,6 @@ func (ec *executionContext) fieldContext_VerifyTokenPayload_user(_ context.Conte
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -20036,8 +19764,6 @@ func (ec *executionContext) fieldContext_Viewer_user(_ context.Context, field gr
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_User_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_User_dbid(ctx, field)
 			case "roles":
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
@@ -20087,8 +19813,6 @@ func (ec *executionContext) fieldContext_Viewer_pools(_ context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -20368,8 +20092,6 @@ func (ec *executionContext) fieldContext_Withdrawal_pool(_ context.Context, fiel
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Pool_id(ctx, field)
-			case "dbid":
-				return ec.fieldContext_Pool_dbid(ctx, field)
 			case "name":
 				return ec.fieldContext_Pool_name(ctx, field)
 			case "description":
@@ -22782,14 +22504,14 @@ func (ec *executionContext) unmarshalInputClaimBulkCreateInput(ctx context.Conte
 			it.Data = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Parent = data
 		case "children":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22830,7 +22552,7 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 		switch k {
 		case "claimId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22851,14 +22573,14 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 			it.Data = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Parent = data
 		case "children":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22968,7 +22690,7 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 		switch k {
 		case "claimId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimId"))
-			data, err := ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22989,14 +22711,14 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 			it.Data = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
-			data, err := ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Parent = data
 		case "children":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("children"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23028,7 +22750,7 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"asUsername", "userId", "chainAddresses", "debugToolsPassword"}
+	fieldsInOrder := [...]string{"asUsername", "chainAddresses", "debugToolsPassword"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -23062,37 +22784,6 @@ func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj int
 				it.AsUsername = nil
 			} else {
 				err := fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-		case "userId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, v)
-			}
-
-			directive1 := func(ctx context.Context) (interface{}, error) {
-				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
-				if err != nil {
-					var zeroVal *persist.DBID
-					return zeroVal, err
-				}
-				if ec.directives.RestrictEnvironment == nil {
-					var zeroVal *persist.DBID
-					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
-				}
-				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
-			}
-
-			tmp, err := directive1(ctx)
-			if err != nil {
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-			if data, ok := tmp.(*persist.DBID); ok {
-				it.UserID = data
-			} else if tmp == nil {
-				it.UserID = nil
-			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/service/persist.DBID`, tmp)
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 		case "chainAddresses":
@@ -23479,7 +23170,7 @@ func (ec *executionContext) unmarshalInputPoolUpdateInput(ctx context.Context, o
 			it.UpdateClaims = data
 		case "removeClaims":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("removeClaims"))
-			data, err := ec.unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx, v)
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -25128,11 +24819,6 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "dbid":
-			out.Values[i] = ec._Claim_dbid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "data":
 			out.Values[i] = ec._Claim_data(ctx, field, obj)
 		case "label":
@@ -25686,11 +25372,6 @@ func (ec *executionContext) _DeletedNode(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("DeletedNode")
 		case "id":
 			out.Values[i] = ec._DeletedNode_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "dbid":
-			out.Values[i] = ec._DeletedNode_dbid(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -27584,11 +27265,6 @@ func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = graphql.MarshalString("Pool")
 		case "id":
 			out.Values[i] = ec._Pool_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "dbid":
-			out.Values[i] = ec._Pool_dbid(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -29636,11 +29312,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "dbid":
-			out.Values[i] = ec._User_dbid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "roles":
 			field := field
 
@@ -31168,54 +30839,6 @@ func (ec *executionContext) marshalNClearNotificationsResult2githubᚗcomᚋmutu
 	return ec._ClearNotificationsResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (persist.DBID, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.DBID(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v persist.DBID) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]persist.DBID, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNDBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx context.Context, sel ast.SelectionSet, v []*model.Deposit) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -31448,19 +31071,45 @@ func (ec *executionContext) marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutu
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := model.GqlID(tmp)
+	var res model.GqlID
+	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, sel ast.SelectionSet, v model.GqlID) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+	return v
+}
+
+func (ec *executionContext) unmarshalNID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx context.Context, v interface{}) ([]model.GqlID, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]model.GqlID, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
 		}
 	}
-	return res
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx context.Context, sel ast.SelectionSet, v []model.GqlID) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
@@ -32855,61 +32504,6 @@ func (ec *executionContext) unmarshalOClaimUpdateInput2ᚕᚖgithubᚗcomᚋmutu
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, v interface{}) ([]persist.DBID, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]persist.DBID, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalODBID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBIDᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.DBID) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNDBID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) unmarshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, v interface{}) (*persist.DBID, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.DBID(tmp)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalODBID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐDBID(ctx context.Context, sel ast.SelectionSet, v *persist.DBID) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(string(*v))
-	return res
-}
-
 func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDebugAuth(ctx context.Context, v interface{}) (*model.DebugAuth, error) {
 	if v == nil {
 		return nil, nil
@@ -33059,6 +32653,60 @@ func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._GroupNotificationUserEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx context.Context, v interface{}) ([]model.GqlID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]model.GqlID, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx context.Context, sel ast.SelectionSet, v []model.GqlID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (*model.GqlID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.GqlID)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, sel ast.SelectionSet, v *model.GqlID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {

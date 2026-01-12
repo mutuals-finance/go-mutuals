@@ -88,8 +88,11 @@ func resolveUserByAddress(ctx context.Context, chainAddress persist.ChainAddress
 	return userToModel(ctx, *user), nil
 }
 
-func resolvePool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (model.PoolResult, error) {
-	pool, err := publicapi.For(ctx).Pool.GetPool(ctx, id, slug, contractID)
+func resolvePool(ctx context.Context, id *model.GqlID, slug *string, contractID *model.GqlID) (model.PoolResult, error) {
+	poolDBID := id.DBID()
+	contractDBID := contractID.DBID()
+
+	pool, err := publicapi.For(ctx).Pool.GetPool(ctx, &poolDBID, slug, &contractDBID)
 	if err != nil {
 		return nil, err
 	}
@@ -363,35 +366,29 @@ func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notifi
 	return notificationToModel(notification)
 }
 
-func resolveViewerByID(ctx context.Context, id string) (*model.Viewer, error) {
+func resolveViewerByID(ctx context.Context, id persist.DBID) (*model.Viewer, error) {
 	logger.For(ctx).Infof("User fetch for %s", id)
 	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
 		return nil, nil
 	}
 
 	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	if userId.String() != id {
+	if userId != id {
 		return nil, nil
 	}
 
 	return &model.Viewer{
-		HelperViewerData: model.HelperViewerData{
-			UserId: userId,
-		},
 		User:  nil, // handled by dedicated resolver
 		Pools: nil, // handled by dedicated resolver
 	}, nil
 }
 
 func resolveDeletedNodeByID(ctx context.Context, id persist.DBID) (*model.DeletedNode, error) {
-	return &model.DeletedNode{
-		Dbid: id,
-	}, nil
+	return &model.DeletedNode{}, nil
 }
 
 func poolToModel(ctx context.Context, pool db.Pool) *model.Pool {
 	return &model.Pool{
-		Dbid:        pool.ID,
 		Name:        pool.Name,
 		Description: pool.Description,
 		Image:       pool.Image,
@@ -416,7 +413,6 @@ func poolsToModels(ctx context.Context, pools []db.Pool) []*model.Pool {
 
 func claimToModel(ctx context.Context, claim db.Claim) *model.Claim {
 	return &model.Claim{
-		Dbid:          claim.ID,
 		Data:          claim.Data.Bytes,
 		Label:         claim.Label,
 		Path:          persist.NullStrToStr(claim.Path),
@@ -441,10 +437,6 @@ func claimsToModels(ctx context.Context, claims []db.Claim) []*model.Claim {
 
 func userToModel(ctx context.Context, user db.User) *model.User {
 	return &model.User{
-		HelperUserData: model.HelperUserData{
-			UserID: user.ID,
-		},
-		Dbid:  user.ID,
 		Pools: nil, // handled by dedicated resolver
 		Roles: nil, // handled by dedicated resolver
 	}

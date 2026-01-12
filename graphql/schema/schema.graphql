@@ -28,7 +28,6 @@ directive @goEmbedHelper on OBJECT
 scalar Time
 scalar Address
 scalar PubKey
-scalar DBID
 scalar Email
 scalar HexString
 scalar JSON
@@ -50,7 +49,6 @@ interface Node {
 
 type DeletedNode implements Node {
   id: ID!
-  dbid: DBID!
 }
 
 interface Error {
@@ -146,7 +144,6 @@ enum Role {
 
 type User implements Node @goEmbedHelper {
   id: ID!
-  dbid: DBID!
   roles: [Role] @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
 }
@@ -236,7 +233,6 @@ type Extension {
 
 type Claim implements Node {
   id: ID!
-  dbid: DBID!
   data: JSON
   label: String!
   path: String!
@@ -263,7 +259,6 @@ enum PoolStatus {
 
 type Pool implements Node {
   id: ID!
-  dbid: DBID!
   name: String!
   description: String!
   image: String!
@@ -540,7 +535,6 @@ input EoaAuth {
 
 input DebugAuth @restrictEnvironment(allowed: ["local", "development", "sandbox"]) {
   asUsername: String
-  userId: DBID
   chainAddresses: [ChainAddressInput!]
   debugToolsPassword: String
 }
@@ -598,14 +592,14 @@ type Query {
   node(id: ID!): Node
   viewer: ViewerResult! @authRequired
   userByUsername(username: String!): UserResult!
-  userById(id: DBID!): UserResult!
+  userById(id: ID!): UserResult!
   userByAddress(chainAddress: ChainAddressInput!): UserResult!
 
   """Look up a pool by ID, slug, or contract ID."""
   pool(
-    id: DBID
+    id: ID
     slug: String
-    contractId: DBID
+    contractId: ID
   ): PoolResult!
 
   searchUsers(
@@ -809,11 +803,11 @@ type ClaimUpdatePayload {
 }
 
 input ClaimUpdateInput {
-  claimId: DBID!
+  claimId: ID!
   recipientAddress: Address
   data: JSON
-  parent: DBID
-  children: [DBID!]
+  parent: ID
+  children: [ID!]
   stateId: String
   strategyId: String
 }
@@ -834,8 +828,8 @@ type ClaimBulkCreatePayload {
 input ClaimBulkCreateInput {
   recipientAddress: Address
   data: JSON
-  parent: DBID
-  children: [DBID!]
+  parent: ID
+  children: [ID!]
   stateId: String!
   strategyId: String!
 }
@@ -848,11 +842,11 @@ type ClaimBulkUpdatePayload {
 }
 
 input ClaimBulkUpdateInput {
-  claimId: DBID!
+  claimId: ID!
   recipientAddress: Address
   data: JSON
-  parent: DBID
-  children: [DBID!]
+  parent: ID
+  children: [ID!]
   stateId: String
   strategyId: String
 }
@@ -897,7 +891,7 @@ input PoolUpdateInput {
   slug: String
   addClaims: [ClaimCreateInput!]
   updateClaims: [ClaimUpdateInput!]
-  removeClaims: [DBID!]
+  removeClaims: [ID!]
 }
 
 union PoolUpdateResult = PoolUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -911,7 +905,7 @@ union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput 
 type Mutation {
   # User
   userRegister(input: UserRegisterInput!): UserRegisterResult!
-  userUpdate(userId: DBID, input: UserUpdateInput!): UserUpdateResult! @authRequired
+  userUpdate(userId: ID, input: UserUpdateInput!): UserUpdateResult! @authRequired
   userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
   userDelete(token: String!): UserDeleteResult! @authRequired
 
@@ -922,7 +916,7 @@ type Mutation {
 
   # Wallets
   addUserWallet(authMechanism: AuthMechanism!): AddUserWalletResult! @authRequired
-  removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsResult! @authRequired
+  removeUserWallets(walletIds: [ID!]!): RemoveUserWalletsResult! @authRequired
 
   # Push Tokens
   pushTokenRegister(pushToken: String!): PushTokenRegisterResult! @authRequired
@@ -944,17 +938,17 @@ type Mutation {
   roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
 
   # Claims
-  poolClaimCreate(poolId: DBID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
-  poolClaimUpdate(poolId: DBID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
-  poolClaimDelete(poolId: DBID!, claimId: DBID!): ClaimDeleteResult! @authRequired
-  poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: DBID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
-  poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: DBID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
-  poolClaimBulkDelete(poolId: DBID!, claimIds: [DBID!]!): ClaimBulkDeleteResult! @authRequired
+  poolClaimCreate(poolId: ID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
+  poolClaimUpdate(poolId: ID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
+  poolClaimDelete(poolId: ID!, claimId: ID!): ClaimDeleteResult! @authRequired
+  poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
+  poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
+  poolClaimBulkDelete(poolId: ID!, claimIds: [ID!]!): ClaimBulkDeleteResult! @authRequired
 
   # Pools
   poolCreate(input: PoolCreateInput!): PoolCreateResult!
-  poolUpdate(id: DBID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
-  poolDelete(id: DBID!): PoolDeleteResult! @authRequired
+  poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
+  poolDelete(id: ID!): PoolDeleteResult! @authRequired
 }
 
 type Subscription {

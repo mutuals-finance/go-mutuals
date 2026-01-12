@@ -64,8 +64,8 @@ func (v *ChainPubKeyInput) GetChainId() int { return v.ChainId }
 type ClaimBulkCreateInput struct {
 	RecipientAddress *persist.Address `json:"recipientAddress"`
 	Data             *json.RawMessage `json:"data"`
-	Parent           *persist.DBID    `json:"parent"`
-	Children         []persist.DBID   `json:"children"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
 	StateId          string           `json:"stateId"`
 	StrategyId       string           `json:"strategyId"`
 }
@@ -77,10 +77,10 @@ func (v *ClaimBulkCreateInput) GetRecipientAddress() *persist.Address { return v
 func (v *ClaimBulkCreateInput) GetData() *json.RawMessage { return v.Data }
 
 // GetParent returns ClaimBulkCreateInput.Parent, and is useful for accessing the field via an interface.
-func (v *ClaimBulkCreateInput) GetParent() *persist.DBID { return v.Parent }
+func (v *ClaimBulkCreateInput) GetParent() *string { return v.Parent }
 
 // GetChildren returns ClaimBulkCreateInput.Children, and is useful for accessing the field via an interface.
-func (v *ClaimBulkCreateInput) GetChildren() []persist.DBID { return v.Children }
+func (v *ClaimBulkCreateInput) GetChildren() []string { return v.Children }
 
 // GetStateId returns ClaimBulkCreateInput.StateId, and is useful for accessing the field via an interface.
 func (v *ClaimBulkCreateInput) GetStateId() string { return v.StateId }
@@ -89,17 +89,17 @@ func (v *ClaimBulkCreateInput) GetStateId() string { return v.StateId }
 func (v *ClaimBulkCreateInput) GetStrategyId() string { return v.StrategyId }
 
 type ClaimBulkUpdateInput struct {
-	ClaimId          persist.DBID     `json:"claimId"`
+	ClaimId          string           `json:"claimId"`
 	RecipientAddress *persist.Address `json:"recipientAddress"`
 	Data             *json.RawMessage `json:"data"`
-	Parent           *persist.DBID    `json:"parent"`
-	Children         []persist.DBID   `json:"children"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
 	StateId          *string          `json:"stateId"`
 	StrategyId       *string          `json:"strategyId"`
 }
 
 // GetClaimId returns ClaimBulkUpdateInput.ClaimId, and is useful for accessing the field via an interface.
-func (v *ClaimBulkUpdateInput) GetClaimId() persist.DBID { return v.ClaimId }
+func (v *ClaimBulkUpdateInput) GetClaimId() string { return v.ClaimId }
 
 // GetRecipientAddress returns ClaimBulkUpdateInput.RecipientAddress, and is useful for accessing the field via an interface.
 func (v *ClaimBulkUpdateInput) GetRecipientAddress() *persist.Address { return v.RecipientAddress }
@@ -108,10 +108,10 @@ func (v *ClaimBulkUpdateInput) GetRecipientAddress() *persist.Address { return v
 func (v *ClaimBulkUpdateInput) GetData() *json.RawMessage { return v.Data }
 
 // GetParent returns ClaimBulkUpdateInput.Parent, and is useful for accessing the field via an interface.
-func (v *ClaimBulkUpdateInput) GetParent() *persist.DBID { return v.Parent }
+func (v *ClaimBulkUpdateInput) GetParent() *string { return v.Parent }
 
 // GetChildren returns ClaimBulkUpdateInput.Children, and is useful for accessing the field via an interface.
-func (v *ClaimBulkUpdateInput) GetChildren() []persist.DBID { return v.Children }
+func (v *ClaimBulkUpdateInput) GetChildren() []string { return v.Children }
 
 // GetStateId returns ClaimBulkUpdateInput.StateId, and is useful for accessing the field via an interface.
 func (v *ClaimBulkUpdateInput) GetStateId() *string { return v.StateId }
@@ -151,17 +151,17 @@ func (v *ClaimCreateInput) GetStateId() string { return v.StateId }
 func (v *ClaimCreateInput) GetStrategyId() string { return v.StrategyId }
 
 type ClaimUpdateInput struct {
-	ClaimId          persist.DBID     `json:"claimId"`
+	ClaimId          string           `json:"claimId"`
 	RecipientAddress *persist.Address `json:"recipientAddress"`
 	Data             *json.RawMessage `json:"data"`
-	Parent           *persist.DBID    `json:"parent"`
-	Children         []persist.DBID   `json:"children"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
 	StateId          *string          `json:"stateId"`
 	StrategyId       *string          `json:"strategyId"`
 }
 
 // GetClaimId returns ClaimUpdateInput.ClaimId, and is useful for accessing the field via an interface.
-func (v *ClaimUpdateInput) GetClaimId() persist.DBID { return v.ClaimId }
+func (v *ClaimUpdateInput) GetClaimId() string { return v.ClaimId }
 
 // GetRecipientAddress returns ClaimUpdateInput.RecipientAddress, and is useful for accessing the field via an interface.
 func (v *ClaimUpdateInput) GetRecipientAddress() *persist.Address { return v.RecipientAddress }
@@ -170,10 +170,10 @@ func (v *ClaimUpdateInput) GetRecipientAddress() *persist.Address { return v.Rec
 func (v *ClaimUpdateInput) GetData() *json.RawMessage { return v.Data }
 
 // GetParent returns ClaimUpdateInput.Parent, and is useful for accessing the field via an interface.
-func (v *ClaimUpdateInput) GetParent() *persist.DBID { return v.Parent }
+func (v *ClaimUpdateInput) GetParent() *string { return v.Parent }
 
 // GetChildren returns ClaimUpdateInput.Children, and is useful for accessing the field via an interface.
-func (v *ClaimUpdateInput) GetChildren() []persist.DBID { return v.Children }
+func (v *ClaimUpdateInput) GetChildren() []string { return v.Children }
 
 // GetStateId returns ClaimUpdateInput.StateId, and is useful for accessing the field via an interface.
 func (v *ClaimUpdateInput) GetStateId() *string { return v.StateId }
@@ -183,16 +183,12 @@ func (v *ClaimUpdateInput) GetStrategyId() *string { return v.StrategyId }
 
 type DebugAuth struct {
 	AsUsername         *string             `json:"asUsername"`
-	UserId             *persist.DBID       `json:"userId"`
 	ChainAddresses     []ChainAddressInput `json:"chainAddresses"`
 	DebugToolsPassword *string             `json:"debugToolsPassword"`
 }
 
 // GetAsUsername returns DebugAuth.AsUsername, and is useful for accessing the field via an interface.
 func (v *DebugAuth) GetAsUsername() *string { return v.AsUsername }
-
-// GetUserId returns DebugAuth.UserId, and is useful for accessing the field via an interface.
-func (v *DebugAuth) GetUserId() *persist.DBID { return v.UserId }
 
 // GetChainAddresses returns DebugAuth.ChainAddresses, and is useful for accessing the field via an interface.
 func (v *DebugAuth) GetChainAddresses() []ChainAddressInput { return v.ChainAddresses }
@@ -339,7 +335,7 @@ type PoolUpdateInput struct {
 	Slug         *string            `json:"slug"`
 	AddClaims    []ClaimCreateInput `json:"addClaims"`
 	UpdateClaims []ClaimUpdateInput `json:"updateClaims"`
-	RemoveClaims []persist.DBID     `json:"removeClaims"`
+	RemoveClaims []string           `json:"removeClaims"`
 }
 
 // GetPrivate returns PoolUpdateInput.Private, and is useful for accessing the field via an interface.
@@ -367,7 +363,7 @@ func (v *PoolUpdateInput) GetAddClaims() []ClaimCreateInput { return v.AddClaims
 func (v *PoolUpdateInput) GetUpdateClaims() []ClaimUpdateInput { return v.UpdateClaims }
 
 // GetRemoveClaims returns PoolUpdateInput.RemoveClaims, and is useful for accessing the field via an interface.
-func (v *PoolUpdateInput) GetRemoveClaims() []persist.DBID { return v.RemoveClaims }
+func (v *PoolUpdateInput) GetRemoveClaims() []string { return v.RemoveClaims }
 
 type PrivyAuth struct {
 	Token string `json:"token"`
@@ -460,13 +456,13 @@ func (v *__notificationSettingsUpdateMutationInput) GetSettings() NotificationSe
 
 // __poolClaimBulkCreateMutationInput is used internally by genqlient
 type __poolClaimBulkCreateMutationInput struct {
-	PoolId      persist.DBID           `json:"poolId"`
+	PoolId      string                 `json:"poolId"`
 	Claims      []ClaimBulkCreateInput `json:"claims"`
 	ErrorPolicy *ErrorPolicyEnum       `json:"errorPolicy"`
 }
 
 // GetPoolId returns __poolClaimBulkCreateMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__poolClaimBulkCreateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+func (v *__poolClaimBulkCreateMutationInput) GetPoolId() string { return v.PoolId }
 
 // GetClaims returns __poolClaimBulkCreateMutationInput.Claims, and is useful for accessing the field via an interface.
 func (v *__poolClaimBulkCreateMutationInput) GetClaims() []ClaimBulkCreateInput { return v.Claims }
@@ -476,25 +472,25 @@ func (v *__poolClaimBulkCreateMutationInput) GetErrorPolicy() *ErrorPolicyEnum {
 
 // __poolClaimBulkDeleteMutationInput is used internally by genqlient
 type __poolClaimBulkDeleteMutationInput struct {
-	PoolId   persist.DBID   `json:"poolId"`
-	ClaimIds []persist.DBID `json:"claimIds"`
+	PoolId   string   `json:"poolId"`
+	ClaimIds []string `json:"claimIds"`
 }
 
 // GetPoolId returns __poolClaimBulkDeleteMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__poolClaimBulkDeleteMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+func (v *__poolClaimBulkDeleteMutationInput) GetPoolId() string { return v.PoolId }
 
 // GetClaimIds returns __poolClaimBulkDeleteMutationInput.ClaimIds, and is useful for accessing the field via an interface.
-func (v *__poolClaimBulkDeleteMutationInput) GetClaimIds() []persist.DBID { return v.ClaimIds }
+func (v *__poolClaimBulkDeleteMutationInput) GetClaimIds() []string { return v.ClaimIds }
 
 // __poolClaimBulkUpdateMutationInput is used internally by genqlient
 type __poolClaimBulkUpdateMutationInput struct {
-	PoolId      persist.DBID           `json:"poolId"`
+	PoolId      string                 `json:"poolId"`
 	Claims      []ClaimBulkUpdateInput `json:"claims"`
 	ErrorPolicy *ErrorPolicyEnum       `json:"errorPolicy"`
 }
 
 // GetPoolId returns __poolClaimBulkUpdateMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__poolClaimBulkUpdateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+func (v *__poolClaimBulkUpdateMutationInput) GetPoolId() string { return v.PoolId }
 
 // GetClaims returns __poolClaimBulkUpdateMutationInput.Claims, and is useful for accessing the field via an interface.
 func (v *__poolClaimBulkUpdateMutationInput) GetClaims() []ClaimBulkUpdateInput { return v.Claims }
@@ -504,36 +500,36 @@ func (v *__poolClaimBulkUpdateMutationInput) GetErrorPolicy() *ErrorPolicyEnum {
 
 // __poolClaimCreateMutationInput is used internally by genqlient
 type __poolClaimCreateMutationInput struct {
-	PoolId persist.DBID     `json:"poolId"`
+	PoolId string           `json:"poolId"`
 	Input  ClaimCreateInput `json:"input"`
 }
 
 // GetPoolId returns __poolClaimCreateMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__poolClaimCreateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+func (v *__poolClaimCreateMutationInput) GetPoolId() string { return v.PoolId }
 
 // GetInput returns __poolClaimCreateMutationInput.Input, and is useful for accessing the field via an interface.
 func (v *__poolClaimCreateMutationInput) GetInput() ClaimCreateInput { return v.Input }
 
 // __poolClaimDeleteMutationInput is used internally by genqlient
 type __poolClaimDeleteMutationInput struct {
-	PoolId  persist.DBID `json:"poolId"`
-	ClaimId persist.DBID `json:"claimId"`
+	PoolId  string `json:"poolId"`
+	ClaimId string `json:"claimId"`
 }
 
 // GetPoolId returns __poolClaimDeleteMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__poolClaimDeleteMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+func (v *__poolClaimDeleteMutationInput) GetPoolId() string { return v.PoolId }
 
 // GetClaimId returns __poolClaimDeleteMutationInput.ClaimId, and is useful for accessing the field via an interface.
-func (v *__poolClaimDeleteMutationInput) GetClaimId() persist.DBID { return v.ClaimId }
+func (v *__poolClaimDeleteMutationInput) GetClaimId() string { return v.ClaimId }
 
 // __poolClaimUpdateMutationInput is used internally by genqlient
 type __poolClaimUpdateMutationInput struct {
-	PoolId persist.DBID     `json:"poolId"`
+	PoolId string           `json:"poolId"`
 	Input  ClaimUpdateInput `json:"input"`
 }
 
 // GetPoolId returns __poolClaimUpdateMutationInput.PoolId, and is useful for accessing the field via an interface.
-func (v *__poolClaimUpdateMutationInput) GetPoolId() persist.DBID { return v.PoolId }
+func (v *__poolClaimUpdateMutationInput) GetPoolId() string { return v.PoolId }
 
 // GetInput returns __poolClaimUpdateMutationInput.Input, and is useful for accessing the field via an interface.
 func (v *__poolClaimUpdateMutationInput) GetInput() ClaimUpdateInput { return v.Input }
@@ -548,36 +544,36 @@ func (v *__poolCreateMutationInput) GetInput() PoolCreateInput { return v.Input 
 
 // __poolDeleteMutationInput is used internally by genqlient
 type __poolDeleteMutationInput struct {
-	Id persist.DBID `json:"id"`
+	Id string `json:"id"`
 }
 
 // GetId returns __poolDeleteMutationInput.Id, and is useful for accessing the field via an interface.
-func (v *__poolDeleteMutationInput) GetId() persist.DBID { return v.Id }
+func (v *__poolDeleteMutationInput) GetId() string { return v.Id }
 
 // __poolQueryInput is used internally by genqlient
 type __poolQueryInput struct {
-	Id         *persist.DBID `json:"id"`
-	Slug       *string       `json:"slug"`
-	ContractId *persist.DBID `json:"contractId"`
+	Id         *string `json:"id"`
+	Slug       *string `json:"slug"`
+	ContractId *string `json:"contractId"`
 }
 
 // GetId returns __poolQueryInput.Id, and is useful for accessing the field via an interface.
-func (v *__poolQueryInput) GetId() *persist.DBID { return v.Id }
+func (v *__poolQueryInput) GetId() *string { return v.Id }
 
 // GetSlug returns __poolQueryInput.Slug, and is useful for accessing the field via an interface.
 func (v *__poolQueryInput) GetSlug() *string { return v.Slug }
 
 // GetContractId returns __poolQueryInput.ContractId, and is useful for accessing the field via an interface.
-func (v *__poolQueryInput) GetContractId() *persist.DBID { return v.ContractId }
+func (v *__poolQueryInput) GetContractId() *string { return v.ContractId }
 
 // __poolUpdateMutationInput is used internally by genqlient
 type __poolUpdateMutationInput struct {
-	Id    persist.DBID    `json:"id"`
+	Id    string          `json:"id"`
 	Input PoolUpdateInput `json:"input"`
 }
 
 // GetId returns __poolUpdateMutationInput.Id, and is useful for accessing the field via an interface.
-func (v *__poolUpdateMutationInput) GetId() persist.DBID { return v.Id }
+func (v *__poolUpdateMutationInput) GetId() string { return v.Id }
 
 // GetInput returns __poolUpdateMutationInput.Input, and is useful for accessing the field via an interface.
 func (v *__poolUpdateMutationInput) GetInput() PoolUpdateInput { return v.Input }
@@ -664,11 +660,11 @@ func (v *__userByAddressQueryInput) GetInput() ChainAddressInput { return v.Inpu
 
 // __userByIdQueryInput is used internally by genqlient
 type __userByIdQueryInput struct {
-	Id persist.DBID `json:"id"`
+	Id string `json:"id"`
 }
 
 // GetId returns __userByIdQueryInput.Id, and is useful for accessing the field via an interface.
-func (v *__userByIdQueryInput) GetId() persist.DBID { return v.Id }
+func (v *__userByIdQueryInput) GetId() string { return v.Id }
 
 // __userDeleteMutationInput is used internally by genqlient
 type __userDeleteMutationInput struct {
@@ -696,12 +692,12 @@ func (v *__userRequestDeletionMutationInput) GetRedirectUrl() string { return v.
 
 // __userUpdateMutationInput is used internally by genqlient
 type __userUpdateMutationInput struct {
-	UserId *persist.DBID   `json:"userId"`
+	UserId *string         `json:"userId"`
 	Input  UserUpdateInput `json:"input"`
 }
 
 // GetUserId returns __userUpdateMutationInput.UserId, and is useful for accessing the field via an interface.
-func (v *__userUpdateMutationInput) GetUserId() *persist.DBID { return v.UserId }
+func (v *__userUpdateMutationInput) GetUserId() *string { return v.UserId }
 
 // GetInput returns __userUpdateMutationInput.Input, and is useful for accessing the field via an interface.
 func (v *__userUpdateMutationInput) GetInput() UserUpdateInput { return v.Input }
@@ -2390,7 +2386,6 @@ func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayload) G
 // poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim struct {
 	Id    string           `json:"id"`
-	Dbid  persist.DBID     `json:"dbid"`
 	Label string           `json:"label"`
 	Path  string           `json:"path"`
 	Data  *json.RawMessage `json:"data"`
@@ -2399,11 +2394,6 @@ type poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsC
 // GetId returns poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim.Id, and is useful for accessing the field via an interface.
 func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim) GetId() string {
 	return v.Id
-}
-
-// GetDbid returns poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim) GetDbid() persist.DBID {
-	return v.Dbid
 }
 
 // GetLabel returns poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim.Label, and is useful for accessing the field via an interface.
@@ -2930,7 +2920,6 @@ func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayload) G
 // poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim struct {
 	Id    string           `json:"id"`
-	Dbid  persist.DBID     `json:"dbid"`
 	Label string           `json:"label"`
 	Path  string           `json:"path"`
 	Data  *json.RawMessage `json:"data"`
@@ -2939,11 +2928,6 @@ type poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsC
 // GetId returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim.Id, and is useful for accessing the field via an interface.
 func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim) GetId() string {
 	return v.Id
-}
-
-// GetDbid returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim) GetDbid() persist.DBID {
-	return v.Dbid
 }
 
 // GetLabel returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim.Label, and is useful for accessing the field via an interface.
@@ -3214,7 +3198,6 @@ func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayload) GetClaim() po
 // poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim struct {
 	Id    string           `json:"id"`
-	Dbid  persist.DBID     `json:"dbid"`
 	Label string           `json:"label"`
 	Path  string           `json:"path"`
 	Data  *json.RawMessage `json:"data"`
@@ -3222,11 +3205,6 @@ type poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim struct {
 
 // GetId returns poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim.Id, and is useful for accessing the field via an interface.
 func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim) GetId() string { return v.Id }
-
-// GetDbid returns poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim) GetDbid() persist.DBID {
-	return v.Dbid
-}
 
 // GetLabel returns poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim.Label, and is useful for accessing the field via an interface.
 func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim) GetLabel() string {
@@ -3491,17 +3469,11 @@ func (v *poolClaimDeleteMutationPoolClaimDeleteClaimDeletePayload) GetClaim() po
 
 // poolClaimDeleteMutationPoolClaimDeleteClaimDeletePayloadClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimDeleteMutationPoolClaimDeleteClaimDeletePayloadClaim struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns poolClaimDeleteMutationPoolClaimDeleteClaimDeletePayloadClaim.Id, and is useful for accessing the field via an interface.
 func (v *poolClaimDeleteMutationPoolClaimDeleteClaimDeletePayloadClaim) GetId() string { return v.Id }
-
-// GetDbid returns poolClaimDeleteMutationPoolClaimDeleteClaimDeletePayloadClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *poolClaimDeleteMutationPoolClaimDeleteClaimDeletePayloadClaim) GetDbid() persist.DBID {
-	return v.Dbid
-}
 
 // poolClaimDeleteMutationPoolClaimDeleteClaimDeleteResult includes the requested fields of the GraphQL interface ClaimDeleteResult.
 //
@@ -3752,7 +3724,6 @@ func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayload) GetClaim() po
 // poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim struct {
 	Id    string           `json:"id"`
-	Dbid  persist.DBID     `json:"dbid"`
 	Label string           `json:"label"`
 	Path  string           `json:"path"`
 	Data  *json.RawMessage `json:"data"`
@@ -3760,11 +3731,6 @@ type poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim struct {
 
 // GetId returns poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim.Id, and is useful for accessing the field via an interface.
 func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim) GetId() string { return v.Id }
-
-// GetDbid returns poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim.Dbid, and is useful for accessing the field via an interface.
-func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim) GetDbid() persist.DBID {
-	return v.Dbid
-}
 
 // GetLabel returns poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim.Label, and is useful for accessing the field via an interface.
 func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim) GetLabel() string {
@@ -4059,21 +4025,17 @@ func (v *poolCreateMutationPoolCreatePoolCreatePayload) GetPool() poolCreateMuta
 
 // poolCreateMutationPoolCreatePoolCreatePayloadPool includes the requested fields of the GraphQL type Pool.
 type poolCreateMutationPoolCreatePoolCreatePayloadPool struct {
-	Id          string       `json:"id"`
-	Dbid        persist.DBID `json:"dbid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Image       string       `json:"image"`
-	DonationBps int          `json:"donationBps"`
-	Slug        string       `json:"slug"`
-	Status      PoolStatus   `json:"status"`
+	Id          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Image       string     `json:"image"`
+	DonationBps int        `json:"donationBps"`
+	Slug        string     `json:"slug"`
+	Status      PoolStatus `json:"status"`
 }
 
 // GetId returns poolCreateMutationPoolCreatePoolCreatePayloadPool.Id, and is useful for accessing the field via an interface.
 func (v *poolCreateMutationPoolCreatePoolCreatePayloadPool) GetId() string { return v.Id }
-
-// GetDbid returns poolCreateMutationPoolCreatePoolCreatePayloadPool.Dbid, and is useful for accessing the field via an interface.
-func (v *poolCreateMutationPoolCreatePoolCreatePayloadPool) GetDbid() persist.DBID { return v.Dbid }
 
 // GetName returns poolCreateMutationPoolCreatePoolCreatePayloadPool.Name, and is useful for accessing the field via an interface.
 func (v *poolCreateMutationPoolCreatePoolCreatePayloadPool) GetName() string { return v.Name }
@@ -4317,15 +4279,11 @@ func (v *poolDeleteMutationPoolDeletePoolDeletePayload) GetPool() poolDeleteMuta
 
 // poolDeleteMutationPoolDeletePoolDeletePayloadPool includes the requested fields of the GraphQL type Pool.
 type poolDeleteMutationPoolDeletePoolDeletePayloadPool struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns poolDeleteMutationPoolDeletePoolDeletePayloadPool.Id, and is useful for accessing the field via an interface.
 func (v *poolDeleteMutationPoolDeletePoolDeletePayloadPool) GetId() string { return v.Id }
-
-// GetDbid returns poolDeleteMutationPoolDeletePoolDeletePayloadPool.Dbid, and is useful for accessing the field via an interface.
-func (v *poolDeleteMutationPoolDeletePoolDeletePayloadPool) GetDbid() persist.DBID { return v.Dbid }
 
 // poolDeleteMutationPoolDeletePoolDeleteResult includes the requested fields of the GraphQL interface PoolDeleteResult.
 //
@@ -4505,7 +4463,6 @@ func (v *poolDeleteMutationResponse) __premarshalJSON() (*__premarshalpoolDelete
 type poolQueryPool struct {
 	Typename    *string                         `json:"__typename"`
 	Id          string                          `json:"id"`
-	Dbid        persist.DBID                    `json:"dbid"`
 	Name        string                          `json:"name"`
 	Description string                          `json:"description"`
 	Status      PoolStatus                      `json:"status"`
@@ -4522,9 +4479,6 @@ func (v *poolQueryPool) GetTypename() *string { return v.Typename }
 
 // GetId returns poolQueryPool.Id, and is useful for accessing the field via an interface.
 func (v *poolQueryPool) GetId() string { return v.Id }
-
-// GetDbid returns poolQueryPool.Dbid, and is useful for accessing the field via an interface.
-func (v *poolQueryPool) GetDbid() persist.DBID { return v.Dbid }
 
 // GetName returns poolQueryPool.Name, and is useful for accessing the field via an interface.
 func (v *poolQueryPool) GetName() string { return v.Name }
@@ -4591,8 +4545,6 @@ type __premarshalpoolQueryPool struct {
 
 	Id string `json:"id"`
 
-	Dbid persist.DBID `json:"dbid"`
-
 	Name string `json:"name"`
 
 	Description string `json:"description"`
@@ -4625,7 +4577,6 @@ func (v *poolQueryPool) __premarshalJSON() (*__premarshalpoolQueryPool, error) {
 
 	retval.Typename = v.Typename
 	retval.Id = v.Id
-	retval.Dbid = v.Dbid
 	retval.Name = v.Name
 	retval.Description = v.Description
 	retval.Status = v.Status
@@ -4699,9 +4650,8 @@ func (v *poolQueryPoolOwnerEVMAccount) GetAccountType() EVMAccountType { return 
 
 // poolQueryPoolOwnerUser includes the requested fields of the GraphQL type User.
 type poolQueryPoolOwnerUser struct {
-	Typename *string      `json:"__typename"`
-	Id       string       `json:"id"`
-	Dbid     persist.DBID `json:"dbid"`
+	Typename *string `json:"__typename"`
+	Id       string  `json:"id"`
 }
 
 // GetTypename returns poolQueryPoolOwnerUser.Typename, and is useful for accessing the field via an interface.
@@ -4709,9 +4659,6 @@ func (v *poolQueryPoolOwnerUser) GetTypename() *string { return v.Typename }
 
 // GetId returns poolQueryPoolOwnerUser.Id, and is useful for accessing the field via an interface.
 func (v *poolQueryPoolOwnerUser) GetId() string { return v.Id }
-
-// GetDbid returns poolQueryPoolOwnerUser.Dbid, and is useful for accessing the field via an interface.
-func (v *poolQueryPoolOwnerUser) GetDbid() persist.DBID { return v.Dbid }
 
 // poolQueryPoolOwnerUserOrAccount includes the requested fields of the GraphQL interface UserOrAccount.
 //
@@ -5004,21 +4951,17 @@ func (v *poolUpdateMutationPoolUpdatePoolUpdatePayload) GetPool() poolUpdateMuta
 
 // poolUpdateMutationPoolUpdatePoolUpdatePayloadPool includes the requested fields of the GraphQL type Pool.
 type poolUpdateMutationPoolUpdatePoolUpdatePayloadPool struct {
-	Id          string       `json:"id"`
-	Dbid        persist.DBID `json:"dbid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Image       string       `json:"image"`
-	DonationBps int          `json:"donationBps"`
-	Slug        string       `json:"slug"`
-	Status      PoolStatus   `json:"status"`
+	Id          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Image       string     `json:"image"`
+	DonationBps int        `json:"donationBps"`
+	Slug        string     `json:"slug"`
+	Status      PoolStatus `json:"status"`
 }
 
 // GetId returns poolUpdateMutationPoolUpdatePoolUpdatePayloadPool.Id, and is useful for accessing the field via an interface.
 func (v *poolUpdateMutationPoolUpdatePoolUpdatePayloadPool) GetId() string { return v.Id }
-
-// GetDbid returns poolUpdateMutationPoolUpdatePoolUpdatePayloadPool.Dbid, and is useful for accessing the field via an interface.
-func (v *poolUpdateMutationPoolUpdatePoolUpdatePayloadPool) GetDbid() persist.DBID { return v.Dbid }
 
 // GetName returns poolUpdateMutationPoolUpdatePoolUpdatePayloadPool.Name, and is useful for accessing the field via an interface.
 func (v *poolUpdateMutationPoolUpdatePoolUpdatePayloadPool) GetName() string { return v.Name }
@@ -5300,18 +5243,12 @@ func (v *pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterPayload) Get
 
 // pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterPayloadUser includes the requested fields of the GraphQL type User.
 type pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterPayloadUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterPayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterPayloadUser) GetId() string {
 	return v.Id
-}
-
-// GetDbid returns pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterPayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterPayloadUser) GetDbid() persist.DBID {
-	return v.Dbid
 }
 
 // pushTokenRegisterMutationPushTokenRegisterPushTokenRegisterResult includes the requested fields of the GraphQL interface PushTokenRegisterResult.
@@ -5556,18 +5493,12 @@ func (v *pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterPayloa
 
 // pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterPayloadUser includes the requested fields of the GraphQL type User.
 type pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterPayloadUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterPayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterPayloadUser) GetId() string {
 	return v.Id
-}
-
-// GetDbid returns pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterPayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterPayloadUser) GetDbid() persist.DBID {
-	return v.Dbid
 }
 
 // pushTokenUnregisterMutationPushTokenUnregisterPushTokenUnregisterResult includes the requested fields of the GraphQL interface PushTokenUnregisterResult.
@@ -5851,16 +5782,12 @@ func (v *roleUpdateMutationRoleUpdateRoleUpdatePayload) GetUser() roleUpdateMuta
 
 // roleUpdateMutationRoleUpdateRoleUpdatePayloadUser includes the requested fields of the GraphQL type User.
 type roleUpdateMutationRoleUpdateRoleUpdatePayloadUser struct {
-	Id    string       `json:"id"`
-	Dbid  persist.DBID `json:"dbid"`
-	Roles []*Role      `json:"roles"`
+	Id    string  `json:"id"`
+	Roles []*Role `json:"roles"`
 }
 
 // GetId returns roleUpdateMutationRoleUpdateRoleUpdatePayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *roleUpdateMutationRoleUpdateRoleUpdatePayloadUser) GetId() string { return v.Id }
-
-// GetDbid returns roleUpdateMutationRoleUpdateRoleUpdatePayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *roleUpdateMutationRoleUpdateRoleUpdatePayloadUser) GetDbid() persist.DBID { return v.Dbid }
 
 // GetRoles returns roleUpdateMutationRoleUpdateRoleUpdatePayloadUser.Roles, and is useful for accessing the field via an interface.
 func (v *roleUpdateMutationRoleUpdateRoleUpdatePayloadUser) GetRoles() []*Role { return v.Roles }
@@ -6071,20 +5998,14 @@ func (v *searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResult) G
 
 // searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResultPool includes the requested fields of the GraphQL type Pool.
 type searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResultPool struct {
-	Id          string       `json:"id"`
-	Dbid        persist.DBID `json:"dbid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 // GetId returns searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResultPool.Id, and is useful for accessing the field via an interface.
 func (v *searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResultPool) GetId() string {
 	return v.Id
-}
-
-// GetDbid returns searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResultPool.Dbid, and is useful for accessing the field via an interface.
-func (v *searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResultPool) GetDbid() persist.DBID {
-	return v.Dbid
 }
 
 // GetName returns searchPoolsQuerySearchPoolsSearchPoolsPayloadResultsPoolSearchResultPool.Name, and is useful for accessing the field via an interface.
@@ -6289,18 +6210,12 @@ func (v *searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResult) G
 
 // searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser includes the requested fields of the GraphQL type User.
 type searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser.Id, and is useful for accessing the field via an interface.
 func (v *searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser) GetId() string {
 	return v.Id
-}
-
-// GetDbid returns searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser.Dbid, and is useful for accessing the field via an interface.
-func (v *searchUsersQuerySearchUsersSearchUsersPayloadResultsUserSearchResultUser) GetDbid() persist.DBID {
-	return v.Dbid
 }
 
 // searchUsersQuerySearchUsersSearchUsersResult includes the requested fields of the GraphQL interface SearchUsersResult.
@@ -6501,15 +6416,11 @@ func (v *tokenVerifyMutationTokenVerifyVerifyTokenPayload) GetIsValid() bool { r
 
 // tokenVerifyMutationTokenVerifyVerifyTokenPayloadUser includes the requested fields of the GraphQL type User.
 type tokenVerifyMutationTokenVerifyVerifyTokenPayloadUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns tokenVerifyMutationTokenVerifyVerifyTokenPayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *tokenVerifyMutationTokenVerifyVerifyTokenPayloadUser) GetId() string { return v.Id }
-
-// GetDbid returns tokenVerifyMutationTokenVerifyVerifyTokenPayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *tokenVerifyMutationTokenVerifyVerifyTokenPayloadUser) GetDbid() persist.DBID { return v.Dbid }
 
 // tokenVerifyMutationTokenVerifyVerifyTokenResult includes the requested fields of the GraphQL interface VerifyTokenResult.
 //
@@ -6707,10 +6618,9 @@ func (v *userByAddressQueryUserByAddressErrUserNotFound) GetMessage() string { r
 
 // userByAddressQueryUserByAddressUser includes the requested fields of the GraphQL type User.
 type userByAddressQueryUserByAddressUser struct {
-	Typename *string      `json:"__typename"`
-	Id       string       `json:"id"`
-	Dbid     persist.DBID `json:"dbid"`
-	Roles    []*Role      `json:"roles"`
+	Typename *string `json:"__typename"`
+	Id       string  `json:"id"`
+	Roles    []*Role `json:"roles"`
 }
 
 // GetTypename returns userByAddressQueryUserByAddressUser.Typename, and is useful for accessing the field via an interface.
@@ -6718,9 +6628,6 @@ func (v *userByAddressQueryUserByAddressUser) GetTypename() *string { return v.T
 
 // GetId returns userByAddressQueryUserByAddressUser.Id, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressUser) GetId() string { return v.Id }
-
-// GetDbid returns userByAddressQueryUserByAddressUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressUser) GetDbid() persist.DBID { return v.Dbid }
 
 // GetRoles returns userByAddressQueryUserByAddressUser.Roles, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressUser) GetRoles() []*Role { return v.Roles }
@@ -6917,10 +6824,9 @@ func (v *userByIdQueryUserByIdErrUserNotFound) GetMessage() string { return v.Me
 
 // userByIdQueryUserByIdUser includes the requested fields of the GraphQL type User.
 type userByIdQueryUserByIdUser struct {
-	Typename *string      `json:"__typename"`
-	Id       string       `json:"id"`
-	Dbid     persist.DBID `json:"dbid"`
-	Roles    []*Role      `json:"roles"`
+	Typename *string `json:"__typename"`
+	Id       string  `json:"id"`
+	Roles    []*Role `json:"roles"`
 }
 
 // GetTypename returns userByIdQueryUserByIdUser.Typename, and is useful for accessing the field via an interface.
@@ -6928,9 +6834,6 @@ func (v *userByIdQueryUserByIdUser) GetTypename() *string { return v.Typename }
 
 // GetId returns userByIdQueryUserByIdUser.Id, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdUser) GetId() string { return v.Id }
-
-// GetDbid returns userByIdQueryUserByIdUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdUser) GetDbid() persist.DBID { return v.Dbid }
 
 // GetRoles returns userByIdQueryUserByIdUser.Roles, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdUser) GetRoles() []*Role { return v.Roles }
@@ -7142,15 +7045,11 @@ func (v *userDeleteMutationUserDeleteUserDeletePayload) GetUser() *userDeleteMut
 
 // userDeleteMutationUserDeleteUserDeletePayloadUser includes the requested fields of the GraphQL type User.
 type userDeleteMutationUserDeleteUserDeletePayloadUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns userDeleteMutationUserDeleteUserDeletePayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *userDeleteMutationUserDeleteUserDeletePayloadUser) GetId() string { return v.Id }
-
-// GetDbid returns userDeleteMutationUserDeleteUserDeletePayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userDeleteMutationUserDeleteUserDeletePayloadUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userDeleteMutationUserDeleteUserDeleteResult includes the requested fields of the GraphQL interface UserDeleteResult.
 //
@@ -7404,17 +7303,11 @@ func (v *userRegisterMutationUserRegisterUserRegisterPayload) GetUser() userRegi
 
 // userRegisterMutationUserRegisterUserRegisterPayloadUser includes the requested fields of the GraphQL type User.
 type userRegisterMutationUserRegisterUserRegisterPayloadUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns userRegisterMutationUserRegisterUserRegisterPayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *userRegisterMutationUserRegisterUserRegisterPayloadUser) GetId() string { return v.Id }
-
-// GetDbid returns userRegisterMutationUserRegisterUserRegisterPayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userRegisterMutationUserRegisterUserRegisterPayloadUser) GetDbid() persist.DBID {
-	return v.Dbid
-}
 
 // userRegisterMutationUserRegisterUserRegisterResult includes the requested fields of the GraphQL interface UserRegisterResult.
 //
@@ -7894,18 +7787,12 @@ func (v *userRequestDeletionMutationUserRequestDeletionUserDeletePayload) GetUse
 
 // userRequestDeletionMutationUserRequestDeletionUserDeletePayloadUser includes the requested fields of the GraphQL type User.
 type userRequestDeletionMutationUserRequestDeletionUserDeletePayloadUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns userRequestDeletionMutationUserRequestDeletionUserDeletePayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *userRequestDeletionMutationUserRequestDeletionUserDeletePayloadUser) GetId() string {
 	return v.Id
-}
-
-// GetDbid returns userRequestDeletionMutationUserRequestDeletionUserDeletePayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userRequestDeletionMutationUserRequestDeletionUserDeletePayloadUser) GetDbid() persist.DBID {
-	return v.Dbid
 }
 
 // userRequestDeletionMutationUserRequestDeletionUserDeleteResult includes the requested fields of the GraphQL interface UserDeleteResult.
@@ -8374,15 +8261,11 @@ func (v *userUpdateMutationUserUpdateUserUpdatePayload) GetUser() userUpdateMuta
 
 // userUpdateMutationUserUpdateUserUpdatePayloadUser includes the requested fields of the GraphQL type User.
 type userUpdateMutationUserUpdateUserUpdatePayloadUser struct {
-	Id   string       `json:"id"`
-	Dbid persist.DBID `json:"dbid"`
+	Id string `json:"id"`
 }
 
 // GetId returns userUpdateMutationUserUpdateUserUpdatePayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *userUpdateMutationUserUpdateUserUpdatePayloadUser) GetId() string { return v.Id }
-
-// GetDbid returns userUpdateMutationUserUpdateUserUpdatePayloadUser.Dbid, and is useful for accessing the field via an interface.
-func (v *userUpdateMutationUserUpdateUserUpdatePayloadUser) GetDbid() persist.DBID { return v.Dbid }
 
 // userUpdateMutationUserUpdateUserUpdateResult includes the requested fields of the GraphQL interface UserUpdateResult.
 //
@@ -8533,18 +8416,12 @@ func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge) GetCursor() *s
 
 // usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser includes the requested fields of the GraphQL type User.
 type usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser struct {
-	Id    string       `json:"id"`
-	Dbid  persist.DBID `json:"dbid"`
-	Roles []*Role      `json:"roles"`
+	Id    string  `json:"id"`
+	Roles []*Role `json:"roles"`
 }
 
 // GetId returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Id, and is useful for accessing the field via an interface.
 func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetId() string { return v.Id }
-
-// GetDbid returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Dbid, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetDbid() persist.DBID {
-	return v.Dbid
-}
 
 // GetRoles returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Roles, and is useful for accessing the field via an interface.
 func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetRoles() []*Role {
@@ -8922,16 +8799,12 @@ func (v *viewerQueryViewerErrNotAuthorizedCauseErrSessionInvalidated) GetMessage
 
 // viewerQueryViewerUser includes the requested fields of the GraphQL type User.
 type viewerQueryViewerUser struct {
-	Id    string       `json:"id"`
-	Dbid  persist.DBID `json:"dbid"`
-	Roles []*Role      `json:"roles"`
+	Id    string  `json:"id"`
+	Roles []*Role `json:"roles"`
 }
 
 // GetId returns viewerQueryViewerUser.Id, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerUser) GetId() string { return v.Id }
-
-// GetDbid returns viewerQueryViewerUser.Dbid, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUser) GetDbid() persist.DBID { return v.Dbid }
 
 // GetRoles returns viewerQueryViewerUser.Roles, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerUser) GetRoles() []*Role { return v.Roles }
@@ -9357,14 +9230,13 @@ func notificationsForViewerQuery(
 
 // The mutation executed by poolClaimBulkCreateMutation.
 const poolClaimBulkCreateMutation_Operation = `
-mutation poolClaimBulkCreateMutation ($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+mutation poolClaimBulkCreateMutation ($poolId: ID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
 	poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
 		__typename
 		... on ClaimBulkCreatePayload {
 			count
 			claims {
 				id
-				dbid
 				label
 				path
 				data
@@ -9388,7 +9260,7 @@ mutation poolClaimBulkCreateMutation ($poolId: DBID!, $claims: [ClaimBulkCreateI
 func poolClaimBulkCreateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
+	poolId string,
 	claims []ClaimBulkCreateInput,
 	errorPolicy *ErrorPolicyEnum,
 ) (data_ *poolClaimBulkCreateMutationResponse, err_ error) {
@@ -9416,7 +9288,7 @@ func poolClaimBulkCreateMutation(
 
 // The mutation executed by poolClaimBulkDeleteMutation.
 const poolClaimBulkDeleteMutation_Operation = `
-mutation poolClaimBulkDeleteMutation ($poolId: DBID!, $claimIds: [DBID!]!) {
+mutation poolClaimBulkDeleteMutation ($poolId: ID!, $claimIds: [ID!]!) {
 	poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
 		__typename
 		... on ClaimBulkDeletePayload {
@@ -9440,8 +9312,8 @@ mutation poolClaimBulkDeleteMutation ($poolId: DBID!, $claimIds: [DBID!]!) {
 func poolClaimBulkDeleteMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
-	claimIds []persist.DBID,
+	poolId string,
+	claimIds []string,
 ) (data_ *poolClaimBulkDeleteMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "poolClaimBulkDeleteMutation",
@@ -9466,14 +9338,13 @@ func poolClaimBulkDeleteMutation(
 
 // The mutation executed by poolClaimBulkUpdateMutation.
 const poolClaimBulkUpdateMutation_Operation = `
-mutation poolClaimBulkUpdateMutation ($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
+mutation poolClaimBulkUpdateMutation ($poolId: ID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
 	poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
 		__typename
 		... on ClaimBulkUpdatePayload {
 			count
 			claims {
 				id
-				dbid
 				label
 				path
 				data
@@ -9497,7 +9368,7 @@ mutation poolClaimBulkUpdateMutation ($poolId: DBID!, $claims: [ClaimBulkUpdateI
 func poolClaimBulkUpdateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
+	poolId string,
 	claims []ClaimBulkUpdateInput,
 	errorPolicy *ErrorPolicyEnum,
 ) (data_ *poolClaimBulkUpdateMutationResponse, err_ error) {
@@ -9525,13 +9396,12 @@ func poolClaimBulkUpdateMutation(
 
 // The mutation executed by poolClaimCreateMutation.
 const poolClaimCreateMutation_Operation = `
-mutation poolClaimCreateMutation ($poolId: DBID!, $input: ClaimCreateInput!) {
+mutation poolClaimCreateMutation ($poolId: ID!, $input: ClaimCreateInput!) {
 	poolClaimCreate(poolId: $poolId, input: $input) {
 		__typename
 		... on ClaimCreatePayload {
 			claim {
 				id
-				dbid
 				label
 				path
 				data
@@ -9555,7 +9425,7 @@ mutation poolClaimCreateMutation ($poolId: DBID!, $input: ClaimCreateInput!) {
 func poolClaimCreateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
+	poolId string,
 	input ClaimCreateInput,
 ) (data_ *poolClaimCreateMutationResponse, err_ error) {
 	req_ := &graphql.Request{
@@ -9581,13 +9451,12 @@ func poolClaimCreateMutation(
 
 // The mutation executed by poolClaimDeleteMutation.
 const poolClaimDeleteMutation_Operation = `
-mutation poolClaimDeleteMutation ($poolId: DBID!, $claimId: DBID!) {
+mutation poolClaimDeleteMutation ($poolId: ID!, $claimId: ID!) {
 	poolClaimDelete(poolId: $poolId, claimId: $claimId) {
 		__typename
 		... on ClaimDeletePayload {
 			claim {
 				id
-				dbid
 			}
 		}
 		... on ErrNotAuthorized {
@@ -9608,8 +9477,8 @@ mutation poolClaimDeleteMutation ($poolId: DBID!, $claimId: DBID!) {
 func poolClaimDeleteMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
-	claimId persist.DBID,
+	poolId string,
+	claimId string,
 ) (data_ *poolClaimDeleteMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "poolClaimDeleteMutation",
@@ -9634,13 +9503,12 @@ func poolClaimDeleteMutation(
 
 // The mutation executed by poolClaimUpdateMutation.
 const poolClaimUpdateMutation_Operation = `
-mutation poolClaimUpdateMutation ($poolId: DBID!, $input: ClaimUpdateInput!) {
+mutation poolClaimUpdateMutation ($poolId: ID!, $input: ClaimUpdateInput!) {
 	poolClaimUpdate(poolId: $poolId, input: $input) {
 		__typename
 		... on ClaimUpdatePayload {
 			claim {
 				id
-				dbid
 				label
 				path
 				data
@@ -9664,7 +9532,7 @@ mutation poolClaimUpdateMutation ($poolId: DBID!, $input: ClaimUpdateInput!) {
 func poolClaimUpdateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	poolId persist.DBID,
+	poolId string,
 	input ClaimUpdateInput,
 ) (data_ *poolClaimUpdateMutationResponse, err_ error) {
 	req_ := &graphql.Request{
@@ -9696,7 +9564,6 @@ mutation poolCreateMutation ($input: PoolCreateInput!) {
 		... on PoolCreatePayload {
 			pool {
 				id
-				dbid
 				name
 				description
 				image
@@ -9744,13 +9611,12 @@ func poolCreateMutation(
 
 // The mutation executed by poolDeleteMutation.
 const poolDeleteMutation_Operation = `
-mutation poolDeleteMutation ($id: DBID!) {
+mutation poolDeleteMutation ($id: ID!) {
 	poolDelete(id: $id) {
 		__typename
 		... on PoolDeletePayload {
 			pool {
 				id
-				dbid
 			}
 		}
 		... on ErrNotAuthorized {
@@ -9771,7 +9637,7 @@ mutation poolDeleteMutation ($id: DBID!) {
 func poolDeleteMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	id persist.DBID,
+	id string,
 ) (data_ *poolDeleteMutationResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "poolDeleteMutation",
@@ -9795,12 +9661,11 @@ func poolDeleteMutation(
 
 // The query executed by poolQuery.
 const poolQuery_Operation = `
-query poolQuery ($id: DBID, $slug: String, $contractId: DBID) {
+query poolQuery ($id: ID, $slug: String, $contractId: ID) {
 	pool(id: $id, slug: $slug, contractId: $contractId) {
 		__typename
 		... on Pool {
 			id
-			dbid
 			name
 			description
 			status
@@ -9811,7 +9676,6 @@ query poolQuery ($id: DBID, $slug: String, $contractId: DBID) {
 				__typename
 				... on User {
 					id
-					dbid
 				}
 				... on EVMAccount {
 					address
@@ -9836,9 +9700,9 @@ query poolQuery ($id: DBID, $slug: String, $contractId: DBID) {
 func poolQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	id *persist.DBID,
+	id *string,
 	slug *string,
-	contractId *persist.DBID,
+	contractId *string,
 ) (data_ *poolQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "poolQuery",
@@ -9864,13 +9728,12 @@ func poolQuery(
 
 // The mutation executed by poolUpdateMutation.
 const poolUpdateMutation_Operation = `
-mutation poolUpdateMutation ($id: DBID!, $input: PoolUpdateInput!) {
+mutation poolUpdateMutation ($id: ID!, $input: PoolUpdateInput!) {
 	poolUpdate(id: $id, input: $input) {
 		__typename
 		... on PoolUpdatePayload {
 			pool {
 				id
-				dbid
 				name
 				description
 				image
@@ -9897,7 +9760,7 @@ mutation poolUpdateMutation ($id: DBID!, $input: PoolUpdateInput!) {
 func poolUpdateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	id persist.DBID,
+	id string,
 	input PoolUpdateInput,
 ) (data_ *poolUpdateMutationResponse, err_ error) {
 	req_ := &graphql.Request{
@@ -9930,7 +9793,6 @@ mutation pushTokenRegisterMutation ($pushToken: String!) {
 			pushToken
 			user {
 				id
-				dbid
 			}
 		}
 		... on ErrNotAuthorized {
@@ -9982,7 +9844,6 @@ mutation pushTokenUnregisterMutation ($pushToken: String!) {
 			pushToken
 			user {
 				id
-				dbid
 			}
 		}
 		... on ErrNotAuthorized {
@@ -10030,7 +9891,6 @@ mutation roleUpdateMutation ($role: Role!, $input: RoleUpdateInput!) {
 		... on RoleUpdatePayload {
 			user {
 				id
-				dbid
 				roles
 			}
 		}
@@ -10082,7 +9942,6 @@ query searchPoolsQuery ($query: String!, $limit: Int, $nameWeight: Float, $descr
 			results {
 				pool {
 					id
-					dbid
 					name
 					description
 				}
@@ -10137,7 +9996,6 @@ query searchUsersQuery ($query: String!, $limit: Int, $usernameWeight: Float) {
 			results {
 				user {
 					id
-					dbid
 				}
 			}
 		}
@@ -10187,7 +10045,6 @@ mutation tokenVerifyMutation ($token: String!) {
 		... on VerifyTokenPayload {
 			user {
 				id
-				dbid
 			}
 			isValid
 		}
@@ -10235,7 +10092,6 @@ query userByAddressQuery ($input: ChainAddressInput!) {
 		__typename
 		... on User {
 			id
-			dbid
 			roles
 		}
 		... on ErrUserNotFound {
@@ -10277,12 +10133,11 @@ func userByAddressQuery(
 
 // The query executed by userByIdQuery.
 const userByIdQuery_Operation = `
-query userByIdQuery ($id: DBID!) {
+query userByIdQuery ($id: ID!) {
 	userById(id: $id) {
 		__typename
 		... on User {
 			id
-			dbid
 			roles
 		}
 		... on ErrUserNotFound {
@@ -10301,7 +10156,7 @@ query userByIdQuery ($id: DBID!) {
 func userByIdQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	id persist.DBID,
+	id string,
 ) (data_ *userByIdQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "userByIdQuery",
@@ -10331,7 +10186,6 @@ mutation userDeleteMutation ($token: String!) {
 		... on UserDeletePayload {
 			user {
 				id
-				dbid
 			}
 		}
 		... on ErrNotAuthorized {
@@ -10380,7 +10234,6 @@ mutation userRegisterMutation ($input: UserRegisterInput!) {
 			requiresConfirmation
 			user {
 				id
-				dbid
 			}
 		}
 		... on ErrAuthenticationFailed {
@@ -10435,7 +10288,6 @@ mutation userRequestDeletionMutation ($redirectUrl: String!) {
 		... on UserDeletePayload {
 			user {
 				id
-				dbid
 			}
 		}
 		... on ErrNotAuthorized {
@@ -10486,13 +10338,12 @@ func userRequestDeletionMutation(
 
 // The mutation executed by userUpdateMutation.
 const userUpdateMutation_Operation = `
-mutation userUpdateMutation ($userId: DBID, $input: UserUpdateInput!) {
+mutation userUpdateMutation ($userId: ID, $input: UserUpdateInput!) {
 	userUpdate(userId: $userId, input: $input) {
 		__typename
 		... on UserUpdatePayload {
 			user {
 				id
-				dbid
 			}
 		}
 		... on ErrNotAuthorized {
@@ -10528,7 +10379,7 @@ mutation userUpdateMutation ($userId: DBID, $input: UserUpdateInput!) {
 func userUpdateMutation(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	userId *persist.DBID,
+	userId *string,
 	input UserUpdateInput,
 ) (data_ *userUpdateMutationResponse, err_ error) {
 	req_ := &graphql.Request{
@@ -10559,7 +10410,6 @@ query usersByRoleQuery ($role: Role!, $before: String, $after: String, $first: I
 		edges {
 			node {
 				id
-				dbid
 				roles
 			}
 			cursor
@@ -10618,7 +10468,6 @@ query viewerQuery {
 			id
 			user {
 				id
-				dbid
 				roles
 			}
 		}

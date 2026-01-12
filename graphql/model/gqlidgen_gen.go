@@ -11,45 +11,36 @@ import (
 )
 
 func (r *Claim) ID() GqlID {
-	return GqlID(fmt.Sprintf("Claim:%s", r.Dbid))
+	return GqlID(GqlID(fmt.Sprintf("Claim:%s", r.ID)))
 }
 
 func (r *DeletedNode) ID() GqlID {
-	return GqlID(fmt.Sprintf("DeletedNode:%s", r.Dbid))
+	return GqlID(GqlID(fmt.Sprintf("DeletedNode:%s", r.ID)))
 }
 
 func (r *Pool) ID() GqlID {
-	return GqlID(fmt.Sprintf("Pool:%s", r.Dbid))
+	return GqlID(GqlID(fmt.Sprintf("Pool:%s", r.ID)))
 }
 
 func (r *User) ID() GqlID {
-	return GqlID(fmt.Sprintf("User:%s", r.Dbid))
+	return GqlID(GqlID(fmt.Sprintf("User:%s", r.ID)))
 }
 
 func (r *Viewer) ID() GqlID {
-	//-----------------------------------------------------------------------------------------------
-	//-----------------------------------------------------------------------------------------------
-	// Some fields specified by @goGqlId require manual binding because one of the following is true:
-	// (a) the field does not exist on the Viewer type, or
-	// (b) the field exists but is not a string type
-	//-----------------------------------------------------------------------------------------------
-	// Please create binding methods on the Viewer type with the following signatures:
-	// func (r *Viewer) GetGqlIDField_UserID() string
-	//-----------------------------------------------------------------------------------------------
-	return GqlID(fmt.Sprintf("Viewer:%s", r.GetGqlIDField_UserID()))
+	return GqlID(GqlID(fmt.Sprintf("Viewer:%s", r.ID)))
 }
 
 type NodeFetcher struct {
-	OnClaim       func(ctx context.Context, dbid persist.DBID) (*Claim, error)
-	OnDeletedNode func(ctx context.Context, dbid persist.DBID) (*DeletedNode, error)
-	OnPool        func(ctx context.Context, dbid persist.DBID) (*Pool, error)
-	OnUser        func(ctx context.Context, dbid persist.DBID) (*User, error)
-	OnViewer      func(ctx context.Context, userId string) (*Viewer, error)
+	OnClaim       func(ctx context.Context, id persist.DBID) (*Claim, error)
+	OnDeletedNode func(ctx context.Context, id persist.DBID) (*DeletedNode, error)
+	OnPool        func(ctx context.Context, id persist.DBID) (*Pool, error)
+	OnUser        func(ctx context.Context, id persist.DBID) (*User, error)
+	OnViewer      func(ctx context.Context, id persist.DBID) (*Viewer, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
 	parts := strings.Split(string(id), ":")
-	if len(parts) == 1 {
+	if len(parts) <= 1 {
 		return nil, ErrInvalidIDFormat{message: "no ID components specified after type name"}
 	}
 
@@ -81,7 +72,7 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 		if len(ids) != 1 {
 			return nil, ErrInvalidIDFormat{message: fmt.Sprintf("'Viewer' type requires 1 ID component(s) (%d component(s) supplied)", len(ids))}
 		}
-		return n.OnViewer(ctx, string(ids[0]))
+		return n.OnViewer(ctx, persist.DBID(ids[0]))
 	}
 
 	return nil, ErrInvalidIDFormat{typeName}

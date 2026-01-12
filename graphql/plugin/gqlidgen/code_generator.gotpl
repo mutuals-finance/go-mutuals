@@ -33,7 +33,7 @@ type NodeFetcher struct {
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
     parts := strings.Split(string(id), ":")
-    if len(parts) == 1 {
+    if len(parts) <= 1 {
         return nil, ErrInvalidIDFormat{message: "no ID components specified after type name"}
     }
 
