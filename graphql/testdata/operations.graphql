@@ -47,6 +47,20 @@ query viewerQuery {
         }
         ... on ErrNotAuthorized {
             message
+            cause {
+                ... on ErrNoCookie {
+                    message
+                }
+                ... on ErrInvalidToken {
+                    message
+                }
+                ... on ErrSessionInvalidated {
+                    message
+                }
+                ... on ErrDoesNotOwnRequiredToken {
+                    message
+                }
+            }
         }
     }
 }
@@ -73,32 +87,56 @@ query notificationsForViewerQuery {
         }
         ... on ErrNotAuthorized {
             message
+            cause {
+                ... on ErrNoCookie {
+                    message
+                }
+                ... on ErrInvalidToken {
+                    message
+                }
+                ... on ErrSessionInvalidated {
+                    message
+                }
+                ... on ErrDoesNotOwnRequiredToken {
+                    message
+                }
+            }
         }
     }
 }
 
-query poolQuery($id: DBID!) {
-    pool(id: $id) {
-        id
-        dbid
-        name
-        description
-        status
-        image
-        donationBps
-        slug
-        owner {
-            ... on User {
-                id
-                dbid
+query poolQuery($id: DBID, $slug: String, $contractId: DBID) {
+    pool(id: $id, slug: $slug, contractId: $contractId) {
+        ... on Pool {
+            id
+            dbid
+            name
+            description
+            status
+            image
+            donationBps
+            slug
+            owner {
+                ... on User {
+                    id
+                    dbid
+                }
+                ... on EVMAccount {
+                    address
+                    accountType
+                }
             }
-            ... on EVMAccount {
-                address
-                accountType
-            }
+            createdAt
+            updatedAt
         }
-        createdAt
-        updatedAt
+        ... on ErrPoolNotFound {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
     }
 }
 
@@ -168,294 +206,479 @@ query usersByRoleQuery($role: Role!, $before: String, $after: String, $first: In
 # Mutation operations
 mutation userRegisterMutation($input: UserRegisterInput!) {
     userRegister(input: $input) {
-        requiresConfirmation
-        user {
-            id
-            dbid
+        ... on UserRegisterPayload {
+            requiresConfirmation
+            user {
+                id
+                dbid
+            }
         }
-        errors {
-            field
+        ... on ErrAuthenticationFailed {
             message
-            code
+        }
+        ... on ErrUserAlreadyExists {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrDoesNotOwnRequiredToken {
+            message
         }
     }
 }
 
-mutation userUpdateMutation($userId: DBID, $input: UserInput!) {
+mutation userUpdateMutation($userId: DBID, $input: UserUpdateInput!) {
     userUpdate(userId: $userId, input: $input) {
-        user {
-            id
-            dbid
+        ... on UserUpdatePayload {
+            user {
+                id
+                dbid
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+            cause {
+                ... on ErrNoCookie {
+                    message
+                }
+                ... on ErrInvalidToken {
+                    message
+                }
+                ... on ErrSessionInvalidated {
+                    message
+                }
+                ... on ErrDoesNotOwnRequiredToken {
+                    message
+                }
+            }
+        }
+        ... on ErrUsernameNotAvailable {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
         }
     }
 }
 
 mutation userRequestDeletionMutation($redirectUrl: String!) {
     userRequestDeletion(redirectUrl: $redirectUrl) {
-        errors {
-            field
+        ... on UserDeletePayload {
+            user {
+                id
+                dbid
+            }
+        }
+        ... on ErrNotAuthorized {
             message
-            code
+            cause {
+                ... on ErrNoCookie {
+                    message
+                }
+                ... on ErrInvalidToken {
+                    message
+                }
+            }
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
         }
     }
 }
 
 mutation userDeleteMutation($token: String!) {
     userDelete(token: $token) {
-        user {
-            id
-            dbid
+        ... on UserDeletePayload {
+            user {
+                id
+                dbid
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
         }
     }
 }
 
 mutation tokenVerifyMutation($token: String!) {
     tokenVerify(token: $token) {
-        user {
-            id
-            dbid
+        ... on VerifyTokenPayload {
+            user {
+                id
+                dbid
+            }
+            isValid
         }
-        isValid
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
         }
     }
 }
 
 mutation pushTokenRegisterMutation($pushToken: String!) {
     pushTokenRegister(pushToken: $pushToken) {
-        pushToken
-        user {
-            id
-            dbid
+        ... on PushTokenRegisterPayload {
+            pushToken
+            user {
+                id
+                dbid
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPushTokenBelongsToAnotherUser {
+            message
         }
     }
 }
 
 mutation pushTokenUnregisterMutation($pushToken: String!) {
     pushTokenUnregister(pushToken: $pushToken) {
-        pushToken
-        user {
-            id
-            dbid
+        ... on PushTokenUnregisterPayload {
+            pushToken
+            user {
+                id
+                dbid
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
         }
     }
 }
 
 mutation notificationSettingsUpdateMutation($settings: NotificationSettingsInput!) {
     notificationSettingsUpdate(settings: $settings) {
-        someoneViewedYourPool
+        ... on NotificationSettingsUpdatePayload {
+            notificationSettings {
+                someoneViewedYourPool
+            }
+        }
+        ... on ErrNotAuthorized {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
     }
 }
 
 mutation clearNotificationsMutation {
     clearNotifications {
-        notifications {
-            id
-            seen
+        ... on ClearNotificationsPayload {
+            notifications {
+                id
+                seen
+            }
+        }
+        ... on ErrNotAuthorized {
+            message
         }
     }
 }
 
 mutation emailNotificationSettingsUpdateMutation($settings: UpdateEmailNotificationSettingsInput!) {
     emailNotificationSettingsUpdate(settings: $settings) {
-        unsubscribedFromAll
-        unsubscribedFromNotifications
+        ... on EmailNotificationSettingsUpdatePayload {
+            emailNotificationSettings {
+                unsubscribedFromAll
+                unsubscribedFromNotifications
+            }
+        }
+        ... on ErrNotAuthorized {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
     }
 }
 
 mutation poolCreateMutation($input: PoolCreateInput!) {
     poolCreate(input: $input) {
-        pool {
-            id
-            dbid
-            name
-            description
-            image
-            donationBps
-            slug
-            status
+        ... on PoolCreatePayload {
+            pool {
+                id
+                dbid
+                name
+                description
+                image
+                donationBps
+                slug
+                status
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
         }
     }
 }
 
 mutation poolUpdateMutation($id: DBID!, $input: PoolUpdateInput!) {
     poolUpdate(id: $id, input: $input) {
-        pool {
-            id
-            dbid
-            name
-            description
-            image
-            donationBps
-            slug
-            status
+        ... on PoolUpdatePayload {
+            pool {
+                id
+                dbid
+                name
+                description
+                image
+                donationBps
+                slug
+                status
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
 mutation poolDeleteMutation($id: DBID!) {
     poolDelete(id: $id) {
-        pool {
-            id
-            dbid
+        ... on PoolDeletePayload {
+            pool {
+                id
+                dbid
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
 mutation poolClaimCreateMutation($poolId: DBID!, $input: ClaimCreateInput!) {
     poolClaimCreate(poolId: $poolId, input: $input) {
-        claim {
-            id
-            dbid
-            label
-            path
-            data
+        ... on ClaimCreatePayload {
+            claim {
+                id
+                dbid
+                label
+                path
+                data
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
 mutation poolClaimUpdateMutation($poolId: DBID!, $input: ClaimUpdateInput!) {
     poolClaimUpdate(poolId: $poolId, input: $input) {
-        claim {
-            id
-            dbid
-            label
-            path
-            data
+        ... on ClaimUpdatePayload {
+            claim {
+                id
+                dbid
+                label
+                path
+                data
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
 mutation poolClaimDeleteMutation($poolId: DBID!, $claimId: DBID!) {
     poolClaimDelete(poolId: $poolId, claimId: $claimId) {
-        claim {
-            id
-            dbid
+        ... on ClaimDeletePayload {
+            claim {
+                id
+                dbid
+            }
         }
-        errors {
-            field
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
 mutation poolClaimBulkCreateMutation($poolId: DBID!, $claims: [ClaimBulkCreateInput!]!, $errorPolicy: ErrorPolicyEnum) {
     poolClaimBulkCreate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
-        count
-        results {
-            claim {
+        ... on ClaimBulkCreatePayload {
+            count
+            claims {
                 id
                 dbid
                 label
                 path
                 data
             }
-            errors {
-                path
-                message
-                code
-            }
         }
-        errors {
-            path
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
 mutation poolClaimBulkUpdateMutation($poolId: DBID!, $claims: [ClaimBulkUpdateInput!]!, $errorPolicy: ErrorPolicyEnum) {
     poolClaimBulkUpdate(poolId: $poolId, claims: $claims, errorPolicy: $errorPolicy) {
-        count
-        results {
-            claim {
+        ... on ClaimBulkUpdatePayload {
+            count
+            claims {
                 id
                 dbid
                 label
                 path
                 data
             }
-            errors {
-                path
-                message
-                code
-            }
         }
-        errors {
-            path
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
 mutation poolClaimBulkDeleteMutation($poolId: DBID!, $claimIds: [DBID!]!) {
     poolClaimBulkDelete(poolId: $poolId, claimIds: $claimIds) {
-        count
-        errors {
-            field
+        ... on ClaimBulkDeletePayload {
+            count
+        }
+        ... on ErrNotAuthorized {
             message
-            code
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+        ... on ErrPoolNotFound {
+            message
         }
     }
 }
 
-mutation roleUpdateMutation($role: Role, $input: RoleUpdateInput!) {
+mutation roleUpdateMutation($role: Role!, $input: RoleUpdateInput!) {
     roleUpdate(role: $role, input: $input) {
-        role
-        errors {
-            field
-            message
-            code
+        ... on RoleUpdatePayload {
+            user {
+                id
+                dbid
+                roles
+            }
         }
+        ... on ErrNotAuthorized {
+            message
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
+        }
+    }
+}
+
+# Subscription operations
+subscription notificationCreatedSubscription {
+    notificationCreated {
+        id
+        seen
+        creationTime
+        updatedTime
+    }
+}
+
+subscription notificationUpdatedSubscription {
+    notificationUpdated {
+        id
+        seen
+        creationTime
+        updatedTime
     }
 }

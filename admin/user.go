@@ -99,20 +99,13 @@ func createUser(db *sql.DB, createUserStmt, createNonceStmt *sql.Stmt) gin.Handl
 			return
 		}
 
-		for _, address := range input.Addresses {
-			if _, err := tx.StmtContext(c, createNonceStmt).ExecContext(c, persist.GenerateID(), userID, address, auth.GenerateNonce()); err != nil {
-				rollbackWithErr(c, tx, http.StatusInternalServerError, err)
-				return
-			}
-		}
-
 		if err := tx.Commit(); err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
 		}
 
 		c.JSON(http.StatusOK, createUserOutput{
-			UserId: userID,
+			UserId: userId,
 		})
 	}
 }

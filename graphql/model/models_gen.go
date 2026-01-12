@@ -11,33 +11,52 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
-type AddRolesToUserPayloadOrError interface {
-	IsAddRolesToUserPayloadOrError()
-}
-
-// -------------------------------------------------------------------------------
-//
-//	MUTATIONS
-//
-// -------------------------------------------------------------------------------
-type AddUserWalletPayloadOrError interface {
-	IsAddUserWalletPayloadOrError()
+type AddUserWalletResult interface {
+	IsAddUserWalletResult()
 }
 
 type AuthorizationError interface {
 	IsAuthorizationError()
 }
 
-type CreateUserPayloadOrError interface {
-	IsCreateUserPayloadOrError()
+type ClaimBulkCreateResult interface {
+	IsClaimBulkCreateResult()
+}
+
+type ClaimBulkDeleteResult interface {
+	IsClaimBulkDeleteResult()
+}
+
+type ClaimBulkUpdateResult interface {
+	IsClaimBulkUpdateResult()
+}
+
+type ClaimCreateResult interface {
+	IsClaimCreateResult()
+}
+
+type ClaimDeleteResult interface {
+	IsClaimDeleteResult()
+}
+
+type ClaimUpdateResult interface {
+	IsClaimUpdateResult()
+}
+
+type ClearNotificationsResult interface {
+	IsClearNotificationsResult()
+}
+
+type EmailNotificationSettingsUpdateResult interface {
+	IsEmailNotificationSettingsUpdateResult()
 }
 
 type Error interface {
 	IsError()
 }
 
-type LoginPayloadOrError interface {
-	IsLoginPayloadOrError()
+type LoginResult interface {
+	IsLoginResult()
 }
 
 type Node interface {
@@ -49,99 +68,107 @@ type Notification interface {
 	IsNotification()
 }
 
-type OptInForRolesPayloadOrError interface {
-	IsOptInForRolesPayloadOrError()
+type NotificationSettingsUpdateResult interface {
+	IsNotificationSettingsUpdateResult()
 }
 
-type OptOutForRolesPayloadOrError interface {
-	IsOptOutForRolesPayloadOrError()
+type PoolCreateResult interface {
+	IsPoolCreateResult()
 }
 
-type PoolByIDPayloadOrError interface {
-	IsPoolByIDPayloadOrError()
+type PoolDeleteResult interface {
+	IsPoolDeleteResult()
 }
 
 type PoolOrUserOrEVMAccount interface {
 	IsPoolOrUserOrEVMAccount()
 }
 
-type PreverifyEmailPayloadOrError interface {
-	IsPreverifyEmailPayloadOrError()
+type PoolResult interface {
+	IsPoolResult()
 }
 
-type RemoveUserWalletsPayloadOrError interface {
-	IsRemoveUserWalletsPayloadOrError()
+type PoolUpdateResult interface {
+	IsPoolUpdateResult()
 }
 
-type ResendVerificationEmailPayloadOrError interface {
-	IsResendVerificationEmailPayloadOrError()
+type PreverifyEmailResult interface {
+	IsPreverifyEmailResult()
 }
 
-type RevokeRolesFromUserPayloadOrError interface {
-	IsRevokeRolesFromUserPayloadOrError()
+type PushTokenRegisterResult interface {
+	IsPushTokenRegisterResult()
 }
 
-type SearchPoolsPayloadOrError interface {
-	IsSearchPoolsPayloadOrError()
+type PushTokenUnregisterResult interface {
+	IsPushTokenUnregisterResult()
 }
 
-type SearchUsersPayloadOrError interface {
-	IsSearchUsersPayloadOrError()
+type RemoveUserWalletsResult interface {
+	IsRemoveUserWalletsResult()
 }
 
-type UnsubscribeFromEmailTypePayloadOrError interface {
-	IsUnsubscribeFromEmailTypePayloadOrError()
+type ResendVerificationEmailResult interface {
+	IsResendVerificationEmailResult()
 }
 
-type UpdateEmailNotificationSettingsPayloadOrError interface {
-	IsUpdateEmailNotificationSettingsPayloadOrError()
+type RoleUpdateResult interface {
+	IsRoleUpdateResult()
 }
 
-type UpdateEmailPayloadOrError interface {
-	IsUpdateEmailPayloadOrError()
+type SearchPoolsResult interface {
+	IsSearchPoolsResult()
 }
 
-type UpdateUserInfoPayloadOrError interface {
-	IsUpdateUserInfoPayloadOrError()
+type SearchUsersResult interface {
+	IsSearchUsersResult()
 }
 
-type UploadPersistedQueriesPayloadOrError interface {
-	IsUploadPersistedQueriesPayloadOrError()
+type UnsubscribeFromEmailResult interface {
+	IsUnsubscribeFromEmailResult()
 }
 
-type UserByAddressOrError interface {
-	IsUserByAddressOrError()
+type UpdateEmailResult interface {
+	IsUpdateEmailResult()
 }
 
-type UserByIDOrError interface {
-	IsUserByIDOrError()
-}
-
-type UserByUsernameOrError interface {
-	IsUserByUsernameOrError()
+type UserDeleteResult interface {
+	IsUserDeleteResult()
 }
 
 type UserOrAccount interface {
 	IsUserOrAccount()
 }
 
-type VerifyEmailMagicLinkPayloadOrError interface {
-	IsVerifyEmailMagicLinkPayloadOrError()
+type UserRegisterResult interface {
+	IsUserRegisterResult()
 }
 
-type VerifyEmailPayloadOrError interface {
-	IsVerifyEmailPayloadOrError()
+type UserResult interface {
+	IsUserResult()
 }
 
-type ViewerOrError interface {
-	IsViewerOrError()
+type UserUpdateResult interface {
+	IsUserUpdateResult()
+}
+
+type VerifyEmailResult interface {
+	IsVerifyEmailResult()
+}
+
+type VerifyTokenResult interface {
+	IsVerifyTokenResult()
+}
+
+type ViewerResult interface {
+	IsViewerResult()
 }
 
 type AddUserWalletPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (AddUserWalletPayload) IsAddUserWalletPayloadOrError() {}
+func (AddUserWalletPayload) IsAddUserWalletResult() {}
 
 type AuthMechanism struct {
 	Eoa               *EoaAuth               `json:"eoa"`
@@ -158,8 +185,7 @@ type ChainPools struct {
 }
 
 type Claim struct {
-	Dbid persist.DBID `json:"dbid"`
-	// Extension (strategy and state) specific data.
+	Dbid          persist.DBID           `json:"dbid"`
 	Data          persist.JSON           `json:"data"`
 	Label         string                 `json:"label"`
 	Path          string                 `json:"path"`
@@ -176,149 +202,88 @@ type Claim struct {
 
 func (Claim) IsNode() {}
 
-// Creates claims.
-type ClaimBulkCreate struct {
-	// Returns how many objects were created.
-	Count int `json:"count"`
-	// List of the created claims.
-	Results []*ClaimBulkResult `json:"results"`
-	Errors  []*ClaimBulkError  `json:"errors"`
-}
-
 type ClaimBulkCreateInput struct {
-	// Claim recipient address.
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// Extension (strategy and state) specific data.
-	Data persist.JSON `json:"data"`
-	// Parent claim.
-	Parent *persist.DBID `json:"parent"`
-	// Children claims.
-	Children []persist.DBID `json:"children"`
-	// State id.
-	StateID string `json:"stateId"`
-	// Strategy id.
-	StrategyID string `json:"strategyId"`
+	Data             persist.JSON     `json:"data"`
+	Parent           *persist.DBID    `json:"parent"`
+	Children         []persist.DBID   `json:"children"`
+	StateID          string           `json:"stateId"`
+	StrategyID       string           `json:"strategyId"`
 }
 
-// Deletes claims.
-type ClaimBulkDelete struct {
-	// Returns how many objects were affected.
-	Count  int           `json:"count"`
-	Errors []*ClaimError `json:"errors"`
+type ClaimBulkCreatePayload struct {
+	Count  int      `json:"count"`
+	Claims []*Claim `json:"claims"`
 }
 
-type ClaimBulkError struct {
-	// Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Path *string `json:"path"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimBulkErrorCode `json:"code"`
-}
+func (ClaimBulkCreatePayload) IsClaimBulkCreateResult() {}
 
-type ClaimBulkResult struct {
-	// Claim data.
-	Claim *Claim `json:"claim"`
-	// List of errors occurred on create attempt.
-	Errors []*ClaimBulkError `json:"errors"`
-}
-
-// Updates claims.
-type ClaimBulkUpdate struct {
-	// Returns how many objects were updated.
+type ClaimBulkDeletePayload struct {
 	Count int `json:"count"`
-	// List of the updated claims.
-	Results []*ClaimBulkResult `json:"results"`
-	Errors  []*ClaimBulkError  `json:"errors"`
 }
+
+func (ClaimBulkDeletePayload) IsClaimBulkDeleteResult() {}
 
 type ClaimBulkUpdateInput struct {
-	// Claim ID.
-	ClaimID persist.DBID `json:"claimId"`
-	// Claim recipient address.
+	ClaimID          persist.DBID     `json:"claimId"`
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// Extension (strategy and state) specific data.
-	Data persist.JSON `json:"data"`
-	// Parent claim.
-	Parent *persist.DBID `json:"parent"`
-	// Children claims.
-	Children []persist.DBID `json:"children"`
-	// State id.
-	StateID string `json:"stateId"`
-	// Strategy id.
-	StrategyID string `json:"strategyId"`
+	Data             persist.JSON     `json:"data"`
+	Parent           *persist.DBID    `json:"parent"`
+	Children         []persist.DBID   `json:"children"`
+	StateID          *string          `json:"stateId"`
+	StrategyID       *string          `json:"strategyId"`
 }
 
-// Creates a new claim.
-type ClaimCreate struct {
-	Errors []*ClaimError `json:"errors"`
-	Claim  *Claim        `json:"claim"`
+type ClaimBulkUpdatePayload struct {
+	Count  int      `json:"count"`
+	Claims []*Claim `json:"claims"`
 }
+
+func (ClaimBulkUpdatePayload) IsClaimBulkUpdateResult() {}
 
 type ClaimCreateInput struct {
-	// Claim label.
-	Label *string `json:"label"`
-	// Claim recipient address.
+	Label            string           `json:"label"`
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// Extension (strategy and state) specific data.
-	Data persist.JSON `json:"data"`
-	// Parent claim label.
-	Parent *string `json:"parent"`
-	// Children claim labels.
-	Children []string `json:"children"`
-	// State id.
-	StateID string `json:"stateId"`
-	// Strategy id.
-	StrategyID string `json:"strategyId"`
+	Data             persist.JSON     `json:"data"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
+	StateID          string           `json:"stateId"`
+	StrategyID       string           `json:"strategyId"`
 }
 
-// Deletes a claim.
-type ClaimDelete struct {
-	Errors []*ClaimError `json:"errors"`
-	Claim  *Claim        `json:"claim"`
+type ClaimCreatePayload struct {
+	Claim *Claim `json:"claim"`
 }
 
-type ClaimError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code ClaimErrorCode `json:"code"`
+func (ClaimCreatePayload) IsClaimCreateResult() {}
+
+type ClaimDeletePayload struct {
+	Claim *Claim `json:"claim"`
 }
 
-// Updates given claim.
-type ClaimUpdate struct {
-	Errors []*ClaimError `json:"errors"`
-	Claim  *Claim        `json:"claim"`
-}
+func (ClaimDeletePayload) IsClaimDeleteResult() {}
 
 type ClaimUpdateInput struct {
-	// Claim ID.
-	ClaimID persist.DBID `json:"claimId"`
-	// Claim recipient address.
+	ClaimID          persist.DBID     `json:"claimId"`
 	RecipientAddress *persist.Address `json:"recipientAddress"`
-	// Extension (strategy and state) specific data.
-	Data persist.JSON `json:"data"`
-	// Parent claim.
-	Parent *persist.DBID `json:"parent"`
-	// Children claims.
-	Children []persist.DBID `json:"children"`
-	// State id.
-	StateID string `json:"stateId"`
-	// Strategy id.
-	StrategyID string `json:"strategyId"`
+	Data             persist.JSON     `json:"data"`
+	Parent           *persist.DBID    `json:"parent"`
+	Children         []persist.DBID   `json:"children"`
+	StateID          *string          `json:"stateId"`
+	StrategyID       *string          `json:"strategyId"`
 }
 
-type ClearAllNotificationsPayload struct {
+type ClaimUpdatePayload struct {
+	Claim *Claim `json:"claim"`
+}
+
+func (ClaimUpdatePayload) IsClaimUpdateResult() {}
+
+type ClearNotificationsPayload struct {
 	Notifications []Notification `json:"notifications"`
 }
 
-type CreateUserPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (CreateUserPayload) IsCreateUserPayloadOrError() {}
+func (ClearNotificationsPayload) IsClearNotificationsResult() {}
 
 type DebugAuth struct {
 	AsUsername         *string                 `json:"asUsername"`
@@ -365,6 +330,12 @@ type EmailNotificationSettings struct {
 	UnsubscribedFromNotifications bool `json:"unsubscribedFromNotifications"`
 }
 
+type EmailNotificationSettingsUpdatePayload struct {
+	EmailNotificationSettings *EmailNotificationSettings `json:"emailNotificationSettings"`
+}
+
+func (EmailNotificationSettingsUpdatePayload) IsEmailNotificationSettingsUpdateResult() {}
+
 type EoaAuth struct {
 	ChainPubKey *persist.ChainPubKey `json:"chainPubKey"`
 	Nonce       string               `json:"nonce"`
@@ -376,32 +347,26 @@ type ErrAddressOwnedByUser struct {
 	Message string `json:"message"`
 }
 
-func (ErrAddressOwnedByUser) IsAddUserWalletPayloadOrError() {}
-func (ErrAddressOwnedByUser) IsError()                       {}
+func (ErrAddressOwnedByUser) IsError()               {}
+func (ErrAddressOwnedByUser) IsAddUserWalletResult() {}
 
 type ErrAuthenticationFailed struct {
 	Message string `json:"message"`
 }
 
-func (ErrAuthenticationFailed) IsAddUserWalletPayloadOrError() {}
-func (ErrAuthenticationFailed) IsError()                       {}
-func (ErrAuthenticationFailed) IsLoginPayloadOrError()         {}
-func (ErrAuthenticationFailed) IsCreateUserPayloadOrError()    {}
-
-type ErrCommunityNotFound struct {
-	Message string `json:"message"`
-}
-
-func (ErrCommunityNotFound) IsError() {}
+func (ErrAuthenticationFailed) IsError()               {}
+func (ErrAuthenticationFailed) IsUserRegisterResult()  {}
+func (ErrAuthenticationFailed) IsAddUserWalletResult() {}
+func (ErrAuthenticationFailed) IsLoginResult()         {}
 
 type ErrDoesNotOwnRequiredToken struct {
 	Message string `json:"message"`
 }
 
-func (ErrDoesNotOwnRequiredToken) IsAuthorizationError()       {}
-func (ErrDoesNotOwnRequiredToken) IsError()                    {}
-func (ErrDoesNotOwnRequiredToken) IsLoginPayloadOrError()      {}
-func (ErrDoesNotOwnRequiredToken) IsCreateUserPayloadOrError() {}
+func (ErrDoesNotOwnRequiredToken) IsError()              {}
+func (ErrDoesNotOwnRequiredToken) IsAuthorizationError() {}
+func (ErrDoesNotOwnRequiredToken) IsUserRegisterResult() {}
+func (ErrDoesNotOwnRequiredToken) IsLoginResult()        {}
 
 type ErrInvalidInput struct {
 	Message    string   `json:"message"`
@@ -409,75 +374,109 @@ type ErrInvalidInput struct {
 	Reasons    []string `json:"reasons"`
 }
 
-func (ErrInvalidInput) IsUserByUsernameOrError()                         {}
-func (ErrInvalidInput) IsUserByIDOrError()                               {}
-func (ErrInvalidInput) IsUserByAddressOrError()                          {}
-func (ErrInvalidInput) IsSearchUsersPayloadOrError()                     {}
-func (ErrInvalidInput) IsSearchPoolsPayloadOrError()                     {}
-func (ErrInvalidInput) IsAddUserWalletPayloadOrError()                   {}
-func (ErrInvalidInput) IsRemoveUserWalletsPayloadOrError()               {}
-func (ErrInvalidInput) IsUpdateUserInfoPayloadOrError()                  {}
-func (ErrInvalidInput) IsError()                                         {}
-func (ErrInvalidInput) IsCreateUserPayloadOrError()                      {}
-func (ErrInvalidInput) IsVerifyEmailPayloadOrError()                     {}
-func (ErrInvalidInput) IsPreverifyEmailPayloadOrError()                  {}
-func (ErrInvalidInput) IsVerifyEmailMagicLinkPayloadOrError()            {}
-func (ErrInvalidInput) IsUpdateEmailPayloadOrError()                     {}
-func (ErrInvalidInput) IsResendVerificationEmailPayloadOrError()         {}
-func (ErrInvalidInput) IsUpdateEmailNotificationSettingsPayloadOrError() {}
-func (ErrInvalidInput) IsUnsubscribeFromEmailTypePayloadOrError()        {}
-func (ErrInvalidInput) IsOptInForRolesPayloadOrError()                   {}
-func (ErrInvalidInput) IsOptOutForRolesPayloadOrError()                  {}
+func (ErrInvalidInput) IsError()                                 {}
+func (ErrInvalidInput) IsUserResult()                            {}
+func (ErrInvalidInput) IsPoolResult()                            {}
+func (ErrInvalidInput) IsSearchUsersResult()                     {}
+func (ErrInvalidInput) IsSearchPoolsResult()                     {}
+func (ErrInvalidInput) IsUserRegisterResult()                    {}
+func (ErrInvalidInput) IsUserUpdateResult()                      {}
+func (ErrInvalidInput) IsUserDeleteResult()                      {}
+func (ErrInvalidInput) IsAddUserWalletResult()                   {}
+func (ErrInvalidInput) IsRemoveUserWalletsResult()               {}
+func (ErrInvalidInput) IsVerifyTokenResult()                     {}
+func (ErrInvalidInput) IsPushTokenRegisterResult()               {}
+func (ErrInvalidInput) IsPushTokenUnregisterResult()             {}
+func (ErrInvalidInput) IsNotificationSettingsUpdateResult()      {}
+func (ErrInvalidInput) IsEmailNotificationSettingsUpdateResult() {}
+func (ErrInvalidInput) IsVerifyEmailResult()                     {}
+func (ErrInvalidInput) IsPreverifyEmailResult()                  {}
+func (ErrInvalidInput) IsUpdateEmailResult()                     {}
+func (ErrInvalidInput) IsResendVerificationEmailResult()         {}
+func (ErrInvalidInput) IsUnsubscribeFromEmailResult()            {}
+func (ErrInvalidInput) IsRoleUpdateResult()                      {}
+func (ErrInvalidInput) IsClaimCreateResult()                     {}
+func (ErrInvalidInput) IsClaimUpdateResult()                     {}
+func (ErrInvalidInput) IsClaimDeleteResult()                     {}
+func (ErrInvalidInput) IsClaimBulkCreateResult()                 {}
+func (ErrInvalidInput) IsClaimBulkUpdateResult()                 {}
+func (ErrInvalidInput) IsClaimBulkDeleteResult()                 {}
+func (ErrInvalidInput) IsPoolCreateResult()                      {}
+func (ErrInvalidInput) IsPoolUpdateResult()                      {}
+func (ErrInvalidInput) IsPoolDeleteResult()                      {}
 
 type ErrInvalidToken struct {
 	Message string `json:"message"`
 }
 
-func (ErrInvalidToken) IsAuthorizationError() {}
 func (ErrInvalidToken) IsError()              {}
+func (ErrInvalidToken) IsAuthorizationError() {}
 
 type ErrNoCookie struct {
 	Message string `json:"message"`
 }
 
-func (ErrNoCookie) IsAuthorizationError() {}
 func (ErrNoCookie) IsError()              {}
+func (ErrNoCookie) IsAuthorizationError() {}
 
 type ErrNotAuthorized struct {
 	Message string             `json:"message"`
 	Cause   AuthorizationError `json:"cause"`
 }
 
-func (ErrNotAuthorized) IsViewerOrError()                        {}
-func (ErrNotAuthorized) IsAddUserWalletPayloadOrError()          {}
-func (ErrNotAuthorized) IsRemoveUserWalletsPayloadOrError()      {}
-func (ErrNotAuthorized) IsUpdateUserInfoPayloadOrError()         {}
-func (ErrNotAuthorized) IsError()                                {}
-func (ErrNotAuthorized) IsAddRolesToUserPayloadOrError()         {}
-func (ErrNotAuthorized) IsRevokeRolesFromUserPayloadOrError()    {}
-func (ErrNotAuthorized) IsOptInForRolesPayloadOrError()          {}
-func (ErrNotAuthorized) IsOptOutForRolesPayloadOrError()         {}
-func (ErrNotAuthorized) IsUploadPersistedQueriesPayloadOrError() {}
+func (ErrNotAuthorized) IsError()                                 {}
+func (ErrNotAuthorized) IsViewerResult()                          {}
+func (ErrNotAuthorized) IsUserUpdateResult()                      {}
+func (ErrNotAuthorized) IsUserDeleteResult()                      {}
+func (ErrNotAuthorized) IsAddUserWalletResult()                   {}
+func (ErrNotAuthorized) IsRemoveUserWalletsResult()               {}
+func (ErrNotAuthorized) IsVerifyTokenResult()                     {}
+func (ErrNotAuthorized) IsPushTokenRegisterResult()               {}
+func (ErrNotAuthorized) IsPushTokenUnregisterResult()             {}
+func (ErrNotAuthorized) IsNotificationSettingsUpdateResult()      {}
+func (ErrNotAuthorized) IsClearNotificationsResult()              {}
+func (ErrNotAuthorized) IsEmailNotificationSettingsUpdateResult() {}
+func (ErrNotAuthorized) IsUpdateEmailResult()                     {}
+func (ErrNotAuthorized) IsResendVerificationEmailResult()         {}
+func (ErrNotAuthorized) IsRoleUpdateResult()                      {}
+func (ErrNotAuthorized) IsClaimCreateResult()                     {}
+func (ErrNotAuthorized) IsClaimUpdateResult()                     {}
+func (ErrNotAuthorized) IsClaimDeleteResult()                     {}
+func (ErrNotAuthorized) IsClaimBulkCreateResult()                 {}
+func (ErrNotAuthorized) IsClaimBulkUpdateResult()                 {}
+func (ErrNotAuthorized) IsClaimBulkDeleteResult()                 {}
+func (ErrNotAuthorized) IsPoolCreateResult()                      {}
+func (ErrNotAuthorized) IsPoolUpdateResult()                      {}
+func (ErrNotAuthorized) IsPoolDeleteResult()                      {}
 
 type ErrPoolNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrPoolNotFound) IsError()                  {}
-func (ErrPoolNotFound) IsPoolByIDPayloadOrError() {}
+func (ErrPoolNotFound) IsError()                 {}
+func (ErrPoolNotFound) IsPoolResult()            {}
+func (ErrPoolNotFound) IsClaimCreateResult()     {}
+func (ErrPoolNotFound) IsClaimUpdateResult()     {}
+func (ErrPoolNotFound) IsClaimDeleteResult()     {}
+func (ErrPoolNotFound) IsClaimBulkCreateResult() {}
+func (ErrPoolNotFound) IsClaimBulkUpdateResult() {}
+func (ErrPoolNotFound) IsClaimBulkDeleteResult() {}
+func (ErrPoolNotFound) IsPoolUpdateResult()      {}
+func (ErrPoolNotFound) IsPoolDeleteResult()      {}
 
 type ErrPushTokenBelongsToAnotherUser struct {
 	Message string `json:"message"`
 }
 
-func (ErrPushTokenBelongsToAnotherUser) IsError() {}
+func (ErrPushTokenBelongsToAnotherUser) IsError()                   {}
+func (ErrPushTokenBelongsToAnotherUser) IsPushTokenRegisterResult() {}
 
 type ErrSessionInvalidated struct {
 	Message string `json:"message"`
 }
 
-func (ErrSessionInvalidated) IsAuthorizationError() {}
 func (ErrSessionInvalidated) IsError()              {}
+func (ErrSessionInvalidated) IsAuthorizationError() {}
 
 type ErrSyncFailed struct {
 	Message string `json:"message"`
@@ -495,26 +494,23 @@ type ErrUserAlreadyExists struct {
 	Message string `json:"message"`
 }
 
-func (ErrUserAlreadyExists) IsError()                    {}
-func (ErrUserAlreadyExists) IsCreateUserPayloadOrError() {}
+func (ErrUserAlreadyExists) IsError()              {}
+func (ErrUserAlreadyExists) IsUserRegisterResult() {}
 
 type ErrUserNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrUserNotFound) IsUserByUsernameOrError() {}
-func (ErrUserNotFound) IsUserByIDOrError()       {}
-func (ErrUserNotFound) IsUserByAddressOrError()  {}
-func (ErrUserNotFound) IsError()                 {}
-func (ErrUserNotFound) IsLoginPayloadOrError()   {}
+func (ErrUserNotFound) IsError()       {}
+func (ErrUserNotFound) IsUserResult()  {}
+func (ErrUserNotFound) IsLoginResult() {}
 
 type ErrUsernameNotAvailable struct {
 	Message string `json:"message"`
 }
 
-func (ErrUsernameNotAvailable) IsUpdateUserInfoPayloadOrError() {}
-func (ErrUsernameNotAvailable) IsError()                        {}
-func (ErrUsernameNotAvailable) IsCreateUserPayloadOrError()     {}
+func (ErrUsernameNotAvailable) IsError()            {}
+func (ErrUsernameNotAvailable) IsUserUpdateResult() {}
 
 type Extension struct {
 	ID                GqlID              `json:"id"`
@@ -562,7 +558,7 @@ type LoginPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (LoginPayload) IsLoginPayloadOrError() {}
+func (LoginPayload) IsLoginResult() {}
 
 type LogoutPayload struct {
 	Viewer *Viewer `json:"viewer"`
@@ -572,7 +568,6 @@ type MagicLinkAuth struct {
 	Token string `json:"token"`
 }
 
-// Create and get a new nonce and message.
 type Nonce struct {
 	Nonce   *string `json:"nonce"`
 	Message *string `json:"message"`
@@ -591,6 +586,12 @@ type NotificationSettingsInput struct {
 	SomeoneViewedYourPool *bool `json:"someoneViewedYourPool"`
 }
 
+type NotificationSettingsUpdatePayload struct {
+	NotificationSettings *NotificationSettings `json:"notificationSettings"`
+}
+
+func (NotificationSettingsUpdatePayload) IsNotificationSettingsUpdateResult() {}
+
 type NotificationsConnection struct {
 	HelperNotificationsConnectionData
 	Edges       []*NotificationEdge `json:"edges"`
@@ -602,18 +603,6 @@ type OneTimeLoginTokenAuth struct {
 	Token string `json:"token"`
 }
 
-type OptInForRolesPayload struct {
-	User *User `json:"user"`
-}
-
-func (OptInForRolesPayload) IsOptInForRolesPayloadOrError() {}
-
-type OptOutForRolesPayload struct {
-	User *User `json:"user"`
-}
-
-func (OptOutForRolesPayload) IsOptOutForRolesPayloadOrError() {}
-
 type PageInfo struct {
 	Total           *int   `json:"total"`
 	Size            int    `json:"size"`
@@ -624,11 +613,10 @@ type PageInfo struct {
 }
 
 type Pool struct {
-	Dbid        persist.DBID `json:"dbid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Image       string       `json:"image"`
-	// Basis point donation.
+	Dbid        persist.DBID  `json:"dbid"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Image       string        `json:"image"`
 	DonationBps int           `json:"donationBps"`
 	Slug        string        `json:"slug"`
 	Status      PoolStatus    `json:"status"`
@@ -641,7 +629,7 @@ type Pool struct {
 
 func (Pool) IsNode()                   {}
 func (Pool) IsPoolOrUserOrEVMAccount() {}
-func (Pool) IsPoolByIDPayloadOrError() {}
+func (Pool) IsPoolResult()             {}
 
 type PoolContract struct {
 	ID          GqlID              `json:"id"`
@@ -659,29 +647,22 @@ type PoolContract struct {
 	UpdatedAt   time.Time          `json:"updatedAt"`
 }
 
-type PoolCreate struct {
-	Errors []*PoolError `json:"errors"`
-	Pool   *Pool        `json:"pool"`
+type PoolCreateInput struct {
+	Owner       *string             `json:"owner"`
+	Private     *bool               `json:"private"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Image       *string             `json:"image"`
+	DonationBps *int                `json:"donationBps"`
+	Slug        string              `json:"slug"`
+	AddClaims   []*ClaimCreateInput `json:"addClaims"`
 }
 
-type PoolCreateInput struct {
-	// Name of the pool.
-	Owner *string `json:"owner"`
-	// Whether a pool is shared with its recipients or not.
-	Private *bool `json:"private"`
-	// Name of the pool.
-	Name *string `json:"name"`
-	// Name of the pool.
-	Description *string `json:"description"`
-	// Name of the pool.
-	Image *string `json:"image"`
-	// Basis point donation.
-	DonationBps *int `json:"donationBps"`
-	// Slug of the pool.
-	Slug *string `json:"slug"`
-	// List of claims to create and assign to the pool.
-	AddClaims []*ClaimCreateInput `json:"addClaims"`
+type PoolCreatePayload struct {
+	Pool *Pool `json:"pool"`
 }
+
+func (PoolCreatePayload) IsPoolCreateResult() {}
 
 type PoolDayBalance struct {
 	ID        GqlID             `json:"id"`
@@ -694,20 +675,11 @@ type PoolDayBalance struct {
 	UpdatedAt time.Time         `json:"updatedAt"`
 }
 
-// Update a pool.
-type PoolDelete struct {
-	Errors []*PoolError `json:"errors"`
-	Pool   *Pool        `json:"pool"`
+type PoolDeletePayload struct {
+	Pool *Pool `json:"pool"`
 }
 
-type PoolError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code PoolErrorCode `json:"code"`
-}
+func (PoolDeletePayload) IsPoolDeleteResult() {}
 
 type PoolFactory struct {
 	ID        GqlID           `json:"id"`
@@ -734,147 +706,83 @@ type PoolSearchResult struct {
 	Pool *Pool `json:"pool"`
 }
 
-// Update a pool.
-type PoolUpdate struct {
-	Errors []*PoolError `json:"errors"`
-	Pool   *Pool        `json:"pool"`
-}
-
 type PoolUpdateInput struct {
-	// Whether a pool is shared with its recipients or not.
-	Private *bool `json:"private"`
-	// Name of the pool.
-	Name *string `json:"name"`
-	// Name of the pool.
-	Description *string `json:"description"`
-	// Image of the pool.
-	Image *string `json:"image"`
-	// Basis point donation.
-	DonationBps *int `json:"donationBps"`
-	// Slug of the pool.
-	Slug *string `json:"slug"`
-	// List of claims to assign to the pool.
-	AddClaims []*ClaimCreateInput `json:"addClaims"`
-	// List of claims to assign to the pool.
+	Private      *bool               `json:"private"`
+	Name         *string             `json:"name"`
+	Description  *string             `json:"description"`
+	Image        *string             `json:"image"`
+	DonationBps  *int                `json:"donationBps"`
+	Slug         *string             `json:"slug"`
+	AddClaims    []*ClaimCreateInput `json:"addClaims"`
 	UpdateClaims []*ClaimUpdateInput `json:"updateClaims"`
-	// List of claims to remove from the pool.
-	RemoveClaims []persist.DBID `json:"removeClaims"`
+	RemoveClaims []persist.DBID      `json:"removeClaims"`
 }
 
-type PreverifyEmailInput struct {
-	Email persist.Email `json:"email"`
+type PoolUpdatePayload struct {
+	Pool *Pool `json:"pool"`
 }
+
+func (PoolUpdatePayload) IsPoolUpdateResult() {}
 
 type PreverifyEmailPayload struct {
 	Email  persist.Email        `json:"email"`
-	Result PreverifyEmailResult `json:"result"`
+	Result PreverifyEmailStatus `json:"result"`
 }
 
-func (PreverifyEmailPayload) IsPreverifyEmailPayloadOrError() {}
+func (PreverifyEmailPayload) IsPreverifyEmailResult() {}
 
 type PrivyAuth struct {
 	Token string `json:"token"`
 }
 
-type PushTokenError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code PushTokenErrorCode `json:"code"`
+type PushTokenRegisterPayload struct {
+	PushToken string `json:"pushToken"`
+	User      *User  `json:"user"`
 }
 
-type PushTokenRegister struct {
-	// push token.
-	PushToken *string `json:"pushToken"`
-	// A user instance.
-	User   *User             `json:"user"`
-	Errors []*PushTokenError `json:"errors"`
+func (PushTokenRegisterPayload) IsPushTokenRegisterResult() {}
+
+type PushTokenUnregisterPayload struct {
+	PushToken string `json:"pushToken"`
+	User      *User  `json:"user"`
 }
 
-type PushTokenRegisterInput struct {
-	// Whether a pool is shared with its recipients or not.
-	Private *bool `json:"private"`
-	// Name of the pool.
-	Name *string `json:"name"`
-	// Name of the pool.
-	Description *string `json:"description"`
-	// Slug of the pool.
-	Slug *string `json:"slug"`
-	// List of claims to assign to the pool.
-	AddClaims []persist.DBID `json:"addClaims"`
-}
-
-// Update a pool.
-type PushTokenUnregister struct {
-	// push token.
-	PushToken *string `json:"pushToken"`
-	// A user instance.
-	User   *User             `json:"user"`
-	Errors []*PushTokenError `json:"errors"`
-}
-
-type PushTokenUnregisterInput struct {
-	// Whether a pool is shared with its recipients or not.
-	Private *bool `json:"private"`
-	// Name of the pool.
-	Name *string `json:"name"`
-	// Name of the pool.
-	Description *string `json:"description"`
-	// Slug of the pool.
-	Slug *string `json:"slug"`
-	// List of claims to assign to the pool.
-	AddClaims []persist.DBID `json:"addClaims"`
-	// List of claims to remove from the pool.
-	RemoveClaims []persist.DBID `json:"removeClaims"`
-}
+func (PushTokenUnregisterPayload) IsPushTokenUnregisterResult() {}
 
 type RemoveUserWalletsPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (RemoveUserWalletsPayload) IsRemoveUserWalletsPayloadOrError() {}
+func (RemoveUserWalletsPayload) IsRemoveUserWalletsResult() {}
 
 type ResendVerificationEmailPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (ResendVerificationEmailPayload) IsResendVerificationEmailPayloadOrError() {}
-
-type RoleError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code RoleErrorCode `json:"code"`
-}
-
-// Update role.
-type RoleUpdate struct {
-	Errors []*RoleError  `json:"errors"`
-	Role   *persist.Role `json:"role"`
-}
+func (ResendVerificationEmailPayload) IsResendVerificationEmailResult() {}
 
 type RoleUpdateInput struct {
-	// List of users to assign to a role.
-	AddUsers []persist.DBID `json:"addUsers"`
-	// List of users to unassign from a role.
-	RemoveUsers []persist.DBID `json:"removeUsers"`
+	AddRoles    []persist.Role `json:"addRoles"`
+	RemoveRoles []persist.Role `json:"removeRoles"`
 }
+
+type RoleUpdatePayload struct {
+	User *User `json:"user"`
+}
+
+func (RoleUpdatePayload) IsRoleUpdateResult() {}
 
 type SearchPoolsPayload struct {
 	Results []*PoolSearchResult `json:"results"`
 }
 
-func (SearchPoolsPayload) IsSearchPoolsPayloadOrError() {}
+func (SearchPoolsPayload) IsSearchPoolsResult() {}
 
 type SearchUsersPayload struct {
 	Results []*UserSearchResult `json:"results"`
 }
 
-func (SearchUsersPayload) IsSearchUsersPayloadOrError() {}
+func (SearchUsersPayload) IsSearchUsersResult() {}
 
 type Token struct {
 	ID           GqlID           `json:"id"`
@@ -912,22 +820,15 @@ type Tx struct {
 	Withdrawals []*Withdrawal     `json:"withdrawals"`
 }
 
-type UnsubscribeFromEmailTypeInput struct {
-	Type  EmailUnsubscriptionType `json:"type"`
-	Token string                  `json:"token"`
-}
-
-type UnsubscribeFromEmailTypePayload struct {
+type UnsubscribeFromEmailPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (UnsubscribeFromEmailTypePayload) IsUnsubscribeFromEmailTypePayloadOrError() {}
+func (UnsubscribeFromEmailPayload) IsUnsubscribeFromEmailResult() {}
 
-type UpdateEmailInput struct {
-	Email persist.Email `json:"email"`
-	// authMechanism is an optional parameter that can verify a user's email address in lieu of sending
-	// a verification email to the user. If not provided, a verification email will be sent.
-	AuthMechanism *AuthMechanism `json:"authMechanism"`
+type UnsubscribeFromEmailTypeInput struct {
+	Type  EmailUnsubscriptionType `json:"type"`
+	Token string                  `json:"token"`
 }
 
 type UpdateEmailNotificationSettingsInput struct {
@@ -935,37 +836,11 @@ type UpdateEmailNotificationSettingsInput struct {
 	UnsubscribedFromNotifications bool `json:"unsubscribedFromNotifications"`
 }
 
-type UpdateEmailNotificationSettingsPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (UpdateEmailNotificationSettingsPayload) IsUpdateEmailNotificationSettingsPayloadOrError() {}
-
 type UpdateEmailPayload struct {
 	Viewer *Viewer `json:"viewer"`
 }
 
-func (UpdateEmailPayload) IsUpdateEmailPayloadOrError() {}
-
-type UpdateUserInfoInput struct {
-	Username string `json:"username"`
-}
-
-type UpdateUserInfoPayload struct {
-	Viewer *Viewer `json:"viewer"`
-}
-
-func (UpdateUserInfoPayload) IsUpdateUserInfoPayloadOrError() {}
-
-type UploadPersistedQueriesInput struct {
-	PersistedQueries *string `json:"persistedQueries"`
-}
-
-type UploadPersistedQueriesPayload struct {
-	Message *string `json:"message"`
-}
-
-func (UploadPersistedQueriesPayload) IsUploadPersistedQueriesPayloadOrError() {}
+func (UpdateEmailPayload) IsUpdateEmailResult() {}
 
 type User struct {
 	HelperUserData
@@ -974,20 +849,16 @@ type User struct {
 	Pools []*Pool         `json:"pools"`
 }
 
-func (User) IsNode()                              {}
-func (User) IsUserOrAccount()                     {}
-func (User) IsUserByUsernameOrError()             {}
-func (User) IsUserByIDOrError()                   {}
-func (User) IsUserByAddressOrError()              {}
-func (User) IsPoolOrUserOrEVMAccount()            {}
-func (User) IsAddRolesToUserPayloadOrError()      {}
-func (User) IsRevokeRolesFromUserPayloadOrError() {}
+func (User) IsNode()                   {}
+func (User) IsUserOrAccount()          {}
+func (User) IsPoolOrUserOrEVMAccount() {}
+func (User) IsUserResult()             {}
 
-// Removes a user.
-type UserDelete struct {
-	Errors []*UserError `json:"errors"`
-	User   *User        `json:"user"`
+type UserDeletePayload struct {
+	User *User `json:"user"`
 }
+
+func (UserDeletePayload) IsUserDeleteResult() {}
 
 type UserEdge struct {
 	Node   *User   `json:"node"`
@@ -1000,105 +871,59 @@ type UserEmail struct {
 	EmailNotificationSettings *EmailNotificationSettings       `json:"emailNotificationSettings"`
 }
 
-// Represents errors in user mutations.
-type UserError struct {
-	// Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-	Field *string `json:"field"`
-	// The error message.
-	Message *string `json:"message"`
-	// The error code.
-	Code UserErrorCode `json:"code"`
-}
-
-// Fields required to update the user.
-type UserInput struct {
-	// Username.
-	Username *string `json:"username"`
-}
-
-// Register a new user.
-type UserRegister struct {
-	// Informs whether users need to confirm their email address.
-	RequiresConfirmation *bool        `json:"requiresConfirmation"`
-	Errors               []*UserError `json:"errors"`
-	User                 *User        `json:"user"`
-}
-
-// Fields required to create a user.
 type UserRegisterInput struct {
-	// Decentralized identifier of the user.
-	Did *string `json:"did"`
-	// Base of frontend URL that will be needed to create confirmation URL.
-	RedirectURL *string `json:"redirectUrl"`
+	AuthMechanism *AuthMechanism `json:"authMechanism"`
 }
 
-// Sends an email with the user removal link for the logged-in user.
-type UserRequestDeletion struct {
-	Errors []*UserError `json:"errors"`
+type UserRegisterPayload struct {
+	User                 *User `json:"user"`
+	RequiresConfirmation *bool `json:"requiresConfirmation"`
 }
 
-// -------------------------------------------------------------------------------
-//
-//	SEARCH
-//
-// -------------------------------------------------------------------------------
+func (UserRegisterPayload) IsUserRegisterResult() {}
+
 type UserSearchResult struct {
 	User *User `json:"user"`
 }
 
-// Updates the user of the logged-in user.
-type UserUpdate struct {
-	Errors []*UserError `json:"errors"`
-	User   *User        `json:"user"`
+type UserUpdateInput struct {
+	Username *string `json:"username"`
 }
+
+type UserUpdatePayload struct {
+	User *User `json:"user"`
+}
+
+func (UserUpdatePayload) IsUserUpdateResult() {}
 
 type UsersConnection struct {
 	Edges    []*UserEdge `json:"edges"`
 	PageInfo *PageInfo   `json:"pageInfo"`
 }
 
-type VerifyEmailInput struct {
-	Token string `json:"token"`
-}
-
-type VerifyEmailMagicLinkInput struct {
-	Email persist.Email `json:"email"`
-}
-
-type VerifyEmailMagicLinkPayload struct {
-	CanSend bool `json:"canSend"`
-}
-
-func (VerifyEmailMagicLinkPayload) IsVerifyEmailMagicLinkPayloadOrError() {}
-
 type VerifyEmailPayload struct {
 	Email persist.Email `json:"email"`
 }
 
-func (VerifyEmailPayload) IsVerifyEmailPayloadOrError() {}
+func (VerifyEmailPayload) IsVerifyEmailResult() {}
 
-// Verify JWT token.
-type VerifyToken struct {
-	// User assigned to token.
-	User *User `json:"user"`
-	// Determine if token is valid or not.
-	IsValid bool `json:"isValid"`
-	// JWT payload.
-	Errors []*UserError `json:"errors"`
+type VerifyTokenPayload struct {
+	User    *User `json:"user"`
+	IsValid bool  `json:"isValid"`
 }
+
+func (VerifyTokenPayload) IsVerifyTokenResult() {}
 
 type Viewer struct {
 	HelperViewerData
-	User  *User   `json:"user"`
-	Pools []*Pool `json:"pools"`
-	// Returns a list of notifications in reverse chronological order.
-	// Seen notifications come after unseen notifications
+	User                 *User                    `json:"user"`
+	Pools                []*Pool                  `json:"pools"`
 	Notifications        *NotificationsConnection `json:"notifications"`
 	NotificationSettings *NotificationSettings    `json:"notificationSettings"`
 }
 
-func (Viewer) IsViewerOrError() {}
-func (Viewer) IsNode()          {}
+func (Viewer) IsNode()         {}
+func (Viewer) IsViewerResult() {}
 
 type Withdrawal struct {
 	ID          GqlID             `json:"id"`
@@ -1112,108 +937,6 @@ type Withdrawal struct {
 	LogIndex    *int              `json:"logIndex"`
 	CreatedAt   time.Time         `json:"createdAt"`
 	UpdatedAt   time.Time         `json:"updatedAt"`
-}
-
-type ClaimBulkErrorCode string
-
-const (
-	ClaimBulkErrorCodeBlank               ClaimBulkErrorCode = "BLANK"
-	ClaimBulkErrorCodeMaxLength           ClaimBulkErrorCode = "MAX_LENGTH"
-	ClaimBulkErrorCodeDuplicatedInputItem ClaimBulkErrorCode = "DUPLICATED_INPUT_ITEM"
-	ClaimBulkErrorCodeGraphqlError        ClaimBulkErrorCode = "GRAPHQL_ERROR"
-	ClaimBulkErrorCodeInvalid             ClaimBulkErrorCode = "INVALID"
-	ClaimBulkErrorCodeNotFound            ClaimBulkErrorCode = "NOT_FOUND"
-	ClaimBulkErrorCodeRequired            ClaimBulkErrorCode = "REQUIRED"
-	ClaimBulkErrorCodeUnique              ClaimBulkErrorCode = "UNIQUE"
-)
-
-var AllClaimBulkErrorCode = []ClaimBulkErrorCode{
-	ClaimBulkErrorCodeBlank,
-	ClaimBulkErrorCodeMaxLength,
-	ClaimBulkErrorCodeDuplicatedInputItem,
-	ClaimBulkErrorCodeGraphqlError,
-	ClaimBulkErrorCodeInvalid,
-	ClaimBulkErrorCodeNotFound,
-	ClaimBulkErrorCodeRequired,
-	ClaimBulkErrorCodeUnique,
-}
-
-func (e ClaimBulkErrorCode) IsValid() bool {
-	switch e {
-	case ClaimBulkErrorCodeBlank, ClaimBulkErrorCodeMaxLength, ClaimBulkErrorCodeDuplicatedInputItem, ClaimBulkErrorCodeGraphqlError, ClaimBulkErrorCodeInvalid, ClaimBulkErrorCodeNotFound, ClaimBulkErrorCodeRequired, ClaimBulkErrorCodeUnique:
-		return true
-	}
-	return false
-}
-
-func (e ClaimBulkErrorCode) String() string {
-	return string(e)
-}
-
-func (e *ClaimBulkErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ClaimBulkErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ClaimBulkErrorCode", str)
-	}
-	return nil
-}
-
-func (e ClaimBulkErrorCode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type ClaimErrorCode string
-
-const (
-	ClaimErrorCodeAlreadyExists ClaimErrorCode = "ALREADY_EXISTS"
-	ClaimErrorCodeGraphqlError  ClaimErrorCode = "GRAPHQL_ERROR"
-	ClaimErrorCodeInvalid       ClaimErrorCode = "INVALID"
-	ClaimErrorCodeNotFound      ClaimErrorCode = "NOT_FOUND"
-	ClaimErrorCodeRequired      ClaimErrorCode = "REQUIRED"
-	ClaimErrorCodeUnique        ClaimErrorCode = "UNIQUE"
-)
-
-var AllClaimErrorCode = []ClaimErrorCode{
-	ClaimErrorCodeAlreadyExists,
-	ClaimErrorCodeGraphqlError,
-	ClaimErrorCodeInvalid,
-	ClaimErrorCodeNotFound,
-	ClaimErrorCodeRequired,
-	ClaimErrorCodeUnique,
-}
-
-func (e ClaimErrorCode) IsValid() bool {
-	switch e {
-	case ClaimErrorCodeAlreadyExists, ClaimErrorCodeGraphqlError, ClaimErrorCodeInvalid, ClaimErrorCodeNotFound, ClaimErrorCodeRequired, ClaimErrorCodeUnique:
-		return true
-	}
-	return false
-}
-
-func (e ClaimErrorCode) String() string {
-	return string(e)
-}
-
-func (e *ClaimErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ClaimErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ClaimErrorCode", str)
-	}
-	return nil
-}
-
-func (e ClaimErrorCode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type EVMAccountType string
@@ -1301,11 +1024,8 @@ func (e EmailUnsubscriptionType) MarshalGQL(w io.Writer) {
 type ErrorPolicyEnum string
 
 const (
-	// Save what is possible within a single row. If there are errors in an input data row, try to save it partially and skip the invalid part.
-	ErrorPolicyEnumIgnoreFailed ErrorPolicyEnum = "IGNORE_FAILED"
-	// Reject all rows if there is at least one error in any of them.
+	ErrorPolicyEnumIgnoreFailed     ErrorPolicyEnum = "IGNORE_FAILED"
 	ErrorPolicyEnumRejectEverything ErrorPolicyEnum = "REJECT_EVERYTHING"
-	// Reject rows with errors.
 	ErrorPolicyEnumRejectFailedRows ErrorPolicyEnum = "REJECT_FAILED_ROWS"
 )
 
@@ -1385,55 +1105,6 @@ func (e ExtensionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type PoolErrorCode string
-
-const (
-	PoolErrorCodeAlreadyExists PoolErrorCode = "ALREADY_EXISTS"
-	PoolErrorCodeGraphqlError  PoolErrorCode = "GRAPHQL_ERROR"
-	PoolErrorCodeInvalid       PoolErrorCode = "INVALID"
-	PoolErrorCodeNotFound      PoolErrorCode = "NOT_FOUND"
-	PoolErrorCodeRequired      PoolErrorCode = "REQUIRED"
-	PoolErrorCodeUnique        PoolErrorCode = "UNIQUE"
-)
-
-var AllPoolErrorCode = []PoolErrorCode{
-	PoolErrorCodeAlreadyExists,
-	PoolErrorCodeGraphqlError,
-	PoolErrorCodeInvalid,
-	PoolErrorCodeNotFound,
-	PoolErrorCodeRequired,
-	PoolErrorCodeUnique,
-}
-
-func (e PoolErrorCode) IsValid() bool {
-	switch e {
-	case PoolErrorCodeAlreadyExists, PoolErrorCodeGraphqlError, PoolErrorCodeInvalid, PoolErrorCodeNotFound, PoolErrorCodeRequired, PoolErrorCodeUnique:
-		return true
-	}
-	return false
-}
-
-func (e PoolErrorCode) String() string {
-	return string(e)
-}
-
-func (e *PoolErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PoolErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PoolErrorCode", str)
-	}
-	return nil
-}
-
-func (e PoolErrorCode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
 type PoolStatus string
 
 const (
@@ -1477,140 +1148,46 @@ func (e PoolStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type PreverifyEmailResult string
+type PreverifyEmailStatus string
 
 const (
-	PreverifyEmailResultInvalid PreverifyEmailResult = "Invalid"
-	PreverifyEmailResultRisky   PreverifyEmailResult = "Risky"
-	PreverifyEmailResultValid   PreverifyEmailResult = "Valid"
+	PreverifyEmailStatusInvalid PreverifyEmailStatus = "Invalid"
+	PreverifyEmailStatusRisky   PreverifyEmailStatus = "Risky"
+	PreverifyEmailStatusValid   PreverifyEmailStatus = "Valid"
 )
 
-var AllPreverifyEmailResult = []PreverifyEmailResult{
-	PreverifyEmailResultInvalid,
-	PreverifyEmailResultRisky,
-	PreverifyEmailResultValid,
+var AllPreverifyEmailStatus = []PreverifyEmailStatus{
+	PreverifyEmailStatusInvalid,
+	PreverifyEmailStatusRisky,
+	PreverifyEmailStatusValid,
 }
 
-func (e PreverifyEmailResult) IsValid() bool {
+func (e PreverifyEmailStatus) IsValid() bool {
 	switch e {
-	case PreverifyEmailResultInvalid, PreverifyEmailResultRisky, PreverifyEmailResultValid:
+	case PreverifyEmailStatusInvalid, PreverifyEmailStatusRisky, PreverifyEmailStatusValid:
 		return true
 	}
 	return false
 }
 
-func (e PreverifyEmailResult) String() string {
+func (e PreverifyEmailStatus) String() string {
 	return string(e)
 }
 
-func (e *PreverifyEmailResult) UnmarshalGQL(v interface{}) error {
+func (e *PreverifyEmailStatus) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = PreverifyEmailResult(str)
+	*e = PreverifyEmailStatus(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PreverifyEmailResult", str)
+		return fmt.Errorf("%s is not a valid PreverifyEmailStatus", str)
 	}
 	return nil
 }
 
-func (e PreverifyEmailResult) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type PushTokenErrorCode string
-
-const (
-	PushTokenErrorCodeAlreadyExists PushTokenErrorCode = "ALREADY_EXISTS"
-	PushTokenErrorCodeGraphqlError  PushTokenErrorCode = "GRAPHQL_ERROR"
-	PushTokenErrorCodeInvalid       PushTokenErrorCode = "INVALID"
-	PushTokenErrorCodeNotFound      PushTokenErrorCode = "NOT_FOUND"
-	PushTokenErrorCodeRequired      PushTokenErrorCode = "REQUIRED"
-	PushTokenErrorCodeUnique        PushTokenErrorCode = "UNIQUE"
-)
-
-var AllPushTokenErrorCode = []PushTokenErrorCode{
-	PushTokenErrorCodeAlreadyExists,
-	PushTokenErrorCodeGraphqlError,
-	PushTokenErrorCodeInvalid,
-	PushTokenErrorCodeNotFound,
-	PushTokenErrorCodeRequired,
-	PushTokenErrorCodeUnique,
-}
-
-func (e PushTokenErrorCode) IsValid() bool {
-	switch e {
-	case PushTokenErrorCodeAlreadyExists, PushTokenErrorCodeGraphqlError, PushTokenErrorCodeInvalid, PushTokenErrorCodeNotFound, PushTokenErrorCodeRequired, PushTokenErrorCodeUnique:
-		return true
-	}
-	return false
-}
-
-func (e PushTokenErrorCode) String() string {
-	return string(e)
-}
-
-func (e *PushTokenErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PushTokenErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PushTokenErrorCode", str)
-	}
-	return nil
-}
-
-func (e PushTokenErrorCode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type RoleErrorCode string
-
-const (
-	RoleErrorCodeRequired            RoleErrorCode = "REQUIRED"
-	RoleErrorCodeUnique              RoleErrorCode = "UNIQUE"
-	RoleErrorCodeDuplicatedInputItem RoleErrorCode = "DUPLICATED_INPUT_ITEM"
-	RoleErrorCodeOutOfScopeUser      RoleErrorCode = "OUT_OF_SCOPE_USER"
-)
-
-var AllRoleErrorCode = []RoleErrorCode{
-	RoleErrorCodeRequired,
-	RoleErrorCodeUnique,
-	RoleErrorCodeDuplicatedInputItem,
-	RoleErrorCodeOutOfScopeUser,
-}
-
-func (e RoleErrorCode) IsValid() bool {
-	switch e {
-	case RoleErrorCodeRequired, RoleErrorCodeUnique, RoleErrorCodeDuplicatedInputItem, RoleErrorCodeOutOfScopeUser:
-		return true
-	}
-	return false
-}
-
-func (e RoleErrorCode) String() string {
-	return string(e)
-}
-
-func (e *RoleErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = RoleErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid RoleErrorCode", str)
-	}
-	return nil
-}
-
-func (e RoleErrorCode) MarshalGQL(w io.Writer) {
+func (e PreverifyEmailStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
@@ -1650,90 +1227,5 @@ func (e *TokenType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e TokenType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type UserErrorCode string
-
-const (
-	UserErrorCodeActivateOwnAccount         UserErrorCode = "ACTIVATE_OWN_ACCOUNT"
-	UserErrorCodeActivateSuperuserAccount   UserErrorCode = "ACTIVATE_SUPERUSER_ACCOUNT"
-	UserErrorCodeDuplicatedInputItem        UserErrorCode = "DUPLICATED_INPUT_ITEM"
-	UserErrorCodeDeactivateOwnAccount       UserErrorCode = "DEACTIVATE_OWN_ACCOUNT"
-	UserErrorCodeDeactivateSuperuserAccount UserErrorCode = "DEACTIVATE_SUPERUSER_ACCOUNT"
-	UserErrorCodeDeleteNonStaffUser         UserErrorCode = "DELETE_NON_STAFF_USER"
-	UserErrorCodeDeleteOwnAccount           UserErrorCode = "DELETE_OWN_ACCOUNT"
-	UserErrorCodeDeleteSuperuserAccount     UserErrorCode = "DELETE_SUPERUSER_ACCOUNT"
-	UserErrorCodeGraphqlError               UserErrorCode = "GRAPHQL_ERROR"
-	UserErrorCodeInactive                   UserErrorCode = "INACTIVE"
-	UserErrorCodeInvalid                    UserErrorCode = "INVALID"
-	UserErrorCodeInvalidCredentials         UserErrorCode = "INVALID_CREDENTIALS"
-	UserErrorCodeNotFound                   UserErrorCode = "NOT_FOUND"
-	UserErrorCodeOutOfScopeRole             UserErrorCode = "OUT_OF_SCOPE_ROLE"
-	UserErrorCodeRequired                   UserErrorCode = "REQUIRED"
-	UserErrorCodeUnique                     UserErrorCode = "UNIQUE"
-	UserErrorCodeJwtSignatureExpired        UserErrorCode = "JWT_SIGNATURE_EXPIRED"
-	UserErrorCodeJwtInvalidToken            UserErrorCode = "JWT_INVALID_TOKEN"
-	UserErrorCodeJwtDecodeError             UserErrorCode = "JWT_DECODE_ERROR"
-	UserErrorCodeJwtMissingToken            UserErrorCode = "JWT_MISSING_TOKEN"
-	UserErrorCodeJwtInvalidCsrfToken        UserErrorCode = "JWT_INVALID_CSRF_TOKEN"
-	UserErrorCodeAccountNotConfirmed        UserErrorCode = "ACCOUNT_NOT_CONFIRMED"
-	UserErrorCodeLoginAttemptDelayed        UserErrorCode = "LOGIN_ATTEMPT_DELAYED"
-	UserErrorCodeUnknownIPAddress           UserErrorCode = "UNKNOWN_IP_ADDRESS"
-)
-
-var AllUserErrorCode = []UserErrorCode{
-	UserErrorCodeActivateOwnAccount,
-	UserErrorCodeActivateSuperuserAccount,
-	UserErrorCodeDuplicatedInputItem,
-	UserErrorCodeDeactivateOwnAccount,
-	UserErrorCodeDeactivateSuperuserAccount,
-	UserErrorCodeDeleteNonStaffUser,
-	UserErrorCodeDeleteOwnAccount,
-	UserErrorCodeDeleteSuperuserAccount,
-	UserErrorCodeGraphqlError,
-	UserErrorCodeInactive,
-	UserErrorCodeInvalid,
-	UserErrorCodeInvalidCredentials,
-	UserErrorCodeNotFound,
-	UserErrorCodeOutOfScopeRole,
-	UserErrorCodeRequired,
-	UserErrorCodeUnique,
-	UserErrorCodeJwtSignatureExpired,
-	UserErrorCodeJwtInvalidToken,
-	UserErrorCodeJwtDecodeError,
-	UserErrorCodeJwtMissingToken,
-	UserErrorCodeJwtInvalidCsrfToken,
-	UserErrorCodeAccountNotConfirmed,
-	UserErrorCodeLoginAttemptDelayed,
-	UserErrorCodeUnknownIPAddress,
-}
-
-func (e UserErrorCode) IsValid() bool {
-	switch e {
-	case UserErrorCodeActivateOwnAccount, UserErrorCodeActivateSuperuserAccount, UserErrorCodeDuplicatedInputItem, UserErrorCodeDeactivateOwnAccount, UserErrorCodeDeactivateSuperuserAccount, UserErrorCodeDeleteNonStaffUser, UserErrorCodeDeleteOwnAccount, UserErrorCodeDeleteSuperuserAccount, UserErrorCodeGraphqlError, UserErrorCodeInactive, UserErrorCodeInvalid, UserErrorCodeInvalidCredentials, UserErrorCodeNotFound, UserErrorCodeOutOfScopeRole, UserErrorCodeRequired, UserErrorCodeUnique, UserErrorCodeJwtSignatureExpired, UserErrorCodeJwtInvalidToken, UserErrorCodeJwtDecodeError, UserErrorCodeJwtMissingToken, UserErrorCodeJwtInvalidCsrfToken, UserErrorCodeAccountNotConfirmed, UserErrorCodeLoginAttemptDelayed, UserErrorCodeUnknownIPAddress:
-		return true
-	}
-	return false
-}
-
-func (e UserErrorCode) String() string {
-	return string(e)
-}
-
-func (e *UserErrorCode) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = UserErrorCode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid UserErrorCode", str)
-	}
-	return nil
-}
-
-func (e UserErrorCode) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

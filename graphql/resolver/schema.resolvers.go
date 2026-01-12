@@ -81,104 +81,84 @@ func (r *extensionRegistryResolver) Owner(ctx context.Context, obj *model.Extens
 }
 
 // UserRegister is the resolver for the userRegister field.
-func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserRegisterInput) (*model.UserRegister, error) {
+func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserRegisterInput) (model.UserRegisterResult, error) {
 	user, err := publicapi.For(ctx).User.CreateUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	output := model.UserRegister{
-		User: userToModel(ctx, user),
-	}
-
-	return &output, nil
+	requiresConfirmation := false // TODO: determine
+	return &model.UserRegisterPayload{
+		User:                 userToModel(ctx, user),
+		RequiresConfirmation: &requiresConfirmation,
+	}, nil
 }
 
 // UserUpdate is the resolver for the userUpdate field.
-func (r *mutationResolver) UserUpdate(ctx context.Context, userID *persist.DBID, input model.UserInput) (*model.UserUpdate, error) {
+func (r *mutationResolver) UserUpdate(ctx context.Context, userID *persist.DBID, input model.UserUpdateInput) (model.UserUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: UserUpdate - userUpdate"))
-	/*	user, err := publicapi.For(ctx).User.Update(ctx, input.Username)
-		if err != nil {
-			return nil, err
-		}
-
-		out := &model.UserUpdate{
-			User: user,
-		}
-
-		return out, nil*/
-
-	/*	var authenticator *auth.Authenticator
-
-		if input.AuthMechanism != nil {
-			a, err := r.authMechanismToAuthenticator(ctx, *input.AuthMechanism)
-			if err != nil {
-				return nil, err
-			}
-			authenticator = &a
-		}
-
-		return updateUserEmail(ctx, input.Email, authenticator)
-	*/
-
-	/*	err := publicapi.For(ctx).User.UpdateUserPrimaryWallet(ctx, walletID)
-		if err != nil {
-			return nil, err
-		}
-		return model.UpdatePrimaryWalletPayload{
-			Viewer: resolveViewer(ctx),
-		}, nil
-	*/
 }
 
 // UserRequestDeletion is the resolver for the userRequestDeletion field.
-func (r *mutationResolver) UserRequestDeletion(ctx context.Context, redirectURL string) (*model.UserRequestDeletion, error) {
+func (r *mutationResolver) UserRequestDeletion(ctx context.Context, redirectURL string) (model.UserDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: UserRequestDeletion - userRequestDeletion"))
 }
 
 // UserDelete is the resolver for the userDelete field.
-func (r *mutationResolver) UserDelete(ctx context.Context, token string) (*model.UserDelete, error) {
+func (r *mutationResolver) UserDelete(ctx context.Context, token string) (model.UserDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: UserDelete - userDelete"))
 }
 
+// Login is the resolver for the login field.
+func (r *mutationResolver) Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginResult, error) {
+	panic(fmt.Errorf("not implemented: Login - login"))
+}
+
+// Logout is the resolver for the logout field.
+func (r *mutationResolver) Logout(ctx context.Context) (*model.LogoutPayload, error) {
+	panic(fmt.Errorf("not implemented: Logout - logout"))
+}
+
 // TokenVerify is the resolver for the tokenVerify field.
-func (r *mutationResolver) TokenVerify(ctx context.Context, token string) (*model.VerifyToken, error) {
+func (r *mutationResolver) TokenVerify(ctx context.Context, token string) (model.VerifyTokenResult, error) {
 	panic(fmt.Errorf("not implemented: TokenVerify - tokenVerify"))
 }
 
+// AddUserWallet is the resolver for the addUserWallet field.
+func (r *mutationResolver) AddUserWallet(ctx context.Context, authMechanism model.AuthMechanism) (model.AddUserWalletResult, error) {
+	panic(fmt.Errorf("not implemented: AddUserWallet - addUserWallet"))
+}
+
+// RemoveUserWallets is the resolver for the removeUserWallets field.
+func (r *mutationResolver) RemoveUserWallets(ctx context.Context, walletIds []persist.DBID) (model.RemoveUserWalletsResult, error) {
+	panic(fmt.Errorf("not implemented: RemoveUserWallets - removeUserWallets"))
+}
+
 // PushTokenRegister is the resolver for the pushTokenRegister field.
-func (r *mutationResolver) PushTokenRegister(ctx context.Context, pushToken string) (*model.PushTokenRegister, error) {
+func (r *mutationResolver) PushTokenRegister(ctx context.Context, pushToken string) (model.PushTokenRegisterResult, error) {
 	panic(fmt.Errorf("not implemented: PushTokenRegister - pushTokenRegister"))
-	/*	pushToken, err := publicapi.For(ctx).User.CreatePushTokenForUser(ctx, pushToken)
-		if err != nil {
-			return nil, err
-		}
-
-		out := &model.PushTokenRegister{
-			PushToken: pushToken,
-		}
-
-		return out, nil
-	*/
 }
 
 // PushTokenUnregister is the resolver for the pushTokenUnregister field.
-func (r *mutationResolver) PushTokenUnregister(ctx context.Context, pushToken string) (*model.PushTokenUnregister, error) {
+func (r *mutationResolver) PushTokenUnregister(ctx context.Context, pushToken string) (model.PushTokenUnregisterResult, error) {
 	err := publicapi.For(ctx).User.DeletePushTokenByPushToken(ctx, pushToken)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.PushTokenUnregister{
-		PushToken: &pushToken,
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, publicapi.For(ctx).User.GetLoggedInUserId(ctx))
+	if err != nil {
+		return nil, err
 	}
 
-	return output, nil
+	return &model.PushTokenUnregisterPayload{
+		PushToken: pushToken,
+		User:      userToModel(ctx, *user),
+	}, nil
 }
 
 // NotificationSettingsUpdate is the resolver for the notificationSettingsUpdate field.
-func (r *mutationResolver) NotificationSettingsUpdate(ctx context.Context, settings model.NotificationSettingsInput) (*model.NotificationSettings, error) {
-	// panic(fmt.Errorf("not implemented: NotificationSettingsUpdate - notificationSettingsUpdate"))
+func (r *mutationResolver) NotificationSettingsUpdate(ctx context.Context, settings model.NotificationSettingsInput) (model.NotificationSettingsUpdateResult, error) {
 	err := publicapi.For(ctx).User.UpdateUserNotificationSettings(ctx, persist.UserNotificationSettings{})
 	if err != nil {
 		return nil, err
@@ -187,8 +167,7 @@ func (r *mutationResolver) NotificationSettingsUpdate(ctx context.Context, setti
 }
 
 // ClearNotifications is the resolver for the clearNotifications field.
-func (r *mutationResolver) ClearNotifications(ctx context.Context) (*model.ClearAllNotificationsPayload, error) {
-	//panic(fmt.Errorf("not implemented: ClearNotifications - clearNotifications"))
+func (r *mutationResolver) ClearNotifications(ctx context.Context) (model.ClearNotificationsResult, error) {
 	notifications, err := publicapi.For(ctx).Notifications.ClearUserNotifications(ctx)
 	if err != nil {
 		return nil, err
@@ -203,104 +182,103 @@ func (r *mutationResolver) ClearNotifications(ctx context.Context) (*model.Clear
 		models[i] = m
 	}
 
-	output := &model.ClearAllNotificationsPayload{
+	return &model.ClearNotificationsPayload{
 		Notifications: models,
-	}
-	return output, nil
+	}, nil
 }
 
 // EmailNotificationSettingsUpdate is the resolver for the emailNotificationSettingsUpdate field.
-func (r *mutationResolver) EmailNotificationSettingsUpdate(ctx context.Context, settings model.UpdateEmailNotificationSettingsInput) (*model.EmailNotificationSettings, error) {
+func (r *mutationResolver) EmailNotificationSettingsUpdate(ctx context.Context, settings model.UpdateEmailNotificationSettingsInput) (model.EmailNotificationSettingsUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: EmailNotificationSettingsUpdate - emailNotificationSettingsUpdate"))
-	//return updateUserEmailNotificationSettings(ctx, settings)
+}
+
+// VerifyEmail is the resolver for the verifyEmail field.
+func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (model.VerifyEmailResult, error) {
+	panic(fmt.Errorf("not implemented: VerifyEmail - verifyEmail"))
+}
+
+// PreverifyEmail is the resolver for the preverifyEmail field.
+func (r *mutationResolver) PreverifyEmail(ctx context.Context, email persist.Email) (model.PreverifyEmailResult, error) {
+	panic(fmt.Errorf("not implemented: PreverifyEmail - preverifyEmail"))
+}
+
+// UpdateEmail is the resolver for the updateEmail field.
+func (r *mutationResolver) UpdateEmail(ctx context.Context, email persist.Email, authMechanism *model.AuthMechanism) (model.UpdateEmailResult, error) {
+	panic(fmt.Errorf("not implemented: UpdateEmail - updateEmail"))
+}
+
+// ResendVerificationEmail is the resolver for the resendVerificationEmail field.
+func (r *mutationResolver) ResendVerificationEmail(ctx context.Context) (model.ResendVerificationEmailResult, error) {
+	panic(fmt.Errorf("not implemented: ResendVerificationEmail - resendVerificationEmail"))
+}
+
+// UnsubscribeFromEmail is the resolver for the unsubscribeFromEmail field.
+func (r *mutationResolver) UnsubscribeFromEmail(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailResult, error) {
+	panic(fmt.Errorf("not implemented: UnsubscribeFromEmail - unsubscribeFromEmail"))
+}
+
+// RoleUpdate is the resolver for the roleUpdate field.
+func (r *mutationResolver) RoleUpdate(ctx context.Context, role persist.Role, input model.RoleUpdateInput) (model.RoleUpdateResult, error) {
+	panic(fmt.Errorf("not implemented: RoleUpdate - roleUpdate"))
 }
 
 // PoolClaimCreate is the resolver for the poolClaimCreate field.
-func (r *mutationResolver) PoolClaimCreate(ctx context.Context, poolID persist.DBID, input model.ClaimCreateInput) (*model.ClaimCreate, error) {
+func (r *mutationResolver) PoolClaimCreate(ctx context.Context, poolID persist.DBID, input model.ClaimCreateInput) (model.ClaimCreateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimCreate - poolClaimCreate"))
 }
 
 // PoolClaimUpdate is the resolver for the poolClaimUpdate field.
-func (r *mutationResolver) PoolClaimUpdate(ctx context.Context, poolID persist.DBID, input model.ClaimUpdateInput) (*model.ClaimUpdate, error) {
+func (r *mutationResolver) PoolClaimUpdate(ctx context.Context, poolID persist.DBID, input model.ClaimUpdateInput) (model.ClaimUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimUpdate - poolClaimUpdate"))
 }
 
 // PoolClaimDelete is the resolver for the poolClaimDelete field.
-func (r *mutationResolver) PoolClaimDelete(ctx context.Context, poolID persist.DBID, claimID persist.DBID) (*model.ClaimDelete, error) {
+func (r *mutationResolver) PoolClaimDelete(ctx context.Context, poolID persist.DBID, claimID persist.DBID) (model.ClaimDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimDelete - poolClaimDelete"))
 }
 
 // PoolClaimBulkCreate is the resolver for the poolClaimBulkCreate field.
-func (r *mutationResolver) PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) (*model.ClaimBulkCreate, error) {
+func (r *mutationResolver) PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkCreateInput) (model.ClaimBulkCreateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimBulkCreate - poolClaimBulkCreate"))
 }
 
 // PoolClaimBulkUpdate is the resolver for the poolClaimBulkUpdate field.
-func (r *mutationResolver) PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) (*model.ClaimBulkUpdate, error) {
+func (r *mutationResolver) PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID persist.DBID, claims []*model.ClaimBulkUpdateInput) (model.ClaimBulkUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimBulkUpdate - poolClaimBulkUpdate"))
 }
 
 // PoolClaimBulkDelete is the resolver for the poolClaimBulkDelete field.
-func (r *mutationResolver) PoolClaimBulkDelete(ctx context.Context, poolID persist.DBID, claimIds []persist.DBID) (*model.ClaimBulkDelete, error) {
+func (r *mutationResolver) PoolClaimBulkDelete(ctx context.Context, poolID persist.DBID, claimIds []persist.DBID) (model.ClaimBulkDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: PoolClaimBulkDelete - poolClaimBulkDelete"))
 }
 
 // PoolCreate is the resolver for the poolCreate field.
-func (r *mutationResolver) PoolCreate(ctx context.Context, input model.PoolCreateInput) (*model.PoolCreate, error) {
+func (r *mutationResolver) PoolCreate(ctx context.Context, input model.PoolCreateInput) (model.PoolCreateResult, error) {
 	pool, err := publicapi.For(ctx).Pool.CreatePool(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &model.PoolCreate{
+	return &model.PoolCreatePayload{
 		Pool: poolToModel(ctx, pool),
-	}
-
-	return output, nil
+	}, nil
 }
 
 // PoolUpdate is the resolver for the poolUpdate field.
-func (r *mutationResolver) PoolUpdate(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (*model.PoolUpdate, error) {
+func (r *mutationResolver) PoolUpdate(ctx context.Context, id persist.DBID, input model.PoolUpdateInput) (model.PoolUpdateResult, error) {
 	dbPool, err := publicapi.For(ctx).Pool.UpdatePool(ctx, id, input)
 	if err != nil {
 		return nil, err
 	}
 
-	out := model.PoolUpdate{
+	return &model.PoolUpdatePayload{
 		Pool: poolToModel(ctx, dbPool),
-	}
-
-	return &out, nil
+	}, nil
 }
 
 // PoolDelete is the resolver for the poolDelete field.
-func (r *mutationResolver) PoolDelete(ctx context.Context, id persist.DBID) (*model.PoolDelete, error) {
+func (r *mutationResolver) PoolDelete(ctx context.Context, id persist.DBID) (model.PoolDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: PoolDelete - poolDelete"))
-}
-
-// RoleUpdate is the resolver for the roleUpdate field.
-func (r *mutationResolver) RoleUpdate(ctx context.Context, role *persist.Role, input model.RoleUpdateInput) (*model.RoleUpdate, error) {
-	panic(fmt.Errorf("not implemented: RoleUpdate - roleUpdate"))
-	/*	user, err := publicapi.For(ctx).User.OptInForRoles(ctx, roles)
-		if err != nil {
-			return nil, err
-		}
-
-		payload := model.OptInForRolesPayload{
-			User: userToModel(ctx, *user),
-		}
-
-		return payload, nil
-	*/
-
-	/*	user, err := publicapi.For(ctx).Admin.RemoveRolesFromUser(ctx, username, roles)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return userToModel(ctx, *user), nil
-	*/
 }
 
 // Owner is the resolver for the owner field.
@@ -379,40 +357,45 @@ func (r *queryResolver) Node(ctx context.Context, id model.GqlID) (model.Node, e
 }
 
 // Viewer is the resolver for the viewer field.
-func (r *queryResolver) Viewer(ctx context.Context) (model.ViewerOrError, error) {
+func (r *queryResolver) Viewer(ctx context.Context) (model.ViewerResult, error) {
 	return resolveViewer(ctx), nil
 }
 
 // UserByUsername is the resolver for the userByUsername field.
-func (r *queryResolver) UserByUsername(ctx context.Context, username string) (model.UserByUsernameOrError, error) {
+func (r *queryResolver) UserByUsername(ctx context.Context, username string) (model.UserResult, error) {
 	panic(fmt.Errorf("not implemented: UserByUsername - userByUsername"))
-	//return resolveMutualsUserByUsername(ctx, username)
 }
 
 // UserByID is the resolver for the userById field.
-func (r *queryResolver) UserByID(ctx context.Context, id persist.DBID) (model.UserByIDOrError, error) {
-	panic(fmt.Errorf("not implemented: UserByID - userById"))
-	//return resolveMutualsUserByUserID(ctx, id)
+func (r *queryResolver) UserByID(ctx context.Context, id persist.DBID) (model.UserResult, error) {
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return userToModel(ctx, *user), nil
 }
 
 // UserByAddress is the resolver for the userByAddress field.
-func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserByAddressOrError, error) {
-	panic(fmt.Errorf("not implemented: UserByAddress - userByAddress"))
-	//poolById resolveMutualsUserByAddress(ctx, chainAddress)
+func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserResult, error) {
+	user, err := resolveUserByAddress(ctx, chainAddress)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // Pool is the resolver for the pool field.
-func (r *queryResolver) Pool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (*model.Pool, error) {
+func (r *queryResolver) Pool(ctx context.Context, id *persist.DBID, slug *string, contractID *persist.DBID) (model.PoolResult, error) {
 	return resolvePool(ctx, id, slug, contractID)
 }
 
 // SearchUsers is the resolver for the searchUsers field.
-func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersPayloadOrError, error) {
+func (r *queryResolver) SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersResult, error) {
 	panic(fmt.Errorf("not implemented: SearchUsers - searchUsers"))
 }
 
 // SearchPools is the resolver for the searchPools field.
-func (r *queryResolver) SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsPayloadOrError, error) {
+func (r *queryResolver) SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsResult, error) {
 	panic(fmt.Errorf("not implemented: SearchPools - searchPools"))
 }
 
@@ -442,8 +425,7 @@ func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, befo
 
 // NotificationCreated is the resolver for the notificationCreated field.
 func (r *subscriptionResolver) NotificationCreated(ctx context.Context) (<-chan model.Notification, error) {
-	panic(fmt.Errorf("not implemented: NotificationCreated - notificationCreated"))
-	//return resolveNewNotificationSubscription(ctx), nil
+	return resolveNewNotificationSubscription(ctx), nil
 }
 
 // NotificationUpdated is the resolver for the notificationUpdated field.
@@ -490,7 +472,6 @@ func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*persist.R
 // Pools is the resolver for the pools field.
 func (r *userResolver) Pools(ctx context.Context, obj *model.User) ([]*model.Pool, error) {
 	panic(fmt.Errorf("not implemented: Pools - pools"))
-	//return resolvePoolsByUserID(ctx, obj.HelperUserData.Dbid)
 }
 
 // EmailNotificationSettings is the resolver for the emailNotificationSettings field.
@@ -526,7 +507,12 @@ func (r *viewerResolver) Notifications(ctx context.Context, obj *model.Viewer, b
 
 // NotificationSettings is the resolver for the notificationSettings field.
 func (r *viewerResolver) NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error) {
-	return resolveViewerNotificationSettings(ctx)
+	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return notificationSettingsToModel(ctx, user), nil
 }
 
 // Transaction is the resolver for the transaction field.

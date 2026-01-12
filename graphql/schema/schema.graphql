@@ -4,51 +4,25 @@ It will not conform to our rules around breaking changes.
 """
 directive @experimental on FIELD_DEFINITION
 
-# Use @goField(forceResolver: true) to lazily handle recursive or expensive fields that shouldn't be
-# resolved unless the caller asks for them
 directive @goField(
   forceResolver: Boolean
   name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-# Add @authRequired to any field that requires a user to be logged in. NOTE: Any field tagged with
-# @authRequired MUST return a union type that includes ErrNotAuthorized.
-#
-# If we need more control over auth in the future, this directive can be updated to take
-# arguments that specify the level of access required.
 directive @authRequired on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
-# Add @basicAuth to any field that should be secured by a basic auth token. For example, some fields
-# should only be usable by Retool, so they'd use @basicAuth(allowed: [Retool]). Other fields might be
-# accessible by both Retool and Monitoring, so they'd use @basicAuth(allowed: [Retool, Monitoring]).
 directive @basicAuth(allowed: [BasicAuthType!]!) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 directive @frontendBuildAuth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
-# Use @scrub on any input field that should be omitted from request logging (e.g. passwords or
-# other sensitive data)
 directive @scrub on INPUT_FIELD_DEFINITION
 
-# Use @restrictEnvironment to choose which values of the ENV environment variable the annotated field/object
-# should be usable in (case-insensitive). Example: @restrictEnvironment(allowed:["local", "development"]) would
-# allow a field in "local" and "development" environments but not in "production"
 directive @restrictEnvironment(
   allowed: [String!]!
 ) on INPUT_FIELD_DEFINITION | INPUT_OBJECT | FIELD_DEFINITION | OBJECT
 
-# All types that implement Node must have a unique GqlID set in their "id" field. For types with
-# a "dbid" field, it's assumed that we can synthesize a unique ID from the type name and the dbid,
-# so those types will automatically have an ID function generated for them (which gqlgen will find
-# and bind to). Types without a dbid field, or types that need multiple inputs to create a unique ID
-# that can be used to refetch the node in the future, must use the @goGqlId directive to explicitly
-# state the fields that will be used to generate the ID. If a named field exists on the object and is
-# a string-based type, that field will be used as part of the ID automatically. Otherwise, a manual
-# getter method will need to be implemented to retrieve that component of the GqlID.
 directive @goGqlId(fields: [String!]!) on OBJECT
 
-# Injects a "Helper<TypeName>Data" struct embed into a generated type. Useful for adding backend-only
-# helper data necessary to resolve queries, while keeping that data out of the schema and invisible
-# to clients.
 directive @goEmbedHelper on OBJECT
 
 scalar Time
@@ -60,15 +34,8 @@ scalar HexString
 scalar JSON
 
 enum ErrorPolicyEnum {
-  """
-  Save what is possible within a single row. If there are errors in an input data row, try to save it partially and skip the invalid part.
-  """
   IGNORE_FAILED
-
-  """Reject all rows if there is at least one error in any of them."""
   REJECT_EVERYTHING
-
-  """Reject rows with errors."""
   REJECT_FAILED_ROWS
 }
 
@@ -115,18 +82,6 @@ input ChainPubKeyInput {
   chainId: Int! @goField(forceResolver: true)
 }
 
-#enum Chain {
-#  Ethereum
-#  Holesky
-#  PolygonAmoy
-#  Arbitrum
-#  Polygon
-#  Optimism
-#  Base
-#  Localhost
-#  Hardhat
-#}
-
 #-------------------------------------------------------------------------------
 # PAGINATION
 #-------------------------------------------------------------------------------
@@ -150,55 +105,32 @@ enum EVMAccountType {
 }
 
 type EVMAccount {
-  # account address
   id: ID!
-  # account address
   address: Address!
-  # contract or EOA
   accountType: EVMAccountType!
-  # pools this account represents if account is a pool contract
   selfPools: [Pool!] @goField(forceResolver: true)
-  # token balances of the account
   balances: [TokenBalance!] @goField(forceResolver: true)
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
 type PoolFactory {
-  # { chain id }-{ contract address }
   id: ID!
-  # dbid: DBID!
-  # contract address
   address: Address!
-  # chain ID
   chainId: Int!
-  # amount of pools created
   poolCount: Int!
-  # current owner of the factory
   owner: EVMAccount!
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
 type ExtensionRegistry {
-  # { chain id }-{ contract address }
   id: ID!
-  # dbid: DBID!
-  # contract address
   address: Address!
-  # chain ID
   chainId: Int!
-  # amount of extensions created
   extensionCount: Int!
-  # current owner of the registry
   owner: EVMAccount! @goField(forceResolver: true)
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
@@ -216,26 +148,10 @@ type User implements Node @goEmbedHelper {
   id: ID!
   dbid: DBID!
   roles: [Role] @goField(forceResolver: true)
-  # Returns all pools owned by this user. Useful for retrieving all pools without any duplicates,
-  # as opposed to retrieving user -> accounts -> pools, which would contain duplicates for any pool
-  # that appears in more than one of the user's wallets.
   pools: [Pool] @goField(forceResolver: true)
 }
 
 union UserOrAccount = User | EVMAccount
-
-union UserByUsernameOrError = User | ErrUserNotFound | ErrInvalidInput
-
-union UserByIdOrError = User | ErrUserNotFound | ErrInvalidInput
-
-union UserByAddressOrError = User | ErrUserNotFound | ErrInvalidInput
-
-union ViewerOrError = Viewer | ErrNotAuthorized
-
-# Actions a user can take on a resource
-enum Action {
-  UserCreated
-}
 
 type UserEdge {
   node: User
@@ -255,14 +171,8 @@ type Viewer implements Node @goGqlId(fields: ["userId"]) @goEmbedHelper {
   id: ID!
   user: User @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
-
-  """
-  Returns a list of notifications in reverse chronological order.
-  Seen notifications come after unseen notifications
-  """
   notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection
   @goField(forceResolver: true)
-
   notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
 
@@ -275,54 +185,29 @@ enum TokenType {
 }
 
 type Token {
-  # { chain id }-{ token address }
   id: ID!
-  # dbid: DBID!
-  # token address
   address: Address!
-  # chain
   chainId: Int!
-  # token type
   tokenType: TokenType!
-  # token symbol
   symbol: String!
-  # token name
   name: String!
-  # token decimals
   decimals: Int!
-  # token logo
   logo: String
-  # token thumbnail
   thumbnail: String
-  # if token details have been validated
   validated: Int
-  # if possibly a spam token
   possibleSpam: Boolean
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
 type TokenBalance {
-  # {chain id }-{ holder address }-{ token address }
   id: ID!
-  # chain
   chainId: Int!
-  # token
   token: Token! @goField(forceResolver: true)
-  # token owner
   holder: PoolOrUserOrEVMAccount! @goField(forceResolver: true)
-  # token balance (BigDecimal)
   amount: HexString!
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
-}
-
-type ErrTokenNotFound implements Error {
-  message: String!
 }
 
 #-------------------------------------------------------------------------------
@@ -335,61 +220,34 @@ enum ExtensionType {
 }
 
 type Extension {
-  # { chain id }-{ pool address }
   id: ID!
-  # dbid: DBID!
-  # pool address
   address: Address!
-  # chain ID
   chainId: Int!
-  # extension registry that created this pool
   extensionRegistry: ExtensionRegistry! @goField(forceResolver: true)
-  # extension id of functionality (unspecific of chain)
   extensionId: String!
-  # type of the extension
   extensionType: ExtensionType!
-  # array of call signatures that this extension supports
   permissions: [String!]
-  # JSON data of the extension
   data: JSON
-  # name
   name: String!
-  # description
   description: String!
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
 type Claim implements Node {
-  # { claim id }
   id: ID!
-  # { claim id }
   dbid: DBID!
-  """Extension (strategy and state) specific data."""
   data: JSON
-  # label
   label: String!
-  # path
   path: String!
-  # path
   childrenCount: Int!
-  # parent claim
   parent: Claim @goField(forceResolver: true)
-  # children claims
   children: [Claim!] @goField(forceResolver: true)
-  # pool
   pool: Pool! @goField(forceResolver: true)
-  # recipient
   recipient: PoolOrUserOrEVMAccount @goField(forceResolver: true)
-  # state
   state: Extension! @goField(forceResolver: true)
-  # strategy
   strategy: Extension! @goField(forceResolver: true)
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
@@ -397,108 +255,65 @@ type Claim implements Node {
 # POOL
 #-------------------------------------------------------------------------------
 
-type Pool implements Node {
-  # id of the pool composed of type name - dbid
-  id: ID!
-  # dbid of the pool
-  dbid: DBID!
-  # name
-  name: String!
-  # description
-  description: String!
-  # logo
-  image: String!
-  """Basis point donation."""
-  donationBps: Int!
-  # slug
-  slug: String!
-  # status of the pool
-  status: PoolStatus!
-  # owner of the pool
-  owner: UserOrAccount! @goField(forceResolver: true)
-  # pool contract
-  contract: PoolContract @goField(forceResolver: true)
-  # pool claims
-  claims: [Claim!] @goField(forceResolver: true)
-  # creation timestamp
-  createdAt: Time!
-  # update timestamp
-  updatedAt: Time!
+enum PoolStatus {
+  Draft
+  Active
+  Paused
 }
 
-type ErrPoolNotFound implements Error {
-  message: String!
+type Pool implements Node {
+  id: ID!
+  dbid: DBID!
+  name: String!
+  description: String!
+  image: String!
+  donationBps: Int!
+  slug: String!
+  status: PoolStatus!
+  owner: UserOrAccount! @goField(forceResolver: true)
+  contract: PoolContract @goField(forceResolver: true)
+  claims: [Claim!] @goField(forceResolver: true)
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
 
-union PoolByIdPayloadOrError = Pool | ErrPoolNotFound
-
 type PoolContract {
-  # { chain id }-{ pool address }
   id: ID!
-  # pool contract address
   address: Address!
-  # chain id
   chainId: Int!
-  # status of the pool
   status: PoolStatus!
-  # pool factory that created this pool
   poolFactory: PoolFactory! @goField(forceResolver: true)
-  # account of this pool
   account: EVMAccount! @goField(forceResolver: true)
-  # current owner of the pool
   owner: EVMAccount! @goField(forceResolver: true)
-  # daily snapshots of pool token balances
   dayBalance: [PoolDayBalance!]! @goField(forceResolver: true)
-  # hourly snapshots of pool token balances
   hourBalance: [PoolHourBalance!]! @goField(forceResolver: true)
-  # deposit transactions
   deposits: [Deposit!]! @goField(forceResolver: true)
-  # withdraw transactions
   withdrawals: [Withdrawal!]! @goField(forceResolver: true)
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
 type PoolDayBalance {
-  # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current day) }
   id: ID!
-  # dbid: DBID!
-  # chain
   chainId: Int!
-  # timestamp rounded to current day by dividing by 86400
   date: Time!
-  # pointer to pool
   pool: Pool! @goField(forceResolver: true)
-  # pointer to token
   token: Token! @goField(forceResolver: true)
-  # last token balance in token units
   amount: HexString!
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
 type PoolHourBalance {
-  # { chain ID }-{ pool address }-{ token address }-{ date (rounded to current hour) }
   id: ID!
-  # chain ID
   chainId: Int!
-  # timestamp rounded to current hour by dividing by 3600
   date: Time!
-  # pointer to pool
   pool: Pool! @goField(forceResolver: true)
-  # pointer to token
   token: Token! @goField(forceResolver: true)
-  # last token balance in token units
   amount: HexString!
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
@@ -573,76 +388,46 @@ enum ReportWindow {
 }
 
 type Tx {
-  # txn hash
   id: ID!
-  # gas used during txn execution
   gasUsed: HexString!
-  # gas price for txn execution
   gasPrice: HexString!
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
-  # derived values
   deposits: [Deposit]! @goField(forceResolver: true)
   withdrawals: [Withdrawal]! @goField(forceResolver: true)
 }
 
 type Deposit {
-  # { transaction hash }-{ index in deposits transaction array }
   id: ID!
-  # which txn the mint was included in
   transaction: Tx! @goField(forceResolver: true)
-  # pool that receives deposit
   pool: Pool! @goField(forceResolver: true)
-  # allow indexing by tokens
   token: Token! @goField(forceResolver: true)
-  # the address that deposited the token
   from: Address!
-  # the address that received the token (the pool)
   to: Address!
-  # txn origin
-  origin: String! # the EOA that initiated the txn
-  # deposit amount
+  origin: String!
   amount: HexString!
-  # order within the txn
   logIndex: Int
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
 type Withdrawal {
-  # { transaction hash }-{ index in withdrawals transaction array }
   id: ID!
-  # txn burn was included in
   transaction: Tx! @goField(forceResolver: true)
-  # pool position is within
   pool: Pool! @goField(forceResolver: true)
-  # allow indexing by tokens
   token: Token! @goField(forceResolver: true)
-  # sender of the withdrawal
   from: Address!
-  # recipient of the withdrawal
   to: Address!
-  # txn origin
-  origin: String! # the EOA that initiated the txn
-  # withdrawn amount
+  origin: String!
   amount: HexString!
-  # position within the transactions
   logIndex: Int
-  # creation timestamp
   createdAt: Time!
-  # update timestamp
   updatedAt: Time!
 }
 
-"""
--------------------------------------------------------------------------------
- SEARCH
--------------------------------------------------------------------------------
-"""
+#-------------------------------------------------------------------------------
+# SEARCH
+#-------------------------------------------------------------------------------
 
 type UserSearchResult {
   user: User
@@ -652,8 +437,6 @@ type SearchUsersPayload {
   results: [UserSearchResult!]
 }
 
-union SearchUsersPayloadOrError = SearchUsersPayload | ErrInvalidInput
-
 type PoolSearchResult {
   pool: Pool
 }
@@ -662,98 +445,9 @@ type SearchPoolsPayload {
   results: [PoolSearchResult!]
 }
 
-union SearchPoolsPayloadOrError = SearchPoolsPayload | ErrInvalidInput
-
-type Query {
-  node(id: ID!): Node
-  viewer: ViewerOrError @authRequired
-  userByUsername(username: String!): UserByUsernameOrError
-  userById(id: DBID!): UserByIdOrError
-  userByAddress(chainAddress: ChainAddressInput!): UserByAddressOrError
-
-  """Look up a pool by ID, slug, or contract ID."""
-  pool(
-    """ID of the pool."""
-    id: DBID
-
-    """Slug of the pool"""
-    slug: String
-
-    """ID of the contract"""
-    contractId: DBID
-  ): Pool
-
-  """
-  Search for users with optional weighting. Weights are floats in the [0.0. 1.0] range
-  that help determine how matches will be ranked. usernameWeight defaults to 0.4 and
-  bioWeight defaults to 0.2, meaning that a search result matching a username is considered
-  twice as relevant as a search result matching another entry (currently nothing provided.
-  See searchPools(...) for more).
-  """
-  searchUsers(
-    query: String!
-    limit: Int
-    usernameWeight: Float
-  ): SearchUsersPayloadOrError
-  """
-  Search for pools with optional weighting. Weights are floats in the [0.0. 1.0] range
-  that help determine how matches will be ranked. nameWeight defaults to 0.4 and
-  descriptionWeight defaults to 0.2, meaning that a search result matching a pool name is
-  considered twice as relevant as a search result matching a pool description.
-  """
-  searchPools(
-    query: String!
-    limit: Int
-    nameWeight: Float
-    descriptionWeight: Float
-  ): SearchPoolsPayloadOrError
-
-  isEmailAddressAvailable(emailAddress: Email!): Boolean
-
-  # Retool Specific
-  usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
-    @basicAuth(allowed: [Retool])
-}
-
-"""
--------------------------------------------------------------------------------
- MUTATIONS
--------------------------------------------------------------------------------
-"""
-
-union AddUserWalletPayloadOrError =
-    AddUserWalletPayload
-  | ErrAuthenticationFailed
-  | ErrNotAuthorized
-  | ErrInvalidInput
-  | ErrAddressOwnedByUser
-
-type AddUserWalletPayload {
-  viewer: Viewer
-}
-
-union RemoveUserWalletsPayloadOrError =
-    RemoveUserWalletsPayload
-  | ErrNotAuthorized
-  | ErrInvalidInput
-
-type RemoveUserWalletsPayload {
-  viewer: Viewer
-}
-
-input UpdateUserInfoInput {
-  username: String!
-}
-
-union UpdateUserInfoPayloadOrError =
-    UpdateUserInfoPayload
-  | ErrNotAuthorized
-  | ErrUsernameNotAvailable
-  | ErrInvalidInput
-
-type UpdateUserInfoPayload {
-  viewer: Viewer
-}
+#-------------------------------------------------------------------------------
+# ERRORS
+#-------------------------------------------------------------------------------
 
 type ErrAuthenticationFailed implements Error {
   message: String!
@@ -775,19 +469,12 @@ type ErrUserNotFound implements Error {
   message: String!
 }
 
-type ErrCommunityNotFound implements Error {
+type ErrPoolNotFound implements Error {
   message: String!
 }
 
-union AuthorizationError =
-  ErrNoCookie
-  | ErrInvalidToken
-  | ErrSessionInvalidated
-  | ErrDoesNotOwnRequiredToken
-
-type ErrNotAuthorized implements Error {
+type ErrTokenNotFound implements Error {
   message: String!
-  cause: AuthorizationError!
 }
 
 type ErrInvalidInput implements Error {
@@ -812,6 +499,17 @@ type ErrDoesNotOwnRequiredToken implements Error {
   message: String!
 }
 
+union AuthorizationError =
+  ErrNoCookie
+  | ErrInvalidToken
+  | ErrSessionInvalidated
+  | ErrDoesNotOwnRequiredToken
+
+type ErrNotAuthorized implements Error {
+  message: String!
+  cause: AuthorizationError!
+}
+
 type ErrSyncFailed implements Error {
   message: String!
 }
@@ -819,6 +517,10 @@ type ErrSyncFailed implements Error {
 type ErrPushTokenBelongsToAnotherUser implements Error {
   message: String!
 }
+
+#-------------------------------------------------------------------------------
+# AUTH MECHANISMS
+#-------------------------------------------------------------------------------
 
 input AuthMechanism {
   eoa: EoaAuth
@@ -836,25 +538,10 @@ input EoaAuth {
   signature: String! @scrub
 }
 
-# DebugAuth is a debug-only authentication mechanism for testing and debugging.
-# It creates an authenticator that will return the supplied userId and chainAddresses as if they had been
-# successfully authenticated. For existing users, the asUsername parameter may be supplied as a convenience
-# method to look up and return their userId and chainAddresses.
 input DebugAuth @restrictEnvironment(allowed: ["local", "development", "sandbox"]) {
-  # Convenience method to authenticate as an existing user.
-  # Cannot be used in conjunction with the userId and chainAddresses parameters.
   asUsername: String
-
-  # The userId that will be returned from the resulting authenticator.
-  # May be omitted or blank to indicate that there is no user associated with the supplied chainAddresses.
-  # Cannot be used in conjunction with the asUsername parameter.
   userId: DBID
-
-  # The chainAddresses that will be returned from the resulting authenticator.
-  # Cannot be used in conjunction with the asUsername parameter.
   chainAddresses: [ChainAddressInput!]
-
-  # A password required to use debug tools. Typically empty in local environments.
   debugToolsPassword: String
 }
 
@@ -876,31 +563,9 @@ input OneTimeLoginTokenAuth {
   token: String!
 }
 
-union LoginPayloadOrError =
-    LoginPayload
-  | ErrUserNotFound
-  | ErrAuthenticationFailed
-  | ErrDoesNotOwnRequiredToken
-
-type LoginPayload {
-  viewer: Viewer
-}
-
-type LogoutPayload {
-  viewer: Viewer
-}
-
-union CreateUserPayloadOrError =
-    CreateUserPayload
-  | ErrAuthenticationFailed
-  | ErrDoesNotOwnRequiredToken
-  | ErrUserAlreadyExists
-  | ErrUsernameNotAvailable
-  | ErrInvalidInput
-
-type CreateUserPayload {
-  viewer: Viewer
-}
+#-------------------------------------------------------------------------------
+# NOTIFICATIONS
+#-------------------------------------------------------------------------------
 
 interface Notification implements Node {
   id: ID!
@@ -908,15 +573,6 @@ interface Notification implements Node {
   creationTime: Time
   updatedTime: Time
 }
-
-#interface GroupedNotification implements Notification & Node {
-#  id: ID!
-#  seen: Boolean
-#  creationTime: Time
-#  updatedTime: Time
-#
-#  count: Int
-#}
 
 type GroupNotificationUserEdge {
   node: User
@@ -928,25 +584,165 @@ type GroupNotificationUsersConnection @goEmbedHelper {
   pageInfo: PageInfo
 }
 
-type ClearAllNotificationsPayload {
-  notifications: [Notification]
+#-------------------------------------------------------------------------------
+# QUERY
+#-------------------------------------------------------------------------------
+
+union ViewerResult = Viewer | ErrNotAuthorized
+union UserResult = User | ErrUserNotFound | ErrInvalidInput
+union PoolResult = Pool | ErrPoolNotFound | ErrInvalidInput
+union SearchUsersResult = SearchUsersPayload | ErrInvalidInput
+union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
+
+type Query {
+  node(id: ID!): Node
+  viewer: ViewerResult! @authRequired
+  userByUsername(username: String!): UserResult!
+  userById(id: DBID!): UserResult!
+  userByAddress(chainAddress: ChainAddressInput!): UserResult!
+
+  """Look up a pool by ID, slug, or contract ID."""
+  pool(
+    id: DBID
+    slug: String
+    contractId: DBID
+  ): PoolResult!
+
+  searchUsers(
+    query: String!
+    limit: Int
+    usernameWeight: Float
+  ): SearchUsersResult!
+
+  searchPools(
+    query: String!
+    limit: Int
+    nameWeight: Float
+    descriptionWeight: Float
+  ): SearchPoolsResult!
+
+  isEmailAddressAvailable(emailAddress: Email!): Boolean
+
+  usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
+  @basicAuth(allowed: [Retool])
 }
 
-input VerifyEmailInput {
-  token: String! @scrub
+#-------------------------------------------------------------------------------
+# MUTATIONS
+#-------------------------------------------------------------------------------
+
+type Nonce {
+  nonce: String
+  message: String
 }
+
+# USER MUTATIONS
+
+type UserRegisterPayload {
+  user: User!
+  requiresConfirmation: Boolean
+}
+
+input UserRegisterInput {
+  authMechanism: AuthMechanism!
+}
+
+union UserRegisterResult = UserRegisterPayload | ErrAuthenticationFailed | ErrUserAlreadyExists | ErrInvalidInput | ErrDoesNotOwnRequiredToken
+
+type UserUpdatePayload {
+  user: User!
+}
+
+input UserUpdateInput {
+  username: String
+}
+
+union UserUpdateResult = UserUpdatePayload | ErrNotAuthorized | ErrUsernameNotAvailable | ErrInvalidInput
+
+type UserDeletePayload {
+  user: User
+}
+
+union UserDeleteResult = UserDeletePayload | ErrNotAuthorized | ErrInvalidInput
+
+# WALLET MUTATIONS
+
+type AddUserWalletPayload {
+  viewer: Viewer!
+}
+
+union AddUserWalletResult = AddUserWalletPayload | ErrAuthenticationFailed | ErrNotAuthorized | ErrInvalidInput | ErrAddressOwnedByUser
+
+type RemoveUserWalletsPayload {
+  viewer: Viewer!
+}
+
+union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | ErrInvalidInput
+
+# AUTH MUTATIONS
+
+type LoginPayload {
+  viewer: Viewer!
+}
+
+union LoginResult = LoginPayload | ErrUserNotFound | ErrAuthenticationFailed | ErrDoesNotOwnRequiredToken
+
+type LogoutPayload {
+  viewer: Viewer
+}
+
+type VerifyTokenPayload {
+  user: User!
+  isValid: Boolean!
+}
+
+union VerifyTokenResult = VerifyTokenPayload | ErrNotAuthorized | ErrInvalidInput
+
+# PUSH TOKEN MUTATIONS
+
+type PushTokenRegisterPayload {
+  pushToken: String!
+  user: User!
+}
+
+union PushTokenRegisterResult = PushTokenRegisterPayload | ErrNotAuthorized | ErrInvalidInput | ErrPushTokenBelongsToAnotherUser
+
+type PushTokenUnregisterPayload {
+  pushToken: String!
+  user: User!
+}
+
+union PushTokenUnregisterResult = PushTokenUnregisterPayload | ErrNotAuthorized | ErrInvalidInput
+
+# NOTIFICATION MUTATIONS
+
+type NotificationSettingsUpdatePayload {
+  notificationSettings: NotificationSettings!
+}
+
+union NotificationSettingsUpdateResult = NotificationSettingsUpdatePayload | ErrNotAuthorized | ErrInvalidInput
+
+type ClearNotificationsPayload {
+  notifications: [Notification]!
+}
+
+union ClearNotificationsResult = ClearNotificationsPayload | ErrNotAuthorized
+
+# EMAIL MUTATIONS
+
+type EmailNotificationSettingsUpdatePayload {
+  emailNotificationSettings: EmailNotificationSettings!
+}
+
+union EmailNotificationSettingsUpdateResult = EmailNotificationSettingsUpdatePayload | ErrNotAuthorized | ErrInvalidInput
 
 type VerifyEmailPayload {
   email: Email!
 }
 
-union VerifyEmailPayloadOrError = VerifyEmailPayload | ErrInvalidInput
+union VerifyEmailResult = VerifyEmailPayload | ErrInvalidInput
 
-input PreverifyEmailInput {
-  email: Email! @scrub
-}
-
-enum PreverifyEmailResult {
+enum PreverifyEmailStatus {
   Invalid
   Risky
   Valid
@@ -954,816 +750,211 @@ enum PreverifyEmailResult {
 
 type PreverifyEmailPayload {
   email: Email!
-  result: PreverifyEmailResult!
+  result: PreverifyEmailStatus!
 }
 
-union PreverifyEmailPayloadOrError = PreverifyEmailPayload | ErrInvalidInput
-
-input VerifyEmailMagicLinkInput {
-  email: Email! @scrub
-}
-
-type VerifyEmailMagicLinkPayload {
-  canSend: Boolean!
-}
-
-union VerifyEmailMagicLinkPayloadOrError = VerifyEmailMagicLinkPayload | ErrInvalidInput
-
-input UpdateEmailInput {
-  email: Email! @scrub
-  """
-  authMechanism is an optional parameter that can verify a user's email address in lieu of sending
-  a verification email to the user. If not provided, a verification email will be sent.
-  """
-  authMechanism: AuthMechanism
-}
+union PreverifyEmailResult = PreverifyEmailPayload | ErrInvalidInput
 
 type UpdateEmailPayload {
-  viewer: Viewer
+  viewer: Viewer!
 }
 
-union UpdateEmailPayloadOrError = UpdateEmailPayload | ErrInvalidInput
+union UpdateEmailResult = UpdateEmailPayload | ErrNotAuthorized | ErrInvalidInput
 
 type ResendVerificationEmailPayload {
-  viewer: Viewer
+  viewer: Viewer!
 }
 
-union ResendVerificationEmailPayloadOrError = ResendVerificationEmailPayload | ErrInvalidInput
+union ResendVerificationEmailResult = ResendVerificationEmailPayload | ErrNotAuthorized | ErrInvalidInput
 
-type UpdateEmailNotificationSettingsPayload {
-  viewer: Viewer
+type UnsubscribeFromEmailPayload {
+  viewer: Viewer!
 }
 
-union UpdateEmailNotificationSettingsPayloadOrError =
-  UpdateEmailNotificationSettingsPayload
-  | ErrInvalidInput
+union UnsubscribeFromEmailResult = UnsubscribeFromEmailPayload | ErrInvalidInput
 
-type UnsubscribeFromEmailTypePayload {
-  viewer: Viewer
-}
+# ROLE MUTATIONS
 
-union UnsubscribeFromEmailTypePayloadOrError = UnsubscribeFromEmailTypePayload | ErrInvalidInput
-
-union AddRolesToUserPayloadOrError = User | ErrNotAuthorized
-union RevokeRolesFromUserPayloadOrError = User | ErrNotAuthorized
-
-type OptInForRolesPayload {
-  user: User
-}
-
-type OptOutForRolesPayload {
-  user: User
-}
-
-union OptInForRolesPayloadOrError = OptInForRolesPayload | ErrNotAuthorized | ErrInvalidInput
-union OptOutForRolesPayloadOrError = OptOutForRolesPayload | ErrNotAuthorized | ErrInvalidInput
-
-input UploadPersistedQueriesInput {
-  persistedQueries: String
-}
-
-union UploadPersistedQueriesPayloadOrError = UploadPersistedQueriesPayload | ErrNotAuthorized
-
-type UploadPersistedQueriesPayload {
-  message: String
-}
-
-"""
-Create and get a new nonce and message.
-"""
-type Nonce {
-  nonce: String
-  message: String
-}
-
-"""
-Register a new user.
-"""
-type UserRegister {
-  """Informs whether users need to confirm their email address."""
-  requiresConfirmation: Boolean
-  errors: [UserError!]!
-  user: User
-}
-
-"""Fields required to create a user."""
-input UserRegisterInput {
-  """Decentralized identifier of the user."""
-  did: String
-
-  """
-  Base of frontend URL that will be needed to create confirmation URL.
-  """
-  redirectUrl: String
-}
-
-"""
-Updates the user of the logged-in user.
-"""
-type UserUpdate {
-  errors: [UserError!]!
-  user: User
-}
-
-"""Represents errors in user mutations."""
-type UserError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: UserErrorCode!
-}
-
-enum UserErrorCode {
-  ACTIVATE_OWN_ACCOUNT
-  ACTIVATE_SUPERUSER_ACCOUNT
-  DUPLICATED_INPUT_ITEM
-  DEACTIVATE_OWN_ACCOUNT
-  DEACTIVATE_SUPERUSER_ACCOUNT
-  DELETE_NON_STAFF_USER
-  DELETE_OWN_ACCOUNT
-  DELETE_SUPERUSER_ACCOUNT
-  GRAPHQL_ERROR
-  INACTIVE
-  INVALID
-  INVALID_CREDENTIALS
-  NOT_FOUND
-  OUT_OF_SCOPE_ROLE
-  REQUIRED
-  UNIQUE
-  JWT_SIGNATURE_EXPIRED
-  JWT_INVALID_TOKEN
-  JWT_DECODE_ERROR
-  JWT_MISSING_TOKEN
-  JWT_INVALID_CSRF_TOKEN
-  ACCOUNT_NOT_CONFIRMED
-  LOGIN_ATTEMPT_DELAYED
-  UNKNOWN_IP_ADDRESS
-}
-
-"""Fields required to update the user."""
-input UserInput {
-  """Username."""
-  username: String
-}
-
-"""
-Sends an email with the user removal link for the logged-in user.
-"""
-type UserRequestDeletion {
-  errors: [UserError!]!
-}
-
-"""
-Removes a user.
-"""
-type UserDelete {
-  errors: [UserError!]!
-  user: User
-}
-
-type PushTokenRegister {
-  """push token."""
-  pushToken: String
-
-  """A user instance."""
-  user: User
-
-  errors: [PushTokenError!]!
-}
-
-type PushTokenError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: PushTokenErrorCode!
-}
-
-enum PushTokenErrorCode {
-  ALREADY_EXISTS
-  GRAPHQL_ERROR
-  INVALID
-  NOT_FOUND
-  REQUIRED
-  UNIQUE
-  #| ErrNotAuthorized
-  #| ErrInvalidInput
-  #| ErrPushTokenBelongsToAnotherUser
-}
-
-input PushTokenRegisterInput {
-  """Whether a pool is shared with its recipients or not."""
-  private: Boolean
-
-  """Name of the pool."""
-  name: String
-
-  """Name of the pool."""
-  description: String
-
-  """Slug of the pool."""
-  slug: String
-
-  """List of claims to assign to the pool."""
-  addClaims: [DBID!]
-}
-
-"""
-Update a pool.
-"""
-type PushTokenUnregister {
-  """push token."""
-  pushToken: String
-
-  """A user instance."""
-  user: User
-
-  errors: [PushTokenError!]!
-}
-
-input PushTokenUnregisterInput {
-  """Whether a pool is shared with its recipients or not."""
-  private: Boolean
-
-  """Name of the pool."""
-  name: String
-
-  """Name of the pool."""
-  description: String
-
-  """Slug of the pool."""
-  slug: String
-
-  """List of claims to assign to the pool."""
-  addClaims: [DBID!]
-
-  """List of claims to remove from the pool."""
-  removeClaims: [DBID!]
-}
-
-"""Verify JWT token."""
-type VerifyToken {
-  """User assigned to token."""
-  user: User
-
-  """Determine if token is valid or not."""
-  isValid: Boolean!
-
-  """JWT payload."""
-  # payload: GenericScalar
-  errors: [UserError!]!
-}
-
-type RoleError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: RoleErrorCode!
-}
-
-enum RoleErrorCode {
-  REQUIRED
-  UNIQUE
-  DUPLICATED_INPUT_ITEM
-  OUT_OF_SCOPE_USER
-}
-
-"""
-Update role.
-"""
-type RoleUpdate {
-  errors: [RoleError!]!
-  role: Role
+type RoleUpdatePayload {
+  user: User!
 }
 
 input RoleUpdateInput {
-  """List of users to assign to a role."""
-  addUsers: [DBID!]
-
-  """List of users to unassign from a role."""
-  removeUsers: [DBID!]
+  addRoles: [Role!]
+  removeRoles: [Role!]
 }
 
-"""
-Creates a new claim.
-"""
-type ClaimCreate {
-  errors: [ClaimError!]!
-  claim: Claim
-}
+union RoleUpdateResult = RoleUpdatePayload | ErrNotAuthorized | ErrInvalidInput
 
-type ClaimError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
+# CLAIM MUTATIONS
 
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: ClaimErrorCode!
-}
-
-enum ClaimErrorCode {
-  ALREADY_EXISTS
-  GRAPHQL_ERROR
-  INVALID
-  NOT_FOUND
-  REQUIRED
-  UNIQUE
+type ClaimCreatePayload {
+  claim: Claim!
 }
 
 input ClaimCreateInput {
-  """Claim label."""
-  label: String
-
-  """Claim recipient address."""
+  label: String!
   recipientAddress: Address
-
-  """Extension (strategy and state) specific data."""
   data: JSON
-
-  """Parent claim label."""
   parent: String
-
-  """Children claim labels."""
   children: [String!]
-
-  """State id."""
   stateId: String!
-
-  """Strategy id."""
   strategyId: String!
 }
 
-"""
-Updates given claim.
-"""
-type ClaimUpdate {
-  errors: [ClaimError!]!
-  claim: Claim
+union ClaimCreateResult = ClaimCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+type ClaimUpdatePayload {
+  claim: Claim!
 }
 
 input ClaimUpdateInput {
-  """Claim ID."""
   claimId: DBID!
-
-  """Claim recipient address."""
   recipientAddress: Address
-
-  """Extension (strategy and state) specific data."""
   data: JSON
-
-  """Parent claim."""
   parent: DBID
-
-  """Children claims."""
   children: [DBID!]
-
-  """State id."""
-  stateId: String!
-
-  """Strategy id."""
-  strategyId: String!
+  stateId: String
+  strategyId: String
 }
 
-"""
-Deletes a claim.
-"""
-type ClaimDelete {
-  errors: [ClaimError!]!
-  claim: Claim
+union ClaimUpdateResult = ClaimUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+type ClaimDeletePayload {
+  claim: Claim!
 }
 
-"""
-Creates claims.
-"""
-type ClaimBulkCreate {
-  """Returns how many objects were created."""
+union ClaimDeleteResult = ClaimDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+type ClaimBulkCreatePayload {
   count: Int!
-
-  """List of the created claims."""
-  results: [ClaimBulkResult!]!
-  errors: [ClaimBulkError!]!
-}
-
-type ClaimBulkResult {
-  """Claim data."""
-  claim: Claim
-
-  """List of errors occurred on create attempt."""
-  errors: [ClaimBulkError!]
-}
-
-type ClaimBulkError {
-  """
-  Path to field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  path: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: ClaimBulkErrorCode!
-}
-
-enum ClaimBulkErrorCode {
-  BLANK
-  MAX_LENGTH
-  DUPLICATED_INPUT_ITEM
-  GRAPHQL_ERROR
-  INVALID
-  NOT_FOUND
-  REQUIRED
-  UNIQUE
+  claims: [Claim!]!
 }
 
 input ClaimBulkCreateInput {
-  """Claim recipient address."""
   recipientAddress: Address
-
-  """Extension (strategy and state) specific data."""
   data: JSON
-
-  """Parent claim."""
   parent: DBID
-
-  """Children claims."""
   children: [DBID!]
-
-  """State id."""
   stateId: String!
-
-  """Strategy id."""
   strategyId: String!
 }
 
-"""
-Updates claims.
-"""
-type ClaimBulkUpdate {
-  """Returns how many objects were updated."""
-  count: Int!
+union ClaimBulkCreateResult = ClaimBulkCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
 
-  """List of the updated claims."""
-  results: [ClaimBulkResult!]!
-  errors: [ClaimBulkError!]!
+type ClaimBulkUpdatePayload {
+  count: Int!
+  claims: [Claim!]!
 }
 
 input ClaimBulkUpdateInput {
-  """Claim ID."""
   claimId: DBID!
-
-  """Claim recipient address."""
   recipientAddress: Address
-
-  """Extension (strategy and state) specific data."""
   data: JSON
-
-  """Parent claim."""
   parent: DBID
-
-  """Children claims."""
   children: [DBID!]
-
-  """State id."""
-  stateId: String!
-
-  """Strategy id."""
-  strategyId: String!
+  stateId: String
+  strategyId: String
 }
 
-"""
-Deletes claims.
-"""
-type ClaimBulkDelete {
-  """Returns how many objects were affected."""
+union ClaimBulkUpdateResult = ClaimBulkUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+type ClaimBulkDeletePayload {
   count: Int!
-  errors: [ClaimError!]!
 }
 
-enum PoolStatus {
-  Draft
-  Active
-  Paused
-}
+union ClaimBulkDeleteResult = ClaimBulkDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
 
-type PoolCreate {
-  errors: [PoolError!]!
-  pool: Pool
-}
+# POOL MUTATIONS
 
-type PoolError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: PoolErrorCode!
-}
-
-enum PoolErrorCode {
-  ALREADY_EXISTS
-  GRAPHQL_ERROR
-  INVALID
-  NOT_FOUND
-  REQUIRED
-  UNIQUE
+type PoolCreatePayload {
+  pool: Pool!
 }
 
 input PoolCreateInput {
-  """Name of the pool."""
   owner: String
-
-  """Whether a pool is shared with its recipients or not."""
   private: Boolean
-
-  """Name of the pool."""
-  name: String
-
-  """Name of the pool."""
-  description: String
-
-  """Name of the pool."""
+  name: String!
+  description: String!
   image: String
-
-  """Basis point donation."""
   donationBps: Int
-
-  """Slug of the pool."""
-  slug: String
-
-  """List of claims to create and assign to the pool."""
+  slug: String!
   addClaims: [ClaimCreateInput!]
 }
 
-"""
-Update a pool.
-"""
-type PoolUpdate {
-  errors: [PoolError!]!
-  pool: Pool
+union PoolCreateResult = PoolCreatePayload | ErrNotAuthorized | ErrInvalidInput
+
+type PoolUpdatePayload {
+  pool: Pool!
 }
 
 input PoolUpdateInput {
-  """Whether a pool is shared with its recipients or not."""
   private: Boolean
-
-  """Name of the pool."""
   name: String
-
-  """Name of the pool."""
   description: String
-
-  """Image of the pool."""
   image: String
-
-  """Basis point donation."""
   donationBps: Int
-
-  """Slug of the pool."""
   slug: String
-
-  """List of claims to assign to the pool."""
   addClaims: [ClaimCreateInput!]
-
-  """List of claims to assign to the pool."""
   updateClaims: [ClaimUpdateInput!]
-
-  """List of claims to remove from the pool."""
   removeClaims: [DBID!]
 }
 
-"""
-Update a pool.
-"""
-type PoolDelete {
-  errors: [PoolError!]!
-  pool: Pool
+union PoolUpdateResult = PoolUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+type PoolDeletePayload {
+  pool: Pool!
 }
 
+union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
 type Mutation {
-  """
-  Register a new user.
-  """ # prev:  createUser(authMechanism: AuthMechanism!, input: CreateUserInput!): CreateUserPayloadOrError
-  userRegister(
-    """Fields required to create a user."""
-    input: UserRegisterInput!
-  ): UserRegister
+  # User
+  userRegister(input: UserRegisterInput!): UserRegisterResult!
+  userUpdate(userId: DBID, input: UserUpdateInput!): UserUpdateResult! @authRequired
+  userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
+  userDelete(token: String!): UserDeleteResult! @authRequired
 
-  """
-  Updates the user of the logged-in user.
-  """
-  # prev:   updateUserInfo(input: UpdateUserInfoInput!): UpdateUserInfoPayloadOrError @authRequired
-  # prev   updatePrimaryWallet(walletID: DBID!): UpdatePrimaryWalletPayloadOrError @authRequired
-  userUpdate(
-    """
-    ID of user the application is impersonating.
-    """
-    userId: DBID
+  # Auth
+  login(authMechanism: AuthMechanism!): LoginResult!
+  logout: LogoutPayload!
+  tokenVerify(token: String!): VerifyTokenResult! @authRequired
 
-    """Fields required to update the account of the logged-in user."""
-    input: UserInput!
-  ): UserUpdate @authRequired
+  # Wallets
+  addUserWallet(authMechanism: AuthMechanism!): AddUserWalletResult! @authRequired
+  removeUserWallets(walletIds: [DBID!]!): RemoveUserWalletsResult! @authRequired
 
-  """
-  Sends an email with the user removal link for the logged-in user.
-  """
-  userRequestDeletion(
-    """
-    URL of a view where users should be redirected to delete their account. URL in RFC 1808 format.
-    """
-    redirectUrl: String!
-  ): UserRequestDeletion @authRequired
+  # Push Tokens
+  pushTokenRegister(pushToken: String!): PushTokenRegisterResult! @authRequired
+  pushTokenUnregister(pushToken: String!): PushTokenUnregisterResult! @authRequired
 
-  """
-  Remove user.
-  """
-  userDelete(
-    """
-    A one-time token required to remove account. Sent by email using AccountRequestDeletion mutation.
-    """
-    token: String!
-  ): UserDelete @authRequired
+  # Notifications
+  notificationSettingsUpdate(settings: NotificationSettingsInput!): NotificationSettingsUpdateResult! @authRequired
+  clearNotifications: ClearNotificationsResult! @authRequired
 
-  """Verify JWT token."""
-  tokenVerify(
-    """JWT token to validate."""
-    token: String!
-  ): VerifyToken @authRequired
+  # Email
+  emailNotificationSettingsUpdate(settings: UpdateEmailNotificationSettingsInput!): EmailNotificationSettingsUpdateResult! @authRequired
+  verifyEmail(token: String!): VerifyEmailResult!
+  preverifyEmail(email: Email!): PreverifyEmailResult!
+  updateEmail(email: Email!, authMechanism: AuthMechanism): UpdateEmailResult! @authRequired
+  resendVerificationEmail: ResendVerificationEmailResult! @authRequired
+  unsubscribeFromEmail(input: UnsubscribeFromEmailTypeInput!): UnsubscribeFromEmailResult!
 
-  """
-  Register a push token.
-  """ # prev: registerUserPushToken(pushToken: String!): RegisterUserPushTokenPayloadOrError
-  pushTokenRegister(
-    """Push token to register."""
-    pushToken: String!
-  ): PushTokenRegister @authRequired
+  # Roles
+  roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
 
-  """
-  Unregister a push token.
-  """ # prev: unregisterUserPushToken(pushToken: String!): UnregisterUserPushTokenPayloadOrError
-  pushTokenUnregister(
-    """Push token to unregister."""
-    pushToken: String!
-  ): PushTokenUnregister @authRequired
+  # Claims
+  poolClaimCreate(poolId: DBID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
+  poolClaimUpdate(poolId: DBID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
+  poolClaimDelete(poolId: DBID!, claimId: DBID!): ClaimDeleteResult! @authRequired
+  poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: DBID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
+  poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: DBID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
+  poolClaimBulkDelete(poolId: DBID!, claimIds: [DBID!]!): ClaimBulkDeleteResult! @authRequired
 
-  """
-  Updates a users notification settings.
-  """ #prev: updateNotificationSettings(settings: NotificationSettingsInput): NotificationSettings
-  notificationSettingsUpdate(
-    """Fields required to update notification settings."""
-    settings: NotificationSettingsInput!
-  ): NotificationSettings @authRequired
-
-  """
-  Clears a users notifications.
-  """
-  clearNotifications: ClearAllNotificationsPayload @authRequired
-
-  """
-  Updates a users email notification settings.
-  """
-  # prev:   updateEmailNotificationSettings(input: UpdateEmailNotificationSettingsInput!): UpdateEmailNotificationSettingsPayloadOrError
-  # prev: unsubscribeFromEmailType(input: UnsubscribeFromEmailTypeInput!): UnsubscribeFromEmailTypePayloadOrError
-  emailNotificationSettingsUpdate(
-    """Fields required to update notification settings."""
-    settings: UpdateEmailNotificationSettingsInput!
-  ): EmailNotificationSettings @authRequired
-
-  """
-  Creates a new claim.
-  """
-  poolClaimCreate(
-    """ID of a pool to create a claim within."""
-    poolId: DBID!
-
-    """Fields required to create a claim."""
-    input: ClaimCreateInput!
-  ): ClaimCreate @authRequired
-
-  """
-  Updates a new claim.
-  """
-  poolClaimUpdate(
-    """ID of a pool to update."""
-    poolId: DBID!
-
-    """Fields required to update a claim."""
-    input: ClaimUpdateInput!
-  ): ClaimUpdate @authRequired
-
-  """
-  Deletes a claim.
-  """
-  poolClaimDelete(
-    """ID of a pool with the claim to delete."""
-    poolId: DBID!
-
-    """ID of a claim to delete."""
-    claimId: DBID!
-  ): ClaimDelete @authRequired
-
-  """
-  Creates claims.
-  """
-  poolClaimBulkCreate(
-    """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
-    errorPolicy: ErrorPolicyEnum
-
-    """Pool ID to create claims to."""
-    poolId: DBID!
-
-    """Input list of claims to create."""
-    claims: [ClaimBulkCreateInput!]!
-  ): ClaimBulkCreate @authRequired
-
-  """
-  Updates claims.
-  """
-  poolClaimBulkUpdate(
-    """Policies of error handling. DEFAULT: REJECT_EVERYTHING"""
-    errorPolicy: ErrorPolicyEnum
-
-    """Pool ID to update."""
-    poolId: DBID!
-
-    """Input list of claims to update."""
-    claims: [ClaimBulkUpdateInput!]!
-  ): ClaimBulkUpdate @authRequired
-
-  """
-  Deletes claims.
-  """
-  poolClaimBulkDelete(
-    """Pool ID to delete claims from."""
-    poolId: DBID!
-
-    """List of claim IDs to delete."""
-    claimIds: [DBID!]!
-  ): ClaimBulkDelete @authRequired
-
-  """
-  Creates a pool.
-  """
-  poolCreate(
-    """Fields required when creating an invoice."""
-    input: PoolCreateInput!
-  ): PoolCreate #@authRequired
-
-  """
-  Updates a pool.
-  """
-  poolUpdate(
-    """ID of a pool to update."""
-    id: DBID!
-
-    """Fields to use when updating a pool."""
-    input: PoolUpdateInput!
-  ): PoolUpdate @authRequired
-
-  """
-  Deletes a pool.
-  """
-  poolDelete(
-    """ID of a pool to delete."""
-    id: DBID!
-  ): PoolDelete @authRequired
-
-  """
-  Update a role.
-  """
-  # prev: optInForRoles(roles: [Role!]!): OptInForRolesPayloadOrError @authRequired
-  # prev: optOutForRoles(roles: [Role!]!): OptOutForRolesPayloadOrError @authRequired
-  roleUpdate(
-    """Role to update."""
-    role: Role
-    """Roles to remove from the user."""
-    input: RoleUpdateInput!
-  ): RoleUpdate @authRequired
+  # Pools
+  poolCreate(input: PoolCreateInput!): PoolCreateResult!
+  poolUpdate(id: DBID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
+  poolDelete(id: DBID!): PoolDeleteResult! @authRequired
 }
 
 type Subscription {

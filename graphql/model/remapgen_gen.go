@@ -3,13 +3,8 @@
 package model
 
 var typeConversionMap = map[string]func(object interface{}) (objectAsType interface{}, ok bool){
-	"AddRolesToUserPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(AddRolesToUserPayloadOrError)
-		return obj, ok
-	},
-
-	"AddUserWalletPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(AddUserWalletPayloadOrError)
+	"AddUserWalletResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(AddUserWalletResult)
 		return obj, ok
 	},
 
@@ -18,8 +13,43 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"CreateUserPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(CreateUserPayloadOrError)
+	"ClaimBulkCreateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ClaimBulkCreateResult)
+		return obj, ok
+	},
+
+	"ClaimBulkDeleteResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ClaimBulkDeleteResult)
+		return obj, ok
+	},
+
+	"ClaimBulkUpdateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ClaimBulkUpdateResult)
+		return obj, ok
+	},
+
+	"ClaimCreateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ClaimCreateResult)
+		return obj, ok
+	},
+
+	"ClaimDeleteResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ClaimDeleteResult)
+		return obj, ok
+	},
+
+	"ClaimUpdateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ClaimUpdateResult)
+		return obj, ok
+	},
+
+	"ClearNotificationsResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ClearNotificationsResult)
+		return obj, ok
+	},
+
+	"EmailNotificationSettingsUpdateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(EmailNotificationSettingsUpdateResult)
 		return obj, ok
 	},
 
@@ -28,8 +58,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"LoginPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(LoginPayloadOrError)
+	"LoginResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(LoginResult)
 		return obj, ok
 	},
 
@@ -38,18 +68,18 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"OptInForRolesPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(OptInForRolesPayloadOrError)
+	"NotificationSettingsUpdateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(NotificationSettingsUpdateResult)
 		return obj, ok
 	},
 
-	"OptOutForRolesPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(OptOutForRolesPayloadOrError)
+	"PoolCreateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PoolCreateResult)
 		return obj, ok
 	},
 
-	"PoolByIdPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PoolByIDPayloadOrError)
+	"PoolDeleteResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PoolDeleteResult)
 		return obj, ok
 	},
 
@@ -58,73 +88,68 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"PreverifyEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PreverifyEmailPayloadOrError)
+	"PoolResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PoolResult)
 		return obj, ok
 	},
 
-	"RemoveUserWalletsPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RemoveUserWalletsPayloadOrError)
+	"PoolUpdateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PoolUpdateResult)
 		return obj, ok
 	},
 
-	"ResendVerificationEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(ResendVerificationEmailPayloadOrError)
+	"PreverifyEmailResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PreverifyEmailResult)
 		return obj, ok
 	},
 
-	"RevokeRolesFromUserPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(RevokeRolesFromUserPayloadOrError)
+	"PushTokenRegisterResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PushTokenRegisterResult)
 		return obj, ok
 	},
 
-	"SearchPoolsPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SearchPoolsPayloadOrError)
+	"PushTokenUnregisterResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(PushTokenUnregisterResult)
 		return obj, ok
 	},
 
-	"SearchUsersPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(SearchUsersPayloadOrError)
+	"RemoveUserWalletsResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(RemoveUserWalletsResult)
 		return obj, ok
 	},
 
-	"UnsubscribeFromEmailTypePayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UnsubscribeFromEmailTypePayloadOrError)
+	"ResendVerificationEmailResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ResendVerificationEmailResult)
 		return obj, ok
 	},
 
-	"UpdateEmailNotificationSettingsPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateEmailNotificationSettingsPayloadOrError)
+	"RoleUpdateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(RoleUpdateResult)
 		return obj, ok
 	},
 
-	"UpdateEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateEmailPayloadOrError)
+	"SearchPoolsResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(SearchPoolsResult)
 		return obj, ok
 	},
 
-	"UpdateUserInfoPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateUserInfoPayloadOrError)
+	"SearchUsersResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(SearchUsersResult)
 		return obj, ok
 	},
 
-	"UploadPersistedQueriesPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UploadPersistedQueriesPayloadOrError)
+	"UnsubscribeFromEmailResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UnsubscribeFromEmailResult)
 		return obj, ok
 	},
 
-	"UserByAddressOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UserByAddressOrError)
+	"UpdateEmailResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UpdateEmailResult)
 		return obj, ok
 	},
 
-	"UserByIdOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UserByIDOrError)
-		return obj, ok
-	},
-
-	"UserByUsernameOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UserByUsernameOrError)
+	"UserDeleteResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UserDeleteResult)
 		return obj, ok
 	},
 
@@ -133,18 +158,33 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"VerifyEmailMagicLinkPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(VerifyEmailMagicLinkPayloadOrError)
+	"UserRegisterResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UserRegisterResult)
 		return obj, ok
 	},
 
-	"VerifyEmailPayloadOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(VerifyEmailPayloadOrError)
+	"UserResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UserResult)
 		return obj, ok
 	},
 
-	"ViewerOrError": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(ViewerOrError)
+	"UserUpdateResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UserUpdateResult)
+		return obj, ok
+	},
+
+	"VerifyEmailResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(VerifyEmailResult)
+		return obj, ok
+	},
+
+	"VerifyTokenResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(VerifyTokenResult)
+		return obj, ok
+	},
+
+	"ViewerResult": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(ViewerResult)
 		return obj, ok
 	},
 }

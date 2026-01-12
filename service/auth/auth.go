@@ -2,10 +2,8 @@ package auth
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -13,29 +11,15 @@ import (
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/service/auth/privy"
 	"github.com/mutuals/go-mutuals/service/redis"
+	"github.com/mutuals/go-mutuals/util"
 
-	"github.com/magiclabs/magic-admin-go"
-	magicclient "github.com/magiclabs/magic-admin-go/client"
-	"github.com/magiclabs/magic-admin-go/token"
 	"github.com/mutuals/go-mutuals/env"
 
 	"github.com/mutuals/go-mutuals/service/logger"
 
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-gonic/gin"
-	"github.com/mutuals/go-mutuals/service/multichain"
 	"github.com/mutuals/go-mutuals/service/persist"
 )
-
-// AuthenticatedAddress contains address information that has been successfully verified
-// by an authenticator.
-type AuthenticatedAddress struct {
-	// A ChainAddress that has had its ownership successfully verified by an authenticator
-	ChainAddress persist.ChainAddress
-
-	// The WalletType of the verified ChainAddress
-	WalletType persist.WalletType
-}
 
 const (
 	// Context keys for auth data
@@ -58,12 +42,6 @@ const IdCookieKey = "privy-id-token"
 // RefreshCookieKey is the key used to store the refresh token in the cookie
 const RefreshCookieKey = "SPLITFI_REFRESH_JWT"
 
-// ErrNonceMismatch is returned when the nonce does not match the expected nonce
-var ErrNonceMismatch = errors.New("incorrect nonce input")
-
-// ErrMessageDoesNotContainNonce is returned when a nonce authenticator's message does not contain its nonce
-var ErrMessageDoesNotContainNonce = errors.New("message does not contain nonce")
-
 // ErrInvalidJWT is returned when the JWT is invalid
 var ErrInvalidJWT = errors.New("invalid or expired auth token")
 
@@ -72,43 +50,10 @@ var ErrNoCookie = errors.New("no jwt passed as cookie")
 
 var ErrSessionInvalidated = errors.New("session has been invalidated")
 
-// ErrSignatureInvalid is returned when the signed nonce's signature is invalid
-var ErrSignatureInvalid = errors.New("signature invalid")
-
-var ErrInvalidMagicLink = errors.New("invalid magic link")
-
-// ErrEmailUnverified
-// TODO: Figure out a better scheme for handling user-facing errors
-var ErrEmailUnverified = errors.New("The email address you provided is unverified. Login with QR code instead, or verify your email at gallery.so/settings.")
-
-var ErrEmailAlreadyUsed = errors.New("email already in use")
-
-type Authenticator interface {
-	// GetDescription returns information about the authenticator for error and logging purposes.
-	// NOTE: GetDescription should NOT include any sensitive data (passwords, auth tokens, etc)
-	// that we wouldn't want showing up in logs!
-	GetDescription() string
-
-	Authenticate(context.Context) (*AuthResult, error)
-
-	UserRegistered(context.Context) (bool, error)
-}
-
 type AuthResult struct {
-	User      *db.User
-	Addresses []AuthenticatedAddress
-	Email     *persist.Email
-	PrivyDID  *string
-}
-
-func (a *AuthResult) GetAuthenticatedAddress(chainAddress persist.ChainAddress) (AuthenticatedAddress, bool) {
-	for _, address := range a.Addresses {
-		if address.ChainAddress == chainAddress {
-			return address, true
-		}
-	}
-
-	return AuthenticatedAddress{}, false
+	User     *db.User
+	Email    *persist.Email
+	PrivyDID *string
 }
 
 type ErrAuthenticationFailed struct {
@@ -123,116 +68,6 @@ func (e ErrAuthenticationFailed) Error() string {
 	return fmt.Sprintf("authentication failed: %s", e.WrappedErr.Error())
 }
 
-type ErrSignatureVerificationFailed struct {
-	WrappedErr error
-}
-
-func (e ErrSignatureVerificationFailed) Unwrap() error {
-	return e.WrappedErr
-}
-
-func (e ErrSignatureVerificationFailed) Error() string {
-	return fmt.Sprintf("signature verification failed: %s", e.WrappedErr.Error())
-}
-
-type ErrDoesNotOwnRequiredNFT struct {
-	addresses []persist.ChainAddress
-}
-
-func (e ErrDoesNotOwnRequiredNFT) Error() string {
-	return fmt.Sprintf("required tokens not owned by any addresses: %s", e.addresses)
-}
-
-type ErrNonceNotFound struct {
-	L1ChainAddress persist.L1ChainAddress
-}
-
-func (e ErrNonceNotFound) Error() string {
-	return fmt.Sprintf("nonce not found for address: %s", e.L1ChainAddress)
-}
-
-// GenerateNonce generates a random nonce to be signed by a wallet
-func GenerateNonce() (string, error) {
-	nonceBytes := make([]byte, 16)
-	_, err := rand.Read(nonceBytes)
-	if err != nil {
-		return "", err
-	}
-	// Encode to a hex string
-	nonceStr := hex.EncodeToString(nonceBytes)
-	return nonceStr, nil
-}
-
-type NonceAuthenticator struct {
-	ChainPubKey        persist.ChainPubKey
-	Nonce              string
-	Message            string
-	Signature          string
-	WalletType         persist.WalletType
-	EthClient          *ethclient.Client
-	MultichainProvider *multichain.Provider
-	Queries            *db.Queries
-}
-
-func (e NonceAuthenticator) GetDescription() string {
-	return fmt.Sprintf("NonceAuthenticator(address: %s, nonce: %s, message: %s, signature: %s, walletType: %v)", e.ChainPubKey, e.Nonce, e.Message, e.Signature, e.WalletType)
-}
-
-type MagicLinkAuthenticator struct {
-	Token       token.Token
-	MagicClient *magicclient.API
-	Queries     *db.Queries
-}
-
-func NewMagicLinkClient() *magicclient.API {
-	return magicclient.New(env.GetString("MAGIC_LINK_SECRET_KEY"), magic.NewDefaultClient())
-}
-
-type OneTimeLoginTokenAuthenticator struct {
-	ConsumedTokenCache *redis.Cache
-	Queries            *db.Queries
-	LoginToken         string
-}
-
-func (a OneTimeLoginTokenAuthenticator) GetDescription() string {
-	return "OneTimeLoginTokenAuthenticator"
-}
-
-func (a OneTimeLoginTokenAuthenticator) Authenticate(ctx context.Context) (*AuthResult, error) {
-	userId, expiresAt, err := ParseOneTimeLoginToken(ctx, a.LoginToken)
-	if err != nil {
-		return nil, err
-	}
-
-	// Use redis to stop this token from being used again (and add an extra minute to the TTL account for clock differences)
-	ttl := time.Until(expiresAt) + time.Minute
-	success, err := a.ConsumedTokenCache.SetNX(ctx, a.LoginToken, []byte{1}, ttl)
-	if err != nil {
-		return nil, err
-	}
-
-	if !success {
-		return nil, errors.New("token already used")
-	}
-
-	user, err := a.Queries.GetUserById(ctx, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	authResult := AuthResult{
-		Addresses: []AuthenticatedAddress{},
-		User:      &user,
-	}
-
-	return &authResult, nil
-}
-
-func (a OneTimeLoginTokenAuthenticator) UserRegistered(ctx context.Context) (bool, error) {
-	// TODO: implement
-	return false, nil
-}
-
 // GetAppIdFromCtx returns the session ID from the context
 func GetAppIdFromCtx(c *gin.Context) string {
 	return c.MustGet(appIdContextKey).(string)
@@ -243,9 +78,35 @@ func GetUserIdFromCtx(c *gin.Context) persist.DBID {
 	return persist.DBID(c.MustGet(userIdContextKey).(string))
 }
 
+// GetAuthenticatedUserId returns the user ID from the context if the user is authenticated
+func GetAuthenticatedUserId(ctx context.Context) (persist.DBID, error) {
+	gc := util.MustGetGinContext(ctx)
+	authError := GetAuthErrorFromCtx(gc)
+
+	if authError != nil {
+		return "", authError
+	}
+
+	userID := GetUserIdFromCtx(gc)
+	return userID, nil
+}
+
 // GetLinkedAccountsFromCtx returns the linked accounts from the context
 func GetLinkedAccountsFromCtx(c *gin.Context) []privy.LinkedAccount {
 	return c.MustGet(linkedAccountsContextKey).([]privy.LinkedAccount)
+}
+
+// GetAuthenticatedLinkedAccounts returns the linked accounts from the context if the user is authenticated
+func GetAuthenticatedLinkedAccounts(ctx context.Context) ([]privy.LinkedAccount, error) {
+	gc := util.MustGetGinContext(ctx)
+	authError := GetAuthErrorFromCtx(gc)
+
+	if authError != nil {
+		return []privy.LinkedAccount{}, authError
+	}
+
+	linkedAccounts := GetLinkedAccountsFromCtx(gc)
+	return linkedAccounts, nil
 }
 
 // GetUserAuthedFromCtx queries the context to determine whether the user is authenticated
@@ -293,32 +154,6 @@ func clearSessionStateForCtx(c *gin.Context, err error) {
 	c.Set(authErrorContextKey, err)
 	c.Set(userAuthedContextKey, false)
 	c.Set(userRolesContextKey, []persist.Role{})
-}
-
-// ForceAuthTokenRefresh should be called whenever something happens that would result in existing auth
-// tokens being out-of-date. For example, when a user's roles are changed, or a user logs out of a session,
-// existing otherwise-valid auth tokens should be refreshed so they have the latest session state.
-func ForceAuthTokenRefresh(ctx context.Context, authRefreshCache *redis.Cache, userId persist.DBID) error {
-	// Keep the key long enough for any existing auth tokens to expire, plus an extra minute of wiggle room
-	expiration := time.Duration(env.GetInt64("AUTH_JWT_TTL"))*time.Second + time.Minute
-	return authRefreshCache.SetTime(ctx, userId.String(), time.Now(), expiration, true)
-}
-
-func mustRefreshAuthToken(ctx context.Context, authRefreshCache *redis.Cache, userId persist.DBID, issuedAt time.Time) bool {
-	forceRefreshBefore, err := authRefreshCache.GetTime(ctx, userId.String())
-	if err != nil {
-		// If there's no key for this user, we don't need to force an auth token refresh
-		var notFound redis.ErrKeyNotFound
-		if errors.As(err, &notFound) {
-			return false
-		}
-
-		// If we couldn't hit the redis cache, assume we need to refresh the auth token
-		logger.For(ctx).Errorf("error checking auth refresh cache: %s", err)
-		return true
-	}
-
-	return issuedAt.Before(forceRefreshBefore)
 }
 
 // VerifySession checks the request cookies for an existing auth session.

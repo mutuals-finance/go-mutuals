@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/mutuals/go-mutuals/event"
 	"github.com/mutuals/go-mutuals/service/redis"
-	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
 	"github.com/mutuals/go-mutuals/service/task"
 
 	"github.com/mutuals/go-mutuals/service/logger"
@@ -207,103 +206,6 @@ func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.Ch
 		}
 	*/
 	return nil, nil
-}
-
-func (api *UserAPI) OptInForRoles(ctx context.Context, roles []persist.Role) (*coredb.User, error) {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"roles": validate.WithTag(roles, "required,min=1,unique,dive,role,opt_in_role"),
-	}); err != nil {
-		return nil, err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// The opt_in_role validator already checks this, but let's be explicit about not letting
-	// users opt in for the admin role.
-	for _, role := range roles {
-		if role == persist.RoleAdmin {
-			err = errors.New("cannot opt in for admin role")
-			sentryutil.ReportError(ctx, err)
-			return nil, err
-		}
-	}
-
-	newRoles := util.MapWithoutError(roles, func(role persist.Role) string { return string(role) })
-	ids := util.MapWithoutError(roles, func(role persist.Role) string { return persist.GenerateID().String() })
-
-	err = api.queries.AddUserRoles(ctx, coredb.AddUserRolesParams{
-		UserID: userId,
-		Ids:    ids,
-		Roles:  newRoles,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Even though the user's roles have changed in the database, it could take a while before
-	// the new roles are reflected in their auth token. Forcing an auth token refresh will
-	// make the roles appear immediately.
-	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, userId)
-	if err != nil {
-		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userId, err)
-	}
-
-	user, err := api.queries.GetUserById(ctx, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, err
-}
-
-func (api *UserAPI) OptOutForRoles(ctx context.Context, roles []persist.Role) (*coredb.User, error) {
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"roles": validate.WithTag(roles, "required,min=1,unique,dive,role,opt_in_role"),
-	}); err != nil {
-		return nil, err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// The opt_in_role validator already checks this, but let's be explicit about not letting
-	// users opt out of the admin role.
-	for _, role := range roles {
-		if role == persist.RoleAdmin {
-			err := errors.New("cannot opt out of admin role")
-			sentryutil.ReportError(ctx, err)
-			return nil, err
-		}
-	}
-
-	err = api.queries.DeleteUserRoles(ctx, coredb.DeleteUserRolesParams{
-		Roles:  roles,
-		UserID: userId,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Even though the user's roles have changed in the database, it could take a while before
-	// the new roles are reflected in their auth token. Forcing an auth token refresh will
-	// make the roles appear immediately.
-	err = For(ctx).Auth.ForceAuthTokenRefresh(ctx, userId)
-	if err != nil {
-		logger.For(ctx).Errorf("error forcing auth token refresh for user %s: %s", userId, err)
-	}
-
-	user, err := api.queries.GetUserById(ctx, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, err
 }
 
 func (api *UserAPI) GetUserRolesByUserId(ctx context.Context, userId persist.DBID) ([]persist.Role, error) {

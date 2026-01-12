@@ -13,6 +13,7 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/allocation"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
+	poolService "github.com/mutuals/go-mutuals/service/pool"
 	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
 )
@@ -60,7 +61,6 @@ func (api PoolAPI) GetViewerPools(ctx context.Context) (*[]db.Pool, error) {
 	for _, account := range viewerAccounts {
 		params.Addresses = append(params.Addresses, account.Address)
 	}
-	logger.For(ctx).Infof("PARAMS: %v", params)
 
 	pools, err := api.loaders.GetPoolsByAddressesOrOwnerBatch.Load(params)
 	if err != nil {
@@ -113,11 +113,6 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 		return db.Pool{}, err
 	}
 
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return db.Pool{}, err
-	}
-
 	tx, err := api.repos.BeginTx(ctx)
 	if err != nil {
 		return db.Pool{}, err
@@ -125,17 +120,8 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 	defer tx.Rollback(ctx)
 
 	q := api.queries.WithTx(tx)
-	poolID := persist.GenerateID()
 
-	pool, err := q.CreatePool(ctx, db.CreatePoolParams{
-		ID:          poolID,
-		Name:        util.FromPointer(input.Name),
-		Description: util.FromPointer(input.Description),
-		Image:       util.FromPointer(input.Image),
-		Slug:        util.FromPointer(input.Slug),
-		Private:     util.FromPointer(input.Private),
-		OwnerID:     userId,
-	})
+	pool, err := poolService.CreatePool(ctx, q, util.FromPointer(input.Name), util.FromPointer(input.Description), util.FromPointer(input.Image), util.FromPointer(input.Slug), util.FromPointer(input.Private))
 	if err != nil {
 		return db.Pool{}, err
 	}
@@ -155,11 +141,10 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 			})
 		}
 
-		_, err := claimsService.CreateClaims(ctx, q, poolID, claims)
+		_, err := claimsService.CreateClaims(ctx, q, pool.ID, claims)
 		if err != nil {
 			return db.Pool{}, err
 		}
-
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -181,17 +166,6 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		return db.Pool{}, err
 	}
 
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return db.Pool{}, err
-	}
-
-	// TODO: verify user owns the pool
-	pool, err := api.queries.GetPoolById(ctx, id)
-	if err != nil {
-		return db.Pool{}, err
-	}
-
 	// Begin transaction
 	tx, err := api.repos.BeginTx(ctx)
 	if err != nil {
@@ -202,93 +176,23 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 	q := api.queries.WithTx(tx)
 
 	// Update pool basic info
-	private := pool.Private
-	if input.Private != nil {
-		private = *input.Private
-	}
-
-	name := pool.Name
-	if input.Name != nil {
-		name = *input.Name
-	}
-
-	description := pool.Description
-	if input.Description != nil {
-		description = *input.Description
-	}
-
-	slug := pool.Slug
-	if input.Slug != nil {
-		slug = *input.Slug
-	}
-
-	image := pool.Image
-	if input.Image != nil {
-		image = *input.Image
-	}
-
-	donationBps := int32(0)
-	if input.DonationBps != nil {
-		donationBps = int32(*input.DonationBps)
-	}
-
-	updatedPool, err := q.UpdatePool(ctx, db.UpdatePoolParams{
-		ID:          id,
-		Name:        name,
-		Description: description,
-		Image:       image,
-		Slug:        slug,
-		Private:     private,
-		DonationBps: donationBps,
-		OwnerID:     userId,
-	})
+	updatedPool, err := poolService.UpdatePool(ctx, q, id, input.Name, input.Description, input.Image, input.Slug, input.Private)
 	if err != nil {
 		return db.Pool{}, err
 	}
 
 	// Handle add claims
 	if input.AddClaims != nil && len(input.AddClaims) > 0 {
-		/*for _, claimInput := range input.AddClaims {
-				_, err := q.CreateClaims(ctx, db.CreateClaimsParams{
-					ID:               persist.GenerateID(),
-					PoolID:           id,
-					RecipientAddress: claimInput.RecipientAddress.String(),
-					StateID:          claimInput.StateId,
-					StrategyID:       claimInput.StrategyId,
-					Data:             claimInput.Data,
-					ParentID:         "", // TODO: Handle nested claims
-				})
-				if err != nil {
-					return db.Pool{}, err
-				}
-		}*/
+		// TODO: Implement claim additions
 	}
 
 	// Handle update claims
 	if input.UpdateClaims != nil && len(input.UpdateClaims) > 0 {
-		/*		for _, claimInput := range input.UpdateClaims {
-					err := q.UpdateClaims(ctx, db.UpdateClaimsParams{
-						ID:               claimInput.ClaimId,
-						RecipientAddress: claimInput.RecipientAddress.String(),
-						StateID:          claimInput.StateId,
-						StrategyID:       claimInput.StrategyId,
-						Data:             claimInput.Data,
-					})
-					if err != nil {
-						return db.Pool{}, err
-					}
-				}
-		*/
+		// TODO: Implement claim updates
 	}
 
 	if input.RemoveClaims != nil && len(input.RemoveClaims) > 0 {
-		/*		for _, claimID := range input.RemoveClaims {
-					err := q.DeleteClaim(ctx, claimID)
-					if err != nil {
-						return db.Pool{}, err
-					}
-				}
-		*/
+		// TODO: Implement claim removals
 	}
 
 	// Commit transaction

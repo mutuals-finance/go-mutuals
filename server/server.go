@@ -85,18 +85,17 @@ func ClientInit(ctx context.Context) *Clients {
 	iPgx := postgres.NewPgxClient(postgres.WithEnvParams(postgres.WithPrefix("TIMESCALE")))
 
 	return &Clients{
-		Repos:           postgres.NewRepositories(pq, cPgx),
-		CoreQueries:     coredb.New(cPgx),
-		IndexerQueries:  indexerdb.New(iPgx),
-		HTTPClient:      &http.Client{Timeout: 0},
-		EthClient:       rpc.NewEthClient(),
-		IPFSClient:      ipfs.NewShell(),
-		ArweaveClient:   arweave.NewClient(),
-		StorageClient:   rpc.NewStorageClient(ctx),
-		TaskClient:      task.NewClient(ctx),
-		SecretClient:    newSecretsClient(),
-		PubSubClient:    gcp.NewClient(ctx),
-		MagicLinkClient: auth.NewMagicLinkClient(),
+		Repos:          postgres.NewRepositories(pq, cPgx),
+		CoreQueries:    coredb.New(cPgx),
+		IndexerQueries: indexerdb.New(iPgx),
+		HTTPClient:     &http.Client{Timeout: 0},
+		EthClient:      rpc.NewEthClient(),
+		IPFSClient:     ipfs.NewShell(),
+		ArweaveClient:  arweave.NewClient(),
+		StorageClient:  rpc.NewStorageClient(ctx),
+		TaskClient:     task.NewClient(ctx),
+		SecretClient:   newSecretsClient(),
+		PubSubClient:   gcp.NewClient(ctx),
 		closeFunc: func() {
 			pq.Close()
 			cPgx.Close()
