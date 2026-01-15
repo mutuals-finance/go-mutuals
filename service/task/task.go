@@ -44,11 +44,6 @@ type TokenTransfer struct {
 	Amount      persist.HexString         `json:"amount"`
 }
 
-type TokenProcessingWalletRemovalMessage struct {
-	UserID    persist.DBID   `json:"user_id" binding:"required"`
-	WalletIDs []persist.DBID `json:"wallet_ids" binding:"required"`
-}
-
 type ValidateNFTsMessage struct {
 	OwnerAddress persist.EthereumAddress `json:"wallet"`
 }
@@ -78,15 +73,6 @@ func (c *Client) CreateTaskForTokenTransferProcessing(ctx context.Context, messa
 	defer tracing.FinishSpan(span)
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
 	url := fmt.Sprintf("%s/token/transfer", env.GetString("TOKEN_PROCESSING_URL"))
-	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
-}
-
-func (c *Client) CreateTaskForWalletRemoval(ctx context.Context, message TokenProcessingWalletRemovalMessage) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForWalletRemoval")
-	defer tracing.FinishSpan(span)
-	tracing.AddEventDataToSpan(span, map[string]any{"User ID": message.UserID, "Wallet IDs": message.WalletIDs})
-	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
-	url := fmt.Sprintf("%s/owner/wallet-removal", env.GetString("TOKEN_PROCESSING_URL"))
 	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
 }
 

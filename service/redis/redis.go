@@ -31,12 +31,9 @@ const (
 	locks               redisDB = 0
 	rateLimiters        redisDB = 1
 	misc                redisDB = 3
-	streamerThrottle    redisDB = 6
 	refreshNFTsThrottle redisDB = 7
-	tokenProcessing     redisDB = 8
 	emailThrottle       redisDB = 9
 	graphQLAPQ          redisDB = 12
-	social              redisDB = 14
 )
 
 // Every cache is uniquely defined by its database and key prefix. Display names are used for tracing.
@@ -47,16 +44,11 @@ var (
 	PushNotificationRateLimitersCache = CacheConfig{database: rateLimiters, keyPrefix: "push", displayName: "pushNotificationLimiters"}
 	OneTimeLoginCache                 = CacheConfig{database: misc, keyPrefix: "otl", displayName: "oneTimeLogin"}
 	AuthTokenForceRefreshCache        = CacheConfig{database: misc, keyPrefix: "authRefresh", displayName: "authTokenForceRefresh"}
-	StreamerThrottleCache             = CacheConfig{database: streamerThrottle, keyPrefix: "", displayName: "streamerThrottle"}
 	RefreshNFTsThrottleCache          = CacheConfig{database: refreshNFTsThrottle, keyPrefix: "", displayName: "refreshNFTsThrottle"}
-	TokenProcessingThrottleCache      = CacheConfig{database: tokenProcessing, keyPrefix: "throttle", displayName: "tokenProcessingThrottle"}
-	TokenProcessingMetadataCache      = CacheConfig{database: tokenProcessing, keyPrefix: "metadata", displayName: "tokenProcessingMetadata"}
 	EmailThrottleCache                = CacheConfig{database: emailThrottle, keyPrefix: "", displayName: "emailThrottle"}
 	GraphQLAPQCache                   = CacheConfig{database: graphQLAPQ, keyPrefix: "", displayName: "graphQLAPQ"}
-	SocialCache                       = CacheConfig{database: social, keyPrefix: "", displayName: "social"}
 	SearchCache                       = CacheConfig{keyPrefix: "search", displayName: "search"}
 	UserPrefCache                     = CacheConfig{keyPrefix: "userpref", displayName: "userPref"}
-	WalletsBloomFilterCache           = CacheConfig{database: tokenProcessing, keyPrefix: "wallets-bloom", displayName: "wallets-bloom"}
 )
 
 func newClient(db redisDB, traceName string) *redis.Client {
