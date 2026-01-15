@@ -1771,11 +1771,11 @@ func (v *notificationUpdatedSubscriptionResponse) __premarshalJSON() (*__premars
 
 // notificationsForViewerQueryResponse is returned by notificationsForViewerQuery on success.
 type notificationsForViewerQueryResponse struct {
-	Viewer notificationsForViewerQueryViewerViewerResult `json:"-"`
+	Viewer *notificationsForViewerQueryViewerUserResult `json:"-"`
 }
 
 // GetViewer returns notificationsForViewerQueryResponse.Viewer, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryResponse) GetViewer() notificationsForViewerQueryViewerViewerResult {
+func (v *notificationsForViewerQueryResponse) GetViewer() *notificationsForViewerQueryViewerUserResult {
 	return v.Viewer
 }
 
@@ -1801,8 +1801,9 @@ func (v *notificationsForViewerQueryResponse) UnmarshalJSON(b []byte) error {
 		dst := &v.Viewer
 		src := firstPass.Viewer
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalnotificationsForViewerQueryViewerViewerResult(
-				src, dst)
+			*dst = new(notificationsForViewerQueryViewerUserResult)
+			err = __unmarshalnotificationsForViewerQueryViewerUserResult(
+				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
 					"unable to unmarshal notificationsForViewerQueryResponse.Viewer: %w", err)
@@ -1831,30 +1832,26 @@ func (v *notificationsForViewerQueryResponse) __premarshalJSON() (*__premarshaln
 
 		dst := &retval.Viewer
 		src := v.Viewer
-		var err error
-		*dst, err = __marshalnotificationsForViewerQueryViewerViewerResult(
-			&src)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"unable to marshal notificationsForViewerQueryResponse.Viewer: %w", err)
+		if src != nil {
+			var err error
+			*dst, err = __marshalnotificationsForViewerQueryViewerUserResult(
+				src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal notificationsForViewerQueryResponse.Viewer: %w", err)
+			}
 		}
 	}
 	return &retval, nil
 }
 
-// notificationsForViewerQueryViewer includes the requested fields of the GraphQL type Viewer.
-type notificationsForViewerQueryViewer struct {
-	Typename      *string                                                                `json:"__typename"`
-	Notifications *notificationsForViewerQueryViewerNotificationsNotificationsConnection `json:"notifications"`
+// notificationsForViewerQueryViewerErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type notificationsForViewerQueryViewerErrInvalidInput struct {
+	Typename *string `json:"__typename"`
 }
 
-// GetTypename returns notificationsForViewerQueryViewer.Typename, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewer) GetTypename() *string { return v.Typename }
-
-// GetNotifications returns notificationsForViewerQueryViewer.Notifications, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewer) GetNotifications() *notificationsForViewerQueryViewerNotificationsNotificationsConnection {
-	return v.Notifications
-}
+// GetTypename returns notificationsForViewerQueryViewerErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerErrInvalidInput) GetTypename() *string { return v.Typename }
 
 // notificationsForViewerQueryViewerErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
 type notificationsForViewerQueryViewerErrNotAuthorized struct {
@@ -2108,50 +2105,72 @@ func (v *notificationsForViewerQueryViewerErrNotAuthorizedCauseErrSessionInvalid
 	return v.Message
 }
 
-// notificationsForViewerQueryViewerNotificationsNotificationsConnection includes the requested fields of the GraphQL type NotificationsConnection.
-type notificationsForViewerQueryViewerNotificationsNotificationsConnection struct {
-	UnseenCount *int                                                                                          `json:"unseenCount"`
-	Edges       []*notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge `json:"edges"`
-	PageInfo    *notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo                `json:"pageInfo"`
+// notificationsForViewerQueryViewerErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
+type notificationsForViewerQueryViewerErrUserNotFound struct {
+	Typename *string `json:"__typename"`
 }
 
-// GetUnseenCount returns notificationsForViewerQueryViewerNotificationsNotificationsConnection.UnseenCount, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnection) GetUnseenCount() *int {
+// GetTypename returns notificationsForViewerQueryViewerErrUserNotFound.Typename, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerErrUserNotFound) GetTypename() *string { return v.Typename }
+
+// notificationsForViewerQueryViewerUser includes the requested fields of the GraphQL type User.
+type notificationsForViewerQueryViewerUser struct {
+	Typename      *string                                                                    `json:"__typename"`
+	Notifications *notificationsForViewerQueryViewerUserNotificationsNotificationsConnection `json:"notifications"`
+}
+
+// GetTypename returns notificationsForViewerQueryViewerUser.Typename, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUser) GetTypename() *string { return v.Typename }
+
+// GetNotifications returns notificationsForViewerQueryViewerUser.Notifications, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUser) GetNotifications() *notificationsForViewerQueryViewerUserNotificationsNotificationsConnection {
+	return v.Notifications
+}
+
+// notificationsForViewerQueryViewerUserNotificationsNotificationsConnection includes the requested fields of the GraphQL type NotificationsConnection.
+type notificationsForViewerQueryViewerUserNotificationsNotificationsConnection struct {
+	UnseenCount *int                                                                                              `json:"unseenCount"`
+	Edges       []*notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge `json:"edges"`
+	PageInfo    *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo                `json:"pageInfo"`
+}
+
+// GetUnseenCount returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnection.UnseenCount, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnection) GetUnseenCount() *int {
 	return v.UnseenCount
 }
 
-// GetEdges returns notificationsForViewerQueryViewerNotificationsNotificationsConnection.Edges, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnection) GetEdges() []*notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge {
+// GetEdges returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnection.Edges, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnection) GetEdges() []*notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge {
 	return v.Edges
 }
 
-// GetPageInfo returns notificationsForViewerQueryViewerNotificationsNotificationsConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnection) GetPageInfo() *notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo {
+// GetPageInfo returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnection) GetPageInfo() *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo {
 	return v.PageInfo
 }
 
-// notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge includes the requested fields of the GraphQL type NotificationEdge.
-type notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge struct {
-	Node *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification `json:"-"`
+// notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge includes the requested fields of the GraphQL type NotificationEdge.
+type notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge struct {
+	Node *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification `json:"-"`
 }
 
-// GetNode returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge.Node, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge) GetNode() *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification {
+// GetNode returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge.Node, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge) GetNode() *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification {
 	return v.Node
 }
 
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge) UnmarshalJSON(b []byte) error {
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge
+		*notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge
 		Node json.RawMessage `json:"node"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge = v
+	firstPass.notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -2162,23 +2181,23 @@ func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEd
 		dst := &v.Node
 		src := firstPass.Node
 		if len(src) != 0 && string(src) != "null" {
-			*dst = new(notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification)
-			err = __unmarshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(
+			*dst = new(notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification)
+			err = __unmarshalnotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(
 				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge.Node: %w", err)
+					"unable to unmarshal notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge.Node: %w", err)
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge struct {
+type __premarshalnotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge struct {
 	Node json.RawMessage `json:"node"`
 }
 
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge) MarshalJSON() ([]byte, error) {
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -2186,8 +2205,8 @@ func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEd
 	return json.Marshal(premarshaled)
 }
 
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge) __premarshalJSON() (*__premarshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge, error) {
-	var retval __premarshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge) __premarshalJSON() (*__premarshalnotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge, error) {
+	var retval __premarshalnotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge
 
 	{
 
@@ -2195,22 +2214,22 @@ func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEd
 		src := v.Node
 		if src != nil {
 			var err error
-			*dst, err = __marshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(
+			*dst, err = __marshalnotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(
 				src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"unable to marshal notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdge.Node: %w", err)
+					"unable to marshal notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdge.Node: %w", err)
 			}
 		}
 	}
 	return &retval, nil
 }
 
-// notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification includes the requested fields of the GraphQL interface Notification.
+// notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification includes the requested fields of the GraphQL interface Notification.
 //
-// notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification is implemented by the following types:
-type notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification interface {
-	implementsGraphQLInterfacenotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification()
+// notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification is implemented by the following types:
+type notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification interface {
+	implementsGraphQLInterfacenotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 	// GetId returns the interface-field "id" from its implementation.
@@ -2221,7 +2240,7 @@ type notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesN
 	GetCreationTime() *string
 }
 
-func __unmarshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(b []byte, v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification) error {
+func __unmarshalnotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(b []byte, v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -2240,11 +2259,11 @@ func __unmarshalnotificationsForViewerQueryViewerNotificationsNotificationsConne
 			"response was missing Notification.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification: "%v"`, tn.TypeName)
+			`unexpected concrete type for notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalnotificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification) ([]byte, error) {
+func __marshalnotificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification(v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
@@ -2252,55 +2271,61 @@ func __marshalnotificationsForViewerQueryViewerNotificationsNotificationsConnect
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for notificationsForViewerQueryViewerNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification: "%T"`, v)
+			`unexpected concrete type for notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionEdgesNotificationEdgeNodeNotification: "%T"`, v)
 	}
 }
 
-// notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
-type notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo struct {
+// notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+type notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo struct {
 	HasNextPage     bool   `json:"hasNextPage"`
 	HasPreviousPage bool   `json:"hasPreviousPage"`
 	StartCursor     string `json:"startCursor"`
 	EndCursor       string `json:"endCursor"`
 }
 
-// GetHasNextPage returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo) GetHasNextPage() bool {
+// GetHasNextPage returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo) GetHasNextPage() bool {
 	return v.HasNextPage
 }
 
-// GetHasPreviousPage returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo.HasPreviousPage, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo) GetHasPreviousPage() bool {
+// GetHasPreviousPage returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo.HasPreviousPage, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo) GetHasPreviousPage() bool {
 	return v.HasPreviousPage
 }
 
-// GetStartCursor returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo) GetStartCursor() string {
+// GetStartCursor returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo) GetStartCursor() string {
 	return v.StartCursor
 }
 
-// GetEndCursor returns notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *notificationsForViewerQueryViewerNotificationsNotificationsConnectionPageInfo) GetEndCursor() string {
+// GetEndCursor returns notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *notificationsForViewerQueryViewerUserNotificationsNotificationsConnectionPageInfo) GetEndCursor() string {
 	return v.EndCursor
 }
 
-// notificationsForViewerQueryViewerViewerResult includes the requested fields of the GraphQL interface ViewerResult.
+// notificationsForViewerQueryViewerUserResult includes the requested fields of the GraphQL interface UserResult.
 //
-// notificationsForViewerQueryViewerViewerResult is implemented by the following types:
+// notificationsForViewerQueryViewerUserResult is implemented by the following types:
+// notificationsForViewerQueryViewerErrInvalidInput
 // notificationsForViewerQueryViewerErrNotAuthorized
-// notificationsForViewerQueryViewer
-type notificationsForViewerQueryViewerViewerResult interface {
-	implementsGraphQLInterfacenotificationsForViewerQueryViewerViewerResult()
+// notificationsForViewerQueryViewerErrUserNotFound
+// notificationsForViewerQueryViewerUser
+type notificationsForViewerQueryViewerUserResult interface {
+	implementsGraphQLInterfacenotificationsForViewerQueryViewerUserResult()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *notificationsForViewerQueryViewerErrNotAuthorized) implementsGraphQLInterfacenotificationsForViewerQueryViewerViewerResult() {
+func (v *notificationsForViewerQueryViewerErrInvalidInput) implementsGraphQLInterfacenotificationsForViewerQueryViewerUserResult() {
 }
-func (v *notificationsForViewerQueryViewer) implementsGraphQLInterfacenotificationsForViewerQueryViewerViewerResult() {
+func (v *notificationsForViewerQueryViewerErrNotAuthorized) implementsGraphQLInterfacenotificationsForViewerQueryViewerUserResult() {
+}
+func (v *notificationsForViewerQueryViewerErrUserNotFound) implementsGraphQLInterfacenotificationsForViewerQueryViewerUserResult() {
+}
+func (v *notificationsForViewerQueryViewerUser) implementsGraphQLInterfacenotificationsForViewerQueryViewerUserResult() {
 }
 
-func __unmarshalnotificationsForViewerQueryViewerViewerResult(b []byte, v *notificationsForViewerQueryViewerViewerResult) error {
+func __unmarshalnotificationsForViewerQueryViewerUserResult(b []byte, v *notificationsForViewerQueryViewerUserResult) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -2314,25 +2339,39 @@ func __unmarshalnotificationsForViewerQueryViewerViewerResult(b []byte, v *notif
 	}
 
 	switch tn.TypeName {
+	case "ErrInvalidInput":
+		*v = new(notificationsForViewerQueryViewerErrInvalidInput)
+		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
 		*v = new(notificationsForViewerQueryViewerErrNotAuthorized)
 		return json.Unmarshal(b, *v)
-	case "Viewer":
-		*v = new(notificationsForViewerQueryViewer)
+	case "ErrUserNotFound":
+		*v = new(notificationsForViewerQueryViewerErrUserNotFound)
+		return json.Unmarshal(b, *v)
+	case "User":
+		*v = new(notificationsForViewerQueryViewerUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing ViewerResult.__typename")
+			"response was missing UserResult.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for notificationsForViewerQueryViewerViewerResult: "%v"`, tn.TypeName)
+			`unexpected concrete type for notificationsForViewerQueryViewerUserResult: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalnotificationsForViewerQueryViewerViewerResult(v *notificationsForViewerQueryViewerViewerResult) ([]byte, error) {
+func __marshalnotificationsForViewerQueryViewerUserResult(v *notificationsForViewerQueryViewerUserResult) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
+	case *notificationsForViewerQueryViewerErrInvalidInput:
+		typename = "ErrInvalidInput"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*notificationsForViewerQueryViewerErrInvalidInput
+		}{typename, v}
+		return json.Marshal(result)
 	case *notificationsForViewerQueryViewerErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
@@ -2345,19 +2384,27 @@ func __marshalnotificationsForViewerQueryViewerViewerResult(v *notificationsForV
 			*__premarshalnotificationsForViewerQueryViewerErrNotAuthorized
 		}{typename, premarshaled}
 		return json.Marshal(result)
-	case *notificationsForViewerQueryViewer:
-		typename = "Viewer"
+	case *notificationsForViewerQueryViewerErrUserNotFound:
+		typename = "ErrUserNotFound"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*notificationsForViewerQueryViewer
+			*notificationsForViewerQueryViewerErrUserNotFound
+		}{typename, v}
+		return json.Marshal(result)
+	case *notificationsForViewerQueryViewerUser:
+		typename = "User"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*notificationsForViewerQueryViewerUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for notificationsForViewerQueryViewerViewerResult: "%T"`, v)
+			`unexpected concrete type for notificationsForViewerQueryViewerUserResult: "%T"`, v)
 	}
 }
 
@@ -6604,6 +6651,14 @@ func (v *userByAddressQueryUserByAddressErrInvalidInput) GetParameters() []strin
 // GetReasons returns userByAddressQueryUserByAddressErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
 func (v *userByAddressQueryUserByAddressErrInvalidInput) GetReasons() []string { return v.Reasons }
 
+// userByAddressQueryUserByAddressErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type userByAddressQueryUserByAddressErrNotAuthorized struct {
+	Typename *string `json:"__typename"`
+}
+
+// GetTypename returns userByAddressQueryUserByAddressErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserByAddressErrNotAuthorized) GetTypename() *string { return v.Typename }
+
 // userByAddressQueryUserByAddressErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
 type userByAddressQueryUserByAddressErrUserNotFound struct {
 	Typename *string `json:"__typename"`
@@ -6636,6 +6691,7 @@ func (v *userByAddressQueryUserByAddressUser) GetRoles() []*Role { return v.Role
 //
 // userByAddressQueryUserByAddressUserResult is implemented by the following types:
 // userByAddressQueryUserByAddressErrInvalidInput
+// userByAddressQueryUserByAddressErrNotAuthorized
 // userByAddressQueryUserByAddressErrUserNotFound
 // userByAddressQueryUserByAddressUser
 type userByAddressQueryUserByAddressUserResult interface {
@@ -6645,6 +6701,8 @@ type userByAddressQueryUserByAddressUserResult interface {
 }
 
 func (v *userByAddressQueryUserByAddressErrInvalidInput) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult() {
+}
+func (v *userByAddressQueryUserByAddressErrNotAuthorized) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult() {
 }
 func (v *userByAddressQueryUserByAddressErrUserNotFound) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult() {
 }
@@ -6667,6 +6725,9 @@ func __unmarshaluserByAddressQueryUserByAddressUserResult(b []byte, v *userByAdd
 	switch tn.TypeName {
 	case "ErrInvalidInput":
 		*v = new(userByAddressQueryUserByAddressErrInvalidInput)
+		return json.Unmarshal(b, *v)
+	case "ErrNotAuthorized":
+		*v = new(userByAddressQueryUserByAddressErrNotAuthorized)
 		return json.Unmarshal(b, *v)
 	case "ErrUserNotFound":
 		*v = new(userByAddressQueryUserByAddressErrUserNotFound)
@@ -6693,6 +6754,14 @@ func __marshaluserByAddressQueryUserByAddressUserResult(v *userByAddressQueryUse
 		result := struct {
 			TypeName string `json:"__typename"`
 			*userByAddressQueryUserByAddressErrInvalidInput
+		}{typename, v}
+		return json.Marshal(result)
+	case *userByAddressQueryUserByAddressErrNotAuthorized:
+		typename = "ErrNotAuthorized"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*userByAddressQueryUserByAddressErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
 	case *userByAddressQueryUserByAddressErrUserNotFound:
@@ -6810,6 +6879,14 @@ func (v *userByIdQueryUserByIdErrInvalidInput) GetParameters() []string { return
 // GetReasons returns userByIdQueryUserByIdErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
 func (v *userByIdQueryUserByIdErrInvalidInput) GetReasons() []string { return v.Reasons }
 
+// userByIdQueryUserByIdErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type userByIdQueryUserByIdErrNotAuthorized struct {
+	Typename *string `json:"__typename"`
+}
+
+// GetTypename returns userByIdQueryUserByIdErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserByIdErrNotAuthorized) GetTypename() *string { return v.Typename }
+
 // userByIdQueryUserByIdErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
 type userByIdQueryUserByIdErrUserNotFound struct {
 	Typename *string `json:"__typename"`
@@ -6842,6 +6919,7 @@ func (v *userByIdQueryUserByIdUser) GetRoles() []*Role { return v.Roles }
 //
 // userByIdQueryUserByIdUserResult is implemented by the following types:
 // userByIdQueryUserByIdErrInvalidInput
+// userByIdQueryUserByIdErrNotAuthorized
 // userByIdQueryUserByIdErrUserNotFound
 // userByIdQueryUserByIdUser
 type userByIdQueryUserByIdUserResult interface {
@@ -6851,6 +6929,8 @@ type userByIdQueryUserByIdUserResult interface {
 }
 
 func (v *userByIdQueryUserByIdErrInvalidInput) implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult() {
+}
+func (v *userByIdQueryUserByIdErrNotAuthorized) implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult() {
 }
 func (v *userByIdQueryUserByIdErrUserNotFound) implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult() {
 }
@@ -6872,6 +6952,9 @@ func __unmarshaluserByIdQueryUserByIdUserResult(b []byte, v *userByIdQueryUserBy
 	switch tn.TypeName {
 	case "ErrInvalidInput":
 		*v = new(userByIdQueryUserByIdErrInvalidInput)
+		return json.Unmarshal(b, *v)
+	case "ErrNotAuthorized":
+		*v = new(userByIdQueryUserByIdErrNotAuthorized)
 		return json.Unmarshal(b, *v)
 	case "ErrUserNotFound":
 		*v = new(userByIdQueryUserByIdErrUserNotFound)
@@ -6898,6 +6981,14 @@ func __marshaluserByIdQueryUserByIdUserResult(v *userByIdQueryUserByIdUserResult
 		result := struct {
 			TypeName string `json:"__typename"`
 			*userByIdQueryUserByIdErrInvalidInput
+		}{typename, v}
+		return json.Marshal(result)
+	case *userByIdQueryUserByIdErrNotAuthorized:
+		typename = "ErrNotAuthorized"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*userByIdQueryUserByIdErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
 	case *userByIdQueryUserByIdErrUserNotFound:
@@ -8466,11 +8557,11 @@ func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetEndCursor() stri
 
 // viewerQueryResponse is returned by viewerQuery on success.
 type viewerQueryResponse struct {
-	Viewer viewerQueryViewerViewerResult `json:"-"`
+	Viewer *viewerQueryViewerUserResult `json:"-"`
 }
 
 // GetViewer returns viewerQueryResponse.Viewer, and is useful for accessing the field via an interface.
-func (v *viewerQueryResponse) GetViewer() viewerQueryViewerViewerResult { return v.Viewer }
+func (v *viewerQueryResponse) GetViewer() *viewerQueryViewerUserResult { return v.Viewer }
 
 func (v *viewerQueryResponse) UnmarshalJSON(b []byte) error {
 
@@ -8494,8 +8585,9 @@ func (v *viewerQueryResponse) UnmarshalJSON(b []byte) error {
 		dst := &v.Viewer
 		src := firstPass.Viewer
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalviewerQueryViewerViewerResult(
-				src, dst)
+			*dst = new(viewerQueryViewerUserResult)
+			err = __unmarshalviewerQueryViewerUserResult(
+				src, *dst)
 			if err != nil {
 				return fmt.Errorf(
 					"unable to unmarshal viewerQueryResponse.Viewer: %w", err)
@@ -8524,32 +8616,38 @@ func (v *viewerQueryResponse) __premarshalJSON() (*__premarshalviewerQueryRespon
 
 		dst := &retval.Viewer
 		src := v.Viewer
-		var err error
-		*dst, err = __marshalviewerQueryViewerViewerResult(
-			&src)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"unable to marshal viewerQueryResponse.Viewer: %w", err)
+		if src != nil {
+			var err error
+			*dst, err = __marshalviewerQueryViewerUserResult(
+				src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal viewerQueryResponse.Viewer: %w", err)
+			}
 		}
 	}
 	return &retval, nil
 }
 
-// viewerQueryViewer includes the requested fields of the GraphQL type Viewer.
-type viewerQueryViewer struct {
-	Typename *string                `json:"__typename"`
-	Id       string                 `json:"id"`
-	User     *viewerQueryViewerUser `json:"user"`
+// viewerQueryViewerErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type viewerQueryViewerErrInvalidInput struct {
+	Typename   *string  `json:"__typename"`
+	Message    string   `json:"message"`
+	Parameters []string `json:"parameters"`
+	Reasons    []string `json:"reasons"`
 }
 
-// GetTypename returns viewerQueryViewer.Typename, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewer) GetTypename() *string { return v.Typename }
+// GetTypename returns viewerQueryViewerErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// GetId returns viewerQueryViewer.Id, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewer) GetId() string { return v.Id }
+// GetMessage returns viewerQueryViewerErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerErrInvalidInput) GetMessage() string { return v.Message }
 
-// GetUser returns viewerQueryViewer.User, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewer) GetUser() *viewerQueryViewerUser { return v.User }
+// GetParameters returns viewerQueryViewerErrInvalidInput.Parameters, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerErrInvalidInput) GetParameters() []string { return v.Parameters }
+
+// GetReasons returns viewerQueryViewerErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerErrInvalidInput) GetReasons() []string { return v.Reasons }
 
 // viewerQueryViewerErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
 type viewerQueryViewerErrNotAuthorized struct {
@@ -8797,11 +8895,23 @@ func (v *viewerQueryViewerErrNotAuthorizedCauseErrSessionInvalidated) GetMessage
 	return v.Message
 }
 
+// viewerQueryViewerErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
+type viewerQueryViewerErrUserNotFound struct {
+	Typename *string `json:"__typename"`
+}
+
+// GetTypename returns viewerQueryViewerErrUserNotFound.Typename, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerErrUserNotFound) GetTypename() *string { return v.Typename }
+
 // viewerQueryViewerUser includes the requested fields of the GraphQL type User.
 type viewerQueryViewerUser struct {
-	Id    string  `json:"id"`
-	Roles []*Role `json:"roles"`
+	Typename *string `json:"__typename"`
+	Id       string  `json:"id"`
+	Roles    []*Role `json:"roles"`
 }
+
+// GetTypename returns viewerQueryViewerUser.Typename, and is useful for accessing the field via an interface.
+func (v *viewerQueryViewerUser) GetTypename() *string { return v.Typename }
 
 // GetId returns viewerQueryViewerUser.Id, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerUser) GetId() string { return v.Id }
@@ -8809,22 +8919,25 @@ func (v *viewerQueryViewerUser) GetId() string { return v.Id }
 // GetRoles returns viewerQueryViewerUser.Roles, and is useful for accessing the field via an interface.
 func (v *viewerQueryViewerUser) GetRoles() []*Role { return v.Roles }
 
-// viewerQueryViewerViewerResult includes the requested fields of the GraphQL interface ViewerResult.
+// viewerQueryViewerUserResult includes the requested fields of the GraphQL interface UserResult.
 //
-// viewerQueryViewerViewerResult is implemented by the following types:
+// viewerQueryViewerUserResult is implemented by the following types:
+// viewerQueryViewerErrInvalidInput
 // viewerQueryViewerErrNotAuthorized
-// viewerQueryViewer
-type viewerQueryViewerViewerResult interface {
-	implementsGraphQLInterfaceviewerQueryViewerViewerResult()
+// viewerQueryViewerErrUserNotFound
+// viewerQueryViewerUser
+type viewerQueryViewerUserResult interface {
+	implementsGraphQLInterfaceviewerQueryViewerUserResult()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *viewerQueryViewerErrNotAuthorized) implementsGraphQLInterfaceviewerQueryViewerViewerResult() {
-}
-func (v *viewerQueryViewer) implementsGraphQLInterfaceviewerQueryViewerViewerResult() {}
+func (v *viewerQueryViewerErrInvalidInput) implementsGraphQLInterfaceviewerQueryViewerUserResult()  {}
+func (v *viewerQueryViewerErrNotAuthorized) implementsGraphQLInterfaceviewerQueryViewerUserResult() {}
+func (v *viewerQueryViewerErrUserNotFound) implementsGraphQLInterfaceviewerQueryViewerUserResult()  {}
+func (v *viewerQueryViewerUser) implementsGraphQLInterfaceviewerQueryViewerUserResult()             {}
 
-func __unmarshalviewerQueryViewerViewerResult(b []byte, v *viewerQueryViewerViewerResult) error {
+func __unmarshalviewerQueryViewerUserResult(b []byte, v *viewerQueryViewerUserResult) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -8838,25 +8951,39 @@ func __unmarshalviewerQueryViewerViewerResult(b []byte, v *viewerQueryViewerView
 	}
 
 	switch tn.TypeName {
+	case "ErrInvalidInput":
+		*v = new(viewerQueryViewerErrInvalidInput)
+		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
 		*v = new(viewerQueryViewerErrNotAuthorized)
 		return json.Unmarshal(b, *v)
-	case "Viewer":
-		*v = new(viewerQueryViewer)
+	case "ErrUserNotFound":
+		*v = new(viewerQueryViewerErrUserNotFound)
+		return json.Unmarshal(b, *v)
+	case "User":
+		*v = new(viewerQueryViewerUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
-			"response was missing ViewerResult.__typename")
+			"response was missing UserResult.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for viewerQueryViewerViewerResult: "%v"`, tn.TypeName)
+			`unexpected concrete type for viewerQueryViewerUserResult: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshalviewerQueryViewerViewerResult(v *viewerQueryViewerViewerResult) ([]byte, error) {
+func __marshalviewerQueryViewerUserResult(v *viewerQueryViewerUserResult) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
+	case *viewerQueryViewerErrInvalidInput:
+		typename = "ErrInvalidInput"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*viewerQueryViewerErrInvalidInput
+		}{typename, v}
+		return json.Marshal(result)
 	case *viewerQueryViewerErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
@@ -8869,19 +8996,27 @@ func __marshalviewerQueryViewerViewerResult(v *viewerQueryViewerViewerResult) ([
 			*__premarshalviewerQueryViewerErrNotAuthorized
 		}{typename, premarshaled}
 		return json.Marshal(result)
-	case *viewerQueryViewer:
-		typename = "Viewer"
+	case *viewerQueryViewerErrUserNotFound:
+		typename = "ErrUserNotFound"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*viewerQueryViewer
+			*viewerQueryViewerErrUserNotFound
+		}{typename, v}
+		return json.Marshal(result)
+	case *viewerQueryViewerUser:
+		typename = "User"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*viewerQueryViewerUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for viewerQueryViewerViewerResult: "%T"`, v)
+			`unexpected concrete type for viewerQueryViewerUserResult: "%T"`, v)
 	}
 }
 
@@ -9166,8 +9301,8 @@ const notificationsForViewerQuery_Operation = `
 query notificationsForViewerQuery {
 	viewer {
 		__typename
-		... on Viewer {
-			notifications(last: 1, before: null) {
+		... on User {
+			notifications(last: 1) {
 				unseenCount
 				edges {
 					node {
@@ -10464,12 +10599,9 @@ const viewerQuery_Operation = `
 query viewerQuery {
 	viewer {
 		__typename
-		... on Viewer {
+		... on User {
 			id
-			user {
-				id
-				roles
-			}
+			roles
 		}
 		... on ErrNotAuthorized {
 			message
@@ -10488,6 +10620,11 @@ query viewerQuery {
 					message
 				}
 			}
+		}
+		... on ErrInvalidInput {
+			message
+			parameters
+			reasons
 		}
 	}
 }

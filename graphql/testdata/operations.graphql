@@ -35,37 +35,31 @@ query userByAddressQuery($input: ChainAddressInput!) {
 
 query viewerQuery {
     viewer {
-        ... on Viewer {
+        ... on User {
             id
-            user {
-                id
-                roles
-            }
+            roles
         }
         ... on ErrNotAuthorized {
             message
             cause {
-                ... on ErrNoCookie {
-                    message
-                }
-                ... on ErrInvalidToken {
-                    message
-                }
-                ... on ErrSessionInvalidated {
-                    message
-                }
-                ... on ErrDoesNotOwnRequiredToken {
-                    message
-                }
+                ... on ErrNoCookie { message }
+                ... on ErrInvalidToken { message }
+                ... on ErrSessionInvalidated { message }
+                ... on ErrDoesNotOwnRequiredToken { message }
             }
+        }
+        ... on ErrInvalidInput {
+            message
+            parameters
+            reasons
         }
     }
 }
 
 query notificationsForViewerQuery {
     viewer {
-        ... on Viewer {
-            notifications(last: 1, before: null) {
+        ... on User {
+            notifications(last: 1) {
                 unseenCount
                 edges {
                     node {
@@ -85,18 +79,10 @@ query notificationsForViewerQuery {
         ... on ErrNotAuthorized {
             message
             cause {
-                ... on ErrNoCookie {
-                    message
-                }
-                ... on ErrInvalidToken {
-                    message
-                }
-                ... on ErrSessionInvalidated {
-                    message
-                }
-                ... on ErrDoesNotOwnRequiredToken {
-                    message
-                }
+                ... on ErrNoCookie { message }
+                ... on ErrInvalidToken { message }
+                ... on ErrSessionInvalidated { message }
+                ... on ErrDoesNotOwnRequiredToken { message }
             }
         }
     }

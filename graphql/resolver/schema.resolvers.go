@@ -357,8 +357,12 @@ func (r *queryResolver) Node(ctx context.Context, id model.GqlID) (model.Node, e
 }
 
 // Viewer is the resolver for the viewer field.
-func (r *queryResolver) Viewer(ctx context.Context) (model.ViewerResult, error) {
-	return resolveViewer(ctx), nil
+func (r *queryResolver) Viewer(ctx context.Context) (model.UserResult, error) {
+	user, err := resolveViewer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // UserByUsername is the resolver for the userByUsername field.
@@ -471,7 +475,22 @@ func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*persist.R
 
 // Pools is the resolver for the pools field.
 func (r *userResolver) Pools(ctx context.Context, obj *model.User) ([]*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pools - pools"))
+	return resolveUserPools(ctx, obj)
+}
+
+// Notifications is the resolver for the notifications field.
+func (r *userResolver) Notifications(ctx context.Context, obj *model.User, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error) {
+	return resolveViewerNotifications(ctx, before, after, first, last)
+}
+
+// NotificationSettings is the resolver for the notificationSettings field.
+func (r *userResolver) NotificationSettings(ctx context.Context, obj *model.User) (*model.NotificationSettings, error) {
+	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return notificationSettingsToModel(ctx, user), nil
 }
 
 // EmailNotificationSettings is the resolver for the emailNotificationSettings field.
@@ -486,33 +505,6 @@ func (r *userEmailResolver) EmailNotificationSettings(ctx context.Context, obj *
 		UnsubscribedFromAll:           unsubs.All.Bool(),
 		UnsubscribedFromNotifications: unsubs.Notifications.Bool(),
 	}, nil
-}
-
-// User is the resolver for the user field.
-func (r *viewerResolver) User(ctx context.Context, obj *model.Viewer) (*model.User, error) {
-	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	return resolveUserByUserID(ctx, userId)
-}
-
-// Pools is the resolver for the pools field.
-func (r *viewerResolver) Pools(ctx context.Context, obj *model.Viewer) ([]*model.Pool, error) {
-	logger.For(ctx).Infof("viewerResolver: %v", obj)
-	return resolveViewerPools(ctx)
-}
-
-// Notifications is the resolver for the notifications field.
-func (r *viewerResolver) Notifications(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error) {
-	return resolveViewerNotifications(ctx, before, after, first, last)
-}
-
-// NotificationSettings is the resolver for the notificationSettings field.
-func (r *viewerResolver) NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error) {
-	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
-	if err != nil {
-		return nil, err
-	}
-	return notificationSettingsToModel(ctx, user), nil
 }
 
 // Transaction is the resolver for the transaction field.
@@ -604,9 +596,6 @@ func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 // UserEmail returns generated.UserEmailResolver implementation.
 func (r *Resolver) UserEmail() generated.UserEmailResolver { return &userEmailResolver{r} }
 
-// Viewer returns generated.ViewerResolver implementation.
-func (r *Resolver) Viewer() generated.ViewerResolver { return &viewerResolver{r} }
-
 // Withdrawal returns generated.WithdrawalResolver implementation.
 func (r *Resolver) Withdrawal() generated.WithdrawalResolver { return &withdrawalResolver{r} }
 
@@ -636,7 +625,6 @@ type tokenBalanceResolver struct{ *Resolver }
 type txResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type userEmailResolver struct{ *Resolver }
-type viewerResolver struct{ *Resolver }
 type withdrawalResolver struct{ *Resolver }
 type chainAddressInputResolver struct{ *Resolver }
 type chainPubKeyInputResolver struct{ *Resolver }

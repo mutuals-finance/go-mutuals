@@ -8,8 +8,8 @@ import (
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/graphql/model"
+	"github.com/mutuals/go-mutuals/service/auth/privy"
 	claimsService "github.com/mutuals/go-mutuals/service/claims"
-	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/allocation"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
@@ -47,18 +47,30 @@ func (api PoolAPI) GetPool(ctx context.Context, poolID *persist.DBID, slug *stri
 
 func (api PoolAPI) GetViewerPools(ctx context.Context) (*[]db.Pool, error) {
 	viewerId, err := getAuthenticatedUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
 	viewerAccounts, err := getAuthenticatedLinkedAccounts(ctx)
-	logger.For(ctx).Infof("VIEWER: %s, %v", viewerId, viewerAccounts)
-
 	if err != nil {
 		return nil, err
 	}
 
-	params := db.GetPoolsByAddressesOrOwnerBatchParams{
-		OwnerID: viewerId,
+	return api.GetPoolsByUserIdAndLinkedAccounts(ctx, viewerId, viewerAccounts)
+}
+
+func (api PoolAPI) GetPoolsByUserIdAndLinkedAccounts(ctx context.Context, userId persist.DBID, linkedAccounts []privy.LinkedAccount) (*[]db.Pool, error) {
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"userId": validate.WithTag(userId, "required"),
+	}); err != nil {
+		return nil, err
 	}
 
-	for _, account := range viewerAccounts {
+	params := db.GetPoolsByAddressesOrOwnerBatchParams{
+		OwnerID: userId,
+	}
+
+	for _, account := range linkedAccounts {
 		params.Addresses = append(params.Addresses, account.Address)
 	}
 

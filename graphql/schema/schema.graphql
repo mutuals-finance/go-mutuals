@@ -142,6 +142,8 @@ type User implements Node {
   id: ID!
   roles: [Role] @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
+  notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection @goField(forceResolver: true)
+  notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
 
 union UserOrAccount = User | EVMAccount
@@ -154,19 +156,6 @@ type UserEdge {
 type UsersConnection {
   edges: [UserEdge]
   pageInfo: PageInfo!
-}
-
-#-------------------------------------------------------------------------------
-# VIEWER
-#-------------------------------------------------------------------------------
-
-type Viewer implements Node {
-  id: ID!
-  user: User @goField(forceResolver: true)
-  pools: [Pool] @goField(forceResolver: true)
-  notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection
-  @goField(forceResolver: true)
-  notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
 
 # -------------------------------------------------------------------------------
@@ -578,16 +567,15 @@ type GroupNotificationUsersConnection {
 # QUERY
 #-------------------------------------------------------------------------------
 
-union ViewerResult = Viewer | ErrNotAuthorized
-union UserResult = User | ErrUserNotFound | ErrInvalidInput
+union UserResult = User | ErrNotAuthorized | ErrUserNotFound | ErrInvalidInput
 union PoolResult = Pool | ErrPoolNotFound | ErrInvalidInput
 union SearchUsersResult = SearchUsersPayload | ErrInvalidInput
 union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
 
 type Query {
   node(id: ID!): Node
-  viewer: ViewerResult! @authRequired
-  userByUsername(username: String!): UserResult!
+    viewer: UserResult @authRequired
+    userByUsername(username: String!): UserResult!
   userById(id: ID!): UserResult!
   userByAddress(chainAddress: ChainAddressInput!): UserResult!
 
@@ -658,13 +646,13 @@ union UserDeleteResult = UserDeletePayload | ErrNotAuthorized | ErrInvalidInput
 # WALLET MUTATIONS
 
 type AddUserWalletPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union AddUserWalletResult = AddUserWalletPayload | ErrAuthenticationFailed | ErrNotAuthorized | ErrInvalidInput | ErrAddressOwnedByUser
 
 type RemoveUserWalletsPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | ErrInvalidInput
@@ -672,13 +660,13 @@ union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | Er
 # AUTH MUTATIONS
 
 type LoginPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union LoginResult = LoginPayload | ErrUserNotFound | ErrAuthenticationFailed | ErrDoesNotOwnRequiredToken
 
 type LogoutPayload {
-  viewer: Viewer
+  viewer: User
 }
 
 type VerifyTokenPayload {
@@ -746,19 +734,19 @@ type PreverifyEmailPayload {
 union PreverifyEmailResult = PreverifyEmailPayload | ErrInvalidInput
 
 type UpdateEmailPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union UpdateEmailResult = UpdateEmailPayload | ErrNotAuthorized | ErrInvalidInput
 
 type ResendVerificationEmailPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union ResendVerificationEmailResult = ResendVerificationEmailPayload | ErrNotAuthorized | ErrInvalidInput
 
 type UnsubscribeFromEmailPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union UnsubscribeFromEmailResult = UnsubscribeFromEmailPayload | ErrInvalidInput

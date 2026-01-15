@@ -59,7 +59,6 @@ type ResolverRoot interface {
 	Tx() TxResolver
 	User() UserResolver
 	UserEmail() UserEmailResolver
-	Viewer() ViewerResolver
 	Withdrawal() WithdrawalResolver
 	ChainAddressInput() ChainAddressInputResolver
 	ChainPubKeyInput() ChainPubKeyInputResolver
@@ -525,9 +524,11 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		ID    func(childComplexity int) int
-		Pools func(childComplexity int) int
-		Roles func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		NotificationSettings func(childComplexity int) int
+		Notifications        func(childComplexity int, before *string, after *string, first *int, last *int) int
+		Pools                func(childComplexity int) int
+		Roles                func(childComplexity int) int
 	}
 
 	UserDeletePayload struct {
@@ -570,14 +571,6 @@ type ComplexityRoot struct {
 	VerifyTokenPayload struct {
 		IsValid func(childComplexity int) int
 		User    func(childComplexity int) int
-	}
-
-	Viewer struct {
-		ID                   func(childComplexity int) int
-		NotificationSettings func(childComplexity int) int
-		Notifications        func(childComplexity int, before *string, after *string, first *int, last *int) int
-		Pools                func(childComplexity int) int
-		User                 func(childComplexity int) int
 	}
 
 	Withdrawal struct {
@@ -677,7 +670,7 @@ type PoolHourBalanceResolver interface {
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id model.GqlID) (model.Node, error)
-	Viewer(ctx context.Context) (model.ViewerResult, error)
+	Viewer(ctx context.Context) (model.UserResult, error)
 	UserByUsername(ctx context.Context, username string) (model.UserResult, error)
 	UserByID(ctx context.Context, id model.GqlID) (model.UserResult, error)
 	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserResult, error)
@@ -702,15 +695,11 @@ type TxResolver interface {
 type UserResolver interface {
 	Roles(ctx context.Context, obj *model.User) ([]*persist.Role, error)
 	Pools(ctx context.Context, obj *model.User) ([]*model.Pool, error)
+	Notifications(ctx context.Context, obj *model.User, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error)
+	NotificationSettings(ctx context.Context, obj *model.User) (*model.NotificationSettings, error)
 }
 type UserEmailResolver interface {
 	EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error)
-}
-type ViewerResolver interface {
-	User(ctx context.Context, obj *model.Viewer) (*model.User, error)
-	Pools(ctx context.Context, obj *model.Viewer) ([]*model.Pool, error)
-	Notifications(ctx context.Context, obj *model.Viewer, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error)
-	NotificationSettings(ctx context.Context, obj *model.Viewer) (*model.NotificationSettings, error)
 }
 type WithdrawalResolver interface {
 	Transaction(ctx context.Context, obj *model.Withdrawal) (*model.Tx, error)
@@ -2629,6 +2618,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.ID(childComplexity), true
 
+	case "User.notificationSettings":
+		if e.complexity.User.NotificationSettings == nil {
+			break
+		}
+
+		return e.complexity.User.NotificationSettings(childComplexity), true
+
+	case "User.notifications":
+		if e.complexity.User.Notifications == nil {
+			break
+		}
+
+		args, err := ec.field_User_notifications_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.Notifications(childComplexity, args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
+
 	case "User.pools":
 		if e.complexity.User.Pools == nil {
 			break
@@ -2747,46 +2755,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VerifyTokenPayload.User(childComplexity), true
-
-	case "Viewer.id":
-		if e.complexity.Viewer.ID == nil {
-			break
-		}
-
-		return e.complexity.Viewer.ID(childComplexity), true
-
-	case "Viewer.notificationSettings":
-		if e.complexity.Viewer.NotificationSettings == nil {
-			break
-		}
-
-		return e.complexity.Viewer.NotificationSettings(childComplexity), true
-
-	case "Viewer.notifications":
-		if e.complexity.Viewer.Notifications == nil {
-			break
-		}
-
-		args, err := ec.field_Viewer_notifications_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Viewer.Notifications(childComplexity, args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
-
-	case "Viewer.pools":
-		if e.complexity.Viewer.Pools == nil {
-			break
-		}
-
-		return e.complexity.Viewer.Pools(childComplexity), true
-
-	case "Viewer.user":
-		if e.complexity.Viewer.User == nil {
-			break
-		}
-
-		return e.complexity.Viewer.User(childComplexity), true
 
 	case "Withdrawal.amount":
 		if e.complexity.Withdrawal.Amount == nil {
@@ -3159,6 +3127,8 @@ type User implements Node {
   id: ID!
   roles: [Role] @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
+  notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection @goField(forceResolver: true)
+  notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
 
 union UserOrAccount = User | EVMAccount
@@ -3171,19 +3141,6 @@ type UserEdge {
 type UsersConnection {
   edges: [UserEdge]
   pageInfo: PageInfo!
-}
-
-#-------------------------------------------------------------------------------
-# VIEWER
-#-------------------------------------------------------------------------------
-
-type Viewer implements Node {
-  id: ID!
-  user: User @goField(forceResolver: true)
-  pools: [Pool] @goField(forceResolver: true)
-  notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection
-  @goField(forceResolver: true)
-  notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
 
 # -------------------------------------------------------------------------------
@@ -3595,16 +3552,15 @@ type GroupNotificationUsersConnection {
 # QUERY
 #-------------------------------------------------------------------------------
 
-union ViewerResult = Viewer | ErrNotAuthorized
-union UserResult = User | ErrUserNotFound | ErrInvalidInput
+union UserResult = User | ErrNotAuthorized | ErrUserNotFound | ErrInvalidInput
 union PoolResult = Pool | ErrPoolNotFound | ErrInvalidInput
 union SearchUsersResult = SearchUsersPayload | ErrInvalidInput
 union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
 
 type Query {
   node(id: ID!): Node
-  viewer: ViewerResult! @authRequired
-  userByUsername(username: String!): UserResult!
+    viewer: UserResult @authRequired
+    userByUsername(username: String!): UserResult!
   userById(id: ID!): UserResult!
   userByAddress(chainAddress: ChainAddressInput!): UserResult!
 
@@ -3675,13 +3631,13 @@ union UserDeleteResult = UserDeletePayload | ErrNotAuthorized | ErrInvalidInput
 # WALLET MUTATIONS
 
 type AddUserWalletPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union AddUserWalletResult = AddUserWalletPayload | ErrAuthenticationFailed | ErrNotAuthorized | ErrInvalidInput | ErrAddressOwnedByUser
 
 type RemoveUserWalletsPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | ErrInvalidInput
@@ -3689,13 +3645,13 @@ union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | Er
 # AUTH MUTATIONS
 
 type LoginPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union LoginResult = LoginPayload | ErrUserNotFound | ErrAuthenticationFailed | ErrDoesNotOwnRequiredToken
 
 type LogoutPayload {
-  viewer: Viewer
+  viewer: User
 }
 
 type VerifyTokenPayload {
@@ -3763,19 +3719,19 @@ type PreverifyEmailPayload {
 union PreverifyEmailResult = PreverifyEmailPayload | ErrInvalidInput
 
 type UpdateEmailPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union UpdateEmailResult = UpdateEmailPayload | ErrNotAuthorized | ErrInvalidInput
 
 type ResendVerificationEmailPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union ResendVerificationEmailResult = ResendVerificationEmailPayload | ErrNotAuthorized | ErrInvalidInput
 
 type UnsubscribeFromEmailPayload {
-  viewer: Viewer!
+  viewer: User!
 }
 
 union UnsubscribeFromEmailResult = UnsubscribeFromEmailPayload | ErrInvalidInput
@@ -5872,32 +5828,32 @@ func (ec *executionContext) field_Query_usersByRole_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Viewer_notifications_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_User_notifications_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Viewer_notifications_argsBefore(ctx, rawArgs)
+	arg0, err := ec.field_User_notifications_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg0
-	arg1, err := ec.field_Viewer_notifications_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_User_notifications_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Viewer_notifications_argsFirst(ctx, rawArgs)
+	arg2, err := ec.field_User_notifications_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg2
-	arg3, err := ec.field_Viewer_notifications_argsLast(ctx, rawArgs)
+	arg3, err := ec.field_User_notifications_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg3
 	return args, nil
 }
-func (ec *executionContext) field_Viewer_notifications_argsBefore(
+func (ec *executionContext) field_User_notifications_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*string, error) {
@@ -5919,7 +5875,7 @@ func (ec *executionContext) field_Viewer_notifications_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Viewer_notifications_argsAfter(
+func (ec *executionContext) field_User_notifications_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*string, error) {
@@ -5941,7 +5897,7 @@ func (ec *executionContext) field_Viewer_notifications_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Viewer_notifications_argsFirst(
+func (ec *executionContext) field_User_notifications_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*int, error) {
@@ -5963,7 +5919,7 @@ func (ec *executionContext) field_Viewer_notifications_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Viewer_notifications_argsLast(
+func (ec *executionContext) field_User_notifications_argsLast(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*int, error) {
@@ -6083,9 +6039,9 @@ func (ec *executionContext) _AddUserWalletPayload_viewer(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Viewer)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6097,17 +6053,17 @@ func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(_ context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
-				return ec.fieldContext_Viewer_pools(ctx, field)
+				return ec.fieldContext_User_pools(ctx, field)
 			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
+				return ec.fieldContext_User_notifications(ctx, field)
 			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -10388,6 +10344,10 @@ func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(_ contex
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -10564,9 +10524,9 @@ func (ec *executionContext) _LoginPayload_viewer(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Viewer)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LoginPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10578,17 +10538,17 @@ func (ec *executionContext) fieldContext_LoginPayload_viewer(_ context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
-				return ec.fieldContext_Viewer_pools(ctx, field)
+				return ec.fieldContext_User_pools(ctx, field)
 			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
+				return ec.fieldContext_User_notifications(ctx, field)
 			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -10617,9 +10577,9 @@ func (ec *executionContext) _LogoutPayload_viewer(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Viewer)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LogoutPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10631,17 +10591,17 @@ func (ec *executionContext) fieldContext_LogoutPayload_viewer(_ context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
-				return ec.fieldContext_Viewer_pools(ctx, field)
+				return ec.fieldContext_User_pools(ctx, field)
 			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
+				return ec.fieldContext_User_notifications(ctx, field)
 			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -16226,6 +16186,10 @@ func (ec *executionContext) fieldContext_PushTokenRegisterPayload_user(_ context
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -16322,6 +16286,10 @@ func (ec *executionContext) fieldContext_PushTokenUnregisterPayload_user(_ conte
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -16401,7 +16369,7 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.AuthRequired == nil {
-				var zeroVal model.ViewerResult
+				var zeroVal model.UserResult
 				return zeroVal, errors.New("directive authRequired is not implemented")
 			}
 			return ec.directives.AuthRequired(ctx, nil, directive0)
@@ -16414,24 +16382,21 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(model.ViewerResult); ok {
+		if data, ok := tmp.(model.UserResult); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.ViewerResult`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UserResult`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(model.ViewerResult)
+	res := resTmp.(model.UserResult)
 	fc.Result = res
-	return ec.marshalNViewerResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerResult(ctx, field.Selections, res)
+	return ec.marshalOUserResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16441,7 +16406,7 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ViewerResult does not have child fields")
+			return nil, errors.New("field of type UserResult does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17117,9 +17082,9 @@ func (ec *executionContext) _RemoveUserWalletsPayload_viewer(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Viewer)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17131,17 +17096,17 @@ func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(_ conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
-				return ec.fieldContext_Viewer_pools(ctx, field)
+				return ec.fieldContext_User_pools(ctx, field)
 			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
+				return ec.fieldContext_User_notifications(ctx, field)
 			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -17173,9 +17138,9 @@ func (ec *executionContext) _ResendVerificationEmailPayload_viewer(ctx context.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Viewer)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17187,17 +17152,17 @@ func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(_
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
-				return ec.fieldContext_Viewer_pools(ctx, field)
+				return ec.fieldContext_User_pools(ctx, field)
 			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
+				return ec.fieldContext_User_notifications(ctx, field)
 			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -17248,6 +17213,10 @@ func (ec *executionContext) fieldContext_RoleUpdatePayload_user(_ context.Contex
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -18733,9 +18702,9 @@ func (ec *executionContext) _UnsubscribeFromEmailPayload_viewer(ctx context.Cont
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Viewer)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UnsubscribeFromEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18747,17 +18716,17 @@ func (ec *executionContext) fieldContext_UnsubscribeFromEmailPayload_viewer(_ co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
-				return ec.fieldContext_Viewer_pools(ctx, field)
+				return ec.fieldContext_User_pools(ctx, field)
 			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
+				return ec.fieldContext_User_notifications(ctx, field)
 			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -18789,9 +18758,9 @@ func (ec *executionContext) _UpdateEmailPayload_viewer(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Viewer)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18803,17 +18772,17 @@ func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(_ context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Viewer_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Viewer_user(ctx, field)
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
-				return ec.fieldContext_Viewer_pools(ctx, field)
+				return ec.fieldContext_User_pools(ctx, field)
 			case "notifications":
-				return ec.fieldContext_Viewer_notifications(ctx, field)
+				return ec.fieldContext_User_notifications(ctx, field)
 			case "notificationSettings":
-				return ec.fieldContext_Viewer_notificationSettings(ctx, field)
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -18971,6 +18940,111 @@ func (ec *executionContext) fieldContext_User_pools(_ context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _User_notifications(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_notifications(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().Notifications(rctx, obj, fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.NotificationsConnection)
+	fc.Result = res
+	return ec.marshalONotificationsConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationsConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_NotificationsConnection_edges(ctx, field)
+			case "unseenCount":
+				return ec.fieldContext_NotificationsConnection_unseenCount(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_NotificationsConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NotificationsConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_notifications_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_notificationSettings(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_notificationSettings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().NotificationSettings(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.NotificationSettings)
+	fc.Result = res
+	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_notificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "someoneViewedYourPool":
+				return ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UserDeletePayload_user(ctx context.Context, field graphql.CollectedField, obj *model.UserDeletePayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UserDeletePayload_user(ctx, field)
 	if err != nil {
@@ -19013,6 +19087,10 @@ func (ec *executionContext) fieldContext_UserDeletePayload_user(_ context.Contex
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19062,6 +19140,10 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19284,6 +19366,10 @@ func (ec *executionContext) fieldContext_UserRegisterPayload_user(_ context.Cont
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19374,6 +19460,10 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(_ context.Context
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19426,6 +19516,10 @@ func (ec *executionContext) fieldContext_UserUpdatePayload_user(_ context.Contex
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19627,6 +19721,10 @@ func (ec *executionContext) fieldContext_VerifyTokenPayload_user(_ context.Conte
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
+			case "notifications":
+				return ec.fieldContext_User_notifications(ctx, field)
+			case "notificationSettings":
+				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19673,271 +19771,6 @@ func (ec *executionContext) fieldContext_VerifyTokenPayload_isValid(_ context.Co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Viewer_id(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Viewer_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Viewer",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Viewer_user(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_user(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().User(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Viewer_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Viewer",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Viewer_pools(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_pools(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().Pools(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Pool)
-	fc.Result = res
-	return ec.marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Viewer_pools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Viewer",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Pool_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Pool_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Pool_description(ctx, field)
-			case "image":
-				return ec.fieldContext_Pool_image(ctx, field)
-			case "donationBps":
-				return ec.fieldContext_Pool_donationBps(ctx, field)
-			case "slug":
-				return ec.fieldContext_Pool_slug(ctx, field)
-			case "status":
-				return ec.fieldContext_Pool_status(ctx, field)
-			case "owner":
-				return ec.fieldContext_Pool_owner(ctx, field)
-			case "contract":
-				return ec.fieldContext_Pool_contract(ctx, field)
-			case "claims":
-				return ec.fieldContext_Pool_claims(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Pool_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Pool_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Viewer_notifications(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_notifications(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().Notifications(rctx, obj, fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.NotificationsConnection)
-	fc.Result = res
-	return ec.marshalONotificationsConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationsConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Viewer_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Viewer",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_NotificationsConnection_edges(ctx, field)
-			case "unseenCount":
-				return ec.fieldContext_NotificationsConnection_unseenCount(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_NotificationsConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NotificationsConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Viewer_notifications_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Viewer_notificationSettings(ctx context.Context, field graphql.CollectedField, obj *model.Viewer) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Viewer_notificationSettings(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().NotificationSettings(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.NotificationSettings)
-	fc.Result = res
-	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Viewer_notificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Viewer",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "someoneViewedYourPool":
-				return ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
 		},
 	}
 	return fc, nil
@@ -23889,13 +23722,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._User(ctx, sel, obj)
-	case model.Viewer:
-		return ec._Viewer(ctx, sel, &obj)
-	case *model.Viewer:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Viewer(ctx, sel, obj)
 	case model.Claim:
 		return ec._Claim(ctx, sel, &obj)
 	case *model.Claim:
@@ -24510,6 +24336,13 @@ func (ec *executionContext) _UserResult(ctx context.Context, sel ast.SelectionSe
 			return graphql.Null
 		}
 		return ec._User(ctx, sel, obj)
+	case model.ErrNotAuthorized:
+		return ec._ErrNotAuthorized(ctx, sel, &obj)
+	case *model.ErrNotAuthorized:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrNotAuthorized(ctx, sel, obj)
 	case model.ErrUserNotFound:
 		return ec._ErrUserNotFound(ctx, sel, &obj)
 	case *model.ErrUserNotFound:
@@ -24614,29 +24447,6 @@ func (ec *executionContext) _VerifyTokenResult(ctx context.Context, sel ast.Sele
 			return graphql.Null
 		}
 		return ec._VerifyTokenPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _ViewerResult(ctx context.Context, sel ast.SelectionSet, obj model.ViewerResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.Viewer:
-		return ec._Viewer(ctx, sel, &obj)
-	case *model.Viewer:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Viewer(ctx, sel, obj)
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -26025,7 +25835,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "Error", "ViewerResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "PushTokenRegisterResult", "PushTokenUnregisterResult", "NotificationSettingsUpdateResult", "ClearNotificationsResult", "EmailNotificationSettingsUpdateResult", "UpdateEmailResult", "ResendVerificationEmailResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "Error", "UserResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "PushTokenRegisterResult", "PushTokenUnregisterResult", "NotificationSettingsUpdateResult", "ClearNotificationsResult", "EmailNotificationSettingsUpdateResult", "UpdateEmailResult", "ResendVerificationEmailResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -28412,16 +28222,13 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "viewer":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_viewer(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -29374,6 +29181,72 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "notifications":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_notifications(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "notificationSettings":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_notificationSettings(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -29759,177 +29632,6 @@ func (ec *executionContext) _VerifyTokenPayload(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var viewerImplementors = []string{"Viewer", "Node", "ViewerResult"}
-
-func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, obj *model.Viewer) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, viewerImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Viewer")
-		case "id":
-			out.Values[i] = ec._Viewer_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "user":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Viewer_user(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "pools":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Viewer_pools(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "notifications":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Viewer_notifications(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "notificationSettings":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Viewer_notificationSettings(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -31797,26 +31499,6 @@ func (ec *executionContext) marshalNVerifyTokenResult2githubᚗcomᚋmutualsᚋg
 	return ec._VerifyTokenResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Viewer(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNViewerResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewerResult(ctx context.Context, sel ast.SelectionSet, v model.ViewerResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ViewerResult(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx context.Context, sel ast.SelectionSet, v []*model.Withdrawal) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -33331,6 +33013,13 @@ func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmu
 	return ec._UserEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOUserResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserResult(ctx context.Context, sel ast.SelectionSet, v model.UserResult) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserResult(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserSearchResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -33383,13 +33072,6 @@ func (ec *executionContext) marshalOUsersConnection2ᚖgithubᚗcomᚋmutualsᚋ
 		return graphql.Null
 	}
 	return ec._UsersConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOViewer2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐViewer(ctx context.Context, sel ast.SelectionSet, v *model.Viewer) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Viewer(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOWithdrawal2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.Withdrawal) graphql.Marshaler {

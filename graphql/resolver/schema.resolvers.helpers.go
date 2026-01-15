@@ -26,7 +26,6 @@ var nodeFetcher = model.NodeFetcher{
 	OnDeletedNode: resolveDeletedNodeByID,
 	OnPool:        resolvePoolByID,
 	OnUser:        resolveUserByUserID,
-	OnViewer:      resolveViewerByID,
 }
 
 func init() {
@@ -108,7 +107,8 @@ func resolvePoolByID(ctx context.Context, id persist.DBID) (*model.Pool, error) 
 	return poolToModel(ctx, *pool), nil
 }
 
-func resolveViewerPools(ctx context.Context) ([]*model.Pool, error) {
+func resolveUserPools(ctx context.Context, obj *model.User) ([]*model.Pool, error) {
+	// For now, we do not support querying pools for arbitrary users.
 	pools, err := publicapi.For(ctx).Pool.GetViewerPools(ctx)
 	if err != nil {
 		return nil, err
@@ -161,16 +161,12 @@ func resolveTokenBalanceByTokenBalanceID(ctx context.Context, assetID persist.DB
 	return &model.TokenBalance{}, nil
 }
 
-func resolveViewer(ctx context.Context) model.ViewerResult {
-	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
-		return nil
+func resolveViewer(ctx context.Context) (*model.User, error) {
+	user, err := publicapi.For(ctx).User.GetViewer(ctx)
+	if err != nil {
+		return nil, err
 	}
-
-	// User id assignment works through the ID() method via @goGqlId directive
-	return &model.Viewer{
-		User:  nil, // handled by dedicated resolver
-		Pools: nil, // handled by dedicated resolver
-	}
+	return userToModel(ctx, *user), nil
 }
 
 func resolveViewerEmail(ctx context.Context) *model.UserEmail {
@@ -357,22 +353,6 @@ func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notifi
 	return notificationToModel(notification)
 }
 
-func resolveViewerByID(ctx context.Context, id persist.DBID) (*model.Viewer, error) {
-	if !publicapi.For(ctx).User.IsUserLoggedIn(ctx) {
-		return nil, nil
-	}
-
-	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	if userId != id {
-		return nil, nil
-	}
-
-	return &model.Viewer{
-		User:  nil, // handled by dedicated resolver
-		Pools: nil, // handled by dedicated resolver
-	}, nil
-}
-
 func resolveDeletedNodeByID(ctx context.Context, id persist.DBID) (*model.DeletedNode, error) {
 	return &model.DeletedNode{}, nil
 }
@@ -427,8 +407,10 @@ func claimsToModels(ctx context.Context, claims []db.Claim) []*model.Claim {
 
 func userToModel(ctx context.Context, user db.User) *model.User {
 	return &model.User{
-		Pools: nil, // handled by dedicated resolver
-		Roles: nil, // handled by dedicated resolver
+		Pools:                nil, // handled by dedicated resolver
+		Roles:                nil, // handled by dedicated resolver
+		Notifications:        nil, // handled by dedicated resolver
+		NotificationSettings: nil, // handled by dedicated resolver
 	}
 }
 

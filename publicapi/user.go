@@ -75,6 +75,11 @@ func (api UserAPI) GetUserById(ctx context.Context, userId persist.DBID) (*cored
 	return &user, nil
 }
 
+func (api UserAPI) GetViewer(ctx context.Context) (*coredb.User, error) {
+	userId := api.GetLoggedInUserId(ctx)
+	return api.GetUserById(ctx, userId)
+}
+
 func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress persist.Email) (bool, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{

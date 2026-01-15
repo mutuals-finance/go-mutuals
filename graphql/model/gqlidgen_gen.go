@@ -26,16 +26,11 @@ func (r *User) ID() GqlID {
 	return GqlID(fmt.Sprintf("User:%s", r.ID))
 }
 
-func (r *Viewer) ID() GqlID {
-	return GqlID(fmt.Sprintf("Viewer:%s", r.ID))
-}
-
 type NodeFetcher struct {
 	OnClaim       func(ctx context.Context, id persist.DBID) (*Claim, error)
 	OnDeletedNode func(ctx context.Context, id persist.DBID) (*DeletedNode, error)
 	OnPool        func(ctx context.Context, id persist.DBID) (*Pool, error)
 	OnUser        func(ctx context.Context, id persist.DBID) (*User, error)
-	OnViewer      func(ctx context.Context, id persist.DBID) (*Viewer, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
@@ -56,8 +51,6 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 		return n.OnPool(ctx, persist.DBID(idStr))
 	case "User":
 		return n.OnUser(ctx, persist.DBID(idStr))
-	case "Viewer":
-		return n.OnViewer(ctx, persist.DBID(idStr))
 	}
 
 	return nil, ErrInvalidIDType{typeName: typeName}
@@ -73,7 +66,5 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPool")
 	case n.OnUser == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnUser")
-	case n.OnViewer == nil:
-		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnViewer")
 	}
 }

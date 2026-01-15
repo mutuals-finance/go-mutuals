@@ -160,12 +160,8 @@ type VerifyTokenResult interface {
 	IsVerifyTokenResult()
 }
 
-type ViewerResult interface {
-	IsViewerResult()
-}
-
 type AddUserWalletPayload struct {
-	Viewer *Viewer `json:"viewer"`
+	Viewer *User `json:"viewer"`
 }
 
 func (AddUserWalletPayload) IsAddUserWalletResult() {}
@@ -422,7 +418,7 @@ type ErrNotAuthorized struct {
 }
 
 func (ErrNotAuthorized) IsError()                                 {}
-func (ErrNotAuthorized) IsViewerResult()                          {}
+func (ErrNotAuthorized) IsUserResult()                            {}
 func (ErrNotAuthorized) IsUserUpdateResult()                      {}
 func (ErrNotAuthorized) IsUserDeleteResult()                      {}
 func (ErrNotAuthorized) IsAddUserWalletResult()                   {}
@@ -551,13 +547,13 @@ type GroupNotificationUsersConnection struct {
 }
 
 type LoginPayload struct {
-	Viewer *Viewer `json:"viewer"`
+	Viewer *User `json:"viewer"`
 }
 
 func (LoginPayload) IsLoginResult() {}
 
 type LogoutPayload struct {
-	Viewer *Viewer `json:"viewer"`
+	Viewer *User `json:"viewer"`
 }
 
 type MagicLinkAuth struct {
@@ -744,13 +740,13 @@ type PushTokenUnregisterPayload struct {
 func (PushTokenUnregisterPayload) IsPushTokenUnregisterResult() {}
 
 type RemoveUserWalletsPayload struct {
-	Viewer *Viewer `json:"viewer"`
+	Viewer *User `json:"viewer"`
 }
 
 func (RemoveUserWalletsPayload) IsRemoveUserWalletsResult() {}
 
 type ResendVerificationEmailPayload struct {
-	Viewer *Viewer `json:"viewer"`
+	Viewer *User `json:"viewer"`
 }
 
 func (ResendVerificationEmailPayload) IsResendVerificationEmailResult() {}
@@ -815,7 +811,7 @@ type Tx struct {
 }
 
 type UnsubscribeFromEmailPayload struct {
-	Viewer *Viewer `json:"viewer"`
+	Viewer *User `json:"viewer"`
 }
 
 func (UnsubscribeFromEmailPayload) IsUnsubscribeFromEmailResult() {}
@@ -831,14 +827,16 @@ type UpdateEmailNotificationSettingsInput struct {
 }
 
 type UpdateEmailPayload struct {
-	Viewer *Viewer `json:"viewer"`
+	Viewer *User `json:"viewer"`
 }
 
 func (UpdateEmailPayload) IsUpdateEmailResult() {}
 
 type User struct {
-	Roles []*persist.Role `json:"roles"`
-	Pools []*Pool         `json:"pools"`
+	Roles                []*persist.Role          `json:"roles"`
+	Pools                []*Pool                  `json:"pools"`
+	Notifications        *NotificationsConnection `json:"notifications"`
+	NotificationSettings *NotificationSettings    `json:"notificationSettings"`
 }
 
 func (User) IsNode()                   {}
@@ -905,16 +903,6 @@ type VerifyTokenPayload struct {
 }
 
 func (VerifyTokenPayload) IsVerifyTokenResult() {}
-
-type Viewer struct {
-	User                 *User                    `json:"user"`
-	Pools                []*Pool                  `json:"pools"`
-	Notifications        *NotificationsConnection `json:"notifications"`
-	NotificationSettings *NotificationSettings    `json:"notificationSettings"`
-}
-
-func (Viewer) IsNode()         {}
-func (Viewer) IsViewerResult() {}
 
 type Withdrawal struct {
 	ID          GqlID             `json:"id"`
