@@ -2,22 +2,17 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
-	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/service/logger"
-	"github.com/mutuals/go-mutuals/service/notifications"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
 	"github.com/mutuals/go-mutuals/service/task"
-	"github.com/mutuals/go-mutuals/service/tracing"
 	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
-	"golang.org/x/sync/errgroup"
 )
 
 type sendType int
@@ -31,15 +26,8 @@ const (
 )
 
 // AddTo Register specific event handlers
-func AddTo(ctx *gin.Context, disableDataloaderCaching bool, notif *notifications.NotificationHandlers, queries *db.Queries, taskClient *task.Client) {
+func AddTo(ctx *gin.Context, disableDataloaderCaching bool, queries *db.Queries, taskClient *task.Client) {
 	sender := newEventSender(queries)
-
-	notifications := newEventDispatcher()
-	notificationHandler := newNotificationHandler(notif, disableDataloaderCaching, queries)
-	sender.addDelayedHandler(notifications, persist.ActionUserFollowedUsers, notificationHandler)
-	sender.addDelayedHandler(notifications, persist.ActionViewedPool, notificationHandler)
-
-	sender.notifications = notifications
 	ctx.Set(eventSenderContextKey, &sender)
 }
 
@@ -113,14 +101,12 @@ func dispatchDelayed(ctx context.Context, event db.Event) error {
 		return nil
 	}
 
-	persistedEvent, err := sender.eventRepo.Add(ctx, event)
+	_, err = sender.eventRepo.Add(ctx, event)
 	if err != nil {
 		return err
 	}
 
-	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error { return sender.notifications.dispatchDelayed(ctx, *persistedEvent) })
-	return eg.Wait()
+	return nil
 }
 
 // dispatchImmediate flushes the event immediately to its registered handlers.
@@ -139,33 +125,12 @@ func dispatchImmediate(ctx context.Context, events []db.Event) error {
 		}
 	}
 
-	persistedEvents := make([]db.Event, 0, len(events))
 	for _, e := range events {
-		persistedEvent, err := sender.eventRepo.Add(ctx, e)
+		_, err := sender.eventRepo.Add(ctx, e)
 		if err != nil {
 			return err
 		}
-
-		persistedEvents = append(persistedEvents, *persistedEvent)
 	}
-
-	go func() {
-
-		ctx := sentryutil.NewSentryHubGinContext(ctx)
-		if _, err := sender.notifications.dispatchImmediate(ctx, persistedEvents); err != nil {
-			logger.For(ctx).Error(err)
-			sentryutil.ReportError(ctx, err)
-		}
-
-	}()
-
-	/*	feedEvent, err := sender.feed.dispatchImmediate(ctx, persistedEvents)
-		if err != nil {
-			return nil, err
-		}
-
-		return feedEvent.(*db.FeedEvent), nil
-	*/
 
 	return nil
 }
@@ -190,21 +155,6 @@ func DispatchGroup(ctx context.Context, groupID string, action persist.Action, c
 		}
 	}
 
-	go func() {
-
-		ctx := sentryutil.NewSentryHubGinContext(ctx)
-		if _, err := sender.notifications.dispatchGroup(ctx, groupID, action); err != nil {
-			logger.For(ctx).Error(err)
-			sentryutil.ReportError(ctx, err)
-		}
-
-	}()
-
-	/*	feedEvent, err := sender.feed.dispatchGroup(ctx, groupID, action)
-		if err != nil {
-			return nil, err
-		}
-	*/
 	return nil
 }
 
@@ -216,11 +166,10 @@ func For(ctx context.Context) *eventSender {
 type registedActions map[persist.Action]struct{}
 
 type eventSender struct {
-	notifications *eventDispatcher
-	registry      map[sendType]registedActions
-	queries       *db.Queries
-	eventRepo     postgres.EventRepository
-	validate      *validator.Validate
+	registry  map[sendType]registedActions
+	queries   *db.Queries
+	eventRepo postgres.EventRepository
+	validate  *validator.Validate
 }
 
 func newEventSender(queries *db.Queries) eventSender {
@@ -232,241 +181,4 @@ func newEventSender(queries *db.Queries) eventSender {
 		eventRepo: postgres.EventRepository{Queries: queries},
 		validate:  v,
 	}
-}
-
-func (e *eventSender) addDelayedHandler(dispatcher *eventDispatcher, action persist.Action, handler delayedHandler) {
-	dispatcher.addDelayed(action, handler)
-	e.registry[delayedKey][action] = struct{}{}
-}
-
-func (e *eventSender) addImmediateHandler(dispatcher *eventDispatcher, action persist.Action, handler immediateHandler) {
-	dispatcher.addImmediate(action, handler)
-	e.registry[immediateKey][action] = struct{}{}
-}
-
-func (e *eventSender) addGroupHandler(dispatcher *eventDispatcher, action persist.Action, handler groupHandler) {
-	dispatcher.addGroup(action, handler)
-	e.registry[groupKey][action] = struct{}{}
-}
-
-type eventDispatcher struct {
-	delayedHandlers   map[persist.Action]delayedHandler
-	immediateHandlers map[persist.Action]immediateHandler
-	groupHandlers     map[persist.Action]groupHandler
-}
-
-func newEventDispatcher() *eventDispatcher {
-	return &eventDispatcher{
-		delayedHandlers:   map[persist.Action]delayedHandler{},
-		immediateHandlers: map[persist.Action]immediateHandler{},
-		groupHandlers:     map[persist.Action]groupHandler{},
-	}
-}
-
-func (d *eventDispatcher) addDelayed(action persist.Action, handler delayedHandler) {
-	d.delayedHandlers[action] = handler
-}
-
-func (d *eventDispatcher) addImmediate(action persist.Action, handler immediateHandler) {
-	d.immediateHandlers[action] = handler
-}
-
-func (d *eventDispatcher) addGroup(action persist.Action, handler groupHandler) {
-	d.groupHandlers[action] = handler
-}
-
-func (d *eventDispatcher) dispatchDelayed(ctx context.Context, event db.Event) error {
-	if handler, ok := d.delayedHandlers[event.Action]; ok {
-		return handler.handleDelayed(ctx, event)
-	}
-	return nil
-}
-
-// this will run the handler for each event and return the final non-nil result returned by the handler.
-// in the case of the feed, immediate events should be grouped such that only one feed event is created
-// and one event is returned
-func (d *eventDispatcher) dispatchImmediate(ctx context.Context, event []db.Event) (interface{}, error) {
-
-	resultChan := make(chan interface{})
-	errChan := make(chan error)
-	var handleables int
-	for _, e := range event {
-		if handler, ok := d.immediateHandlers[e.Action]; ok {
-			handleables++
-			go func(event db.Event) {
-				result, err := handler.handleImmediate(ctx, event)
-				if err != nil {
-					errChan <- err
-					return
-				}
-				resultChan <- result
-			}(e)
-		}
-	}
-
-	var result interface{}
-	for i := 0; i < handleables; i++ {
-		select {
-		case r := <-resultChan:
-			if r != nil {
-				result = r
-			}
-		case err := <-errChan:
-			return nil, err
-		}
-	}
-
-	return result, nil
-}
-
-func (d *eventDispatcher) dispatchGroup(ctx context.Context, groupID string, action persist.Action) (interface{}, error) {
-	if handler, ok := d.groupHandlers[action]; ok {
-		return handler.handleGroup(ctx, groupID, action)
-	}
-	return nil, nil
-}
-
-type delayedHandler interface {
-	handleDelayed(context.Context, db.Event) error
-}
-
-type immediateHandler interface {
-	handleImmediate(context.Context, db.Event) (interface{}, error)
-}
-
-type groupHandler interface {
-	handleGroup(context.Context, string, persist.Action) (interface{}, error)
-}
-
-// notificationHandlers handles events for consumption as notifications.
-type notificationHandler struct {
-	dataloaders          *dataloader.Loaders
-	notificationHandlers *notifications.NotificationHandlers
-}
-
-func newNotificationHandler(notifiers *notifications.NotificationHandlers, disableDataloaderCaching bool, queries *db.Queries) *notificationHandler {
-	return &notificationHandler{
-		notificationHandlers: notifiers,
-		dataloaders:          dataloader.NewLoaders(context.Background(), queries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook),
-	}
-}
-
-func (h notificationHandler) handleDelayed(ctx context.Context, persistedEvent db.Event) error {
-	owner, err := h.findOwnerForNotificationFromEvent(ctx, persistedEvent)
-	if err != nil {
-		return err
-	}
-
-	// if no user found to notify, don't notify
-	if owner == "" {
-		return nil
-	}
-
-	// Don't notify the user on self events
-	if persist.DBID(persist.NullStrToStr(persistedEvent.ActorID)) == owner {
-		return nil
-	}
-
-	// Don't notify the user on un-authed views
-	if persistedEvent.Action == persist.ActionViewedPool && persistedEvent.ActorID.String == "" {
-		return nil
-	}
-
-	return h.notificationHandlers.Notifications.Dispatch(ctx, db.Notification{
-		OwnerID:  owner,
-		Action:   persistedEvent.Action,
-		Data:     h.createNotificationDataForEvent(persistedEvent),
-		EventIds: persist.DBIDList{persistedEvent.ID},
-		PoolID:   persistedEvent.PoolID,
-		//TokenID:  persistedEvent.TokenID,
-	})
-}
-
-func (h notificationHandler) findOwnerForNotificationFromEvent(ctx context.Context, event db.Event) (persist.DBID, error) {
-	switch event.ResourceTypeID {
-	case persist.ResourceTypePool:
-		// TODO return the creator user id
-		//pool, err := h.dataloaders.GetPoolByIdBatch.Load(event.PoolID)
-		//if err != nil {
-		//	return "", err
-		//}
-		// return pool.CreatorAddress, nil
-		return persist.DBID("1"), nil
-	case persist.ResourceTypeUser:
-		return event.SubjectID, nil
-	case persist.ResourceTypeToken:
-		return persist.DBID(event.ActorID.String), nil
-	}
-
-	return "", fmt.Errorf("no owner found for event: %s", event.Action)
-}
-
-func (h notificationHandler) createNotificationDataForEvent(event db.Event) (data persist.NotificationData) {
-	switch event.Action {
-	case persist.ActionViewedPool:
-		if event.ActorID.String != "" {
-			data.AuthedViewerIDs = []persist.DBID{persist.NullStrToDBID(event.ActorID)}
-		}
-		if event.ExternalID.String != "" {
-			data.UnauthedViewerIDs = []string{persist.NullStrToStr(event.ExternalID)}
-		}
-	//case persist.ActionUserFollowedUsers:
-	//	if event.ActorID.String != "" {
-	//		data.FollowerIDs = []persist.DBID{persist.NullStrToDBID(event.ActorID)}
-	//	}
-	//	data.FollowedBack = persist.NullBool(event.Data.UserFollowedBack)
-	//	data.Refollowed = persist.NullBool(event.Data.UserRefollowed)
-	//case persist.ActionNewTokensReceived:
-	//	data.NewTokenID = event.Data.NewTokenID
-	//	data.NewTokenQuantity = event.Data.NewTokenQuantity
-	//case persist.ActionTopActivityBadgeReceived:
-	//	data.ActivityBadgeThreshold = event.Data.ActivityBadgeThreshold
-	//	data.NewTopActiveUser = event.Data.NewTopActiveUser
-	default:
-		logger.For(nil).Debugf("no notification data for event: %s", event.Action)
-	}
-	return
-}
-
-// followerNotificationHandler handles events for consumption as notifications.
-type followerNotificationHandler struct {
-	notificationHandlers *notifications.NotificationHandlers
-}
-
-func newFollowerNotificationHandler(notifiers *notifications.NotificationHandlers) *followerNotificationHandler {
-	return &followerNotificationHandler{
-		notificationHandlers: notifiers,
-	}
-}
-
-func (h followerNotificationHandler) handleDelayed(ctx context.Context, persistedEvent db.Event) error {
-	return h.notificationHandlers.Notifications.Dispatch(ctx, db.Notification{
-		// no owner or data for follower notifications
-		Action:   persistedEvent.Action,
-		EventIds: persist.DBIDList{persistedEvent.ID},
-		PoolID:   persistedEvent.PoolID,
-		//TokenID:  persistedEvent.TokenID,
-	})
-}
-
-// global handles events for consumption as global notifications.
-type announcementNotificationHandler struct {
-	notificationHandlers *notifications.NotificationHandlers
-}
-
-func newAnnouncementNotificationHandler(notifiers *notifications.NotificationHandlers) *announcementNotificationHandler {
-	return &announcementNotificationHandler{
-		notificationHandlers: notifiers,
-	}
-}
-
-func (h announcementNotificationHandler) handleDelayed(ctx context.Context, persistedEvent db.Event) error {
-	return h.notificationHandlers.Notifications.Dispatch(ctx, db.Notification{
-		// no owner or data for follower notifications
-		Action:   persistedEvent.Action,
-		EventIds: persist.DBIDList{persistedEvent.ID},
-		Data:     persist.NotificationData{
-			//AnnouncementDetails: persistedEvent.Data.AnnouncementDetails,
-		},
-	})
 }

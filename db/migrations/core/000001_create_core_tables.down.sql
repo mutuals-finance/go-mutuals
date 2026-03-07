@@ -1,14 +1,11 @@
-DROP TABLE IF EXISTS dev_metadata_users;
 DROP TABLE IF EXISTS events;
-DROP TABLE IF EXISTS legacy_views;
 DROP TABLE IF EXISTS spam_user_scores;
 DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS pii.for_users CASCADE;
 DROP TABLE IF EXISTS user_blocklist;
 DROP TABLE IF EXISTS push_notification_tickets;
 DROP TABLE IF EXISTS push_notification_tokens;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS claims;
-DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS pools CASCADE;
 DROP TABLE IF EXISTS linked_accounts;
+

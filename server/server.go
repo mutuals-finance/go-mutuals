@@ -22,7 +22,6 @@ import (
 	sentry "github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	shell "github.com/ipfs/go-ipfs-api"
-	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/env"
 	"github.com/mutuals/go-mutuals/service/auth"
@@ -60,19 +59,18 @@ func Init() {
 }
 
 type Clients struct {
-	Repos           *postgres.Repositories
-	CoreQueries     *coredb.Queries
-	IndexerQueries  *indexerdb.Queries
-	HTTPClient      *http.Client
-	EthClient       *ethclient.Client
-	IPFSClient      *shell.Shell
-	ArweaveClient   *goar.Client
-	StorageClient   *storage.Client
-	TaskClient      *task.Client
-	SecretClient    *secretmanager.Client
-	PubSubClient    *pubsub.Client
-	MagicLinkClient *magicclient.API
-	closeFunc       func()
+	Repos          *postgres.Repositories
+	CoreQueries    *coredb.Queries
+	IndexerQueries *indexerdb.Queries
+	HTTPClient     *http.Client
+	EthClient      *ethclient.Client
+	IPFSClient     *shell.Shell
+	ArweaveClient  *goar.Client
+	StorageClient  *storage.Client
+	TaskClient     *task.Client
+	SecretClient   *secretmanager.Client
+	PubSubClient   *pubsub.Client
+	closeFunc      func()
 }
 
 func (c *Clients) Close() {
@@ -108,9 +106,8 @@ func CoreInit(ctx context.Context, c *Clients) *gin.Engine {
 	lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
 	graphqlAPQCache := redis.NewCache(redis.GraphQLAPQCache)
 	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
-	oneTimeLoginCache := redis.NewCache(redis.OneTimeLoginCache)
 	return CoreInitHandlerF(ctx, func(r *gin.Engine) {
-		HandlersInit(r, c.Repos, c.CoreQueries, c.IndexerQueries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, authRefreshCache, oneTimeLoginCache, c.MagicLinkClient)
+		HandlersInit(r, c.Repos, c.CoreQueries, c.IndexerQueries, c.HTTPClient, c.EthClient, c.IPFSClient, c.ArweaveClient, c.StorageClient, newThrottler(), c.TaskClient, c.PubSubClient, lock, c.SecretClient, graphqlAPQCache, authRefreshCache)
 	})
 }
 
@@ -161,11 +158,6 @@ func newSecretsClient() *secretmanager.Client {
 func SetDefaults() {
 	viper.SetDefault("ENV", "local")
 	viper.SetDefault("ALLOWED_ORIGINS", "http://localhost:3000")
-	viper.SetDefault("REFRESH_JWT_SECRET", "Refresh-Test-Secret")
-	viper.SetDefault("REFRESH_JWT_TTL", 60*60*24*90)
-	viper.SetDefault("AUTH_JWT_SECRET", "Test-Secret")
-	viper.SetDefault("AUTH_JWT_TTL", 60*5)
-	viper.SetDefault("ONE_TIME_LOGIN_JWT_SECRET", "One-Time-Login-Test-Secret")
 	viper.SetDefault("PORT", 4000)
 	viper.SetDefault("POSTGRES_HOST", "0.0.0.0")
 	viper.SetDefault("POSTGRES_PORT", 5432)
@@ -270,10 +262,6 @@ func SetDefaults() {
 		util.VarNotSetTo("RETOOL_AUTH_TOKEN", "TEST_TOKEN")
 		util.VarNotSetTo("BACKEND_SECRET", "BACKEND_SECRET")
 		util.VarNotSetTo("PUSH_NOTIFICATIONS_SECRET", "push-notifications-secret")
-		util.VarNotSetTo("REFRESH_JWT_SECRET", "Refresh-Test-Secret")
-		util.VarNotSetTo("AUTH_JWT_SECRET", "Test-Secret")
-		util.VarNotSetTo("PRIVY_AUTH_JWT_SECRET", "Test-Secret")
-		util.VarNotSetTo("ONE_TIME_LOGIN_JWT_SECRET", "One-Time-Login-Test-Secret")
 	}
 }
 

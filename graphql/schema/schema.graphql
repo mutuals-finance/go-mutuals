@@ -24,7 +24,6 @@ directive @restrictEnvironment(
 scalar Time
 scalar Address
 scalar PubKey
-scalar Email
 scalar HexString
 scalar JSON
 
@@ -49,31 +48,6 @@ type DeletedNode implements Node {
 
 interface Error {
   message: String!
-}
-
-type ChainAddress {
-  address: Address
-  chainId: Int
-}
-
-type ChainPubKey {
-  pubKey: PubKey
-  chainId: Int
-}
-
-type ChainPools {
-  chainId: Int
-  pools: [Pool]
-}
-
-input ChainAddressInput {
-  address: Address! @goField(forceResolver: true)
-  chainId: Int! @goField(forceResolver: true)
-}
-
-input ChainPubKeyInput {
-  pubKey: PubKey! @goField(forceResolver: true)
-  chainId: Int! @goField(forceResolver: true)
 }
 
 #-------------------------------------------------------------------------------
@@ -118,11 +92,11 @@ type PoolFactory {
   updatedAt: Time!
 }
 
-type ExtensionRegistry {
+type ModuleRegistry {
   id: ID!
   address: Address!
   chainId: Int!
-  extensionCount: Int!
+  moduleCount: Int!
   owner: EVMAccount! @goField(forceResolver: true)
   createdAt: Time!
   updatedAt: Time!
@@ -142,11 +116,9 @@ type User implements Node {
   id: ID!
   roles: [Role] @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
-  notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection @goField(forceResolver: true)
-  notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
 
-union UserOrAccount = User | EVMAccount
+union UserOrEVMAccount = User | EVMAccount
 
 type UserEdge {
   node: User
@@ -164,6 +136,8 @@ type UsersConnection {
 
 enum TokenType {
   ERC20
+  ERC721
+  ERC1155
 }
 
 type Token {
@@ -196,18 +170,18 @@ type TokenBalance {
 # EXTENSION
 #-------------------------------------------------------------------------------
 
-enum ExtensionType {
-  State
-  Strategy
+enum ModuleType {
+  Validation
+  Distribution
 }
 
-type Extension {
+type Module {
   id: ID!
   address: Address!
   chainId: Int!
-  extensionRegistry: ExtensionRegistry! @goField(forceResolver: true)
-  extensionId: String!
-  extensionType: ExtensionType!
+  moduleRegistry: ModuleRegistry! @goField(forceResolver: true)
+  moduleId: String!
+  moduleType: ModuleType!
   permissions: [String!]
   data: JSON
   name: String!
@@ -221,13 +195,12 @@ type Claim implements Node {
   data: JSON
   label: String!
   path: String!
-  childrenCount: Int!
   parent: Claim @goField(forceResolver: true)
   children: [Claim!] @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
   recipient: PoolOrUserOrEVMAccount @goField(forceResolver: true)
-  state: Extension! @goField(forceResolver: true)
-  strategy: Extension! @goField(forceResolver: true)
+  validation: Module! @goField(forceResolver: true)
+  distribution: Module! @goField(forceResolver: true)
   createdAt: Time!
   updatedAt: Time!
 }
@@ -250,7 +223,7 @@ type Pool implements Node {
   donationBps: Int!
   slug: String!
   status: PoolStatus!
-  owner: UserOrAccount! @goField(forceResolver: true)
+  owner: UserOrEVMAccount! @goField(forceResolver: true)
   contract: PoolContract @goField(forceResolver: true)
   claims: [Claim!] @goField(forceResolver: true)
   createdAt: Time!
@@ -297,66 +270,9 @@ type PoolHourBalance {
   updatedAt: Time!
 }
 
-#-------------------------------------------------------------------------------
-# NOTIFICATIONS
-#-------------------------------------------------------------------------------
-
-type NotificationEdge {
-  node: Notification
-  cursor: String
-}
-
-type NotificationsConnection {
-  edges: [NotificationEdge]
-  unseenCount: Int
-  pageInfo: PageInfo
-}
-
-type NotificationSettings {
-  someoneViewedYourPool: Boolean
-}
-
-input NotificationSettingsInput {
-  someoneViewedYourPool: Boolean
-}
 
 #-------------------------------------------------------------------------------
-# EMAIL
-#-------------------------------------------------------------------------------
-
-enum EmailVerificationStatus {
-  Unverified
-  Verified
-  Failed
-  Admin
-}
-
-enum EmailUnsubscriptionType {
-  All
-  Notifications
-}
-
-type UserEmail {
-  email: Email
-  verificationStatus: EmailVerificationStatus
-  emailNotificationSettings: EmailNotificationSettings @goField(forceResolver: true)
-}
-
-type EmailNotificationSettings {
-  unsubscribedFromAll: Boolean!
-  unsubscribedFromNotifications: Boolean!
-}
-
-input UpdateEmailNotificationSettingsInput {
-  unsubscribedFromAll: Boolean!
-  unsubscribedFromNotifications: Boolean!
-}
-
-input UnsubscribeFromEmailTypeInput {
-  type: EmailUnsubscriptionType!
-  token: String! @scrub
-}
-
+# POOL
 #-------------------------------------------------------------------------------
 # EVENT
 #-------------------------------------------------------------------------------
@@ -494,74 +410,6 @@ type ErrSyncFailed implements Error {
   message: String!
 }
 
-type ErrPushTokenBelongsToAnotherUser implements Error {
-  message: String!
-}
-
-#-------------------------------------------------------------------------------
-# AUTH MECHANISMS
-#-------------------------------------------------------------------------------
-
-input AuthMechanism {
-  eoa: EoaAuth
-  gnosisSafe: GnosisSafeAuth
-  debug: DebugAuth
-  magicLink: MagicLinkAuth
-  oneTimeLoginToken: OneTimeLoginTokenAuth
-  privy: PrivyAuth
-}
-
-input EoaAuth {
-  chainPubKey: ChainPubKeyInput!
-  nonce: String!
-  message: String!
-  signature: String! @scrub
-}
-
-input DebugAuth @restrictEnvironment(allowed: ["local", "development", "sandbox"]) {
-  asUsername: String
-  chainAddresses: [ChainAddressInput!]
-  debugToolsPassword: String
-}
-
-input GnosisSafeAuth {
-  address: Address!
-  nonce: String!
-  message: String!
-}
-
-input MagicLinkAuth {
-  token: String!
-}
-
-input PrivyAuth {
-  token: String!
-}
-
-input OneTimeLoginTokenAuth {
-  token: String!
-}
-
-#-------------------------------------------------------------------------------
-# NOTIFICATIONS
-#-------------------------------------------------------------------------------
-
-interface Notification implements Node {
-  id: ID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-}
-
-type GroupNotificationUserEdge {
-  node: User
-  cursor: String
-}
-
-type GroupNotificationUsersConnection {
-  edges: [GroupNotificationUserEdge]
-  pageInfo: PageInfo
-}
 
 #-------------------------------------------------------------------------------
 # QUERY
@@ -574,10 +422,10 @@ union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
 
 type Query {
   node(id: ID!): Node
-    viewer: UserResult @authRequired
-    userByUsername(username: String!): UserResult!
+  viewer: UserResult @authRequired
+  userByUsername(username: String!): UserResult!
   userById(id: ID!): UserResult!
-  userByAddress(chainAddress: ChainAddressInput!): UserResult!
+  userByAddress(address: Address!): UserResult!
 
   """Look up a pool by ID, slug, or contract ID."""
   pool(
@@ -599,7 +447,6 @@ type Query {
     descriptionWeight: Float
   ): SearchPoolsResult!
 
-  isEmailAddressAvailable(emailAddress: Email!): Boolean
 
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
   @basicAuth(allowed: [Retool])
@@ -609,20 +456,11 @@ type Query {
 # MUTATIONS
 #-------------------------------------------------------------------------------
 
-type Nonce {
-  nonce: String
-  message: String
-}
-
 # USER MUTATIONS
 
 type UserRegisterPayload {
   user: User!
   requiresConfirmation: Boolean
-}
-
-input UserRegisterInput {
-  authMechanism: AuthMechanism!
 }
 
 union UserRegisterResult = UserRegisterPayload | ErrAuthenticationFailed | ErrUserAlreadyExists | ErrInvalidInput | ErrDoesNotOwnRequiredToken
@@ -676,80 +514,6 @@ type VerifyTokenPayload {
 
 union VerifyTokenResult = VerifyTokenPayload | ErrNotAuthorized | ErrInvalidInput
 
-# PUSH TOKEN MUTATIONS
-
-type PushTokenRegisterPayload {
-  pushToken: String!
-  user: User!
-}
-
-union PushTokenRegisterResult = PushTokenRegisterPayload | ErrNotAuthorized | ErrInvalidInput | ErrPushTokenBelongsToAnotherUser
-
-type PushTokenUnregisterPayload {
-  pushToken: String!
-  user: User!
-}
-
-union PushTokenUnregisterResult = PushTokenUnregisterPayload | ErrNotAuthorized | ErrInvalidInput
-
-# NOTIFICATION MUTATIONS
-
-type NotificationSettingsUpdatePayload {
-  notificationSettings: NotificationSettings!
-}
-
-union NotificationSettingsUpdateResult = NotificationSettingsUpdatePayload | ErrNotAuthorized | ErrInvalidInput
-
-type ClearNotificationsPayload {
-  notifications: [Notification]!
-}
-
-union ClearNotificationsResult = ClearNotificationsPayload | ErrNotAuthorized
-
-# EMAIL MUTATIONS
-
-type EmailNotificationSettingsUpdatePayload {
-  emailNotificationSettings: EmailNotificationSettings!
-}
-
-union EmailNotificationSettingsUpdateResult = EmailNotificationSettingsUpdatePayload | ErrNotAuthorized | ErrInvalidInput
-
-type VerifyEmailPayload {
-  email: Email!
-}
-
-union VerifyEmailResult = VerifyEmailPayload | ErrInvalidInput
-
-enum PreverifyEmailStatus {
-  Invalid
-  Risky
-  Valid
-}
-
-type PreverifyEmailPayload {
-  email: Email!
-  result: PreverifyEmailStatus!
-}
-
-union PreverifyEmailResult = PreverifyEmailPayload | ErrInvalidInput
-
-type UpdateEmailPayload {
-  viewer: User!
-}
-
-union UpdateEmailResult = UpdateEmailPayload | ErrNotAuthorized | ErrInvalidInput
-
-type ResendVerificationEmailPayload {
-  viewer: User!
-}
-
-union ResendVerificationEmailResult = ResendVerificationEmailPayload | ErrNotAuthorized | ErrInvalidInput
-
-type UnsubscribeFromEmailPayload {
-  viewer: User!
-}
-
-union UnsubscribeFromEmailResult = UnsubscribeFromEmailPayload | ErrInvalidInput
 
 # ROLE MUTATIONS
 
@@ -772,12 +536,11 @@ type ClaimCreatePayload {
 
 input ClaimCreateInput {
   label: String!
-  recipientAddress: Address
   data: JSON
   parent: String
   children: [String!]
-  stateId: String!
-  strategyId: String!
+  validationId: String!
+  distributionId: String!
 }
 
 union ClaimCreateResult = ClaimCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -788,12 +551,11 @@ type ClaimUpdatePayload {
 
 input ClaimUpdateInput {
   claimId: ID!
-  recipientAddress: Address
   data: JSON
   parent: ID
   children: [ID!]
-  stateId: String
-  strategyId: String
+  validationId: String
+  distributionId: String
 }
 
 union ClaimUpdateResult = ClaimUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -810,12 +572,11 @@ type ClaimBulkCreatePayload {
 }
 
 input ClaimBulkCreateInput {
-  recipientAddress: Address
   data: JSON
   parent: ID
   children: [ID!]
-  stateId: String!
-  strategyId: String!
+  validationId: String!
+  distributionId: String!
 }
 
 union ClaimBulkCreateResult = ClaimBulkCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -827,12 +588,11 @@ type ClaimBulkUpdatePayload {
 
 input ClaimBulkUpdateInput {
   claimId: ID!
-  recipientAddress: Address
   data: JSON
   parent: ID
   children: [ID!]
-  stateId: String
-  strategyId: String
+  validationId: String
+  distributionId: String
 }
 
 union ClaimBulkUpdateResult = ClaimBulkUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -888,35 +648,11 @@ union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput 
 
 type Mutation {
   # User
-  userRegister(input: UserRegisterInput!): UserRegisterResult!
-  userUpdate(userId: ID, input: UserUpdateInput!): UserUpdateResult! @authRequired
+  userRegister: UserRegisterResult! @authRequired
+  userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
   userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
   userDelete(token: String!): UserDeleteResult! @authRequired
 
-  # Auth
-  login(authMechanism: AuthMechanism!): LoginResult!
-  logout: LogoutPayload!
-  tokenVerify(token: String!): VerifyTokenResult! @authRequired
-
-  # Wallets
-  addUserWallet(authMechanism: AuthMechanism!): AddUserWalletResult! @authRequired
-  removeUserWallets(walletIds: [ID!]!): RemoveUserWalletsResult! @authRequired
-
-  # Push Tokens
-  pushTokenRegister(pushToken: String!): PushTokenRegisterResult! @authRequired
-  pushTokenUnregister(pushToken: String!): PushTokenUnregisterResult! @authRequired
-
-  # Notifications
-  notificationSettingsUpdate(settings: NotificationSettingsInput!): NotificationSettingsUpdateResult! @authRequired
-  clearNotifications: ClearNotificationsResult! @authRequired
-
-  # Email
-  emailNotificationSettingsUpdate(settings: UpdateEmailNotificationSettingsInput!): EmailNotificationSettingsUpdateResult! @authRequired
-  verifyEmail(token: String!): VerifyEmailResult!
-  preverifyEmail(email: Email!): PreverifyEmailResult!
-  updateEmail(email: Email!, authMechanism: AuthMechanism): UpdateEmailResult! @authRequired
-  resendVerificationEmail: ResendVerificationEmailResult! @authRequired
-  unsubscribeFromEmail(input: UnsubscribeFromEmailTypeInput!): UnsubscribeFromEmailResult!
 
   # Roles
   roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
@@ -933,9 +669,4 @@ type Mutation {
   poolCreate(input: PoolCreateInput!): PoolCreateResult!
   poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
   poolDelete(id: ID!): PoolDeleteResult! @authRequired
-}
-
-type Subscription {
-  notificationCreated: Notification
-  notificationUpdated: Notification
 }

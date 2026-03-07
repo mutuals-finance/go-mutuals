@@ -27,10 +27,9 @@ func CreateClaims(ctx context.Context, queries *db.Queries, poolID persist.DBID,
 	for _, claim := range tree.Claims {
 		params.ID = append(params.ID, claim.ID.String())
 		params.Label = append(params.Label, claim.Label)
-		params.RecipientAddress = append(params.RecipientAddress, claim.RecipientAddress.String())
 		params.Path = append(params.Path, claim.Path)
-		params.StateID = append(params.StateID, claim.StateID)
-		params.StrategyID = append(params.StrategyID, claim.StrategyID)
+		params.ValidationID = append(params.ValidationID, claim.ValidationID)
+		params.DistributionID = append(params.DistributionID, claim.DistributionID)
 		// params.Data = append(params.Data, claim.Data)
 	}
 

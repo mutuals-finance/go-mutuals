@@ -3,9 +3,10 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/mutuals/go-mutuals/util"
 	"strconv"
 	"time"
+
+	"github.com/mutuals/go-mutuals/util"
 
 	"github.com/bsm/redislock"
 
@@ -32,7 +33,6 @@ const (
 	rateLimiters        redisDB = 1
 	misc                redisDB = 3
 	refreshNFTsThrottle redisDB = 7
-	emailThrottle       redisDB = 9
 	graphQLAPQ          redisDB = 12
 )
 
@@ -40,12 +40,9 @@ const (
 
 var (
 	NotificationLockCache             = CacheConfig{database: locks, keyPrefix: "notif", displayName: "notificationLock"}
-	EmailRateLimitersCache            = CacheConfig{database: rateLimiters, keyPrefix: "email", displayName: "emailRateLimiters"}
 	PushNotificationRateLimitersCache = CacheConfig{database: rateLimiters, keyPrefix: "push", displayName: "pushNotificationLimiters"}
-	OneTimeLoginCache                 = CacheConfig{database: misc, keyPrefix: "otl", displayName: "oneTimeLogin"}
 	AuthTokenForceRefreshCache        = CacheConfig{database: misc, keyPrefix: "authRefresh", displayName: "authTokenForceRefresh"}
 	RefreshNFTsThrottleCache          = CacheConfig{database: refreshNFTsThrottle, keyPrefix: "", displayName: "refreshNFTsThrottle"}
-	EmailThrottleCache                = CacheConfig{database: emailThrottle, keyPrefix: "", displayName: "emailThrottle"}
 	GraphQLAPQCache                   = CacheConfig{database: graphQLAPQ, keyPrefix: "", displayName: "graphQLAPQ"}
 	SearchCache                       = CacheConfig{keyPrefix: "search", displayName: "search"}
 	UserPrefCache                     = CacheConfig{keyPrefix: "userpref", displayName: "userPref"}

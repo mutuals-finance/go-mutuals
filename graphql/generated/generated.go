@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -46,22 +45,18 @@ type ResolverRoot interface {
 	Claim() ClaimResolver
 	Deposit() DepositResolver
 	EVMAccount() EVMAccountResolver
-	Extension() ExtensionResolver
-	ExtensionRegistry() ExtensionRegistryResolver
+	Module() ModuleResolver
+	ModuleRegistry() ModuleRegistryResolver
 	Mutation() MutationResolver
 	Pool() PoolResolver
 	PoolContract() PoolContractResolver
 	PoolDayBalance() PoolDayBalanceResolver
 	PoolHourBalance() PoolHourBalanceResolver
 	Query() QueryResolver
-	Subscription() SubscriptionResolver
 	TokenBalance() TokenBalanceResolver
 	Tx() TxResolver
 	User() UserResolver
-	UserEmail() UserEmailResolver
 	Withdrawal() WithdrawalResolver
-	ChainAddressInput() ChainAddressInputResolver
-	ChainPubKeyInput() ChainPubKeyInputResolver
 }
 
 type DirectiveRoot struct {
@@ -77,35 +72,19 @@ type ComplexityRoot struct {
 		Viewer func(childComplexity int) int
 	}
 
-	ChainAddress struct {
-		Address func(childComplexity int) int
-		ChainId func(childComplexity int) int
-	}
-
-	ChainPools struct {
-		ChainID func(childComplexity int) int
-		Pools   func(childComplexity int) int
-	}
-
-	ChainPubKey struct {
-		ChainId func(childComplexity int) int
-		PubKey  func(childComplexity int) int
-	}
-
 	Claim struct {
-		Children      func(childComplexity int) int
-		ChildrenCount func(childComplexity int) int
-		CreatedAt     func(childComplexity int) int
-		Data          func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Label         func(childComplexity int) int
-		Parent        func(childComplexity int) int
-		Path          func(childComplexity int) int
-		Pool          func(childComplexity int) int
-		Recipient     func(childComplexity int) int
-		State         func(childComplexity int) int
-		Strategy      func(childComplexity int) int
-		UpdatedAt     func(childComplexity int) int
+		Children     func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		Data         func(childComplexity int) int
+		Distribution func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Label        func(childComplexity int) int
+		Parent       func(childComplexity int) int
+		Path         func(childComplexity int) int
+		Pool         func(childComplexity int) int
+		Recipient    func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		Validation   func(childComplexity int) int
 	}
 
 	ClaimBulkCreatePayload struct {
@@ -134,10 +113,6 @@ type ComplexityRoot struct {
 		Claim func(childComplexity int) int
 	}
 
-	ClearNotificationsPayload struct {
-		Notifications func(childComplexity int) int
-	}
-
 	DeletedNode struct {
 		ID func(childComplexity int) int
 	}
@@ -164,15 +139,6 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		SelfPools   func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
-	}
-
-	EmailNotificationSettings struct {
-		UnsubscribedFromAll           func(childComplexity int) int
-		UnsubscribedFromNotifications func(childComplexity int) int
-	}
-
-	EmailNotificationSettingsUpdatePayload struct {
-		EmailNotificationSettings func(childComplexity int) int
 	}
 
 	ErrAddressOwnedByUser struct {
@@ -210,10 +176,6 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	ErrPushTokenBelongsToAnotherUser struct {
-		Message func(childComplexity int) int
-	}
-
 	ErrSessionInvalidated struct {
 		Message func(childComplexity int) int
 	}
@@ -238,41 +200,6 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	Extension struct {
-		Address           func(childComplexity int) int
-		ChainID           func(childComplexity int) int
-		CreatedAt         func(childComplexity int) int
-		Data              func(childComplexity int) int
-		Description       func(childComplexity int) int
-		ExtensionID       func(childComplexity int) int
-		ExtensionRegistry func(childComplexity int) int
-		ExtensionType     func(childComplexity int) int
-		ID                func(childComplexity int) int
-		Name              func(childComplexity int) int
-		Permissions       func(childComplexity int) int
-		UpdatedAt         func(childComplexity int) int
-	}
-
-	ExtensionRegistry struct {
-		Address        func(childComplexity int) int
-		ChainID        func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		ExtensionCount func(childComplexity int) int
-		ID             func(childComplexity int) int
-		Owner          func(childComplexity int) int
-		UpdatedAt      func(childComplexity int) int
-	}
-
-	GroupNotificationUserEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	GroupNotificationUsersConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
-	}
-
 	LoginPayload struct {
 		Viewer func(childComplexity int) int
 	}
@@ -281,60 +208,46 @@ type ComplexityRoot struct {
 		Viewer func(childComplexity int) int
 	}
 
+	Module struct {
+		Address        func(childComplexity int) int
+		ChainID        func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Data           func(childComplexity int) int
+		Description    func(childComplexity int) int
+		ID             func(childComplexity int) int
+		ModuleID       func(childComplexity int) int
+		ModuleRegistry func(childComplexity int) int
+		ModuleType     func(childComplexity int) int
+		Name           func(childComplexity int) int
+		Permissions    func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+	}
+
+	ModuleRegistry struct {
+		Address     func(childComplexity int) int
+		ChainID     func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		ModuleCount func(childComplexity int) int
+		Owner       func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+	}
+
 	Mutation struct {
-		AddUserWallet                   func(childComplexity int, authMechanism model.AuthMechanism) int
-		ClearNotifications              func(childComplexity int) int
-		EmailNotificationSettingsUpdate func(childComplexity int, settings model.UpdateEmailNotificationSettingsInput) int
-		Login                           func(childComplexity int, authMechanism model.AuthMechanism) int
-		Logout                          func(childComplexity int) int
-		NotificationSettingsUpdate      func(childComplexity int, settings model.NotificationSettingsInput) int
-		PoolClaimBulkCreate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkCreateInput) int
-		PoolClaimBulkDelete             func(childComplexity int, poolID model.GqlID, claimIds []model.GqlID) int
-		PoolClaimBulkUpdate             func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkUpdateInput) int
-		PoolClaimCreate                 func(childComplexity int, poolID model.GqlID, input model.ClaimCreateInput) int
-		PoolClaimDelete                 func(childComplexity int, poolID model.GqlID, claimID model.GqlID) int
-		PoolClaimUpdate                 func(childComplexity int, poolID model.GqlID, input model.ClaimUpdateInput) int
-		PoolCreate                      func(childComplexity int, input model.PoolCreateInput) int
-		PoolDelete                      func(childComplexity int, id model.GqlID) int
-		PoolUpdate                      func(childComplexity int, id model.GqlID, input model.PoolUpdateInput) int
-		PreverifyEmail                  func(childComplexity int, email persist.Email) int
-		PushTokenRegister               func(childComplexity int, pushToken string) int
-		PushTokenUnregister             func(childComplexity int, pushToken string) int
-		RemoveUserWallets               func(childComplexity int, walletIds []model.GqlID) int
-		ResendVerificationEmail         func(childComplexity int) int
-		RoleUpdate                      func(childComplexity int, role persist.Role, input model.RoleUpdateInput) int
-		TokenVerify                     func(childComplexity int, token string) int
-		UnsubscribeFromEmail            func(childComplexity int, input model.UnsubscribeFromEmailTypeInput) int
-		UpdateEmail                     func(childComplexity int, email persist.Email, authMechanism *model.AuthMechanism) int
-		UserDelete                      func(childComplexity int, token string) int
-		UserRegister                    func(childComplexity int, input model.UserRegisterInput) int
-		UserRequestDeletion             func(childComplexity int, redirectURL string) int
-		UserUpdate                      func(childComplexity int, userID *model.GqlID, input model.UserUpdateInput) int
-		VerifyEmail                     func(childComplexity int, token string) int
-	}
-
-	Nonce struct {
-		Message func(childComplexity int) int
-		Nonce   func(childComplexity int) int
-	}
-
-	NotificationEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	NotificationSettings struct {
-		SomeoneViewedYourPool func(childComplexity int) int
-	}
-
-	NotificationSettingsUpdatePayload struct {
-		NotificationSettings func(childComplexity int) int
-	}
-
-	NotificationsConnection struct {
-		Edges       func(childComplexity int) int
-		PageInfo    func(childComplexity int) int
-		UnseenCount func(childComplexity int) int
+		PoolClaimBulkCreate func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkCreateInput) int
+		PoolClaimBulkDelete func(childComplexity int, poolID model.GqlID, claimIds []model.GqlID) int
+		PoolClaimBulkUpdate func(childComplexity int, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkUpdateInput) int
+		PoolClaimCreate     func(childComplexity int, poolID model.GqlID, input model.ClaimCreateInput) int
+		PoolClaimDelete     func(childComplexity int, poolID model.GqlID, claimID model.GqlID) int
+		PoolClaimUpdate     func(childComplexity int, poolID model.GqlID, input model.ClaimUpdateInput) int
+		PoolCreate          func(childComplexity int, input model.PoolCreateInput) int
+		PoolDelete          func(childComplexity int, id model.GqlID) int
+		PoolUpdate          func(childComplexity int, id model.GqlID, input model.PoolUpdateInput) int
+		RoleUpdate          func(childComplexity int, role persist.Role, input model.RoleUpdateInput) int
+		UserDelete          func(childComplexity int, token string) int
+		UserRegister        func(childComplexity int) int
+		UserRequestDeletion func(childComplexity int, redirectURL string) int
+		UserUpdate          func(childComplexity int, input model.UserUpdateInput) int
 	}
 
 	PageInfo struct {
@@ -425,40 +338,20 @@ type ComplexityRoot struct {
 		Pool func(childComplexity int) int
 	}
 
-	PreverifyEmailPayload struct {
-		Email  func(childComplexity int) int
-		Result func(childComplexity int) int
-	}
-
-	PushTokenRegisterPayload struct {
-		PushToken func(childComplexity int) int
-		User      func(childComplexity int) int
-	}
-
-	PushTokenUnregisterPayload struct {
-		PushToken func(childComplexity int) int
-		User      func(childComplexity int) int
-	}
-
 	Query struct {
-		IsEmailAddressAvailable func(childComplexity int, emailAddress persist.Email) int
-		Node                    func(childComplexity int, id model.GqlID) int
-		Pool                    func(childComplexity int, id *model.GqlID, slug *string, contractID *model.GqlID) int
-		SearchPools             func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
-		SearchUsers             func(childComplexity int, query string, limit *int, usernameWeight *float64) int
-		UserByAddress           func(childComplexity int, chainAddress persist.ChainAddress) int
-		UserByID                func(childComplexity int, id model.GqlID) int
-		UserByUsername          func(childComplexity int, username string) int
-		UsersByRole             func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
-		Viewer                  func(childComplexity int) int
-		__resolve__service      func(childComplexity int) int
+		Node               func(childComplexity int, id model.GqlID) int
+		Pool               func(childComplexity int, id *model.GqlID, slug *string, contractID *model.GqlID) int
+		SearchPools        func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
+		SearchUsers        func(childComplexity int, query string, limit *int, usernameWeight *float64) int
+		UserByAddress      func(childComplexity int, address persist.Address) int
+		UserByID           func(childComplexity int, id model.GqlID) int
+		UserByUsername     func(childComplexity int, username string) int
+		UsersByRole        func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
+		Viewer             func(childComplexity int) int
+		__resolve__service func(childComplexity int) int
 	}
 
 	RemoveUserWalletsPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	ResendVerificationEmailPayload struct {
 		Viewer func(childComplexity int) int
 	}
 
@@ -472,11 +365,6 @@ type ComplexityRoot struct {
 
 	SearchUsersPayload struct {
 		Results func(childComplexity int) int
-	}
-
-	Subscription struct {
-		NotificationCreated func(childComplexity int) int
-		NotificationUpdated func(childComplexity int) int
 	}
 
 	Token struct {
@@ -515,20 +403,10 @@ type ComplexityRoot struct {
 		Withdrawals func(childComplexity int) int
 	}
 
-	UnsubscribeFromEmailPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
-	UpdateEmailPayload struct {
-		Viewer func(childComplexity int) int
-	}
-
 	User struct {
-		ID                   func(childComplexity int) int
-		NotificationSettings func(childComplexity int) int
-		Notifications        func(childComplexity int, before *string, after *string, first *int, last *int) int
-		Pools                func(childComplexity int) int
-		Roles                func(childComplexity int) int
+		ID    func(childComplexity int) int
+		Pools func(childComplexity int) int
+		Roles func(childComplexity int) int
 	}
 
 	UserDeletePayload struct {
@@ -538,12 +416,6 @@ type ComplexityRoot struct {
 	UserEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	}
-
-	UserEmail struct {
-		Email                     func(childComplexity int) int
-		EmailNotificationSettings func(childComplexity int) int
-		VerificationStatus        func(childComplexity int) int
 	}
 
 	UserRegisterPayload struct {
@@ -562,10 +434,6 @@ type ComplexityRoot struct {
 	UsersConnection struct {
 		Edges    func(childComplexity int) int
 		PageInfo func(childComplexity int) int
-	}
-
-	VerifyEmailPayload struct {
-		Email func(childComplexity int) int
 	}
 
 	VerifyTokenPayload struct {
@@ -597,8 +465,8 @@ type ClaimResolver interface {
 	Children(ctx context.Context, obj *model.Claim) ([]*model.Claim, error)
 	Pool(ctx context.Context, obj *model.Claim) (*model.Pool, error)
 	Recipient(ctx context.Context, obj *model.Claim) (model.PoolOrUserOrEVMAccount, error)
-	State(ctx context.Context, obj *model.Claim) (*model.Extension, error)
-	Strategy(ctx context.Context, obj *model.Claim) (*model.Extension, error)
+	Validation(ctx context.Context, obj *model.Claim) (*model.Module, error)
+	Distribution(ctx context.Context, obj *model.Claim) (*model.Module, error)
 }
 type DepositResolver interface {
 	Transaction(ctx context.Context, obj *model.Deposit) (*model.Tx, error)
@@ -609,32 +477,17 @@ type EVMAccountResolver interface {
 	SelfPools(ctx context.Context, obj *model.EVMAccount) ([]*model.Pool, error)
 	Balances(ctx context.Context, obj *model.EVMAccount) ([]*model.TokenBalance, error)
 }
-type ExtensionResolver interface {
-	ExtensionRegistry(ctx context.Context, obj *model.Extension) (*model.ExtensionRegistry, error)
+type ModuleResolver interface {
+	ModuleRegistry(ctx context.Context, obj *model.Module) (*model.ModuleRegistry, error)
 }
-type ExtensionRegistryResolver interface {
-	Owner(ctx context.Context, obj *model.ExtensionRegistry) (*model.EVMAccount, error)
+type ModuleRegistryResolver interface {
+	Owner(ctx context.Context, obj *model.ModuleRegistry) (*model.EVMAccount, error)
 }
 type MutationResolver interface {
-	UserRegister(ctx context.Context, input model.UserRegisterInput) (model.UserRegisterResult, error)
-	UserUpdate(ctx context.Context, userID *model.GqlID, input model.UserUpdateInput) (model.UserUpdateResult, error)
+	UserRegister(ctx context.Context) (model.UserRegisterResult, error)
+	UserUpdate(ctx context.Context, input model.UserUpdateInput) (model.UserUpdateResult, error)
 	UserRequestDeletion(ctx context.Context, redirectURL string) (model.UserDeleteResult, error)
 	UserDelete(ctx context.Context, token string) (model.UserDeleteResult, error)
-	Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginResult, error)
-	Logout(ctx context.Context) (*model.LogoutPayload, error)
-	TokenVerify(ctx context.Context, token string) (model.VerifyTokenResult, error)
-	AddUserWallet(ctx context.Context, authMechanism model.AuthMechanism) (model.AddUserWalletResult, error)
-	RemoveUserWallets(ctx context.Context, walletIds []model.GqlID) (model.RemoveUserWalletsResult, error)
-	PushTokenRegister(ctx context.Context, pushToken string) (model.PushTokenRegisterResult, error)
-	PushTokenUnregister(ctx context.Context, pushToken string) (model.PushTokenUnregisterResult, error)
-	NotificationSettingsUpdate(ctx context.Context, settings model.NotificationSettingsInput) (model.NotificationSettingsUpdateResult, error)
-	ClearNotifications(ctx context.Context) (model.ClearNotificationsResult, error)
-	EmailNotificationSettingsUpdate(ctx context.Context, settings model.UpdateEmailNotificationSettingsInput) (model.EmailNotificationSettingsUpdateResult, error)
-	VerifyEmail(ctx context.Context, token string) (model.VerifyEmailResult, error)
-	PreverifyEmail(ctx context.Context, email persist.Email) (model.PreverifyEmailResult, error)
-	UpdateEmail(ctx context.Context, email persist.Email, authMechanism *model.AuthMechanism) (model.UpdateEmailResult, error)
-	ResendVerificationEmail(ctx context.Context) (model.ResendVerificationEmailResult, error)
-	UnsubscribeFromEmail(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailResult, error)
 	RoleUpdate(ctx context.Context, role persist.Role, input model.RoleUpdateInput) (model.RoleUpdateResult, error)
 	PoolClaimCreate(ctx context.Context, poolID model.GqlID, input model.ClaimCreateInput) (model.ClaimCreateResult, error)
 	PoolClaimUpdate(ctx context.Context, poolID model.GqlID, input model.ClaimUpdateInput) (model.ClaimUpdateResult, error)
@@ -647,7 +500,7 @@ type MutationResolver interface {
 	PoolDelete(ctx context.Context, id model.GqlID) (model.PoolDeleteResult, error)
 }
 type PoolResolver interface {
-	Owner(ctx context.Context, obj *model.Pool) (model.UserOrAccount, error)
+	Owner(ctx context.Context, obj *model.Pool) (model.UserOrEVMAccount, error)
 	Contract(ctx context.Context, obj *model.Pool) (*model.PoolContract, error)
 	Claims(ctx context.Context, obj *model.Pool) ([]*model.Claim, error)
 }
@@ -673,16 +526,11 @@ type QueryResolver interface {
 	Viewer(ctx context.Context) (model.UserResult, error)
 	UserByUsername(ctx context.Context, username string) (model.UserResult, error)
 	UserByID(ctx context.Context, id model.GqlID) (model.UserResult, error)
-	UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserResult, error)
+	UserByAddress(ctx context.Context, address persist.Address) (model.UserResult, error)
 	Pool(ctx context.Context, id *model.GqlID, slug *string, contractID *model.GqlID) (model.PoolResult, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersResult, error)
 	SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsResult, error)
-	IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error)
 	UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error)
-}
-type SubscriptionResolver interface {
-	NotificationCreated(ctx context.Context) (<-chan model.Notification, error)
-	NotificationUpdated(ctx context.Context) (<-chan model.Notification, error)
 }
 type TokenBalanceResolver interface {
 	Token(ctx context.Context, obj *model.TokenBalance) (*model.Token, error)
@@ -695,25 +543,11 @@ type TxResolver interface {
 type UserResolver interface {
 	Roles(ctx context.Context, obj *model.User) ([]*persist.Role, error)
 	Pools(ctx context.Context, obj *model.User) ([]*model.Pool, error)
-	Notifications(ctx context.Context, obj *model.User, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error)
-	NotificationSettings(ctx context.Context, obj *model.User) (*model.NotificationSettings, error)
-}
-type UserEmailResolver interface {
-	EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error)
 }
 type WithdrawalResolver interface {
 	Transaction(ctx context.Context, obj *model.Withdrawal) (*model.Tx, error)
 	Pool(ctx context.Context, obj *model.Withdrawal) (*model.Pool, error)
 	Token(ctx context.Context, obj *model.Withdrawal) (*model.Token, error)
-}
-
-type ChainAddressInputResolver interface {
-	Address(ctx context.Context, obj *persist.ChainAddress, data persist.Address) error
-	ChainID(ctx context.Context, obj *persist.ChainAddress, data int) error
-}
-type ChainPubKeyInputResolver interface {
-	PubKey(ctx context.Context, obj *persist.ChainPubKey, data persist.PubKey) error
-	ChainID(ctx context.Context, obj *persist.ChainPubKey, data int) error
 }
 
 type executableSchema struct {
@@ -742,61 +576,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AddUserWalletPayload.Viewer(childComplexity), true
 
-	case "ChainAddress.address":
-		if e.complexity.ChainAddress.Address == nil {
-			break
-		}
-
-		return e.complexity.ChainAddress.Address(childComplexity), true
-
-	case "ChainAddress.chainId":
-		if e.complexity.ChainAddress.ChainId == nil {
-			break
-		}
-
-		return e.complexity.ChainAddress.ChainId(childComplexity), true
-
-	case "ChainPools.chainId":
-		if e.complexity.ChainPools.ChainID == nil {
-			break
-		}
-
-		return e.complexity.ChainPools.ChainID(childComplexity), true
-
-	case "ChainPools.pools":
-		if e.complexity.ChainPools.Pools == nil {
-			break
-		}
-
-		return e.complexity.ChainPools.Pools(childComplexity), true
-
-	case "ChainPubKey.chainId":
-		if e.complexity.ChainPubKey.ChainId == nil {
-			break
-		}
-
-		return e.complexity.ChainPubKey.ChainId(childComplexity), true
-
-	case "ChainPubKey.pubKey":
-		if e.complexity.ChainPubKey.PubKey == nil {
-			break
-		}
-
-		return e.complexity.ChainPubKey.PubKey(childComplexity), true
-
 	case "Claim.children":
 		if e.complexity.Claim.Children == nil {
 			break
 		}
 
 		return e.complexity.Claim.Children(childComplexity), true
-
-	case "Claim.childrenCount":
-		if e.complexity.Claim.ChildrenCount == nil {
-			break
-		}
-
-		return e.complexity.Claim.ChildrenCount(childComplexity), true
 
 	case "Claim.createdAt":
 		if e.complexity.Claim.CreatedAt == nil {
@@ -811,6 +596,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Claim.Data(childComplexity), true
+
+	case "Claim.distribution":
+		if e.complexity.Claim.Distribution == nil {
+			break
+		}
+
+		return e.complexity.Claim.Distribution(childComplexity), true
 
 	case "Claim.id":
 		if e.complexity.Claim.ID == nil {
@@ -854,26 +646,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Claim.Recipient(childComplexity), true
 
-	case "Claim.state":
-		if e.complexity.Claim.State == nil {
-			break
-		}
-
-		return e.complexity.Claim.State(childComplexity), true
-
-	case "Claim.strategy":
-		if e.complexity.Claim.Strategy == nil {
-			break
-		}
-
-		return e.complexity.Claim.Strategy(childComplexity), true
-
 	case "Claim.updatedAt":
 		if e.complexity.Claim.UpdatedAt == nil {
 			break
 		}
 
 		return e.complexity.Claim.UpdatedAt(childComplexity), true
+
+	case "Claim.validation":
+		if e.complexity.Claim.Validation == nil {
+			break
+		}
+
+		return e.complexity.Claim.Validation(childComplexity), true
 
 	case "ClaimBulkCreatePayload.claims":
 		if e.complexity.ClaimBulkCreatePayload.Claims == nil {
@@ -930,13 +715,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ClaimUpdatePayload.Claim(childComplexity), true
-
-	case "ClearNotificationsPayload.notifications":
-		if e.complexity.ClearNotificationsPayload.Notifications == nil {
-			break
-		}
-
-		return e.complexity.ClearNotificationsPayload.Notifications(childComplexity), true
 
 	case "DeletedNode.id":
 		if e.complexity.DeletedNode.ID == nil {
@@ -1071,27 +849,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EVMAccount.UpdatedAt(childComplexity), true
 
-	case "EmailNotificationSettings.unsubscribedFromAll":
-		if e.complexity.EmailNotificationSettings.UnsubscribedFromAll == nil {
-			break
-		}
-
-		return e.complexity.EmailNotificationSettings.UnsubscribedFromAll(childComplexity), true
-
-	case "EmailNotificationSettings.unsubscribedFromNotifications":
-		if e.complexity.EmailNotificationSettings.UnsubscribedFromNotifications == nil {
-			break
-		}
-
-		return e.complexity.EmailNotificationSettings.UnsubscribedFromNotifications(childComplexity), true
-
-	case "EmailNotificationSettingsUpdatePayload.emailNotificationSettings":
-		if e.complexity.EmailNotificationSettingsUpdatePayload.EmailNotificationSettings == nil {
-			break
-		}
-
-		return e.complexity.EmailNotificationSettingsUpdatePayload.EmailNotificationSettings(childComplexity), true
-
 	case "ErrAddressOwnedByUser.message":
 		if e.complexity.ErrAddressOwnedByUser.Message == nil {
 			break
@@ -1169,13 +926,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ErrPoolNotFound.Message(childComplexity), true
 
-	case "ErrPushTokenBelongsToAnotherUser.message":
-		if e.complexity.ErrPushTokenBelongsToAnotherUser.Message == nil {
-			break
-		}
-
-		return e.complexity.ErrPushTokenBelongsToAnotherUser.Message(childComplexity), true
-
 	case "ErrSessionInvalidated.message":
 		if e.complexity.ErrSessionInvalidated.Message == nil {
 			break
@@ -1218,167 +968,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ErrUsernameNotAvailable.Message(childComplexity), true
 
-	case "Extension.address":
-		if e.complexity.Extension.Address == nil {
-			break
-		}
-
-		return e.complexity.Extension.Address(childComplexity), true
-
-	case "Extension.chainId":
-		if e.complexity.Extension.ChainID == nil {
-			break
-		}
-
-		return e.complexity.Extension.ChainID(childComplexity), true
-
-	case "Extension.createdAt":
-		if e.complexity.Extension.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Extension.CreatedAt(childComplexity), true
-
-	case "Extension.data":
-		if e.complexity.Extension.Data == nil {
-			break
-		}
-
-		return e.complexity.Extension.Data(childComplexity), true
-
-	case "Extension.description":
-		if e.complexity.Extension.Description == nil {
-			break
-		}
-
-		return e.complexity.Extension.Description(childComplexity), true
-
-	case "Extension.extensionId":
-		if e.complexity.Extension.ExtensionID == nil {
-			break
-		}
-
-		return e.complexity.Extension.ExtensionID(childComplexity), true
-
-	case "Extension.extensionRegistry":
-		if e.complexity.Extension.ExtensionRegistry == nil {
-			break
-		}
-
-		return e.complexity.Extension.ExtensionRegistry(childComplexity), true
-
-	case "Extension.extensionType":
-		if e.complexity.Extension.ExtensionType == nil {
-			break
-		}
-
-		return e.complexity.Extension.ExtensionType(childComplexity), true
-
-	case "Extension.id":
-		if e.complexity.Extension.ID == nil {
-			break
-		}
-
-		return e.complexity.Extension.ID(childComplexity), true
-
-	case "Extension.name":
-		if e.complexity.Extension.Name == nil {
-			break
-		}
-
-		return e.complexity.Extension.Name(childComplexity), true
-
-	case "Extension.permissions":
-		if e.complexity.Extension.Permissions == nil {
-			break
-		}
-
-		return e.complexity.Extension.Permissions(childComplexity), true
-
-	case "Extension.updatedAt":
-		if e.complexity.Extension.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.Extension.UpdatedAt(childComplexity), true
-
-	case "ExtensionRegistry.address":
-		if e.complexity.ExtensionRegistry.Address == nil {
-			break
-		}
-
-		return e.complexity.ExtensionRegistry.Address(childComplexity), true
-
-	case "ExtensionRegistry.chainId":
-		if e.complexity.ExtensionRegistry.ChainID == nil {
-			break
-		}
-
-		return e.complexity.ExtensionRegistry.ChainID(childComplexity), true
-
-	case "ExtensionRegistry.createdAt":
-		if e.complexity.ExtensionRegistry.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.ExtensionRegistry.CreatedAt(childComplexity), true
-
-	case "ExtensionRegistry.extensionCount":
-		if e.complexity.ExtensionRegistry.ExtensionCount == nil {
-			break
-		}
-
-		return e.complexity.ExtensionRegistry.ExtensionCount(childComplexity), true
-
-	case "ExtensionRegistry.id":
-		if e.complexity.ExtensionRegistry.ID == nil {
-			break
-		}
-
-		return e.complexity.ExtensionRegistry.ID(childComplexity), true
-
-	case "ExtensionRegistry.owner":
-		if e.complexity.ExtensionRegistry.Owner == nil {
-			break
-		}
-
-		return e.complexity.ExtensionRegistry.Owner(childComplexity), true
-
-	case "ExtensionRegistry.updatedAt":
-		if e.complexity.ExtensionRegistry.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.ExtensionRegistry.UpdatedAt(childComplexity), true
-
-	case "GroupNotificationUserEdge.cursor":
-		if e.complexity.GroupNotificationUserEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.GroupNotificationUserEdge.Cursor(childComplexity), true
-
-	case "GroupNotificationUserEdge.node":
-		if e.complexity.GroupNotificationUserEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.GroupNotificationUserEdge.Node(childComplexity), true
-
-	case "GroupNotificationUsersConnection.edges":
-		if e.complexity.GroupNotificationUsersConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.GroupNotificationUsersConnection.Edges(childComplexity), true
-
-	case "GroupNotificationUsersConnection.pageInfo":
-		if e.complexity.GroupNotificationUsersConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.GroupNotificationUsersConnection.PageInfo(childComplexity), true
-
 	case "LoginPayload.viewer":
 		if e.complexity.LoginPayload.Viewer == nil {
 			break
@@ -1393,67 +982,138 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.LogoutPayload.Viewer(childComplexity), true
 
-	case "Mutation.addUserWallet":
-		if e.complexity.Mutation.AddUserWallet == nil {
+	case "Module.address":
+		if e.complexity.Module.Address == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_addUserWallet_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
+		return e.complexity.Module.Address(childComplexity), true
 
-		return e.complexity.Mutation.AddUserWallet(childComplexity, args["authMechanism"].(model.AuthMechanism)), true
-
-	case "Mutation.clearNotifications":
-		if e.complexity.Mutation.ClearNotifications == nil {
+	case "Module.chainId":
+		if e.complexity.Module.ChainID == nil {
 			break
 		}
 
-		return e.complexity.Mutation.ClearNotifications(childComplexity), true
+		return e.complexity.Module.ChainID(childComplexity), true
 
-	case "Mutation.emailNotificationSettingsUpdate":
-		if e.complexity.Mutation.EmailNotificationSettingsUpdate == nil {
+	case "Module.createdAt":
+		if e.complexity.Module.CreatedAt == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_emailNotificationSettingsUpdate_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
+		return e.complexity.Module.CreatedAt(childComplexity), true
 
-		return e.complexity.Mutation.EmailNotificationSettingsUpdate(childComplexity, args["settings"].(model.UpdateEmailNotificationSettingsInput)), true
-
-	case "Mutation.login":
-		if e.complexity.Mutation.Login == nil {
+	case "Module.data":
+		if e.complexity.Module.Data == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_login_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
+		return e.complexity.Module.Data(childComplexity), true
 
-		return e.complexity.Mutation.Login(childComplexity, args["authMechanism"].(model.AuthMechanism)), true
-
-	case "Mutation.logout":
-		if e.complexity.Mutation.Logout == nil {
+	case "Module.description":
+		if e.complexity.Module.Description == nil {
 			break
 		}
 
-		return e.complexity.Mutation.Logout(childComplexity), true
+		return e.complexity.Module.Description(childComplexity), true
 
-	case "Mutation.notificationSettingsUpdate":
-		if e.complexity.Mutation.NotificationSettingsUpdate == nil {
+	case "Module.id":
+		if e.complexity.Module.ID == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_notificationSettingsUpdate_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
+		return e.complexity.Module.ID(childComplexity), true
+
+	case "Module.moduleId":
+		if e.complexity.Module.ModuleID == nil {
+			break
 		}
 
-		return e.complexity.Mutation.NotificationSettingsUpdate(childComplexity, args["settings"].(model.NotificationSettingsInput)), true
+		return e.complexity.Module.ModuleID(childComplexity), true
+
+	case "Module.moduleRegistry":
+		if e.complexity.Module.ModuleRegistry == nil {
+			break
+		}
+
+		return e.complexity.Module.ModuleRegistry(childComplexity), true
+
+	case "Module.moduleType":
+		if e.complexity.Module.ModuleType == nil {
+			break
+		}
+
+		return e.complexity.Module.ModuleType(childComplexity), true
+
+	case "Module.name":
+		if e.complexity.Module.Name == nil {
+			break
+		}
+
+		return e.complexity.Module.Name(childComplexity), true
+
+	case "Module.permissions":
+		if e.complexity.Module.Permissions == nil {
+			break
+		}
+
+		return e.complexity.Module.Permissions(childComplexity), true
+
+	case "Module.updatedAt":
+		if e.complexity.Module.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Module.UpdatedAt(childComplexity), true
+
+	case "ModuleRegistry.address":
+		if e.complexity.ModuleRegistry.Address == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.Address(childComplexity), true
+
+	case "ModuleRegistry.chainId":
+		if e.complexity.ModuleRegistry.ChainID == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.ChainID(childComplexity), true
+
+	case "ModuleRegistry.createdAt":
+		if e.complexity.ModuleRegistry.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.CreatedAt(childComplexity), true
+
+	case "ModuleRegistry.id":
+		if e.complexity.ModuleRegistry.ID == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.ID(childComplexity), true
+
+	case "ModuleRegistry.moduleCount":
+		if e.complexity.ModuleRegistry.ModuleCount == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.ModuleCount(childComplexity), true
+
+	case "ModuleRegistry.owner":
+		if e.complexity.ModuleRegistry.Owner == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.Owner(childComplexity), true
+
+	case "ModuleRegistry.updatedAt":
+		if e.complexity.ModuleRegistry.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.UpdatedAt(childComplexity), true
 
 	case "Mutation.poolClaimBulkCreate":
 		if e.complexity.Mutation.PoolClaimBulkCreate == nil {
@@ -1563,61 +1223,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.PoolUpdate(childComplexity, args["id"].(model.GqlID), args["input"].(model.PoolUpdateInput)), true
 
-	case "Mutation.preverifyEmail":
-		if e.complexity.Mutation.PreverifyEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_preverifyEmail_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.PreverifyEmail(childComplexity, args["email"].(persist.Email)), true
-
-	case "Mutation.pushTokenRegister":
-		if e.complexity.Mutation.PushTokenRegister == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_pushTokenRegister_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.PushTokenRegister(childComplexity, args["pushToken"].(string)), true
-
-	case "Mutation.pushTokenUnregister":
-		if e.complexity.Mutation.PushTokenUnregister == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_pushTokenUnregister_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.PushTokenUnregister(childComplexity, args["pushToken"].(string)), true
-
-	case "Mutation.removeUserWallets":
-		if e.complexity.Mutation.RemoveUserWallets == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_removeUserWallets_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RemoveUserWallets(childComplexity, args["walletIds"].([]model.GqlID)), true
-
-	case "Mutation.resendVerificationEmail":
-		if e.complexity.Mutation.ResendVerificationEmail == nil {
-			break
-		}
-
-		return e.complexity.Mutation.ResendVerificationEmail(childComplexity), true
-
 	case "Mutation.roleUpdate":
 		if e.complexity.Mutation.RoleUpdate == nil {
 			break
@@ -1629,42 +1234,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RoleUpdate(childComplexity, args["role"].(persist.Role), args["input"].(model.RoleUpdateInput)), true
-
-	case "Mutation.tokenVerify":
-		if e.complexity.Mutation.TokenVerify == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_tokenVerify_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.TokenVerify(childComplexity, args["token"].(string)), true
-
-	case "Mutation.unsubscribeFromEmail":
-		if e.complexity.Mutation.UnsubscribeFromEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_unsubscribeFromEmail_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UnsubscribeFromEmail(childComplexity, args["input"].(model.UnsubscribeFromEmailTypeInput)), true
-
-	case "Mutation.updateEmail":
-		if e.complexity.Mutation.UpdateEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateEmail_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateEmail(childComplexity, args["email"].(persist.Email), args["authMechanism"].(*model.AuthMechanism)), true
 
 	case "Mutation.userDelete":
 		if e.complexity.Mutation.UserDelete == nil {
@@ -1683,12 +1252,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Mutation_userRegister_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UserRegister(childComplexity, args["input"].(model.UserRegisterInput)), true
+		return e.complexity.Mutation.UserRegister(childComplexity), true
 
 	case "Mutation.userRequestDeletion":
 		if e.complexity.Mutation.UserRequestDeletion == nil {
@@ -1712,82 +1276,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UserUpdate(childComplexity, args["userId"].(*model.GqlID), args["input"].(model.UserUpdateInput)), true
-
-	case "Mutation.verifyEmail":
-		if e.complexity.Mutation.VerifyEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_verifyEmail_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.VerifyEmail(childComplexity, args["token"].(string)), true
-
-	case "Nonce.message":
-		if e.complexity.Nonce.Message == nil {
-			break
-		}
-
-		return e.complexity.Nonce.Message(childComplexity), true
-
-	case "Nonce.nonce":
-		if e.complexity.Nonce.Nonce == nil {
-			break
-		}
-
-		return e.complexity.Nonce.Nonce(childComplexity), true
-
-	case "NotificationEdge.cursor":
-		if e.complexity.NotificationEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.NotificationEdge.Cursor(childComplexity), true
-
-	case "NotificationEdge.node":
-		if e.complexity.NotificationEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.NotificationEdge.Node(childComplexity), true
-
-	case "NotificationSettings.someoneViewedYourPool":
-		if e.complexity.NotificationSettings.SomeoneViewedYourPool == nil {
-			break
-		}
-
-		return e.complexity.NotificationSettings.SomeoneViewedYourPool(childComplexity), true
-
-	case "NotificationSettingsUpdatePayload.notificationSettings":
-		if e.complexity.NotificationSettingsUpdatePayload.NotificationSettings == nil {
-			break
-		}
-
-		return e.complexity.NotificationSettingsUpdatePayload.NotificationSettings(childComplexity), true
-
-	case "NotificationsConnection.edges":
-		if e.complexity.NotificationsConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.NotificationsConnection.Edges(childComplexity), true
-
-	case "NotificationsConnection.pageInfo":
-		if e.complexity.NotificationsConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.NotificationsConnection.PageInfo(childComplexity), true
-
-	case "NotificationsConnection.unseenCount":
-		if e.complexity.NotificationsConnection.UnseenCount == nil {
-			break
-		}
-
-		return e.complexity.NotificationsConnection.UnseenCount(childComplexity), true
+		return e.complexity.Mutation.UserUpdate(childComplexity, args["input"].(model.UserUpdateInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -2195,60 +1684,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolUpdatePayload.Pool(childComplexity), true
 
-	case "PreverifyEmailPayload.email":
-		if e.complexity.PreverifyEmailPayload.Email == nil {
-			break
-		}
-
-		return e.complexity.PreverifyEmailPayload.Email(childComplexity), true
-
-	case "PreverifyEmailPayload.result":
-		if e.complexity.PreverifyEmailPayload.Result == nil {
-			break
-		}
-
-		return e.complexity.PreverifyEmailPayload.Result(childComplexity), true
-
-	case "PushTokenRegisterPayload.pushToken":
-		if e.complexity.PushTokenRegisterPayload.PushToken == nil {
-			break
-		}
-
-		return e.complexity.PushTokenRegisterPayload.PushToken(childComplexity), true
-
-	case "PushTokenRegisterPayload.user":
-		if e.complexity.PushTokenRegisterPayload.User == nil {
-			break
-		}
-
-		return e.complexity.PushTokenRegisterPayload.User(childComplexity), true
-
-	case "PushTokenUnregisterPayload.pushToken":
-		if e.complexity.PushTokenUnregisterPayload.PushToken == nil {
-			break
-		}
-
-		return e.complexity.PushTokenUnregisterPayload.PushToken(childComplexity), true
-
-	case "PushTokenUnregisterPayload.user":
-		if e.complexity.PushTokenUnregisterPayload.User == nil {
-			break
-		}
-
-		return e.complexity.PushTokenUnregisterPayload.User(childComplexity), true
-
-	case "Query.isEmailAddressAvailable":
-		if e.complexity.Query.IsEmailAddressAvailable == nil {
-			break
-		}
-
-		args, err := ec.field_Query_isEmailAddressAvailable_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.IsEmailAddressAvailable(childComplexity, args["emailAddress"].(persist.Email)), true
-
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -2307,7 +1742,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.UserByAddress(childComplexity, args["chainAddress"].(persist.ChainAddress)), true
+		return e.complexity.Query.UserByAddress(childComplexity, args["address"].(persist.Address)), true
 
 	case "Query.userById":
 		if e.complexity.Query.UserByID == nil {
@@ -2366,13 +1801,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RemoveUserWalletsPayload.Viewer(childComplexity), true
 
-	case "ResendVerificationEmailPayload.viewer":
-		if e.complexity.ResendVerificationEmailPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.ResendVerificationEmailPayload.Viewer(childComplexity), true
-
 	case "RoleUpdatePayload.user":
 		if e.complexity.RoleUpdatePayload.User == nil {
 			break
@@ -2393,20 +1821,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SearchUsersPayload.Results(childComplexity), true
-
-	case "Subscription.notificationCreated":
-		if e.complexity.Subscription.NotificationCreated == nil {
-			break
-		}
-
-		return e.complexity.Subscription.NotificationCreated(childComplexity), true
-
-	case "Subscription.notificationUpdated":
-		if e.complexity.Subscription.NotificationUpdated == nil {
-			break
-		}
-
-		return e.complexity.Subscription.NotificationUpdated(childComplexity), true
 
 	case "Token.address":
 		if e.complexity.Token.Address == nil {
@@ -2597,45 +2011,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Tx.Withdrawals(childComplexity), true
 
-	case "UnsubscribeFromEmailPayload.viewer":
-		if e.complexity.UnsubscribeFromEmailPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.UnsubscribeFromEmailPayload.Viewer(childComplexity), true
-
-	case "UpdateEmailPayload.viewer":
-		if e.complexity.UpdateEmailPayload.Viewer == nil {
-			break
-		}
-
-		return e.complexity.UpdateEmailPayload.Viewer(childComplexity), true
-
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
 		}
 
 		return e.complexity.User.ID(childComplexity), true
-
-	case "User.notificationSettings":
-		if e.complexity.User.NotificationSettings == nil {
-			break
-		}
-
-		return e.complexity.User.NotificationSettings(childComplexity), true
-
-	case "User.notifications":
-		if e.complexity.User.Notifications == nil {
-			break
-		}
-
-		args, err := ec.field_User_notifications_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.User.Notifications(childComplexity, args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	case "User.pools":
 		if e.complexity.User.Pools == nil {
@@ -2671,27 +2052,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UserEdge.Node(childComplexity), true
-
-	case "UserEmail.email":
-		if e.complexity.UserEmail.Email == nil {
-			break
-		}
-
-		return e.complexity.UserEmail.Email(childComplexity), true
-
-	case "UserEmail.emailNotificationSettings":
-		if e.complexity.UserEmail.EmailNotificationSettings == nil {
-			break
-		}
-
-		return e.complexity.UserEmail.EmailNotificationSettings(childComplexity), true
-
-	case "UserEmail.verificationStatus":
-		if e.complexity.UserEmail.VerificationStatus == nil {
-			break
-		}
-
-		return e.complexity.UserEmail.VerificationStatus(childComplexity), true
 
 	case "UserRegisterPayload.requiresConfirmation":
 		if e.complexity.UserRegisterPayload.RequiresConfirmation == nil {
@@ -2734,13 +2094,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UsersConnection.PageInfo(childComplexity), true
-
-	case "VerifyEmailPayload.email":
-		if e.complexity.VerifyEmailPayload.Email == nil {
-			break
-		}
-
-		return e.complexity.VerifyEmailPayload.Email(childComplexity), true
 
 	case "VerifyTokenPayload.isValid":
 		if e.complexity.VerifyTokenPayload.IsValid == nil {
@@ -2848,26 +2201,13 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputAuthMechanism,
-		ec.unmarshalInputChainAddressInput,
-		ec.unmarshalInputChainPubKeyInput,
 		ec.unmarshalInputClaimBulkCreateInput,
 		ec.unmarshalInputClaimBulkUpdateInput,
 		ec.unmarshalInputClaimCreateInput,
 		ec.unmarshalInputClaimUpdateInput,
-		ec.unmarshalInputDebugAuth,
-		ec.unmarshalInputEoaAuth,
-		ec.unmarshalInputGnosisSafeAuth,
-		ec.unmarshalInputMagicLinkAuth,
-		ec.unmarshalInputNotificationSettingsInput,
-		ec.unmarshalInputOneTimeLoginTokenAuth,
 		ec.unmarshalInputPoolCreateInput,
 		ec.unmarshalInputPoolUpdateInput,
-		ec.unmarshalInputPrivyAuth,
 		ec.unmarshalInputRoleUpdateInput,
-		ec.unmarshalInputUnsubscribeFromEmailTypeInput,
-		ec.unmarshalInputUpdateEmailNotificationSettingsInput,
-		ec.unmarshalInputUserRegisterInput,
 		ec.unmarshalInputUserUpdateInput,
 	)
 	first := true
@@ -2912,23 +2252,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
-			data.MarshalGQL(&buf)
-
-			return &graphql.Response{
-				Data: buf.Bytes(),
-			}
-		}
-	case ast.Subscription:
-		next := ec._Subscription(ctx, opCtx.Operation.SelectionSet)
-
-		var buf bytes.Buffer
-		return func(ctx context.Context) *graphql.Response {
-			buf.Reset()
-			data := next(ctx)
-
-			if data == nil {
-				return nil
-			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -3009,7 +2332,6 @@ directive @restrictEnvironment(
 scalar Time
 scalar Address
 scalar PubKey
-scalar Email
 scalar HexString
 scalar JSON
 
@@ -3034,31 +2356,6 @@ type DeletedNode implements Node {
 
 interface Error {
   message: String!
-}
-
-type ChainAddress {
-  address: Address
-  chainId: Int
-}
-
-type ChainPubKey {
-  pubKey: PubKey
-  chainId: Int
-}
-
-type ChainPools {
-  chainId: Int
-  pools: [Pool]
-}
-
-input ChainAddressInput {
-  address: Address! @goField(forceResolver: true)
-  chainId: Int! @goField(forceResolver: true)
-}
-
-input ChainPubKeyInput {
-  pubKey: PubKey! @goField(forceResolver: true)
-  chainId: Int! @goField(forceResolver: true)
 }
 
 #-------------------------------------------------------------------------------
@@ -3103,11 +2400,11 @@ type PoolFactory {
   updatedAt: Time!
 }
 
-type ExtensionRegistry {
+type ModuleRegistry {
   id: ID!
   address: Address!
   chainId: Int!
-  extensionCount: Int!
+  moduleCount: Int!
   owner: EVMAccount! @goField(forceResolver: true)
   createdAt: Time!
   updatedAt: Time!
@@ -3127,11 +2424,9 @@ type User implements Node {
   id: ID!
   roles: [Role] @goField(forceResolver: true)
   pools: [Pool] @goField(forceResolver: true)
-  notifications(before: String, after: String, first: Int, last: Int): NotificationsConnection @goField(forceResolver: true)
-  notificationSettings: NotificationSettings @goField(forceResolver: true)
 }
 
-union UserOrAccount = User | EVMAccount
+union UserOrEVMAccount = User | EVMAccount
 
 type UserEdge {
   node: User
@@ -3149,6 +2444,8 @@ type UsersConnection {
 
 enum TokenType {
   ERC20
+  ERC721
+  ERC1155
 }
 
 type Token {
@@ -3181,18 +2478,18 @@ type TokenBalance {
 # EXTENSION
 #-------------------------------------------------------------------------------
 
-enum ExtensionType {
-  State
-  Strategy
+enum ModuleType {
+  Validation
+  Distribution
 }
 
-type Extension {
+type Module {
   id: ID!
   address: Address!
   chainId: Int!
-  extensionRegistry: ExtensionRegistry! @goField(forceResolver: true)
-  extensionId: String!
-  extensionType: ExtensionType!
+  moduleRegistry: ModuleRegistry! @goField(forceResolver: true)
+  moduleId: String!
+  moduleType: ModuleType!
   permissions: [String!]
   data: JSON
   name: String!
@@ -3206,13 +2503,12 @@ type Claim implements Node {
   data: JSON
   label: String!
   path: String!
-  childrenCount: Int!
   parent: Claim @goField(forceResolver: true)
   children: [Claim!] @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
   recipient: PoolOrUserOrEVMAccount @goField(forceResolver: true)
-  state: Extension! @goField(forceResolver: true)
-  strategy: Extension! @goField(forceResolver: true)
+  validation: Module! @goField(forceResolver: true)
+  distribution: Module! @goField(forceResolver: true)
   createdAt: Time!
   updatedAt: Time!
 }
@@ -3235,7 +2531,7 @@ type Pool implements Node {
   donationBps: Int!
   slug: String!
   status: PoolStatus!
-  owner: UserOrAccount! @goField(forceResolver: true)
+  owner: UserOrEVMAccount! @goField(forceResolver: true)
   contract: PoolContract @goField(forceResolver: true)
   claims: [Claim!] @goField(forceResolver: true)
   createdAt: Time!
@@ -3282,66 +2578,9 @@ type PoolHourBalance {
   updatedAt: Time!
 }
 
-#-------------------------------------------------------------------------------
-# NOTIFICATIONS
-#-------------------------------------------------------------------------------
-
-type NotificationEdge {
-  node: Notification
-  cursor: String
-}
-
-type NotificationsConnection {
-  edges: [NotificationEdge]
-  unseenCount: Int
-  pageInfo: PageInfo
-}
-
-type NotificationSettings {
-  someoneViewedYourPool: Boolean
-}
-
-input NotificationSettingsInput {
-  someoneViewedYourPool: Boolean
-}
 
 #-------------------------------------------------------------------------------
-# EMAIL
-#-------------------------------------------------------------------------------
-
-enum EmailVerificationStatus {
-  Unverified
-  Verified
-  Failed
-  Admin
-}
-
-enum EmailUnsubscriptionType {
-  All
-  Notifications
-}
-
-type UserEmail {
-  email: Email
-  verificationStatus: EmailVerificationStatus
-  emailNotificationSettings: EmailNotificationSettings @goField(forceResolver: true)
-}
-
-type EmailNotificationSettings {
-  unsubscribedFromAll: Boolean!
-  unsubscribedFromNotifications: Boolean!
-}
-
-input UpdateEmailNotificationSettingsInput {
-  unsubscribedFromAll: Boolean!
-  unsubscribedFromNotifications: Boolean!
-}
-
-input UnsubscribeFromEmailTypeInput {
-  type: EmailUnsubscriptionType!
-  token: String! @scrub
-}
-
+# POOL
 #-------------------------------------------------------------------------------
 # EVENT
 #-------------------------------------------------------------------------------
@@ -3479,74 +2718,6 @@ type ErrSyncFailed implements Error {
   message: String!
 }
 
-type ErrPushTokenBelongsToAnotherUser implements Error {
-  message: String!
-}
-
-#-------------------------------------------------------------------------------
-# AUTH MECHANISMS
-#-------------------------------------------------------------------------------
-
-input AuthMechanism {
-  eoa: EoaAuth
-  gnosisSafe: GnosisSafeAuth
-  debug: DebugAuth
-  magicLink: MagicLinkAuth
-  oneTimeLoginToken: OneTimeLoginTokenAuth
-  privy: PrivyAuth
-}
-
-input EoaAuth {
-  chainPubKey: ChainPubKeyInput!
-  nonce: String!
-  message: String!
-  signature: String! @scrub
-}
-
-input DebugAuth @restrictEnvironment(allowed: ["local", "development", "sandbox"]) {
-  asUsername: String
-  chainAddresses: [ChainAddressInput!]
-  debugToolsPassword: String
-}
-
-input GnosisSafeAuth {
-  address: Address!
-  nonce: String!
-  message: String!
-}
-
-input MagicLinkAuth {
-  token: String!
-}
-
-input PrivyAuth {
-  token: String!
-}
-
-input OneTimeLoginTokenAuth {
-  token: String!
-}
-
-#-------------------------------------------------------------------------------
-# NOTIFICATIONS
-#-------------------------------------------------------------------------------
-
-interface Notification implements Node {
-  id: ID!
-  seen: Boolean
-  creationTime: Time
-  updatedTime: Time
-}
-
-type GroupNotificationUserEdge {
-  node: User
-  cursor: String
-}
-
-type GroupNotificationUsersConnection {
-  edges: [GroupNotificationUserEdge]
-  pageInfo: PageInfo
-}
 
 #-------------------------------------------------------------------------------
 # QUERY
@@ -3559,10 +2730,10 @@ union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
 
 type Query {
   node(id: ID!): Node
-    viewer: UserResult @authRequired
-    userByUsername(username: String!): UserResult!
+  viewer: UserResult @authRequired
+  userByUsername(username: String!): UserResult!
   userById(id: ID!): UserResult!
-  userByAddress(chainAddress: ChainAddressInput!): UserResult!
+  userByAddress(address: Address!): UserResult!
 
   """Look up a pool by ID, slug, or contract ID."""
   pool(
@@ -3584,7 +2755,6 @@ type Query {
     descriptionWeight: Float
   ): SearchPoolsResult!
 
-  isEmailAddressAvailable(emailAddress: Email!): Boolean
 
   usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
   @basicAuth(allowed: [Retool])
@@ -3594,20 +2764,11 @@ type Query {
 # MUTATIONS
 #-------------------------------------------------------------------------------
 
-type Nonce {
-  nonce: String
-  message: String
-}
-
 # USER MUTATIONS
 
 type UserRegisterPayload {
   user: User!
   requiresConfirmation: Boolean
-}
-
-input UserRegisterInput {
-  authMechanism: AuthMechanism!
 }
 
 union UserRegisterResult = UserRegisterPayload | ErrAuthenticationFailed | ErrUserAlreadyExists | ErrInvalidInput | ErrDoesNotOwnRequiredToken
@@ -3661,80 +2822,6 @@ type VerifyTokenPayload {
 
 union VerifyTokenResult = VerifyTokenPayload | ErrNotAuthorized | ErrInvalidInput
 
-# PUSH TOKEN MUTATIONS
-
-type PushTokenRegisterPayload {
-  pushToken: String!
-  user: User!
-}
-
-union PushTokenRegisterResult = PushTokenRegisterPayload | ErrNotAuthorized | ErrInvalidInput | ErrPushTokenBelongsToAnotherUser
-
-type PushTokenUnregisterPayload {
-  pushToken: String!
-  user: User!
-}
-
-union PushTokenUnregisterResult = PushTokenUnregisterPayload | ErrNotAuthorized | ErrInvalidInput
-
-# NOTIFICATION MUTATIONS
-
-type NotificationSettingsUpdatePayload {
-  notificationSettings: NotificationSettings!
-}
-
-union NotificationSettingsUpdateResult = NotificationSettingsUpdatePayload | ErrNotAuthorized | ErrInvalidInput
-
-type ClearNotificationsPayload {
-  notifications: [Notification]!
-}
-
-union ClearNotificationsResult = ClearNotificationsPayload | ErrNotAuthorized
-
-# EMAIL MUTATIONS
-
-type EmailNotificationSettingsUpdatePayload {
-  emailNotificationSettings: EmailNotificationSettings!
-}
-
-union EmailNotificationSettingsUpdateResult = EmailNotificationSettingsUpdatePayload | ErrNotAuthorized | ErrInvalidInput
-
-type VerifyEmailPayload {
-  email: Email!
-}
-
-union VerifyEmailResult = VerifyEmailPayload | ErrInvalidInput
-
-enum PreverifyEmailStatus {
-  Invalid
-  Risky
-  Valid
-}
-
-type PreverifyEmailPayload {
-  email: Email!
-  result: PreverifyEmailStatus!
-}
-
-union PreverifyEmailResult = PreverifyEmailPayload | ErrInvalidInput
-
-type UpdateEmailPayload {
-  viewer: User!
-}
-
-union UpdateEmailResult = UpdateEmailPayload | ErrNotAuthorized | ErrInvalidInput
-
-type ResendVerificationEmailPayload {
-  viewer: User!
-}
-
-union ResendVerificationEmailResult = ResendVerificationEmailPayload | ErrNotAuthorized | ErrInvalidInput
-
-type UnsubscribeFromEmailPayload {
-  viewer: User!
-}
-
-union UnsubscribeFromEmailResult = UnsubscribeFromEmailPayload | ErrInvalidInput
 
 # ROLE MUTATIONS
 
@@ -3757,12 +2844,11 @@ type ClaimCreatePayload {
 
 input ClaimCreateInput {
   label: String!
-  recipientAddress: Address
   data: JSON
   parent: String
   children: [String!]
-  stateId: String!
-  strategyId: String!
+  validationId: String!
+  distributionId: String!
 }
 
 union ClaimCreateResult = ClaimCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -3773,12 +2859,11 @@ type ClaimUpdatePayload {
 
 input ClaimUpdateInput {
   claimId: ID!
-  recipientAddress: Address
   data: JSON
   parent: ID
   children: [ID!]
-  stateId: String
-  strategyId: String
+  validationId: String
+  distributionId: String
 }
 
 union ClaimUpdateResult = ClaimUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -3795,12 +2880,11 @@ type ClaimBulkCreatePayload {
 }
 
 input ClaimBulkCreateInput {
-  recipientAddress: Address
   data: JSON
   parent: ID
   children: [ID!]
-  stateId: String!
-  strategyId: String!
+  validationId: String!
+  distributionId: String!
 }
 
 union ClaimBulkCreateResult = ClaimBulkCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -3812,12 +2896,11 @@ type ClaimBulkUpdatePayload {
 
 input ClaimBulkUpdateInput {
   claimId: ID!
-  recipientAddress: Address
   data: JSON
   parent: ID
   children: [ID!]
-  stateId: String
-  strategyId: String
+  validationId: String
+  distributionId: String
 }
 
 union ClaimBulkUpdateResult = ClaimBulkUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
@@ -3873,35 +2956,11 @@ union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput 
 
 type Mutation {
   # User
-  userRegister(input: UserRegisterInput!): UserRegisterResult!
-  userUpdate(userId: ID, input: UserUpdateInput!): UserUpdateResult! @authRequired
+  userRegister: UserRegisterResult! @authRequired
+  userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
   userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
   userDelete(token: String!): UserDeleteResult! @authRequired
 
-  # Auth
-  login(authMechanism: AuthMechanism!): LoginResult!
-  logout: LogoutPayload!
-  tokenVerify(token: String!): VerifyTokenResult! @authRequired
-
-  # Wallets
-  addUserWallet(authMechanism: AuthMechanism!): AddUserWalletResult! @authRequired
-  removeUserWallets(walletIds: [ID!]!): RemoveUserWalletsResult! @authRequired
-
-  # Push Tokens
-  pushTokenRegister(pushToken: String!): PushTokenRegisterResult! @authRequired
-  pushTokenUnregister(pushToken: String!): PushTokenUnregisterResult! @authRequired
-
-  # Notifications
-  notificationSettingsUpdate(settings: NotificationSettingsInput!): NotificationSettingsUpdateResult! @authRequired
-  clearNotifications: ClearNotificationsResult! @authRequired
-
-  # Email
-  emailNotificationSettingsUpdate(settings: UpdateEmailNotificationSettingsInput!): EmailNotificationSettingsUpdateResult! @authRequired
-  verifyEmail(token: String!): VerifyEmailResult!
-  preverifyEmail(email: Email!): PreverifyEmailResult!
-  updateEmail(email: Email!, authMechanism: AuthMechanism): UpdateEmailResult! @authRequired
-  resendVerificationEmail: ResendVerificationEmailResult! @authRequired
-  unsubscribeFromEmail(input: UnsubscribeFromEmailTypeInput!): UnsubscribeFromEmailResult!
 
   # Roles
   roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
@@ -3919,11 +2978,7 @@ type Mutation {
   poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
   poolDelete(id: ID!): PoolDeleteResult! @authRequired
 }
-
-type Subscription {
-  notificationCreated: Notification
-  notificationUpdated: Notification
-}`, BuiltIn: false},
+`, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
 	directive @composeDirective(name: String!) repeatable on SCHEMA
@@ -4052,134 +3107,6 @@ func (ec *executionContext) dir_restrictEnvironment_argsAllowed(
 	}
 
 	var zeroVal []string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_addUserWallet_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_addUserWallet_argsAuthMechanism(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["authMechanism"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_addUserWallet_argsAuthMechanism(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.AuthMechanism, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["authMechanism"]
-	if !ok {
-		var zeroVal model.AuthMechanism
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-	if tmp, ok := rawArgs["authMechanism"]; ok {
-		return ec.unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
-	}
-
-	var zeroVal model.AuthMechanism
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_emailNotificationSettingsUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_emailNotificationSettingsUpdate_argsSettings(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["settings"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_emailNotificationSettingsUpdate_argsSettings(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.UpdateEmailNotificationSettingsInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["settings"]
-	if !ok {
-		var zeroVal model.UpdateEmailNotificationSettingsInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("settings"))
-	if tmp, ok := rawArgs["settings"]; ok {
-		return ec.unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx, tmp)
-	}
-
-	var zeroVal model.UpdateEmailNotificationSettingsInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_login_argsAuthMechanism(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["authMechanism"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_login_argsAuthMechanism(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.AuthMechanism, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["authMechanism"]
-	if !ok {
-		var zeroVal model.AuthMechanism
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-	if tmp, ok := rawArgs["authMechanism"]; ok {
-		return ec.unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
-	}
-
-	var zeroVal model.AuthMechanism
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_notificationSettingsUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_notificationSettingsUpdate_argsSettings(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["settings"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_notificationSettingsUpdate_argsSettings(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.NotificationSettingsInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["settings"]
-	if !ok {
-		var zeroVal model.NotificationSettingsInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("settings"))
-	if tmp, ok := rawArgs["settings"]; ok {
-		return ec.unmarshalNNotificationSettingsInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx, tmp)
-	}
-
-	var zeroVal model.NotificationSettingsInput
 	return zeroVal, nil
 }
 
@@ -4714,134 +3641,6 @@ func (ec *executionContext) field_Mutation_poolUpdate_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_preverifyEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_preverifyEmail_argsEmail(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["email"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_preverifyEmail_argsEmail(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (persist.Email, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["email"]
-	if !ok {
-		var zeroVal persist.Email
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-	if tmp, ok := rawArgs["email"]; ok {
-		return ec.unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, tmp)
-	}
-
-	var zeroVal persist.Email
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_pushTokenRegister_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_pushTokenRegister_argsPushToken(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["pushToken"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_pushTokenRegister_argsPushToken(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["pushToken"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pushToken"))
-	if tmp, ok := rawArgs["pushToken"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_pushTokenUnregister_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_pushTokenUnregister_argsPushToken(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["pushToken"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_pushTokenUnregister_argsPushToken(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["pushToken"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pushToken"))
-	if tmp, ok := rawArgs["pushToken"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_removeUserWallets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_removeUserWallets_argsWalletIds(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["walletIds"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_removeUserWallets_argsWalletIds(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) ([]model.GqlID, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["walletIds"]
-	if !ok {
-		var zeroVal []model.GqlID
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("walletIds"))
-	if tmp, ok := rawArgs["walletIds"]; ok {
-		return ec.unmarshalNID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx, tmp)
-	}
-
-	var zeroVal []model.GqlID
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Mutation_roleUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4901,129 +3700,6 @@ func (ec *executionContext) field_Mutation_roleUpdate_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_tokenVerify_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_tokenVerify_argsToken(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["token"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_tokenVerify_argsToken(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["token"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-	if tmp, ok := rawArgs["token"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_unsubscribeFromEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_unsubscribeFromEmail_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_unsubscribeFromEmail_argsInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.UnsubscribeFromEmailTypeInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["input"]
-	if !ok {
-		var zeroVal model.UnsubscribeFromEmailTypeInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx, tmp)
-	}
-
-	var zeroVal model.UnsubscribeFromEmailTypeInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_updateEmail_argsEmail(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["email"] = arg0
-	arg1, err := ec.field_Mutation_updateEmail_argsAuthMechanism(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["authMechanism"] = arg1
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_updateEmail_argsEmail(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (persist.Email, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["email"]
-	if !ok {
-		var zeroVal persist.Email
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-	if tmp, ok := rawArgs["email"]; ok {
-		return ec.unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, tmp)
-	}
-
-	var zeroVal persist.Email
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateEmail_argsAuthMechanism(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*model.AuthMechanism, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["authMechanism"]
-	if !ok {
-		var zeroVal *model.AuthMechanism
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-	if tmp, ok := rawArgs["authMechanism"]; ok {
-		return ec.unmarshalOAuthMechanism2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, tmp)
-	}
-
-	var zeroVal *model.AuthMechanism
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Mutation_userDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -5053,38 +3729,6 @@ func (ec *executionContext) field_Mutation_userDelete_argsToken(
 	}
 
 	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_userRegister_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_userRegister_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_userRegister_argsInput(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (model.UserRegisterInput, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["input"]
-	if !ok {
-		var zeroVal model.UserRegisterInput
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUserRegisterInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserRegisterInput(ctx, tmp)
-	}
-
-	var zeroVal model.UserRegisterInput
 	return zeroVal, nil
 }
 
@@ -5123,40 +3767,13 @@ func (ec *executionContext) field_Mutation_userRequestDeletion_argsRedirectURL(
 func (ec *executionContext) field_Mutation_userUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_userUpdate_argsUserID(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_userUpdate_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["userId"] = arg0
-	arg1, err := ec.field_Mutation_userUpdate_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_userUpdate_argsUserID(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*model.GqlID, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["userId"]
-	if !ok {
-		var zeroVal *model.GqlID
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-	if tmp, ok := rawArgs["userId"]; ok {
-		return ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
-	}
-
-	var zeroVal *model.GqlID
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Mutation_userUpdate_argsInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
@@ -5176,38 +3793,6 @@ func (ec *executionContext) field_Mutation_userUpdate_argsInput(
 	}
 
 	var zeroVal model.UserUpdateInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Mutation_verifyEmail_argsToken(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["token"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_verifyEmail_argsToken(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["token"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-	if tmp, ok := rawArgs["token"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -5240,38 +3825,6 @@ func (ec *executionContext) field_Query___type_argsName(
 	}
 
 	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_isEmailAddressAvailable_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_isEmailAddressAvailable_argsEmailAddress(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["emailAddress"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_isEmailAddressAvailable_argsEmailAddress(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (persist.Email, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["emailAddress"]
-	if !ok {
-		var zeroVal persist.Email
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("emailAddress"))
-	if tmp, ok := rawArgs["emailAddress"]; ok {
-		return ec.unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, tmp)
-	}
-
-	var zeroVal persist.Email
 	return zeroVal, nil
 }
 
@@ -5595,32 +4148,32 @@ func (ec *executionContext) field_Query_searchUsers_argsUsernameWeight(
 func (ec *executionContext) field_Query_userByAddress_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_userByAddress_argsChainAddress(ctx, rawArgs)
+	arg0, err := ec.field_Query_userByAddress_argsAddress(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["chainAddress"] = arg0
+	args["address"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Query_userByAddress_argsChainAddress(
+func (ec *executionContext) field_Query_userByAddress_argsAddress(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (persist.ChainAddress, error) {
+) (persist.Address, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
-	_, ok := rawArgs["chainAddress"]
+	_, ok := rawArgs["address"]
 	if !ok {
-		var zeroVal persist.ChainAddress
+		var zeroVal persist.Address
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddress"))
-	if tmp, ok := rawArgs["chainAddress"]; ok {
-		return ec.unmarshalNChainAddressInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, tmp)
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+	if tmp, ok := rawArgs["address"]; ok {
+		return ec.unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, tmp)
 	}
 
-	var zeroVal persist.ChainAddress
+	var zeroVal persist.Address
 	return zeroVal, nil
 }
 
@@ -5828,119 +4381,6 @@ func (ec *executionContext) field_Query_usersByRole_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_User_notifications_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_User_notifications_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg0
-	arg1, err := ec.field_User_notifications_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_User_notifications_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg2
-	arg3, err := ec.field_User_notifications_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg3
-	return args, nil
-}
-func (ec *executionContext) field_User_notifications_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["before"]
-	if !ok {
-		var zeroVal *string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_User_notifications_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["after"]
-	if !ok {
-		var zeroVal *string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_User_notifications_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*int, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["first"]
-	if !ok {
-		var zeroVal *int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_User_notifications_argsLast(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*int, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["last"]
-	if !ok {
-		var zeroVal *int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -6058,284 +4498,8 @@ func (ec *executionContext) fieldContext_AddUserWalletPayload_viewer(_ context.C
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainAddress_address(ctx context.Context, field graphql.CollectedField, obj *persist.ChainAddress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainAddress_address(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Address(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(persist.Address)
-	fc.Result = res
-	return ec.marshalOAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainAddress_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainAddress",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainAddress_chainId(ctx context.Context, field graphql.CollectedField, obj *persist.ChainAddress) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainAddress_chainId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChainId(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalOInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainAddress_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainAddress",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainPools_chainId(ctx context.Context, field graphql.CollectedField, obj *model.ChainPools) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainPools_chainId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainPools_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainPools",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainPools_pools(ctx context.Context, field graphql.CollectedField, obj *model.ChainPools) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainPools_pools(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Pools, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Pool)
-	fc.Result = res
-	return ec.marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainPools_pools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainPools",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Pool_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Pool_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Pool_description(ctx, field)
-			case "image":
-				return ec.fieldContext_Pool_image(ctx, field)
-			case "donationBps":
-				return ec.fieldContext_Pool_donationBps(ctx, field)
-			case "slug":
-				return ec.fieldContext_Pool_slug(ctx, field)
-			case "status":
-				return ec.fieldContext_Pool_status(ctx, field)
-			case "owner":
-				return ec.fieldContext_Pool_owner(ctx, field)
-			case "contract":
-				return ec.fieldContext_Pool_contract(ctx, field)
-			case "claims":
-				return ec.fieldContext_Pool_claims(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Pool_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Pool_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainPubKey_pubKey(ctx context.Context, field graphql.CollectedField, obj *persist.ChainPubKey) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainPubKey_pubKey(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PubKey(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(persist.PubKey)
-	fc.Result = res
-	return ec.marshalOPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainPubKey_pubKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainPubKey",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PubKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChainPubKey_chainId(ctx context.Context, field graphql.CollectedField, obj *persist.ChainPubKey) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ChainPubKey_chainId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChainId(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalOInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ChainPubKey_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChainPubKey",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6514,50 +4678,6 @@ func (ec *executionContext) fieldContext_Claim_path(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Claim_childrenCount(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Claim_childrenCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChildrenCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Claim_childrenCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Claim",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Claim_parent(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Claim_parent(ctx, field)
 	if err != nil {
@@ -6602,8 +4722,6 @@ func (ec *executionContext) fieldContext_Claim_parent(_ context.Context, field g
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -6612,10 +4730,10 @@ func (ec *executionContext) fieldContext_Claim_parent(_ context.Context, field g
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -6671,8 +4789,6 @@ func (ec *executionContext) fieldContext_Claim_children(_ context.Context, field
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -6681,10 +4797,10 @@ func (ec *executionContext) fieldContext_Claim_children(_ context.Context, field
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -6807,8 +4923,8 @@ func (ec *executionContext) fieldContext_Claim_recipient(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Claim_state(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Claim_state(ctx, field)
+func (ec *executionContext) _Claim_validation(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Claim_validation(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6821,7 +4937,7 @@ func (ec *executionContext) _Claim_state(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Claim().State(rctx, obj)
+		return ec.resolvers.Claim().Validation(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6833,12 +4949,12 @@ func (ec *executionContext) _Claim_state(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Extension)
+	res := resTmp.(*model.Module)
 	fc.Result = res
-	return ec.marshalNExtension2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtension(ctx, field.Selections, res)
+	return ec.marshalNModule2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModule(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Claim_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Claim_validation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Claim",
 		Field:      field,
@@ -6847,38 +4963,38 @@ func (ec *executionContext) fieldContext_Claim_state(_ context.Context, field gr
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Extension_id(ctx, field)
+				return ec.fieldContext_Module_id(ctx, field)
 			case "address":
-				return ec.fieldContext_Extension_address(ctx, field)
+				return ec.fieldContext_Module_address(ctx, field)
 			case "chainId":
-				return ec.fieldContext_Extension_chainId(ctx, field)
-			case "extensionRegistry":
-				return ec.fieldContext_Extension_extensionRegistry(ctx, field)
-			case "extensionId":
-				return ec.fieldContext_Extension_extensionId(ctx, field)
-			case "extensionType":
-				return ec.fieldContext_Extension_extensionType(ctx, field)
+				return ec.fieldContext_Module_chainId(ctx, field)
+			case "moduleRegistry":
+				return ec.fieldContext_Module_moduleRegistry(ctx, field)
+			case "moduleId":
+				return ec.fieldContext_Module_moduleId(ctx, field)
+			case "moduleType":
+				return ec.fieldContext_Module_moduleType(ctx, field)
 			case "permissions":
-				return ec.fieldContext_Extension_permissions(ctx, field)
+				return ec.fieldContext_Module_permissions(ctx, field)
 			case "data":
-				return ec.fieldContext_Extension_data(ctx, field)
+				return ec.fieldContext_Module_data(ctx, field)
 			case "name":
-				return ec.fieldContext_Extension_name(ctx, field)
+				return ec.fieldContext_Module_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Extension_description(ctx, field)
+				return ec.fieldContext_Module_description(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Extension_createdAt(ctx, field)
+				return ec.fieldContext_Module_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Extension_updatedAt(ctx, field)
+				return ec.fieldContext_Module_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Extension", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Module", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Claim_strategy(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Claim_strategy(ctx, field)
+func (ec *executionContext) _Claim_distribution(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Claim_distribution(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6891,7 +5007,7 @@ func (ec *executionContext) _Claim_strategy(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Claim().Strategy(rctx, obj)
+		return ec.resolvers.Claim().Distribution(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6903,12 +5019,12 @@ func (ec *executionContext) _Claim_strategy(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Extension)
+	res := resTmp.(*model.Module)
 	fc.Result = res
-	return ec.marshalNExtension2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtension(ctx, field.Selections, res)
+	return ec.marshalNModule2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModule(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Claim_strategy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Claim_distribution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Claim",
 		Field:      field,
@@ -6917,31 +5033,31 @@ func (ec *executionContext) fieldContext_Claim_strategy(_ context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Extension_id(ctx, field)
+				return ec.fieldContext_Module_id(ctx, field)
 			case "address":
-				return ec.fieldContext_Extension_address(ctx, field)
+				return ec.fieldContext_Module_address(ctx, field)
 			case "chainId":
-				return ec.fieldContext_Extension_chainId(ctx, field)
-			case "extensionRegistry":
-				return ec.fieldContext_Extension_extensionRegistry(ctx, field)
-			case "extensionId":
-				return ec.fieldContext_Extension_extensionId(ctx, field)
-			case "extensionType":
-				return ec.fieldContext_Extension_extensionType(ctx, field)
+				return ec.fieldContext_Module_chainId(ctx, field)
+			case "moduleRegistry":
+				return ec.fieldContext_Module_moduleRegistry(ctx, field)
+			case "moduleId":
+				return ec.fieldContext_Module_moduleId(ctx, field)
+			case "moduleType":
+				return ec.fieldContext_Module_moduleType(ctx, field)
 			case "permissions":
-				return ec.fieldContext_Extension_permissions(ctx, field)
+				return ec.fieldContext_Module_permissions(ctx, field)
 			case "data":
-				return ec.fieldContext_Extension_data(ctx, field)
+				return ec.fieldContext_Module_data(ctx, field)
 			case "name":
-				return ec.fieldContext_Extension_name(ctx, field)
+				return ec.fieldContext_Module_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Extension_description(ctx, field)
+				return ec.fieldContext_Module_description(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Extension_createdAt(ctx, field)
+				return ec.fieldContext_Module_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Extension_updatedAt(ctx, field)
+				return ec.fieldContext_Module_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Extension", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Module", field.Name)
 		},
 	}
 	return fc, nil
@@ -7126,8 +5242,6 @@ func (ec *executionContext) fieldContext_ClaimBulkCreatePayload_claims(_ context
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -7136,10 +5250,10 @@ func (ec *executionContext) fieldContext_ClaimBulkCreatePayload_claims(_ context
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -7286,8 +5400,6 @@ func (ec *executionContext) fieldContext_ClaimBulkUpdatePayload_claims(_ context
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -7296,10 +5408,10 @@ func (ec *executionContext) fieldContext_ClaimBulkUpdatePayload_claims(_ context
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -7358,8 +5470,6 @@ func (ec *executionContext) fieldContext_ClaimCreatePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -7368,10 +5478,10 @@ func (ec *executionContext) fieldContext_ClaimCreatePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -7430,8 +5540,6 @@ func (ec *executionContext) fieldContext_ClaimDeletePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -7440,10 +5548,10 @@ func (ec *executionContext) fieldContext_ClaimDeletePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -7502,8 +5610,6 @@ func (ec *executionContext) fieldContext_ClaimUpdatePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -7512,60 +5618,16 @@ func (ec *executionContext) fieldContext_ClaimUpdatePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Claim_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Claim", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClearNotificationsPayload_notifications(ctx context.Context, field graphql.CollectedField, obj *model.ClearNotificationsPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClearNotificationsPayload_notifications(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Notifications, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]model.Notification)
-	fc.Result = res
-	return ec.marshalNNotification2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClearNotificationsPayload_notifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClearNotificationsPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
 		},
 	}
 	return fc, nil
@@ -8510,144 +6572,6 @@ func (ec *executionContext) fieldContext_EVMAccount_updatedAt(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _EmailNotificationSettings_unsubscribedFromAll(ctx context.Context, field graphql.CollectedField, obj *model.EmailNotificationSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmailNotificationSettings_unsubscribedFromAll(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UnsubscribedFromAll, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmailNotificationSettings_unsubscribedFromAll(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmailNotificationSettings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _EmailNotificationSettings_unsubscribedFromNotifications(ctx context.Context, field graphql.CollectedField, obj *model.EmailNotificationSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmailNotificationSettings_unsubscribedFromNotifications(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UnsubscribedFromNotifications, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmailNotificationSettings_unsubscribedFromNotifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmailNotificationSettings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _EmailNotificationSettingsUpdatePayload_emailNotificationSettings(ctx context.Context, field graphql.CollectedField, obj *model.EmailNotificationSettingsUpdatePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EmailNotificationSettingsUpdatePayload_emailNotificationSettings(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EmailNotificationSettings, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.EmailNotificationSettings)
-	fc.Result = res
-	return ec.marshalNEmailNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EmailNotificationSettingsUpdatePayload_emailNotificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EmailNotificationSettingsUpdatePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "unsubscribedFromAll":
-				return ec.fieldContext_EmailNotificationSettings_unsubscribedFromAll(ctx, field)
-			case "unsubscribedFromNotifications":
-				return ec.fieldContext_EmailNotificationSettings_unsubscribedFromNotifications(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EmailNotificationSettings", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ErrAddressOwnedByUser_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrAddressOwnedByUser) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ErrAddressOwnedByUser_message(ctx, field)
 	if err != nil {
@@ -9132,50 +7056,6 @@ func (ec *executionContext) fieldContext_ErrPoolNotFound_message(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _ErrPushTokenBelongsToAnotherUser_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrPushTokenBelongsToAnotherUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ErrPushTokenBelongsToAnotherUser_message(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Message, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ErrPushTokenBelongsToAnotherUser_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ErrPushTokenBelongsToAnotherUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ErrSessionInvalidated_message(ctx context.Context, field graphql.CollectedField, obj *model.ErrSessionInvalidated) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ErrSessionInvalidated_message(ctx, field)
 	if err != nil {
@@ -9440,1064 +7320,6 @@ func (ec *executionContext) fieldContext_ErrUsernameNotAvailable_message(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Extension_id(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_address(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_address(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Address, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.Address)
-	fc.Result = res
-	return ec.marshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_chainId(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_chainId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_extensionRegistry(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_extensionRegistry(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Extension().ExtensionRegistry(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ExtensionRegistry)
-	fc.Result = res
-	return ec.marshalNExtensionRegistry2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtensionRegistry(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_extensionRegistry(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ExtensionRegistry_id(ctx, field)
-			case "address":
-				return ec.fieldContext_ExtensionRegistry_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_ExtensionRegistry_chainId(ctx, field)
-			case "extensionCount":
-				return ec.fieldContext_ExtensionRegistry_extensionCount(ctx, field)
-			case "owner":
-				return ec.fieldContext_ExtensionRegistry_owner(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ExtensionRegistry_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ExtensionRegistry_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExtensionRegistry", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_extensionId(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_extensionId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ExtensionID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_extensionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_extensionType(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_extensionType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ExtensionType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.ExtensionType)
-	fc.Result = res
-	return ec.marshalNExtensionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtensionType(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_extensionType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ExtensionType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_permissions(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_permissions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Permissions, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_permissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_data(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_data(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Data, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(persist.JSON)
-	fc.Result = res
-	return ec.marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type JSON does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_name(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_description(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_description(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Extension_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Extension_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Extension_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Extension",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExtensionRegistry_id(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ExtensionRegistry_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GqlID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ExtensionRegistry_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExtensionRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExtensionRegistry_address(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ExtensionRegistry_address(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Address, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.Address)
-	fc.Result = res
-	return ec.marshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ExtensionRegistry_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExtensionRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Address does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExtensionRegistry_chainId(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ExtensionRegistry_chainId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ExtensionRegistry_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExtensionRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExtensionRegistry_extensionCount(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ExtensionRegistry_extensionCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ExtensionCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ExtensionRegistry_extensionCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExtensionRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExtensionRegistry_owner(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ExtensionRegistry_owner(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ExtensionRegistry().Owner(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.EVMAccount)
-	fc.Result = res
-	return ec.marshalNEVMAccount2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEVMAccount(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ExtensionRegistry_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExtensionRegistry",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_EVMAccount_id(ctx, field)
-			case "address":
-				return ec.fieldContext_EVMAccount_address(ctx, field)
-			case "accountType":
-				return ec.fieldContext_EVMAccount_accountType(ctx, field)
-			case "selfPools":
-				return ec.fieldContext_EVMAccount_selfPools(ctx, field)
-			case "balances":
-				return ec.fieldContext_EVMAccount_balances(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_EVMAccount_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_EVMAccount_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EVMAccount", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExtensionRegistry_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ExtensionRegistry_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ExtensionRegistry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExtensionRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ExtensionRegistry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ExtensionRegistry_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ExtensionRegistry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ExtensionRegistry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GroupNotificationUserEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.GroupNotificationUserEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GroupNotificationUserEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GroupNotificationUserEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GroupNotificationUserEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GroupNotificationUserEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.GroupNotificationUserEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GroupNotificationUserEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GroupNotificationUserEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GroupNotificationUserEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GroupNotificationUsersConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.GroupNotificationUsersConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GroupNotificationUsersConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.GroupNotificationUserEdge)
-	fc.Result = res
-	return ec.marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GroupNotificationUsersConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_GroupNotificationUserEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_GroupNotificationUserEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type GroupNotificationUserEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GroupNotificationUsersConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.GroupNotificationUsersConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GroupNotificationUsersConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PageInfo)
-	fc.Result = res
-	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GroupNotificationUsersConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GroupNotificationUsersConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "total":
-				return ec.fieldContext_PageInfo_total(ctx, field)
-			case "size":
-				return ec.fieldContext_PageInfo_size(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _LoginPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.LoginPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LoginPayload_viewer(ctx, field)
 	if err != nil {
@@ -10543,10 +7365,6 @@ func (ec *executionContext) fieldContext_LoginPayload_viewer(_ context.Context, 
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -10596,12 +7414,870 @@ func (ec *executionContext) fieldContext_LogoutPayload_viewer(_ context.Context,
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_id(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_address(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_chainId(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_chainId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChainID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_moduleRegistry(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_moduleRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Module().ModuleRegistry(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ModuleRegistry)
+	fc.Result = res
+	return ec.marshalNModuleRegistry2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModuleRegistry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_moduleRegistry(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ModuleRegistry_id(ctx, field)
+			case "address":
+				return ec.fieldContext_ModuleRegistry_address(ctx, field)
+			case "chainId":
+				return ec.fieldContext_ModuleRegistry_chainId(ctx, field)
+			case "moduleCount":
+				return ec.fieldContext_ModuleRegistry_moduleCount(ctx, field)
+			case "owner":
+				return ec.fieldContext_ModuleRegistry_owner(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ModuleRegistry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ModuleRegistry_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ModuleRegistry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_moduleId(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_moduleId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ModuleID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_moduleId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_moduleType(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_moduleType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ModuleType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.ModuleType)
+	fc.Result = res
+	return ec.marshalNModuleType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModuleType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_moduleType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ModuleType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_permissions(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_permissions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Permissions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_permissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_data(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(persist.JSON)
+	fc.Result = res
+	return ec.marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_name(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_description(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Module_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Module_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Module",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ModuleRegistry_id(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GqlID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ModuleRegistry_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ModuleRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ModuleRegistry_address(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.Address)
+	fc.Result = res
+	return ec.marshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ModuleRegistry_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ModuleRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Address does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ModuleRegistry_chainId(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_chainId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChainID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ModuleRegistry_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ModuleRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ModuleRegistry_moduleCount(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_moduleCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ModuleCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ModuleRegistry_moduleCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ModuleRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ModuleRegistry_owner(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ModuleRegistry().Owner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EVMAccount)
+	fc.Result = res
+	return ec.marshalNEVMAccount2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEVMAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ModuleRegistry_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ModuleRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_EVMAccount_id(ctx, field)
+			case "address":
+				return ec.fieldContext_EVMAccount_address(ctx, field)
+			case "accountType":
+				return ec.fieldContext_EVMAccount_accountType(ctx, field)
+			case "selfPools":
+				return ec.fieldContext_EVMAccount_selfPools(ctx, field)
+			case "balances":
+				return ec.fieldContext_EVMAccount_balances(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_EVMAccount_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_EVMAccount_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EVMAccount", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ModuleRegistry_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ModuleRegistry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ModuleRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ModuleRegistry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ModuleRegistry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ModuleRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10620,8 +8296,30 @@ func (ec *executionContext) _Mutation_userRegister(ctx context.Context, field gr
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UserRegister(rctx, fc.Args["input"].(model.UserRegisterInput))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UserRegister(rctx)
+		}
+
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.AuthRequired == nil {
+				var zeroVal model.UserRegisterResult
+				return zeroVal, errors.New("directive authRequired is not implemented")
+			}
+			return ec.directives.AuthRequired(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(model.UserRegisterResult); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UserRegisterResult`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10638,7 +8336,7 @@ func (ec *executionContext) _Mutation_userRegister(ctx context.Context, field gr
 	return ec.marshalNUserRegisterResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserRegisterResult(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_userRegister(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_userRegister(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -10647,17 +8345,6 @@ func (ec *executionContext) fieldContext_Mutation_userRegister(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UserRegisterResult does not have child fields")
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_userRegister_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -10677,7 +8364,7 @@ func (ec *executionContext) _Mutation_userUpdate(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UserUpdate(rctx, fc.Args["userId"].(*model.GqlID), fc.Args["input"].(model.UserUpdateInput))
+			return ec.resolvers.Mutation().UserUpdate(rctx, fc.Args["input"].(model.UserUpdateInput))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
@@ -10887,1022 +8574,6 @@ func (ec *executionContext) fieldContext_Mutation_userDelete(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_userDelete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_login(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Login(rctx, fc.Args["authMechanism"].(model.AuthMechanism))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.LoginResult)
-	fc.Result = res
-	return ec.marshalNLoginResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLoginResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type LoginResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_login_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_logout(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Logout(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.LogoutPayload)
-	fc.Result = res
-	return ec.marshalNLogoutPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLogoutPayload(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_logout(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "viewer":
-				return ec.fieldContext_LogoutPayload_viewer(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type LogoutPayload", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_tokenVerify(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_tokenVerify(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().TokenVerify(rctx, fc.Args["token"].(string))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.VerifyTokenResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.VerifyTokenResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.VerifyTokenResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.VerifyTokenResult)
-	fc.Result = res
-	return ec.marshalNVerifyTokenResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyTokenResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_tokenVerify(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type VerifyTokenResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_tokenVerify_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_addUserWallet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_addUserWallet(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().AddUserWallet(rctx, fc.Args["authMechanism"].(model.AuthMechanism))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.AddUserWalletResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.AddUserWalletResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.AddUserWalletResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.AddUserWalletResult)
-	fc.Result = res
-	return ec.marshalNAddUserWalletResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAddUserWalletResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_addUserWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type AddUserWalletResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addUserWallet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_removeUserWallets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_removeUserWallets(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().RemoveUserWallets(rctx, fc.Args["walletIds"].([]model.GqlID))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.RemoveUserWalletsResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.RemoveUserWalletsResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.RemoveUserWalletsResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.RemoveUserWalletsResult)
-	fc.Result = res
-	return ec.marshalNRemoveUserWalletsResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRemoveUserWalletsResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_removeUserWallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type RemoveUserWalletsResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_removeUserWallets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_pushTokenRegister(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_pushTokenRegister(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PushTokenRegister(rctx, fc.Args["pushToken"].(string))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.PushTokenRegisterResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.PushTokenRegisterResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.PushTokenRegisterResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.PushTokenRegisterResult)
-	fc.Result = res
-	return ec.marshalNPushTokenRegisterResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPushTokenRegisterResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_pushTokenRegister(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PushTokenRegisterResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_pushTokenRegister_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_pushTokenUnregister(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_pushTokenUnregister(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().PushTokenUnregister(rctx, fc.Args["pushToken"].(string))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.PushTokenUnregisterResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.PushTokenUnregisterResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.PushTokenUnregisterResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.PushTokenUnregisterResult)
-	fc.Result = res
-	return ec.marshalNPushTokenUnregisterResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPushTokenUnregisterResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_pushTokenUnregister(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PushTokenUnregisterResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_pushTokenUnregister_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_notificationSettingsUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_notificationSettingsUpdate(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().NotificationSettingsUpdate(rctx, fc.Args["settings"].(model.NotificationSettingsInput))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.NotificationSettingsUpdateResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.NotificationSettingsUpdateResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.NotificationSettingsUpdateResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.NotificationSettingsUpdateResult)
-	fc.Result = res
-	return ec.marshalNNotificationSettingsUpdateResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettingsUpdateResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_notificationSettingsUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type NotificationSettingsUpdateResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_notificationSettingsUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_clearNotifications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_clearNotifications(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClearNotifications(rctx)
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.ClearNotificationsResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.ClearNotificationsResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.ClearNotificationsResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.ClearNotificationsResult)
-	fc.Result = res
-	return ec.marshalNClearNotificationsResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClearNotificationsResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_clearNotifications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ClearNotificationsResult does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_emailNotificationSettingsUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_emailNotificationSettingsUpdate(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().EmailNotificationSettingsUpdate(rctx, fc.Args["settings"].(model.UpdateEmailNotificationSettingsInput))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.EmailNotificationSettingsUpdateResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.EmailNotificationSettingsUpdateResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.EmailNotificationSettingsUpdateResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.EmailNotificationSettingsUpdateResult)
-	fc.Result = res
-	return ec.marshalNEmailNotificationSettingsUpdateResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettingsUpdateResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_emailNotificationSettingsUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type EmailNotificationSettingsUpdateResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_emailNotificationSettingsUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_verifyEmail(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().VerifyEmail(rctx, fc.Args["token"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.VerifyEmailResult)
-	fc.Result = res
-	return ec.marshalNVerifyEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_verifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type VerifyEmailResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_verifyEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_preverifyEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_preverifyEmail(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().PreverifyEmail(rctx, fc.Args["email"].(persist.Email))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.PreverifyEmailResult)
-	fc.Result = res
-	return ec.marshalNPreverifyEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_preverifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PreverifyEmailResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_preverifyEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateEmail(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateEmail(rctx, fc.Args["email"].(persist.Email), fc.Args["authMechanism"].(*model.AuthMechanism))
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.UpdateEmailResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.UpdateEmailResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.UpdateEmailResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.UpdateEmailResult)
-	fc.Result = res
-	return ec.marshalNUpdateEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UpdateEmailResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_resendVerificationEmail(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ResendVerificationEmail(rctx)
-		}
-
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AuthRequired == nil {
-				var zeroVal model.ResendVerificationEmailResult
-				return zeroVal, errors.New("directive authRequired is not implemented")
-			}
-			return ec.directives.AuthRequired(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(model.ResendVerificationEmailResult); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/mutuals/go-mutuals/graphql/model.ResendVerificationEmailResult`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.ResendVerificationEmailResult)
-	fc.Result = res
-	return ec.marshalNResendVerificationEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐResendVerificationEmailResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_resendVerificationEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ResendVerificationEmailResult does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_unsubscribeFromEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_unsubscribeFromEmail(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UnsubscribeFromEmail(rctx, fc.Args["input"].(model.UnsubscribeFromEmailTypeInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.UnsubscribeFromEmailResult)
-	fc.Result = res
-	return ec.marshalNUnsubscribeFromEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_unsubscribeFromEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UnsubscribeFromEmailResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_unsubscribeFromEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12657,402 +9328,6 @@ func (ec *executionContext) fieldContext_Mutation_poolDelete(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Nonce_nonce(ctx context.Context, field graphql.CollectedField, obj *model.Nonce) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Nonce_nonce(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Nonce, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Nonce_nonce(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Nonce",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Nonce_message(ctx context.Context, field graphql.CollectedField, obj *model.Nonce) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Nonce_message(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Message, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Nonce_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Nonce",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NotificationEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.NotificationEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.Notification)
-	fc.Result = res
-	return ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NotificationEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.NotificationEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NotificationSettings_someoneViewedYourPool(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SomeoneViewedYourPool, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationSettings_someoneViewedYourPool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationSettings",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NotificationSettingsUpdatePayload_notificationSettings(ctx context.Context, field graphql.CollectedField, obj *model.NotificationSettingsUpdatePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationSettingsUpdatePayload_notificationSettings(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.NotificationSettings, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.NotificationSettings)
-	fc.Result = res
-	return ec.marshalNNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationSettingsUpdatePayload_notificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationSettingsUpdatePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "someoneViewedYourPool":
-				return ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NotificationsConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.NotificationsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationsConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.NotificationEdge)
-	fc.Result = res
-	return ec.marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationsConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_NotificationEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_NotificationEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NotificationEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NotificationsConnection_unseenCount(ctx context.Context, field graphql.CollectedField, obj *model.NotificationsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationsConnection_unseenCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UnseenCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationsConnection_unseenCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NotificationsConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.NotificationsConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NotificationsConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PageInfo)
-	fc.Result = res
-	return ec.marshalOPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NotificationsConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NotificationsConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "total":
-				return ec.fieldContext_PageInfo_total(ctx, field)
-			case "size":
-				return ec.fieldContext_PageInfo_size(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _PageInfo_total(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PageInfo_total(ctx, field)
 	if err != nil {
@@ -13648,9 +9923,9 @@ func (ec *executionContext) _Pool_owner(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.UserOrAccount)
+	res := resTmp.(model.UserOrEVMAccount)
 	fc.Result = res
-	return ec.marshalNUserOrAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserOrAccount(ctx, field.Selections, res)
+	return ec.marshalNUserOrEVMAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserOrEVMAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Pool_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13660,7 +9935,7 @@ func (ec *executionContext) fieldContext_Pool_owner(_ context.Context, field gra
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UserOrAccount does not have child fields")
+			return nil, errors.New("field of type UserOrEVMAccount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13779,8 +10054,6 @@ func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field gr
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
 				return ec.fieldContext_Claim_path(ctx, field)
-			case "childrenCount":
-				return ec.fieldContext_Claim_childrenCount(ctx, field)
 			case "parent":
 				return ec.fieldContext_Claim_parent(ctx, field)
 			case "children":
@@ -13789,10 +10062,10 @@ func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field gr
 				return ec.fieldContext_Claim_pool(ctx, field)
 			case "recipient":
 				return ec.fieldContext_Claim_recipient(ctx, field)
-			case "state":
-				return ec.fieldContext_Claim_state(ctx, field)
-			case "strategy":
-				return ec.fieldContext_Claim_strategy(ctx, field)
+			case "validation":
+				return ec.fieldContext_Claim_validation(ctx, field)
+			case "distribution":
+				return ec.fieldContext_Claim_distribution(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -16009,294 +12282,6 @@ func (ec *executionContext) fieldContext_PoolUpdatePayload_pool(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _PreverifyEmailPayload_email(ctx context.Context, field graphql.CollectedField, obj *model.PreverifyEmailPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreverifyEmailPayload_email(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Email, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.Email)
-	fc.Result = res
-	return ec.marshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreverifyEmailPayload_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreverifyEmailPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Email does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PreverifyEmailPayload_result(ctx context.Context, field graphql.CollectedField, obj *model.PreverifyEmailPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PreverifyEmailPayload_result(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Result, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.PreverifyEmailStatus)
-	fc.Result = res
-	return ec.marshalNPreverifyEmailStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PreverifyEmailPayload_result(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PreverifyEmailPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PreverifyEmailStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PushTokenRegisterPayload_pushToken(ctx context.Context, field graphql.CollectedField, obj *model.PushTokenRegisterPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PushTokenRegisterPayload_pushToken(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PushToken, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PushTokenRegisterPayload_pushToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PushTokenRegisterPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PushTokenRegisterPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.PushTokenRegisterPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PushTokenRegisterPayload_user(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PushTokenRegisterPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PushTokenRegisterPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PushTokenUnregisterPayload_pushToken(ctx context.Context, field graphql.CollectedField, obj *model.PushTokenUnregisterPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PushTokenUnregisterPayload_pushToken(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PushToken, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PushTokenUnregisterPayload_pushToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PushTokenUnregisterPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PushTokenUnregisterPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.PushTokenUnregisterPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PushTokenUnregisterPayload_user(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PushTokenUnregisterPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PushTokenUnregisterPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_node(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_node(ctx, field)
 	if err != nil {
@@ -16536,7 +12521,7 @@ func (ec *executionContext) _Query_userByAddress(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserByAddress(rctx, fc.Args["chainAddress"].(persist.ChainAddress))
+		return ec.resolvers.Query().UserByAddress(rctx, fc.Args["address"].(persist.Address))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16736,58 +12721,6 @@ func (ec *executionContext) fieldContext_Query_searchPools(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_searchPools_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_isEmailAddressAvailable(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_isEmailAddressAvailable(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().IsEmailAddressAvailable(rctx, fc.Args["emailAddress"].(persist.Email))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_isEmailAddressAvailable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_isEmailAddressAvailable_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -17101,66 +13034,6 @@ func (ec *executionContext) fieldContext_RemoveUserWalletsPayload_viewer(_ conte
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ResendVerificationEmailPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.ResendVerificationEmailPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ResendVerificationEmailPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ResendVerificationEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ResendVerificationEmailPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -17213,10 +13086,6 @@ func (ec *executionContext) fieldContext_RoleUpdatePayload_user(_ context.Contex
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -17309,116 +13178,6 @@ func (ec *executionContext) fieldContext_SearchUsersPayload_results(_ context.Co
 				return ec.fieldContext_UserSearchResult_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type UserSearchResult", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_notificationCreated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	fc, err := ec.fieldContext_Subscription_notificationCreated(ctx, field)
-	if err != nil {
-		return nil
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = nil
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().NotificationCreated(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	if resTmp == nil {
-		return nil
-	}
-	return func(ctx context.Context) graphql.Marshaler {
-		select {
-		case res, ok := <-resTmp.(<-chan model.Notification):
-			if !ok {
-				return nil
-			}
-			return graphql.WriterFunc(func(w io.Writer) {
-				w.Write([]byte{'{'})
-				graphql.MarshalString(field.Alias).MarshalGQL(w)
-				w.Write([]byte{':'})
-				ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
-				w.Write([]byte{'}'})
-			})
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-func (ec *executionContext) fieldContext_Subscription_notificationCreated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_notificationUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	fc, err := ec.fieldContext_Subscription_notificationUpdated(ctx, field)
-	if err != nil {
-		return nil
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = nil
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().NotificationUpdated(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	if resTmp == nil {
-		return nil
-	}
-	return func(ctx context.Context) graphql.Marshaler {
-		select {
-		case res, ok := <-resTmp.(<-chan model.Notification):
-			if !ok {
-				return nil
-			}
-			return graphql.WriterFunc(func(w io.Writer) {
-				w.Write([]byte{'{'})
-				graphql.MarshalString(field.Alias).MarshalGQL(w)
-				w.Write([]byte{':'})
-				ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
-				w.Write([]byte{'}'})
-			})
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-func (ec *executionContext) fieldContext_Subscription_notificationUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
 		},
 	}
 	return fc, nil
@@ -18676,118 +14435,6 @@ func (ec *executionContext) fieldContext_Tx_withdrawals(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _UnsubscribeFromEmailPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UnsubscribeFromEmailPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnsubscribeFromEmailPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnsubscribeFromEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnsubscribeFromEmailPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateEmailPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.UpdateEmailPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateEmailPayload_viewer(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Viewer, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateEmailPayload_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateEmailPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_id(ctx, field)
 	if err != nil {
@@ -18940,111 +14587,6 @@ func (ec *executionContext) fieldContext_User_pools(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _User_notifications(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_notifications(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Notifications(rctx, obj, fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.NotificationsConnection)
-	fc.Result = res
-	return ec.marshalONotificationsConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationsConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_User_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_NotificationsConnection_edges(ctx, field)
-			case "unseenCount":
-				return ec.fieldContext_NotificationsConnection_unseenCount(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_NotificationsConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NotificationsConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_User_notifications_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_notificationSettings(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_notificationSettings(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().NotificationSettings(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.NotificationSettings)
-	fc.Result = res
-	return ec.marshalONotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_User_notificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "someoneViewedYourPool":
-				return ec.fieldContext_NotificationSettings_someoneViewedYourPool(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NotificationSettings", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UserDeletePayload_user(ctx context.Context, field graphql.CollectedField, obj *model.UserDeletePayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UserDeletePayload_user(ctx, field)
 	if err != nil {
@@ -19087,10 +14629,6 @@ func (ec *executionContext) fieldContext_UserDeletePayload_user(_ context.Contex
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19140,10 +14678,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19187,135 +14721,6 @@ func (ec *executionContext) fieldContext_UserEdge_cursor(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserEmail_email(ctx context.Context, field graphql.CollectedField, obj *model.UserEmail) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserEmail_email(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Email, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.Email)
-	fc.Result = res
-	return ec.marshalOEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserEmail_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserEmail",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Email does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserEmail_verificationStatus(ctx context.Context, field graphql.CollectedField, obj *model.UserEmail) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserEmail_verificationStatus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VerificationStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*persist.EmailVerificationStatus)
-	fc.Result = res
-	return ec.marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmailVerificationStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserEmail_verificationStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserEmail",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type EmailVerificationStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserEmail_emailNotificationSettings(ctx context.Context, field graphql.CollectedField, obj *model.UserEmail) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserEmail_emailNotificationSettings(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.UserEmail().EmailNotificationSettings(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.EmailNotificationSettings)
-	fc.Result = res
-	return ec.marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserEmail_emailNotificationSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserEmail",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "unsubscribedFromAll":
-				return ec.fieldContext_EmailNotificationSettings_unsubscribedFromAll(ctx, field)
-			case "unsubscribedFromNotifications":
-				return ec.fieldContext_EmailNotificationSettings_unsubscribedFromNotifications(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EmailNotificationSettings", field.Name)
 		},
 	}
 	return fc, nil
@@ -19366,10 +14771,6 @@ func (ec *executionContext) fieldContext_UserRegisterPayload_user(_ context.Cont
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19460,10 +14861,6 @@ func (ec *executionContext) fieldContext_UserSearchResult_user(_ context.Context
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19516,10 +14913,6 @@ func (ec *executionContext) fieldContext_UserUpdatePayload_user(_ context.Contex
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -19632,50 +15025,6 @@ func (ec *executionContext) fieldContext_UsersConnection_pageInfo(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _VerifyEmailPayload_email(ctx context.Context, field graphql.CollectedField, obj *model.VerifyEmailPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VerifyEmailPayload_email(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Email, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(persist.Email)
-	fc.Result = res
-	return ec.marshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VerifyEmailPayload_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VerifyEmailPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Email does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _VerifyTokenPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.VerifyTokenPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VerifyTokenPayload_user(ctx, field)
 	if err != nil {
@@ -19721,10 +15070,6 @@ func (ec *executionContext) fieldContext_VerifyTokenPayload_user(_ context.Conte
 				return ec.fieldContext_User_roles(ctx, field)
 			case "pools":
 				return ec.fieldContext_User_pools(ctx, field)
-			case "notifications":
-				return ec.fieldContext_User_notifications(ctx, field)
-			case "notificationSettings":
-				return ec.fieldContext_User_notificationSettings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -22141,168 +17486,6 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAuthMechanism(ctx context.Context, obj interface{}) (model.AuthMechanism, error) {
-	var it model.AuthMechanism
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"eoa", "gnosisSafe", "debug", "magicLink", "oneTimeLoginToken", "privy"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "eoa":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eoa"))
-			data, err := ec.unmarshalOEoaAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEoaAuth(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Eoa = data
-		case "gnosisSafe":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gnosisSafe"))
-			data, err := ec.unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.GnosisSafe = data
-		case "debug":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
-			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalODebugAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDebugAuth(ctx, v)
-			}
-
-			directive1 := func(ctx context.Context) (interface{}, error) {
-				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
-				if err != nil {
-					var zeroVal *model.DebugAuth
-					return zeroVal, err
-				}
-				if ec.directives.RestrictEnvironment == nil {
-					var zeroVal *model.DebugAuth
-					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
-				}
-				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
-			}
-
-			tmp, err := directive1(ctx)
-			if err != nil {
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-			if data, ok := tmp.(*model.DebugAuth); ok {
-				it.Debug = data
-			} else if tmp == nil {
-				it.Debug = nil
-			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.DebugAuth`, tmp)
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-		case "magicLink":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("magicLink"))
-			data, err := ec.unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MagicLink = data
-		case "oneTimeLoginToken":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("oneTimeLoginToken"))
-			data, err := ec.unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOneTimeLoginTokenAuth(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OneTimeLoginToken = data
-		case "privy":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privy"))
-			data, err := ec.unmarshalOPrivyAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPrivyAuth(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Privy = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputChainAddressInput(ctx context.Context, obj interface{}) (persist.ChainAddress, error) {
-	var it persist.ChainAddress
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"address", "chainId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "address":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.ChainAddressInput().Address(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "chainId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainId"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.ChainAddressInput().ChainID(ctx, &it, data); err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputChainPubKeyInput(ctx context.Context, obj interface{}) (persist.ChainPubKey, error) {
-	var it persist.ChainPubKey
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"pubKey", "chainId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "pubKey":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pubKey"))
-			data, err := ec.unmarshalNPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.ChainPubKeyInput().PubKey(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "chainId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainId"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.ChainPubKeyInput().ChainID(ctx, &it, data); err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputClaimBulkCreateInput(ctx context.Context, obj interface{}) (model.ClaimBulkCreateInput, error) {
 	var it model.ClaimBulkCreateInput
 	asMap := map[string]interface{}{}
@@ -22310,20 +17493,13 @@ func (ec *executionContext) unmarshalInputClaimBulkCreateInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"data", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "recipientAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
-			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RecipientAddress = data
 		case "data":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
@@ -22345,20 +17521,20 @@ func (ec *executionContext) unmarshalInputClaimBulkCreateInput(ctx context.Conte
 				return it, err
 			}
 			it.Children = data
-		case "stateId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+		case "validationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StateID = data
-		case "strategyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyId"))
+			it.ValidationID = data
+		case "distributionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StrategyID = data
+			it.DistributionID = data
 		}
 	}
 
@@ -22372,7 +17548,7 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"claimId", "recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"claimId", "data", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22386,13 +17562,6 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 				return it, err
 			}
 			it.ClaimID = data
-		case "recipientAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
-			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RecipientAddress = data
 		case "data":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
@@ -22414,20 +17583,20 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 				return it, err
 			}
 			it.Children = data
-		case "stateId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+		case "validationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationId"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StateID = data
-		case "strategyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyId"))
+			it.ValidationID = data
+		case "distributionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionId"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StrategyID = data
+			it.DistributionID = data
 		}
 	}
 
@@ -22441,7 +17610,7 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"label", "recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"label", "data", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22455,13 +17624,6 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 				return it, err
 			}
 			it.Label = data
-		case "recipientAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
-			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RecipientAddress = data
 		case "data":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
@@ -22483,20 +17645,20 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 				return it, err
 			}
 			it.Children = data
-		case "stateId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+		case "validationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StateID = data
-		case "strategyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyId"))
+			it.ValidationID = data
+		case "distributionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StrategyID = data
+			it.DistributionID = data
 		}
 	}
 
@@ -22510,7 +17672,7 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"claimId", "recipientAddress", "data", "parent", "children", "stateId", "strategyId"}
+	fieldsInOrder := [...]string{"claimId", "data", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22524,13 +17686,6 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 				return it, err
 			}
 			it.ClaimID = data
-		case "recipientAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipientAddress"))
-			data, err := ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RecipientAddress = data
 		case "data":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
@@ -22552,299 +17707,20 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 				return it, err
 			}
 			it.Children = data
-		case "stateId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+		case "validationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationId"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StateID = data
-		case "strategyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategyId"))
+			it.ValidationID = data
+		case "distributionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionId"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StrategyID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDebugAuth(ctx context.Context, obj interface{}) (model.DebugAuth, error) {
-	var it model.DebugAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"asUsername", "chainAddresses", "debugToolsPassword"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "asUsername":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("asUsername"))
-			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
-
-			directive1 := func(ctx context.Context) (interface{}, error) {
-				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
-				if err != nil {
-					var zeroVal *string
-					return zeroVal, err
-				}
-				if ec.directives.RestrictEnvironment == nil {
-					var zeroVal *string
-					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
-				}
-				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
-			}
-
-			tmp, err := directive1(ctx)
-			if err != nil {
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-			if data, ok := tmp.(*string); ok {
-				it.AsUsername = data
-			} else if tmp == nil {
-				it.AsUsername = nil
-			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-		case "chainAddresses":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainAddresses"))
-			directive0 := func(ctx context.Context) (interface{}, error) {
-				return ec.unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddressᚄ(ctx, v)
-			}
-
-			directive1 := func(ctx context.Context) (interface{}, error) {
-				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
-				if err != nil {
-					var zeroVal []*persist.ChainAddress
-					return zeroVal, err
-				}
-				if ec.directives.RestrictEnvironment == nil {
-					var zeroVal []*persist.ChainAddress
-					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
-				}
-				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
-			}
-
-			tmp, err := directive1(ctx)
-			if err != nil {
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-			if data, ok := tmp.([]*persist.ChainAddress); ok {
-				it.ChainAddresses = data
-			} else if tmp == nil {
-				it.ChainAddresses = nil
-			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be []*github.com/mutuals/go-mutuals/service/persist.ChainAddress`, tmp)
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-		case "debugToolsPassword":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debugToolsPassword"))
-			directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOString2ᚖstring(ctx, v) }
-
-			directive1 := func(ctx context.Context) (interface{}, error) {
-				allowed, err := ec.unmarshalNString2ᚕstringᚄ(ctx, []interface{}{"local", "development", "sandbox"})
-				if err != nil {
-					var zeroVal *string
-					return zeroVal, err
-				}
-				if ec.directives.RestrictEnvironment == nil {
-					var zeroVal *string
-					return zeroVal, errors.New("directive restrictEnvironment is not implemented")
-				}
-				return ec.directives.RestrictEnvironment(ctx, obj, directive0, allowed)
-			}
-
-			tmp, err := directive1(ctx)
-			if err != nil {
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-			if data, ok := tmp.(*string); ok {
-				it.DebugToolsPassword = data
-			} else if tmp == nil {
-				it.DebugToolsPassword = nil
-			} else {
-				err := fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
-				return it, graphql.ErrorOnPath(ctx, err)
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputEoaAuth(ctx context.Context, obj interface{}) (model.EoaAuth, error) {
-	var it model.EoaAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"chainPubKey", "nonce", "message", "signature"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "chainPubKey":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chainPubKey"))
-			data, err := ec.unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainPubKey(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ChainPubKey = data
-		case "nonce":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nonce"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Nonce = data
-		case "message":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Message = data
-		case "signature":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signature"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Signature = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGnosisSafeAuth(ctx context.Context, obj interface{}) (model.GnosisSafeAuth, error) {
-	var it model.GnosisSafeAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"address", "nonce", "message"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "address":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Address = data
-		case "nonce":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nonce"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Nonce = data
-		case "message":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Message = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputMagicLinkAuth(ctx context.Context, obj interface{}) (model.MagicLinkAuth, error) {
-	var it model.MagicLinkAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"token"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "token":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Token = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputNotificationSettingsInput(ctx context.Context, obj interface{}) (model.NotificationSettingsInput, error) {
-	var it model.NotificationSettingsInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"someoneViewedYourPool"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "someoneViewedYourPool":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("someoneViewedYourPool"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SomeoneViewedYourPool = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputOneTimeLoginTokenAuth(ctx context.Context, obj interface{}) (model.OneTimeLoginTokenAuth, error) {
-	var it model.OneTimeLoginTokenAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"token"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "token":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Token = data
+			it.DistributionID = data
 		}
 	}
 
@@ -23010,33 +17886,6 @@ func (ec *executionContext) unmarshalInputPoolUpdateInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPrivyAuth(ctx context.Context, obj interface{}) (model.PrivyAuth, error) {
-	var it model.PrivyAuth
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"token"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "token":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Token = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputRoleUpdateInput(ctx context.Context, obj interface{}) (model.RoleUpdateInput, error) {
 	var it model.RoleUpdateInput
 	asMap := map[string]interface{}{}
@@ -23065,101 +17914,6 @@ func (ec *executionContext) unmarshalInputRoleUpdateInput(ctx context.Context, o
 				return it, err
 			}
 			it.RemoveRoles = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUnsubscribeFromEmailTypeInput(ctx context.Context, obj interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
-	var it model.UnsubscribeFromEmailTypeInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"type", "token"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "type":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNEmailUnsubscriptionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Type = data
-		case "token":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Token = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateEmailNotificationSettingsInput(ctx context.Context, obj interface{}) (model.UpdateEmailNotificationSettingsInput, error) {
-	var it model.UpdateEmailNotificationSettingsInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"unsubscribedFromAll", "unsubscribedFromNotifications"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "unsubscribedFromAll":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unsubscribedFromAll"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UnsubscribedFromAll = data
-		case "unsubscribedFromNotifications":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unsubscribedFromNotifications"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UnsubscribedFromNotifications = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUserRegisterInput(ctx context.Context, obj interface{}) (model.UserRegisterInput, error) {
-	var it model.UserRegisterInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"authMechanism"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "authMechanism":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-			data, err := ec.unmarshalNAuthMechanism2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AuthMechanism = data
 		}
 	}
 
@@ -23500,59 +18254,6 @@ func (ec *executionContext) _ClaimUpdateResult(ctx context.Context, sel ast.Sele
 	}
 }
 
-func (ec *executionContext) _ClearNotificationsResult(ctx context.Context, sel ast.SelectionSet, obj model.ClearNotificationsResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ClearNotificationsPayload:
-		return ec._ClearNotificationsPayload(ctx, sel, &obj)
-	case *model.ClearNotificationsPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ClearNotificationsPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _EmailNotificationSettingsUpdateResult(ctx context.Context, sel ast.SelectionSet, obj model.EmailNotificationSettingsUpdateResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.EmailNotificationSettingsUpdatePayload:
-		return ec._EmailNotificationSettingsUpdatePayload(ctx, sel, &obj)
-	case *model.EmailNotificationSettingsUpdatePayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._EmailNotificationSettingsUpdatePayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, obj model.Error) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -23655,13 +18356,6 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 			return graphql.Null
 		}
 		return ec._ErrSyncFailed(ctx, sel, obj)
-	case model.ErrPushTokenBelongsToAnotherUser:
-		return ec._ErrPushTokenBelongsToAnotherUser(ctx, sel, &obj)
-	case *model.ErrPushTokenBelongsToAnotherUser:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrPushTokenBelongsToAnotherUser(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -23736,50 +18430,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Pool(ctx, sel, obj)
-	case model.Notification:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Notification(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _Notification(ctx context.Context, sel ast.SelectionSet, obj model.Notification) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _NotificationSettingsUpdateResult(ctx context.Context, sel ast.SelectionSet, obj model.NotificationSettingsUpdateResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.NotificationSettingsUpdatePayload:
-		return ec._NotificationSettingsUpdatePayload(ctx, sel, &obj)
-	case *model.NotificationSettingsUpdatePayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._NotificationSettingsUpdatePayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -23949,96 +18599,6 @@ func (ec *executionContext) _PoolUpdateResult(ctx context.Context, sel ast.Selec
 	}
 }
 
-func (ec *executionContext) _PreverifyEmailResult(ctx context.Context, sel ast.SelectionSet, obj model.PreverifyEmailResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.PreverifyEmailPayload:
-		return ec._PreverifyEmailPayload(ctx, sel, &obj)
-	case *model.PreverifyEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PreverifyEmailPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _PushTokenRegisterResult(ctx context.Context, sel ast.SelectionSet, obj model.PushTokenRegisterResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ErrPushTokenBelongsToAnotherUser:
-		return ec._ErrPushTokenBelongsToAnotherUser(ctx, sel, &obj)
-	case *model.ErrPushTokenBelongsToAnotherUser:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrPushTokenBelongsToAnotherUser(ctx, sel, obj)
-	case model.PushTokenRegisterPayload:
-		return ec._PushTokenRegisterPayload(ctx, sel, &obj)
-	case *model.PushTokenRegisterPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PushTokenRegisterPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _PushTokenUnregisterResult(ctx context.Context, sel ast.SelectionSet, obj model.PushTokenUnregisterResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.PushTokenUnregisterPayload:
-		return ec._PushTokenUnregisterPayload(ctx, sel, &obj)
-	case *model.PushTokenUnregisterPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PushTokenUnregisterPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _RemoveUserWalletsResult(ctx context.Context, sel ast.SelectionSet, obj model.RemoveUserWalletsResult) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -24064,36 +18624,6 @@ func (ec *executionContext) _RemoveUserWalletsResult(ctx context.Context, sel as
 			return graphql.Null
 		}
 		return ec._RemoveUserWalletsPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _ResendVerificationEmailResult(ctx context.Context, sel ast.SelectionSet, obj model.ResendVerificationEmailResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.ResendVerificationEmailPayload:
-		return ec._ResendVerificationEmailPayload(ctx, sel, &obj)
-	case *model.ResendVerificationEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ResendVerificationEmailPayload(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24175,59 +18705,6 @@ func (ec *executionContext) _SearchUsersResult(ctx context.Context, sel ast.Sele
 	}
 }
 
-func (ec *executionContext) _UnsubscribeFromEmailResult(ctx context.Context, sel ast.SelectionSet, obj model.UnsubscribeFromEmailResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.UnsubscribeFromEmailPayload:
-		return ec._UnsubscribeFromEmailPayload(ctx, sel, &obj)
-	case *model.UnsubscribeFromEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UnsubscribeFromEmailPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _UpdateEmailResult(ctx context.Context, sel ast.SelectionSet, obj model.UpdateEmailResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrNotAuthorized:
-		return ec._ErrNotAuthorized(ctx, sel, &obj)
-	case *model.ErrNotAuthorized:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.UpdateEmailPayload:
-		return ec._UpdateEmailPayload(ctx, sel, &obj)
-	case *model.UpdateEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._UpdateEmailPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _UserDeleteResult(ctx context.Context, sel ast.SelectionSet, obj model.UserDeleteResult) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -24258,7 +18735,7 @@ func (ec *executionContext) _UserDeleteResult(ctx context.Context, sel ast.Selec
 	}
 }
 
-func (ec *executionContext) _UserOrAccount(ctx context.Context, sel ast.SelectionSet, obj model.UserOrAccount) graphql.Marshaler {
+func (ec *executionContext) _UserOrEVMAccount(ctx context.Context, sel ast.SelectionSet, obj model.UserOrEVMAccount) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -24399,29 +18876,6 @@ func (ec *executionContext) _UserUpdateResult(ctx context.Context, sel ast.Selec
 	}
 }
 
-func (ec *executionContext) _VerifyEmailResult(ctx context.Context, sel ast.SelectionSet, obj model.VerifyEmailResult) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.ErrInvalidInput:
-		return ec._ErrInvalidInput(ctx, sel, &obj)
-	case *model.ErrInvalidInput:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrInvalidInput(ctx, sel, obj)
-	case model.VerifyEmailPayload:
-		return ec._VerifyEmailPayload(ctx, sel, &obj)
-	case *model.VerifyEmailPayload:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._VerifyEmailPayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _VerifyTokenResult(ctx context.Context, sel ast.SelectionSet, obj model.VerifyTokenResult) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -24495,120 +18949,6 @@ func (ec *executionContext) _AddUserWalletPayload(ctx context.Context, sel ast.S
 	return out
 }
 
-var chainAddressImplementors = []string{"ChainAddress"}
-
-func (ec *executionContext) _ChainAddress(ctx context.Context, sel ast.SelectionSet, obj *persist.ChainAddress) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, chainAddressImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ChainAddress")
-		case "address":
-			out.Values[i] = ec._ChainAddress_address(ctx, field, obj)
-		case "chainId":
-			out.Values[i] = ec._ChainAddress_chainId(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var chainPoolsImplementors = []string{"ChainPools"}
-
-func (ec *executionContext) _ChainPools(ctx context.Context, sel ast.SelectionSet, obj *model.ChainPools) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, chainPoolsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ChainPools")
-		case "chainId":
-			out.Values[i] = ec._ChainPools_chainId(ctx, field, obj)
-		case "pools":
-			out.Values[i] = ec._ChainPools_pools(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var chainPubKeyImplementors = []string{"ChainPubKey"}
-
-func (ec *executionContext) _ChainPubKey(ctx context.Context, sel ast.SelectionSet, obj *persist.ChainPubKey) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, chainPubKeyImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ChainPubKey")
-		case "pubKey":
-			out.Values[i] = ec._ChainPubKey_pubKey(ctx, field, obj)
-		case "chainId":
-			out.Values[i] = ec._ChainPubKey_chainId(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var claimImplementors = []string{"Claim", "Node"}
 
 func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, obj *model.Claim) graphql.Marshaler {
@@ -24634,11 +18974,6 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "path":
 			out.Values[i] = ec._Claim_path(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "childrenCount":
-			out.Values[i] = ec._Claim_childrenCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -24777,7 +19112,7 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "state":
+		case "validation":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -24786,7 +19121,7 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Claim_state(ctx, field, obj)
+				res = ec._Claim_validation(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -24813,7 +19148,7 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "strategy":
+		case "distribution":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -24822,7 +19157,7 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Claim_strategy(ctx, field, obj)
+				res = ec._Claim_distribution(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -25126,45 +19461,6 @@ func (ec *executionContext) _ClaimUpdatePayload(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var clearNotificationsPayloadImplementors = []string{"ClearNotificationsPayload", "ClearNotificationsResult"}
-
-func (ec *executionContext) _ClearNotificationsPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ClearNotificationsPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clearNotificationsPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ClearNotificationsPayload")
-		case "notifications":
-			out.Values[i] = ec._ClearNotificationsPayload_notifications(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var deletedNodeImplementors = []string{"DeletedNode", "Node"}
 
 func (ec *executionContext) _DeletedNode(ctx context.Context, sel ast.SelectionSet, obj *model.DeletedNode) graphql.Marshaler {
@@ -25383,7 +19679,7 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var eVMAccountImplementors = []string{"EVMAccount", "UserOrAccount", "PoolOrUserOrEVMAccount"}
+var eVMAccountImplementors = []string{"EVMAccount", "UserOrEVMAccount", "PoolOrUserOrEVMAccount"}
 
 func (ec *executionContext) _EVMAccount(ctx context.Context, sel ast.SelectionSet, obj *model.EVMAccount) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, eVMAccountImplementors)
@@ -25484,89 +19780,6 @@ func (ec *executionContext) _EVMAccount(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._EVMAccount_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var emailNotificationSettingsImplementors = []string{"EmailNotificationSettings"}
-
-func (ec *executionContext) _EmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, obj *model.EmailNotificationSettings) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, emailNotificationSettingsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("EmailNotificationSettings")
-		case "unsubscribedFromAll":
-			out.Values[i] = ec._EmailNotificationSettings_unsubscribedFromAll(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "unsubscribedFromNotifications":
-			out.Values[i] = ec._EmailNotificationSettings_unsubscribedFromNotifications(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var emailNotificationSettingsUpdatePayloadImplementors = []string{"EmailNotificationSettingsUpdatePayload", "EmailNotificationSettingsUpdateResult"}
-
-func (ec *executionContext) _EmailNotificationSettingsUpdatePayload(ctx context.Context, sel ast.SelectionSet, obj *model.EmailNotificationSettingsUpdatePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, emailNotificationSettingsUpdatePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("EmailNotificationSettingsUpdatePayload")
-		case "emailNotificationSettings":
-			out.Values[i] = ec._EmailNotificationSettingsUpdatePayload_emailNotificationSettings(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -25708,7 +19921,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "Error", "UserResult", "PoolResult", "SearchUsersResult", "SearchPoolsResult", "UserRegisterResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "PushTokenRegisterResult", "PushTokenUnregisterResult", "NotificationSettingsUpdateResult", "EmailNotificationSettingsUpdateResult", "VerifyEmailResult", "PreverifyEmailResult", "UpdateEmailResult", "ResendVerificationEmailResult", "UnsubscribeFromEmailResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "Error", "UserResult", "PoolResult", "SearchUsersResult", "SearchPoolsResult", "UserRegisterResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -25835,7 +20048,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "Error", "UserResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "PushTokenRegisterResult", "PushTokenUnregisterResult", "NotificationSettingsUpdateResult", "ClearNotificationsResult", "EmailNotificationSettingsUpdateResult", "UpdateEmailResult", "ResendVerificationEmailResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "Error", "UserResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -25892,45 +20105,6 @@ func (ec *executionContext) _ErrPoolNotFound(ctx context.Context, sel ast.Select
 			out.Values[i] = graphql.MarshalString("ErrPoolNotFound")
 		case "message":
 			out.Values[i] = ec._ErrPoolNotFound_message(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var errPushTokenBelongsToAnotherUserImplementors = []string{"ErrPushTokenBelongsToAnotherUser", "Error", "PushTokenRegisterResult"}
-
-func (ec *executionContext) _ErrPushTokenBelongsToAnotherUser(ctx context.Context, sel ast.SelectionSet, obj *model.ErrPushTokenBelongsToAnotherUser) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, errPushTokenBelongsToAnotherUserImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ErrPushTokenBelongsToAnotherUser")
-		case "message":
-			out.Values[i] = ec._ErrPushTokenBelongsToAnotherUser_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -26191,301 +20365,6 @@ func (ec *executionContext) _ErrUsernameNotAvailable(ctx context.Context, sel as
 	return out
 }
 
-var extensionImplementors = []string{"Extension"}
-
-func (ec *executionContext) _Extension(ctx context.Context, sel ast.SelectionSet, obj *model.Extension) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, extensionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Extension")
-		case "id":
-			out.Values[i] = ec._Extension_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "address":
-			out.Values[i] = ec._Extension_address(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "chainId":
-			out.Values[i] = ec._Extension_chainId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "extensionRegistry":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Extension_extensionRegistry(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "extensionId":
-			out.Values[i] = ec._Extension_extensionId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "extensionType":
-			out.Values[i] = ec._Extension_extensionType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "permissions":
-			out.Values[i] = ec._Extension_permissions(ctx, field, obj)
-		case "data":
-			out.Values[i] = ec._Extension_data(ctx, field, obj)
-		case "name":
-			out.Values[i] = ec._Extension_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "description":
-			out.Values[i] = ec._Extension_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "createdAt":
-			out.Values[i] = ec._Extension_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._Extension_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var extensionRegistryImplementors = []string{"ExtensionRegistry"}
-
-func (ec *executionContext) _ExtensionRegistry(ctx context.Context, sel ast.SelectionSet, obj *model.ExtensionRegistry) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, extensionRegistryImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ExtensionRegistry")
-		case "id":
-			out.Values[i] = ec._ExtensionRegistry_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "address":
-			out.Values[i] = ec._ExtensionRegistry_address(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "chainId":
-			out.Values[i] = ec._ExtensionRegistry_chainId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "extensionCount":
-			out.Values[i] = ec._ExtensionRegistry_extensionCount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "owner":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ExtensionRegistry_owner(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "createdAt":
-			out.Values[i] = ec._ExtensionRegistry_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._ExtensionRegistry_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var groupNotificationUserEdgeImplementors = []string{"GroupNotificationUserEdge"}
-
-func (ec *executionContext) _GroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, obj *model.GroupNotificationUserEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, groupNotificationUserEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("GroupNotificationUserEdge")
-		case "node":
-			out.Values[i] = ec._GroupNotificationUserEdge_node(ctx, field, obj)
-		case "cursor":
-			out.Values[i] = ec._GroupNotificationUserEdge_cursor(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var groupNotificationUsersConnectionImplementors = []string{"GroupNotificationUsersConnection"}
-
-func (ec *executionContext) _GroupNotificationUsersConnection(ctx context.Context, sel ast.SelectionSet, obj *model.GroupNotificationUsersConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, groupNotificationUsersConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("GroupNotificationUsersConnection")
-		case "edges":
-			out.Values[i] = ec._GroupNotificationUsersConnection_edges(ctx, field, obj)
-		case "pageInfo":
-			out.Values[i] = ec._GroupNotificationUsersConnection_pageInfo(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var loginPayloadImplementors = []string{"LoginPayload", "LoginResult"}
 
 func (ec *executionContext) _LoginPayload(ctx context.Context, sel ast.SelectionSet, obj *model.LoginPayload) graphql.Marshaler {
@@ -26561,6 +20440,225 @@ func (ec *executionContext) _LogoutPayload(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var moduleImplementors = []string{"Module"}
+
+func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, obj *model.Module) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, moduleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Module")
+		case "id":
+			out.Values[i] = ec._Module_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "address":
+			out.Values[i] = ec._Module_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "chainId":
+			out.Values[i] = ec._Module_chainId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "moduleRegistry":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Module_moduleRegistry(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "moduleId":
+			out.Values[i] = ec._Module_moduleId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "moduleType":
+			out.Values[i] = ec._Module_moduleType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permissions":
+			out.Values[i] = ec._Module_permissions(ctx, field, obj)
+		case "data":
+			out.Values[i] = ec._Module_data(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._Module_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._Module_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._Module_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Module_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var moduleRegistryImplementors = []string{"ModuleRegistry"}
+
+func (ec *executionContext) _ModuleRegistry(ctx context.Context, sel ast.SelectionSet, obj *model.ModuleRegistry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, moduleRegistryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ModuleRegistry")
+		case "id":
+			out.Values[i] = ec._ModuleRegistry_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "address":
+			out.Values[i] = ec._ModuleRegistry_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "chainId":
+			out.Values[i] = ec._ModuleRegistry_chainId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "moduleCount":
+			out.Values[i] = ec._ModuleRegistry_moduleCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "owner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ModuleRegistry_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._ModuleRegistry_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ModuleRegistry_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -26604,111 +20702,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "userDelete":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_userDelete(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "login":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_login(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "logout":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_logout(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "tokenVerify":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_tokenVerify(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "addUserWallet":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addUserWallet(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "removeUserWallets":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_removeUserWallets(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pushTokenRegister":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_pushTokenRegister(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pushTokenUnregister":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_pushTokenUnregister(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "notificationSettingsUpdate":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_notificationSettingsUpdate(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "clearNotifications":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_clearNotifications(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "emailNotificationSettingsUpdate":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_emailNotificationSettingsUpdate(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "verifyEmail":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_verifyEmail(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "preverifyEmail":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_preverifyEmail(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updateEmail":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateEmail(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "resendVerificationEmail":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_resendVerificationEmail(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "unsubscribeFromEmail":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_unsubscribeFromEmail(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -26783,197 +20776,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var nonceImplementors = []string{"Nonce"}
-
-func (ec *executionContext) _Nonce(ctx context.Context, sel ast.SelectionSet, obj *model.Nonce) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, nonceImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Nonce")
-		case "nonce":
-			out.Values[i] = ec._Nonce_nonce(ctx, field, obj)
-		case "message":
-			out.Values[i] = ec._Nonce_message(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var notificationEdgeImplementors = []string{"NotificationEdge"}
-
-func (ec *executionContext) _NotificationEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, notificationEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("NotificationEdge")
-		case "node":
-			out.Values[i] = ec._NotificationEdge_node(ctx, field, obj)
-		case "cursor":
-			out.Values[i] = ec._NotificationEdge_cursor(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var notificationSettingsImplementors = []string{"NotificationSettings"}
-
-func (ec *executionContext) _NotificationSettings(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationSettings) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, notificationSettingsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("NotificationSettings")
-		case "someoneViewedYourPool":
-			out.Values[i] = ec._NotificationSettings_someoneViewedYourPool(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var notificationSettingsUpdatePayloadImplementors = []string{"NotificationSettingsUpdatePayload", "NotificationSettingsUpdateResult"}
-
-func (ec *executionContext) _NotificationSettingsUpdatePayload(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationSettingsUpdatePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, notificationSettingsUpdatePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("NotificationSettingsUpdatePayload")
-		case "notificationSettings":
-			out.Values[i] = ec._NotificationSettingsUpdatePayload_notificationSettings(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var notificationsConnectionImplementors = []string{"NotificationsConnection"}
-
-func (ec *executionContext) _NotificationsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationsConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, notificationsConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("NotificationsConnection")
-		case "edges":
-			out.Values[i] = ec._NotificationsConnection_edges(ctx, field, obj)
-		case "unseenCount":
-			out.Values[i] = ec._NotificationsConnection_unseenCount(ctx, field, obj)
-		case "pageInfo":
-			out.Values[i] = ec._NotificationsConnection_pageInfo(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -28049,138 +21851,6 @@ func (ec *executionContext) _PoolUpdatePayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var preverifyEmailPayloadImplementors = []string{"PreverifyEmailPayload", "PreverifyEmailResult"}
-
-func (ec *executionContext) _PreverifyEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PreverifyEmailPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, preverifyEmailPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("PreverifyEmailPayload")
-		case "email":
-			out.Values[i] = ec._PreverifyEmailPayload_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "result":
-			out.Values[i] = ec._PreverifyEmailPayload_result(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var pushTokenRegisterPayloadImplementors = []string{"PushTokenRegisterPayload", "PushTokenRegisterResult"}
-
-func (ec *executionContext) _PushTokenRegisterPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PushTokenRegisterPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, pushTokenRegisterPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("PushTokenRegisterPayload")
-		case "pushToken":
-			out.Values[i] = ec._PushTokenRegisterPayload_pushToken(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "user":
-			out.Values[i] = ec._PushTokenRegisterPayload_user(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var pushTokenUnregisterPayloadImplementors = []string{"PushTokenUnregisterPayload", "PushTokenUnregisterResult"}
-
-func (ec *executionContext) _PushTokenUnregisterPayload(ctx context.Context, sel ast.SelectionSet, obj *model.PushTokenUnregisterPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, pushTokenUnregisterPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("PushTokenUnregisterPayload")
-		case "pushToken":
-			out.Values[i] = ec._PushTokenUnregisterPayload_pushToken(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "user":
-			out.Values[i] = ec._PushTokenUnregisterPayload_user(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -28370,25 +22040,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "isEmailAddressAvailable":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_isEmailAddressAvailable(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "usersByRole":
 			field := field
 
@@ -28474,45 +22125,6 @@ func (ec *executionContext) _RemoveUserWalletsPayload(ctx context.Context, sel a
 			out.Values[i] = graphql.MarshalString("RemoveUserWalletsPayload")
 		case "viewer":
 			out.Values[i] = ec._RemoveUserWalletsPayload_viewer(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var resendVerificationEmailPayloadImplementors = []string{"ResendVerificationEmailPayload", "ResendVerificationEmailResult"}
-
-func (ec *executionContext) _ResendVerificationEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.ResendVerificationEmailPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, resendVerificationEmailPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ResendVerificationEmailPayload")
-		case "viewer":
-			out.Values[i] = ec._ResendVerificationEmailPayload_viewer(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -28648,28 +22260,6 @@ func (ec *executionContext) _SearchUsersPayload(ctx context.Context, sel ast.Sel
 	}
 
 	return out
-}
-
-var subscriptionImplementors = []string{"Subscription"}
-
-func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
-	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
-		Object: "Subscription",
-	})
-	if len(fields) != 1 {
-		ec.Errorf(ctx, "must subscribe to exactly one stream")
-		return nil
-	}
-
-	switch fields[0].Name {
-	case "notificationCreated":
-		return ec._Subscription_notificationCreated(ctx, fields[0])
-	case "notificationUpdated":
-		return ec._Subscription_notificationUpdated(ctx, fields[0])
-	default:
-		panic("unknown field " + strconv.Quote(fields[0].Name))
-	}
 }
 
 var tokenImplementors = []string{"Token"}
@@ -29021,85 +22611,7 @@ func (ec *executionContext) _Tx(ctx context.Context, sel ast.SelectionSet, obj *
 	return out
 }
 
-var unsubscribeFromEmailPayloadImplementors = []string{"UnsubscribeFromEmailPayload", "UnsubscribeFromEmailResult"}
-
-func (ec *executionContext) _UnsubscribeFromEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UnsubscribeFromEmailPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, unsubscribeFromEmailPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UnsubscribeFromEmailPayload")
-		case "viewer":
-			out.Values[i] = ec._UnsubscribeFromEmailPayload_viewer(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateEmailPayloadImplementors = []string{"UpdateEmailPayload", "UpdateEmailResult"}
-
-func (ec *executionContext) _UpdateEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateEmailPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateEmailPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateEmailPayload")
-		case "viewer":
-			out.Values[i] = ec._UpdateEmailPayload_viewer(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var userImplementors = []string{"User", "Node", "UserOrAccount", "PoolOrUserOrEVMAccount", "UserResult"}
+var userImplementors = []string{"User", "Node", "UserOrEVMAccount", "PoolOrUserOrEVMAccount", "UserResult"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
@@ -29158,72 +22670,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_pools(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "notifications":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_notifications(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "notificationSettings":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_notificationSettings(ctx, field, obj)
 				return res
 			}
 
@@ -29321,77 +22767,6 @@ func (ec *executionContext) _UserEdge(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._UserEdge_node(ctx, field, obj)
 		case "cursor":
 			out.Values[i] = ec._UserEdge_cursor(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var userEmailImplementors = []string{"UserEmail"}
-
-func (ec *executionContext) _UserEmail(ctx context.Context, sel ast.SelectionSet, obj *model.UserEmail) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userEmailImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UserEmail")
-		case "email":
-			out.Values[i] = ec._UserEmail_email(ctx, field, obj)
-		case "verificationStatus":
-			out.Values[i] = ec._UserEmail_verificationStatus(ctx, field, obj)
-		case "emailNotificationSettings":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._UserEmail_emailNotificationSettings(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -29546,45 +22921,6 @@ func (ec *executionContext) _UsersConnection(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._UsersConnection_edges(ctx, field, obj)
 		case "pageInfo":
 			out.Values[i] = ec._UsersConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var verifyEmailPayloadImplementors = []string{"VerifyEmailPayload", "VerifyEmailResult"}
-
-func (ec *executionContext) _VerifyEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *model.VerifyEmailPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, verifyEmailPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("VerifyEmailPayload")
-		case "email":
-			out.Values[i] = ec._VerifyEmailPayload_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -30196,16 +23532,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAddUserWalletResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAddUserWalletResult(ctx context.Context, sel ast.SelectionSet, v model.AddUserWalletResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AddUserWalletResult(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.Address(tmp)
@@ -30220,16 +23546,6 @@ func (ec *executionContext) marshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutual
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNAuthMechanism2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (model.AuthMechanism, error) {
-	res, err := ec.unmarshalInputAuthMechanism(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNAuthMechanism2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (*model.AuthMechanism, error) {
-	res, err := ec.unmarshalInputAuthMechanism(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNAuthorizationError2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthorizationError(ctx context.Context, sel ast.SelectionSet, v model.AuthorizationError) graphql.Marshaler {
@@ -30332,21 +23648,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNChainAddressInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (persist.ChainAddress, error) {
-	res, err := ec.unmarshalInputChainAddressInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx context.Context, v interface{}) (*persist.ChainAddress, error) {
-	res, err := ec.unmarshalInputChainAddressInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNChainPubKeyInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainPubKey(ctx context.Context, v interface{}) (*persist.ChainPubKey, error) {
-	res, err := ec.unmarshalInputChainPubKeyInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNClaim2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Claim) graphql.Marshaler {
@@ -30527,16 +23828,6 @@ func (ec *executionContext) marshalNClaimUpdateResult2githubᚗcomᚋmutualsᚋg
 	return ec._ClaimUpdateResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNClearNotificationsResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClearNotificationsResult(ctx context.Context, sel ast.SelectionSet, v model.ClearNotificationsResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ClearNotificationsResult(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx context.Context, sel ast.SelectionSet, v []*model.Deposit) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -30653,90 +23944,6 @@ func (ec *executionContext) marshalNEVMAccountType2githubᚗcomᚋmutualsᚋgo�
 	return v
 }
 
-func (ec *executionContext) unmarshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (persist.Email, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.Email(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNEmail2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v persist.Email) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) marshalNEmailNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.EmailNotificationSettings) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._EmailNotificationSettings(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNEmailNotificationSettingsUpdateResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettingsUpdateResult(ctx context.Context, sel ast.SelectionSet, v model.EmailNotificationSettingsUpdateResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._EmailNotificationSettingsUpdateResult(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNEmailUnsubscriptionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, v interface{}) (model.EmailUnsubscriptionType, error) {
-	var res model.EmailUnsubscriptionType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNEmailUnsubscriptionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailUnsubscriptionType(ctx context.Context, sel ast.SelectionSet, v model.EmailUnsubscriptionType) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) marshalNExtension2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtension(ctx context.Context, sel ast.SelectionSet, v model.Extension) graphql.Marshaler {
-	return ec._Extension(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNExtension2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtension(ctx context.Context, sel ast.SelectionSet, v *model.Extension) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Extension(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNExtensionRegistry2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtensionRegistry(ctx context.Context, sel ast.SelectionSet, v model.ExtensionRegistry) graphql.Marshaler {
-	return ec._ExtensionRegistry(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNExtensionRegistry2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtensionRegistry(ctx context.Context, sel ast.SelectionSet, v *model.ExtensionRegistry) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ExtensionRegistry(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNExtensionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtensionType(ctx context.Context, v interface{}) (model.ExtensionType, error) {
-	var res model.ExtensionType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNExtensionType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐExtensionType(ctx context.Context, sel ast.SelectionSet, v model.ExtensionType) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) unmarshalNFieldSet2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -30825,91 +24032,42 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNLoginResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLoginResult(ctx context.Context, sel ast.SelectionSet, v model.LoginResult) graphql.Marshaler {
+func (ec *executionContext) marshalNModule2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModule(ctx context.Context, sel ast.SelectionSet, v model.Module) graphql.Marshaler {
+	return ec._Module(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNModule2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModule(ctx context.Context, sel ast.SelectionSet, v *model.Module) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._LoginResult(ctx, sel, v)
+	return ec._Module(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLogoutPayload2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v model.LogoutPayload) graphql.Marshaler {
-	return ec._LogoutPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNModuleRegistry2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModuleRegistry(ctx context.Context, sel ast.SelectionSet, v model.ModuleRegistry) graphql.Marshaler {
+	return ec._ModuleRegistry(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLogoutPayload2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐLogoutPayload(ctx context.Context, sel ast.SelectionSet, v *model.LogoutPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNModuleRegistry2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModuleRegistry(ctx context.Context, sel ast.SelectionSet, v *model.ModuleRegistry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._LogoutPayload(ctx, sel, v)
+	return ec._ModuleRegistry(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNNotification2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []model.Notification) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalNNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.NotificationSettings) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._NotificationSettings(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNNotificationSettingsInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettingsInput(ctx context.Context, v interface{}) (model.NotificationSettingsInput, error) {
-	res, err := ec.unmarshalInputNotificationSettingsInput(ctx, v)
+func (ec *executionContext) unmarshalNModuleType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModuleType(ctx context.Context, v interface{}) (model.ModuleType, error) {
+	var res model.ModuleType
+	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNNotificationSettingsUpdateResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettingsUpdateResult(ctx context.Context, sel ast.SelectionSet, v model.NotificationSettingsUpdateResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._NotificationSettingsUpdateResult(ctx, sel, v)
+func (ec *executionContext) marshalNModuleType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐModuleType(ctx context.Context, sel ast.SelectionSet, v model.ModuleType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
@@ -31138,82 +24296,6 @@ func (ec *executionContext) marshalNPoolUpdateResult2githubᚗcomᚋmutualsᚋgo
 	return ec._PoolUpdateResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPreverifyEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailResult(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PreverifyEmailResult(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNPreverifyEmailStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailStatus(ctx context.Context, v interface{}) (model.PreverifyEmailStatus, error) {
-	var res model.PreverifyEmailStatus
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNPreverifyEmailStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPreverifyEmailStatus(ctx context.Context, sel ast.SelectionSet, v model.PreverifyEmailStatus) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.PubKey(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) marshalNPushTokenRegisterResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPushTokenRegisterResult(ctx context.Context, sel ast.SelectionSet, v model.PushTokenRegisterResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PushTokenRegisterResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNPushTokenUnregisterResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPushTokenUnregisterResult(ctx context.Context, sel ast.SelectionSet, v model.PushTokenUnregisterResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PushTokenUnregisterResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNRemoveUserWalletsResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRemoveUserWalletsResult(ctx context.Context, sel ast.SelectionSet, v model.RemoveUserWalletsResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._RemoveUserWalletsResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNResendVerificationEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐResendVerificationEmailResult(ctx context.Context, sel ast.SelectionSet, v model.ResendVerificationEmailResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ResendVerificationEmailResult(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
 	var res persist.Role
 	err := res.UnmarshalGQL(v)
@@ -31369,36 +24451,6 @@ func (ec *executionContext) marshalNTx2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutuals�
 	return ec._Tx(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUnsubscribeFromEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailResult(ctx context.Context, sel ast.SelectionSet, v model.UnsubscribeFromEmailResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UnsubscribeFromEmailResult(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNUnsubscribeFromEmailTypeInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUnsubscribeFromEmailTypeInput(ctx context.Context, v interface{}) (model.UnsubscribeFromEmailTypeInput, error) {
-	res, err := ec.unmarshalInputUnsubscribeFromEmailTypeInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdateEmailNotificationSettingsInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailNotificationSettingsInput(ctx context.Context, v interface{}) (model.UpdateEmailNotificationSettingsInput, error) {
-	res, err := ec.unmarshalInputUpdateEmailNotificationSettingsInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUpdateEmailResult(ctx context.Context, sel ast.SelectionSet, v model.UpdateEmailResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateEmailResult(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -31419,19 +24471,14 @@ func (ec *executionContext) marshalNUserDeleteResult2githubᚗcomᚋmutualsᚋgo
 	return ec._UserDeleteResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserOrAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserOrAccount(ctx context.Context, sel ast.SelectionSet, v model.UserOrAccount) graphql.Marshaler {
+func (ec *executionContext) marshalNUserOrEVMAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserOrEVMAccount(ctx context.Context, sel ast.SelectionSet, v model.UserOrEVMAccount) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._UserOrAccount(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNUserRegisterInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserRegisterInput(ctx context.Context, v interface{}) (model.UserRegisterInput, error) {
-	res, err := ec.unmarshalInputUserRegisterInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	return ec._UserOrEVMAccount(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUserRegisterResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserRegisterResult(ctx context.Context, sel ast.SelectionSet, v model.UserRegisterResult) graphql.Marshaler {
@@ -31477,26 +24524,6 @@ func (ec *executionContext) marshalNUserUpdateResult2githubᚗcomᚋmutualsᚋgo
 		return graphql.Null
 	}
 	return ec._UserUpdateResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNVerifyEmailResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyEmailResult(ctx context.Context, sel ast.SelectionSet, v model.VerifyEmailResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._VerifyEmailResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNVerifyTokenResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐVerifyTokenResult(ctx context.Context, sel ast.SelectionSet, v model.VerifyTokenResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._VerifyTokenResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx context.Context, sel ast.SelectionSet, v []*model.Withdrawal) graphql.Marshaler {
@@ -32006,42 +25033,6 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (persist.Address, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.Address(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v persist.Address) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	return res
-}
-
-func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (*persist.Address, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.Address(tmp)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v *persist.Address) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(string(*v))
-	return res
-}
-
-func (ec *executionContext) unmarshalOAuthMechanism2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐAuthMechanism(ctx context.Context, v interface{}) (*model.AuthMechanism, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputAuthMechanism(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -32066,26 +25057,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
-}
-
-func (ec *executionContext) unmarshalOChainAddressInput2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddressᚄ(ctx context.Context, v interface{}) ([]*persist.ChainAddress, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*persist.ChainAddress, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNChainAddressInput2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChainAddress(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
 }
 
 func (ec *executionContext) marshalOClaim2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Claim) graphql.Marshaler {
@@ -32182,67 +25153,11 @@ func (ec *executionContext) unmarshalOClaimUpdateInput2ᚕᚖgithubᚗcomᚋmutu
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalODebugAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDebugAuth(ctx context.Context, v interface{}) (*model.DebugAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputDebugAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalODeposit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx context.Context, sel ast.SelectionSet, v *model.Deposit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Deposit(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, v interface{}) (*persist.Email, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.Email(tmp)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOEmail2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmail(ctx context.Context, sel ast.SelectionSet, v *persist.Email) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(string(*v))
-	return res
-}
-
-func (ec *executionContext) marshalOEmailNotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEmailNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.EmailNotificationSettings) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._EmailNotificationSettings(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, v interface{}) (*persist.EmailVerificationStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(persist.EmailVerificationStatus)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOEmailVerificationStatus2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐEmailVerificationStatus(ctx context.Context, sel ast.SelectionSet, v *persist.EmailVerificationStatus) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
-}
-
-func (ec *executionContext) unmarshalOEoaAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEoaAuth(ctx context.Context, v interface{}) (*model.EoaAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputEoaAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOErrorPolicyEnum2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐErrorPolicyEnum(ctx context.Context, v interface{}) (*model.ErrorPolicyEnum, error) {
@@ -32275,62 +25190,6 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	}
 	res := graphql.MarshalFloatContext(*v)
 	return graphql.WrapContextMarshaler(ctx, res)
-}
-
-func (ec *executionContext) unmarshalOGnosisSafeAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGnosisSafeAuth(ctx context.Context, v interface{}) (*model.GnosisSafeAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGnosisSafeAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.GroupNotificationUserEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOGroupNotificationUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGroupNotificationUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.GroupNotificationUserEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._GroupNotificationUserEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlIDᚄ(ctx context.Context, v interface{}) ([]model.GqlID, error) {
@@ -32387,16 +25246,6 @@ func (ec *executionContext) marshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutuals�
 	return v
 }
 
-func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
-	res, err := graphql.UnmarshalInt(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalInt(v)
-	return res
-}
-
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -32429,103 +25278,11 @@ func (ec *executionContext) marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutuals�
 	return v
 }
 
-func (ec *executionContext) unmarshalOMagicLinkAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐMagicLinkAuth(ctx context.Context, v interface{}) (*model.MagicLinkAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputMagicLinkAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalONode2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalONotification2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v model.Notification) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Notification(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalONotificationEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalONotificationEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalONotificationEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationEdge(ctx context.Context, sel ast.SelectionSet, v *model.NotificationEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._NotificationEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalONotificationSettings2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationSettings(ctx context.Context, sel ast.SelectionSet, v *model.NotificationSettings) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._NotificationSettings(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalONotificationsConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐNotificationsConnection(ctx context.Context, sel ast.SelectionSet, v *model.NotificationsConnection) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._NotificationsConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOOneTimeLoginTokenAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐOneTimeLoginTokenAuth(ctx context.Context, v interface{}) (*model.OneTimeLoginTokenAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputOneTimeLoginTokenAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx context.Context, sel ast.SelectionSet, v []*model.Pool) graphql.Marshaler {
@@ -32682,25 +25439,6 @@ func (ec *executionContext) marshalOPoolSearchResult2ᚕᚖgithubᚗcomᚋmutual
 	}
 
 	return ret
-}
-
-func (ec *executionContext) unmarshalOPrivyAuth2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPrivyAuth(ctx context.Context, v interface{}) (*model.PrivyAuth, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputPrivyAuth(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, v interface{}) (persist.PubKey, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.PubKey(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOPubKey2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐPubKey(ctx context.Context, sel ast.SelectionSet, v persist.PubKey) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	return res
 }
 
 func (ec *executionContext) unmarshalORole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, v interface{}) ([]persist.Role, error) {

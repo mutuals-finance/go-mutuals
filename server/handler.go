@@ -15,7 +15,6 @@ import (
 	"github.com/mutuals/go-mutuals/service/redis"
 
 	"github.com/bsm/redislock"
-	magicclient "github.com/magiclabs/magic-admin-go/client"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -41,17 +40,16 @@ import (
 	"github.com/mutuals/go-mutuals/middleware"
 	"github.com/mutuals/go-mutuals/publicapi"
 	"github.com/mutuals/go-mutuals/service/mediamapper"
-	"github.com/mutuals/go-mutuals/service/notifications"
 	sentryutil "github.com/mutuals/go-mutuals/service/sentry"
 	"github.com/mutuals/go-mutuals/service/throttle"
 	"github.com/mutuals/go-mutuals/util"
 )
 
-func HandlersInit(router *gin.Engine, repos *postgres.Repositories, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, authRefreshCache, oneTimeLoginCache *redis.Cache, magicClient *magicclient.API) *gin.Engine {
+func HandlersInit(router *gin.Engine, repos *postgres.Repositories, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, throttler *throttle.Locker, taskClient *task.Client, pub *pubsub.Client, lock *redislock.Client, secrets *secretmanager.Client, graphqlAPQCache, authRefreshCache *redis.Cache) *gin.Engine {
 	router.GET("/alive", util.HealthCheckHandler())
 	apqCache := &apq.APQCache{Cache: graphqlAPQCache}
 	publicapiF := func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI {
-		api := publicapi.New(ctx, disableDataloaderCaching, repos, coreQueries, indexerQueries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apqCache, authRefreshCache, oneTimeLoginCache, magicClient)
+		api := publicapi.New(ctx, disableDataloaderCaching, repos, coreQueries, indexerQueries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apqCache, authRefreshCache)
 		return api
 	}
 	GraphqlHandlersInit(router, coreQueries, indexerQueries, taskClient, pub, lock, apqCache, authRefreshCache, publicapiF)
@@ -122,8 +120,6 @@ func GraphQLHandler(queries *coredb.Queries, taskClient *task.Client, pub *pubsu
 	// Should happen after FieldReporter, so Sentry trace context is set up prior to error reporting
 	h.AroundFields(graphql.RemapAndReportErrors)
 
-	notificationsHandler := notifications.New(queries, pub, taskClient, lock, true)
-
 	h.AroundFields(graphql.MutationCachingHandler(publicapiF))
 
 	h.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
@@ -151,8 +147,7 @@ func GraphQLHandler(queries *coredb.Queries, taskClient *task.Client, pub *pubsu
 		disableDataloaderCaching := false
 
 		mediamapper.AddTo(c)
-		event.AddTo(c, disableDataloaderCaching, notificationsHandler, queries, taskClient)
-		notifications.AddTo(c, notificationsHandler)
+		event.AddTo(c, disableDataloaderCaching, queries, taskClient)
 
 		// Use the request context so dataloaders will add their traces to the request span
 		publicapi.AddTo(c, publicapiF(c.Request.Context(), disableDataloaderCaching))

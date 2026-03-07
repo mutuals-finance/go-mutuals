@@ -50,7 +50,7 @@ func (api PoolAPI) GetViewerPools(ctx context.Context) (*[]db.Pool, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	viewerAccounts, err := getAuthenticatedLinkedAccounts(ctx)
 	if err != nil {
 		return nil, err
@@ -143,13 +143,12 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 
 		for _, c := range input.AddClaims {
 			claims = append(claims, allocation.Claim{
-				Label:            c.Label,
-				RecipientAddress: c.RecipientAddress,
-				Data:             c.Data,
-				ParentID:         c.Parent,
-				ChildIDs:         c.Children,
-				StateID:          c.StateID,
-				StrategyID:       c.StrategyID,
+				Label:          c.Label,
+				Data:           c.Data,
+				ParentID:       c.Parent,
+				ChildIDs:       c.Children,
+				ValidationID:   c.ValidationID,
+				DistributionID: c.DistributionID,
 			})
 		}
 

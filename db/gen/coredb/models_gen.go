@@ -13,23 +13,16 @@ import (
 )
 
 type Claim struct {
-	ID               persist.DBID    `db:"id" json:"id"`
-	PoolID           persist.DBID    `db:"pool_id" json:"pool_id"`
-	RecipientAddress persist.Address `db:"recipient_address" json:"recipient_address"`
-	StateID          persist.DBID    `db:"state_id" json:"state_id"`
-	StrategyID       persist.DBID    `db:"strategy_id" json:"strategy_id"`
-	Data             pgtype.JSONB    `db:"data" json:"data"`
-	Label            string          `db:"label" json:"label"`
-	Path             sql.NullString  `db:"path" json:"path"`
-	Deleted          bool            `db:"deleted" json:"deleted"`
-	UpdatedAt        time.Time       `db:"updated_at" json:"updated_at"`
-	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
-}
-
-type DevMetadataUser struct {
-	UserID          persist.DBID  `db:"user_id" json:"user_id"`
-	HasEmailAddress persist.Email `db:"has_email_address" json:"has_email_address"`
-	Deleted         bool          `db:"deleted" json:"deleted"`
+	ID             persist.DBID   `db:"id" json:"id"`
+	PoolID         persist.DBID   `db:"pool_id" json:"pool_id"`
+	ValidationID   persist.DBID   `db:"validation_id" json:"validation_id"`
+	DistributionID persist.DBID   `db:"distribution_id" json:"distribution_id"`
+	Data           pgtype.JSONB   `db:"data" json:"data"`
+	Label          string         `db:"label" json:"label"`
+	Path           sql.NullString `db:"path" json:"path"`
+	Deleted        bool           `db:"deleted" json:"deleted"`
+	UpdatedAt      time.Time      `db:"updated_at" json:"updated_at"`
+	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
 }
 
 type Event struct {
@@ -62,40 +55,6 @@ type LinkedAccount struct {
 	LinkedAt         sql.NullTime    `db:"linked_at" json:"linked_at"`
 	CreatedAt        time.Time       `db:"created_at" json:"created_at"`
 	UpdatedAt        time.Time       `db:"updated_at" json:"updated_at"`
-}
-
-type Notification struct {
-	ID        persist.DBID             `db:"id" json:"id"`
-	Deleted   bool                     `db:"deleted" json:"deleted"`
-	OwnerID   persist.DBID             `db:"owner_id" json:"owner_id"`
-	Version   sql.NullInt32            `db:"version" json:"version"`
-	Action    persist.Action           `db:"action" json:"action"`
-	Data      persist.NotificationData `db:"data" json:"data"`
-	EventIds  persist.DBIDList         `db:"event_ids" json:"event_ids"`
-	PoolID    persist.DBID             `db:"pool_id" json:"pool_id"`
-	Seen      bool                     `db:"seen" json:"seen"`
-	Amount    int32                    `db:"amount" json:"amount"`
-	UpdatedAt time.Time                `db:"updated_at" json:"updated_at"`
-	CreatedAt time.Time                `db:"created_at" json:"created_at"`
-}
-
-type PiiForUser struct {
-	UserID                    persist.DBID  `db:"user_id" json:"user_id"`
-	PiiUnverifiedEmailAddress persist.Email `db:"pii_unverified_email_address" json:"pii_unverified_email_address"`
-	PiiVerifiedEmailAddress   persist.Email `db:"pii_verified_email_address" json:"pii_verified_email_address"`
-	Deleted                   bool          `db:"deleted" json:"deleted"`
-}
-
-type PiiUserView struct {
-	ID                        persist.DBID                     `db:"id" json:"id"`
-	Deleted                   bool                             `db:"deleted" json:"deleted"`
-	Version                   sql.NullInt32                    `db:"version" json:"version"`
-	UpdatedAt                 time.Time                        `db:"updated_at" json:"updated_at"`
-	CreatedAt                 time.Time                        `db:"created_at" json:"created_at"`
-	NotificationSettings      persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
-	EmailUnsubscriptions      persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-	PiiUnverifiedEmailAddress persist.Email                    `db:"pii_unverified_email_address" json:"pii_unverified_email_address"`
-	PiiVerifiedEmailAddress   persist.Email                    `db:"pii_verified_email_address" json:"pii_verified_email_address"`
 }
 
 type Pool struct {
@@ -132,13 +91,6 @@ type PushNotificationToken struct {
 	Deleted   bool         `db:"deleted" json:"deleted"`
 }
 
-type ScrubbedPiiForUser struct {
-	UserID                    persist.DBID  `db:"user_id" json:"user_id"`
-	PiiUnverifiedEmailAddress persist.Email `db:"pii_unverified_email_address" json:"pii_unverified_email_address"`
-	PiiVerifiedEmailAddress   persist.Email `db:"pii_verified_email_address" json:"pii_verified_email_address"`
-	Deleted                   bool          `db:"deleted" json:"deleted"`
-}
-
 type SpamUserScore struct {
 	UserID        persist.DBID `db:"user_id" json:"user_id"`
 	Score         int32        `db:"score" json:"score"`
@@ -149,13 +101,11 @@ type SpamUserScore struct {
 }
 
 type User struct {
-	ID                   persist.DBID                     `db:"id" json:"id"`
-	Deleted              bool                             `db:"deleted" json:"deleted"`
-	Version              sql.NullInt32                    `db:"version" json:"version"`
-	UpdatedAt            time.Time                        `db:"updated_at" json:"updated_at"`
-	CreatedAt            time.Time                        `db:"created_at" json:"created_at"`
-	NotificationSettings persist.UserNotificationSettings `db:"notification_settings" json:"notification_settings"`
-	EmailUnsubscriptions persist.EmailUnsubscriptions     `db:"email_unsubscriptions" json:"email_unsubscriptions"`
+	ID        persist.DBID  `db:"id" json:"id"`
+	Deleted   bool          `db:"deleted" json:"deleted"`
+	Version   sql.NullInt32 `db:"version" json:"version"`
+	UpdatedAt time.Time     `db:"updated_at" json:"updated_at"`
+	CreatedAt time.Time     `db:"created_at" json:"created_at"`
 }
 
 type UserBlocklist struct {

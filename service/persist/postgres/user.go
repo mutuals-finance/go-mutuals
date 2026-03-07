@@ -27,7 +27,6 @@ type UserRepository struct {
 	getByIDsStmt             *sql.Stmt
 	getByWalletIDStmt        *sql.Stmt
 	getByUsernameStmt        *sql.Stmt
-	getByVerifiedEmailStmt   *sql.Stmt
 	deleteStmt               *sql.Stmt
 	getGalleriesStmt         *sql.Stmt
 	updateCollectionsStmt    *sql.Stmt
@@ -65,10 +64,6 @@ func NewUserRepository(db *sql.DB, queries *db.Queries, pgx *pgxpool.Pool) *User
 	getByUsernameStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM users WHERE USERNAME_IDEMPOTENT = $1 AND DELETED = FALSE;`)
 	//checkNoErr(err)
 
-	// TODO update sql schema
-	getByVerifiedEmailStmt, err := db.PrepareContext(ctx, `SELECT ID,DELETED,VERSION,USERNAME,USERNAME_IDEMPOTENT,WALLETS,UNIVERSAL,PRIMARY_WALLET_ID,CREATED_AT,UPDATED_AT FROM pii.user_view WHERE PII_VERIFIED_EMAIL_ADDRESS = $1 AND DELETED = FALSE;`)
-	//checkNoErr(err)
-
 	deleteStmt, err := db.PrepareContext(ctx, `UPDATE users SET DELETED = TRUE WHERE ID = $1;`)
 	checkNoErr(err)
 
@@ -94,7 +89,6 @@ func NewUserRepository(db *sql.DB, queries *db.Queries, pgx *pgxpool.Pool) *User
 		getByIDsStmt:             getByIDsStmt,
 		getByWalletIDStmt:        getByWalletIDStmt,
 		getByUsernameStmt:        getByUsernameStmt,
-		getByVerifiedEmailStmt:   getByVerifiedEmailStmt,
 		deleteStmt:               deleteStmt,
 		getWalletIDStmt:          getWalletIDStmt,
 		getWalletStmt:            getWalletStmt,
@@ -131,17 +125,11 @@ func (u *UserRepository) UpdateByID(pCtx context.Context, pID persist.DBID, pUpd
 		if rows == 0 {
 			return persist.ErrUserNotFound{UserID: pID}
 		}
-	case persist.UserUpdateNotificationSettings:
-		return u.queries.UpdateNotificationSettingsById(pCtx, db.UpdateNotificationSettingsByIdParams{
-			ID:                   pID,
-			NotificationSettings: update.NotificationSettings,
-		})
 	default:
 		return fmt.Errorf("unsupported update type: %T", pUpdate)
 	}
 
 	return nil
-
 }
 
 // Create creates a new user

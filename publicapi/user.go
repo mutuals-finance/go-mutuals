@@ -24,7 +24,6 @@ import (
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/emails"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/util"
 	"github.com/mutuals/go-mutuals/validate"
@@ -78,49 +77,6 @@ func (api UserAPI) GetUserById(ctx context.Context, userId persist.DBID) (*cored
 func (api UserAPI) GetViewer(ctx context.Context) (*coredb.User, error) {
 	userId := api.GetLoggedInUserId(ctx)
 	return api.GetUserById(ctx, userId)
-}
-
-func (api UserAPI) VerifiedEmailAddressExists(ctx context.Context, emailAddress persist.Email) (bool, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"emailAddress": validate.WithTag(emailAddress, "required"),
-	}); err != nil {
-		return false, err
-	}
-
-	// Intentionally using queries here instead of a dataloader. Caching a user by email address is tricky
-	// because the key (email address) isn't part of the user object, and this method isn't currently invoked
-	// in a way that would benefit from dataloaders or caching anyway.
-	/*_, err := api.queries.GetUserByVerifiedEmailAddress(ctx, emailAddress.String())
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return false, nil
-		}
-		return false, err
-	}*/
-
-	return true, nil
-}
-
-// GetUserWithPII returns the current user and their associated personally identifiable information
-func (api UserAPI) GetUserWithPII(ctx context.Context) (*coredb.PiiUserView, error) {
-	// Nothing to validate
-	/*
-		userId, err := getAuthenticatedUserId(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-			userWithPII, err := api.queries.GetUserWithPIIById(ctx, userId)
-			if err != nil {
-				return nil, err
-			}
-
-			return &userWithPII, nil
-	*/
-
-	return nil, nil
 }
 
 func (api UserAPI) GetUsersByIds(ctx context.Context, userIds []persist.DBID, before, after *string, first, last *int) ([]coredb.User, PageInfo, error) {
@@ -197,10 +153,10 @@ func (api UserAPI) paginatorWithQuery(c *positionCursor, queryF func(positionPag
 	return paginator
 }
 
-func (api UserAPI) GetUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*coredb.User, error) {
+func (api UserAPI) GetUserByAddress(ctx context.Context, address persist.Address) (*coredb.User, error) {
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"chainAddress": validate.WithTag(chainAddress, "required"),
+		"address": validate.WithTag(address, "required"),
 	}); err != nil {
 		return nil, err
 	}
@@ -304,122 +260,6 @@ func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
 	}
 
 	return nil
-}
-
-func (api UserAPI) UpdateUserEmailWithManualVerification(ctx context.Context, email persist.Email) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"email": validate.WithTag(email, "required"),
-	}); err != nil {
-		return err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return err
-	}
-	err = api.queries.UpdateUserUnverifiedEmail(ctx, coredb.UpdateUserUnverifiedEmailParams{
-		UserID:       userId,
-		EmailAddress: email,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = emails.RequestVerificationEmail(ctx, userId)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (api UserAPI) UpdateUserEmail(ctx context.Context, email persist.Email) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"email": validate.WithTag(email, "required"),
-	}); err != nil {
-		return err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = api.queries.UpdateUserVerifiedEmail(ctx, coredb.UpdateUserVerifiedEmailParams{
-		UserID:       userId,
-		EmailAddress: email,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (api UserAPI) UpdateUserEmailNotificationSettings(ctx context.Context, settings persist.EmailUnsubscriptions) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"settings": validate.WithTag(settings, "required"),
-	}); err != nil {
-		return err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return err
-	}
-
-	// update unsubscriptions
-
-	return emails.UpdateUnsubscriptionsByUserID(ctx, userId, settings)
-
-}
-
-func (api UserAPI) GetCurrentUserEmailNotificationSettings(ctx context.Context) (persist.EmailUnsubscriptions, error) {
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return persist.EmailUnsubscriptions{}, err
-	}
-
-	// update unsubscriptions
-
-	return emails.GetCurrentUnsubscriptionsByUserID(ctx, userId)
-
-}
-
-func (api UserAPI) ResendEmailVerification(ctx context.Context) error {
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = emails.RequestVerificationEmail(ctx, userId)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (api UserAPI) UpdateUserNotificationSettings(ctx context.Context, notificationSettings persist.UserNotificationSettings) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"notification_settings": validate.WithTag(notificationSettings, "required"),
-	}); err != nil {
-		return err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return err
-	}
-
-	return api.queries.UpdateNotificationSettingsById(ctx, coredb.UpdateNotificationSettingsByIdParams{ID: userId, NotificationSettings: notificationSettings})
 }
 
 // CreatePushTokenForUser adds a push token to a user, or returns the existing push token if it's already been

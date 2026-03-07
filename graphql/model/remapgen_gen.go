@@ -43,16 +43,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"ClearNotificationsResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(ClearNotificationsResult)
-		return obj, ok
-	},
-
-	"EmailNotificationSettingsUpdateResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(EmailNotificationSettingsUpdateResult)
-		return obj, ok
-	},
-
 	"Error": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(Error)
 		return obj, ok
@@ -65,11 +55,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"Node": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(Node)
-		return obj, ok
-	},
-
-	"NotificationSettingsUpdateResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(NotificationSettingsUpdateResult)
 		return obj, ok
 	},
 
@@ -98,28 +83,8 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"PreverifyEmailResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PreverifyEmailResult)
-		return obj, ok
-	},
-
-	"PushTokenRegisterResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PushTokenRegisterResult)
-		return obj, ok
-	},
-
-	"PushTokenUnregisterResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(PushTokenUnregisterResult)
-		return obj, ok
-	},
-
 	"RemoveUserWalletsResult": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(RemoveUserWalletsResult)
-		return obj, ok
-	},
-
-	"ResendVerificationEmailResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(ResendVerificationEmailResult)
 		return obj, ok
 	},
 
@@ -138,23 +103,13 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 		return obj, ok
 	},
 
-	"UnsubscribeFromEmailResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UnsubscribeFromEmailResult)
-		return obj, ok
-	},
-
-	"UpdateEmailResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UpdateEmailResult)
-		return obj, ok
-	},
-
 	"UserDeleteResult": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UserDeleteResult)
 		return obj, ok
 	},
 
-	"UserOrAccount": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(UserOrAccount)
+	"UserOrEVMAccount": func(object interface{}) (interface{}, bool) {
+		obj, ok := object.(UserOrEVMAccount)
 		return obj, ok
 	},
 
@@ -170,11 +125,6 @@ var typeConversionMap = map[string]func(object interface{}) (objectAsType interf
 
 	"UserUpdateResult": func(object interface{}) (interface{}, bool) {
 		obj, ok := object.(UserUpdateResult)
-		return obj, ok
-	},
-
-	"VerifyEmailResult": func(object interface{}) (interface{}, bool) {
-		obj, ok := object.(VerifyEmailResult)
 		return obj, ok
 	},
 

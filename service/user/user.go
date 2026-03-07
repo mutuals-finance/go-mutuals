@@ -36,45 +36,10 @@ type GetUserOutput struct {
 	CreatedAt time.Time        `json:"created_at"`
 }
 
-// AddUserAddressesInput is the input for the user add addresses pipeline and also user creation pipeline given that they have the same requirements
-type AddUserAddressesInput struct {
-
-	// needed because this is a new user that cant be logged into, and the client creating
-	// the user still needs to prove ownership of their address.
-	Signature  string             `json:"signature" binding:"signature"`
-	Nonce      string             `json:"nonce"`
-	Address    persist.Address    `json:"address"   binding:"required"`
-	Chain      persist.Chain      `json:"chain"`
-	WalletType persist.WalletType `json:"wallet_type"`
-}
-
-// AddUserAddressOutput is the output of the user add address pipeline
-type AddUserAddressOutput struct {
-	SignatureValid bool `json:"signature_valid"`
-}
-
 // RemoveUserAddressesInput is the input for the user remove addresses pipeline
 type RemoveUserAddressesInput struct {
 	Addresses []persist.Address `json:"addresses"   binding:"required"`
 	Chains    []persist.Chain   `json:"chains"      binding:"required"`
-}
-
-// CreateUserOutput is the output of the user create pipeline
-type CreateUserOutput struct {
-	SignatureValid bool         `json:"signature_valid"`
-	JWTtoken       string       `json:"jwt_token"` // JWT token is sent back to user to use to continue onboarding
-	UserId         persist.DBID `json:"user_id"`
-	PoolID         persist.DBID `json:"pool_id"`
-}
-
-// MergeUsersInput is the input for the user merge pipeline
-type MergeUsersInput struct {
-	SecondUserId persist.DBID       `json:"second_user_id" binding:"required"`
-	Signature    string             `json:"signature" binding:"signature"`
-	Nonce        string             `json:"nonce"`
-	Address      persist.Address    `json:"address"   binding:"required"`
-	Chain        persist.Chain      `json:"chain"`
-	WalletType   persist.WalletType `json:"wallet_type"`
 }
 
 type CreateUserInput struct {

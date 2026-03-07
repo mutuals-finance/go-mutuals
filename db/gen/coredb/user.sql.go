@@ -31,7 +31,7 @@ func (q *Queries) AddUserRoles(ctx context.Context, arg AddUserRolesParams) erro
 }
 
 const blockUser = `-- name: BlockUser :one
-WITH user_to_block AS (SELECT id FROM users WHERE users.id = $3 AND NOT deleted AND NOT universal)
+WITH user_to_block AS (SELECT id FROM users WHERE users.id = $3 AND NOT deleted)
 INSERT
 INTO user_blocklist (id, user_id, blocked_user_id, active) (SELECT $1, $2, user_to_block.id, TRUE FROM user_to_block)
 ON CONFLICT(user_id, blocked_user_id)
@@ -85,7 +85,7 @@ WITH new_accounts AS (
 INSERT
 INTO users (id, deleted, updated_at, created_at)
 VALUES ($1, FALSE, NOW(), NOW())
-RETURNING id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
+RETURNING id, deleted, version, updated_at, created_at
 `
 
 type CreateUserParams struct {
@@ -115,8 +115,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Version,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.NotificationSettings,
-		&i.EmailUnsubscriptions,
 	)
 	return i, err
 }
@@ -152,7 +150,7 @@ func (q *Queries) DeleteUserRoles(ctx context.Context, arg DeleteUserRolesParams
 
 const getUserById = `-- name: GetUserById :one
 
-SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
+SELECT id, deleted, version, updated_at, created_at
 FROM users
 WHERE id = $1
   AND deleted = FALSE
@@ -170,8 +168,6 @@ func (q *Queries) GetUserById(ctx context.Context, id persist.DBID) (User, error
 		&i.Version,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.NotificationSettings,
-		&i.EmailUnsubscriptions,
 	)
 	return i, err
 }
@@ -203,32 +199,8 @@ func (q *Queries) GetUserRolesByUserId(ctx context.Context, userID persist.DBID)
 	return items, nil
 }
 
-const getUserWithPIIById = `-- name: GetUserWithPIIById :one
-SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions, pii_unverified_email_address, pii_verified_email_address
-FROM pii.user_view
-WHERE id = $1
-  AND deleted = FALSE
-`
-
-func (q *Queries) GetUserWithPIIById(ctx context.Context, userID persist.DBID) (PiiUserView, error) {
-	row := q.db.QueryRow(ctx, getUserWithPIIById, userID)
-	var i PiiUserView
-	err := row.Scan(
-		&i.ID,
-		&i.Deleted,
-		&i.Version,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.NotificationSettings,
-		&i.EmailUnsubscriptions,
-		&i.PiiUnverifiedEmailAddress,
-		&i.PiiVerifiedEmailAddress,
-	)
-	return i, err
-}
-
 const getUsersByIds = `-- name: GetUsersByIds :many
-SELECT id, deleted, version, updated_at, created_at, notification_settings, email_unsubscriptions
+SELECT id, deleted, version, updated_at, created_at
 FROM users
 WHERE id = ANY ($2)
   AND deleted = FALSE
@@ -272,76 +244,6 @@ func (q *Queries) GetUsersByIds(ctx context.Context, arg GetUsersByIdsParams) ([
 			&i.Version,
 			&i.UpdatedAt,
 			&i.CreatedAt,
-			&i.NotificationSettings,
-			&i.EmailUnsubscriptions,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getUsersWithEmailNotificationsOnForEmailType = `-- name: GetUsersWithEmailNotificationsOnForEmailType :many
-SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions, u.pii_unverified_email_address, u.pii_verified_email_address
-FROM pii.user_view u
-         LEFT JOIN user_roles r ON r.user_id = u.id AND r.role = 'EMAIL_TESTER' AND r.deleted = FALSE
-WHERE (u.email_unsubscriptions ->> 'all' = 'false' OR u.email_unsubscriptions ->> 'all' IS NULL)
-  AND (u.email_unsubscriptions ->> $2::varchar = 'false' OR
-       u.email_unsubscriptions ->> $2::varchar IS NULL)
-  AND u.deleted = FALSE
-  AND u.pii_verified_email_address IS NOT NULL
-  AND (u.created_at, u.id) < ($3, $4::dbid)
-  AND (u.created_at, u.id) > ($5, $6::dbid)
-  AND ($7::bool = FALSE OR r.user_id IS NOT NULL)
-ORDER BY CASE WHEN $8::bool THEN (u.created_at, u.id) END ASC,
-         CASE WHEN NOT $8::bool THEN (u.created_at, u.id) END DESC
-LIMIT $1
-`
-
-type GetUsersWithEmailNotificationsOnForEmailTypeParams struct {
-	Limit               int32        `db:"limit" json:"limit"`
-	EmailUnsubscription string       `db:"email_unsubscription" json:"email_unsubscription"`
-	CurBeforeTime       time.Time    `db:"cur_before_time" json:"cur_before_time"`
-	CurBeforeID         persist.DBID `db:"cur_before_id" json:"cur_before_id"`
-	CurAfterTime        time.Time    `db:"cur_after_time" json:"cur_after_time"`
-	CurAfterID          persist.DBID `db:"cur_after_id" json:"cur_after_id"`
-	EmailTestersOnly    bool         `db:"email_testers_only" json:"email_testers_only"`
-	PagingForward       bool         `db:"paging_forward" json:"paging_forward"`
-}
-
-// for some reason this query will not allow me to use @tags for $1
-func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Context, arg GetUsersWithEmailNotificationsOnForEmailTypeParams) ([]PiiUserView, error) {
-	rows, err := q.db.Query(ctx, getUsersWithEmailNotificationsOnForEmailType,
-		arg.Limit,
-		arg.EmailUnsubscription,
-		arg.CurBeforeTime,
-		arg.CurBeforeID,
-		arg.CurAfterTime,
-		arg.CurAfterID,
-		arg.EmailTestersOnly,
-		arg.PagingForward,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []PiiUserView
-	for rows.Next() {
-		var i PiiUserView
-		if err := rows.Scan(
-			&i.ID,
-			&i.Deleted,
-			&i.Version,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.NotificationSettings,
-			&i.EmailUnsubscriptions,
-			&i.PiiUnverifiedEmailAddress,
-			&i.PiiVerifiedEmailAddress,
 		); err != nil {
 			return nil, err
 		}
@@ -354,7 +256,7 @@ func (q *Queries) GetUsersWithEmailNotificationsOnForEmailType(ctx context.Conte
 }
 
 const getUsersWithRolePaginate = `-- name: GetUsersWithRolePaginate :many
-SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at, u.notification_settings, u.email_unsubscriptions
+SELECT u.id, u.deleted, u.version, u.updated_at, u.created_at
 FROM users u,
      user_roles ur
 WHERE u.deleted = FALSE
@@ -401,8 +303,6 @@ func (q *Queries) GetUsersWithRolePaginate(ctx context.Context, arg GetUsersWith
 			&i.Version,
 			&i.UpdatedAt,
 			&i.CreatedAt,
-			&i.NotificationSettings,
-			&i.EmailUnsubscriptions,
 		); err != nil {
 			return nil, err
 		}
@@ -430,57 +330,5 @@ type UnblockUserParams struct {
 
 func (q *Queries) UnblockUser(ctx context.Context, arg UnblockUserParams) error {
 	_, err := q.db.Exec(ctx, unblockUser, arg.UserID, arg.BlockedUserID)
-	return err
-}
-
-const updateUserEmailUnsubscriptions = `-- name: UpdateUserEmailUnsubscriptions :exec
-UPDATE users
-SET email_unsubscriptions = $2
-WHERE id = $1
-`
-
-type UpdateUserEmailUnsubscriptionsParams struct {
-	ID                   persist.DBID                 `db:"id" json:"id"`
-	EmailUnsubscriptions persist.EmailUnsubscriptions `db:"email_unsubscriptions" json:"email_unsubscriptions"`
-}
-
-func (q *Queries) UpdateUserEmailUnsubscriptions(ctx context.Context, arg UpdateUserEmailUnsubscriptionsParams) error {
-	_, err := q.db.Exec(ctx, updateUserEmailUnsubscriptions, arg.ID, arg.EmailUnsubscriptions)
-	return err
-}
-
-const updateUserUnverifiedEmail = `-- name: UpdateUserUnverifiedEmail :exec
-INSERT INTO pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address)
-VALUES ($1, $2, NULL)
-ON CONFLICT (user_id) DO UPDATE
-    SET pii_unverified_email_address = excluded.pii_unverified_email_address,
-        pii_verified_email_address   = excluded.pii_verified_email_address
-`
-
-type UpdateUserUnverifiedEmailParams struct {
-	UserID       persist.DBID  `db:"user_id" json:"user_id"`
-	EmailAddress persist.Email `db:"email_address" json:"email_address"`
-}
-
-func (q *Queries) UpdateUserUnverifiedEmail(ctx context.Context, arg UpdateUserUnverifiedEmailParams) error {
-	_, err := q.db.Exec(ctx, updateUserUnverifiedEmail, arg.UserID, arg.EmailAddress)
-	return err
-}
-
-const updateUserVerifiedEmail = `-- name: UpdateUserVerifiedEmail :exec
-INSERT INTO pii.for_users (user_id, pii_unverified_email_address, pii_verified_email_address)
-VALUES ($1, NULL, $2)
-ON CONFLICT (user_id) DO UPDATE
-    SET pii_verified_email_address   = excluded.pii_verified_email_address,
-        pii_unverified_email_address = excluded.pii_unverified_email_address
-`
-
-type UpdateUserVerifiedEmailParams struct {
-	UserID       persist.DBID  `db:"user_id" json:"user_id"`
-	EmailAddress persist.Email `db:"email_address" json:"email_address"`
-}
-
-func (q *Queries) UpdateUserVerifiedEmail(ctx context.Context, arg UpdateUserVerifiedEmailParams) error {
-	_, err := q.db.Exec(ctx, updateUserVerifiedEmail, arg.UserID, arg.EmailAddress)
 	return err
 }

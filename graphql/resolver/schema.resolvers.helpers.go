@@ -6,17 +6,13 @@ package graphql
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/gammazero/workerpool"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
 	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/publicapi"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/logger"
-	"github.com/mutuals/go-mutuals/service/notifications"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/validate"
 )
@@ -79,8 +75,8 @@ func resolveUserByUserID(ctx context.Context, userId persist.DBID) (*model.User,
 	return userToModel(ctx, *user), nil
 }
 
-func resolveUserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (*model.User, error) {
-	user, err := publicapi.For(ctx).User.GetUserByAddress(ctx, chainAddress)
+func resolveUserByAddress(ctx context.Context, address persist.Address) (*model.User, error) {
+	user, err := publicapi.For(ctx).User.GetUserByAddress(ctx, address)
 	if err != nil {
 		return nil, err
 	}
@@ -169,190 +165,6 @@ func resolveViewer(ctx context.Context) (*model.User, error) {
 	return userToModel(ctx, *user), nil
 }
 
-func resolveViewerEmail(ctx context.Context) *model.UserEmail {
-	userWithPII, err := publicapi.For(ctx).User.GetUserWithPII(ctx)
-	if err != nil {
-		return nil
-	}
-	return userWithPIIToEmailModel(userWithPII)
-}
-
-func userWithPIIToEmailModel(user *db.PiiUserView) *model.UserEmail {
-	var verificationStatus persist.EmailVerificationStatus
-	var email persist.Email
-
-	if user.PiiVerifiedEmailAddress.String() != "" {
-		email = user.PiiVerifiedEmailAddress
-		verificationStatus = persist.EmailVerificationStatusVerified
-	} else {
-		email = user.PiiUnverifiedEmailAddress
-		verificationStatus = persist.EmailVerificationStatusUnverified
-	}
-
-	return &model.UserEmail{
-		Email:              &email,
-		VerificationStatus: &verificationStatus,
-		EmailNotificationSettings: &model.EmailNotificationSettings{
-			UnsubscribedFromAll:           user.EmailUnsubscriptions.All.Bool(),
-			UnsubscribedFromNotifications: user.EmailUnsubscriptions.Notifications.Bool(),
-		},
-	}
-}
-
-func resolveViewerNotifications(ctx context.Context, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error) {
-	notifs, pageInfo, unseen, err := publicapi.For(ctx).Notifications.GetViewerNotifications(ctx, before, after, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	edges, err := notificationsToEdges(notifs)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.NotificationsConnection{
-		Edges:       edges,
-		PageInfo:    pageInfoToModel(ctx, pageInfo),
-		UnseenCount: &unseen,
-	}, nil
-}
-
-func notificationsToEdges(notifs []db.Notification) ([]*model.NotificationEdge, error) {
-	edges := make([]*model.NotificationEdge, len(notifs))
-
-	for i, notif := range notifs {
-		node, err := notificationToModel(notif)
-		if err != nil {
-			return nil, err
-		}
-		edges[i] = &model.NotificationEdge{
-			Node: node,
-		}
-	}
-
-	return edges, nil
-}
-
-func notificationToModel(notif db.Notification) (model.Notification, error) {
-	switch notif.Action {
-	// TODO extend with custom notification actions
-	default:
-		return nil, fmt.Errorf("unknown notification action: %s", notif.Action)
-	}
-}
-
-func resolveViewerNotificationSettings(ctx context.Context) (model.NotificationSettingsUpdateResult, error) {
-	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.NotificationSettingsUpdatePayload{
-		NotificationSettings: notificationSettingsToModel(ctx, user),
-	}, nil
-}
-
-func notificationSettingsToModel(ctx context.Context, user *db.User) *model.NotificationSettings {
-	// TODO notifications
-	return &model.NotificationSettings{}
-}
-
-func resolveNewNotificationSubscription(ctx context.Context) <-chan model.Notification {
-	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	notifDispatcher := notifications.For(ctx)
-	notifs := notifDispatcher.GetNewNotificationsForUser(userId)
-	logger.For(ctx).Info("new notification subscription for ", userId)
-
-	result := make(chan model.Notification)
-
-	go func() {
-		for notif := range notifs {
-			asModel, err := notificationToModel(notif)
-			if err != nil {
-				logger.For(nil).Errorf("error converting notification to model: %v", err)
-				return
-			}
-			select {
-			case result <- asModel:
-				logger.For(nil).Debug("sent new notification to subscription")
-			default:
-				logger.For(nil).Errorf("notification subscription channel full, dropping notification")
-				notifDispatcher.UnsubscribeNewNotificationsForUser(userId)
-			}
-		}
-	}()
-
-	return result
-}
-
-func resolveUpdatedNotificationSubscription(ctx context.Context) <-chan model.Notification {
-	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	notifDispatcher := notifications.For(ctx)
-	notifs := notifDispatcher.GetUpdatedNotificationsForUser(userId)
-
-	result := make(chan model.Notification)
-	wp := workerpool.New(10)
-
-	go func() {
-		for notif := range notifs {
-			n := notif
-			wp.Submit(func() {
-				asModel, err := notificationToModel(n)
-				if err != nil {
-					logger.For(nil).Errorf("error converting notification to model: %v", err)
-					return
-				}
-				select {
-				case result <- asModel:
-					logger.For(nil).Debug("sent updated notification to subscription")
-				default:
-					logger.For(nil).Errorf("notification subscription channel full, dropping notification")
-					notifDispatcher.UnsubscribeUpdatedNotificationsForUser(userId)
-				}
-			})
-		}
-		wp.StopWait()
-	}()
-
-	return result
-}
-
-func resolveGroupNotificationUsersConnectionByUserIDs(ctx context.Context, userIds persist.DBIDList, before *string, after *string, first *int, last *int) (*model.GroupNotificationUsersConnection, error) {
-	if len(userIds) == 0 {
-		return &model.GroupNotificationUsersConnection{
-			Edges:    []*model.GroupNotificationUserEdge{},
-			PageInfo: &model.PageInfo{},
-		}, nil
-	}
-
-	users, pageInfo, err := publicapi.For(ctx).User.GetUsersByIds(ctx, userIds, before, after, first, last)
-	if err != nil {
-		return nil, err
-	}
-
-	edges := make([]*model.GroupNotificationUserEdge, len(users))
-	for i, user := range users {
-		edges[i] = &model.GroupNotificationUserEdge{
-			Node:   userToModel(ctx, user),
-			Cursor: nil,
-		}
-	}
-
-	return &model.GroupNotificationUsersConnection{
-		Edges:    edges,
-		PageInfo: pageInfoToModel(ctx, pageInfo),
-	}, nil
-}
-
-func resolveNotificationByID(ctx context.Context, id persist.DBID) (model.Notification, error) {
-	notification, err := publicapi.For(ctx).Notifications.GetById(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return notificationToModel(notification)
-}
-
 func resolveDeletedNodeByID(ctx context.Context, id persist.DBID) (*model.DeletedNode, error) {
 	return &model.DeletedNode{}, nil
 }
@@ -383,17 +195,16 @@ func poolsToModels(ctx context.Context, pools []db.Pool) []*model.Pool {
 
 func claimToModel(ctx context.Context, claim db.Claim) *model.Claim {
 	return &model.Claim{
-		Data:          claim.Data.Bytes,
-		Label:         claim.Label,
-		Path:          persist.NullStrToStr(claim.Path),
-		ChildrenCount: 0, // TODO: calculate or fetch
-		CreatedAt:     claim.CreatedAt,
-		UpdatedAt:     claim.UpdatedAt,
-		Parent:        nil, // handled by dedicated resolver
-		Pool:          nil, // handled by dedicated resolver
-		Recipient:     nil, // handled by dedicated resolver
-		State:         nil, // handled by dedicated resolver
-		Strategy:      nil, // handled by dedicated resolver
+		Data:         claim.Data.Bytes,
+		Label:        claim.Label,
+		Path:         persist.NullStrToStr(claim.Path),
+		CreatedAt:    claim.CreatedAt,
+		UpdatedAt:    claim.UpdatedAt,
+		Parent:       nil, // handled by dedicated resolver
+		Pool:         nil, // handled by dedicated resolver
+		Recipient:    nil, // handled by dedicated resolver
+		Validation:   nil, // handled by dedicated resolver
+		Distribution: nil, // handled by dedicated resolver
 	}
 }
 
@@ -407,10 +218,8 @@ func claimsToModels(ctx context.Context, claims []db.Claim) []*model.Claim {
 
 func userToModel(ctx context.Context, user db.User) *model.User {
 	return &model.User{
-		Pools:                nil, // handled by dedicated resolver
-		Roles:                nil, // handled by dedicated resolver
-		Notifications:        nil, // handled by dedicated resolver
-		NotificationSettings: nil, // handled by dedicated resolver
+		Pools: nil, // handled by dedicated resolver
+		Roles: nil, // handled by dedicated resolver
 	}
 }
 

@@ -3,7 +3,6 @@ package publicapi
 import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
-	magicclient "github.com/magiclabs/magic-admin-go/client"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/service/multichain"
@@ -18,7 +17,5 @@ type AuthAPI struct {
 	validator          *validator.Validate
 	ethClient          *ethclient.Client
 	multiChainProvider *multichain.Provider
-	magicLinkClient    *magicclient.API
-	oneTimeLoginCache  *redis.Cache
 	authRefreshCache   *redis.Cache
 }

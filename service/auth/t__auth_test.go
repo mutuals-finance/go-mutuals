@@ -4,23 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func TestGenerateAuthToken_Success(t *testing.T) {
-	ctx := context.Background()
-	userId := persist.DBID("test-user-id")
-	appId := persist.DBID("test-app-id")
-	refreshID := "refresh-id"
-	roles := []persist.Role{}
-
-	token, err := GenerateAuthToken(ctx, userId, appId, refreshID, roles)
-
-	require.NoError(t, err)
-	assert.NotEmpty(t, token)
-}
 
 func TestParseIdToken_Success(t *testing.T) {
 	ctx := context.Background()

@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
-	"github.com/mutuals/go-mutuals/service/auth"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/util"
 )
@@ -94,7 +94,7 @@ func createUser(db *sql.DB, createUserStmt, createNonceStmt *sql.Stmt) gin.Handl
 		}
 
 		var userId persist.DBID
-		if err := tx.StmtContext(c, createUserStmt).QueryRowContext(c, persist.GenerateID(), pq.Array(input.Addresses), input.Username, strings.ToLower(input.Username), input.Bio).Scan(&userID); err != nil {
+		if err := tx.StmtContext(c, createUserStmt).QueryRowContext(c, persist.GenerateID(), pq.Array(input.Addresses), input.Username, strings.ToLower(input.Username), input.Bio).Scan(&userId); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
@@ -117,7 +117,7 @@ func updateUser(updateUserStmt *sql.Stmt) gin.HandlerFunc {
 			util.ErrResponse(c, http.StatusBadRequest, err)
 			return
 		}
-		if _, err := updateUserStmt.ExecContext(c, pq.Array(input.Addresses), input.Bio, input.Username, strings.ToLower(input.Username), persist.UpdatedAtTime{}, input.ID); err != nil {
+		if _, err := updateUserStmt.ExecContext(c, pq.Array(input.Addresses), input.Bio, input.Username, strings.ToLower(input.Username), time.Now(), input.ID); err != nil {
 			util.ErrResponse(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -200,17 +200,17 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getP
 		}
 
 		var secondUser persist.User
-		if err := getUserByIDStmt.QueryRowContext(c, input.SecondUserID).Scan(&secondUser.ID, pq.Array(&secondUser.Wallets), &secondUser.Bio, &secondUser.Username, &secondUser.UsernameIdempotent, &secondUser.UpdatedAt, &secondUser.CreationTime); err != nil {
+		if err := getUserByIDStmt.QueryRowContext(c, input.SecondUserId).Scan(&secondUser.ID, pq.Array(&secondUser.Wallets), &secondUser.Bio, &secondUser.Username, &secondUser.UsernameIdempotent, &secondUser.UpdatedAt, &secondUser.CreationTime); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
 
-		if _, err := tx.StmtContext(c, updateUserStmt).ExecContext(c, pq.Array(append(firstUser.Wallets, secondUser.Wallets...)), firstUser.Bio, firstUser.Username, firstUser.UsernameIdempotent, persist.UpdatedAtTime{}, firstUser.ID); err != nil {
+		if _, err := tx.StmtContext(c, updateUserStmt).ExecContext(c, pq.Array(append(firstUser.Wallets, secondUser.Wallets...)), firstUser.Bio, firstUser.Username, firstUser.UsernameIdempotent, time.Now(), firstUser.ID); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}
 
-		res, err := getPoolsStmt.QueryContext(c, input.FirstUserID)
+		res, err := getPoolsStmt.QueryContext(c, input.FirstUserId)
 		if err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
@@ -232,7 +232,7 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getP
 			return
 		}
 
-		nextRes, err := getPoolsStmt.QueryContext(c, input.SecondUserID)
+		nextRes, err := getPoolsStmt.QueryContext(c, input.SecondUserId)
 		if err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
@@ -270,7 +270,7 @@ func mergeUser(db *sql.DB, getUserByIDStmt, updateUserStmt, deleteUserStmt, getP
 		//	return
 		//}
 
-		if _, err := tx.StmtContext(c, deleteUserStmt).ExecContext(c, input.SecondUserID); err != nil {
+		if _, err := tx.StmtContext(c, deleteUserStmt).ExecContext(c, input.SecondUserId); err != nil {
 			rollbackWithErr(c, tx, http.StatusInternalServerError, err)
 			return
 		}

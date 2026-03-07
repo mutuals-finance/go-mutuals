@@ -11,7 +11,6 @@ import (
 	"github.com/mutuals/go-mutuals/graphql/generated"
 	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/publicapi"
-	"github.com/mutuals/go-mutuals/service/logger"
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
@@ -35,14 +34,14 @@ func (r *claimResolver) Recipient(ctx context.Context, obj *model.Claim) (model.
 	panic(fmt.Errorf("not implemented: Recipient - recipient"))
 }
 
-// State is the resolver for the state field.
-func (r *claimResolver) State(ctx context.Context, obj *model.Claim) (*model.Extension, error) {
-	panic(fmt.Errorf("not implemented: State - state"))
+// Validation is the resolver for the validation field.
+func (r *claimResolver) Validation(ctx context.Context, obj *model.Claim) (*model.Module, error) {
+	panic(fmt.Errorf("not implemented: Validation - validation"))
 }
 
-// Strategy is the resolver for the strategy field.
-func (r *claimResolver) Strategy(ctx context.Context, obj *model.Claim) (*model.Extension, error) {
-	panic(fmt.Errorf("not implemented: Strategy - strategy"))
+// Distribution is the resolver for the distribution field.
+func (r *claimResolver) Distribution(ctx context.Context, obj *model.Claim) (*model.Module, error) {
+	panic(fmt.Errorf("not implemented: Distribution - distribution"))
 }
 
 // Transaction is the resolver for the transaction field.
@@ -70,18 +69,18 @@ func (r *eVMAccountResolver) Balances(ctx context.Context, obj *model.EVMAccount
 	panic(fmt.Errorf("not implemented: Balances - balances"))
 }
 
-// ExtensionRegistry is the resolver for the extensionRegistry field.
-func (r *extensionResolver) ExtensionRegistry(ctx context.Context, obj *model.Extension) (*model.ExtensionRegistry, error) {
-	panic(fmt.Errorf("not implemented: ExtensionRegistry - extensionRegistry"))
+// ModuleRegistry is the resolver for the moduleRegistry field.
+func (r *moduleResolver) ModuleRegistry(ctx context.Context, obj *model.Module) (*model.ModuleRegistry, error) {
+	panic(fmt.Errorf("not implemented: ModuleRegistry - moduleRegistry"))
 }
 
 // Owner is the resolver for the owner field.
-func (r *extensionRegistryResolver) Owner(ctx context.Context, obj *model.ExtensionRegistry) (*model.EVMAccount, error) {
+func (r *moduleRegistryResolver) Owner(ctx context.Context, obj *model.ModuleRegistry) (*model.EVMAccount, error) {
 	panic(fmt.Errorf("not implemented: Owner - owner"))
 }
 
 // UserRegister is the resolver for the userRegister field.
-func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserRegisterInput) (model.UserRegisterResult, error) {
+func (r *mutationResolver) UserRegister(ctx context.Context) (model.UserRegisterResult, error) {
 	user, err := publicapi.For(ctx).User.CreateUser(ctx)
 	if err != nil {
 		return nil, err
@@ -95,7 +94,7 @@ func (r *mutationResolver) UserRegister(ctx context.Context, input model.UserReg
 }
 
 // UserUpdate is the resolver for the userUpdate field.
-func (r *mutationResolver) UserUpdate(ctx context.Context, userID *model.GqlID, input model.UserUpdateInput) (model.UserUpdateResult, error) {
+func (r *mutationResolver) UserUpdate(ctx context.Context, input model.UserUpdateInput) (model.UserUpdateResult, error) {
 	panic(fmt.Errorf("not implemented: UserUpdate - userUpdate"))
 }
 
@@ -107,114 +106,6 @@ func (r *mutationResolver) UserRequestDeletion(ctx context.Context, redirectURL 
 // UserDelete is the resolver for the userDelete field.
 func (r *mutationResolver) UserDelete(ctx context.Context, token string) (model.UserDeleteResult, error) {
 	panic(fmt.Errorf("not implemented: UserDelete - userDelete"))
-}
-
-// Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, authMechanism model.AuthMechanism) (model.LoginResult, error) {
-	panic(fmt.Errorf("not implemented: Login - login"))
-}
-
-// Logout is the resolver for the logout field.
-func (r *mutationResolver) Logout(ctx context.Context) (*model.LogoutPayload, error) {
-	panic(fmt.Errorf("not implemented: Logout - logout"))
-}
-
-// TokenVerify is the resolver for the tokenVerify field.
-func (r *mutationResolver) TokenVerify(ctx context.Context, token string) (model.VerifyTokenResult, error) {
-	panic(fmt.Errorf("not implemented: TokenVerify - tokenVerify"))
-}
-
-// AddUserWallet is the resolver for the addUserWallet field.
-func (r *mutationResolver) AddUserWallet(ctx context.Context, authMechanism model.AuthMechanism) (model.AddUserWalletResult, error) {
-	panic(fmt.Errorf("not implemented: AddUserWallet - addUserWallet"))
-}
-
-// RemoveUserWallets is the resolver for the removeUserWallets field.
-func (r *mutationResolver) RemoveUserWallets(ctx context.Context, walletIds []model.GqlID) (model.RemoveUserWalletsResult, error) {
-	panic(fmt.Errorf("not implemented: RemoveUserWallets - removeUserWallets"))
-}
-
-// PushTokenRegister is the resolver for the pushTokenRegister field.
-func (r *mutationResolver) PushTokenRegister(ctx context.Context, pushToken string) (model.PushTokenRegisterResult, error) {
-	panic(fmt.Errorf("not implemented: PushTokenRegister - pushTokenRegister"))
-}
-
-// PushTokenUnregister is the resolver for the pushTokenUnregister field.
-func (r *mutationResolver) PushTokenUnregister(ctx context.Context, pushToken string) (model.PushTokenUnregisterResult, error) {
-	err := publicapi.For(ctx).User.DeletePushTokenByPushToken(ctx, pushToken)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, publicapi.For(ctx).User.GetLoggedInUserId(ctx))
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.PushTokenUnregisterPayload{
-		PushToken: pushToken,
-		User:      userToModel(ctx, *user),
-	}, nil
-}
-
-// NotificationSettingsUpdate is the resolver for the notificationSettingsUpdate field.
-func (r *mutationResolver) NotificationSettingsUpdate(ctx context.Context, settings model.NotificationSettingsInput) (model.NotificationSettingsUpdateResult, error) {
-	err := publicapi.For(ctx).User.UpdateUserNotificationSettings(ctx, persist.UserNotificationSettings{})
-	if err != nil {
-		return nil, err
-	}
-	return resolveViewerNotificationSettings(ctx)
-}
-
-// ClearNotifications is the resolver for the clearNotifications field.
-func (r *mutationResolver) ClearNotifications(ctx context.Context) (model.ClearNotificationsResult, error) {
-	notifications, err := publicapi.For(ctx).Notifications.ClearUserNotifications(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	models := make([]model.Notification, len(notifications))
-	for i, n := range notifications {
-		m, err := notificationToModel(n)
-		if err != nil {
-			return nil, err
-		}
-		models[i] = m
-	}
-
-	return &model.ClearNotificationsPayload{
-		Notifications: models,
-	}, nil
-}
-
-// EmailNotificationSettingsUpdate is the resolver for the emailNotificationSettingsUpdate field.
-func (r *mutationResolver) EmailNotificationSettingsUpdate(ctx context.Context, settings model.UpdateEmailNotificationSettingsInput) (model.EmailNotificationSettingsUpdateResult, error) {
-	panic(fmt.Errorf("not implemented: EmailNotificationSettingsUpdate - emailNotificationSettingsUpdate"))
-}
-
-// VerifyEmail is the resolver for the verifyEmail field.
-func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (model.VerifyEmailResult, error) {
-	panic(fmt.Errorf("not implemented: VerifyEmail - verifyEmail"))
-}
-
-// PreverifyEmail is the resolver for the preverifyEmail field.
-func (r *mutationResolver) PreverifyEmail(ctx context.Context, email persist.Email) (model.PreverifyEmailResult, error) {
-	panic(fmt.Errorf("not implemented: PreverifyEmail - preverifyEmail"))
-}
-
-// UpdateEmail is the resolver for the updateEmail field.
-func (r *mutationResolver) UpdateEmail(ctx context.Context, email persist.Email, authMechanism *model.AuthMechanism) (model.UpdateEmailResult, error) {
-	panic(fmt.Errorf("not implemented: UpdateEmail - updateEmail"))
-}
-
-// ResendVerificationEmail is the resolver for the resendVerificationEmail field.
-func (r *mutationResolver) ResendVerificationEmail(ctx context.Context) (model.ResendVerificationEmailResult, error) {
-	panic(fmt.Errorf("not implemented: ResendVerificationEmail - resendVerificationEmail"))
-}
-
-// UnsubscribeFromEmail is the resolver for the unsubscribeFromEmail field.
-func (r *mutationResolver) UnsubscribeFromEmail(ctx context.Context, input model.UnsubscribeFromEmailTypeInput) (model.UnsubscribeFromEmailResult, error) {
-	panic(fmt.Errorf("not implemented: UnsubscribeFromEmail - unsubscribeFromEmail"))
 }
 
 // RoleUpdate is the resolver for the roleUpdate field.
@@ -282,7 +173,7 @@ func (r *mutationResolver) PoolDelete(ctx context.Context, id model.GqlID) (mode
 }
 
 // Owner is the resolver for the owner field.
-func (r *poolResolver) Owner(ctx context.Context, obj *model.Pool) (model.UserOrAccount, error) {
+func (r *poolResolver) Owner(ctx context.Context, obj *model.Pool) (model.UserOrEVMAccount, error) {
 	panic(fmt.Errorf("not implemented: Owner - owner"))
 }
 
@@ -380,8 +271,8 @@ func (r *queryResolver) UserByID(ctx context.Context, id model.GqlID) (model.Use
 }
 
 // UserByAddress is the resolver for the userByAddress field.
-func (r *queryResolver) UserByAddress(ctx context.Context, chainAddress persist.ChainAddress) (model.UserResult, error) {
-	user, err := resolveUserByAddress(ctx, chainAddress)
+func (r *queryResolver) UserByAddress(ctx context.Context, address persist.Address) (model.UserResult, error) {
+	user, err := resolveUserByAddress(ctx, address)
 	if err != nil {
 		return nil, err
 	}
@@ -403,17 +294,6 @@ func (r *queryResolver) SearchPools(ctx context.Context, query string, limit *in
 	panic(fmt.Errorf("not implemented: SearchPools - searchPools"))
 }
 
-// IsEmailAddressAvailable is the resolver for the isEmailAddressAvailable field.
-func (r *queryResolver) IsEmailAddressAvailable(ctx context.Context, emailAddress persist.Email) (*bool, error) {
-	exists, err := publicapi.For(ctx).User.VerifiedEmailAddressExists(ctx, emailAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	available := !exists
-	return &available, nil
-}
-
 // UsersByRole is the resolver for the usersByRole field.
 func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
 	users, pageInfo, err := publicapi.For(ctx).User.PaginateUsersWithRole(ctx, role, before, after, first, last)
@@ -425,16 +305,6 @@ func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, befo
 		Edges:    usersToEdges(ctx, users),
 		PageInfo: pageInfoToModel(ctx, pageInfo),
 	}, nil
-}
-
-// NotificationCreated is the resolver for the notificationCreated field.
-func (r *subscriptionResolver) NotificationCreated(ctx context.Context) (<-chan model.Notification, error) {
-	return resolveNewNotificationSubscription(ctx), nil
-}
-
-// NotificationUpdated is the resolver for the notificationUpdated field.
-func (r *subscriptionResolver) NotificationUpdated(ctx context.Context) (<-chan model.Notification, error) {
-	return resolveUpdatedNotificationSubscription(ctx), nil
 }
 
 // Token is the resolver for the token field.
@@ -478,35 +348,6 @@ func (r *userResolver) Pools(ctx context.Context, obj *model.User) ([]*model.Poo
 	return resolveUserPools(ctx, obj)
 }
 
-// Notifications is the resolver for the notifications field.
-func (r *userResolver) Notifications(ctx context.Context, obj *model.User, before *string, after *string, first *int, last *int) (*model.NotificationsConnection, error) {
-	return resolveViewerNotifications(ctx, before, after, first, last)
-}
-
-// NotificationSettings is the resolver for the notificationSettings field.
-func (r *userResolver) NotificationSettings(ctx context.Context, obj *model.User) (*model.NotificationSettings, error) {
-	userId := publicapi.For(ctx).User.GetLoggedInUserId(ctx)
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
-	if err != nil {
-		return nil, err
-	}
-	return notificationSettingsToModel(ctx, user), nil
-}
-
-// EmailNotificationSettings is the resolver for the emailNotificationSettings field.
-func (r *userEmailResolver) EmailNotificationSettings(ctx context.Context, obj *model.UserEmail) (*model.EmailNotificationSettings, error) {
-	unsubs, err := publicapi.For(ctx).User.GetCurrentUserEmailNotificationSettings(ctx)
-	if err != nil {
-		logger.For(ctx).Errorf("error getting email notification settings from email service: %s", err)
-		return obj.EmailNotificationSettings, nil
-	}
-
-	return &model.EmailNotificationSettings{
-		UnsubscribedFromAll:           unsubs.All.Bool(),
-		UnsubscribedFromNotifications: unsubs.Notifications.Bool(),
-	}, nil
-}
-
 // Transaction is the resolver for the transaction field.
 func (r *withdrawalResolver) Transaction(ctx context.Context, obj *model.Withdrawal) (*model.Tx, error) {
 	panic(fmt.Errorf("not implemented: Transaction - transaction"))
@@ -522,26 +363,6 @@ func (r *withdrawalResolver) Token(ctx context.Context, obj *model.Withdrawal) (
 	panic(fmt.Errorf("not implemented: Token - token"))
 }
 
-// Address is the resolver for the address field.
-func (r *chainAddressInputResolver) Address(ctx context.Context, obj *persist.ChainAddress, data persist.Address) error {
-	return obj.GQLSetAddressFromResolver(data)
-}
-
-// ChainID is the resolver for the chainId field.
-func (r *chainAddressInputResolver) ChainID(ctx context.Context, obj *persist.ChainAddress, data int) error {
-	panic(fmt.Errorf("not implemented: ChainID - chainId"))
-}
-
-// PubKey is the resolver for the pubKey field.
-func (r *chainPubKeyInputResolver) PubKey(ctx context.Context, obj *persist.ChainPubKey, data persist.PubKey) error {
-	return obj.GQLSetPubKeyFromResolver(data)
-}
-
-// ChainID is the resolver for the chainId field.
-func (r *chainPubKeyInputResolver) ChainID(ctx context.Context, obj *persist.ChainPubKey, data int) error {
-	panic(fmt.Errorf("not implemented: ChainID - chainId"))
-}
-
 // Claim returns generated.ClaimResolver implementation.
 func (r *Resolver) Claim() generated.ClaimResolver { return &claimResolver{r} }
 
@@ -551,12 +372,12 @@ func (r *Resolver) Deposit() generated.DepositResolver { return &depositResolver
 // EVMAccount returns generated.EVMAccountResolver implementation.
 func (r *Resolver) EVMAccount() generated.EVMAccountResolver { return &eVMAccountResolver{r} }
 
-// Extension returns generated.ExtensionResolver implementation.
-func (r *Resolver) Extension() generated.ExtensionResolver { return &extensionResolver{r} }
+// Module returns generated.ModuleResolver implementation.
+func (r *Resolver) Module() generated.ModuleResolver { return &moduleResolver{r} }
 
-// ExtensionRegistry returns generated.ExtensionRegistryResolver implementation.
-func (r *Resolver) ExtensionRegistry() generated.ExtensionRegistryResolver {
-	return &extensionRegistryResolver{r}
+// ModuleRegistry returns generated.ModuleRegistryResolver implementation.
+func (r *Resolver) ModuleRegistry() generated.ModuleRegistryResolver {
+	return &moduleRegistryResolver{r}
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -581,9 +402,6 @@ func (r *Resolver) PoolHourBalance() generated.PoolHourBalanceResolver {
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-// Subscription returns generated.SubscriptionResolver implementation.
-func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
-
 // TokenBalance returns generated.TokenBalanceResolver implementation.
 func (r *Resolver) TokenBalance() generated.TokenBalanceResolver { return &tokenBalanceResolver{r} }
 
@@ -593,38 +411,21 @@ func (r *Resolver) Tx() generated.TxResolver { return &txResolver{r} }
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
-// UserEmail returns generated.UserEmailResolver implementation.
-func (r *Resolver) UserEmail() generated.UserEmailResolver { return &userEmailResolver{r} }
-
 // Withdrawal returns generated.WithdrawalResolver implementation.
 func (r *Resolver) Withdrawal() generated.WithdrawalResolver { return &withdrawalResolver{r} }
-
-// ChainAddressInput returns generated.ChainAddressInputResolver implementation.
-func (r *Resolver) ChainAddressInput() generated.ChainAddressInputResolver {
-	return &chainAddressInputResolver{r}
-}
-
-// ChainPubKeyInput returns generated.ChainPubKeyInputResolver implementation.
-func (r *Resolver) ChainPubKeyInput() generated.ChainPubKeyInputResolver {
-	return &chainPubKeyInputResolver{r}
-}
 
 type claimResolver struct{ *Resolver }
 type depositResolver struct{ *Resolver }
 type eVMAccountResolver struct{ *Resolver }
-type extensionResolver struct{ *Resolver }
-type extensionRegistryResolver struct{ *Resolver }
+type moduleResolver struct{ *Resolver }
+type moduleRegistryResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type poolResolver struct{ *Resolver }
 type poolContractResolver struct{ *Resolver }
 type poolDayBalanceResolver struct{ *Resolver }
 type poolHourBalanceResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
 type tokenBalanceResolver struct{ *Resolver }
 type txResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-type userEmailResolver struct{ *Resolver }
 type withdrawalResolver struct{ *Resolver }
-type chainAddressInputResolver struct{ *Resolver }
-type chainPubKeyInputResolver struct{ *Resolver }

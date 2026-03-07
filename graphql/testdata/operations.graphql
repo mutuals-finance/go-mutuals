@@ -16,8 +16,8 @@ query userByIdQuery($id: ID!) {
     }
 }
 
-query userByAddressQuery($input: ChainAddressInput!) {
-    userByAddress(chainAddress: $input) {
+query userByAddressQuery($address: Address!) {
+    userByAddress(address: $address) {
         ... on User {
             id
             roles
@@ -56,37 +56,6 @@ query viewerQuery {
     }
 }
 
-query notificationsForViewerQuery {
-    viewer {
-        ... on User {
-            notifications(last: 1) {
-                unseenCount
-                edges {
-                    node {
-                        id
-                        seen
-                        creationTime
-                    }
-                }
-                pageInfo {
-                    hasNextPage
-                    hasPreviousPage
-                    startCursor
-                    endCursor
-                }
-            }
-        }
-        ... on ErrNotAuthorized {
-            message
-            cause {
-                ... on ErrNoCookie { message }
-                ... on ErrInvalidToken { message }
-                ... on ErrSessionInvalidated { message }
-                ... on ErrDoesNotOwnRequiredToken { message }
-            }
-        }
-    }
-}
 
 query poolQuery($id: ID, $slug: String, $contractId: ID) {
     pool(id: $id, slug: $slug, contractId: $contractId) {
@@ -121,45 +90,6 @@ query poolQuery($id: ID, $slug: String, $contractId: ID) {
     }
 }
 
-query searchUsersQuery($query: String!, $limit: Int, $usernameWeight: Float) {
-    searchUsers(query: $query, limit: $limit, usernameWeight: $usernameWeight) {
-        ... on SearchUsersPayload {
-            results {
-                user {
-                    id
-                }
-            }
-        }
-        ... on ErrInvalidInput {
-            message
-            parameters
-            reasons
-        }
-    }
-}
-
-query searchPoolsQuery($query: String!, $limit: Int, $nameWeight: Float, $descriptionWeight: Float) {
-    searchPools(query: $query, limit: $limit, nameWeight: $nameWeight, descriptionWeight: $descriptionWeight) {
-        ... on SearchPoolsPayload {
-            results {
-                pool {
-                    id
-                    name
-                    description
-                }
-            }
-        }
-        ... on ErrInvalidInput {
-            message
-            parameters
-            reasons
-        }
-    }
-}
-
-query isEmailAvailableQuery($emailAddress: Email!) {
-    isEmailAddressAvailable(emailAddress: $emailAddress)
-}
 
 query usersByRoleQuery($role: Role!, $before: String, $after: String, $first: Int, $last: Int) {
     usersByRole(role: $role, before: $before, after: $after, first: $first, last: $last) {
@@ -182,8 +112,8 @@ query usersByRoleQuery($role: Role!, $before: String, $after: String, $first: In
 }
 
 # Mutation operations
-mutation userRegisterMutation($input: UserRegisterInput!) {
-    userRegister(input: $input) {
+mutation userRegisterMutation {
+    userRegister {
         ... on UserRegisterPayload {
             requiresConfirmation
             user {
@@ -207,8 +137,8 @@ mutation userRegisterMutation($input: UserRegisterInput!) {
     }
 }
 
-mutation userUpdateMutation($userId: ID, $input: UserUpdateInput!) {
-    userUpdate(userId: $userId, input: $input) {
+mutation userUpdateMutation($input: UserUpdateInput!) {
+    userUpdate(input: $input) {
         ... on UserUpdatePayload {
             user {
                 id
@@ -286,116 +216,6 @@ mutation userDeleteMutation($token: String!) {
     }
 }
 
-mutation tokenVerifyMutation($token: String!) {
-    tokenVerify(token: $token) {
-        ... on VerifyTokenPayload {
-            user {
-                id
-            }
-            isValid
-        }
-        ... on ErrNotAuthorized {
-            message
-        }
-        ... on ErrInvalidInput {
-            message
-            parameters
-            reasons
-        }
-    }
-}
-
-mutation pushTokenRegisterMutation($pushToken: String!) {
-    pushTokenRegister(pushToken: $pushToken) {
-        ... on PushTokenRegisterPayload {
-            pushToken
-            user {
-                id
-            }
-        }
-        ... on ErrNotAuthorized {
-            message
-        }
-        ... on ErrInvalidInput {
-            message
-            parameters
-            reasons
-        }
-        ... on ErrPushTokenBelongsToAnotherUser {
-            message
-        }
-    }
-}
-
-mutation pushTokenUnregisterMutation($pushToken: String!) {
-    pushTokenUnregister(pushToken: $pushToken) {
-        ... on PushTokenUnregisterPayload {
-            pushToken
-            user {
-                id
-            }
-        }
-        ... on ErrNotAuthorized {
-            message
-        }
-        ... on ErrInvalidInput {
-            message
-            parameters
-            reasons
-        }
-    }
-}
-
-mutation notificationSettingsUpdateMutation($settings: NotificationSettingsInput!) {
-    notificationSettingsUpdate(settings: $settings) {
-        ... on NotificationSettingsUpdatePayload {
-            notificationSettings {
-                someoneViewedYourPool
-            }
-        }
-        ... on ErrNotAuthorized {
-            message
-        }
-        ... on ErrInvalidInput {
-            message
-            parameters
-            reasons
-        }
-    }
-}
-
-mutation clearNotificationsMutation {
-    clearNotifications {
-        ... on ClearNotificationsPayload {
-            notifications {
-                id
-                seen
-            }
-        }
-        ... on ErrNotAuthorized {
-            message
-        }
-    }
-}
-
-mutation emailNotificationSettingsUpdateMutation($settings: UpdateEmailNotificationSettingsInput!) {
-    emailNotificationSettingsUpdate(settings: $settings) {
-        ... on EmailNotificationSettingsUpdatePayload {
-            emailNotificationSettings {
-                unsubscribedFromAll
-                unsubscribedFromNotifications
-            }
-        }
-        ... on ErrNotAuthorized {
-            message
-        }
-        ... on ErrInvalidInput {
-            message
-            parameters
-            reasons
-        }
-    }
-}
 
 mutation poolCreateMutation($input: PoolCreateInput!) {
     poolCreate(input: $input) {
@@ -623,24 +443,5 @@ mutation roleUpdateMutation($role: Role!, $input: RoleUpdateInput!) {
             parameters
             reasons
         }
-    }
-}
-
-# Subscription operations
-subscription notificationCreatedSubscription {
-    notificationCreated {
-        id
-        seen
-        creationTime
-        updatedTime
-    }
-}
-
-subscription notificationUpdatedSubscription {
-    notificationUpdated {
-        id
-        seen
-        creationTime
-        updatedTime
     }
 }

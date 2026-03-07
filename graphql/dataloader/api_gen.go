@@ -15,13 +15,10 @@ import (
 
 type Loaders struct {
 	GetClaimByIdBatch                   *GetClaimByIdBatch
-	GetClaimsByAddressBatch             *GetClaimsByAddressBatch
 	GetClaimsByPoolIdBatch              *GetClaimsByPoolIdBatch
-	GetNotificationByIdBatch            *GetNotificationByIdBatch
 	GetPoolBatch                        *GetPoolBatch
 	GetPoolsByAddressesOrOwnerBatch     *GetPoolsByAddressesOrOwnerBatch
 	GetUserByIdBatch                    *GetUserByIdBatch
-	GetUserNotificationsBatch           *GetUserNotificationsBatch
 	GetUsersByPositionPaginateBatch     *GetUsersByPositionPaginateBatch
 	GetUsersByPositionPersonalizedBatch *GetUsersByPositionPersonalizedBatch
 }
@@ -30,29 +27,16 @@ func NewLoaders(ctx context.Context, q *coredb.Queries, disableCaching bool, pre
 	loaders := &Loaders{}
 
 	loaders.GetClaimByIdBatch = newGetClaimByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimByIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetClaimsByAddressBatch = newGetClaimsByAddressBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimsByAddressBatch(q), preFetchHook, postFetchHook)
 	loaders.GetClaimsByPoolIdBatch = newGetClaimsByPoolIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetClaimsByPoolIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetNotificationByIdBatch = newGetNotificationByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetNotificationByIdBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolBatch = newGetPoolBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolBatch(q), preFetchHook, postFetchHook)
 	loaders.GetPoolsByAddressesOrOwnerBatch = newGetPoolsByAddressesOrOwnerBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetPoolsByAddressesOrOwnerBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUserByIdBatch = newGetUserByIdBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserByIdBatch(q), preFetchHook, postFetchHook)
-	loaders.GetUserNotificationsBatch = newGetUserNotificationsBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUserNotificationsBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersByPositionPaginateBatch = newGetUsersByPositionPaginateBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPaginateBatch(q), preFetchHook, postFetchHook)
 	loaders.GetUsersByPositionPersonalizedBatch = newGetUsersByPositionPersonalizedBatch(ctx, 100, time.Duration(2000000), !disableCaching, true, loadGetUsersByPositionPersonalizedBatch(q), preFetchHook, postFetchHook)
 
-	loaders.GetClaimsByAddressBatch.RegisterResultSubscriber(func(result []coredb.Claim) {
-		for _, entry := range result {
-			loaders.GetClaimByIdBatch.Prime(loaders.GetClaimByIdBatch.getKeyForResult(entry), entry)
-		}
-	})
 	loaders.GetClaimsByPoolIdBatch.RegisterResultSubscriber(func(result []coredb.Claim) {
 		for _, entry := range result {
 			loaders.GetClaimByIdBatch.Prime(loaders.GetClaimByIdBatch.getKeyForResult(entry), entry)
-		}
-	})
-	loaders.GetUserNotificationsBatch.RegisterResultSubscriber(func(result []coredb.Notification) {
-		for _, entry := range result {
-			loaders.GetNotificationByIdBatch.Prime(loaders.GetNotificationByIdBatch.getKeyForResult(entry), entry)
 		}
 	})
 	loaders.GetUsersByPositionPaginateBatch.RegisterResultSubscriber(func(result []coredb.User) {
@@ -88,22 +72,6 @@ func loadGetClaimByIdBatch(q *coredb.Queries) func(context.Context, *GetClaimByI
 	}
 }
 
-func loadGetClaimsByAddressBatch(q *coredb.Queries) func(context.Context, *GetClaimsByAddressBatch, []persist.Address) ([][]coredb.Claim, []error) {
-	return func(ctx context.Context, d *GetClaimsByAddressBatch, params []persist.Address) ([][]coredb.Claim, []error) {
-		results := make([][]coredb.Claim, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetClaimsByAddressBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, r []coredb.Claim, err error) {
-			results[i], errors[i] = r, err
-		})
-
-		return results, errors
-	}
-}
-
 func loadGetClaimsByPoolIdBatch(q *coredb.Queries) func(context.Context, *GetClaimsByPoolIdBatch, []persist.DBID) ([][]coredb.Claim, []error) {
 	return func(ctx context.Context, d *GetClaimsByPoolIdBatch, params []persist.DBID) ([][]coredb.Claim, []error) {
 		results := make([][]coredb.Claim, len(params))
@@ -114,25 +82,6 @@ func loadGetClaimsByPoolIdBatch(q *coredb.Queries) func(context.Context, *GetCla
 
 		b.Query(func(i int, r []coredb.Claim, err error) {
 			results[i], errors[i] = r, err
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetNotificationByIdBatch(q *coredb.Queries) func(context.Context, *GetNotificationByIdBatch, []persist.DBID) ([]coredb.Notification, []error) {
-	return func(ctx context.Context, d *GetNotificationByIdBatch, params []persist.DBID) ([]coredb.Notification, []error) {
-		results := make([]coredb.Notification, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetNotificationByIdBatch(ctx, params)
-		defer b.Close()
-
-		b.QueryRow(func(i int, r coredb.Notification, err error) {
-			results[i], errors[i] = r, err
-			if errors[i] == pgx.ErrNoRows {
-				errors[i] = d.getNotFoundError(params[i])
-			}
 		})
 
 		return results, errors
@@ -187,22 +136,6 @@ func loadGetUserByIdBatch(q *coredb.Queries) func(context.Context, *GetUserByIdB
 			if errors[i] == pgx.ErrNoRows {
 				errors[i] = d.getNotFoundError(params[i])
 			}
-		})
-
-		return results, errors
-	}
-}
-
-func loadGetUserNotificationsBatch(q *coredb.Queries) func(context.Context, *GetUserNotificationsBatch, []coredb.GetUserNotificationsBatchParams) ([][]coredb.Notification, []error) {
-	return func(ctx context.Context, d *GetUserNotificationsBatch, params []coredb.GetUserNotificationsBatchParams) ([][]coredb.Notification, []error) {
-		results := make([][]coredb.Notification, len(params))
-		errors := make([]error, len(params))
-
-		b := q.GetUserNotificationsBatch(ctx, params)
-		defer b.Close()
-
-		b.Query(func(i int, r []coredb.Notification, err error) {
-			results[i], errors[i] = r, err
 		})
 
 		return results, errors

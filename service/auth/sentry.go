@@ -40,10 +40,8 @@ func ScrubEventCookies(event *sentry.Event, hint *sentry.EventHint) *sentry.Even
 
 	var scrubbed []string
 	for _, c := range strings.Split(event.Request.Cookies, "; ") {
-		if strings.HasPrefix(c, AuthCookieKey) {
-			scrubbed = append(scrubbed, AuthCookieKey+"=[filtered]")
-		} else if strings.HasPrefix(c, RefreshCookieKey) {
-			scrubbed = append(scrubbed, RefreshCookieKey+"=[filtered]")
+		if strings.HasPrefix(c, IdCookieKey) {
+			scrubbed = append(scrubbed, IdCookieKey+"=[filtered]")
 		} else {
 			scrubbed = append(scrubbed, c)
 		}

@@ -33,14 +33,8 @@ const (
 
 const cookieExpires = 1 * time.Hour
 
-// AuthCookieKey is the key used to store the auth token in the cookie
-const AuthCookieKey = "privy-token"
-
 // IdCookieKey is the key used to store the id token in the cookie
 const IdCookieKey = "privy-id-token"
-
-// RefreshCookieKey is the key used to store the refresh token in the cookie
-const RefreshCookieKey = "SPLITFI_REFRESH_JWT"
 
 // ErrInvalidJWT is returned when the JWT is invalid
 var ErrInvalidJWT = errors.New("invalid or expired auth token")
@@ -52,7 +46,6 @@ var ErrSessionInvalidated = errors.New("session has been invalidated")
 
 type AuthResult struct {
 	User     *db.User
-	Email    *persist.Email
 	PrivyDID *string
 }
 
@@ -183,9 +176,7 @@ func VerifySession(c *gin.Context, queries *db.Queries, authRefreshCache *redis.
 }
 
 func clearSessionCookies(c *gin.Context) {
-	clearCookie(c, AuthCookieKey)
 	clearCookie(c, IdCookieKey)
-	clearCookie(c, RefreshCookieKey)
 }
 
 func getAndParseIdToken(c *gin.Context) (IdTokenClaims, error) {
@@ -195,15 +186,6 @@ func getAndParseIdToken(c *gin.Context) (IdTokenClaims, error) {
 	}
 
 	return ParseIdToken(c, idToken)
-}
-
-func getAndParseAuthToken(c *gin.Context) (AuthTokenClaims, error) {
-	authToken, err := getCookie(c, AuthCookieKey)
-	if err != nil {
-		return AuthTokenClaims{}, err
-	}
-
-	return ParseAuthToken(c, authToken)
 }
 
 func getCookie(c *gin.Context, cookieName string) (string, error) {

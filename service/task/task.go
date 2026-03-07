@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mutuals/go-mutuals/service/auth/basicauth"
 	"net/http"
 	"time"
+
+	"github.com/mutuals/go-mutuals/service/auth/basicauth"
 
 	gcptasks "cloud.google.com/go/cloudtasks/apiv2"
 	"github.com/getsentry/sentry-go"
@@ -31,10 +32,6 @@ type Client struct {
 
 type TokenTransferProcessingMessage struct {
 	Transfers []TokenTransfer `json:"transfers" binding:"required"`
-}
-
-type AddEmailToMailingListMessage struct {
-	UserID persist.DBID `json:"user_id" binding:"required"`
 }
 
 type TokenTransfer struct {
@@ -74,16 +71,6 @@ func (c *Client) CreateTaskForTokenTransferProcessing(ctx context.Context, messa
 	queue := env.GetString("TOKEN_PROCESSING_QUEUE")
 	url := fmt.Sprintf("%s/token/transfer", env.GetString("TOKEN_PROCESSING_URL"))
 	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span))
-}
-
-func (c *Client) CreateTaskForAddingEmailToMailingList(ctx context.Context, message AddEmailToMailingListMessage) error {
-	span, ctx := tracing.StartSpan(ctx, "cloudtask.create", "createTaskForAddingEmailToMailingList")
-	defer tracing.FinishSpan(span)
-	tracing.AddEventDataToSpan(span, map[string]any{"User ID": message.UserID})
-	queue := env.GetString("EMAILS_QUEUE")
-	url := fmt.Sprintf("%s/send/process/add-to-mailing-list", env.GetString("EMAILS_HOST"))
-	secret := env.GetString("EMAILS_TASK_SECRET")
-	return c.submitTask(ctx, queue, url, withJSON(message), withTrace(span), withBasicAuth(secret))
 }
 
 // NewClient returns a new task client with tracing enabled.

@@ -11,19 +11,16 @@ import (
 // Claim is the single node structure.
 type Claim struct {
 	// Data Fields
-	ID               persist.DBID
-	Label            string
-	Path             string
-	RecipientAddress *persist.Address
-	Data             persist.JSON
-	StateID          string
-	StrategyID       string
-
+	ID             persist.DBID
+	Label          string
+	Path           string
+	Data           persist.JSON
+	ValidationID   string
+	DistributionID string
 	// Raw Inputs (used only for initial linking)
 	ParentID *string
 	ChildIDs []string
-
-	// Pointer Links (used for actual logic)
+	// Pointer Links
 	Parent   *Claim
 	Children []*Claim
 }
@@ -60,7 +57,7 @@ func NewTree(inputs []Claim) (*Tree, error) {
 	// 2: Identify container-only nodes
 	containerNodes := make(map[*Claim]bool)
 	for _, ptr := range allPtrs {
-		if ptr.StateID == "" && ptr.StrategyID == "" && len(ptr.ChildIDs) > 0 {
+		if ptr.ValidationID == "" && ptr.DistributionID == "" && len(ptr.ChildIDs) > 0 {
 			containerNodes[ptr] = true
 		}
 	}
@@ -141,10 +138,6 @@ func computePathRecursive(claim *Claim, parentPath string) {
 // Validate performs basic sanity checks
 func (t *Tree) Validate(ctx context.Context) error {
 	for _, claim := range t.Claims {
-		if len(claim.Children) == 0 && (claim.RecipientAddress == nil || claim.RecipientAddress.String() == "") {
-			return errors.New(fmt.Sprintf("node %s: leaf node must have recipient address", claim.Label))
-		}
-
 		if hasCycle(claim, make(map[*Claim]bool)) {
 			return errors.New(fmt.Sprintf("cycle detected starting at %s", claim.Label))
 		}

@@ -67,25 +67,6 @@ type UserUpdateInfoInput struct {
 	Bio                NullString `json:"bio"`
 }
 
-// UserUpdateNotificationSettings represents the data to be updated when updating a user's notification settings
-type UserUpdateNotificationSettings struct {
-	UpdatedAt            time.Time                `json:"updated_at"`
-	NotificationSettings UserNotificationSettings `json:"notification_settings"`
-}
-
-/*
-someoneFollowedYou: Boolean
-someoneAdmiredYourUpdate: Boolean
-someoneCommentedOnYourUpdate: Boolean
-someoneViewedYourGallery: Boolean
-*/
-type UserNotificationSettings struct {
-	SomeoneFollowedYou           *bool `json:"someone_followed_you,omitempty"`
-	SomeoneAdmiredYourUpdate     *bool `json:"someone_admired_your_update,omitempty"`
-	SomeoneCommentedOnYourUpdate *bool `json:"someone_commented_on_your_update,omitempty"`
-	SomeoneViewedYourGallery     *bool `json:"someone_viewed_your_gallery,omitempty"`
-}
-
 type CreateUserInput struct {
 	ID string
 }
@@ -101,7 +82,6 @@ type UserRepository interface {
 	GetByWalletID(context.Context, DBID) (User, error)
 	GetByChainAddress(context.Context, ChainAddress) (User, error)
 	GetByUsername(context.Context, string) (User, error)
-	GetByEmail(context.Context, Email) (User, error)
 	Delete(context.Context, DBID) error
 	MergeUsers(context.Context, DBID, DBID) error
 	AddFollower(pCtx context.Context, follower DBID, followee DBID) (refollowed bool, err error)
@@ -126,18 +106,6 @@ func (m Traits) Value() (driver.Value, error) {
 	}
 
 	return []byte(strings.ToValidUTF8(strings.ReplaceAll(string(val), "\\u0000", ""), "")), nil
-}
-
-func (u UserNotificationSettings) Value() (driver.Value, error) {
-	return json.Marshal(u)
-}
-
-func (u *UserNotificationSettings) Scan(src interface{}) error {
-	if src == nil {
-		*u = UserNotificationSettings{}
-		return nil
-	}
-	return json.Unmarshal(src.([]uint8), u)
 }
 
 func (s SocialUserIdentifiers) Value() (driver.Value, error) {
@@ -190,7 +158,6 @@ type ErrUserNotFound struct {
 	WalletID       DBID
 	L1ChainAddress L1ChainAddress
 	Username       string
-	Email          Email
 	Authenticator  string
 }
 
@@ -214,11 +181,6 @@ func (e ErrUserNotFound) Error() string {
 
 	if e.L1ChainAddress != (L1ChainAddress{}) {
 		method := fmt.Sprintf("method=%s;chainAddress=%s", "byChainAddress", e.L1ChainAddress)
-		return fmt.Sprintf(template, method, e.Authenticator)
-	}
-
-	if e.Email != "" {
-		method := fmt.Sprintf("method=%s;email=%s", "byEmail", e.Email)
 		return fmt.Sprintf(template, method, e.Authenticator)
 	}
 
@@ -285,7 +247,6 @@ const (
 	RoleAdmin       Role = "ADMIN"
 	RoleBetaTester  Role = "BETA_TESTER"
 	RoleEarlyAccess Role = "EARLY_ACCESS"
-	RoleEmailTester Role = "EMAIL_TESTER"
 )
 
 // Scan implements the database/sql Scanner interface for the DBID type
@@ -320,8 +281,6 @@ func (r *Role) UnmarshalGQL(v interface{}) error {
 		*r = RoleBetaTester
 	case "early_access":
 		*r = RoleEarlyAccess
-	case "email_tester":
-		*r = RoleEmailTester
 	}
 	return nil
 }
@@ -335,8 +294,6 @@ func (r Role) MarshalGQL(w io.Writer) {
 		w.Write([]byte(`"BETA_TESTER"`))
 	case RoleEarlyAccess:
 		w.Write([]byte(`"EARLY_ACCESS"`))
-	case RoleEmailTester:
-		w.Write([]byte(`"EMAIL_TESTER"`))
 	}
 }
 

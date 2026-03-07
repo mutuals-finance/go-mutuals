@@ -69,43 +69,6 @@ func (*GetClaimByIdBatch) getKeyForResult(result coredb.Claim) persist.DBID {
 	return result.ID
 }
 
-// GetClaimsByAddressBatch batches and caches requests
-type GetClaimsByAddressBatch struct {
-	generator.Dataloader[persist.Address, []coredb.Claim]
-}
-
-// newGetClaimsByAddressBatch creates a new GetClaimsByAddressBatch with the given settings, functions, and options
-func newGetClaimsByAddressBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetClaimsByAddressBatch, []persist.Address) ([][]coredb.Claim, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetClaimsByAddressBatch {
-	d := &GetClaimsByAddressBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []persist.Address) ([][]coredb.Claim, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetClaimsByAddressBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetClaimsByAddressBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
 // GetClaimsByPoolIdBatch batches and caches requests
 type GetClaimsByPoolIdBatch struct {
 	generator.Dataloader[persist.DBID, []coredb.Claim]
@@ -141,47 +104,6 @@ func newGetClaimsByPoolIdBatch(
 
 	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
 	return d
-}
-
-// GetNotificationByIdBatch batches and caches requests
-type GetNotificationByIdBatch struct {
-	generator.Dataloader[persist.DBID, coredb.Notification]
-}
-
-// newGetNotificationByIdBatch creates a new GetNotificationByIdBatch with the given settings, functions, and options
-func newGetNotificationByIdBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetNotificationByIdBatch, []persist.DBID) ([]coredb.Notification, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetNotificationByIdBatch {
-	d := &GetNotificationByIdBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []persist.DBID) ([]coredb.Notification, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetNotificationByIdBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetNotificationByIdBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
-}
-
-func (*GetNotificationByIdBatch) getKeyForResult(result coredb.Notification) persist.DBID {
-	return result.ID
 }
 
 // GetPoolBatch batches and caches requests
@@ -297,43 +219,6 @@ func newGetUserByIdBatch(
 
 func (*GetUserByIdBatch) getKeyForResult(result coredb.User) persist.DBID {
 	return result.ID
-}
-
-// GetUserNotificationsBatch batches and caches requests
-type GetUserNotificationsBatch struct {
-	generator.Dataloader[coredb.GetUserNotificationsBatchParams, []coredb.Notification]
-}
-
-// newGetUserNotificationsBatch creates a new GetUserNotificationsBatch with the given settings, functions, and options
-func newGetUserNotificationsBatch(
-	ctx context.Context,
-	maxBatchSize int,
-	batchTimeout time.Duration,
-	cacheResults bool,
-	publishResults bool,
-	fetch func(context.Context, *GetUserNotificationsBatch, []coredb.GetUserNotificationsBatchParams) ([][]coredb.Notification, []error),
-	preFetchHook PreFetchHook,
-	postFetchHook PostFetchHook,
-) *GetUserNotificationsBatch {
-	d := &GetUserNotificationsBatch{}
-
-	fetchWithHooks := func(ctx context.Context, keys []coredb.GetUserNotificationsBatchParams) ([][]coredb.Notification, []error) {
-		// Allow the preFetchHook to modify and return a new context
-		if preFetchHook != nil {
-			ctx = preFetchHook(ctx, "GetUserNotificationsBatch")
-		}
-
-		results, errors := fetch(ctx, d, keys)
-
-		if postFetchHook != nil {
-			postFetchHook(ctx, "GetUserNotificationsBatch")
-		}
-
-		return results, errors
-	}
-
-	d.Dataloader = *generator.NewDataloader(ctx, maxBatchSize, batchTimeout, cacheResults, publishResults, fetchWithHooks)
-	return d
 }
 
 // GetUsersByPositionPaginateBatch batches and caches requests

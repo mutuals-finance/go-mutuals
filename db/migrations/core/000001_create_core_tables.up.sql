@@ -5,15 +5,11 @@ CREATE SCHEMA IF NOT EXISTS scrubbed_pii;
 
 CREATE TABLE IF NOT EXISTS users
 (
-    id                    character varying(255) PRIMARY KEY NOT NULL,
-    deleted               boolean                            NOT NULL DEFAULT FALSE,
-    version               integer                                     DEFAULT 0,
-    updated_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at            timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    notification_settings jsonb,
-    email_unsubscriptions jsonb                              NOT NULL DEFAULT '{
-      "all": false
-    }'::jsonb
+    id         character varying(255) PRIMARY KEY NOT NULL,
+    deleted    boolean                            NOT NULL DEFAULT FALSE,
+    version    integer                                     DEFAULT 0,
+    updated_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS linked_accounts
@@ -67,9 +63,8 @@ CREATE TABLE IF NOT EXISTS claims
 (
     id                character varying(255) PRIMARY KEY,
     pool_id           character varying(255)   NOT NULL REFERENCES pools ON DELETE CASCADE,
-    recipient_address character varying(255),
-    state_id          character varying(255)   NOT NULL,
-    strategy_id       character varying(255)   NOT NULL,
+    validation_id     character varying(255)   NOT NULL,
+    distribution_id   character varying(255)   NOT NULL,
     data              jsonb                    NULL,
     label             character varying(255)   NOT NULL,
     path              ltree                    NULL,
@@ -82,12 +77,6 @@ CREATE INDEX claim_path_gist_idx ON claims USING gist (path);
 
 CREATE INDEX claim_path_idx ON claims USING btree (path);
 
-CREATE TABLE IF NOT EXISTS dev_metadata_users
-(
-    user_id           varchar(255) PRIMARY KEY REFERENCES users (id),
-    has_email_address bool,
-    deleted           bool NOT NULL DEFAULT FALSE
-);
 
 CREATE TABLE IF NOT EXISTS events
 (
@@ -127,29 +116,6 @@ ALTER TABLE events
     ADD CONSTRAINT events_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
 
-CREATE TABLE IF NOT EXISTS notifications
-(
-    id         character varying(255) PRIMARY KEY NOT NULL,
-    deleted    boolean                            NOT NULL DEFAULT FALSE,
-    owner_id   character varying(255),
-    version    integer                                     DEFAULT 0,
-    action     character varying(255)             NOT NULL,
-    data       jsonb,
-    event_ids  character varying(255)[],
-    pool_id    character varying(255),
-    seen       boolean                            NOT NULL DEFAULT FALSE,
-    amount     integer                            NOT NULL DEFAULT 1,
-    updated_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at timestamp WITH TIME ZONE           NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX notification_created_at_id_idx ON notifications USING btree (created_at, id);
-
-CREATE INDEX notification_owner_id_idx ON notifications USING btree (owner_id);
-
-ALTER TABLE notifications
-    ADD CONSTRAINT notifications_pool_id_fkey
-        FOREIGN KEY (pool_id) REFERENCES pools (id);
 
 -- Spam scores for newly-created users. Contains all newly created users,
 -- but users with score 0 can typically be ignored since they're not likely to
@@ -191,71 +157,6 @@ ALTER TABLE user_roles
     ADD CONSTRAINT user_roles_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id);
 
-CREATE TABLE IF NOT EXISTS pii.for_users
-(
-    user_id                      character varying(255) PRIMARY KEY REFERENCES users,
-    pii_unverified_email_address character varying,
-    pii_verified_email_address   character varying,
-    deleted                      boolean NOT NULL DEFAULT FALSE
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS pii_for_users_pii_verified_email_address_idx ON pii.for_users (pii_verified_email_address) WHERE deleted = FALSE;
-
-CREATE VIEW pii.user_view AS
-SELECT users.id,
-       users.deleted,
-       users.version,
-       users.updated_at,
-       users.created_at,
-       users.notification_settings,
-       users.email_unsubscriptions,
-       for_users.pii_unverified_email_address,
-       for_users.pii_verified_email_address
-FROM users
-         LEFT JOIN pii.for_users
-                   ON users.id = for_users.user_id
-                       AND for_users.deleted = FALSE;
-
-
-CREATE VIEW scrubbed_pii.for_users AS
-(
-WITH scrubbed_unverified_email_address AS (SELECT u.id    AS user_id,
-                                                  CASE
-                                                      WHEN p.pii_unverified_email_address IS NOT NULL
-                                                          THEN '-unverified@dummy-email.mutuals.finance'
-                                                      END AS scrubbed_address
-                                           FROM users u,
-                                                pii.for_users p
-                                           WHERE u.id = p.user_id),
-
-     -- <username>@dummy-email.mutuals.finance for users who have verified email addresses, null otherwise
-     scrubbed_verified_email_address AS (SELECT u.id    AS user_id,
-                                                CASE
-                                                    WHEN p.pii_verified_email_address IS NOT NULL
-                                                        THEN '@dummy-email.mutuals.finance'
-                                                    END AS scrubbed_address
-                                         FROM users u,
-                                              pii.for_users p
-                                         WHERE u.id = p.user_id)
-
-     -- Doing this limit 0 union ensures we have appropriate column types for our view
-        (SELECT * FROM pii.for_users LIMIT 0)
-UNION ALL
-SELECT p.user_id, unverified_email.scrubbed_address, verified_email.scrubbed_address, p.deleted
-FROM pii.for_users p
-         JOIN scrubbed_unverified_email_address unverified_email ON unverified_email.user_id = p.user_id
-         JOIN scrubbed_verified_email_address verified_email ON verified_email.user_id = p.user_id
-    );
-
-/*
-TODO pii cron -> add later?
-alter role access_rw_pii with login;
-grant usage on schema cron to access_rw_pii;
-
-set role to access_rw_pii;
-select cron.schedule('purge-account-creation-info', '@weekly', 'delete from pii.account_creation_info where created_at < now() - interval ''180 days''');
-set role to access_rw;
-*/
 
 CREATE TABLE IF NOT EXISTS user_blocklist
 (

@@ -11,10 +11,6 @@ func (*GetPoolBatch) getNotFoundError(key coredb.GetPoolBatchParams) error {
 	return persist.ErrPoolNotFound{ID: persist.DBID(key.PoolID.String)}
 }
 
-func (*GetNotificationByIdBatch) getNotFoundError(key persist.DBID) error {
-	return pgx.ErrNoRows
-}
-
 func (*GetUserByIdBatch) getNotFoundError(key persist.DBID) error {
 	return persist.ErrUserNotFound{UserID: key}
 }

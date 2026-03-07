@@ -13,21 +13,19 @@ import (
 )
 
 const createClaims = `-- name: CreateClaims :many
-WITH updates AS (SELECT UNNEST($1::text[])                AS id,
-                        $2                           AS pool_id,
-                        UNNEST($3::text[]) AS recipient_address,
-                        UNNEST($4::text[])          AS state_id,
-                        UNNEST($5::text[])       AS strategy_id,
-                        UNNEST($6::jsonb[])             AS data,
-                        UNNEST($7::text[])             AS label,
-                        UNNEST($8::ltree[])             AS path)
+WITH updates AS (SELECT UNNEST($1::text[])              AS id,
+                        $2                         AS pool_id,
+                        UNNEST($3::text[])   AS validation_id,
+                        UNNEST($4::text[]) AS distribution_id,
+                        UNNEST($5::jsonb[])           AS data,
+                        UNNEST($6::text[])           AS label,
+                        UNNEST($7::ltree[])           AS path)
 INSERT
-INTO claims (id, pool_id, recipient_address, state_id, strategy_id, data, label, path, deleted, updated_at, created_at)
+INTO claims (id, pool_id, validation_id, distribution_id, data, label, path, deleted, updated_at, created_at)
 SELECT id,
        pool_id,
-       recipient_address,
-       state_id,
-       strategy_id,
+       validation_id,
+       distribution_id,
        data,
        label,
        path,
@@ -35,27 +33,25 @@ SELECT id,
        NOW(),
        NOW()
 FROM updates
-RETURNING id, pool_id, recipient_address, state_id, strategy_id, data, label, path, deleted, updated_at, created_at
+RETURNING id, pool_id, validation_id, distribution_id, data, label, path, deleted, updated_at, created_at
 `
 
 type CreateClaimsParams struct {
-	ID               []string       `db:"id" json:"id"`
-	PoolID           persist.DBID   `db:"pool_id" json:"pool_id"`
-	RecipientAddress []string       `db:"recipient_address" json:"recipient_address"`
-	StateID          []string       `db:"state_id" json:"state_id"`
-	StrategyID       []string       `db:"strategy_id" json:"strategy_id"`
-	Data             []pgtype.JSONB `db:"data" json:"data"`
-	Label            []string       `db:"label" json:"label"`
-	Path             []string       `db:"path" json:"path"`
+	ID             []string       `db:"id" json:"id"`
+	PoolID         persist.DBID   `db:"pool_id" json:"pool_id"`
+	ValidationID   []string       `db:"validation_id" json:"validation_id"`
+	DistributionID []string       `db:"distribution_id" json:"distribution_id"`
+	Data           []pgtype.JSONB `db:"data" json:"data"`
+	Label          []string       `db:"label" json:"label"`
+	Path           []string       `db:"path" json:"path"`
 }
 
 func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]Claim, error) {
 	rows, err := q.db.Query(ctx, createClaims,
 		arg.ID,
 		arg.PoolID,
-		arg.RecipientAddress,
-		arg.StateID,
-		arg.StrategyID,
+		arg.ValidationID,
+		arg.DistributionID,
 		arg.Data,
 		arg.Label,
 		arg.Path,
@@ -70,9 +66,8 @@ func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]C
 		if err := rows.Scan(
 			&i.ID,
 			&i.PoolID,
-			&i.RecipientAddress,
-			&i.StateID,
-			&i.StrategyID,
+			&i.ValidationID,
+			&i.DistributionID,
 			&i.Data,
 			&i.Label,
 			&i.Path,
@@ -92,7 +87,7 @@ func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]C
 
 const getClaimById = `-- name: GetClaimById :one
 
-SELECT id, pool_id, recipient_address, state_id, strategy_id, data, label, path, deleted, updated_at, created_at
+SELECT id, pool_id, validation_id, distribution_id, data, label, path, deleted, updated_at, created_at
 FROM claims
 WHERE id = $1
   AND deleted = FALSE
@@ -107,9 +102,8 @@ func (q *Queries) GetClaimById(ctx context.Context, id persist.DBID) (Claim, err
 	err := row.Scan(
 		&i.ID,
 		&i.PoolID,
-		&i.RecipientAddress,
-		&i.StateID,
-		&i.StrategyID,
+		&i.ValidationID,
+		&i.DistributionID,
 		&i.Data,
 		&i.Label,
 		&i.Path,
@@ -121,46 +115,42 @@ func (q *Queries) GetClaimById(ctx context.Context, id persist.DBID) (Claim, err
 }
 
 const updateClaims = `-- name: UpdateClaims :many
-WITH updates AS (SELECT UNNEST($1::text[])                AS id,
-                        UNNEST($2::text[]) AS recipient_address,
-                        UNNEST($3::text[])          AS state_id,
-                        UNNEST($4::text[])       AS strategy_id,
-                        UNNEST($5::jsonb[])             AS data,
-                        UNNEST($6::text[])             AS label,
-                        UNNEST($7::ltree[])             AS path,
-                        UNNEST($8::boolean[])        AS deleted)
+WITH updates AS (SELECT UNNEST($1::text[])              AS id,
+                        UNNEST($2::text[])   AS validation_id,
+                        UNNEST($3::text[]) AS distribution_id,
+                        UNNEST($4::jsonb[])           AS data,
+                        UNNEST($5::text[])           AS label,
+                        UNNEST($6::ltree[])           AS path,
+                        UNNEST($7::boolean[])      AS deleted)
 UPDATE claims
-SET recipient_address = updates.recipient_address,
-    state_id          = updates.state_id,
-    strategy_id       = updates.strategy_id,
-    data              = updates.data,
-    label             = updates.label,
-    path              = updates.path,
-    deleted           = updates.deleted,
-    updated_at        = NOW()
+SET validation_id   = updates.validation_id,
+    distribution_id = updates.distribution_id,
+    data            = updates.data,
+    label           = updates.label,
+    path            = updates.path,
+    deleted         = updates.deleted,
+    updated_at      = NOW()
 FROM updates
 WHERE claims.id = updates.id
   AND claims.deleted = FALSE
-RETURNING claims.id, claims.pool_id, claims.recipient_address, claims.state_id, claims.strategy_id, claims.data, claims.label, claims.path, claims.deleted, claims.updated_at, claims.created_at
+RETURNING claims.id, claims.pool_id, claims.validation_id, claims.distribution_id, claims.data, claims.label, claims.path, claims.deleted, claims.updated_at, claims.created_at
 `
 
 type UpdateClaimsParams struct {
-	ID               []string       `db:"id" json:"id"`
-	RecipientAddress []string       `db:"recipient_address" json:"recipient_address"`
-	StateID          []string       `db:"state_id" json:"state_id"`
-	StrategyID       []string       `db:"strategy_id" json:"strategy_id"`
-	Data             []pgtype.JSONB `db:"data" json:"data"`
-	Label            []string       `db:"label" json:"label"`
-	Path             []string       `db:"path" json:"path"`
-	Deleted          []bool         `db:"deleted" json:"deleted"`
+	ID             []string       `db:"id" json:"id"`
+	ValidationID   []string       `db:"validation_id" json:"validation_id"`
+	DistributionID []string       `db:"distribution_id" json:"distribution_id"`
+	Data           []pgtype.JSONB `db:"data" json:"data"`
+	Label          []string       `db:"label" json:"label"`
+	Path           []string       `db:"path" json:"path"`
+	Deleted        []bool         `db:"deleted" json:"deleted"`
 }
 
 func (q *Queries) UpdateClaims(ctx context.Context, arg UpdateClaimsParams) ([]Claim, error) {
 	rows, err := q.db.Query(ctx, updateClaims,
 		arg.ID,
-		arg.RecipientAddress,
-		arg.StateID,
-		arg.StrategyID,
+		arg.ValidationID,
+		arg.DistributionID,
 		arg.Data,
 		arg.Label,
 		arg.Path,
@@ -176,9 +166,8 @@ func (q *Queries) UpdateClaims(ctx context.Context, arg UpdateClaimsParams) ([]C
 		if err := rows.Scan(
 			&i.ID,
 			&i.PoolID,
-			&i.RecipientAddress,
-			&i.StateID,
-			&i.StrategyID,
+			&i.ValidationID,
+			&i.DistributionID,
 			&i.Data,
 			&i.Label,
 			&i.Path,
