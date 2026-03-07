@@ -18,19 +18,79 @@ func (r *DeletedNode) ID() GqlID {
 	return GqlID(fmt.Sprintf("DeletedNode:%s", r.ID))
 }
 
+func (r *Deposit) ID() GqlID {
+	return GqlID(fmt.Sprintf("Deposit:%s", r.ID))
+}
+
+func (r *EVMAccount) ID() GqlID {
+	return GqlID(fmt.Sprintf("EVMAccount:%s", r.ID))
+}
+
+func (r *Module) ID() GqlID {
+	return GqlID(fmt.Sprintf("Module:%s", r.ID))
+}
+
+func (r *ModuleRegistry) ID() GqlID {
+	return GqlID(fmt.Sprintf("ModuleRegistry:%s", r.ID))
+}
+
 func (r *Pool) ID() GqlID {
 	return GqlID(fmt.Sprintf("Pool:%s", r.ID))
+}
+
+func (r *PoolContract) ID() GqlID {
+	return GqlID(fmt.Sprintf("PoolContract:%s", r.ID))
+}
+
+func (r *PoolDayBalance) ID() GqlID {
+	return GqlID(fmt.Sprintf("PoolDayBalance:%s", r.ID))
+}
+
+func (r *PoolFactory) ID() GqlID {
+	return GqlID(fmt.Sprintf("PoolFactory:%s", r.ID))
+}
+
+func (r *PoolHourBalance) ID() GqlID {
+	return GqlID(fmt.Sprintf("PoolHourBalance:%s", r.ID))
+}
+
+func (r *Token) ID() GqlID {
+	return GqlID(fmt.Sprintf("Token:%s", r.ID))
+}
+
+func (r *TokenBalance) ID() GqlID {
+	return GqlID(fmt.Sprintf("TokenBalance:%s", r.ID))
+}
+
+func (r *Tx) ID() GqlID {
+	return GqlID(fmt.Sprintf("Tx:%s", r.ID))
 }
 
 func (r *User) ID() GqlID {
 	return GqlID(fmt.Sprintf("User:%s", r.ID))
 }
 
+func (r *Withdrawal) ID() GqlID {
+	return GqlID(fmt.Sprintf("Withdrawal:%s", r.ID))
+}
+
 type NodeFetcher struct {
-	OnClaim       func(ctx context.Context, id persist.DBID) (*Claim, error)
-	OnDeletedNode func(ctx context.Context, id persist.DBID) (*DeletedNode, error)
-	OnPool        func(ctx context.Context, id persist.DBID) (*Pool, error)
-	OnUser        func(ctx context.Context, id persist.DBID) (*User, error)
+	OnClaim           func(ctx context.Context, id persist.DBID) (*Claim, error)
+	OnDeletedNode     func(ctx context.Context, id persist.DBID) (*DeletedNode, error)
+	OnDeposit         func(ctx context.Context, id persist.DBID) (*Deposit, error)
+	OnEVMAccount      func(ctx context.Context, id persist.DBID) (*EVMAccount, error)
+	OnModule          func(ctx context.Context, id persist.DBID) (*Module, error)
+	OnModuleRegistry  func(ctx context.Context, id persist.DBID) (*ModuleRegistry, error)
+	OnPool            func(ctx context.Context, id persist.DBID) (*Pool, error)
+	OnPoolContract    func(ctx context.Context, id persist.DBID) (*PoolContract, error)
+	OnPoolDayBalance  func(ctx context.Context, id persist.DBID) (*PoolDayBalance, error)
+	OnPoolFactory     func(ctx context.Context, id persist.DBID) (*PoolFactory, error)
+	OnPoolHourBalance func(ctx context.Context, id persist.DBID) (*PoolHourBalance, error)
+	OnToken           func(ctx context.Context, id persist.DBID) (*Token, error)
+	OnTokenBalance    func(ctx context.Context, id persist.DBID) (*TokenBalance, error)
+	OnTx              func(ctx context.Context, id persist.DBID) (*Tx, error)
+	OnUser            func(ctx context.Context, id persist.DBID) (*User, error)
+	OnWithdrawal      func(ctx context.Context, id persist.DBID) (*Withdrawal, error)
 }
 
 func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error) {
@@ -47,10 +107,34 @@ func (n *NodeFetcher) GetNodeByGqlID(ctx context.Context, id GqlID) (Node, error
 		return n.OnClaim(ctx, persist.DBID(idStr))
 	case "DeletedNode":
 		return n.OnDeletedNode(ctx, persist.DBID(idStr))
+	case "Deposit":
+		return n.OnDeposit(ctx, persist.DBID(idStr))
+	case "EVMAccount":
+		return n.OnEVMAccount(ctx, persist.DBID(idStr))
+	case "Module":
+		return n.OnModule(ctx, persist.DBID(idStr))
+	case "ModuleRegistry":
+		return n.OnModuleRegistry(ctx, persist.DBID(idStr))
 	case "Pool":
 		return n.OnPool(ctx, persist.DBID(idStr))
+	case "PoolContract":
+		return n.OnPoolContract(ctx, persist.DBID(idStr))
+	case "PoolDayBalance":
+		return n.OnPoolDayBalance(ctx, persist.DBID(idStr))
+	case "PoolFactory":
+		return n.OnPoolFactory(ctx, persist.DBID(idStr))
+	case "PoolHourBalance":
+		return n.OnPoolHourBalance(ctx, persist.DBID(idStr))
+	case "Token":
+		return n.OnToken(ctx, persist.DBID(idStr))
+	case "TokenBalance":
+		return n.OnTokenBalance(ctx, persist.DBID(idStr))
+	case "Tx":
+		return n.OnTx(ctx, persist.DBID(idStr))
 	case "User":
 		return n.OnUser(ctx, persist.DBID(idStr))
+	case "Withdrawal":
+		return n.OnWithdrawal(ctx, persist.DBID(idStr))
 	}
 
 	return nil, ErrInvalidIDType{typeName: typeName}
@@ -62,9 +146,33 @@ func (n *NodeFetcher) ValidateHandlers() {
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnClaim")
 	case n.OnDeletedNode == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeletedNode")
+	case n.OnDeposit == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnDeposit")
+	case n.OnEVMAccount == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnEVMAccount")
+	case n.OnModule == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnModule")
+	case n.OnModuleRegistry == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnModuleRegistry")
 	case n.OnPool == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPool")
+	case n.OnPoolContract == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPoolContract")
+	case n.OnPoolDayBalance == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPoolDayBalance")
+	case n.OnPoolFactory == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPoolFactory")
+	case n.OnPoolHourBalance == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnPoolHourBalance")
+	case n.OnToken == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnToken")
+	case n.OnTokenBalance == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnTokenBalance")
+	case n.OnTx == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnTx")
 	case n.OnUser == nil:
 		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnUser")
+	case n.OnWithdrawal == nil:
+		panic("NodeFetcher handler validation failed: no handler set for NodeFetcher.OnWithdrawal")
 	}
 }

@@ -2380,7 +2380,7 @@ enum EVMAccountType {
   Contract
 }
 
-type EVMAccount {
+type EVMAccount implements Node {
   id: ID!
   address: Address!
   accountType: EVMAccountType!
@@ -2390,7 +2390,7 @@ type EVMAccount {
   updatedAt: Time!
 }
 
-type PoolFactory {
+type PoolFactory implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -2400,7 +2400,7 @@ type PoolFactory {
   updatedAt: Time!
 }
 
-type ModuleRegistry {
+type ModuleRegistry implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -2448,7 +2448,7 @@ enum TokenType {
   ERC1155
 }
 
-type Token {
+type Token implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -2464,7 +2464,7 @@ type Token {
   updatedAt: Time!
 }
 
-type TokenBalance {
+type TokenBalance implements Node {
   id: ID!
   chainId: Int!
   token: Token! @goField(forceResolver: true)
@@ -2475,7 +2475,7 @@ type TokenBalance {
 }
 
 #-------------------------------------------------------------------------------
-# EXTENSION
+# MODULES
 #-------------------------------------------------------------------------------
 
 enum ModuleType {
@@ -2483,7 +2483,7 @@ enum ModuleType {
   Distribution
 }
 
-type Module {
+type Module implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -2540,7 +2540,7 @@ type Pool implements Node {
 
 union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
 
-type PoolContract {
+type PoolContract implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -2556,7 +2556,7 @@ type PoolContract {
   updatedAt: Time!
 }
 
-type PoolDayBalance {
+type PoolDayBalance implements Node {
   id: ID!
   chainId: Int!
   date: Time!
@@ -2567,7 +2567,7 @@ type PoolDayBalance {
   updatedAt: Time!
 }
 
-type PoolHourBalance {
+type PoolHourBalance implements Node {
   id: ID!
   chainId: Int!
   date: Time!
@@ -2591,7 +2591,7 @@ enum ReportWindow {
   ALL_TIME
 }
 
-type Tx {
+type Tx implements Node {
   id: ID!
   gasUsed: HexString!
   gasPrice: HexString!
@@ -2601,7 +2601,7 @@ type Tx {
   withdrawals: [Withdrawal]! @goField(forceResolver: true)
 }
 
-type Deposit {
+type Deposit implements Node {
   id: ID!
   transaction: Tx! @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
@@ -2615,7 +2615,7 @@ type Deposit {
   updatedAt: Time!
 }
 
-type Withdrawal {
+type Withdrawal implements Node {
   id: ID!
   transaction: Tx! @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
@@ -2960,7 +2960,6 @@ type Mutation {
   userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
   userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
   userDelete(token: String!): UserDeleteResult! @authRequired
-
 
   # Roles
   roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
@@ -5691,7 +5690,7 @@ func (ec *executionContext) _Deposit_id(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5712,7 +5711,7 @@ func (ec *executionContext) fieldContext_Deposit_id(_ context.Context, field gra
 	fc = &graphql.FieldContext{
 		Object:     "Deposit",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -6242,7 +6241,7 @@ func (ec *executionContext) _EVMAccount_id(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6263,7 +6262,7 @@ func (ec *executionContext) fieldContext_EVMAccount_id(_ context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "EVMAccount",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -7435,7 +7434,7 @@ func (ec *executionContext) _Module_id(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7456,7 +7455,7 @@ func (ec *executionContext) fieldContext_Module_id(_ context.Context, field grap
 	fc = &graphql.FieldContext{
 		Object:     "Module",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -7973,7 +7972,7 @@ func (ec *executionContext) _ModuleRegistry_id(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7994,7 +7993,7 @@ func (ec *executionContext) fieldContext_ModuleRegistry_id(_ context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "ModuleRegistry",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -10179,7 +10178,7 @@ func (ec *executionContext) _PoolContract_id(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10200,7 +10199,7 @@ func (ec *executionContext) fieldContext_PoolContract_id(_ context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "PoolContract",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -10953,7 +10952,7 @@ func (ec *executionContext) _PoolDayBalance_id(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10974,7 +10973,7 @@ func (ec *executionContext) fieldContext_PoolDayBalance_id(_ context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "PoolDayBalance",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -11429,7 +11428,7 @@ func (ec *executionContext) _PoolFactory_id(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11450,7 +11449,7 @@ func (ec *executionContext) fieldContext_PoolFactory_id(_ context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "PoolFactory",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -11753,7 +11752,7 @@ func (ec *executionContext) _PoolHourBalance_id(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11774,7 +11773,7 @@ func (ec *executionContext) fieldContext_PoolHourBalance_id(_ context.Context, f
 	fc = &graphql.FieldContext{
 		Object:     "PoolHourBalance",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -13197,7 +13196,7 @@ func (ec *executionContext) _Token_id(ctx context.Context, field graphql.Collect
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13218,7 +13217,7 @@ func (ec *executionContext) fieldContext_Token_id(_ context.Context, field graph
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -13757,7 +13756,7 @@ func (ec *executionContext) _TokenBalance_id(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13778,7 +13777,7 @@ func (ec *executionContext) fieldContext_TokenBalance_id(_ context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "TokenBalance",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -14093,7 +14092,7 @@ func (ec *executionContext) _Tx_id(ctx context.Context, field graphql.CollectedF
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14114,7 +14113,7 @@ func (ec *executionContext) fieldContext_Tx_id(_ context.Context, field graphql.
 	fc = &graphql.FieldContext{
 		Object:     "Tx",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -15135,7 +15134,7 @@ func (ec *executionContext) _Withdrawal_id(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.ID(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15156,7 +15155,7 @@ func (ec *executionContext) fieldContext_Withdrawal_id(_ context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Withdrawal",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
@@ -18409,6 +18408,27 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._DeletedNode(ctx, sel, obj)
+	case model.EVMAccount:
+		return ec._EVMAccount(ctx, sel, &obj)
+	case *model.EVMAccount:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._EVMAccount(ctx, sel, obj)
+	case model.PoolFactory:
+		return ec._PoolFactory(ctx, sel, &obj)
+	case *model.PoolFactory:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._PoolFactory(ctx, sel, obj)
+	case model.ModuleRegistry:
+		return ec._ModuleRegistry(ctx, sel, &obj)
+	case *model.ModuleRegistry:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ModuleRegistry(ctx, sel, obj)
 	case model.User:
 		return ec._User(ctx, sel, &obj)
 	case *model.User:
@@ -18416,6 +18436,27 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._User(ctx, sel, obj)
+	case model.Token:
+		return ec._Token(ctx, sel, &obj)
+	case *model.Token:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Token(ctx, sel, obj)
+	case model.TokenBalance:
+		return ec._TokenBalance(ctx, sel, &obj)
+	case *model.TokenBalance:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TokenBalance(ctx, sel, obj)
+	case model.Module:
+		return ec._Module(ctx, sel, &obj)
+	case *model.Module:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Module(ctx, sel, obj)
 	case model.Claim:
 		return ec._Claim(ctx, sel, &obj)
 	case *model.Claim:
@@ -18430,6 +18471,48 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Pool(ctx, sel, obj)
+	case model.PoolContract:
+		return ec._PoolContract(ctx, sel, &obj)
+	case *model.PoolContract:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._PoolContract(ctx, sel, obj)
+	case model.PoolDayBalance:
+		return ec._PoolDayBalance(ctx, sel, &obj)
+	case *model.PoolDayBalance:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._PoolDayBalance(ctx, sel, obj)
+	case model.PoolHourBalance:
+		return ec._PoolHourBalance(ctx, sel, &obj)
+	case *model.PoolHourBalance:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._PoolHourBalance(ctx, sel, obj)
+	case model.Tx:
+		return ec._Tx(ctx, sel, &obj)
+	case *model.Tx:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Tx(ctx, sel, obj)
+	case model.Deposit:
+		return ec._Deposit(ctx, sel, &obj)
+	case *model.Deposit:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Deposit(ctx, sel, obj)
+	case model.Withdrawal:
+		return ec._Withdrawal(ctx, sel, &obj)
+	case *model.Withdrawal:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Withdrawal(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -19500,7 +19583,7 @@ func (ec *executionContext) _DeletedNode(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var depositImplementors = []string{"Deposit"}
+var depositImplementors = []string{"Deposit", "Node"}
 
 func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, obj *model.Deposit) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, depositImplementors)
@@ -19679,7 +19762,7 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var eVMAccountImplementors = []string{"EVMAccount", "UserOrEVMAccount", "PoolOrUserOrEVMAccount"}
+var eVMAccountImplementors = []string{"EVMAccount", "Node", "UserOrEVMAccount", "PoolOrUserOrEVMAccount"}
 
 func (ec *executionContext) _EVMAccount(ctx context.Context, sel ast.SelectionSet, obj *model.EVMAccount) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, eVMAccountImplementors)
@@ -20440,7 +20523,7 @@ func (ec *executionContext) _LogoutPayload(ctx context.Context, sel ast.Selectio
 	return out
 }
 
-var moduleImplementors = []string{"Module"}
+var moduleImplementors = []string{"Module", "Node"}
 
 func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, obj *model.Module) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, moduleImplementors)
@@ -20559,7 +20642,7 @@ func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var moduleRegistryImplementors = []string{"ModuleRegistry"}
+var moduleRegistryImplementors = []string{"ModuleRegistry", "Node"}
 
 func (ec *executionContext) _ModuleRegistry(ctx context.Context, sel ast.SelectionSet, obj *model.ModuleRegistry) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, moduleRegistryImplementors)
@@ -21041,7 +21124,7 @@ func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var poolContractImplementors = []string{"PoolContract"}
+var poolContractImplementors = []string{"PoolContract", "Node"}
 
 func (ec *executionContext) _PoolContract(ctx context.Context, sel ast.SelectionSet, obj *model.PoolContract) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, poolContractImplementors)
@@ -21396,7 +21479,7 @@ func (ec *executionContext) _PoolCreatePayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var poolDayBalanceImplementors = []string{"PoolDayBalance"}
+var poolDayBalanceImplementors = []string{"PoolDayBalance", "Node"}
 
 func (ec *executionContext) _PoolDayBalance(ctx context.Context, sel ast.SelectionSet, obj *model.PoolDayBalance) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, poolDayBalanceImplementors)
@@ -21571,7 +21654,7 @@ func (ec *executionContext) _PoolDeletePayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var poolFactoryImplementors = []string{"PoolFactory"}
+var poolFactoryImplementors = []string{"PoolFactory", "Node"}
 
 func (ec *executionContext) _PoolFactory(ctx context.Context, sel ast.SelectionSet, obj *model.PoolFactory) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, poolFactoryImplementors)
@@ -21640,7 +21723,7 @@ func (ec *executionContext) _PoolFactory(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var poolHourBalanceImplementors = []string{"PoolHourBalance"}
+var poolHourBalanceImplementors = []string{"PoolHourBalance", "Node"}
 
 func (ec *executionContext) _PoolHourBalance(ctx context.Context, sel ast.SelectionSet, obj *model.PoolHourBalance) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, poolHourBalanceImplementors)
@@ -22262,7 +22345,7 @@ func (ec *executionContext) _SearchUsersPayload(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var tokenImplementors = []string{"Token"}
+var tokenImplementors = []string{"Token", "Node"}
 
 func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, obj *model.Token) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, tokenImplementors)
@@ -22349,7 +22432,7 @@ func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
-var tokenBalanceImplementors = []string{"TokenBalance"}
+var tokenBalanceImplementors = []string{"TokenBalance", "Node"}
 
 func (ec *executionContext) _TokenBalance(ctx context.Context, sel ast.SelectionSet, obj *model.TokenBalance) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, tokenBalanceImplementors)
@@ -22480,7 +22563,7 @@ func (ec *executionContext) _TokenBalance(ctx context.Context, sel ast.Selection
 	return out
 }
 
-var txImplementors = []string{"Tx"}
+var txImplementors = []string{"Tx", "Node"}
 
 func (ec *executionContext) _Tx(ctx context.Context, sel ast.SelectionSet, obj *model.Tx) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, txImplementors)
@@ -22991,7 +23074,7 @@ func (ec *executionContext) _VerifyTokenPayload(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var withdrawalImplementors = []string{"Withdrawal"}
+var withdrawalImplementors = []string{"Withdrawal", "Node"}
 
 func (ec *executionContext) _Withdrawal(ctx context.Context, sel ast.SelectionSet, obj *model.Withdrawal) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, withdrawalImplementors)

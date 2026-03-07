@@ -6,7 +6,6 @@ package graphql
 
 import (
 	"context"
-	"time"
 
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/db/gen/indexerdb"
@@ -18,10 +17,22 @@ import (
 )
 
 var nodeFetcher = model.NodeFetcher{
-	OnClaim:       resolveClaimByID,
-	OnDeletedNode: resolveDeletedNodeByID,
-	OnPool:        resolvePoolByID,
-	OnUser:        resolveUserByUserID,
+	OnClaim:           resolveClaimByID,
+	OnDeletedNode:     resolveDeletedNodeByID,
+	OnDeposit:         resolveDepositByID,
+	OnEVMAccount:      resolveEVMAccountByID,
+	OnModule:          resolveModuleByID,
+	OnModuleRegistry:  resolveModuleRegistryByID,
+	OnPool:            resolvePoolByID,
+	OnPoolContract:    resolvePoolContractByID,
+	OnPoolDayBalance:  resolvePoolDayBalanceByID,
+	OnPoolFactory:     resolvePoolFactoryByID,
+	OnPoolHourBalance: resolvePoolHourBalanceByID,
+	OnToken:           resolveTokenByID,
+	OnTokenBalance:    resolveTokenBalanceByID,
+	OnTx:              resolveTxByID,
+	OnUser:            resolveUserByID,
+	OnWithdrawal:      resolveWithdrawalByID,
 }
 
 func init() {
@@ -67,8 +78,8 @@ func errorToGraphqlType(ctx context.Context, err error, gqlTypeName string) (gql
 	return nil, false
 }
 
-func resolveUserByUserID(ctx context.Context, userId persist.DBID) (*model.User, error) {
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, userId)
+func resolveUserByID(ctx context.Context, id persist.DBID) (*model.User, error) {
+	user, err := publicapi.For(ctx).User.GetUserById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -112,25 +123,6 @@ func resolveUserPools(ctx context.Context, obj *model.User) ([]*model.Pool, erro
 	return poolsToModels(ctx, *pools), nil
 }
 
-func resolvePoolContractByPoolContractID(ctx context.Context, contractID persist.DBID) (*model.PoolContract, error) {
-	pool := &model.PoolContract{
-		ID:          "",
-		Address:     "",
-		ChainID:     0,
-		Status:      "",
-		PoolFactory: nil, // handled by dedicated resolver
-		Account:     nil, // handled by dedicated resolver
-		Owner:       nil, // handled by dedicated resolver
-		DayBalance:  nil, // handled by dedicated resolver
-		HourBalance: nil, // handled by dedicated resolver
-		Deposits:    nil, // handled by dedicated resolver
-		Withdrawals: nil, // handled by dedicated resolver
-		CreatedAt:   time.Time{},
-		UpdatedAt:   time.Time{},
-	}
-	return pool, nil
-}
-
 func resolveClaimByID(ctx context.Context, id persist.DBID) (*model.Claim, error) {
 	claim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, id)
 	if err != nil {
@@ -147,14 +139,64 @@ func resolveClaimsByPoolID(ctx context.Context, poolID persist.DBID) ([]*model.C
 	return claimsToModels(ctx, claims), nil
 }
 
-func resolveTokenByTokenID(ctx context.Context, tokenID persist.DBID) (*model.Token, error) {
+func resolveDepositByID(ctx context.Context, id persist.DBID) (*model.Deposit, error) {
 	// TODO: implement
-	return nil, nil
+	return &model.Deposit{}, nil
 }
 
-func resolveTokenBalanceByTokenBalanceID(ctx context.Context, assetID persist.DBID) (*model.TokenBalance, error) {
+func resolveEVMAccountByID(ctx context.Context, id persist.DBID) (*model.EVMAccount, error) {
+	// TODO: implement
+	return &model.EVMAccount{}, nil
+}
+
+func resolveModuleByID(ctx context.Context, id persist.DBID) (*model.Module, error) {
+	// TODO: implement
+	return &model.Module{}, nil
+}
+
+func resolveModuleRegistryByID(ctx context.Context, id persist.DBID) (*model.ModuleRegistry, error) {
+	// TODO: implement
+	return &model.ModuleRegistry{}, nil
+}
+
+func resolvePoolContractByID(ctx context.Context, id persist.DBID) (*model.PoolContract, error) {
+	// TODO: implement
+	return &model.PoolContract{}, nil
+}
+
+func resolvePoolDayBalanceByID(ctx context.Context, id persist.DBID) (*model.PoolDayBalance, error) {
+	// TODO: implement
+	return &model.PoolDayBalance{}, nil
+}
+
+func resolvePoolFactoryByID(ctx context.Context, id persist.DBID) (*model.PoolFactory, error) {
+	// TODO: implement
+	return &model.PoolFactory{}, nil
+}
+
+func resolvePoolHourBalanceByID(ctx context.Context, id persist.DBID) (*model.PoolHourBalance, error) {
+	// TODO: implement
+	return &model.PoolHourBalance{}, nil
+}
+
+func resolveTokenByID(ctx context.Context, id persist.DBID) (*model.Token, error) {
+	// TODO: implement
+	return &model.Token{}, nil
+}
+
+func resolveTokenBalanceByID(ctx context.Context, id persist.DBID) (*model.TokenBalance, error) {
 	// TODO: implement
 	return &model.TokenBalance{}, nil
+}
+
+func resolveTxByID(ctx context.Context, id persist.DBID) (*model.Tx, error) {
+	// TODO: implement
+	return &model.Tx{}, nil
+}
+
+func resolveWithdrawalByID(ctx context.Context, id persist.DBID) (*model.Withdrawal, error) {
+	// TODO: implement
+	return &model.Withdrawal{}, nil
 }
 
 func resolveViewer(ctx context.Context) (*model.User, error) {

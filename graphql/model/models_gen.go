@@ -216,7 +216,6 @@ type DeletedNode struct {
 func (DeletedNode) IsNode() {}
 
 type Deposit struct {
-	ID          GqlID             `json:"id"`
 	Transaction *Tx               `json:"transaction"`
 	Pool        *Pool             `json:"pool"`
 	Token       *Token            `json:"token"`
@@ -229,8 +228,9 @@ type Deposit struct {
 	UpdatedAt   time.Time         `json:"updatedAt"`
 }
 
+func (Deposit) IsNode() {}
+
 type EVMAccount struct {
-	ID          GqlID           `json:"id"`
 	Address     persist.Address `json:"address"`
 	AccountType EVMAccountType  `json:"accountType"`
 	SelfPools   []*Pool         `json:"selfPools"`
@@ -239,6 +239,7 @@ type EVMAccount struct {
 	UpdatedAt   time.Time       `json:"updatedAt"`
 }
 
+func (EVMAccount) IsNode()                   {}
 func (EVMAccount) IsUserOrEVMAccount()       {}
 func (EVMAccount) IsPoolOrUserOrEVMAccount() {}
 
@@ -399,7 +400,6 @@ type LogoutPayload struct {
 }
 
 type Module struct {
-	ID             GqlID           `json:"id"`
 	Address        persist.Address `json:"address"`
 	ChainID        int             `json:"chainId"`
 	ModuleRegistry *ModuleRegistry `json:"moduleRegistry"`
@@ -413,8 +413,9 @@ type Module struct {
 	UpdatedAt      time.Time       `json:"updatedAt"`
 }
 
+func (Module) IsNode() {}
+
 type ModuleRegistry struct {
-	ID          GqlID           `json:"id"`
 	Address     persist.Address `json:"address"`
 	ChainID     int             `json:"chainId"`
 	ModuleCount int             `json:"moduleCount"`
@@ -422,6 +423,8 @@ type ModuleRegistry struct {
 	CreatedAt   time.Time       `json:"createdAt"`
 	UpdatedAt   time.Time       `json:"updatedAt"`
 }
+
+func (ModuleRegistry) IsNode() {}
 
 type PageInfo struct {
 	Total           *int   `json:"total"`
@@ -451,7 +454,6 @@ func (Pool) IsPoolOrUserOrEVMAccount() {}
 func (Pool) IsPoolResult()             {}
 
 type PoolContract struct {
-	ID          GqlID              `json:"id"`
 	Address     persist.Address    `json:"address"`
 	ChainID     int                `json:"chainId"`
 	Status      PoolStatus         `json:"status"`
@@ -465,6 +467,8 @@ type PoolContract struct {
 	CreatedAt   time.Time          `json:"createdAt"`
 	UpdatedAt   time.Time          `json:"updatedAt"`
 }
+
+func (PoolContract) IsNode() {}
 
 type PoolCreateInput struct {
 	Owner       *string             `json:"owner"`
@@ -484,7 +488,6 @@ type PoolCreatePayload struct {
 func (PoolCreatePayload) IsPoolCreateResult() {}
 
 type PoolDayBalance struct {
-	ID        GqlID             `json:"id"`
 	ChainID   int               `json:"chainId"`
 	Date      time.Time         `json:"date"`
 	Pool      *Pool             `json:"pool"`
@@ -493,6 +496,8 @@ type PoolDayBalance struct {
 	CreatedAt time.Time         `json:"createdAt"`
 	UpdatedAt time.Time         `json:"updatedAt"`
 }
+
+func (PoolDayBalance) IsNode() {}
 
 type PoolDeletePayload struct {
 	Pool *Pool `json:"pool"`
@@ -501,7 +506,6 @@ type PoolDeletePayload struct {
 func (PoolDeletePayload) IsPoolDeleteResult() {}
 
 type PoolFactory struct {
-	ID        GqlID           `json:"id"`
 	Address   persist.Address `json:"address"`
 	ChainID   int             `json:"chainId"`
 	PoolCount int             `json:"poolCount"`
@@ -510,8 +514,9 @@ type PoolFactory struct {
 	UpdatedAt time.Time       `json:"updatedAt"`
 }
 
+func (PoolFactory) IsNode() {}
+
 type PoolHourBalance struct {
-	ID        GqlID             `json:"id"`
 	ChainID   int               `json:"chainId"`
 	Date      time.Time         `json:"date"`
 	Pool      *Pool             `json:"pool"`
@@ -520,6 +525,8 @@ type PoolHourBalance struct {
 	CreatedAt time.Time         `json:"createdAt"`
 	UpdatedAt time.Time         `json:"updatedAt"`
 }
+
+func (PoolHourBalance) IsNode() {}
 
 type PoolSearchResult struct {
 	Pool *Pool `json:"pool"`
@@ -573,7 +580,6 @@ type SearchUsersPayload struct {
 func (SearchUsersPayload) IsSearchUsersResult() {}
 
 type Token struct {
-	ID           GqlID           `json:"id"`
 	Address      persist.Address `json:"address"`
 	ChainID      int             `json:"chainId"`
 	TokenType    TokenType       `json:"tokenType"`
@@ -588,8 +594,9 @@ type Token struct {
 	UpdatedAt    time.Time       `json:"updatedAt"`
 }
 
+func (Token) IsNode() {}
+
 type TokenBalance struct {
-	ID        GqlID                  `json:"id"`
 	ChainID   int                    `json:"chainId"`
 	Token     *Token                 `json:"token"`
 	Holder    PoolOrUserOrEVMAccount `json:"holder"`
@@ -598,8 +605,9 @@ type TokenBalance struct {
 	UpdatedAt time.Time              `json:"updatedAt"`
 }
 
+func (TokenBalance) IsNode() {}
+
 type Tx struct {
-	ID          GqlID             `json:"id"`
 	GasUsed     persist.HexString `json:"gasUsed"`
 	GasPrice    persist.HexString `json:"gasPrice"`
 	CreatedAt   time.Time         `json:"createdAt"`
@@ -607,6 +615,8 @@ type Tx struct {
 	Deposits    []*Deposit        `json:"deposits"`
 	Withdrawals []*Withdrawal     `json:"withdrawals"`
 }
+
+func (Tx) IsNode() {}
 
 type User struct {
 	Roles []*persist.Role `json:"roles"`
@@ -663,7 +673,6 @@ type VerifyTokenPayload struct {
 func (VerifyTokenPayload) IsVerifyTokenResult() {}
 
 type Withdrawal struct {
-	ID          GqlID             `json:"id"`
 	Transaction *Tx               `json:"transaction"`
 	Pool        *Pool             `json:"pool"`
 	Token       *Token            `json:"token"`
@@ -675,6 +684,8 @@ type Withdrawal struct {
 	CreatedAt   time.Time         `json:"createdAt"`
 	UpdatedAt   time.Time         `json:"updatedAt"`
 }
+
+func (Withdrawal) IsNode() {}
 
 type EVMAccountType string
 

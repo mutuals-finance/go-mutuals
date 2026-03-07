@@ -72,7 +72,7 @@ enum EVMAccountType {
   Contract
 }
 
-type EVMAccount {
+type EVMAccount implements Node {
   id: ID!
   address: Address!
   accountType: EVMAccountType!
@@ -82,7 +82,7 @@ type EVMAccount {
   updatedAt: Time!
 }
 
-type PoolFactory {
+type PoolFactory implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -92,7 +92,7 @@ type PoolFactory {
   updatedAt: Time!
 }
 
-type ModuleRegistry {
+type ModuleRegistry implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -140,7 +140,7 @@ enum TokenType {
   ERC1155
 }
 
-type Token {
+type Token implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -156,7 +156,7 @@ type Token {
   updatedAt: Time!
 }
 
-type TokenBalance {
+type TokenBalance implements Node {
   id: ID!
   chainId: Int!
   token: Token! @goField(forceResolver: true)
@@ -167,7 +167,7 @@ type TokenBalance {
 }
 
 #-------------------------------------------------------------------------------
-# EXTENSION
+# MODULES
 #-------------------------------------------------------------------------------
 
 enum ModuleType {
@@ -175,7 +175,7 @@ enum ModuleType {
   Distribution
 }
 
-type Module {
+type Module implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -232,7 +232,7 @@ type Pool implements Node {
 
 union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
 
-type PoolContract {
+type PoolContract implements Node {
   id: ID!
   address: Address!
   chainId: Int!
@@ -248,7 +248,7 @@ type PoolContract {
   updatedAt: Time!
 }
 
-type PoolDayBalance {
+type PoolDayBalance implements Node {
   id: ID!
   chainId: Int!
   date: Time!
@@ -259,7 +259,7 @@ type PoolDayBalance {
   updatedAt: Time!
 }
 
-type PoolHourBalance {
+type PoolHourBalance implements Node {
   id: ID!
   chainId: Int!
   date: Time!
@@ -283,7 +283,7 @@ enum ReportWindow {
   ALL_TIME
 }
 
-type Tx {
+type Tx implements Node {
   id: ID!
   gasUsed: HexString!
   gasPrice: HexString!
@@ -293,7 +293,7 @@ type Tx {
   withdrawals: [Withdrawal]! @goField(forceResolver: true)
 }
 
-type Deposit {
+type Deposit implements Node {
   id: ID!
   transaction: Tx! @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
@@ -307,7 +307,7 @@ type Deposit {
   updatedAt: Time!
 }
 
-type Withdrawal {
+type Withdrawal implements Node {
   id: ID!
   transaction: Tx! @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
@@ -652,7 +652,6 @@ type Mutation {
   userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
   userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
   userDelete(token: String!): UserDeleteResult! @authRequired
-
 
   # Roles
   roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
