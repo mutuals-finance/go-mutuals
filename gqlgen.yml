@@ -43,57 +43,7 @@ autobind:
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 models:
-  Address:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.Address
-  JSON:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.JSON
-  JSONB:
-    model:
-      - github.com/jackc/pgtype.JSONB
-  PubKey:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.PubKey
-  Chain:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.Chain
-  EmailVerificationStatus:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.EmailVerificationStatus
-  Email:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.Email
-  ChainAddress:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
-  ChainAddressInput:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
-  ChainPubKey:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
-  ChainPubKeyInput:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
-  HexString:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.HexString
-  WalletType:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.WalletType
-  InteractionType:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.InteractionType
-  PoolStatusType:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.PoolStatus
-  CalculationType:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.CalculationType
-  RecipientType:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.RecipientType
+  # Core scalar types
   ID:
     model:
       - github.com/mutuals/go-mutuals/graphql/model.GqlID
@@ -106,21 +56,62 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+
+  # Blockchain types
+  Address:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.Address
+  Chain:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.Chain
+  ChainAddress:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
+  ChainAddressInput:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
+  ChainPubKey:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
+  ChainPubKeyInput:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
+  PubKey:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.PubKey
+  HexString:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.HexString
+
+  # Data types
+  JSON:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.JSON
+
+  # Wallet types
+  WalletType:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.WalletType
+
+  # Event types
   Action:
     model:
       - github.com/mutuals/go-mutuals/service/persist.Action
+
+  # User types
   Role:
     model:
       - github.com/mutuals/go-mutuals/service/persist.Role
-  ReportWindow:
-    model:
-      - github.com/mutuals/go-mutuals/graphql/model.Window
-  ReportReason:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ReportReason
   DarkMode:
     model:
       - github.com/mutuals/go-mutuals/service/persist.DarkMode
+
+  # Report types
+  ReportWindow:
+    model:
+      - github.com/mutuals/go-mutuals/graphql/model.Window
+
+  # Auth types
   BasicAuthType:
     model:
       - github.com/mutuals/go-mutuals/service/auth/basicauth.AuthTokenType
