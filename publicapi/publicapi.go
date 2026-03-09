@@ -49,6 +49,7 @@ type PublicAPI struct {
 	User           *UserAPI
 	Claim          *ClaimAPI
 	Wallet         *WalletAPI
+	PushToken      *PushTokenAPI
 	Admin          *adminapi.AdminAPI
 	Search         *SearchAPI
 }
@@ -77,6 +78,7 @@ func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching boo
 		Pool:           &PoolAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient},
 		User:           &UserAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
 		Wallet:         &WalletAPI{repos: repos, queries: coreQueries, coreLoaders: coreLoaders, indexerLoaders: indexerLoaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
+		PushToken:      &PushTokenAPI{queries: coreQueries, validator: validator},
 		Admin:          adminapi.NewAPI(repos, coreQueries, authRefreshCache, validator, multichainProvider),
 		Search:         &SearchAPI{queries: coreQueries, loaders: coreLoaders, validator: validator},
 	}

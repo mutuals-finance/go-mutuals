@@ -39,7 +39,7 @@ WHERE NOT deleted DO
 UPDATE
 SET active     = TRUE,
     updated_at = NOW()
-RETURNING id
+RETURNING id, created_at, updated_at, deleted, user_id, blocked_user_id, active
 `
 
 type BlockUserParams struct {
@@ -48,11 +48,19 @@ type BlockUserParams struct {
 	BlockedUserID persist.DBID `db:"blocked_user_id" json:"blocked_user_id"`
 }
 
-func (q *Queries) BlockUser(ctx context.Context, arg BlockUserParams) (persist.DBID, error) {
+func (q *Queries) BlockUser(ctx context.Context, arg BlockUserParams) (UserBlocklist, error) {
 	row := q.db.QueryRow(ctx, blockUser, arg.ID, arg.UserID, arg.BlockedUserID)
-	var id persist.DBID
-	err := row.Scan(&id)
-	return id, err
+	var i UserBlocklist
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Deleted,
+		&i.UserID,
+		&i.BlockedUserID,
+		&i.Active,
+	)
+	return i, err
 }
 
 const countAllUsers = `-- name: CountAllUsers :one
@@ -314,13 +322,14 @@ func (q *Queries) GetUsersWithRolePaginate(ctx context.Context, arg GetUsersWith
 	return items, nil
 }
 
-const unblockUser = `-- name: UnblockUser :exec
+const unblockUser = `-- name: UnblockUser :one
 UPDATE user_blocklist
 SET active     = FALSE,
     updated_at = NOW()
 WHERE user_id = $1
   AND blocked_user_id = $2
   AND NOT deleted
+RETURNING id, created_at, updated_at, deleted, user_id, blocked_user_id, active
 `
 
 type UnblockUserParams struct {
@@ -328,7 +337,17 @@ type UnblockUserParams struct {
 	BlockedUserID persist.DBID `db:"blocked_user_id" json:"blocked_user_id"`
 }
 
-func (q *Queries) UnblockUser(ctx context.Context, arg UnblockUserParams) error {
-	_, err := q.db.Exec(ctx, unblockUser, arg.UserID, arg.BlockedUserID)
-	return err
+func (q *Queries) UnblockUser(ctx context.Context, arg UnblockUserParams) (UserBlocklist, error) {
+	row := q.db.QueryRow(ctx, unblockUser, arg.UserID, arg.BlockedUserID)
+	var i UserBlocklist
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Deleted,
+		&i.UserID,
+		&i.BlockedUserID,
+		&i.Active,
+	)
+	return i, err
 }

@@ -115,12 +115,13 @@ WHERE NOT deleted DO
 UPDATE
 SET active     = TRUE,
     updated_at = NOW()
-RETURNING id;
+RETURNING *;
 
--- name: UnblockUser :exec
+-- name: UnblockUser :one
 UPDATE user_blocklist
 SET active     = FALSE,
     updated_at = NOW()
 WHERE user_id = @user_id
   AND blocked_user_id = @blocked_user_id
-  AND NOT deleted;
+  AND NOT deleted
+RETURNING *;

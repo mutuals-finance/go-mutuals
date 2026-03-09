@@ -2,51 +2,16 @@ package user
 
 import (
 	"context"
-	"errors"
-	"strings"
 	"time"
 
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
+	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/persist/postgres"
-	"github.com/mutuals/go-mutuals/util"
-
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/util"
 )
 
-var errUserCannotRemoveAllWallets = errors.New("user does not have enough wallets to remove")
-var errUserCannotRemovePrimaryWallet = errors.New("cannot remove primary wallet address")
-var errMustResolveENS = errors.New("ENS username must resolve to owner address")
-
-// GetUserInput is the input for the user get pipeline
-type GetUserInput struct {
-	UserId   persist.DBID    `json:"user_id" form:"user_id"`
-	Address  persist.Address `json:"address" form:"address"`
-	Chain    persist.Chain   `json:"chain" form:"chain"`
-	Username string          `json:"username" form:"username"`
-}
-
-// GetUserOutput is the output of the user get pipeline
-type GetUserOutput struct {
-	UserId    persist.DBID     `json:"id"`
-	Username  string           `json:"username"`
-	BioStr    string           `json:"bio"`
-	Addresses []persist.Wallet `json:"addresses"`
-	CreatedAt time.Time        `json:"created_at"`
-}
-
-// RemoveUserAddressesInput is the input for the user remove addresses pipeline
-type RemoveUserAddressesInput struct {
-	Addresses []persist.Address `json:"addresses"   binding:"required"`
-	Chains    []persist.Chain   `json:"chains"      binding:"required"`
-}
-
-type CreateUserInput struct {
-	DID string
-}
-
-// CreateUser creates a new user
+// CreateUser creates a new user with associated linked accounts based on privy auth data in the context
 func CreateUser(ctx context.Context, queries *coredb.Queries) (user coredb.User, err error) {
 	gc := util.MustGetGinContext(ctx)
 	userId := auth.GetUserIdFromCtx(gc)
@@ -70,36 +35,108 @@ func CreateUser(ctx context.Context, queries *coredb.Queries) (user coredb.User,
 	return user, nil
 }
 
-// UpdateUserInfo updates a user by ID and ensures that if they are using an ENS name as a username that their address resolves to that ENS
-func UpdateUserInfo(pCtx context.Context, userId persist.DBID, username string, userRepository *postgres.UserRepository, ethClient *ethclient.Client) error {
-	if strings.HasSuffix(strings.ToLower(username), ".eth") {
-		/*		user, err := userRepository.GetByID(pCtx, userId)
-				if err != nil {
-					return err
-				}
-				can := false
-				for _, addr := range user.Wallets {
-					if resolves, _ := eth.ResolvesENS(pCtx, username, addr.Address, ethClient); resolves {
-						can = true
-						break
-					}
-				}
-				if !can {
-					return errMustResolveENS
-				}
-		*/
-	}
+type GetUserByIdInput struct {
+	UserId persist.DBID
+}
 
-	err := userRepository.UpdateByID(
-		pCtx,
-		userId,
-		persist.UserUpdateInfoInput{
-			UsernameIdempotent: persist.NullString(strings.ToLower(username)),
-			Username:           persist.NullString(username),
-		},
-	)
+// GetUserById retrieves a user by their ID using the dataloader
+func GetUserById(ctx context.Context, loaders *dataloader.Loaders, input GetUserByIdInput) (*coredb.User, error) {
+	user, err := loaders.GetUserByIdBatch.Load(input.UserId)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &user, nil
+}
+
+type GetUsersByIdsInput struct {
+	UserIds       []persist.DBID
+	Limit         int32
+	CurBeforeTime time.Time
+	CurBeforeID   persist.DBID
+	CurAfterTime  time.Time
+	CurAfterID    persist.DBID
+	PagingForward bool
+}
+
+// GetUsersByIds retrieves multiple users by their IDs with pagination
+func GetUsersByIds(ctx context.Context, queries *coredb.Queries, input GetUsersByIdsInput) ([]coredb.User, error) {
+	return queries.GetUsersByIds(ctx, coredb.GetUsersByIdsParams{
+		Limit:         input.Limit,
+		UserIds:       input.UserIds,
+		CurBeforeTime: input.CurBeforeTime,
+		CurBeforeID:   input.CurBeforeID,
+		CurAfterTime:  input.CurAfterTime,
+		CurAfterID:    input.CurAfterID,
+		PagingForward: input.PagingForward,
+	})
+}
+
+type GetUserByAddressInput struct {
+	Address persist.Address
+}
+
+// GetUserByAddress retrieves a user by their address (currently not implemented)
+func GetUserByAddress(ctx context.Context, queries *coredb.Queries, input GetUserByAddressInput) (*coredb.User, error) {
+	// TODO: Implement this function when needed
+	return nil, nil
+}
+
+type GetUserRolesByUserIdInput struct {
+	UserId persist.DBID
+}
+
+// GetUserRolesByUserId retrieves the roles for a specific user
+func GetUserRolesByUserId(ctx context.Context, queries *coredb.Queries, input GetUserRolesByUserIdInput) ([]persist.Role, error) {
+	return auth.RolesByUserId(ctx, queries, input.UserId)
+}
+
+type PaginateUsersWithRoleInput struct {
+	Role          persist.Role
+	Limit         int32
+	CurBeforeKey  string
+	CurBeforeID   persist.DBID
+	CurAfterKey   string
+	CurAfterID    persist.DBID
+	PagingForward bool
+}
+
+// PaginateUsersWithRole retrieves users with a specific role, with pagination
+func PaginateUsersWithRole(ctx context.Context, queries *coredb.Queries, input PaginateUsersWithRoleInput) ([]coredb.User, error) {
+	return queries.GetUsersWithRolePaginate(ctx, coredb.GetUsersWithRolePaginateParams{
+		Role:          input.Role,
+		Limit:         input.Limit,
+		CurBeforeKey:  input.CurBeforeKey,
+		CurBeforeID:   input.CurBeforeID,
+		CurAfterKey:   input.CurAfterKey,
+		CurAfterID:    input.CurAfterID,
+		PagingForward: input.PagingForward,
+	})
+}
+
+type BlockUserInput struct {
+	ViewerId persist.DBID
+	UserId   persist.DBID
+}
+
+// BlockUser blocks a user for the authenticated viewer
+func BlockUser(ctx context.Context, queries *coredb.Queries, input BlockUserInput) (blocklist coredb.UserBlocklist, err error) {
+	blocklist, err = queries.BlockUser(ctx, coredb.BlockUserParams{
+		ID:            persist.GenerateID(),
+		UserID:        input.ViewerId,
+		BlockedUserID: input.UserId,
+	})
+	if err != nil {
+		return coredb.UserBlocklist{}, err
+	}
+	return blocklist, nil
+}
+
+type UnblockUserInput struct {
+	ViewerId persist.DBID
+	UserId   persist.DBID
+}
+
+// UnblockUser unblocks a user for the authenticated viewer
+func UnblockUser(ctx context.Context, queries *coredb.Queries, input UnblockUserInput) (blocklist coredb.UserBlocklist, err error) {
+	return queries.UnblockUser(ctx, coredb.UnblockUserParams{UserID: input.ViewerId, BlockedUserID: input.UserId})
 }

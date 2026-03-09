@@ -2,11 +2,9 @@ package publicapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v4"
 	"github.com/mutuals/go-mutuals/event"
 	"github.com/mutuals/go-mutuals/service/redis"
 	"github.com/mutuals/go-mutuals/service/task"
@@ -66,12 +64,7 @@ func (api UserAPI) GetUserById(ctx context.Context, userId persist.DBID) (*cored
 		return nil, err
 	}
 
-	user, err := api.loaders.GetUserByIdBatch.Load(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
+	return userService.GetUserById(ctx, api.loaders, userService.GetUserByIdInput{UserId: userId})
 }
 
 func (api UserAPI) GetViewer(ctx context.Context) (*coredb.User, error) {
@@ -92,7 +85,7 @@ func (api UserAPI) GetUsersByIds(ctx context.Context, userIds []persist.DBID, be
 	}
 
 	queryFunc := func(params timeIDPagingParams) ([]coredb.User, error) {
-		return api.queries.GetUsersByIds(ctx, coredb.GetUsersByIdsParams{
+		return userService.GetUsersByIds(ctx, api.queries, userService.GetUsersByIdsInput{
 			Limit:         params.Limit,
 			UserIds:       userIds,
 			CurBeforeTime: params.CursorBeforeTime,
@@ -161,16 +154,18 @@ func (api UserAPI) GetUserByAddress(ctx context.Context, address persist.Address
 		return nil, err
 	}
 
-	/*	dbUser, err := api.queries.GetUsersByIds(ctx, chainAddress.Address())
-		if err != nil {
-			return nil, err
-		}
-	*/
-	return nil, nil
+	return userService.GetUserByAddress(ctx, api.queries, userService.GetUserByAddressInput{Address: address})
 }
 
 func (api *UserAPI) GetUserRolesByUserId(ctx context.Context, userId persist.DBID) ([]persist.Role, error) {
-	return auth.RolesByUserId(ctx, api.queries, userId)
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"userId": validate.WithTag(userId, "required"),
+	}); err != nil {
+		return nil, err
+	}
+
+	return userService.GetUserRolesByUserId(ctx, api.queries, userService.GetUserRolesByUserIdInput{UserId: userId})
 }
 
 func (api *UserAPI) UserIsAdmin(ctx context.Context) bool {
@@ -195,7 +190,7 @@ func (api UserAPI) PaginateUsersWithRole(ctx context.Context, role persist.Role,
 	}
 
 	queryFunc := func(params lexicalPagingParams) ([]coredb.User, error) {
-		return api.queries.GetUsersWithRolePaginate(ctx, coredb.GetUsersWithRolePaginateParams{
+		return userService.PaginateUsersWithRole(ctx, api.queries, userService.PaginateUsersWithRoleInput{
 			Role:          role,
 			Limit:         params.Limit,
 			CurBeforeKey:  params.CursorBeforeKey,
@@ -241,142 +236,34 @@ func (api UserAPI) CreateUser(ctx context.Context) (user coredb.User, err error)
 	return user, nil
 }
 
-func (api UserAPI) UpdateUserInfo(ctx context.Context, username string) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"username": validate.WithTag(username, "required,username"),
-	}); err != nil {
-		return err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = userService.UpdateUserInfo(ctx, userId, username, api.repos.UserRepository, api.ethClient)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// CreatePushTokenForUser adds a push token to a user, or returns the existing push token if it's already been
-// added to this user. If the token can't be added because it belongs to another user, an error is returned.
-func (api UserAPI) CreatePushTokenForUser(ctx context.Context, pushToken string) (coredb.PushNotificationToken, error) {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"pushToken": validate.WithTag(pushToken, "required,min=1,max=255"),
-	}); err != nil {
-		return coredb.PushNotificationToken{}, err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return coredb.PushNotificationToken{}, err
-	}
-
-	// Does the token already exist?
-	token, err := api.queries.GetPushTokenByPushToken(ctx, pushToken)
-
-	if err == nil {
-		// If the token exists and belongs to the current user, return it. Attempting to re-add
-		// a token that you've already registered is a no-op.
-		if token.UserID == userId {
-			return token, nil
-		}
-
-		// Otherwise, the token belongs to another user. Return an error.
-		return coredb.PushNotificationToken{}, persist.ErrPushTokenBelongsToAnotherUser{PushToken: pushToken}
-	}
-
-	// ErrNoRows is expected and means we can continue with creating the token. If we see any other
-	// error, return it.
-	if err != pgx.ErrNoRows {
-		return coredb.PushNotificationToken{}, err
-	}
-
-	token, err = api.queries.CreatePushTokenForUser(ctx, coredb.CreatePushTokenForUserParams{
-		ID:        persist.GenerateID(),
-		UserID:    userId,
-		PushToken: pushToken,
-	})
-
-	if err != nil {
-		return coredb.PushNotificationToken{}, err
-	}
-
-	return token, nil
-}
-
-// DeletePushTokenByPushToken removes a push token from a user, or does nothing if the token doesn't exist.
-// If the token can't be removed because it belongs to another user, an error is returned.
-func (api UserAPI) DeletePushTokenByPushToken(ctx context.Context, pushToken string) error {
-	// Validate
-	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"pushToken": validate.WithTag(pushToken, "required,min=1,max=255"),
-	}); err != nil {
-		return err
-	}
-
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return err
-	}
-
-	existingToken, err := api.queries.GetPushTokenByPushToken(ctx, pushToken)
-	if err == nil {
-		// If the token exists and belongs to the current user, let them delete it.
-		if existingToken.UserID == userId {
-			return api.queries.DeletePushTokensByIds(ctx, []persist.DBID{existingToken.ID})
-		}
-
-		// Otherwise, the token belongs to another user. Return an error.
-		return persist.ErrPushTokenBelongsToAnotherUser{PushToken: pushToken}
-	}
-
-	// ErrNoRows is okay and means the token doesn't exist. Unregistering it is a no-op
-	// and doesn't return an error.
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil
-	}
-
-	return err
-}
-
-func (api UserAPI) BlockUser(ctx context.Context, userID persist.DBID) error {
-	// Validate
+// BlockUser adds the specified user to the authenticated user's blocklist
+func (api UserAPI) BlockUser(ctx context.Context, userId persist.DBID) (user coredb.UserBlocklist, err error) {
 	viewerId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
-		return err
+		return coredb.UserBlocklist{}, err
 	}
+
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": validate.WithTag(userID, fmt.Sprintf("required,ne=%s", viewerId)),
+		"userId": validate.WithTag(userId, fmt.Sprintf("required,ne=%s", viewerId)),
 	}); err != nil {
-		return err
+		return coredb.UserBlocklist{}, err
 	}
-	_, err = api.queries.BlockUser(ctx, coredb.BlockUserParams{
-		ID:            persist.GenerateID(),
-		UserID:        viewerId,
-		BlockedUserID: userID,
-	})
-	if err != nil && errors.Is(err, pgx.ErrNoRows) {
-		return persist.ErrUserNotFound{UserID: userID}
-	}
-	return err
+
+	return userService.BlockUser(ctx, api.queries, userService.BlockUserInput{ViewerId: viewerId, UserId: userId})
 }
 
-func (api UserAPI) UnblockUser(ctx context.Context, userID persist.DBID) error {
-	// Validate
+// UnblockUser removes the specified user from the authenticated user's blocklist
+func (api UserAPI) UnblockUser(ctx context.Context, userId persist.DBID) (user coredb.UserBlocklist, err error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"userID": validate.WithTag(userID, "required"),
+		"userId": validate.WithTag(userId, "required"),
 	}); err != nil {
-		return err
+		return coredb.UserBlocklist{}, err
 	}
-	viewerID, err := getAuthenticatedUserId(ctx)
+
+	viewerId, err := getAuthenticatedUserId(ctx)
 	if err != nil {
-		return err
+		return coredb.UserBlocklist{}, err
 	}
-	return api.queries.UnblockUser(ctx, coredb.UnblockUserParams{UserID: persist.DBID(viewerID), BlockedUserID: userID})
+
+	return userService.UnblockUser(ctx, api.queries, userService.UnblockUserInput{ViewerId: viewerId, UserId: userId})
 }
