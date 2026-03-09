@@ -71,6 +71,7 @@ func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Rep
 		Auth:           &AuthAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient, authRefreshCache: authRefreshCache},
 		Pool:           &PoolAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient},
 		User:           &UserAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient},
+		Claim:          &ClaimAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient},
 		Wallet:         &WalletAPI{repos: repos, queries: coreQueries, coreLoaders: coreLoaders, indexerLoaders: indexerLoaders, validator: validator, ethClient: ethClient},
 		PushToken:      &PushTokenAPI{queries: coreQueries, validator: validator},
 		Admin:          adminapi.NewAPI(repos, coreQueries, authRefreshCache, validator),

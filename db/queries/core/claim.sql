@@ -8,10 +8,22 @@ FROM claims
 WHERE id = $1
   AND deleted = FALSE;
 
+-- name: GetClaimsByIds :many
+SELECT *
+FROM claims
+WHERE id = ANY(@ids::text[])
+  AND deleted = FALSE;
+
 -- name: GetClaimByIdBatch :batchone
 SELECT *
 FROM claims
 WHERE id = $1
+  AND deleted = FALSE;
+
+-- name: GetClaimsByPoolId :many
+SELECT *
+FROM claims
+WHERE pool_id = $1
   AND deleted = FALSE;
 
 -- name: GetClaimsByPoolIdBatch :batchmany
@@ -22,6 +34,30 @@ WHERE p.id = $1
   AND c.deleted = FALSE
   AND p.deleted = FALSE;
 
+-- name: CreateClaim :one
+INSERT INTO claims (id, pool_id, label, data, parent, children, validation_id, distribution_id, deleted, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, NOW(), NOW())
+RETURNING *;
+
+-- name: UpdateClaim :one
+UPDATE claims
+SET data            = $2,
+    parent          = $3,
+    children        = $4,
+    validation_id   = $5,
+    distribution_id = $6,
+    updated_at      = NOW()
+WHERE id = $1
+  AND deleted = FALSE
+RETURNING *;
+
+-- name: DeleteClaim :one
+UPDATE claims
+SET deleted    = TRUE,
+    updated_at = NOW()
+WHERE id = $1
+  AND deleted = FALSE
+RETURNING *;
 
 -- name: CreateClaims :many
 WITH updates AS (SELECT UNNEST(@id::text[])              AS id,

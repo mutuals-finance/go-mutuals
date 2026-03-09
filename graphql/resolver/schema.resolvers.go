@@ -16,32 +16,74 @@ import (
 
 // Parent is the resolver for the parent field.
 func (r *claimResolver) Parent(ctx context.Context, obj *model.Claim) (*model.Claim, error) {
-	panic(fmt.Errorf("not implemented: Parent - parent"))
+	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.ID().DBID())
+	if err != nil {
+		return nil, err
+	}
+
+	if !dbClaim.Parent.Valid || dbClaim.Parent.String == "" {
+		return nil, nil
+	}
+
+	parentID := persist.SQLNullStringToDBIDPtr(dbClaim.Parent)
+	if parentID == nil {
+		return nil, nil
+	}
+
+	parentClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, *parentID)
+	if err != nil {
+		return nil, nil
+	}
+
+	return claimToModel(ctx, *parentClaim), nil
 }
 
 // Children is the resolver for the children field.
 func (r *claimResolver) Children(ctx context.Context, obj *model.Claim) ([]*model.Claim, error) {
-	panic(fmt.Errorf("not implemented: Children - children"))
+	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.ID().DBID())
+	if err != nil || len(dbClaim.Children) == 0 {
+		return []*model.Claim{}, nil
+	}
+
+	childIDs := persist.StringSliceToDBIDSlice(dbClaim.Children)
+	childClaims, err := publicapi.For(ctx).Claim.GetClaimsByIds(ctx, childIDs)
+	if err != nil {
+		return []*model.Claim{}, nil
+	}
+
+	return claimsToModels(ctx, childClaims), nil
 }
 
 // Pool is the resolver for the pool field.
 func (r *claimResolver) Pool(ctx context.Context, obj *model.Claim) (*model.Pool, error) {
-	panic(fmt.Errorf("not implemented: Pool - pool"))
+	// Get the claim from database to access pool ID
+	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.ID().DBID())
+	if err != nil {
+		return nil, err
+	}
+
+	return resolvePoolByID(ctx, dbClaim.PoolID)
 }
 
 // Recipient is the resolver for the recipient field.
 func (r *claimResolver) Recipient(ctx context.Context, obj *model.Claim) (model.PoolOrUserOrEVMAccount, error) {
-	panic(fmt.Errorf("not implemented: Recipient - recipient"))
+	// TODO: Implement recipient resolution when the recipient field is added to the database
+	// For now, return nil as recipient is not yet implemented
+	return nil, nil
 }
 
 // Validation is the resolver for the validation field.
 func (r *claimResolver) Validation(ctx context.Context, obj *model.Claim) (*model.Module, error) {
-	panic(fmt.Errorf("not implemented: Validation - validation"))
+	// TODO: Implement Module resolution when Module entity is ready
+	// For now, return nil as validation modules are not yet implemented
+	return nil, nil
 }
 
 // Distribution is the resolver for the distribution field.
 func (r *claimResolver) Distribution(ctx context.Context, obj *model.Claim) (*model.Module, error) {
-	panic(fmt.Errorf("not implemented: Distribution - distribution"))
+	// TODO: Implement Module resolution when Module entity is ready
+	// For now, return nil as distribution modules are not yet implemented
+	return nil, nil
 }
 
 // Transaction is the resolver for the transaction field.
@@ -115,32 +157,149 @@ func (r *mutationResolver) RoleUpdate(ctx context.Context, role persist.Role, in
 
 // PoolClaimCreate is the resolver for the poolClaimCreate field.
 func (r *mutationResolver) PoolClaimCreate(ctx context.Context, poolID model.GqlID, input model.ClaimCreateInput) (model.ClaimCreateResult, error) {
-	panic(fmt.Errorf("not implemented: PoolClaimCreate - poolClaimCreate"))
+	var children []persist.DBID
+	if input.Children != nil {
+		children = make([]persist.DBID, len(input.Children))
+		for i, c := range input.Children {
+			children[i] = persist.DBID(c)
+		}
+	}
+
+	var parent *persist.DBID
+	if input.Parent != nil {
+		p := persist.DBID(*input.Parent)
+		parent = &p
+	}
+
+	claim, err := publicapi.For(ctx).Claim.CreateClaim(
+		ctx,
+		poolID.DBID(),
+		input.Label,
+		input.Data,
+		parent,
+		children,
+		input.ValidationID,
+		input.DistributionID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.ClaimCreatePayload{
+		Claim: claimToModel(ctx, claim),
+	}, nil
 }
 
 // PoolClaimUpdate is the resolver for the poolClaimUpdate field.
 func (r *mutationResolver) PoolClaimUpdate(ctx context.Context, poolID model.GqlID, input model.ClaimUpdateInput) (model.ClaimUpdateResult, error) {
-	panic(fmt.Errorf("not implemented: PoolClaimUpdate - poolClaimUpdate"))
+	var children []persist.DBID
+	if input.Children != nil {
+		children = make([]persist.DBID, len(input.Children))
+		for i, c := range input.Children {
+			children[i] = c.DBID()
+		}
+	}
+
+	claim, err := publicapi.For(ctx).Claim.UpdateClaim(
+		ctx,
+		poolID.DBID(),
+		input.ClaimID.DBID(),
+		input.Data,
+		model.ToDBIDPtr(input.Parent),
+		children,
+		*input.ValidationID,
+		*input.DistributionID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.ClaimUpdatePayload{
+		Claim: claimToModel(ctx, claim),
+	}, nil
 }
 
 // PoolClaimDelete is the resolver for the poolClaimDelete field.
 func (r *mutationResolver) PoolClaimDelete(ctx context.Context, poolID model.GqlID, claimID model.GqlID) (model.ClaimDeleteResult, error) {
-	panic(fmt.Errorf("not implemented: PoolClaimDelete - poolClaimDelete"))
+	claim, err := publicapi.For(ctx).Claim.DeleteClaim(ctx, poolID.DBID(), claimID.DBID())
+	if err != nil {
+		return nil, err
+	}
+
+	return model.ClaimDeletePayload{
+		Claim: claimToModel(ctx, claim),
+	}, nil
 }
 
 // PoolClaimBulkCreate is the resolver for the poolClaimBulkCreate field.
 func (r *mutationResolver) PoolClaimBulkCreate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkCreateInput) (model.ClaimBulkCreateResult, error) {
-	panic(fmt.Errorf("not implemented: PoolClaimBulkCreate - poolClaimBulkCreate"))
+	inputs := make([]publicapi.BulkCreateClaimInput, len(claims))
+	for i, c := range claims {
+		var children []persist.DBID
+		if c.Children != nil {
+			children = model.ToDBIDList(c.Children)
+		}
+
+		inputs[i] = publicapi.BulkCreateClaimInput{
+			Data:           c.Data,
+			Parent:         model.ToDBIDPtr(c.Parent),
+			Children:       children,
+			ValidationID:   c.ValidationID,
+			DistributionID: c.DistributionID,
+		}
+	}
+
+	createdClaims, err := publicapi.For(ctx).Claim.BulkCreateClaims(ctx, poolID.DBID(), inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.ClaimBulkCreatePayload{
+		Count:  len(createdClaims),
+		Claims: claimsToModels(ctx, createdClaims),
+	}, nil
 }
 
 // PoolClaimBulkUpdate is the resolver for the poolClaimBulkUpdate field.
 func (r *mutationResolver) PoolClaimBulkUpdate(ctx context.Context, errorPolicy *model.ErrorPolicyEnum, poolID model.GqlID, claims []*model.ClaimBulkUpdateInput) (model.ClaimBulkUpdateResult, error) {
-	panic(fmt.Errorf("not implemented: PoolClaimBulkUpdate - poolClaimBulkUpdate"))
+	inputs := make([]publicapi.BulkUpdateClaimInput, len(claims))
+	for i, c := range claims {
+		var children []persist.DBID
+		if c.Children != nil {
+			children = model.ToDBIDList(c.Children)
+		}
+
+		inputs[i] = publicapi.BulkUpdateClaimInput{
+			ClaimID:        c.ClaimID.DBID(),
+			Data:           c.Data,
+			Parent:         model.ToDBIDPtr(c.Parent),
+			Children:       children,
+			ValidationID:   *c.ValidationID,
+			DistributionID: *c.DistributionID,
+		}
+	}
+
+	updatedClaims, err := publicapi.For(ctx).Claim.BulkUpdateClaims(ctx, poolID.DBID(), inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.ClaimBulkUpdatePayload{
+		Count:  len(updatedClaims),
+		Claims: claimsToModels(ctx, updatedClaims),
+	}, nil
 }
 
 // PoolClaimBulkDelete is the resolver for the poolClaimBulkDelete field.
 func (r *mutationResolver) PoolClaimBulkDelete(ctx context.Context, poolID model.GqlID, claimIds []model.GqlID) (model.ClaimBulkDeleteResult, error) {
-	panic(fmt.Errorf("not implemented: PoolClaimBulkDelete - poolClaimBulkDelete"))
+	count, err := publicapi.For(ctx).Claim.BulkDeleteClaims(ctx, poolID.DBID(), model.ToDBIDList(claimIds))
+	if err != nil {
+		return nil, err
+	}
+
+	return model.ClaimBulkDeletePayload{
+		Count: count,
+	}, nil
 }
 
 // PoolCreate is the resolver for the poolCreate field.

@@ -5,11 +5,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgtype"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/graphql/model"
 	"github.com/mutuals/go-mutuals/service/auth/privy"
-	claimsService "github.com/mutuals/go-mutuals/service/claims"
+	claimService "github.com/mutuals/go-mutuals/service/claim"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/allocation"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
@@ -139,20 +140,59 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 	}
 
 	if len(input.AddClaims) > 0 {
-		var claims []allocation.Claim
-
-		for _, c := range input.AddClaims {
-			claims = append(claims, allocation.Claim{
+		// Convert GraphQL inputs to allocation claims
+		claims := make([]allocation.Claim, len(input.AddClaims))
+		for i, c := range input.AddClaims {
+			claims[i] = allocation.Claim{
 				Label:          c.Label,
 				Data:           c.Data,
 				ParentID:       c.Parent,
 				ChildIDs:       c.Children,
 				ValidationID:   c.ValidationID,
 				DistributionID: c.DistributionID,
-			})
+			}
 		}
 
-		_, err := claimsService.CreateClaims(ctx, q, pool.ID, claims)
+		// Create tree, prepare (generate IDs & paths), and validate
+		tree, err := allocation.NewTree(claims)
+		if err != nil {
+			return db.Pool{}, err
+		}
+
+		if err := tree.Prepare(ctx); err != nil {
+			return db.Pool{}, err
+		}
+
+		if err := tree.Validate(ctx); err != nil {
+			return db.Pool{}, err
+		}
+
+		// Bulk insert all claims in one query
+		ids := make([]string, len(tree.Claims))
+		labels := make([]string, len(tree.Claims))
+		paths := make([]string, len(tree.Claims))
+		dataList := make([]pgtype.JSONB, len(tree.Claims))
+		validationIDs := make([]string, len(tree.Claims))
+		distributionIDs := make([]string, len(tree.Claims))
+
+		for i, claim := range tree.Claims {
+			ids[i] = claim.ID.String()
+			labels[i] = claim.Label
+			paths[i] = claim.Path
+			dataList[i] = persist.JSONToJSONB(claim.Data)
+			validationIDs[i] = claim.ValidationID
+			distributionIDs[i] = claim.DistributionID
+		}
+
+		_, err = q.CreateClaims(ctx, db.CreateClaimsParams{
+			ID:             ids,
+			PoolID:         pool.ID,
+			Label:          labels,
+			Path:           paths,
+			Data:           dataList,
+			ValidationID:   validationIDs,
+			DistributionID: distributionIDs,
+		})
 		if err != nil {
 			return db.Pool{}, err
 		}
@@ -192,18 +232,111 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		return db.Pool{}, err
 	}
 
-	// Handle add claims
+	// Handle add claims - use bulk creation with allocation tree
 	if input.AddClaims != nil && len(input.AddClaims) > 0 {
-		// TODO: Implement claim additions
+		// Convert GraphQL inputs to allocation claims
+		claims := make([]allocation.Claim, len(input.AddClaims))
+		for i, c := range input.AddClaims {
+			claims[i] = allocation.Claim{
+				Label:          c.Label,
+				Data:           c.Data,
+				ParentID:       c.Parent,
+				ChildIDs:       c.Children,
+				ValidationID:   c.ValidationID,
+				DistributionID: c.DistributionID,
+			}
+		}
+
+		// Create tree, prepare (generate IDs & paths), and validate
+		tree, err := allocation.NewTree(claims)
+		if err != nil {
+			return db.Pool{}, err
+		}
+
+		if err := tree.Prepare(ctx); err != nil {
+			return db.Pool{}, err
+		}
+
+		if err := tree.Validate(ctx); err != nil {
+			return db.Pool{}, err
+		}
+
+		// Bulk insert all claims in one query
+		ids := make([]string, len(tree.Claims))
+		labels := make([]string, len(tree.Claims))
+		paths := make([]string, len(tree.Claims))
+		dataList := make([]pgtype.JSONB, len(tree.Claims))
+		validationIDs := make([]string, len(tree.Claims))
+		distributionIDs := make([]string, len(tree.Claims))
+
+		for i, claim := range tree.Claims {
+			ids[i] = claim.ID.String()
+			labels[i] = claim.Label
+			paths[i] = claim.Path
+			dataList[i] = persist.JSONToJSONB(claim.Data)
+			validationIDs[i] = claim.ValidationID
+			distributionIDs[i] = claim.DistributionID
+		}
+
+		_, err = q.CreateClaims(ctx, db.CreateClaimsParams{
+			ID:             ids,
+			PoolID:         id,
+			Label:          labels,
+			Path:           paths,
+			Data:           dataList,
+			ValidationID:   validationIDs,
+			DistributionID: distributionIDs,
+		})
+		if err != nil {
+			return db.Pool{}, err
+		}
 	}
 
-	// Handle update claims
+	// Handle update claims - use bulk update
 	if input.UpdateClaims != nil && len(input.UpdateClaims) > 0 {
-		// TODO: Implement claim updates
+		updateInputs := make([]claimService.UpdateClaimInput, len(input.UpdateClaims))
+		for i, c := range input.UpdateClaims {
+			var children []persist.DBID
+			if c.Children != nil {
+				children = make([]persist.DBID, len(c.Children))
+				for j, child := range c.Children {
+					children[j] = child.DBID()
+				}
+			}
+
+			updateInputs[i] = claimService.UpdateClaimInput{
+				ClaimID:        c.ClaimID.DBID(),
+				Data:           persist.JSONToJSONB(c.Data),
+				Parent:         persist.DBIDPtrToSQLNullString(c.Parent.DBIDPtr()),
+				Children:       persist.DBIDSliceToStringSlice(children),
+				ValidationID:   persist.DBID(*c.ValidationID),
+				DistributionID: persist.DBID(*c.DistributionID),
+			}
+		}
+
+		// Use bulk update
+		_, err := claimService.BulkUpdateClaims(ctx, q, claimService.BulkUpdateClaimsInput{
+			Claims: updateInputs,
+		})
+		if err != nil {
+			return db.Pool{}, err
+		}
 	}
 
+	// Handle remove claims - use bulk delete
 	if input.RemoveClaims != nil && len(input.RemoveClaims) > 0 {
-		// TODO: Implement claim removals
+		claimIDs := make([]persist.DBID, len(input.RemoveClaims))
+		for i, claimID := range input.RemoveClaims {
+			claimIDs[i] = claimID.DBID()
+		}
+
+		// Use bulk delete
+		_, err := claimService.BulkDeleteClaims(ctx, q, claimService.BulkDeleteClaimsInput{
+			ClaimIDs: claimIDs,
+		})
+		if err != nil {
+			return db.Pool{}, err
+		}
 	}
 
 	// Commit transaction

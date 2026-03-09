@@ -236,17 +236,22 @@ func poolsToModels(ctx context.Context, pools []db.Pool) []*model.Pool {
 }
 
 func claimToModel(ctx context.Context, claim db.Claim) *model.Claim {
+	path := ""
+	if claim.Path.Valid {
+		path = claim.Path.String
+	}
+
 	return &model.Claim{
-		Data:         claim.Data.Bytes,
 		Label:        claim.Label,
-		Path:         persist.NullStrToStr(claim.Path),
+		Data:         persist.JSONBToJSON(claim.Data),
+		Path:         path,
 		CreatedAt:    claim.CreatedAt,
 		UpdatedAt:    claim.UpdatedAt,
-		Parent:       nil, // handled by dedicated resolver
-		Pool:         nil, // handled by dedicated resolver
-		Recipient:    nil, // handled by dedicated resolver
 		Validation:   nil, // handled by dedicated resolver
 		Distribution: nil, // handled by dedicated resolver
+		Pool:         nil, // handled by dedicated resolver
+		Parent:       nil, // handled by dedicated resolver
+		Children:     nil, // handled by dedicated resolver
 	}
 }
 

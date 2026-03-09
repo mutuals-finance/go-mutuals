@@ -20,6 +20,8 @@ type Claim struct {
 	Data           pgtype.JSONB   `db:"data" json:"data"`
 	Label          string         `db:"label" json:"label"`
 	Path           sql.NullString `db:"path" json:"path"`
+	Parent         sql.NullString `db:"parent" json:"parent"`
+	Children       []string       `db:"children" json:"children"`
 	Deleted        bool           `db:"deleted" json:"deleted"`
 	UpdatedAt      time.Time      `db:"updated_at" json:"updated_at"`
 	CreatedAt      time.Time      `db:"created_at" json:"created_at"`

@@ -1,6 +1,7 @@
 package persist
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -190,6 +191,58 @@ func (n *NullString) Scan(value interface{}) error {
 	return nil
 }
 
+// DBIDPtrToNullString converts a DBID pointer to NullString
+func DBIDPtrToNullString(id *DBID) NullString {
+	if id == nil || *id == "" {
+		return NullString("")
+	}
+	return NullString(id.String())
+}
+
+// DBIDPtrToSQLNullString converts a DBID pointer to sql.NullString
+func DBIDPtrToSQLNullString(id *DBID) sql.NullString {
+	if id == nil || *id == "" {
+		return sql.NullString{Valid: false}
+	}
+	return sql.NullString{String: id.String(), Valid: true}
+}
+
+// NullStringToDBIDPtr converts NullString to DBID pointer
+func NullStringToDBIDPtr(s NullString) *DBID {
+	if s == "" {
+		return nil
+	}
+	dbid := DBID(s.String())
+	return &dbid
+}
+
+// SQLNullStringToDBIDPtr converts sql.NullString to DBID pointer
+func SQLNullStringToDBIDPtr(s sql.NullString) *DBID {
+	if !s.Valid || s.String == "" {
+		return nil
+	}
+	dbid := DBID(s.String)
+	return &dbid
+}
+
+// DBIDSliceToStringSlice converts []DBID to []string
+func DBIDSliceToStringSlice(ids []DBID) []string {
+	result := make([]string, len(ids))
+	for i, id := range ids {
+		result[i] = id.String()
+	}
+	return result
+}
+
+// StringSliceToDBIDSlice converts []string to []DBID
+func StringSliceToDBIDSlice(strs []string) []DBID {
+	result := make([]DBID, len(strs))
+	for i, str := range strs {
+		result[i] = DBID(str)
+	}
+	return result
+}
+
 // NullInt64 represents an int64 that may be null in the DB.
 type NullInt64 int64
 
@@ -372,6 +425,22 @@ func ToJSONB(v any) (pgtype.JSONB, error) {
 	ret := pgtype.JSONB{}
 	err = ret.Set(byt)
 	return ret, err
+}
+
+// JSONToJSONB converts persist.JSON to pgtype.JSONB
+func JSONToJSONB(j JSON) pgtype.JSONB {
+	if j == nil || len(j) == 0 {
+		return pgtype.JSONB{Status: pgtype.Null}
+	}
+	return pgtype.JSONB{Bytes: []byte(j), Status: pgtype.Present}
+}
+
+// JSONBToJSON converts pgtype.JSONB to persist.JSON
+func JSONBToJSON(j pgtype.JSONB) JSON {
+	if j.Status != pgtype.Present || len(j.Bytes) == 0 {
+		return nil
+	}
+	return JSON(j.Bytes)
 }
 
 type DarkMode int

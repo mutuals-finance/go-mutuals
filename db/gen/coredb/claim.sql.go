@@ -7,10 +7,57 @@ package coredb
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/jackc/pgtype"
 	"github.com/mutuals/go-mutuals/service/persist"
 )
+
+const createClaim = `-- name: CreateClaim :one
+INSERT INTO claims (id, pool_id, label, data, parent, children, validation_id, distribution_id, deleted, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, NOW(), NOW())
+RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+`
+
+type CreateClaimParams struct {
+	ID             persist.DBID   `db:"id" json:"id"`
+	PoolID         persist.DBID   `db:"pool_id" json:"pool_id"`
+	Label          string         `db:"label" json:"label"`
+	Data           pgtype.JSONB   `db:"data" json:"data"`
+	Parent         sql.NullString `db:"parent" json:"parent"`
+	Children       []string       `db:"children" json:"children"`
+	ValidationID   persist.DBID   `db:"validation_id" json:"validation_id"`
+	DistributionID persist.DBID   `db:"distribution_id" json:"distribution_id"`
+}
+
+func (q *Queries) CreateClaim(ctx context.Context, arg CreateClaimParams) (Claim, error) {
+	row := q.db.QueryRow(ctx, createClaim,
+		arg.ID,
+		arg.PoolID,
+		arg.Label,
+		arg.Data,
+		arg.Parent,
+		arg.Children,
+		arg.ValidationID,
+		arg.DistributionID,
+	)
+	var i Claim
+	err := row.Scan(
+		&i.ID,
+		&i.PoolID,
+		&i.ValidationID,
+		&i.DistributionID,
+		&i.Data,
+		&i.Label,
+		&i.Path,
+		&i.Parent,
+		&i.Children,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
 
 const createClaims = `-- name: CreateClaims :many
 WITH updates AS (SELECT UNNEST($1::text[])              AS id,
@@ -33,7 +80,7 @@ SELECT id,
        NOW(),
        NOW()
 FROM updates
-RETURNING id, pool_id, validation_id, distribution_id, data, label, path, deleted, updated_at, created_at
+RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
 `
 
 type CreateClaimsParams struct {
@@ -71,6 +118,8 @@ func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]C
 			&i.Data,
 			&i.Label,
 			&i.Path,
+			&i.Parent,
+			&i.Children,
 			&i.Deleted,
 			&i.UpdatedAt,
 			&i.CreatedAt,
@@ -85,9 +134,38 @@ func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]C
 	return items, nil
 }
 
+const deleteClaim = `-- name: DeleteClaim :one
+UPDATE claims
+SET deleted    = TRUE,
+    updated_at = NOW()
+WHERE id = $1
+  AND deleted = FALSE
+RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+`
+
+func (q *Queries) DeleteClaim(ctx context.Context, id persist.DBID) (Claim, error) {
+	row := q.db.QueryRow(ctx, deleteClaim, id)
+	var i Claim
+	err := row.Scan(
+		&i.ID,
+		&i.PoolID,
+		&i.ValidationID,
+		&i.DistributionID,
+		&i.Data,
+		&i.Label,
+		&i.Path,
+		&i.Parent,
+		&i.Children,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getClaimById = `-- name: GetClaimById :one
 
-SELECT id, pool_id, validation_id, distribution_id, data, label, path, deleted, updated_at, created_at
+SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
 FROM claims
 WHERE id = $1
   AND deleted = FALSE
@@ -107,6 +185,137 @@ func (q *Queries) GetClaimById(ctx context.Context, id persist.DBID) (Claim, err
 		&i.Data,
 		&i.Label,
 		&i.Path,
+		&i.Parent,
+		&i.Children,
+		&i.Deleted,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getClaimsByIds = `-- name: GetClaimsByIds :many
+SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+FROM claims
+WHERE id = ANY($1::text[])
+  AND deleted = FALSE
+`
+
+func (q *Queries) GetClaimsByIds(ctx context.Context, ids []string) ([]Claim, error) {
+	rows, err := q.db.Query(ctx, getClaimsByIds, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Claim
+	for rows.Next() {
+		var i Claim
+		if err := rows.Scan(
+			&i.ID,
+			&i.PoolID,
+			&i.ValidationID,
+			&i.DistributionID,
+			&i.Data,
+			&i.Label,
+			&i.Path,
+			&i.Parent,
+			&i.Children,
+			&i.Deleted,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getClaimsByPoolId = `-- name: GetClaimsByPoolId :many
+SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+FROM claims
+WHERE pool_id = $1
+  AND deleted = FALSE
+`
+
+func (q *Queries) GetClaimsByPoolId(ctx context.Context, poolID persist.DBID) ([]Claim, error) {
+	rows, err := q.db.Query(ctx, getClaimsByPoolId, poolID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Claim
+	for rows.Next() {
+		var i Claim
+		if err := rows.Scan(
+			&i.ID,
+			&i.PoolID,
+			&i.ValidationID,
+			&i.DistributionID,
+			&i.Data,
+			&i.Label,
+			&i.Path,
+			&i.Parent,
+			&i.Children,
+			&i.Deleted,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateClaim = `-- name: UpdateClaim :one
+UPDATE claims
+SET data            = $2,
+    parent          = $3,
+    children        = $4,
+    validation_id   = $5,
+    distribution_id = $6,
+    updated_at      = NOW()
+WHERE id = $1
+  AND deleted = FALSE
+RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+`
+
+type UpdateClaimParams struct {
+	ID             persist.DBID   `db:"id" json:"id"`
+	Data           pgtype.JSONB   `db:"data" json:"data"`
+	Parent         sql.NullString `db:"parent" json:"parent"`
+	Children       []string       `db:"children" json:"children"`
+	ValidationID   persist.DBID   `db:"validation_id" json:"validation_id"`
+	DistributionID persist.DBID   `db:"distribution_id" json:"distribution_id"`
+}
+
+func (q *Queries) UpdateClaim(ctx context.Context, arg UpdateClaimParams) (Claim, error) {
+	row := q.db.QueryRow(ctx, updateClaim,
+		arg.ID,
+		arg.Data,
+		arg.Parent,
+		arg.Children,
+		arg.ValidationID,
+		arg.DistributionID,
+	)
+	var i Claim
+	err := row.Scan(
+		&i.ID,
+		&i.PoolID,
+		&i.ValidationID,
+		&i.DistributionID,
+		&i.Data,
+		&i.Label,
+		&i.Path,
+		&i.Parent,
+		&i.Children,
 		&i.Deleted,
 		&i.UpdatedAt,
 		&i.CreatedAt,
@@ -133,7 +342,7 @@ SET validation_id   = updates.validation_id,
 FROM updates
 WHERE claims.id = updates.id
   AND claims.deleted = FALSE
-RETURNING claims.id, claims.pool_id, claims.validation_id, claims.distribution_id, claims.data, claims.label, claims.path, claims.deleted, claims.updated_at, claims.created_at
+RETURNING claims.id, claims.pool_id, claims.validation_id, claims.distribution_id, claims.data, claims.label, claims.path, claims.parent, claims.children, claims.deleted, claims.updated_at, claims.created_at
 `
 
 type UpdateClaimsParams struct {
@@ -171,6 +380,8 @@ func (q *Queries) UpdateClaims(ctx context.Context, arg UpdateClaimsParams) ([]C
 			&i.Data,
 			&i.Label,
 			&i.Path,
+			&i.Parent,
+			&i.Children,
 			&i.Deleted,
 			&i.UpdatedAt,
 			&i.CreatedAt,

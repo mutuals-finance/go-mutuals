@@ -49,6 +49,9 @@ models:
   JSON:
     model:
       - github.com/mutuals/go-mutuals/service/persist.JSON
+  JSONB:
+    model:
+      - github.com/jackc/pgtype.JSONB
   PubKey:
     model:
       - github.com/mutuals/go-mutuals/service/persist.PubKey

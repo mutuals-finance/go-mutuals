@@ -65,6 +65,14 @@ func ToDBIDPtr(id *GqlID) *persist.DBID {
 	return id.DBIDPtr()
 }
 
+// JSONOrNil returns the JSON value or nil if the pointer is nil
+func JSONOrNil(j *persist.JSON) persist.JSON {
+	if j == nil {
+		return nil
+	}
+	return *j
+}
+
 // ErrInvalidIDFormat indicates an invalid ID format
 type ErrInvalidIDFormat struct {
 	message string

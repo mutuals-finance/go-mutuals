@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS claims
     data              jsonb                    NULL,
     label             character varying(255)   NOT NULL,
     path              ltree                    NULL,
+    parent            character varying(255)   NULL,
+    children          character varying(255)[] NULL,
     deleted           boolean                  NOT NULL DEFAULT FALSE,
     updated_at        timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at        timestamp WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
