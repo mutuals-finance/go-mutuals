@@ -21,7 +21,6 @@ import (
 	indexerData "github.com/mutuals/go-mutuals/graphql/dataloader/indexerdb"
 	"github.com/mutuals/go-mutuals/service/auth"
 	"github.com/mutuals/go-mutuals/service/auth/privy"
-	"github.com/mutuals/go-mutuals/service/multichain"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/mutuals/go-mutuals/service/redis"
@@ -55,11 +54,6 @@ type PublicAPI struct {
 }
 
 func New(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache *redis.Cache) *PublicAPI {
-	multichainProvider := multichain.NewMultichainProvider(ctx, repos, coreQueries, indexerQueries, ethClient, taskClient)
-	return NewWithMultichainProvider(ctx, disableDataloaderCaching, repos, coreQueries, indexerQueries, httpClient, ethClient, ipfsClient, arweaveClient, storageClient, taskClient, throttler, secrets, apq, authRefreshCache, multichainProvider)
-}
-
-func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching bool, repos *postgres.Repositories, coreQueries *coredb.Queries, indexerQueries *indexerdb.Queries, httpClient *http.Client, ethClient *ethclient.Client, ipfsClient *shell.Shell, arweaveClient *goar.Client, storageClient *storage.Client, taskClient *task.Client, throttler *throttle.Locker, secrets *secretmanager.Client, apq *apq.APQCache, authRefreshCache *redis.Cache, multichainProvider *multichain.Provider) *PublicAPI {
 	coreLoaders := coreData.NewLoaders(ctx, coreQueries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
 	indexerLoaders := indexerData.NewLoaders(ctx, indexerQueries, disableDataloaderCaching, tracing.DataloaderPreFetchHook, tracing.DataloaderPostFetchHook)
 	validator := validate.WithCustomValidators()
@@ -74,12 +68,12 @@ func NewWithMultichainProvider(ctx context.Context, disableDataloaderCaching boo
 		indexerLoaders: indexerLoaders,
 		validator:      validator,
 		APQ:            apq,
-		Auth:           &AuthAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient, multiChainProvider: multichainProvider, authRefreshCache: authRefreshCache},
+		Auth:           &AuthAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient, authRefreshCache: authRefreshCache},
 		Pool:           &PoolAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient},
-		User:           &UserAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient, multichainProvider: multichainProvider},
-		Wallet:         &WalletAPI{repos: repos, queries: coreQueries, coreLoaders: coreLoaders, indexerLoaders: indexerLoaders, validator: validator, ethClient: ethClient, multichainProvider: multichainProvider},
+		User:           &UserAPI{repos: repos, queries: coreQueries, loaders: coreLoaders, validator: validator, ethClient: ethClient, ipfsClient: ipfsClient, arweaveClient: arweaveClient, storageClient: storageClient},
+		Wallet:         &WalletAPI{repos: repos, queries: coreQueries, coreLoaders: coreLoaders, indexerLoaders: indexerLoaders, validator: validator, ethClient: ethClient},
 		PushToken:      &PushTokenAPI{queries: coreQueries, validator: validator},
-		Admin:          adminapi.NewAPI(repos, coreQueries, authRefreshCache, validator, multichainProvider),
+		Admin:          adminapi.NewAPI(repos, coreQueries, authRefreshCache, validator),
 		Search:         &SearchAPI{queries: coreQueries, loaders: coreLoaders, validator: validator},
 	}
 }

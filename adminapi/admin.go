@@ -10,7 +10,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/multichain"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 )
 
@@ -19,11 +18,10 @@ type AdminAPI struct {
 	queries          *db.Queries
 	authRefreshCache *redis.Cache
 	validator        *validator.Validate
-	multichain       *multichain.Provider
 }
 
-func NewAPI(repos *postgres.Repositories, queries *db.Queries, authRefreshCache *redis.Cache, validator *validator.Validate, mp *multichain.Provider) *AdminAPI {
-	return &AdminAPI{repos, queries, authRefreshCache, validator, mp}
+func NewAPI(repos *postgres.Repositories, queries *db.Queries, authRefreshCache *redis.Cache, validator *validator.Validate) *AdminAPI {
+	return &AdminAPI{repos, queries, authRefreshCache, validator}
 }
 
 type authenticator struct {

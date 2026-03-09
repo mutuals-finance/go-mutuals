@@ -10,7 +10,6 @@ import (
 	"github.com/mutuals/go-mutuals/service/task"
 
 	"github.com/mutuals/go-mutuals/service/logger"
-	"github.com/mutuals/go-mutuals/service/multichain"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	userService "github.com/mutuals/go-mutuals/service/user"
 
@@ -28,17 +27,16 @@ import (
 )
 
 type UserAPI struct {
-	repos              *postgres.Repositories
-	queries            *coredb.Queries
-	loaders            *dataloader.Loaders
-	validator          *validator.Validate
-	ethClient          *ethclient.Client
-	ipfsClient         *shell.Shell
-	arweaveClient      *goar.Client
-	storageClient      *storage.Client
-	multichainProvider *multichain.Provider
-	taskClient         *task.Client
-	cache              *redis.Cache
+	repos         *postgres.Repositories
+	queries       *coredb.Queries
+	loaders       *dataloader.Loaders
+	validator     *validator.Validate
+	ethClient     *ethclient.Client
+	ipfsClient    *shell.Shell
+	arweaveClient *goar.Client
+	storageClient *storage.Client
+	taskClient    *task.Client
+	cache         *redis.Cache
 }
 
 func (api UserAPI) GetLoggedInUserId(ctx context.Context) persist.DBID {

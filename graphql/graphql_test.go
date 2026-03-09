@@ -24,7 +24,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/mutuals/go-mutuals/server"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/multichain"
 	"github.com/mutuals/go-mutuals/service/persist"
 	"github.com/mutuals/go-mutuals/util"
 	"github.com/stretchr/testify/assert"
@@ -379,63 +378,6 @@ func defaultHandler(t *testing.T) http.Handler {
 		c.Close()
 	})
 	return handler
-}
-
-// handlerWithProviders returns a GraphQL http.Handler
-func handlerWithProviders(t *testing.T, p multichain.ProviderLookup) http.Handler {
-	ctx := context.Background()
-	c := server.ClientInit(context.Background())
-	provider := newMultichainProvider(c, p)
-	t.Cleanup(c.Close)
-
-	lock := redis.NewLockClient(redis.NewCache(redis.NotificationLockCache))
-	authRefreshCache := redis.NewCache(redis.AuthTokenForceRefreshCache)
-
-	publicapiF := func(ctx context.Context, disableDataloaderCaching bool) *publicapi.PublicAPI {
-		return publicapi.NewWithMultichainProvider(
-			ctx,
-			false,
-			c.Repos,
-			c.CoreQueries,
-			c.IndexerQueries,
-			c.HTTPClient,
-			c.EthClient,
-			c.IPFSClient,
-			c.ArweaveClient,
-			c.StorageClient,
-			c.TaskClient,
-			nil, // throttler
-			c.SecretClient,
-			nil, // apqCache
-			authRefreshCache,
-			&provider,
-		)
-	}
-
-	handlerInitF := func(r *gin.Engine) {
-		server.GraphqlHandlersInit(
-			r,
-			c.CoreQueries,
-			c.IndexerQueries,
-			c.TaskClient,
-			c.PubSubClient,
-			lock,             // redislock
-			nil,              // apqCache
-			authRefreshCache, // authRefreshCache
-			publicapiF,
-		)
-	}
-
-	return server.CoreInitHandlerF(ctx, handlerInitF)
-}
-
-// newMultichainProvider a new multichain provider configured with the given providers
-func newMultichainProvider(c *server.Clients, p multichain.ProviderLookup) multichain.Provider {
-	return multichain.Provider{
-		Repos:   c.Repos,
-		Queries: c.CoreQueries,
-		Chains:  p,
-	}
 }
 
 // defaultHandlerClient returns a GraphQL client attached to a backend GraphQL handler

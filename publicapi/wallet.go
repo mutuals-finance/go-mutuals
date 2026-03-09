@@ -8,7 +8,6 @@ import (
 	"github.com/mutuals/go-mutuals/validate"
 
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
-	"github.com/mutuals/go-mutuals/service/multichain"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
@@ -18,13 +17,12 @@ import (
 )
 
 type WalletAPI struct {
-	repos              *postgres.Repositories
-	queries            *db.Queries
-	indexerLoaders     *indexerData.Loaders
-	coreLoaders        *coreData.Loaders
-	validator          *validator.Validate
-	ethClient          *ethclient.Client
-	multichainProvider *multichain.Provider
+	repos          *postgres.Repositories
+	queries        *db.Queries
+	indexerLoaders *indexerData.Loaders
+	coreLoaders    *coreData.Loaders
+	validator      *validator.Validate
+	ethClient      *ethclient.Client
 }
 
 func (api WalletAPI) GetAccountsByAddresses(ctx context.Context, addresses []string) ([]indexerdb.Account, error) {
