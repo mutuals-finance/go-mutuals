@@ -1,7 +1,6 @@
 package persist
 
 import (
-	"database/sql"
 	"fmt"
 )
 
@@ -44,6 +43,17 @@ type EventData struct {
 	AnnouncementDetails    *AnnouncementDetails `json:"announcement_details"`
 }
 
+type AnnouncementDetails struct {
+	Platform             string `json:"platform"`
+	InternalID           string `json:"internal_id"`
+	ImageURL             string `json:"image_url,omitempty"`
+	Title                string `json:"title,omitempty"`
+	Description          string `json:"description,omitempty"`
+	CTAText              string `json:"cta_text,omitempty"`
+	CTALink              string `json:"cta_link,omitempty"`
+	PushNotificationText string `json:"push_notification_text,omitempty"`
+}
+
 type ErrUnknownAction struct {
 	Action Action
 }
@@ -58,35 +68,4 @@ type ErrUnknownResourceType struct {
 
 func (e ErrUnknownResourceType) Error() string {
 	return fmt.Sprintf("unknown resource type: %v", e.ResourceType)
-}
-
-func StrPtrToNullStr(s *string) sql.NullString {
-	if s == nil {
-		return sql.NullString{}
-	}
-	return sql.NullString{Valid: true, String: *s}
-}
-
-func NullStrToStr(s sql.NullString) string {
-	if !s.Valid {
-		return ""
-	}
-	return s.String
-}
-
-func DBIDToNullStr(id DBID) sql.NullString {
-	s := id.String()
-	return StrPtrToNullStr(&s)
-}
-
-func DBIDPtrToNullStr(id *DBID) sql.NullString {
-	if id == nil {
-		return sql.NullString{}
-	}
-	s := id.String()
-	return StrPtrToNullStr(&s)
-}
-
-func NullStrToDBID(s sql.NullString) DBID {
-	return DBID(NullStrToStr(s))
 }

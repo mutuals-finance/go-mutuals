@@ -243,6 +243,38 @@ func StringSliceToDBIDSlice(strs []string) []DBID {
 	return result
 }
 
+func StrPtrToNullStr(s *string) sql.NullString {
+	if s == nil {
+		return sql.NullString{}
+	}
+	return sql.NullString{Valid: true, String: *s}
+}
+
+func NullStrToStr(s sql.NullString) string {
+	if !s.Valid {
+		return ""
+	}
+	return s.String
+}
+
+func NullStrToDBID(s sql.NullString) DBID {
+	return DBID(NullStrToStr(s))
+}
+
+func DBIDToNullStr(id DBID) sql.NullString {
+	if id == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{Valid: true, String: id.String()}
+}
+
+func DBIDPtrToNullStr(id *DBID) sql.NullString {
+	if id == nil || *id == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{Valid: true, String: id.String()}
+}
+
 // NullInt64 represents an int64 that may be null in the DB.
 type NullInt64 int64
 

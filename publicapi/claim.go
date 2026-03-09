@@ -84,7 +84,6 @@ func (api ClaimAPI) DeleteClaim(ctx context.Context, poolID persist.DBID, claimI
 
 // GetClaimById retrieves a claim by ID
 func (api ClaimAPI) GetClaimById(ctx context.Context, claimID persist.DBID) (*coredb.Claim, error) {
-	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"claimID": validate.WithTag(claimID, "required"),
 	}); err != nil {
@@ -101,7 +100,6 @@ func (api ClaimAPI) GetClaimById(ctx context.Context, claimID persist.DBID) (*co
 
 // CreateClaimsWithAllocationTree creates claims with allocation tree handling
 func (api ClaimAPI) CreateClaimsWithAllocationTree(ctx context.Context, poolID persist.DBID, claims []allocation.Claim) ([]coredb.Claim, error) {
-	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID": validate.WithTag(poolID, "required"),
 		"claims": validate.WithTag(claims, "required,min=1"),

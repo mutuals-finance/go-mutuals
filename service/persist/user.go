@@ -20,15 +20,6 @@ const (
 
 type Traits map[TraitType]interface{}
 
-type Socials map[SocialProvider]SocialUserIdentifiers
-
-type SocialUserIdentifiers struct {
-	Provider SocialProvider         `json:"provider" binding:"required"`
-	ID       string                 `json:"id" binding:"required"`
-	Display  bool                   `json:"display"`
-	Metadata map[string]interface{} `json:"metadata"`
-}
-
 type SocialProvider string
 
 const (
@@ -106,18 +97,6 @@ func (m Traits) Value() (driver.Value, error) {
 	}
 
 	return []byte(strings.ToValidUTF8(strings.ReplaceAll(string(val), "\\u0000", ""), "")), nil
-}
-
-func (s SocialUserIdentifiers) Value() (driver.Value, error) {
-	return json.Marshal(s)
-}
-
-func (s *SocialUserIdentifiers) Scan(src interface{}) error {
-	if src == nil {
-		*s = SocialUserIdentifiers{}
-		return nil
-	}
-	return json.Unmarshal(src.([]uint8), s)
 }
 
 func (s SocialProvider) String() string {

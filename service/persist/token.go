@@ -4,14 +4,15 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/jackc/pgtype"
-	"github.com/lib/pq"
 	"io"
 	"math/big"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgtype"
+	"github.com/lib/pq"
 
 	"github.com/mutuals/go-mutuals/util"
 )
@@ -458,16 +459,6 @@ type FallbackMedia struct {
 type ContractCollectionNFT struct {
 	ContractName  NullString `json:"name"`
 	ContractImage NullString `json:"image_url"`
-}
-
-type TokenUpdateOwnerInput struct {
-	OwnerAddress EthereumAddress `json:"owner_address"`
-	BlockNumber  BlockNumber     `json:"block_number"`
-}
-
-type TokenUpdateBalanceInput struct {
-	Quantity    HexString   `json:"quantity"`
-	BlockNumber BlockNumber `json:"block_number"`
 }
 
 var errTokenNotFound ErrTokenNotFound
