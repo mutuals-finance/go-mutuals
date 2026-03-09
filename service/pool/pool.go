@@ -8,8 +8,16 @@ import (
 	"github.com/mutuals/go-mutuals/service/persist"
 )
 
+type CreatePoolInput struct {
+	Name        string
+	Description string
+	Image       string
+	Slug        string
+	Private     bool
+}
+
 // CreatePool creates a new pool
-func CreatePool(ctx context.Context, queries *coredb.Queries, name string, description string, image string, slug string, private bool) (pool coredb.Pool, err error) {
+func CreatePool(ctx context.Context, queries *coredb.Queries, input CreatePoolInput) (pool coredb.Pool, err error) {
 	userId, err := auth.GetAuthenticatedUserId(ctx)
 	if err != nil {
 		return coredb.Pool{}, err
@@ -17,11 +25,11 @@ func CreatePool(ctx context.Context, queries *coredb.Queries, name string, descr
 
 	pool, err = queries.CreatePool(ctx, coredb.CreatePoolParams{
 		ID:          persist.GenerateID(),
-		Name:        name,
-		Description: description,
-		Image:       image,
-		Slug:        slug,
-		Private:     private,
+		Name:        input.Name,
+		Description: input.Description,
+		Image:       input.Image,
+		Slug:        input.Slug,
+		Private:     input.Private,
 		OwnerID:     userId,
 	})
 	if err != nil {
@@ -31,32 +39,38 @@ func CreatePool(ctx context.Context, queries *coredb.Queries, name string, descr
 	return pool, nil
 }
 
-// UpdatePool updates a new pool
-func UpdatePool(ctx context.Context, queries *coredb.Queries, id persist.DBID, name *string, description *string, image *string, slug *string, private *bool) (pool coredb.Pool, err error) {
+type UpdatePoolInput struct {
+	ID          persist.DBID
+	Name        *string
+	Description *string
+	Image       *string
+	Slug        *string
+	Private     *bool
+}
+
+// UpdatePool updates an existing pool
+func UpdatePool(ctx context.Context, queries *coredb.Queries, input UpdatePoolInput) (pool coredb.Pool, err error) {
 	// TODO check ownership
 	// TODO change owner?
 	// TODO change donationBps?
-	if err != nil {
-		return coredb.Pool{}, err
-	}
 
 	params := coredb.UpdatePoolParams{
-		ID: id,
+		ID: input.ID,
 	}
-	if name != nil {
-		params.Name = *name
+	if input.Name != nil {
+		params.Name = *input.Name
 	}
-	if description != nil {
-		params.Description = *description
+	if input.Description != nil {
+		params.Description = *input.Description
 	}
-	if image != nil {
-		params.Image = *image
+	if input.Image != nil {
+		params.Image = *input.Image
 	}
-	if slug != nil {
-		params.Slug = *slug
+	if input.Slug != nil {
+		params.Slug = *input.Slug
 	}
-	if private != nil {
-		params.Private = *private
+	if input.Private != nil {
+		params.Private = *input.Private
 	}
 
 	pool, err = queries.UpdatePool(ctx, params)
@@ -65,4 +79,26 @@ func UpdatePool(ctx context.Context, queries *coredb.Queries, id persist.DBID, n
 	}
 
 	return pool, nil
+}
+
+type GetPoolByIdInput struct {
+	PoolID persist.DBID
+}
+
+// GetPoolById retrieves a pool by its ID
+func GetPoolById(ctx context.Context, queries *coredb.Queries, input GetPoolByIdInput) (*coredb.Pool, error) {
+	pool, err := queries.GetPoolById(ctx, input.PoolID)
+	if err != nil {
+		return nil, err
+	}
+	return &pool, nil
+}
+
+type DeletePoolInput struct {
+	PoolID persist.DBID
+}
+
+// DeletePool soft-deletes a pool
+func DeletePool(ctx context.Context, queries *coredb.Queries, input DeletePoolInput) error {
+	return queries.DeletePool(ctx, input.PoolID)
 }

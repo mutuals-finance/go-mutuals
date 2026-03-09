@@ -48,3 +48,11 @@ SET name         = @name,
 WHERE id = @id
   AND deleted = FALSE
 RETURNING *;
+
+-- name: DeletePool :exec
+UPDATE pools
+SET deleted    = TRUE,
+    updated_at = NOW()
+WHERE id = $1
+  AND deleted = FALSE;
+

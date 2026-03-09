@@ -5,7 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
-	"github.com/jackc/pgtype"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/graphql/model"
@@ -134,13 +133,18 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 
 	q := api.queries.WithTx(tx)
 
-	pool, err := poolService.CreatePool(ctx, q, input.Name, input.Description, util.FromPointer(input.Image), input.Slug, util.FromPointer(input.Private))
+	pool, err := poolService.CreatePool(ctx, q, poolService.CreatePoolInput{
+		Name:        input.Name,
+		Description: input.Description,
+		Image:       util.FromPointer(input.Image),
+		Slug:        input.Slug,
+		Private:     util.FromPointer(input.Private),
+	})
 	if err != nil {
 		return db.Pool{}, err
 	}
 
 	if len(input.AddClaims) > 0 {
-		// Convert GraphQL inputs to allocation claims
 		claims := make([]allocation.Claim, len(input.AddClaims))
 		for i, c := range input.AddClaims {
 			claims[i] = allocation.Claim{
@@ -153,45 +157,9 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 			}
 		}
 
-		// Create tree, prepare (generate IDs & paths), and validate
-		tree, err := allocation.NewTree(claims)
-		if err != nil {
-			return db.Pool{}, err
-		}
-
-		if err := tree.Prepare(ctx); err != nil {
-			return db.Pool{}, err
-		}
-
-		if err := tree.Validate(ctx); err != nil {
-			return db.Pool{}, err
-		}
-
-		// Bulk insert all claims in one query
-		ids := make([]string, len(tree.Claims))
-		labels := make([]string, len(tree.Claims))
-		paths := make([]string, len(tree.Claims))
-		dataList := make([]pgtype.JSONB, len(tree.Claims))
-		validationIDs := make([]string, len(tree.Claims))
-		distributionIDs := make([]string, len(tree.Claims))
-
-		for i, claim := range tree.Claims {
-			ids[i] = claim.ID.String()
-			labels[i] = claim.Label
-			paths[i] = claim.Path
-			dataList[i] = persist.JSONToJSONB(claim.Data)
-			validationIDs[i] = claim.ValidationID
-			distributionIDs[i] = claim.DistributionID
-		}
-
-		_, err = q.CreateClaims(ctx, db.CreateClaimsParams{
-			ID:             ids,
-			PoolID:         pool.ID,
-			Label:          labels,
-			Path:           paths,
-			Data:           dataList,
-			ValidationID:   validationIDs,
-			DistributionID: distributionIDs,
+		_, err = claimService.CreateClaimsWithAllocationTreeForPool(ctx, q, claimService.CreateClaimsWithAllocationTreeForPoolInput{
+			PoolID: pool.ID,
+			Claims: claims,
 		})
 		if err != nil {
 			return db.Pool{}, err
@@ -227,14 +195,19 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 	q := api.queries.WithTx(tx)
 
 	// Update pool basic info
-	updatedPool, err := poolService.UpdatePool(ctx, q, id, input.Name, input.Description, input.Image, input.Slug, input.Private)
+	updatedPool, err := poolService.UpdatePool(ctx, q, poolService.UpdatePoolInput{
+		ID:          id,
+		Name:        input.Name,
+		Description: input.Description,
+		Image:       input.Image,
+		Slug:        input.Slug,
+		Private:     input.Private,
+	})
 	if err != nil {
 		return db.Pool{}, err
 	}
 
-	// Handle add claims - use bulk creation with allocation tree
 	if input.AddClaims != nil && len(input.AddClaims) > 0 {
-		// Convert GraphQL inputs to allocation claims
 		claims := make([]allocation.Claim, len(input.AddClaims))
 		for i, c := range input.AddClaims {
 			claims[i] = allocation.Claim{
@@ -247,52 +220,15 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 			}
 		}
 
-		// Create tree, prepare (generate IDs & paths), and validate
-		tree, err := allocation.NewTree(claims)
-		if err != nil {
-			return db.Pool{}, err
-		}
-
-		if err := tree.Prepare(ctx); err != nil {
-			return db.Pool{}, err
-		}
-
-		if err := tree.Validate(ctx); err != nil {
-			return db.Pool{}, err
-		}
-
-		// Bulk insert all claims in one query
-		ids := make([]string, len(tree.Claims))
-		labels := make([]string, len(tree.Claims))
-		paths := make([]string, len(tree.Claims))
-		dataList := make([]pgtype.JSONB, len(tree.Claims))
-		validationIDs := make([]string, len(tree.Claims))
-		distributionIDs := make([]string, len(tree.Claims))
-
-		for i, claim := range tree.Claims {
-			ids[i] = claim.ID.String()
-			labels[i] = claim.Label
-			paths[i] = claim.Path
-			dataList[i] = persist.JSONToJSONB(claim.Data)
-			validationIDs[i] = claim.ValidationID
-			distributionIDs[i] = claim.DistributionID
-		}
-
-		_, err = q.CreateClaims(ctx, db.CreateClaimsParams{
-			ID:             ids,
-			PoolID:         id,
-			Label:          labels,
-			Path:           paths,
-			Data:           dataList,
-			ValidationID:   validationIDs,
-			DistributionID: distributionIDs,
+		_, err := claimService.CreateClaimsWithAllocationTreeForPool(ctx, q, claimService.CreateClaimsWithAllocationTreeForPoolInput{
+			PoolID: id,
+			Claims: claims,
 		})
 		if err != nil {
 			return db.Pool{}, err
 		}
 	}
 
-	// Handle update claims - use bulk update
 	if input.UpdateClaims != nil && len(input.UpdateClaims) > 0 {
 		updateInputs := make([]claimService.UpdateClaimInput, len(input.UpdateClaims))
 		for i, c := range input.UpdateClaims {
@@ -314,8 +250,8 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 			}
 		}
 
-		// Use bulk update
-		_, err := claimService.BulkUpdateClaims(ctx, q, claimService.BulkUpdateClaimsInput{
+		_, err := claimService.BulkUpdateClaimsForPool(ctx, q, claimService.BulkUpdateClaimsForPoolInput{
+			PoolID: id,
 			Claims: updateInputs,
 		})
 		if err != nil {
@@ -323,15 +259,14 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		}
 	}
 
-	// Handle remove claims - use bulk delete
 	if input.RemoveClaims != nil && len(input.RemoveClaims) > 0 {
 		claimIDs := make([]persist.DBID, len(input.RemoveClaims))
 		for i, claimID := range input.RemoveClaims {
 			claimIDs[i] = claimID.DBID()
 		}
 
-		// Use bulk delete
-		_, err := claimService.BulkDeleteClaims(ctx, q, claimService.BulkDeleteClaimsInput{
+		_, err := claimService.BulkDeleteClaimsForPool(ctx, q, claimService.BulkDeleteClaimsForPoolInput{
+			PoolID:   id,
 			ClaimIDs: claimIDs,
 		})
 		if err != nil {

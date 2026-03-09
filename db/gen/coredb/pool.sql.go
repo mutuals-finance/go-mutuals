@@ -61,6 +61,19 @@ func (q *Queries) CreatePool(ctx context.Context, arg CreatePoolParams) (Pool, e
 	return i, err
 }
 
+const deletePool = `-- name: DeletePool :exec
+UPDATE pools
+SET deleted    = TRUE,
+    updated_at = NOW()
+WHERE id = $1
+  AND deleted = FALSE
+`
+
+func (q *Queries) DeletePool(ctx context.Context, id persist.DBID) error {
+	_, err := q.db.Exec(ctx, deletePool, id)
+	return err
+}
+
 const getPoolById = `-- name: GetPoolById :one
 
 SELECT id, version, private, name, description, donation_bps, image, slug, owner_id, contract_id, deleted, updated_at, created_at

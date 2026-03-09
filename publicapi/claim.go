@@ -2,7 +2,6 @@ package publicapi
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
@@ -10,6 +9,7 @@ import (
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	claimService "github.com/mutuals/go-mutuals/service/claim"
 	"github.com/mutuals/go-mutuals/service/persist"
+	"github.com/mutuals/go-mutuals/service/persist/allocation"
 	"github.com/mutuals/go-mutuals/service/persist/postgres"
 	"github.com/mutuals/go-mutuals/validate"
 )
@@ -34,30 +34,14 @@ func (api ClaimAPI) CreateClaim(ctx context.Context, poolID persist.DBID, label 
 		return coredb.Claim{}, err
 	}
 
-	// Check authorization (user must be pool owner)
-	userId, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return coredb.Claim{}, err
-	}
-
-	pool, err := api.queries.GetPoolById(ctx, poolID)
-	if err != nil {
-		return coredb.Claim{}, err
-	}
-
-	if pool.OwnerID != userId {
-		return coredb.Claim{}, fmt.Errorf("user is not the owner of the pool")
-	}
-
-	return claimService.CreateClaim(ctx, api.queries, claimService.CreateClaimInput{
-		ID:             persist.GenerateID(),
+	return claimService.CreateClaimForPool(ctx, api.queries, claimService.CreateClaimForPoolInput{
 		PoolID:         poolID,
 		Label:          label,
-		Data:           persist.JSONToJSONB(data),
-		Parent:         persist.DBIDPtrToSQLNullString(parent),
-		Children:       persist.DBIDSliceToStringSlice(children),
-		ValidationID:   persist.DBID(validationID),
-		DistributionID: persist.DBID(distributionID),
+		Data:           data,
+		Parent:         parent,
+		Children:       children,
+		ValidationID:   validationID,
+		DistributionID: distributionID,
 	})
 }
 
@@ -71,28 +55,14 @@ func (api ClaimAPI) UpdateClaim(ctx context.Context, poolID persist.DBID, claimI
 		return coredb.Claim{}, err
 	}
 
-	// Check authorization (user must be pool owner)
-	userID, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return coredb.Claim{}, err
-	}
-
-	pool, err := api.queries.GetPoolById(ctx, poolID)
-	if err != nil {
-		return coredb.Claim{}, err
-	}
-
-	if pool.OwnerID != userID {
-		return coredb.Claim{}, fmt.Errorf("user is not the owner of the pool")
-	}
-
-	return claimService.UpdateClaim(ctx, api.queries, claimService.UpdateClaimInput{
+	return claimService.UpdateClaimForPool(ctx, api.queries, claimService.UpdateClaimForPoolInput{
+		PoolID:         poolID,
 		ClaimID:        claimID,
-		Data:           persist.JSONToJSONB(data),
-		Parent:         persist.DBIDPtrToSQLNullString(parent),
-		Children:       persist.DBIDSliceToStringSlice(children),
-		ValidationID:   persist.DBID(validationID),
-		DistributionID: persist.DBID(distributionID),
+		Data:           data,
+		Parent:         parent,
+		Children:       children,
+		ValidationID:   validationID,
+		DistributionID: distributionID,
 	})
 }
 
@@ -106,22 +76,8 @@ func (api ClaimAPI) DeleteClaim(ctx context.Context, poolID persist.DBID, claimI
 		return coredb.Claim{}, err
 	}
 
-	// Check authorization (user must be pool owner)
-	userID, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return coredb.Claim{}, err
-	}
-
-	pool, err := api.queries.GetPoolById(ctx, poolID)
-	if err != nil {
-		return coredb.Claim{}, err
-	}
-
-	if pool.OwnerID != userID {
-		return coredb.Claim{}, fmt.Errorf("user is not the owner of the pool")
-	}
-
-	return claimService.DeleteClaim(ctx, api.queries, claimService.DeleteClaimInput{
+	return claimService.DeleteClaimForPool(ctx, api.queries, claimService.DeleteClaimForPoolInput{
+		PoolID:  poolID,
 		ClaimID: claimID,
 	})
 }
@@ -141,6 +97,22 @@ func (api ClaimAPI) GetClaimById(ctx context.Context, claimID persist.DBID) (*co
 	}
 
 	return &claim, nil
+}
+
+// CreateClaimsWithAllocationTree creates claims with allocation tree handling
+func (api ClaimAPI) CreateClaimsWithAllocationTree(ctx context.Context, poolID persist.DBID, claims []allocation.Claim) ([]coredb.Claim, error) {
+	// Validate
+	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
+		"poolID": validate.WithTag(poolID, "required"),
+		"claims": validate.WithTag(claims, "required,min=1"),
+	}); err != nil {
+		return nil, err
+	}
+
+	return claimService.CreateClaimsWithAllocationTreeForPool(ctx, api.queries, claimService.CreateClaimsWithAllocationTreeForPoolInput{
+		PoolID: poolID,
+		Claims: claims,
+	})
 }
 
 // GetClaimsByPoolID retrieves all claims for a pool
@@ -192,21 +164,6 @@ func (api ClaimAPI) BulkCreateClaims(ctx context.Context, poolID persist.DBID, i
 		return nil, err
 	}
 
-	// Check authorization (user must be pool owner)
-	userID, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	pool, err := api.queries.GetPoolById(ctx, poolID)
-	if err != nil {
-		return nil, err
-	}
-
-	if pool.OwnerID != userID {
-		return nil, fmt.Errorf("user is not the owner of the pool")
-	}
-
 	// Convert inputs to service inputs
 	serviceInputs := make([]claimService.CreateClaimInput, len(inputs))
 	for i, input := range inputs {
@@ -221,7 +178,7 @@ func (api ClaimAPI) BulkCreateClaims(ctx context.Context, poolID persist.DBID, i
 		}
 	}
 
-	return claimService.BulkCreateClaims(ctx, api.queries, claimService.BulkCreateClaimsInput{
+	return claimService.BulkCreateClaimsForPool(ctx, api.queries, claimService.BulkCreateClaimsForPoolInput{
 		PoolID: poolID,
 		Claims: serviceInputs,
 	})
@@ -246,21 +203,6 @@ func (api ClaimAPI) BulkUpdateClaims(ctx context.Context, poolID persist.DBID, i
 		return nil, err
 	}
 
-	// Check authorization (user must be pool owner)
-	userID, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	pool, err := api.queries.GetPoolById(ctx, poolID)
-	if err != nil {
-		return nil, err
-	}
-
-	if pool.OwnerID != userID {
-		return nil, fmt.Errorf("user is not the owner of the pool")
-	}
-
 	// Convert inputs to service inputs
 	serviceInputs := make([]claimService.UpdateClaimInput, len(inputs))
 	for i, input := range inputs {
@@ -274,7 +216,8 @@ func (api ClaimAPI) BulkUpdateClaims(ctx context.Context, poolID persist.DBID, i
 		}
 	}
 
-	return claimService.BulkUpdateClaims(ctx, api.queries, claimService.BulkUpdateClaimsInput{
+	return claimService.BulkUpdateClaimsForPool(ctx, api.queries, claimService.BulkUpdateClaimsForPoolInput{
+		PoolID: poolID,
 		Claims: serviceInputs,
 	})
 }
@@ -289,22 +232,8 @@ func (api ClaimAPI) BulkDeleteClaims(ctx context.Context, poolID persist.DBID, c
 		return 0, err
 	}
 
-	// Check authorization (user must be pool owner)
-	userID, err := getAuthenticatedUserId(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	pool, err := api.queries.GetPoolById(ctx, poolID)
-	if err != nil {
-		return 0, err
-	}
-
-	if pool.OwnerID != userID {
-		return 0, fmt.Errorf("user is not the owner of the pool")
-	}
-
-	return claimService.BulkDeleteClaims(ctx, api.queries, claimService.BulkDeleteClaimsInput{
+	return claimService.BulkDeleteClaimsForPool(ctx, api.queries, claimService.BulkDeleteClaimsForPoolInput{
+		PoolID:   poolID,
 		ClaimIDs: claimIDs,
 	})
 }
