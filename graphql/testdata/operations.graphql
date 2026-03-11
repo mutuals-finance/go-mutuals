@@ -296,7 +296,8 @@ mutation poolClaimCreateMutation($poolId: ID!, $input: ClaimCreateInput!) {
                 id
                 label
                 path
-                data
+                validationData
+                distributionData
             }
         }
         ... on ErrNotAuthorized {
@@ -320,7 +321,8 @@ mutation poolClaimUpdateMutation($poolId: ID!, $input: ClaimUpdateInput!) {
                 id
                 label
                 path
-                data
+                validationData
+                distributionData
             }
         }
         ... on ErrNotAuthorized {
@@ -366,7 +368,8 @@ mutation poolClaimBulkCreateMutation($poolId: ID!, $claims: [ClaimBulkCreateInpu
                 id
                 label
                 path
-                data
+                validationData
+                distributionData
             }
         }
         ... on ErrNotAuthorized {
@@ -391,7 +394,8 @@ mutation poolClaimBulkUpdateMutation($poolId: ID!, $claims: [ClaimBulkUpdateInpu
                 id
                 label
                 path
-                data
+                validationData
+                distributionData
             }
         }
         ... on ErrNotAuthorized {

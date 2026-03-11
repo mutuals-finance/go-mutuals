@@ -13,18 +13,19 @@ import (
 )
 
 type Claim struct {
-	ID             persist.DBID   `db:"id" json:"id"`
-	PoolID         persist.DBID   `db:"pool_id" json:"pool_id"`
-	ValidationID   persist.DBID   `db:"validation_id" json:"validation_id"`
-	DistributionID persist.DBID   `db:"distribution_id" json:"distribution_id"`
-	Data           pgtype.JSONB   `db:"data" json:"data"`
-	Label          string         `db:"label" json:"label"`
-	Path           sql.NullString `db:"path" json:"path"`
-	Parent         sql.NullString `db:"parent" json:"parent"`
-	Children       []string       `db:"children" json:"children"`
-	Deleted        bool           `db:"deleted" json:"deleted"`
-	UpdatedAt      time.Time      `db:"updated_at" json:"updated_at"`
-	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
+	ID               persist.DBID   `db:"id" json:"id"`
+	PoolID           persist.DBID   `db:"pool_id" json:"pool_id"`
+	ValidationID     persist.DBID   `db:"validation_id" json:"validation_id"`
+	ValidationData   pgtype.JSONB   `db:"validation_data" json:"validation_data"`
+	DistributionID   persist.DBID   `db:"distribution_id" json:"distribution_id"`
+	DistributionData pgtype.JSONB   `db:"distribution_data" json:"distribution_data"`
+	Label            string         `db:"label" json:"label"`
+	Path             sql.NullString `db:"path" json:"path"`
+	Parent           sql.NullString `db:"parent" json:"parent"`
+	Children         []string       `db:"children" json:"children"`
+	Deleted          bool           `db:"deleted" json:"deleted"`
+	UpdatedAt        time.Time      `db:"updated_at" json:"updated_at"`
+	CreatedAt        time.Time      `db:"created_at" json:"created_at"`
 }
 
 type Event struct {

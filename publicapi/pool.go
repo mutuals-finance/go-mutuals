@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgtype"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	"github.com/mutuals/go-mutuals/graphql/model"
@@ -148,12 +149,13 @@ func (api PoolAPI) CreatePool(ctx context.Context, input model.PoolCreateInput) 
 		claims := make([]allocation.Claim, len(input.AddClaims))
 		for i, c := range input.AddClaims {
 			claims[i] = allocation.Claim{
-				Label:          c.Label,
-				Data:           c.Data,
-				ParentID:       c.Parent,
-				ChildIDs:       c.Children,
-				ValidationID:   c.ValidationID,
-				DistributionID: c.DistributionID,
+				Label:            c.Label,
+				ValidationData:   c.ValidationData,
+				DistributionData: c.DistributionData,
+				ParentID:         c.Parent,
+				ChildIDs:         c.Children,
+				ValidationID:     c.ValidationID,
+				DistributionID:   c.DistributionID,
 			}
 		}
 
@@ -211,12 +213,13 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 		claims := make([]allocation.Claim, len(input.AddClaims))
 		for i, c := range input.AddClaims {
 			claims[i] = allocation.Claim{
-				Label:          c.Label,
-				Data:           c.Data,
-				ParentID:       c.Parent,
-				ChildIDs:       c.Children,
-				ValidationID:   c.ValidationID,
-				DistributionID: c.DistributionID,
+				Label:            c.Label,
+				ValidationData:   c.ValidationData,
+				DistributionData: c.DistributionData,
+				ParentID:         c.Parent,
+				ChildIDs:         c.Children,
+				ValidationID:     c.ValidationID,
+				DistributionID:   c.DistributionID,
 			}
 		}
 
@@ -240,13 +243,22 @@ func (api PoolAPI) UpdatePool(ctx context.Context, id persist.DBID, input model.
 				}
 			}
 
+			var validationData, distributionData pgtype.JSONB
+			if c.ValidationData != nil {
+				validationData = persist.JSONToJSONB(c.ValidationData)
+			}
+			if c.DistributionData != nil {
+				distributionData = persist.JSONToJSONB(c.DistributionData)
+			}
+
 			updateInputs[i] = claimService.UpdateClaimInput{
-				ClaimID:        c.ClaimID.DBID(),
-				Data:           persist.JSONToJSONB(c.Data),
-				Parent:         persist.DBIDPtrToSQLNullString(c.Parent.DBIDPtr()),
-				Children:       persist.DBIDSliceToStringSlice(children),
-				ValidationID:   persist.DBID(*c.ValidationID),
-				DistributionID: persist.DBID(*c.DistributionID),
+				ClaimID:          c.ClaimID.DBID(),
+				ValidationData:   validationData,
+				DistributionData: distributionData,
+				Parent:           persist.DBIDPtrToSQLNullString(c.Parent.DBIDPtr()),
+				Children:         persist.DBIDSliceToStringSlice(children),
+				ValidationID:     persist.DBID(*c.ValidationID),
+				DistributionID:   persist.DBID(*c.DistributionID),
 			}
 		}
 

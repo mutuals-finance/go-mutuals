@@ -73,18 +73,18 @@ type ComplexityRoot struct {
 	}
 
 	Claim struct {
-		Children     func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		Data         func(childComplexity int) int
-		Distribution func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Label        func(childComplexity int) int
-		Parent       func(childComplexity int) int
-		Path         func(childComplexity int) int
-		Pool         func(childComplexity int) int
-		Recipient    func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
-		Validation   func(childComplexity int) int
+		Children         func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		Distribution     func(childComplexity int) int
+		DistributionData func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Label            func(childComplexity int) int
+		Parent           func(childComplexity int) int
+		Path             func(childComplexity int) int
+		Pool             func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+		Validation       func(childComplexity int) int
+		ValidationData   func(childComplexity int) int
 	}
 
 	ClaimBulkCreatePayload struct {
@@ -464,8 +464,8 @@ type ClaimResolver interface {
 	Parent(ctx context.Context, obj *model.Claim) (*model.Claim, error)
 	Children(ctx context.Context, obj *model.Claim) ([]*model.Claim, error)
 	Pool(ctx context.Context, obj *model.Claim) (*model.Pool, error)
-	Recipient(ctx context.Context, obj *model.Claim) (model.PoolOrUserOrEVMAccount, error)
 	Validation(ctx context.Context, obj *model.Claim) (*model.Module, error)
+
 	Distribution(ctx context.Context, obj *model.Claim) (*model.Module, error)
 }
 type DepositResolver interface {
@@ -590,19 +590,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Claim.CreatedAt(childComplexity), true
 
-	case "Claim.data":
-		if e.complexity.Claim.Data == nil {
-			break
-		}
-
-		return e.complexity.Claim.Data(childComplexity), true
-
 	case "Claim.distribution":
 		if e.complexity.Claim.Distribution == nil {
 			break
 		}
 
 		return e.complexity.Claim.Distribution(childComplexity), true
+
+	case "Claim.distributionData":
+		if e.complexity.Claim.DistributionData == nil {
+			break
+		}
+
+		return e.complexity.Claim.DistributionData(childComplexity), true
 
 	case "Claim.id":
 		if e.complexity.Claim.ID == nil {
@@ -639,13 +639,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Claim.Pool(childComplexity), true
 
-	case "Claim.recipient":
-		if e.complexity.Claim.Recipient == nil {
-			break
-		}
-
-		return e.complexity.Claim.Recipient(childComplexity), true
-
 	case "Claim.updatedAt":
 		if e.complexity.Claim.UpdatedAt == nil {
 			break
@@ -659,6 +652,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Claim.Validation(childComplexity), true
+
+	case "Claim.validationData":
+		if e.complexity.Claim.ValidationData == nil {
+			break
+		}
+
+		return e.complexity.Claim.ValidationData(childComplexity), true
 
 	case "ClaimBulkCreatePayload.claims":
 		if e.complexity.ClaimBulkCreatePayload.Claims == nil {
@@ -2500,15 +2500,15 @@ type Module implements Node {
 
 type Claim implements Node {
   id: ID!
-  data: JSON
   label: String!
   path: String!
   parent: Claim @goField(forceResolver: true)
   children: [Claim!] @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
-  recipient: PoolOrUserOrEVMAccount @goField(forceResolver: true)
   validation: Module! @goField(forceResolver: true)
+  validationData: JSON
   distribution: Module! @goField(forceResolver: true)
+  distributionData: JSON
   createdAt: Time!
   updatedAt: Time!
 }
@@ -2844,7 +2844,8 @@ type ClaimCreatePayload {
 
 input ClaimCreateInput {
   label: String!
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: String
   children: [String!]
   validationId: String!
@@ -2859,7 +2860,8 @@ type ClaimUpdatePayload {
 
 input ClaimUpdateInput {
   claimId: ID!
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: ID
   children: [ID!]
   validationId: String
@@ -2880,7 +2882,8 @@ type ClaimBulkCreatePayload {
 }
 
 input ClaimBulkCreateInput {
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: ID
   children: [ID!]
   validationId: String!
@@ -2896,7 +2899,8 @@ type ClaimBulkUpdatePayload {
 
 input ClaimBulkUpdateInput {
   claimId: ID!
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: ID
   children: [ID!]
   validationId: String
@@ -4548,47 +4552,6 @@ func (ec *executionContext) fieldContext_Claim_id(_ context.Context, field graph
 	return fc, nil
 }
 
-func (ec *executionContext) _Claim_data(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Claim_data(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Data, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(persist.JSON)
-	fc.Result = res
-	return ec.marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Claim_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Claim",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type JSON does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Claim_label(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Claim_label(ctx, field)
 	if err != nil {
@@ -4715,8 +4678,6 @@ func (ec *executionContext) fieldContext_Claim_parent(_ context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -4727,12 +4688,14 @@ func (ec *executionContext) fieldContext_Claim_parent(_ context.Context, field g
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -4782,8 +4745,6 @@ func (ec *executionContext) fieldContext_Claim_children(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -4794,12 +4755,14 @@ func (ec *executionContext) fieldContext_Claim_children(_ context.Context, field
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -4881,47 +4844,6 @@ func (ec *executionContext) fieldContext_Claim_pool(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Claim_recipient(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Claim_recipient(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Claim().Recipient(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.PoolOrUserOrEVMAccount)
-	fc.Result = res
-	return ec.marshalOPoolOrUserOrEVMAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolOrUserOrEVMAccount(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Claim_recipient(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Claim",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PoolOrUserOrEVMAccount does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Claim_validation(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Claim_validation(ctx, field)
 	if err != nil {
@@ -4992,6 +4914,47 @@ func (ec *executionContext) fieldContext_Claim_validation(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Claim_validationData(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Claim_validationData(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ValidationData, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(persist.JSON)
+	fc.Result = res
+	return ec.marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Claim_validationData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Claim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Claim_distribution(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Claim_distribution(ctx, field)
 	if err != nil {
@@ -5057,6 +5020,47 @@ func (ec *executionContext) fieldContext_Claim_distribution(_ context.Context, f
 				return ec.fieldContext_Module_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Module", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Claim_distributionData(ctx context.Context, field graphql.CollectedField, obj *model.Claim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Claim_distributionData(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DistributionData, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(persist.JSON)
+	fc.Result = res
+	return ec.marshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Claim_distributionData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Claim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5235,8 +5239,6 @@ func (ec *executionContext) fieldContext_ClaimBulkCreatePayload_claims(_ context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -5247,12 +5249,14 @@ func (ec *executionContext) fieldContext_ClaimBulkCreatePayload_claims(_ context
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -5393,8 +5397,6 @@ func (ec *executionContext) fieldContext_ClaimBulkUpdatePayload_claims(_ context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -5405,12 +5407,14 @@ func (ec *executionContext) fieldContext_ClaimBulkUpdatePayload_claims(_ context
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -5463,8 +5467,6 @@ func (ec *executionContext) fieldContext_ClaimCreatePayload_claim(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -5475,12 +5477,14 @@ func (ec *executionContext) fieldContext_ClaimCreatePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -5533,8 +5537,6 @@ func (ec *executionContext) fieldContext_ClaimDeletePayload_claim(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -5545,12 +5547,14 @@ func (ec *executionContext) fieldContext_ClaimDeletePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -5603,8 +5607,6 @@ func (ec *executionContext) fieldContext_ClaimUpdatePayload_claim(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -5615,12 +5617,14 @@ func (ec *executionContext) fieldContext_ClaimUpdatePayload_claim(_ context.Cont
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -10047,8 +10051,6 @@ func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field gr
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Claim_id(ctx, field)
-			case "data":
-				return ec.fieldContext_Claim_data(ctx, field)
 			case "label":
 				return ec.fieldContext_Claim_label(ctx, field)
 			case "path":
@@ -10059,12 +10061,14 @@ func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field gr
 				return ec.fieldContext_Claim_children(ctx, field)
 			case "pool":
 				return ec.fieldContext_Claim_pool(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Claim_recipient(ctx, field)
 			case "validation":
 				return ec.fieldContext_Claim_validation(ctx, field)
+			case "validationData":
+				return ec.fieldContext_Claim_validationData(ctx, field)
 			case "distribution":
 				return ec.fieldContext_Claim_distribution(ctx, field)
+			case "distributionData":
+				return ec.fieldContext_Claim_distributionData(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Claim_createdAt(ctx, field)
 			case "updatedAt":
@@ -17492,20 +17496,27 @@ func (ec *executionContext) unmarshalInputClaimBulkCreateInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"data", "parent", "children", "validationId", "distributionId"}
+	fieldsInOrder := [...]string{"validationData", "distributionData", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "data":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+		case "validationData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationData"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Data = data
+			it.ValidationData = data
+		case "distributionData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionData"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DistributionData = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
@@ -17547,7 +17558,7 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"claimId", "data", "parent", "children", "validationId", "distributionId"}
+	fieldsInOrder := [...]string{"claimId", "validationData", "distributionData", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17561,13 +17572,20 @@ func (ec *executionContext) unmarshalInputClaimBulkUpdateInput(ctx context.Conte
 				return it, err
 			}
 			it.ClaimID = data
-		case "data":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+		case "validationData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationData"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Data = data
+			it.ValidationData = data
+		case "distributionData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionData"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DistributionData = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
@@ -17609,7 +17627,7 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"label", "data", "parent", "children", "validationId", "distributionId"}
+	fieldsInOrder := [...]string{"label", "validationData", "distributionData", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17623,13 +17641,20 @@ func (ec *executionContext) unmarshalInputClaimCreateInput(ctx context.Context, 
 				return it, err
 			}
 			it.Label = data
-		case "data":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+		case "validationData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationData"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Data = data
+			it.ValidationData = data
+		case "distributionData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionData"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DistributionData = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -17671,7 +17696,7 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"claimId", "data", "parent", "children", "validationId", "distributionId"}
+	fieldsInOrder := [...]string{"claimId", "validationData", "distributionData", "parent", "children", "validationId", "distributionId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17685,13 +17710,20 @@ func (ec *executionContext) unmarshalInputClaimUpdateInput(ctx context.Context, 
 				return it, err
 			}
 			it.ClaimID = data
-		case "data":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+		case "validationData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validationData"))
 			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Data = data
+			it.ValidationData = data
+		case "distributionData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("distributionData"))
+			data, err := ec.unmarshalOJSON2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐJSON(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DistributionData = data
 		case "parent":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parent"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, v)
@@ -19048,8 +19080,6 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "data":
-			out.Values[i] = ec._Claim_data(ctx, field, obj)
 		case "label":
 			out.Values[i] = ec._Claim_label(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -19162,39 +19192,6 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "recipient":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Claim_recipient(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "validation":
 			field := field
 
@@ -19231,6 +19228,8 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "validationData":
+			out.Values[i] = ec._Claim_validationData(ctx, field, obj)
 		case "distribution":
 			field := field
 
@@ -19267,6 +19266,8 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "distributionData":
+			out.Values[i] = ec._Claim_distributionData(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Claim_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -25468,13 +25469,6 @@ func (ec *executionContext) marshalOPoolContract2ᚖgithubᚗcomᚋmutualsᚋgo�
 		return graphql.Null
 	}
 	return ec._PoolContract(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPoolOrUserOrEVMAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolOrUserOrEVMAccount(ctx context.Context, sel ast.SelectionSet, v model.PoolOrUserOrEVMAccount) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._PoolOrUserOrEVMAccount(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPoolSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolSearchResult) graphql.Marshaler {

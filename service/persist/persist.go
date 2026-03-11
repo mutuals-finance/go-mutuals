@@ -475,6 +475,15 @@ func JSONBToJSON(j pgtype.JSONB) JSON {
 	return JSON(j.Bytes)
 }
 
+// JSONBToJSONPtr converts pgtype.JSONB to *persist.JSON
+func JSONBToJSONPtr(j pgtype.JSONB) *JSON {
+	if j.Status != pgtype.Present || len(j.Bytes) == 0 {
+		return nil
+	}
+	result := JSON(j.Bytes)
+	return &result
+}
+
 type DarkMode int
 
 const (

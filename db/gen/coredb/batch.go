@@ -19,7 +19,7 @@ var (
 )
 
 const getClaimByIdBatch = `-- name: GetClaimByIdBatch :batchone
-SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+SELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 FROM claims
 WHERE id = $1
   AND deleted = FALSE
@@ -58,8 +58,9 @@ func (b *GetClaimByIdBatchBatchResults) QueryRow(f func(int, Claim, error)) {
 			&i.ID,
 			&i.PoolID,
 			&i.ValidationID,
+			&i.ValidationData,
 			&i.DistributionID,
-			&i.Data,
+			&i.DistributionData,
 			&i.Label,
 			&i.Path,
 			&i.Parent,
@@ -80,7 +81,7 @@ func (b *GetClaimByIdBatchBatchResults) Close() error {
 }
 
 const getClaimsByPoolIdBatch = `-- name: GetClaimsByPoolIdBatch :batchmany
-SELECT c.id, c.pool_id, c.validation_id, c.distribution_id, c.data, c.label, c.path, c.parent, c.children, c.deleted, c.updated_at, c.created_at
+SELECT c.id, c.pool_id, c.validation_id, c.validation_data, c.distribution_id, c.distribution_data, c.label, c.path, c.parent, c.children, c.deleted, c.updated_at, c.created_at
 FROM pools p
          INNER JOIN claims c ON c.pool_id = p.id
 WHERE p.id = $1
@@ -128,8 +129,9 @@ func (b *GetClaimsByPoolIdBatchBatchResults) Query(f func(int, []Claim, error)) 
 					&i.ID,
 					&i.PoolID,
 					&i.ValidationID,
+					&i.ValidationData,
 					&i.DistributionID,
-					&i.Data,
+					&i.DistributionData,
 					&i.Label,
 					&i.Path,
 					&i.Parent,

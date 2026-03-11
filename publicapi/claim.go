@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgtype"
 	"github.com/mutuals/go-mutuals/db/gen/coredb"
 	"github.com/mutuals/go-mutuals/graphql/dataloader"
 	claimService "github.com/mutuals/go-mutuals/service/claim"
@@ -23,8 +24,7 @@ type ClaimAPI struct {
 }
 
 // CreateClaim creates a new claim for a pool
-func (api ClaimAPI) CreateClaim(ctx context.Context, poolID persist.DBID, label string, data persist.JSON, parent *persist.DBID, children []persist.DBID, validationID string, distributionID string) (coredb.Claim, error) {
-	// Validate
+func (api ClaimAPI) CreateClaim(ctx context.Context, poolID persist.DBID, label string, validationData, distributionData *persist.JSON, parent *persist.DBID, children []persist.DBID, validationID string, distributionID string) (coredb.Claim, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID":         validate.WithTag(poolID, "required"),
 		"label":          validate.WithTag(label, "required,max=200"),
@@ -35,19 +35,19 @@ func (api ClaimAPI) CreateClaim(ctx context.Context, poolID persist.DBID, label 
 	}
 
 	return claimService.CreateClaimForPool(ctx, api.queries, claimService.CreateClaimForPoolInput{
-		PoolID:         poolID,
-		Label:          label,
-		Data:           data,
-		Parent:         parent,
-		Children:       children,
-		ValidationID:   validationID,
-		DistributionID: distributionID,
+		PoolID:           poolID,
+		Label:            label,
+		ValidationData:   validationData,
+		DistributionData: distributionData,
+		Parent:           parent,
+		Children:         children,
+		ValidationID:     validationID,
+		DistributionID:   distributionID,
 	})
 }
 
 // UpdateClaim updates an existing claim
-func (api ClaimAPI) UpdateClaim(ctx context.Context, poolID persist.DBID, claimID persist.DBID, data persist.JSON, parent *persist.DBID, children []persist.DBID, validationID string, distributionID string) (coredb.Claim, error) {
-	// Validate
+func (api ClaimAPI) UpdateClaim(ctx context.Context, poolID persist.DBID, claimID persist.DBID, validationData, distributionData *persist.JSON, parent *persist.DBID, children []persist.DBID, validationID string, distributionID string) (coredb.Claim, error) {
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID":  validate.WithTag(poolID, "required"),
 		"claimID": validate.WithTag(claimID, "required"),
@@ -56,19 +56,19 @@ func (api ClaimAPI) UpdateClaim(ctx context.Context, poolID persist.DBID, claimI
 	}
 
 	return claimService.UpdateClaimForPool(ctx, api.queries, claimService.UpdateClaimForPoolInput{
-		PoolID:         poolID,
-		ClaimID:        claimID,
-		Data:           data,
-		Parent:         parent,
-		Children:       children,
-		ValidationID:   validationID,
-		DistributionID: distributionID,
+		PoolID:           poolID,
+		ClaimID:          claimID,
+		ValidationData:   validationData,
+		DistributionData: distributionData,
+		Parent:           parent,
+		Children:         children,
+		ValidationID:     validationID,
+		DistributionID:   distributionID,
 	})
 }
 
 // DeleteClaim deletes a claim
 func (api ClaimAPI) DeleteClaim(ctx context.Context, poolID persist.DBID, claimID persist.DBID) (coredb.Claim, error) {
-	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
 		"poolID":  validate.WithTag(poolID, "required"),
 		"claimID": validate.WithTag(claimID, "required"),
@@ -145,11 +145,12 @@ func (api ClaimAPI) GetClaimsByIds(ctx context.Context, claimIDs []persist.DBID)
 }
 
 type BulkCreateClaimInput struct {
-	Data           persist.JSON
-	Parent         *persist.DBID
-	Children       []persist.DBID
-	ValidationID   string
-	DistributionID string
+	ValidationData   *persist.JSON
+	DistributionData *persist.JSON
+	Parent           *persist.DBID
+	Children         []persist.DBID
+	ValidationID     string
+	DistributionID   string
 }
 
 // BulkCreateClaims creates multiple claims
@@ -165,14 +166,23 @@ func (api ClaimAPI) BulkCreateClaims(ctx context.Context, poolID persist.DBID, i
 	// Convert inputs to service inputs
 	serviceInputs := make([]claimService.CreateClaimInput, len(inputs))
 	for i, input := range inputs {
+		var validationData, distributionData pgtype.JSONB
+		if input.ValidationData != nil {
+			validationData = persist.JSONToJSONB(*input.ValidationData)
+		}
+		if input.DistributionData != nil {
+			distributionData = persist.JSONToJSONB(*input.DistributionData)
+		}
+
 		serviceInputs[i] = claimService.CreateClaimInput{
-			ID:             persist.GenerateID(),
-			PoolID:         poolID,
-			Data:           persist.JSONToJSONB(input.Data),
-			Parent:         persist.DBIDPtrToSQLNullString(input.Parent),
-			Children:       persist.DBIDSliceToStringSlice(input.Children),
-			ValidationID:   persist.DBID(input.ValidationID),
-			DistributionID: persist.DBID(input.DistributionID),
+			ID:               persist.GenerateID(),
+			PoolID:           poolID,
+			ValidationData:   validationData,
+			DistributionData: distributionData,
+			Parent:           persist.DBIDPtrToSQLNullString(input.Parent),
+			Children:         persist.DBIDSliceToStringSlice(input.Children),
+			ValidationID:     persist.DBID(input.ValidationID),
+			DistributionID:   persist.DBID(input.DistributionID),
 		}
 	}
 
@@ -183,12 +193,13 @@ func (api ClaimAPI) BulkCreateClaims(ctx context.Context, poolID persist.DBID, i
 }
 
 type BulkUpdateClaimInput struct {
-	ClaimID        persist.DBID
-	Data           persist.JSON
-	Parent         *persist.DBID
-	Children       []persist.DBID
-	ValidationID   string
-	DistributionID string
+	ClaimID          persist.DBID
+	ValidationData   *persist.JSON
+	DistributionData *persist.JSON
+	Parent           *persist.DBID
+	Children         []persist.DBID
+	ValidationID     string
+	DistributionID   string
 }
 
 // BulkUpdateClaims updates multiple claims
@@ -204,13 +215,22 @@ func (api ClaimAPI) BulkUpdateClaims(ctx context.Context, poolID persist.DBID, i
 	// Convert inputs to service inputs
 	serviceInputs := make([]claimService.UpdateClaimInput, len(inputs))
 	for i, input := range inputs {
+		var validationData, distributionData pgtype.JSONB
+		if input.ValidationData != nil {
+			validationData = persist.JSONToJSONB(*input.ValidationData)
+		}
+		if input.DistributionData != nil {
+			distributionData = persist.JSONToJSONB(*input.DistributionData)
+		}
+
 		serviceInputs[i] = claimService.UpdateClaimInput{
-			ClaimID:        input.ClaimID,
-			Data:           persist.JSONToJSONB(input.Data),
-			Parent:         persist.DBIDPtrToSQLNullString(input.Parent),
-			Children:       persist.DBIDSliceToStringSlice(input.Children),
-			ValidationID:   persist.DBID(input.ValidationID),
-			DistributionID: persist.DBID(input.DistributionID),
+			ClaimID:          input.ClaimID,
+			ValidationData:   validationData,
+			DistributionData: distributionData,
+			Parent:           persist.DBIDPtrToSQLNullString(input.Parent),
+			Children:         persist.DBIDSliceToStringSlice(input.Children),
+			ValidationID:     persist.DBID(input.ValidationID),
+			DistributionID:   persist.DBID(input.DistributionID),
 		}
 	}
 

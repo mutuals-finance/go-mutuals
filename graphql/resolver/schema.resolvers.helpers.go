@@ -241,17 +241,21 @@ func claimToModel(ctx context.Context, claim db.Claim) *model.Claim {
 		path = claim.Path.String
 	}
 
+	validationData := persist.JSONBToJSON(claim.ValidationData)
+	distributionData := persist.JSONBToJSON(claim.DistributionData)
+
 	return &model.Claim{
-		Label:        claim.Label,
-		Data:         persist.JSONBToJSON(claim.Data),
-		Path:         path,
-		CreatedAt:    claim.CreatedAt,
-		UpdatedAt:    claim.UpdatedAt,
-		Validation:   nil, // handled by dedicated resolver
-		Distribution: nil, // handled by dedicated resolver
-		Pool:         nil, // handled by dedicated resolver
-		Parent:       nil, // handled by dedicated resolver
-		Children:     nil, // handled by dedicated resolver
+		Label:            claim.Label,
+		ValidationData:   validationData,
+		DistributionData: distributionData,
+		Path:             path,
+		CreatedAt:        claim.CreatedAt,
+		UpdatedAt:        claim.UpdatedAt,
+		Validation:       nil, // handled by dedicated resolver
+		Distribution:     nil, // handled by dedicated resolver
+		Pool:             nil, // handled by dedicated resolver
+		Parent:           nil, // handled by dedicated resolver
+		Children:         nil, // handled by dedicated resolver
 	}
 }
 

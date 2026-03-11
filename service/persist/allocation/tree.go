@@ -11,12 +11,13 @@ import (
 // Claim is the single node structure.
 type Claim struct {
 	// Data Fields
-	ID             persist.DBID
-	Label          string
-	Path           string
-	Data           persist.JSON
-	ValidationID   string
-	DistributionID string
+	ID               persist.DBID
+	Label            string
+	Path             string
+	ValidationData   persist.JSON
+	DistributionData persist.JSON
+	ValidationID     string
+	DistributionID   string
 	// Raw Inputs (used only for initial linking)
 	ParentID *string
 	ChildIDs []string

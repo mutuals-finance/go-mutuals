@@ -122,27 +122,28 @@ type AddUserWalletPayload struct {
 func (AddUserWalletPayload) IsAddUserWalletResult() {}
 
 type Claim struct {
-	Data         persist.JSON           `json:"data"`
-	Label        string                 `json:"label"`
-	Path         string                 `json:"path"`
-	Parent       *Claim                 `json:"parent"`
-	Children     []*Claim               `json:"children"`
-	Pool         *Pool                  `json:"pool"`
-	Recipient    PoolOrUserOrEVMAccount `json:"recipient"`
-	Validation   *Module                `json:"validation"`
-	Distribution *Module                `json:"distribution"`
-	CreatedAt    time.Time              `json:"createdAt"`
-	UpdatedAt    time.Time              `json:"updatedAt"`
+	Label            string       `json:"label"`
+	Path             string       `json:"path"`
+	Parent           *Claim       `json:"parent"`
+	Children         []*Claim     `json:"children"`
+	Pool             *Pool        `json:"pool"`
+	Validation       *Module      `json:"validation"`
+	ValidationData   persist.JSON `json:"validationData"`
+	Distribution     *Module      `json:"distribution"`
+	DistributionData persist.JSON `json:"distributionData"`
+	CreatedAt        time.Time    `json:"createdAt"`
+	UpdatedAt        time.Time    `json:"updatedAt"`
 }
 
 func (Claim) IsNode() {}
 
 type ClaimBulkCreateInput struct {
-	Data           persist.JSON `json:"data"`
-	Parent         *GqlID       `json:"parent"`
-	Children       []GqlID      `json:"children"`
-	ValidationID   string       `json:"validationId"`
-	DistributionID string       `json:"distributionId"`
+	ValidationData   persist.JSON `json:"validationData"`
+	DistributionData persist.JSON `json:"distributionData"`
+	Parent           *GqlID       `json:"parent"`
+	Children         []GqlID      `json:"children"`
+	ValidationID     string       `json:"validationId"`
+	DistributionID   string       `json:"distributionId"`
 }
 
 type ClaimBulkCreatePayload struct {
@@ -159,12 +160,13 @@ type ClaimBulkDeletePayload struct {
 func (ClaimBulkDeletePayload) IsClaimBulkDeleteResult() {}
 
 type ClaimBulkUpdateInput struct {
-	ClaimID        GqlID        `json:"claimId"`
-	Data           persist.JSON `json:"data"`
-	Parent         *GqlID       `json:"parent"`
-	Children       []GqlID      `json:"children"`
-	ValidationID   *string      `json:"validationId"`
-	DistributionID *string      `json:"distributionId"`
+	ClaimID          GqlID        `json:"claimId"`
+	ValidationData   persist.JSON `json:"validationData"`
+	DistributionData persist.JSON `json:"distributionData"`
+	Parent           *GqlID       `json:"parent"`
+	Children         []GqlID      `json:"children"`
+	ValidationID     *string      `json:"validationId"`
+	DistributionID   *string      `json:"distributionId"`
 }
 
 type ClaimBulkUpdatePayload struct {
@@ -175,12 +177,13 @@ type ClaimBulkUpdatePayload struct {
 func (ClaimBulkUpdatePayload) IsClaimBulkUpdateResult() {}
 
 type ClaimCreateInput struct {
-	Label          string       `json:"label"`
-	Data           persist.JSON `json:"data"`
-	Parent         *string      `json:"parent"`
-	Children       []string     `json:"children"`
-	ValidationID   string       `json:"validationId"`
-	DistributionID string       `json:"distributionId"`
+	Label            string       `json:"label"`
+	ValidationData   persist.JSON `json:"validationData"`
+	DistributionData persist.JSON `json:"distributionData"`
+	Parent           *string      `json:"parent"`
+	Children         []string     `json:"children"`
+	ValidationID     string       `json:"validationId"`
+	DistributionID   string       `json:"distributionId"`
 }
 
 type ClaimCreatePayload struct {
@@ -196,12 +199,13 @@ type ClaimDeletePayload struct {
 func (ClaimDeletePayload) IsClaimDeleteResult() {}
 
 type ClaimUpdateInput struct {
-	ClaimID        GqlID        `json:"claimId"`
-	Data           persist.JSON `json:"data"`
-	Parent         *GqlID       `json:"parent"`
-	Children       []GqlID      `json:"children"`
-	ValidationID   *string      `json:"validationId"`
-	DistributionID *string      `json:"distributionId"`
+	ClaimID          GqlID        `json:"claimId"`
+	ValidationData   persist.JSON `json:"validationData"`
+	DistributionData persist.JSON `json:"distributionData"`
+	Parent           *GqlID       `json:"parent"`
+	Children         []GqlID      `json:"children"`
+	ValidationID     *string      `json:"validationId"`
+	DistributionID   *string      `json:"distributionId"`
 }
 
 type ClaimUpdatePayload struct {

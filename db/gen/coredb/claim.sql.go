@@ -14,20 +14,22 @@ import (
 )
 
 const createClaim = `-- name: CreateClaim :one
-INSERT INTO claims (id, pool_id, label, data, parent, children, validation_id, distribution_id, deleted, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, NOW(), NOW())
-RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+INSERT INTO claims (id, pool_id, label, validation_data, distribution_data, parent, children, validation_id,
+                    distribution_id, deleted, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, NOW(), NOW())
+RETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 `
 
 type CreateClaimParams struct {
-	ID             persist.DBID   `db:"id" json:"id"`
-	PoolID         persist.DBID   `db:"pool_id" json:"pool_id"`
-	Label          string         `db:"label" json:"label"`
-	Data           pgtype.JSONB   `db:"data" json:"data"`
-	Parent         sql.NullString `db:"parent" json:"parent"`
-	Children       []string       `db:"children" json:"children"`
-	ValidationID   persist.DBID   `db:"validation_id" json:"validation_id"`
-	DistributionID persist.DBID   `db:"distribution_id" json:"distribution_id"`
+	ID               persist.DBID   `db:"id" json:"id"`
+	PoolID           persist.DBID   `db:"pool_id" json:"pool_id"`
+	Label            string         `db:"label" json:"label"`
+	ValidationData   pgtype.JSONB   `db:"validation_data" json:"validation_data"`
+	DistributionData pgtype.JSONB   `db:"distribution_data" json:"distribution_data"`
+	Parent           sql.NullString `db:"parent" json:"parent"`
+	Children         []string       `db:"children" json:"children"`
+	ValidationID     persist.DBID   `db:"validation_id" json:"validation_id"`
+	DistributionID   persist.DBID   `db:"distribution_id" json:"distribution_id"`
 }
 
 func (q *Queries) CreateClaim(ctx context.Context, arg CreateClaimParams) (Claim, error) {
@@ -35,7 +37,8 @@ func (q *Queries) CreateClaim(ctx context.Context, arg CreateClaimParams) (Claim
 		arg.ID,
 		arg.PoolID,
 		arg.Label,
-		arg.Data,
+		arg.ValidationData,
+		arg.DistributionData,
 		arg.Parent,
 		arg.Children,
 		arg.ValidationID,
@@ -46,8 +49,9 @@ func (q *Queries) CreateClaim(ctx context.Context, arg CreateClaimParams) (Claim
 		&i.ID,
 		&i.PoolID,
 		&i.ValidationID,
+		&i.ValidationData,
 		&i.DistributionID,
-		&i.Data,
+		&i.DistributionData,
 		&i.Label,
 		&i.Path,
 		&i.Parent,
@@ -60,37 +64,41 @@ func (q *Queries) CreateClaim(ctx context.Context, arg CreateClaimParams) (Claim
 }
 
 const createClaims = `-- name: CreateClaims :many
-WITH updates AS (SELECT UNNEST($1::text[])              AS id,
-                        $2                         AS pool_id,
-                        UNNEST($3::text[])   AS validation_id,
-                        UNNEST($4::text[]) AS distribution_id,
-                        UNNEST($5::jsonb[])           AS data,
-                        UNNEST($6::text[])           AS label,
-                        UNNEST($7::ltree[])           AS path)
+WITH updates AS (SELECT UNNEST($1::text[])                 AS id,
+                        $2                            AS pool_id,
+                        UNNEST($3::text[])      AS validation_id,
+                        UNNEST($4::text[])    AS distribution_id,
+                        UNNEST($5::jsonb[])   AS validation_data,
+                        UNNEST($6::jsonb[]) AS distribution_data,
+                        UNNEST($7::text[])              AS label,
+                        UNNEST($8::ltree[])              AS path)
 INSERT
-INTO claims (id, pool_id, validation_id, distribution_id, data, label, path, deleted, updated_at, created_at)
+INTO claims (id, pool_id, validation_id, distribution_id, validation_data, distribution_data, label, path, deleted,
+             updated_at, created_at)
 SELECT id,
        pool_id,
        validation_id,
        distribution_id,
-       data,
+       validation_data,
+       distribution_data,
        label,
        path,
        FALSE,
        NOW(),
        NOW()
 FROM updates
-RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+RETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 `
 
 type CreateClaimsParams struct {
-	ID             []string       `db:"id" json:"id"`
-	PoolID         persist.DBID   `db:"pool_id" json:"pool_id"`
-	ValidationID   []string       `db:"validation_id" json:"validation_id"`
-	DistributionID []string       `db:"distribution_id" json:"distribution_id"`
-	Data           []pgtype.JSONB `db:"data" json:"data"`
-	Label          []string       `db:"label" json:"label"`
-	Path           []string       `db:"path" json:"path"`
+	ID               []string       `db:"id" json:"id"`
+	PoolID           persist.DBID   `db:"pool_id" json:"pool_id"`
+	ValidationID     []string       `db:"validation_id" json:"validation_id"`
+	DistributionID   []string       `db:"distribution_id" json:"distribution_id"`
+	ValidationData   []pgtype.JSONB `db:"validation_data" json:"validation_data"`
+	DistributionData []pgtype.JSONB `db:"distribution_data" json:"distribution_data"`
+	Label            []string       `db:"label" json:"label"`
+	Path             []string       `db:"path" json:"path"`
 }
 
 func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]Claim, error) {
@@ -99,7 +107,8 @@ func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]C
 		arg.PoolID,
 		arg.ValidationID,
 		arg.DistributionID,
-		arg.Data,
+		arg.ValidationData,
+		arg.DistributionData,
 		arg.Label,
 		arg.Path,
 	)
@@ -114,8 +123,9 @@ func (q *Queries) CreateClaims(ctx context.Context, arg CreateClaimsParams) ([]C
 			&i.ID,
 			&i.PoolID,
 			&i.ValidationID,
+			&i.ValidationData,
 			&i.DistributionID,
-			&i.Data,
+			&i.DistributionData,
 			&i.Label,
 			&i.Path,
 			&i.Parent,
@@ -140,7 +150,7 @@ SET deleted    = TRUE,
     updated_at = NOW()
 WHERE id = $1
   AND deleted = FALSE
-RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+RETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 `
 
 func (q *Queries) DeleteClaim(ctx context.Context, id persist.DBID) (Claim, error) {
@@ -150,8 +160,9 @@ func (q *Queries) DeleteClaim(ctx context.Context, id persist.DBID) (Claim, erro
 		&i.ID,
 		&i.PoolID,
 		&i.ValidationID,
+		&i.ValidationData,
 		&i.DistributionID,
-		&i.Data,
+		&i.DistributionData,
 		&i.Label,
 		&i.Path,
 		&i.Parent,
@@ -165,7 +176,7 @@ func (q *Queries) DeleteClaim(ctx context.Context, id persist.DBID) (Claim, erro
 
 const getClaimById = `-- name: GetClaimById :one
 
-SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+SELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 FROM claims
 WHERE id = $1
   AND deleted = FALSE
@@ -181,8 +192,9 @@ func (q *Queries) GetClaimById(ctx context.Context, id persist.DBID) (Claim, err
 		&i.ID,
 		&i.PoolID,
 		&i.ValidationID,
+		&i.ValidationData,
 		&i.DistributionID,
-		&i.Data,
+		&i.DistributionData,
 		&i.Label,
 		&i.Path,
 		&i.Parent,
@@ -195,9 +207,9 @@ func (q *Queries) GetClaimById(ctx context.Context, id persist.DBID) (Claim, err
 }
 
 const getClaimsByIds = `-- name: GetClaimsByIds :many
-SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+SELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 FROM claims
-WHERE id = ANY($1::text[])
+WHERE id = ANY ($1::text[])
   AND deleted = FALSE
 `
 
@@ -214,8 +226,9 @@ func (q *Queries) GetClaimsByIds(ctx context.Context, ids []string) ([]Claim, er
 			&i.ID,
 			&i.PoolID,
 			&i.ValidationID,
+			&i.ValidationData,
 			&i.DistributionID,
-			&i.Data,
+			&i.DistributionData,
 			&i.Label,
 			&i.Path,
 			&i.Parent,
@@ -235,7 +248,7 @@ func (q *Queries) GetClaimsByIds(ctx context.Context, ids []string) ([]Claim, er
 }
 
 const getClaimsByPoolId = `-- name: GetClaimsByPoolId :many
-SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+SELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 FROM claims
 WHERE pool_id = $1
   AND deleted = FALSE
@@ -254,8 +267,9 @@ func (q *Queries) GetClaimsByPoolId(ctx context.Context, poolID persist.DBID) ([
 			&i.ID,
 			&i.PoolID,
 			&i.ValidationID,
+			&i.ValidationData,
 			&i.DistributionID,
-			&i.Data,
+			&i.DistributionData,
 			&i.Label,
 			&i.Path,
 			&i.Parent,
@@ -276,30 +290,33 @@ func (q *Queries) GetClaimsByPoolId(ctx context.Context, poolID persist.DBID) ([
 
 const updateClaim = `-- name: UpdateClaim :one
 UPDATE claims
-SET data            = $2,
-    parent          = $3,
-    children        = $4,
-    validation_id   = $5,
-    distribution_id = $6,
-    updated_at      = NOW()
+SET validation_data   = $2,
+    distribution_data = $3,
+    parent            = $4,
+    children          = $5,
+    validation_id     = $6,
+    distribution_id   = $7,
+    updated_at        = NOW()
 WHERE id = $1
   AND deleted = FALSE
-RETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at
+RETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at
 `
 
 type UpdateClaimParams struct {
-	ID             persist.DBID   `db:"id" json:"id"`
-	Data           pgtype.JSONB   `db:"data" json:"data"`
-	Parent         sql.NullString `db:"parent" json:"parent"`
-	Children       []string       `db:"children" json:"children"`
-	ValidationID   persist.DBID   `db:"validation_id" json:"validation_id"`
-	DistributionID persist.DBID   `db:"distribution_id" json:"distribution_id"`
+	ID               persist.DBID   `db:"id" json:"id"`
+	ValidationData   pgtype.JSONB   `db:"validation_data" json:"validation_data"`
+	DistributionData pgtype.JSONB   `db:"distribution_data" json:"distribution_data"`
+	Parent           sql.NullString `db:"parent" json:"parent"`
+	Children         []string       `db:"children" json:"children"`
+	ValidationID     persist.DBID   `db:"validation_id" json:"validation_id"`
+	DistributionID   persist.DBID   `db:"distribution_id" json:"distribution_id"`
 }
 
 func (q *Queries) UpdateClaim(ctx context.Context, arg UpdateClaimParams) (Claim, error) {
 	row := q.db.QueryRow(ctx, updateClaim,
 		arg.ID,
-		arg.Data,
+		arg.ValidationData,
+		arg.DistributionData,
 		arg.Parent,
 		arg.Children,
 		arg.ValidationID,
@@ -310,8 +327,9 @@ func (q *Queries) UpdateClaim(ctx context.Context, arg UpdateClaimParams) (Claim
 		&i.ID,
 		&i.PoolID,
 		&i.ValidationID,
+		&i.ValidationData,
 		&i.DistributionID,
-		&i.Data,
+		&i.DistributionData,
 		&i.Label,
 		&i.Path,
 		&i.Parent,
@@ -324,35 +342,38 @@ func (q *Queries) UpdateClaim(ctx context.Context, arg UpdateClaimParams) (Claim
 }
 
 const updateClaims = `-- name: UpdateClaims :many
-WITH updates AS (SELECT UNNEST($1::text[])              AS id,
-                        UNNEST($2::text[])   AS validation_id,
-                        UNNEST($3::text[]) AS distribution_id,
-                        UNNEST($4::jsonb[])           AS data,
-                        UNNEST($5::text[])           AS label,
-                        UNNEST($6::ltree[])           AS path,
-                        UNNEST($7::boolean[])      AS deleted)
+WITH updates AS (SELECT UNNEST($1::text[])                 AS id,
+                        UNNEST($2::text[])      AS validation_id,
+                        UNNEST($3::text[])    AS distribution_id,
+                        UNNEST($4::jsonb[])   AS validation_data,
+                        UNNEST($5::jsonb[]) AS distribution_data,
+                        UNNEST($6::text[])              AS label,
+                        UNNEST($7::ltree[])              AS path,
+                        UNNEST($8::boolean[])         AS deleted)
 UPDATE claims
-SET validation_id   = updates.validation_id,
-    distribution_id = updates.distribution_id,
-    data            = updates.data,
-    label           = updates.label,
-    path            = updates.path,
-    deleted         = updates.deleted,
-    updated_at      = NOW()
+SET validation_id     = updates.validation_id,
+    distribution_id   = updates.distribution_id,
+    validation_data   = updates.validation_data,
+    distribution_data = updates.distribution_data,
+    label             = updates.label,
+    path              = updates.path,
+    deleted           = updates.deleted,
+    updated_at        = NOW()
 FROM updates
 WHERE claims.id = updates.id
   AND claims.deleted = FALSE
-RETURNING claims.id, claims.pool_id, claims.validation_id, claims.distribution_id, claims.data, claims.label, claims.path, claims.parent, claims.children, claims.deleted, claims.updated_at, claims.created_at
+RETURNING claims.id, claims.pool_id, claims.validation_id, claims.validation_data, claims.distribution_id, claims.distribution_data, claims.label, claims.path, claims.parent, claims.children, claims.deleted, claims.updated_at, claims.created_at
 `
 
 type UpdateClaimsParams struct {
-	ID             []string       `db:"id" json:"id"`
-	ValidationID   []string       `db:"validation_id" json:"validation_id"`
-	DistributionID []string       `db:"distribution_id" json:"distribution_id"`
-	Data           []pgtype.JSONB `db:"data" json:"data"`
-	Label          []string       `db:"label" json:"label"`
-	Path           []string       `db:"path" json:"path"`
-	Deleted        []bool         `db:"deleted" json:"deleted"`
+	ID               []string       `db:"id" json:"id"`
+	ValidationID     []string       `db:"validation_id" json:"validation_id"`
+	DistributionID   []string       `db:"distribution_id" json:"distribution_id"`
+	ValidationData   []pgtype.JSONB `db:"validation_data" json:"validation_data"`
+	DistributionData []pgtype.JSONB `db:"distribution_data" json:"distribution_data"`
+	Label            []string       `db:"label" json:"label"`
+	Path             []string       `db:"path" json:"path"`
+	Deleted          []bool         `db:"deleted" json:"deleted"`
 }
 
 func (q *Queries) UpdateClaims(ctx context.Context, arg UpdateClaimsParams) ([]Claim, error) {
@@ -360,7 +381,8 @@ func (q *Queries) UpdateClaims(ctx context.Context, arg UpdateClaimsParams) ([]C
 		arg.ID,
 		arg.ValidationID,
 		arg.DistributionID,
-		arg.Data,
+		arg.ValidationData,
+		arg.DistributionData,
 		arg.Label,
 		arg.Path,
 		arg.Deleted,
@@ -376,8 +398,9 @@ func (q *Queries) UpdateClaims(ctx context.Context, arg UpdateClaimsParams) ([]C
 			&i.ID,
 			&i.PoolID,
 			&i.ValidationID,
+			&i.ValidationData,
 			&i.DistributionID,
-			&i.Data,
+			&i.DistributionData,
 			&i.Label,
 			&i.Path,
 			&i.Parent,

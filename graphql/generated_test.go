@@ -12,15 +12,19 @@ import (
 )
 
 type ClaimBulkCreateInput struct {
-	Data           *json.RawMessage `json:"data"`
-	Parent         *string          `json:"parent"`
-	Children       []string         `json:"children"`
-	ValidationId   string           `json:"validationId"`
-	DistributionId string           `json:"distributionId"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
+	ValidationId     string           `json:"validationId"`
+	DistributionId   string           `json:"distributionId"`
 }
 
-// GetData returns ClaimBulkCreateInput.Data, and is useful for accessing the field via an interface.
-func (v *ClaimBulkCreateInput) GetData() *json.RawMessage { return v.Data }
+// GetValidationData returns ClaimBulkCreateInput.ValidationData, and is useful for accessing the field via an interface.
+func (v *ClaimBulkCreateInput) GetValidationData() *json.RawMessage { return v.ValidationData }
+
+// GetDistributionData returns ClaimBulkCreateInput.DistributionData, and is useful for accessing the field via an interface.
+func (v *ClaimBulkCreateInput) GetDistributionData() *json.RawMessage { return v.DistributionData }
 
 // GetParent returns ClaimBulkCreateInput.Parent, and is useful for accessing the field via an interface.
 func (v *ClaimBulkCreateInput) GetParent() *string { return v.Parent }
@@ -35,19 +39,23 @@ func (v *ClaimBulkCreateInput) GetValidationId() string { return v.ValidationId 
 func (v *ClaimBulkCreateInput) GetDistributionId() string { return v.DistributionId }
 
 type ClaimBulkUpdateInput struct {
-	ClaimId        string           `json:"claimId"`
-	Data           *json.RawMessage `json:"data"`
-	Parent         *string          `json:"parent"`
-	Children       []string         `json:"children"`
-	ValidationId   *string          `json:"validationId"`
-	DistributionId *string          `json:"distributionId"`
+	ClaimId          string           `json:"claimId"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
+	ValidationId     *string          `json:"validationId"`
+	DistributionId   *string          `json:"distributionId"`
 }
 
 // GetClaimId returns ClaimBulkUpdateInput.ClaimId, and is useful for accessing the field via an interface.
 func (v *ClaimBulkUpdateInput) GetClaimId() string { return v.ClaimId }
 
-// GetData returns ClaimBulkUpdateInput.Data, and is useful for accessing the field via an interface.
-func (v *ClaimBulkUpdateInput) GetData() *json.RawMessage { return v.Data }
+// GetValidationData returns ClaimBulkUpdateInput.ValidationData, and is useful for accessing the field via an interface.
+func (v *ClaimBulkUpdateInput) GetValidationData() *json.RawMessage { return v.ValidationData }
+
+// GetDistributionData returns ClaimBulkUpdateInput.DistributionData, and is useful for accessing the field via an interface.
+func (v *ClaimBulkUpdateInput) GetDistributionData() *json.RawMessage { return v.DistributionData }
 
 // GetParent returns ClaimBulkUpdateInput.Parent, and is useful for accessing the field via an interface.
 func (v *ClaimBulkUpdateInput) GetParent() *string { return v.Parent }
@@ -62,19 +70,23 @@ func (v *ClaimBulkUpdateInput) GetValidationId() *string { return v.ValidationId
 func (v *ClaimBulkUpdateInput) GetDistributionId() *string { return v.DistributionId }
 
 type ClaimCreateInput struct {
-	Label          string           `json:"label"`
-	Data           *json.RawMessage `json:"data"`
-	Parent         *string          `json:"parent"`
-	Children       []string         `json:"children"`
-	ValidationId   string           `json:"validationId"`
-	DistributionId string           `json:"distributionId"`
+	Label            string           `json:"label"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
+	ValidationId     string           `json:"validationId"`
+	DistributionId   string           `json:"distributionId"`
 }
 
 // GetLabel returns ClaimCreateInput.Label, and is useful for accessing the field via an interface.
 func (v *ClaimCreateInput) GetLabel() string { return v.Label }
 
-// GetData returns ClaimCreateInput.Data, and is useful for accessing the field via an interface.
-func (v *ClaimCreateInput) GetData() *json.RawMessage { return v.Data }
+// GetValidationData returns ClaimCreateInput.ValidationData, and is useful for accessing the field via an interface.
+func (v *ClaimCreateInput) GetValidationData() *json.RawMessage { return v.ValidationData }
+
+// GetDistributionData returns ClaimCreateInput.DistributionData, and is useful for accessing the field via an interface.
+func (v *ClaimCreateInput) GetDistributionData() *json.RawMessage { return v.DistributionData }
 
 // GetParent returns ClaimCreateInput.Parent, and is useful for accessing the field via an interface.
 func (v *ClaimCreateInput) GetParent() *string { return v.Parent }
@@ -89,19 +101,23 @@ func (v *ClaimCreateInput) GetValidationId() string { return v.ValidationId }
 func (v *ClaimCreateInput) GetDistributionId() string { return v.DistributionId }
 
 type ClaimUpdateInput struct {
-	ClaimId        string           `json:"claimId"`
-	Data           *json.RawMessage `json:"data"`
-	Parent         *string          `json:"parent"`
-	Children       []string         `json:"children"`
-	ValidationId   *string          `json:"validationId"`
-	DistributionId *string          `json:"distributionId"`
+	ClaimId          string           `json:"claimId"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
+	Parent           *string          `json:"parent"`
+	Children         []string         `json:"children"`
+	ValidationId     *string          `json:"validationId"`
+	DistributionId   *string          `json:"distributionId"`
 }
 
 // GetClaimId returns ClaimUpdateInput.ClaimId, and is useful for accessing the field via an interface.
 func (v *ClaimUpdateInput) GetClaimId() string { return v.ClaimId }
 
-// GetData returns ClaimUpdateInput.Data, and is useful for accessing the field via an interface.
-func (v *ClaimUpdateInput) GetData() *json.RawMessage { return v.Data }
+// GetValidationData returns ClaimUpdateInput.ValidationData, and is useful for accessing the field via an interface.
+func (v *ClaimUpdateInput) GetValidationData() *json.RawMessage { return v.ValidationData }
+
+// GetDistributionData returns ClaimUpdateInput.DistributionData, and is useful for accessing the field via an interface.
+func (v *ClaimUpdateInput) GetDistributionData() *json.RawMessage { return v.DistributionData }
 
 // GetParent returns ClaimUpdateInput.Parent, and is useful for accessing the field via an interface.
 func (v *ClaimUpdateInput) GetParent() *string { return v.Parent }
@@ -485,10 +501,11 @@ func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayload) G
 
 // poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim struct {
-	Id    string           `json:"id"`
-	Label string           `json:"label"`
-	Path  string           `json:"path"`
-	Data  *json.RawMessage `json:"data"`
+	Id               string           `json:"id"`
+	Label            string           `json:"label"`
+	Path             string           `json:"path"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
 }
 
 // GetId returns poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim.Id, and is useful for accessing the field via an interface.
@@ -506,9 +523,14 @@ func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadCla
 	return v.Path
 }
 
-// GetData returns poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim.Data, and is useful for accessing the field via an interface.
-func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim) GetData() *json.RawMessage {
-	return v.Data
+// GetValidationData returns poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim.ValidationData, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim) GetValidationData() *json.RawMessage {
+	return v.ValidationData
+}
+
+// GetDistributionData returns poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim.DistributionData, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayloadClaimsClaim) GetDistributionData() *json.RawMessage {
+	return v.DistributionData
 }
 
 // poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreateResult includes the requested fields of the GraphQL interface ClaimBulkCreateResult.
@@ -1019,10 +1041,11 @@ func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayload) G
 
 // poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim struct {
-	Id    string           `json:"id"`
-	Label string           `json:"label"`
-	Path  string           `json:"path"`
-	Data  *json.RawMessage `json:"data"`
+	Id               string           `json:"id"`
+	Label            string           `json:"label"`
+	Path             string           `json:"path"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
 }
 
 // GetId returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim.Id, and is useful for accessing the field via an interface.
@@ -1040,9 +1063,14 @@ func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadCla
 	return v.Path
 }
 
-// GetData returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim.Data, and is useful for accessing the field via an interface.
-func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim) GetData() *json.RawMessage {
-	return v.Data
+// GetValidationData returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim.ValidationData, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim) GetValidationData() *json.RawMessage {
+	return v.ValidationData
+}
+
+// GetDistributionData returns poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim.DistributionData, and is useful for accessing the field via an interface.
+func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdatePayloadClaimsClaim) GetDistributionData() *json.RawMessage {
+	return v.DistributionData
 }
 
 // poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdateResult includes the requested fields of the GraphQL interface ClaimBulkUpdateResult.
@@ -1297,10 +1325,11 @@ func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayload) GetClaim() po
 
 // poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim struct {
-	Id    string           `json:"id"`
-	Label string           `json:"label"`
-	Path  string           `json:"path"`
-	Data  *json.RawMessage `json:"data"`
+	Id               string           `json:"id"`
+	Label            string           `json:"label"`
+	Path             string           `json:"path"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
 }
 
 // GetId returns poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim.Id, and is useful for accessing the field via an interface.
@@ -1316,9 +1345,14 @@ func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim) GetPath(
 	return v.Path
 }
 
-// GetData returns poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim.Data, and is useful for accessing the field via an interface.
-func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim) GetData() *json.RawMessage {
-	return v.Data
+// GetValidationData returns poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim.ValidationData, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim) GetValidationData() *json.RawMessage {
+	return v.ValidationData
+}
+
+// GetDistributionData returns poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim.DistributionData, and is useful for accessing the field via an interface.
+func (v *poolClaimCreateMutationPoolClaimCreateClaimCreatePayloadClaim) GetDistributionData() *json.RawMessage {
+	return v.DistributionData
 }
 
 // poolClaimCreateMutationPoolClaimCreateClaimCreateResult includes the requested fields of the GraphQL interface ClaimCreateResult.
@@ -1823,10 +1857,11 @@ func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayload) GetClaim() po
 
 // poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim includes the requested fields of the GraphQL type Claim.
 type poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim struct {
-	Id    string           `json:"id"`
-	Label string           `json:"label"`
-	Path  string           `json:"path"`
-	Data  *json.RawMessage `json:"data"`
+	Id               string           `json:"id"`
+	Label            string           `json:"label"`
+	Path             string           `json:"path"`
+	ValidationData   *json.RawMessage `json:"validationData"`
+	DistributionData *json.RawMessage `json:"distributionData"`
 }
 
 // GetId returns poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim.Id, and is useful for accessing the field via an interface.
@@ -1842,9 +1877,14 @@ func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim) GetPath(
 	return v.Path
 }
 
-// GetData returns poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim.Data, and is useful for accessing the field via an interface.
-func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim) GetData() *json.RawMessage {
-	return v.Data
+// GetValidationData returns poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim.ValidationData, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim) GetValidationData() *json.RawMessage {
+	return v.ValidationData
+}
+
+// GetDistributionData returns poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim.DistributionData, and is useful for accessing the field via an interface.
+func (v *poolClaimUpdateMutationPoolClaimUpdateClaimUpdatePayloadClaim) GetDistributionData() *json.RawMessage {
+	return v.DistributionData
 }
 
 // poolClaimUpdateMutationPoolClaimUpdateClaimUpdateResult includes the requested fields of the GraphQL interface ClaimUpdateResult.
@@ -5953,7 +5993,8 @@ mutation poolClaimBulkCreateMutation ($poolId: ID!, $claims: [ClaimBulkCreateInp
 				id
 				label
 				path
-				data
+				validationData
+				distributionData
 			}
 		}
 		... on ErrNotAuthorized {
@@ -6061,7 +6102,8 @@ mutation poolClaimBulkUpdateMutation ($poolId: ID!, $claims: [ClaimBulkUpdateInp
 				id
 				label
 				path
-				data
+				validationData
+				distributionData
 			}
 		}
 		... on ErrNotAuthorized {
@@ -6118,7 +6160,8 @@ mutation poolClaimCreateMutation ($poolId: ID!, $input: ClaimCreateInput!) {
 				id
 				label
 				path
-				data
+				validationData
+				distributionData
 			}
 		}
 		... on ErrNotAuthorized {
@@ -6225,7 +6268,8 @@ mutation poolClaimUpdateMutation ($poolId: ID!, $input: ClaimUpdateInput!) {
 				id
 				label
 				path
-				data
+				validationData
+				distributionData
 			}
 		}
 		... on ErrNotAuthorized {

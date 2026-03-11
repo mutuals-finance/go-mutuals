@@ -192,15 +192,15 @@ type Module implements Node {
 
 type Claim implements Node {
   id: ID!
-  data: JSON
   label: String!
   path: String!
   parent: Claim @goField(forceResolver: true)
   children: [Claim!] @goField(forceResolver: true)
   pool: Pool! @goField(forceResolver: true)
-  recipient: PoolOrUserOrEVMAccount @goField(forceResolver: true)
   validation: Module! @goField(forceResolver: true)
+  validationData: JSON
   distribution: Module! @goField(forceResolver: true)
+  distributionData: JSON
   createdAt: Time!
   updatedAt: Time!
 }
@@ -536,7 +536,8 @@ type ClaimCreatePayload {
 
 input ClaimCreateInput {
   label: String!
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: String
   children: [String!]
   validationId: String!
@@ -551,7 +552,8 @@ type ClaimUpdatePayload {
 
 input ClaimUpdateInput {
   claimId: ID!
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: ID
   children: [ID!]
   validationId: String
@@ -572,7 +574,8 @@ type ClaimBulkCreatePayload {
 }
 
 input ClaimBulkCreateInput {
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: ID
   children: [ID!]
   validationId: String!
@@ -588,7 +591,8 @@ type ClaimBulkUpdatePayload {
 
 input ClaimBulkUpdateInput {
   claimId: ID!
-  data: JSON
+  validationData: JSON
+  distributionData: JSON
   parent: ID
   children: [ID!]
   validationId: String

@@ -13,48 +13,52 @@ import (
 )
 
 type CreateClaimInput struct {
-	ID             persist.DBID
-	PoolID         persist.DBID
-	Label          string
-	Data           pgtype.JSONB
-	Parent         sql.NullString
-	Children       []string
-	ValidationID   persist.DBID
-	DistributionID persist.DBID
+	ID               persist.DBID
+	PoolID           persist.DBID
+	Label            string
+	Parent           sql.NullString
+	Children         []string
+	ValidationID     persist.DBID
+	ValidationData   pgtype.JSONB
+	DistributionID   persist.DBID
+	DistributionData pgtype.JSONB
 }
 
 // CreateClaim creates a new claim for a pool
 func CreateClaim(ctx context.Context, queries *coredb.Queries, input CreateClaimInput) (coredb.Claim, error) {
 	return queries.CreateClaim(ctx, coredb.CreateClaimParams{
-		ID:             input.ID,
-		PoolID:         input.PoolID,
-		Label:          input.Label,
-		Data:           input.Data,
-		Parent:         input.Parent,
-		Children:       input.Children,
-		ValidationID:   input.ValidationID,
-		DistributionID: input.DistributionID,
+		ID:               input.ID,
+		PoolID:           input.PoolID,
+		Label:            input.Label,
+		Parent:           input.Parent,
+		Children:         input.Children,
+		ValidationID:     input.ValidationID,
+		ValidationData:   input.ValidationData,
+		DistributionID:   input.DistributionID,
+		DistributionData: input.DistributionData,
 	})
 }
 
 type UpdateClaimInput struct {
-	ClaimID        persist.DBID
-	Data           pgtype.JSONB
-	Parent         sql.NullString
-	Children       []string
-	ValidationID   persist.DBID
-	DistributionID persist.DBID
+	ClaimID          persist.DBID
+	Parent           sql.NullString
+	Children         []string
+	ValidationID     persist.DBID
+	ValidationData   pgtype.JSONB
+	DistributionID   persist.DBID
+	DistributionData pgtype.JSONB
 }
 
 // UpdateClaim updates an existing claim
 func UpdateClaim(ctx context.Context, queries *coredb.Queries, input UpdateClaimInput) (coredb.Claim, error) {
 	return queries.UpdateClaim(ctx, coredb.UpdateClaimParams{
-		ID:             input.ClaimID,
-		Data:           input.Data,
-		Parent:         input.Parent,
-		Children:       input.Children,
-		ValidationID:   input.ValidationID,
-		DistributionID: input.DistributionID,
+		ID:               input.ClaimID,
+		Parent:           input.Parent,
+		Children:         input.Children,
+		ValidationID:     input.ValidationID,
+		ValidationData:   input.ValidationData,
+		DistributionID:   input.DistributionID,
+		DistributionData: input.DistributionData,
 	})
 }
 
@@ -109,33 +113,36 @@ func BulkCreateClaims(ctx context.Context, queries *coredb.Queries, input BulkCr
 	ids := make([]string, len(input.Claims))
 	labels := make([]string, len(input.Claims))
 	paths := make([]string, len(input.Claims))
-	dataList := make([]pgtype.JSONB, len(input.Claims))
 	parents := make([]sql.NullString, len(input.Claims))
 	childrenList := make([][]string, len(input.Claims))
 	validationIDs := make([]string, len(input.Claims))
+	validationDataList := make([]pgtype.JSONB, len(input.Claims))
 	distributionIDs := make([]string, len(input.Claims))
+	distributionDataList := make([]pgtype.JSONB, len(input.Claims))
 
 	for i, claim := range input.Claims {
 		ids[i] = claim.ID.String()
 		labels[i] = claim.Label
 		paths[i] = "" // Path will be set separately if needed
-		dataList[i] = claim.Data
 		parents[i] = claim.Parent
 		childrenList[i] = claim.Children
 		validationIDs[i] = claim.ValidationID.String()
+		validationDataList[i] = claim.ValidationData
 		distributionIDs[i] = claim.DistributionID.String()
+		distributionDataList[i] = claim.DistributionData
 	}
 
 	// Note: CreateClaims currently doesn't support parent/children in the SQL
 	// This is handled by the allocation tree logic in publicapi
 	return queries.CreateClaims(ctx, coredb.CreateClaimsParams{
-		ID:             ids,
-		PoolID:         input.PoolID,
-		Label:          labels,
-		Path:           paths,
-		Data:           dataList,
-		ValidationID:   validationIDs,
-		DistributionID: distributionIDs,
+		ID:               ids,
+		PoolID:           input.PoolID,
+		Label:            labels,
+		Path:             paths,
+		ValidationID:     validationIDs,
+		ValidationData:   validationDataList,
+		DistributionID:   distributionIDs,
+		DistributionData: distributionDataList,
 	})
 }
 
@@ -147,35 +154,38 @@ type BulkUpdateClaimsInput struct {
 func BulkUpdateClaims(ctx context.Context, queries *coredb.Queries, input BulkUpdateClaimsInput) ([]coredb.Claim, error) {
 	// Prepare batch parameters
 	ids := make([]string, len(input.Claims))
-	dataList := make([]pgtype.JSONB, len(input.Claims))
 	parents := make([]sql.NullString, len(input.Claims))
 	childrenList := make([][]string, len(input.Claims))
 	validationIDs := make([]string, len(input.Claims))
+	validationDataList := make([]pgtype.JSONB, len(input.Claims))
 	distributionIDs := make([]string, len(input.Claims))
+	distributionDataList := make([]pgtype.JSONB, len(input.Claims))
 	deleted := make([]bool, len(input.Claims))
 	paths := make([]string, len(input.Claims))
 	labels := make([]string, len(input.Claims))
 
 	for i, claim := range input.Claims {
 		ids[i] = claim.ClaimID.String()
-		dataList[i] = claim.Data
 		parents[i] = claim.Parent
 		childrenList[i] = claim.Children
 		validationIDs[i] = claim.ValidationID.String()
+		validationDataList[i] = claim.ValidationData
 		distributionIDs[i] = claim.DistributionID.String()
+		distributionDataList[i] = claim.DistributionData
 		deleted[i] = false
 		paths[i] = ""  // Maintain existing path
 		labels[i] = "" // Maintain existing label
 	}
 
 	return queries.UpdateClaims(ctx, coredb.UpdateClaimsParams{
-		ID:             ids,
-		ValidationID:   validationIDs,
-		DistributionID: distributionIDs,
-		Data:           dataList,
-		Label:          labels,
-		Path:           paths,
-		Deleted:        deleted,
+		ID:               ids,
+		ValidationID:     validationIDs,
+		ValidationData:   validationDataList,
+		DistributionID:   distributionIDs,
+		DistributionData: distributionDataList,
+		Label:            labels,
+		Path:             paths,
+		Deleted:          deleted,
 	})
 }
 
@@ -188,10 +198,10 @@ func BulkDeleteClaims(ctx context.Context, queries *coredb.Queries, input BulkDe
 	// Prepare batch parameters for soft delete
 	ids := make([]string, len(input.ClaimIDs))
 	deleted := make([]bool, len(input.ClaimIDs))
-	// Empty arrays for other fields (will maintain existing values)
 	validationIDs := make([]string, len(input.ClaimIDs))
 	distributionIDs := make([]string, len(input.ClaimIDs))
-	dataList := make([]pgtype.JSONB, len(input.ClaimIDs))
+	validationDataList := make([]pgtype.JSONB, len(input.ClaimIDs))
+	distributionDataList := make([]pgtype.JSONB, len(input.ClaimIDs))
 	labels := make([]string, len(input.ClaimIDs))
 	paths := make([]string, len(input.ClaimIDs))
 
@@ -202,13 +212,14 @@ func BulkDeleteClaims(ctx context.Context, queries *coredb.Queries, input BulkDe
 	}
 
 	claims, err := queries.UpdateClaims(ctx, coredb.UpdateClaimsParams{
-		ID:             ids,
-		ValidationID:   validationIDs,
-		DistributionID: distributionIDs,
-		Data:           dataList,
-		Label:          labels,
-		Path:           paths,
-		Deleted:        deleted,
+		ID:               ids,
+		ValidationID:     validationIDs,
+		DistributionID:   distributionIDs,
+		ValidationData:   validationDataList,
+		DistributionData: distributionDataList,
+		Label:            labels,
+		Path:             paths,
+		Deleted:          deleted,
 	})
 	if err != nil {
 		return 0, err
@@ -242,7 +253,8 @@ func CreateClaimsWithAllocationTree(ctx context.Context, queries *coredb.Queries
 	ids := make([]string, len(tree.Claims))
 	labels := make([]string, len(tree.Claims))
 	paths := make([]string, len(tree.Claims))
-	dataList := make([]pgtype.JSONB, len(tree.Claims))
+	validationDataList := make([]pgtype.JSONB, len(tree.Claims))
+	distributionDataList := make([]pgtype.JSONB, len(tree.Claims))
 	validationIDs := make([]string, len(tree.Claims))
 	distributionIDs := make([]string, len(tree.Claims))
 
@@ -250,30 +262,33 @@ func CreateClaimsWithAllocationTree(ctx context.Context, queries *coredb.Queries
 		ids[i] = claim.ID.String()
 		labels[i] = claim.Label
 		paths[i] = claim.Path
-		dataList[i] = persist.JSONToJSONB(claim.Data)
+		validationDataList[i] = persist.JSONToJSONB(claim.ValidationData)
+		distributionDataList[i] = persist.JSONToJSONB(claim.DistributionData)
 		validationIDs[i] = claim.ValidationID
 		distributionIDs[i] = claim.DistributionID
 	}
 
 	return queries.CreateClaims(ctx, coredb.CreateClaimsParams{
-		ID:             ids,
-		PoolID:         input.PoolID,
-		Label:          labels,
-		Path:           paths,
-		Data:           dataList,
-		ValidationID:   validationIDs,
-		DistributionID: distributionIDs,
+		ID:               ids,
+		PoolID:           input.PoolID,
+		Label:            labels,
+		Path:             paths,
+		ValidationData:   validationDataList,
+		DistributionData: distributionDataList,
+		ValidationID:     validationIDs,
+		DistributionID:   distributionIDs,
 	})
 }
 
 type CreateClaimForPoolInput struct {
-	PoolID         persist.DBID
-	Label          string
-	Data           persist.JSON
-	Parent         *persist.DBID
-	Children       []persist.DBID
-	ValidationID   string
-	DistributionID string
+	PoolID           persist.DBID
+	Label            string
+	ValidationData   *persist.JSON
+	DistributionData *persist.JSON
+	Parent           *persist.DBID
+	Children         []persist.DBID
+	ValidationID     string
+	DistributionID   string
 }
 
 // CreateClaimForPool creates a claim with authorization check
@@ -292,26 +307,36 @@ func CreateClaimForPool(ctx context.Context, queries *coredb.Queries, input Crea
 		return coredb.Claim{}, fmt.Errorf("user is not the owner of the pool")
 	}
 
+	var validationData, distributionData pgtype.JSONB
+	if input.ValidationData != nil {
+		validationData = persist.JSONToJSONB(*input.ValidationData)
+	}
+	if input.DistributionData != nil {
+		distributionData = persist.JSONToJSONB(*input.DistributionData)
+	}
+
 	return CreateClaim(ctx, queries, CreateClaimInput{
-		ID:             persist.GenerateID(),
-		PoolID:         input.PoolID,
-		Label:          input.Label,
-		Data:           persist.JSONToJSONB(input.Data),
-		Parent:         persist.DBIDPtrToSQLNullString(input.Parent),
-		Children:       persist.DBIDSliceToStringSlice(input.Children),
-		ValidationID:   persist.DBID(input.ValidationID),
-		DistributionID: persist.DBID(input.DistributionID),
+		ID:               persist.GenerateID(),
+		PoolID:           input.PoolID,
+		Label:            input.Label,
+		ValidationData:   validationData,
+		DistributionData: distributionData,
+		Parent:           persist.DBIDPtrToSQLNullString(input.Parent),
+		Children:         persist.DBIDSliceToStringSlice(input.Children),
+		ValidationID:     persist.DBID(input.ValidationID),
+		DistributionID:   persist.DBID(input.DistributionID),
 	})
 }
 
 type UpdateClaimForPoolInput struct {
-	PoolID         persist.DBID
-	ClaimID        persist.DBID
-	Data           persist.JSON
-	Parent         *persist.DBID
-	Children       []persist.DBID
-	ValidationID   string
-	DistributionID string
+	PoolID           persist.DBID
+	ClaimID          persist.DBID
+	ValidationData   *persist.JSON
+	DistributionData *persist.JSON
+	Parent           *persist.DBID
+	Children         []persist.DBID
+	ValidationID     string
+	DistributionID   string
 }
 
 // UpdateClaimForPool updates a claim with authorization check
@@ -330,13 +355,22 @@ func UpdateClaimForPool(ctx context.Context, queries *coredb.Queries, input Upda
 		return coredb.Claim{}, fmt.Errorf("user is not the owner of the pool")
 	}
 
+	var validationData, distributionData pgtype.JSONB
+	if input.ValidationData != nil {
+		validationData = persist.JSONToJSONB(*input.ValidationData)
+	}
+	if input.DistributionData != nil {
+		distributionData = persist.JSONToJSONB(*input.DistributionData)
+	}
+
 	return UpdateClaim(ctx, queries, UpdateClaimInput{
-		ClaimID:        input.ClaimID,
-		Data:           persist.JSONToJSONB(input.Data),
-		Parent:         persist.DBIDPtrToSQLNullString(input.Parent),
-		Children:       persist.DBIDSliceToStringSlice(input.Children),
-		ValidationID:   persist.DBID(input.ValidationID),
-		DistributionID: persist.DBID(input.DistributionID),
+		ClaimID:          input.ClaimID,
+		ValidationData:   validationData,
+		DistributionData: distributionData,
+		Parent:           persist.DBIDPtrToSQLNullString(input.Parent),
+		Children:         persist.DBIDSliceToStringSlice(input.Children),
+		ValidationID:     persist.DBID(input.ValidationID),
+		DistributionID:   persist.DBID(input.DistributionID),
 	})
 }
 

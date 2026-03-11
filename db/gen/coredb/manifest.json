@@ -897,6 +897,32 @@
                 "array_dims": 0
               },
               {
+                "name": "validation_data",
+                "not_null": false,
+                "is_array": false,
+                "comment": "",
+                "length": -1,
+                "is_named_param": false,
+                "is_func_call": false,
+                "scope": "",
+                "table": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "claims"
+                },
+                "table_alias": "",
+                "type": {
+                  "catalog": "",
+                  "schema": "",
+                  "name": "jsonb"
+                },
+                "is_sqlc_slice": false,
+                "embed_table": null,
+                "original_name": "",
+                "unsigned": false,
+                "array_dims": 0
+              },
+              {
                 "name": "distribution_id",
                 "not_null": true,
                 "is_array": false,
@@ -923,7 +949,7 @@
                 "array_dims": 0
               },
               {
-                "name": "data",
+                "name": "distribution_data",
                 "not_null": false,
                 "is_array": false,
                 "comment": "",
@@ -67285,7 +67311,7 @@
   },
   "queries": [
     {
-      "text": "\nSELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "\nSELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetClaimById",
       "cmd": ":one",
       "columns": [
@@ -67368,6 +67394,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -67394,7 +67446,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -67642,7 +67694,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE id = ANY($1::text[])\n  AND deleted = FALSE",
+      "text": "SELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE id = ANY ($1::text[])\n  AND deleted = FALSE",
       "name": "GetClaimsByIds",
       "cmd": ":many",
       "columns": [
@@ -67725,6 +67777,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -67751,7 +67829,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -67991,7 +68069,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE id = $1\n  AND deleted = FALSE",
+      "text": "SELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE id = $1\n  AND deleted = FALSE",
       "name": "GetClaimByIdBatch",
       "cmd": ":batchone",
       "columns": [
@@ -68074,6 +68152,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -68100,7 +68204,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -68344,7 +68448,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE pool_id = $1\n  AND deleted = FALSE",
+      "text": "SELECT id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at\nFROM claims\nWHERE pool_id = $1\n  AND deleted = FALSE",
       "name": "GetClaimsByPoolId",
       "cmd": ":many",
       "columns": [
@@ -68427,6 +68531,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -68453,7 +68583,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -68697,7 +68827,7 @@
       "insert_into_table": null
     },
     {
-      "text": "SELECT c.id, c.pool_id, c.validation_id, c.distribution_id, c.data, c.label, c.path, c.parent, c.children, c.deleted, c.updated_at, c.created_at\nFROM pools p\n         INNER JOIN claims c ON c.pool_id = p.id\nWHERE p.id = $1\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
+      "text": "SELECT c.id, c.pool_id, c.validation_id, c.validation_data, c.distribution_id, c.distribution_data, c.label, c.path, c.parent, c.children, c.deleted, c.updated_at, c.created_at\nFROM pools p\n         INNER JOIN claims c ON c.pool_id = p.id\nWHERE p.id = $1\n  AND c.deleted = FALSE\n  AND p.deleted = FALSE",
       "name": "GetClaimsByPoolIdBatch",
       "cmd": ":batchmany",
       "columns": [
@@ -68780,6 +68910,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -68806,7 +68962,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -69050,7 +69206,7 @@
       "insert_into_table": null
     },
     {
-      "text": "INSERT INTO claims (id, pool_id, label, data, parent, children, validation_id, distribution_id, deleted, created_at, updated_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, NOW(), NOW())\nRETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at",
+      "text": "INSERT INTO claims (id, pool_id, label, validation_data, distribution_data, parent, children, validation_id,\n                    distribution_id, deleted, created_at, updated_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE, NOW(), NOW())\nRETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at",
       "name": "CreateClaim",
       "cmd": ":one",
       "columns": [
@@ -69133,6 +69289,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -69159,7 +69341,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -69458,7 +69640,7 @@
         {
           "number": 4,
           "column": {
-            "name": "data",
+            "name": "validation_data",
             "not_null": false,
             "is_array": false,
             "comment": "",
@@ -69487,6 +69669,35 @@
         {
           "number": 5,
           "column": {
+            "name": "distribution_data",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "claims"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "jsonb"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 6,
+          "column": {
             "name": "parent",
             "not_null": false,
             "is_array": false,
@@ -69514,7 +69725,7 @@
           }
         },
         {
-          "number": 6,
+          "number": 7,
           "column": {
             "name": "children",
             "not_null": false,
@@ -69543,7 +69754,7 @@
           }
         },
         {
-          "number": 7,
+          "number": 8,
           "column": {
             "name": "validation_id",
             "not_null": true,
@@ -69572,7 +69783,7 @@
           }
         },
         {
-          "number": 8,
+          "number": 9,
           "column": {
             "name": "distribution_id",
             "not_null": true,
@@ -69610,7 +69821,7 @@
       }
     },
     {
-      "text": "UPDATE claims\nSET data            = $2,\n    parent          = $3,\n    children        = $4,\n    validation_id   = $5,\n    distribution_id = $6,\n    updated_at      = NOW()\nWHERE id = $1\n  AND deleted = FALSE\nRETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at",
+      "text": "UPDATE claims\nSET validation_data   = $2,\n    distribution_data = $3,\n    parent            = $4,\n    children          = $5,\n    validation_id     = $6,\n    distribution_id   = $7,\n    updated_at        = NOW()\nWHERE id = $1\n  AND deleted = FALSE\nRETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at",
       "name": "UpdateClaim",
       "cmd": ":one",
       "columns": [
@@ -69693,6 +69904,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -69719,7 +69956,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -69960,7 +70197,7 @@
         {
           "number": 2,
           "column": {
-            "name": "data",
+            "name": "validation_data",
             "not_null": false,
             "is_array": false,
             "comment": "",
@@ -69989,6 +70226,35 @@
         {
           "number": 3,
           "column": {
+            "name": "distribution_data",
+            "not_null": false,
+            "is_array": false,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": {
+              "catalog": "",
+              "schema": "public",
+              "name": "claims"
+            },
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "jsonb"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 4,
+          "column": {
             "name": "parent",
             "not_null": false,
             "is_array": false,
@@ -70016,7 +70282,7 @@
           }
         },
         {
-          "number": 4,
+          "number": 5,
           "column": {
             "name": "children",
             "not_null": false,
@@ -70045,7 +70311,7 @@
           }
         },
         {
-          "number": 5,
+          "number": 6,
           "column": {
             "name": "validation_id",
             "not_null": true,
@@ -70074,7 +70340,7 @@
           }
         },
         {
-          "number": 6,
+          "number": 7,
           "column": {
             "name": "distribution_id",
             "not_null": true,
@@ -70108,7 +70374,7 @@
       "insert_into_table": null
     },
     {
-      "text": "UPDATE claims\nSET deleted    = TRUE,\n    updated_at = NOW()\nWHERE id = $1\n  AND deleted = FALSE\nRETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at",
+      "text": "UPDATE claims\nSET deleted    = TRUE,\n    updated_at = NOW()\nWHERE id = $1\n  AND deleted = FALSE\nRETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at",
       "name": "DeleteClaim",
       "cmd": ":one",
       "columns": [
@@ -70191,6 +70457,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -70217,7 +70509,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -70461,7 +70753,7 @@
       "insert_into_table": null
     },
     {
-      "text": "WITH updates AS (SELECT UNNEST($1::text[])              AS id,\n                        $2                         AS pool_id,\n                        UNNEST($3::text[])   AS validation_id,\n                        UNNEST($4::text[]) AS distribution_id,\n                        UNNEST($5::jsonb[])           AS data,\n                        UNNEST($6::text[])           AS label,\n                        UNNEST($7::ltree[])           AS path)\nINSERT\nINTO claims (id, pool_id, validation_id, distribution_id, data, label, path, deleted, updated_at, created_at)\nSELECT id,\n       pool_id,\n       validation_id,\n       distribution_id,\n       data,\n       label,\n       path,\n       FALSE,\n       NOW(),\n       NOW()\nFROM updates\nRETURNING id, pool_id, validation_id, distribution_id, data, label, path, parent, children, deleted, updated_at, created_at",
+      "text": "WITH updates AS (SELECT UNNEST($1::text[])                 AS id,\n                        $2                            AS pool_id,\n                        UNNEST($3::text[])      AS validation_id,\n                        UNNEST($4::text[])    AS distribution_id,\n                        UNNEST($5::jsonb[])   AS validation_data,\n                        UNNEST($6::jsonb[]) AS distribution_data,\n                        UNNEST($7::text[])              AS label,\n                        UNNEST($8::ltree[])              AS path)\nINSERT\nINTO claims (id, pool_id, validation_id, distribution_id, validation_data, distribution_data, label, path, deleted,\n             updated_at, created_at)\nSELECT id,\n       pool_id,\n       validation_id,\n       distribution_id,\n       validation_data,\n       distribution_data,\n       label,\n       path,\n       FALSE,\n       NOW(),\n       NOW()\nFROM updates\nRETURNING id, pool_id, validation_id, validation_data, distribution_id, distribution_data, label, path, parent, children, deleted, updated_at, created_at",
       "name": "CreateClaims",
       "cmd": ":many",
       "columns": [
@@ -70544,6 +70836,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -70570,7 +70888,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -70886,7 +71204,7 @@
         {
           "number": 5,
           "column": {
-            "name": "data",
+            "name": "validation_data",
             "not_null": true,
             "is_array": true,
             "comment": "",
@@ -70911,6 +71229,31 @@
         {
           "number": 6,
           "column": {
+            "name": "distribution_data",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "jsonb"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 7,
+          "column": {
             "name": "label",
             "not_null": true,
             "is_array": true,
@@ -70934,7 +71277,7 @@
           }
         },
         {
-          "number": 7,
+          "number": 8,
           "column": {
             "name": "path",
             "not_null": true,
@@ -70968,7 +71311,7 @@
       }
     },
     {
-      "text": "WITH updates AS (SELECT UNNEST($1::text[])              AS id,\n                        UNNEST($2::text[])   AS validation_id,\n                        UNNEST($3::text[]) AS distribution_id,\n                        UNNEST($4::jsonb[])           AS data,\n                        UNNEST($5::text[])           AS label,\n                        UNNEST($6::ltree[])           AS path,\n                        UNNEST($7::boolean[])      AS deleted)\nUPDATE claims\nSET validation_id   = updates.validation_id,\n    distribution_id = updates.distribution_id,\n    data            = updates.data,\n    label           = updates.label,\n    path            = updates.path,\n    deleted         = updates.deleted,\n    updated_at      = NOW()\nFROM updates\nWHERE claims.id = updates.id\n  AND claims.deleted = FALSE\nRETURNING claims.id, claims.pool_id, claims.validation_id, claims.distribution_id, claims.data, claims.label, claims.path, claims.parent, claims.children, claims.deleted, claims.updated_at, claims.created_at",
+      "text": "WITH updates AS (SELECT UNNEST($1::text[])                 AS id,\n                        UNNEST($2::text[])      AS validation_id,\n                        UNNEST($3::text[])    AS distribution_id,\n                        UNNEST($4::jsonb[])   AS validation_data,\n                        UNNEST($5::jsonb[]) AS distribution_data,\n                        UNNEST($6::text[])              AS label,\n                        UNNEST($7::ltree[])              AS path,\n                        UNNEST($8::boolean[])         AS deleted)\nUPDATE claims\nSET validation_id     = updates.validation_id,\n    distribution_id   = updates.distribution_id,\n    validation_data   = updates.validation_data,\n    distribution_data = updates.distribution_data,\n    label             = updates.label,\n    path              = updates.path,\n    deleted           = updates.deleted,\n    updated_at        = NOW()\nFROM updates\nWHERE claims.id = updates.id\n  AND claims.deleted = FALSE\nRETURNING claims.id, claims.pool_id, claims.validation_id, claims.validation_data, claims.distribution_id, claims.distribution_data, claims.label, claims.path, claims.parent, claims.children, claims.deleted, claims.updated_at, claims.created_at",
       "name": "UpdateClaims",
       "cmd": ":many",
       "columns": [
@@ -71051,6 +71394,32 @@
           "array_dims": 0
         },
         {
+          "name": "validation_data",
+          "not_null": false,
+          "is_array": false,
+          "comment": "",
+          "length": -1,
+          "is_named_param": false,
+          "is_func_call": false,
+          "scope": "",
+          "table": {
+            "catalog": "",
+            "schema": "",
+            "name": "claims"
+          },
+          "table_alias": "",
+          "type": {
+            "catalog": "",
+            "schema": "",
+            "name": "jsonb"
+          },
+          "is_sqlc_slice": false,
+          "embed_table": null,
+          "original_name": "",
+          "unsigned": false,
+          "array_dims": 0
+        },
+        {
           "name": "distribution_id",
           "not_null": true,
           "is_array": false,
@@ -71077,7 +71446,7 @@
           "array_dims": 0
         },
         {
-          "name": "data",
+          "name": "distribution_data",
           "not_null": false,
           "is_array": false,
           "comment": "",
@@ -71364,7 +71733,7 @@
         {
           "number": 4,
           "column": {
-            "name": "data",
+            "name": "validation_data",
             "not_null": true,
             "is_array": true,
             "comment": "",
@@ -71389,6 +71758,31 @@
         {
           "number": 5,
           "column": {
+            "name": "distribution_data",
+            "not_null": true,
+            "is_array": true,
+            "comment": "",
+            "length": -1,
+            "is_named_param": false,
+            "is_func_call": false,
+            "scope": "",
+            "table": null,
+            "table_alias": "",
+            "type": {
+              "catalog": "",
+              "schema": "",
+              "name": "jsonb"
+            },
+            "is_sqlc_slice": false,
+            "embed_table": null,
+            "original_name": "",
+            "unsigned": false,
+            "array_dims": 0
+          }
+        },
+        {
+          "number": 6,
+          "column": {
             "name": "label",
             "not_null": true,
             "is_array": true,
@@ -71412,7 +71806,7 @@
           }
         },
         {
-          "number": 6,
+          "number": 7,
           "column": {
             "name": "path",
             "not_null": true,
@@ -71437,7 +71831,7 @@
           }
         },
         {
-          "number": 7,
+          "number": 8,
           "column": {
             "name": "deleted",
             "not_null": true,

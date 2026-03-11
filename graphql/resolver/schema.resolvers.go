@@ -65,13 +65,6 @@ func (r *claimResolver) Pool(ctx context.Context, obj *model.Claim) (*model.Pool
 	return resolvePoolByID(ctx, dbClaim.PoolID)
 }
 
-// Recipient is the resolver for the recipient field.
-func (r *claimResolver) Recipient(ctx context.Context, obj *model.Claim) (model.PoolOrUserOrEVMAccount, error) {
-	// TODO: Implement recipient resolution when the recipient field is added to the database
-	// For now, return nil as recipient is not yet implemented
-	return nil, nil
-}
-
 // Validation is the resolver for the validation field.
 func (r *claimResolver) Validation(ctx context.Context, obj *model.Claim) (*model.Module, error) {
 	// TODO: Implement Module resolution when Module entity is ready
@@ -171,11 +164,20 @@ func (r *mutationResolver) PoolClaimCreate(ctx context.Context, poolID model.Gql
 		parent = &p
 	}
 
+	var validationData, distributionData *persist.JSON
+	if input.ValidationData != nil {
+		validationData = &input.ValidationData
+	}
+	if input.DistributionData != nil {
+		distributionData = &input.DistributionData
+	}
+
 	claim, err := publicapi.For(ctx).Claim.CreateClaim(
 		ctx,
 		poolID.DBID(),
 		input.Label,
-		input.Data,
+		validationData,
+		distributionData,
 		parent,
 		children,
 		input.ValidationID,
@@ -200,11 +202,20 @@ func (r *mutationResolver) PoolClaimUpdate(ctx context.Context, poolID model.Gql
 		}
 	}
 
+	var validationData, distributionData *persist.JSON
+	if input.ValidationData != nil {
+		validationData = &input.ValidationData
+	}
+	if input.DistributionData != nil {
+		distributionData = &input.DistributionData
+	}
+
 	claim, err := publicapi.For(ctx).Claim.UpdateClaim(
 		ctx,
 		poolID.DBID(),
 		input.ClaimID.DBID(),
-		input.Data,
+		validationData,
+		distributionData,
 		model.ToDBIDPtr(input.Parent),
 		children,
 		*input.ValidationID,
@@ -240,12 +251,22 @@ func (r *mutationResolver) PoolClaimBulkCreate(ctx context.Context, errorPolicy 
 			children = model.ToDBIDList(c.Children)
 		}
 
+		// Convert persist.JSON to pointers
+		var validationData, distributionData *persist.JSON
+		if c.ValidationData != nil {
+			validationData = &c.ValidationData
+		}
+		if c.DistributionData != nil {
+			distributionData = &c.DistributionData
+		}
+
 		inputs[i] = publicapi.BulkCreateClaimInput{
-			Data:           c.Data,
-			Parent:         model.ToDBIDPtr(c.Parent),
-			Children:       children,
-			ValidationID:   c.ValidationID,
-			DistributionID: c.DistributionID,
+			ValidationData:   validationData,
+			DistributionData: distributionData,
+			Parent:           model.ToDBIDPtr(c.Parent),
+			Children:         children,
+			ValidationID:     c.ValidationID,
+			DistributionID:   c.DistributionID,
 		}
 	}
 
@@ -269,13 +290,22 @@ func (r *mutationResolver) PoolClaimBulkUpdate(ctx context.Context, errorPolicy 
 			children = model.ToDBIDList(c.Children)
 		}
 
+		var validationData, distributionData *persist.JSON
+		if c.ValidationData != nil {
+			validationData = &c.ValidationData
+		}
+		if c.DistributionData != nil {
+			distributionData = &c.DistributionData
+		}
+
 		inputs[i] = publicapi.BulkUpdateClaimInput{
-			ClaimID:        c.ClaimID.DBID(),
-			Data:           c.Data,
-			Parent:         model.ToDBIDPtr(c.Parent),
-			Children:       children,
-			ValidationID:   *c.ValidationID,
-			DistributionID: *c.DistributionID,
+			ClaimID:          c.ClaimID.DBID(),
+			ValidationData:   validationData,
+			DistributionData: distributionData,
+			Parent:           model.ToDBIDPtr(c.Parent),
+			Children:         children,
+			ValidationID:     *c.ValidationID,
+			DistributionID:   *c.DistributionID,
 		}
 	}
 
