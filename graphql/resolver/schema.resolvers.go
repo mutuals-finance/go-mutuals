@@ -376,6 +376,20 @@ func (r *poolResolver) Claims(ctx context.Context, obj *model.Pool) ([]*model.Cl
 	return resolveClaimsByPoolID(ctx, obj.ID().DBID())
 }
 
+// Balance is the resolver for the balance field.
+func (r *poolResolver) Balance(ctx context.Context, obj *model.Pool) (*model.PoolBalance, error) {
+	b, err := publicapi.For(ctx).Pool.GetPoolBalance(ctx, obj.ID().DBID())
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.PoolBalance{
+		TotalIncome: b.TotalIncome,
+		Balance:     b.Balance,
+		Withdrawals: b.Withdrawals,
+	}, nil
+}
+
 // PoolFactory is the resolver for the poolFactory field.
 func (r *poolContractResolver) PoolFactory(ctx context.Context, obj *model.PoolContract) (*model.PoolFactory, error) {
 	panic(fmt.Errorf("not implemented: PoolFactory - poolFactory"))
@@ -443,11 +457,6 @@ func (r *queryResolver) Viewer(ctx context.Context) (model.UserResult, error) {
 		return nil, err
 	}
 	return user, nil
-}
-
-// UserByUsername is the resolver for the userByUsername field.
-func (r *queryResolver) UserByUsername(ctx context.Context, username string) (model.UserResult, error) {
-	panic(fmt.Errorf("not implemented: UserByUsername - userByUsername"))
 }
 
 // UserByID is the resolver for the userById field.

@@ -260,6 +260,7 @@ type ComplexityRoot struct {
 	}
 
 	Pool struct {
+		Balance     func(childComplexity int) int
 		Claims      func(childComplexity int) int
 		Contract    func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
@@ -272,6 +273,12 @@ type ComplexityRoot struct {
 		Slug        func(childComplexity int) int
 		Status      func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
+	}
+
+	PoolBalance struct {
+		Balance     func(childComplexity int) int
+		TotalIncome func(childComplexity int) int
+		Withdrawals func(childComplexity int) int
 	}
 
 	PoolContract struct {
@@ -345,7 +352,6 @@ type ComplexityRoot struct {
 		SearchUsers        func(childComplexity int, query string, limit *int, usernameWeight *float64) int
 		UserByAddress      func(childComplexity int, address persist.Address) int
 		UserByID           func(childComplexity int, id model.GqlID) int
-		UserByUsername     func(childComplexity int, username string) int
 		UsersByRole        func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
 		Viewer             func(childComplexity int) int
 		__resolve__service func(childComplexity int) int
@@ -503,6 +509,7 @@ type PoolResolver interface {
 	Owner(ctx context.Context, obj *model.Pool) (model.UserOrEVMAccount, error)
 	Contract(ctx context.Context, obj *model.Pool) (*model.PoolContract, error)
 	Claims(ctx context.Context, obj *model.Pool) ([]*model.Claim, error)
+	Balance(ctx context.Context, obj *model.Pool) (*model.PoolBalance, error)
 }
 type PoolContractResolver interface {
 	PoolFactory(ctx context.Context, obj *model.PoolContract) (*model.PoolFactory, error)
@@ -524,7 +531,6 @@ type PoolHourBalanceResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id model.GqlID) (model.Node, error)
 	Viewer(ctx context.Context) (model.UserResult, error)
-	UserByUsername(ctx context.Context, username string) (model.UserResult, error)
 	UserByID(ctx context.Context, id model.GqlID) (model.UserResult, error)
 	UserByAddress(ctx context.Context, address persist.Address) (model.UserResult, error)
 	Pool(ctx context.Context, id *model.GqlID, slug *string, contractID *model.GqlID) (model.PoolResult, error)
@@ -1320,6 +1326,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.Total(childComplexity), true
 
+	case "Pool.balance":
+		if e.complexity.Pool.Balance == nil {
+			break
+		}
+
+		return e.complexity.Pool.Balance(childComplexity), true
+
 	case "Pool.claims":
 		if e.complexity.Pool.Claims == nil {
 			break
@@ -1403,6 +1416,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Pool.UpdatedAt(childComplexity), true
+
+	case "PoolBalance.balance":
+		if e.complexity.PoolBalance.Balance == nil {
+			break
+		}
+
+		return e.complexity.PoolBalance.Balance(childComplexity), true
+
+	case "PoolBalance.totalIncome":
+		if e.complexity.PoolBalance.TotalIncome == nil {
+			break
+		}
+
+		return e.complexity.PoolBalance.TotalIncome(childComplexity), true
+
+	case "PoolBalance.withdrawals":
+		if e.complexity.PoolBalance.Withdrawals == nil {
+			break
+		}
+
+		return e.complexity.PoolBalance.Withdrawals(childComplexity), true
 
 	case "PoolContract.account":
 		if e.complexity.PoolContract.Account == nil {
@@ -1755,18 +1789,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.UserByID(childComplexity, args["id"].(model.GqlID)), true
-
-	case "Query.userByUsername":
-		if e.complexity.Query.UserByUsername == nil {
-			break
-		}
-
-		args, err := ec.field_Query_userByUsername_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.UserByUsername(childComplexity, args["username"].(string)), true
 
 	case "Query.usersByRole":
 		if e.complexity.Query.UsersByRole == nil {
@@ -2523,6 +2545,12 @@ enum PoolStatus {
   Paused
 }
 
+type PoolBalance {
+  totalIncome: Float!
+  balance: Float!
+  withdrawals: Float!
+}
+
 type Pool implements Node {
   id: ID!
   name: String!
@@ -2534,6 +2562,7 @@ type Pool implements Node {
   owner: UserOrEVMAccount! @goField(forceResolver: true)
   contract: PoolContract @goField(forceResolver: true)
   claims: [Claim!] @goField(forceResolver: true)
+  balance: PoolBalance! @goField(forceResolver: true)
   createdAt: Time!
   updatedAt: Time!
 }
@@ -2731,7 +2760,6 @@ union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
 type Query {
   node(id: ID!): Node
   viewer: UserResult @authRequired
-  userByUsername(username: String!): UserResult!
   userById(id: ID!): UserResult!
   userByAddress(address: Address!): UserResult!
 
@@ -4212,38 +4240,6 @@ func (ec *executionContext) field_Query_userById_argsID(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_userByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_userByUsername_argsUsername(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["username"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_userByUsername_argsUsername(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["username"]
-	if !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-	if tmp, ok := rawArgs["username"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Query_usersByRole_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4833,6 +4829,8 @@ func (ec *executionContext) fieldContext_Claim_pool(_ context.Context, field gra
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -5843,6 +5841,8 @@ func (ec *executionContext) fieldContext_Deposit_pool(_ context.Context, field g
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -6419,6 +6419,8 @@ func (ec *executionContext) fieldContext_EVMAccount_selfPools(_ context.Context,
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -10080,6 +10082,58 @@ func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Pool_balance(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Pool_balance(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Pool().Balance(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PoolBalance)
+	fc.Result = res
+	return ec.marshalNPoolBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolBalance(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Pool_balance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Pool",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalIncome":
+				return ec.fieldContext_PoolBalance_totalIncome(ctx, field)
+			case "balance":
+				return ec.fieldContext_PoolBalance_balance(ctx, field)
+			case "withdrawals":
+				return ec.fieldContext_PoolBalance_withdrawals(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PoolBalance", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Pool_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Pool) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Pool_createdAt(ctx, field)
 	if err != nil {
@@ -10163,6 +10217,138 @@ func (ec *executionContext) fieldContext_Pool_updatedAt(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolBalance_totalIncome(ctx context.Context, field graphql.CollectedField, obj *model.PoolBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolBalance_totalIncome(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalIncome, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolBalance_totalIncome(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolBalance_balance(ctx context.Context, field graphql.CollectedField, obj *model.PoolBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolBalance_balance(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Balance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolBalance_balance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolBalance_withdrawals(ctx context.Context, field graphql.CollectedField, obj *model.PoolBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolBalance_withdrawals(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Withdrawals, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolBalance_withdrawals(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10931,6 +11117,8 @@ func (ec *executionContext) fieldContext_PoolCreatePayload_pool(_ context.Contex
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -11133,6 +11321,8 @@ func (ec *executionContext) fieldContext_PoolDayBalance_pool(_ context.Context, 
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -11407,6 +11597,8 @@ func (ec *executionContext) fieldContext_PoolDeletePayload_pool(_ context.Contex
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -11933,6 +12125,8 @@ func (ec *executionContext) fieldContext_PoolHourBalance_pool(_ context.Context,
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -12204,6 +12398,8 @@ func (ec *executionContext) fieldContext_PoolSearchResult_pool(_ context.Context
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -12274,6 +12470,8 @@ func (ec *executionContext) fieldContext_PoolUpdatePayload_pool(_ context.Contex
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -12396,61 +12594,6 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UserResult does not have child fields")
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_userByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_userByUsername(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserByUsername(rctx, fc.Args["username"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.UserResult)
-	fc.Result = res
-	return ec.marshalNUserResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UserResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_userByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -14579,6 +14722,8 @@ func (ec *executionContext) fieldContext_User_pools(_ context.Context, field gra
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -15287,6 +15432,8 @@ func (ec *executionContext) fieldContext_Withdrawal_pool(_ context.Context, fiel
 				return ec.fieldContext_Pool_contract(ctx, field)
 			case "claims":
 				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Pool_createdAt(ctx, field)
 			case "updatedAt":
@@ -21092,6 +21239,42 @@ func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "balance":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Pool_balance(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
 			out.Values[i] = ec._Pool_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21101,6 +21284,55 @@ func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Pool_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var poolBalanceImplementors = []string{"PoolBalance"}
+
+func (ec *executionContext) _PoolBalance(ctx context.Context, sel ast.SelectionSet, obj *model.PoolBalance) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolBalanceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PoolBalance")
+		case "totalIncome":
+			out.Values[i] = ec._PoolBalance_totalIncome(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "balance":
+			out.Values[i] = ec._PoolBalance_balance(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "withdrawals":
+			out.Values[i] = ec._PoolBalance_withdrawals(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -21983,28 +22215,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_viewer(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "userByUsername":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_userByUsername(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -24043,6 +24253,21 @@ func (ec *executionContext) marshalNFieldSet2string(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
 func (ec *executionContext) unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (persist.HexString, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := persist.HexString(tmp)
@@ -24176,6 +24401,20 @@ func (ec *executionContext) marshalNPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutual
 		return graphql.Null
 	}
 	return ec._Pool(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPoolBalance2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolBalance(ctx context.Context, sel ast.SelectionSet, v model.PoolBalance) graphql.Marshaler {
+	return ec._PoolBalance(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPoolBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolBalance(ctx context.Context, sel ast.SelectionSet, v *model.PoolBalance) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolBalance(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNPoolCreateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolCreateInput(ctx context.Context, v interface{}) (model.PoolCreateInput, error) {

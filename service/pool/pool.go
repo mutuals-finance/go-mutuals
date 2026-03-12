@@ -102,3 +102,15 @@ type DeletePoolInput struct {
 func DeletePool(ctx context.Context, queries *coredb.Queries, input DeletePoolInput) error {
 	return queries.DeletePool(ctx, input.PoolID)
 }
+
+type PoolBalance struct {
+	TotalIncome float64
+	Balance     float64
+	Withdrawals float64
+}
+
+// GetPoolBalance returns aggregated USD balance stats for a pool.
+// TODO: implement real calculation from deposits, withdrawals and token balances.
+func GetPoolBalance(ctx context.Context, queries *coredb.Queries, poolID persist.DBID) (PoolBalance, error) {
+	return PoolBalance{}, nil
+}

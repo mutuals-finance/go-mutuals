@@ -215,6 +215,12 @@ enum PoolStatus {
   Paused
 }
 
+type PoolBalance {
+  totalIncome: Float!
+  balance: Float!
+  withdrawals: Float!
+}
+
 type Pool implements Node {
   id: ID!
   name: String!
@@ -226,6 +232,7 @@ type Pool implements Node {
   owner: UserOrEVMAccount! @goField(forceResolver: true)
   contract: PoolContract @goField(forceResolver: true)
   claims: [Claim!] @goField(forceResolver: true)
+  balance: PoolBalance! @goField(forceResolver: true)
   createdAt: Time!
   updatedAt: Time!
 }
@@ -423,7 +430,6 @@ union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
 type Query {
   node(id: ID!): Node
   viewer: UserResult @authRequired
-  userByUsername(username: String!): UserResult!
   userById(id: ID!): UserResult!
   userByAddress(address: Address!): UserResult!
 

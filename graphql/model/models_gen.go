@@ -449,6 +449,7 @@ type Pool struct {
 	Owner       UserOrEVMAccount `json:"owner"`
 	Contract    *PoolContract    `json:"contract"`
 	Claims      []*Claim         `json:"claims"`
+	Balance     *PoolBalance     `json:"balance"`
 	CreatedAt   time.Time        `json:"createdAt"`
 	UpdatedAt   time.Time        `json:"updatedAt"`
 }
@@ -456,6 +457,12 @@ type Pool struct {
 func (Pool) IsNode()                   {}
 func (Pool) IsPoolOrUserOrEVMAccount() {}
 func (Pool) IsPoolResult()             {}
+
+type PoolBalance struct {
+	TotalIncome float64 `json:"totalIncome"`
+	Balance     float64 `json:"balance"`
+	Withdrawals float64 `json:"withdrawals"`
+}
 
 type PoolContract struct {
 	Address     persist.Address    `json:"address"`

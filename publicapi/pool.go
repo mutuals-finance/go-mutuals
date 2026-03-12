@@ -348,3 +348,8 @@ func (api PoolAPI) DeletePool(ctx context.Context, poolID persist.DBID) error {
 
 	return nil
 }
+
+func (api PoolAPI) GetPoolBalance(ctx context.Context, poolID persist.DBID) (poolService.PoolBalance, error) {
+	return poolService.GetPoolBalance(ctx, api.queries, poolID)
+}
+

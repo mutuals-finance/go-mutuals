@@ -2,9 +2,7 @@ package publicapi
 
 import (
 	"context"
-	"errors"
 	"net/http"
-	"time"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/storage"
@@ -31,7 +29,6 @@ import (
 	"github.com/mutuals/go-mutuals/validate"
 )
 
-var errBadCursorFormat = errors.New("bad cursor format")
 
 const apiContextKey = "publicapi.api"
 
@@ -129,33 +126,3 @@ func getUserRoles(ctx context.Context) []persist.Role {
 	return auth.GetRolesFromCtx(gc)
 }
 
-// dbidCache is a lazy cache that stores DBIDs from expensive queries
-type dbidCache struct {
-	*redis.LazyCache
-}
-
-func newDBIDCache(cfg redis.CacheConfig, key string, ttl time.Duration, f func(context.Context) ([]persist.DBID, error)) dbidCache {
-	lc := &redis.LazyCache{Cache: redis.NewCache(cfg), Key: key, TTL: ttl}
-	lc.CalcFunc = func(ctx context.Context) ([]byte, error) {
-		ids, err := f(ctx)
-		if err != nil {
-			return nil, err
-		}
-		cur := cursors.NewPositionCursor()
-		cur.CurrentPosition = 0
-		cur.IDs = ids
-		b, err := cur.Pack()
-		return []byte(b), err
-	}
-	return dbidCache{lc}
-}
-
-func (d dbidCache) Load(ctx context.Context) ([]persist.DBID, error) {
-	b, err := d.LazyCache.Load(ctx)
-	if err != nil {
-		return nil, err
-	}
-	cur := cursors.NewPositionCursor()
-	err = cur.Unpack(string(b))
-	return cur.IDs, err
-}

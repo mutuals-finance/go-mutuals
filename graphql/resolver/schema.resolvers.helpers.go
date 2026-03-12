@@ -16,6 +16,7 @@ import (
 	"github.com/mutuals/go-mutuals/validate"
 )
 
+
 var nodeFetcher = model.NodeFetcher{
 	OnClaim:           resolveClaimByID,
 	OnDeletedNode:     resolveDeletedNodeByID,
